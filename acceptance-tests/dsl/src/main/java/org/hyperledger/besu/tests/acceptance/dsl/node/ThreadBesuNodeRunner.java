@@ -220,7 +220,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .besuPluginContext(new BesuPluginContextImpl())
         .autoLogBloomCaching(false)
         .storageProvider(storageProvider)
-        .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
         .rpcEndpointService(new RpcEndpointServiceImpl());
     node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
 
