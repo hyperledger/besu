@@ -5425,4 +5425,40 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     serverSocket.close();
   }
+
+  @Test
+  public void presentRequiredOptionShouldPass() {
+    parseCommandWithRequiredOption("--accept-terms-and-conditions", "true");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void missingRequiredOptionShouldFail() {
+    parseCommandWithRequiredOption();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .isEqualTo(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'\n");
+  }
+
+  @Test
+  public void havingRequiredOptionInEnvVarShouldFail() {
+    setEnvironmentVariable("BESU_ACCEPT_TERMS_AND_CONDITIONS", "true");
+    parseCommandWithRequiredOption();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .isEqualTo(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'\n");
+  }
+
+  @Test
+  public void havingRequiredOptionInConfigShouldFail() throws IOException {
+    final Path toml = createTempFile("toml", "accept-terms-and-conditions=true\n");
+    parseCommandWithRequiredOption("--config-file", toml.toString());
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .isEqualTo(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'\n");
+  }
 }
