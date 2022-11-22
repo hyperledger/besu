@@ -351,10 +351,7 @@ public class EngineNewPayloadTest {
   @Test
   public void shouldRespondWithSyncingDuringForwardSync() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
-    when(mergeCoordinator.appendNewPayloadToSync(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
