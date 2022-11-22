@@ -20,6 +20,7 @@
 - Shanghai implementation of EIP-3540 and EIP-3670 Ethereum Object Format and Code Validation [#4644](https://github.com/hyperledger/besu/pull/4644)
 - Remove some log statements that are keeping some objects live in heap for a long time, to reduce the amount of memory required during initial sync [#4705](https://github.com/hyperledger/besu/pull/4705)
 - Add field `type` to Transaction receipt object (eth_getTransactionReceipt) [#4505](https://github.com/hyperledger/besu/issues/4505)
+- Print an overview of configuration and system information at startup [#4451](https://github.com/hyperledger/besu/pull/4451)
 
 ### Bug Fixes
 
