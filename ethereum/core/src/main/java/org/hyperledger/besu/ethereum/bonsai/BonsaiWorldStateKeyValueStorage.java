@@ -22,7 +22,10 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -31,11 +34,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
@@ -43,13 +48,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
+  public static final byte[] FLAT_DB_MODE = "flatDbMode".getBytes(StandardCharsets.UTF_8);
+
   protected final KeyValueStorage accountStorage;
   protected final KeyValueStorage codeStorage;
   protected final KeyValueStorage storageStorage;
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
-
   private Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder;
+
+  private FlatDatabaseMode flatDatabaseMode;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     this(
@@ -89,6 +97,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
     this.maybeFallbackNodeFinder = fallbackNodeFinder;
+    this.flatDatabaseMode = getFlatDatabaseMode();
+  }
+
+  public FlatDatabaseMode getFlatDatabaseMode() {
+    if (flatDatabaseMode == null) {
+      flatDatabaseMode =
+          FlatDatabaseMode.fromBytes(
+              trieBranchStorage.get(FLAT_DB_MODE).map(Bytes::wrap).orElse(Bytes.EMPTY));
+    }
+    return flatDatabaseMode;
   }
 
   @Override
@@ -97,7 +115,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    if (getFlatDatabaseMode().equals(FlatDatabaseMode.PARTIAL) && response.isEmpty()) {
+      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      if (worldStateRootHash.isPresent()) {
+        response =
+            new StoredMerklePatriciaTrie<>(
+                    new StoredNodeFactory<>(
+                        this::getAccountStateTrieNode, Function.identity(), Function.identity()),
+                    Bytes32.wrap(worldStateRootHash.get()))
+                .get(accountHash);
+      }
+    }
+    return response;
   }
 
   @Override
@@ -111,10 +141,17 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage
-          .get(location.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+      final Optional<Bytes> value =
+          trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+      if (value.isPresent()) {
+        return value
+            .filter(b -> Hash.hash(b).equals(nodeHash))
+            .or(
+                () ->
+                    maybeFallbackNodeFinder.flatMap(
+                        finder -> finder.getAccountStateTrieNode(location, nodeHash)));
+      }
+      return Optional.empty();
     }
   }
 
@@ -124,10 +161,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage
-          .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+      final Optional<Bytes> value =
+          trieBranchStorage
+              .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+              .map(Bytes::wrap);
+      if (value.isPresent()) {
+        return value
+            .filter(b -> Hash.hash(b).equals(nodeHash))
+            .or(
+                () ->
+                    maybeFallbackNodeFinder.flatMap(
+                        finder ->
+                            finder.getAccountStorageTrieNode(accountHash, location, nodeHash)));
+      }
+      return Optional.empty();
     }
   }
 
@@ -148,9 +195,29 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    return storageStorage
-        .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-        .map(Bytes::wrap);
+    Optional<Bytes> response =
+        storageStorage
+            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
+            .map(Bytes::wrap);
+    if (getFlatDatabaseMode().equals(FlatDatabaseMode.PARTIAL) && response.isEmpty()) {
+      final Optional<Bytes> account = getAccount(accountHash);
+      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      if (account.isPresent() && worldStateRootHash.isPresent()) {
+        final StateTrieAccountValue accountValue =
+            StateTrieAccountValue.readFrom(
+                org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
+        response =
+            new StoredMerklePatriciaTrie<>(
+                    new StoredNodeFactory<>(
+                        (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                        Function.identity(),
+                        Function.identity()),
+                    accountValue.getStorageRoot())
+                .get(slotHash)
+                .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+      }
+    }
+    return response;
   }
 
   @Override
@@ -326,6 +393,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {
+    BonsaiUpdater setFlatDatabaseMode(final FlatDatabaseMode mode);
+
     BonsaiUpdater removeCode(final Hash accountHash);
 
     BonsaiUpdater removeAccountInfoState(final Hash accountHash);
@@ -362,6 +431,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       this.storageStorageTransaction = storageStorageTransaction;
       this.trieBranchStorageTransaction = trieBranchStorageTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
+    }
+
+    @Override
+    public BonsaiUpdater setFlatDatabaseMode(final FlatDatabaseMode mode) {
+      trieBranchStorageTransaction.put(FLAT_DB_MODE, mode.version.toArrayUnsafe());
+      return this;
     }
 
     @Override

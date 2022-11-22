@@ -108,6 +108,7 @@ public interface KeyValueStorage extends Closeable {
 
   List<Bytes> getByPrefix(final Bytes prefix);
 
+  boolean isEmpty();
   /**
    * Begins a fresh transaction, for sequencing operations for later atomic execution.
    *

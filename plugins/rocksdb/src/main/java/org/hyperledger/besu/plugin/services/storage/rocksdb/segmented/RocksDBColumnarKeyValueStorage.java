@@ -322,6 +322,17 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
+  public boolean isEmpty(final RocksDbSegmentIdentifier segmentHandle) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    rocksIterator.seekToFirst();
+    try {
+      return rocksIterator.isValid();
+    } finally {
+      rocksIterator.close();
+    }
+  }
+
+  @Override
   public void clear(final RocksDbSegmentIdentifier segmentHandle) {
 
     columnHandlesByName.values().stream()

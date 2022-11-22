@@ -87,6 +87,8 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
 
   List<Bytes> getByPrefix(final S segmentHandle, final Bytes prefix);
 
+  boolean isEmpty(S segmentHandle);
+
   void clear(S segmentHandle);
 
   /**

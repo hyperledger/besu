@@ -112,6 +112,11 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   }
 
   @Override
+  public boolean isEmpty() {
+    return stream().findFirst().isEmpty();
+  }
+
+  @Override
   public KeyValueStorageTransaction startTransaction() throws StorageException {
     // The use of a transaction on a transaction based key value store is dubious
     // at best.  return our snapshot transaction instead.

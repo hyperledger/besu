@@ -93,6 +93,11 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   }
 
   @Override
+  public boolean isEmpty() {
+    return storage.isEmpty(segmentHandle);
+  }
+
+  @Override
   public Stream<Pair<byte[], byte[]>> stream() {
     return storage.stream(segmentHandle);
   }

@@ -122,6 +122,11 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
+  public boolean isEmpty() {
+    return storage.size() == 0;
+  }
+
+  @Override
   public Stream<Pair<byte[], byte[]>> stream() {
     final Lock lock = rwLock.readLock();
     lock.lock();

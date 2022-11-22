@@ -189,8 +189,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         (blockHeader, newPivotBlockFound) -> {
           snapContext.clearAccountRangeTasks();
           LOG.info(
-              "Running world state heal process from peers with pivot block {}",
-              blockHeader.getNumber());
+              "Running world state heal process from peers with pivot block {} {}",
+              blockHeader.getNumber(),
+              blockHeader.getStateRoot());
           enqueueRequest(
               createAccountTrieNodeDataRequest(
                   blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));

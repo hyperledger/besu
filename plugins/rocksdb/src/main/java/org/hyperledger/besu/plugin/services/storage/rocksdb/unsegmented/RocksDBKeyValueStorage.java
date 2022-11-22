@@ -69,7 +69,6 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
       final RocksDBConfiguration configuration,
       final MetricsSystem metricsSystem,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
-
     try {
       final Statistics stats = new Statistics();
       options =

@@ -118,6 +118,11 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
+  public boolean isEmpty() {
+    return hashValueStore.isEmpty();
+  }
+
+  @Override
   public Stream<Pair<byte[], byte[]>> stream() {
     final Lock lock = rwLock.readLock();
     lock.lock();
