@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
@@ -187,23 +188,14 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           mergeContext.get().isSyncing(),
           parentHeader.isEmpty(),
           block.getHash());
-      mergeCoordinator
-          .appendNewPayloadToSync(block)
-          .exceptionally(
-              exception -> {
-                debugLambda(
-                    LOG,
-                    "Sync to block {} failed, reason {}",
-                    block::toLogString,
-                    exception::getMessage);
-                return null;
-              });
+      mergeCoordinator.appendNewPayloadToSync(block);
+
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
-      mergeCoordinator.addBadBlock(block);
+      mergeCoordinator.addBadBlock(block, Optional.empty());
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -222,14 +214,13 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     final long startTimeMs = System.currentTimeMillis();
     final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
 
-    if (executionResult.errorMessage.isEmpty()) {
+    if (executionResult.isSuccessful()) {
       logImportedBlockInfo(block, (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
-      if (executionResult.cause.isPresent()) {
-        // TODO; would prefer to invert the logic so we rpc error on anything that isn't a
-        // consensus error
-        if (executionResult.cause.get() instanceof StorageException) {
+      if (executionResult.causedBy().isPresent()) {
+        Throwable causedBy = executionResult.causedBy().get();
+        if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
           JsonRpcError error = JsonRpcError.INTERNAL_ERROR;
           JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
           return response;
