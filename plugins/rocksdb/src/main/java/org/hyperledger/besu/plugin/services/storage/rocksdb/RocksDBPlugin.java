@@ -95,6 +95,10 @@ public class RocksDBPlugin implements BesuPlugin {
     }
   }
 
+  public boolean isHighSpecEnabled() {
+    return options.isHighSpec();
+  }
+
   private void createAndRegister(final StorageService service) {
     final List<SegmentIdentifier> segments = service.getAllSegmentIdentifiers();
 
