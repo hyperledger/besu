@@ -115,7 +115,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     final StringBuilder sb = new StringBuilder();
     sb.append("BlockBody{");
     sb.append("transactions=").append(transactions).append(", ");
-    sb.append("ommers=").append(ommers);
+    sb.append("ommers=").append(ommers).append(", ");
     sb.append("withdrawals=").append(maybeWithdrawals);
     return sb.append("}").toString();
   }

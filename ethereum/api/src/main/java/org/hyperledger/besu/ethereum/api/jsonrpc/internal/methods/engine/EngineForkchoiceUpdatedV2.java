@@ -198,7 +198,10 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
   private boolean payloadAttributesAreValid(
       final EnginePayloadAttributesParameterV2 payloadAttributes) {
     // if pre-shanghai, must have null withdrawals
-    return payloadAttributes.getWithdrawals() == null;
+    boolean isShanghai = false;
+    final boolean preShanghaiValidation = payloadAttributes.getWithdrawals() == null;
+    final boolean postShanghaiValidation = payloadAttributes.getWithdrawals() != null;
+    return isShanghai ? postShanghaiValidation : preShanghaiValidation;
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
