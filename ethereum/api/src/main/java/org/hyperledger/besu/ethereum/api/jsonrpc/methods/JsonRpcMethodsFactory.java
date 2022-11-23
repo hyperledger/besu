@@ -104,7 +104,11 @@ public class JsonRpcMethodsFactory {
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
-                  miningCoordinator, protocolContext, ethPeers, consensusEngineServer),
+                  miningCoordinator,
+                  protocolSchedule,
+                  protocolContext,
+                  ethPeers,
+                  consensusEngineServer),
               new GoQuorumJsonRpcPrivacyMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(

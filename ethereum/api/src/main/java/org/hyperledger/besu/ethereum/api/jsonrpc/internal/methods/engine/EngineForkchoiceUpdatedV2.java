@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
@@ -37,10 +38,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -48,14 +51,17 @@ import org.slf4j.LoggerFactory;
 
 public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV2.class);
+  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
 
   public EngineForkchoiceUpdatedV2(
       final Vertx vertx,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
+    this.protocolSchedule = protocolSchedule;
     this.mergeCoordinator = mergeCoordinator;
   }
 
@@ -114,10 +120,8 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
-    // TODO Withdrawals TODO SLD validate withdrawals, tidy up as some payloadAttribute validation
-    // already in mergeCoordinator
     boolean payloadAttributesAreValid =
-        maybePayloadAttributes.map(this::payloadAttributesAreValid).orElse(true);
+        maybePayloadAttributes.map(this::validatePayloadAttributes).orElse(true);
     if (!payloadAttributesAreValid) {
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
     }
@@ -152,13 +156,13 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                         payloadAttributes.getTimestamp(),
                         payloadAttributes.getPrevRandao(),
                         payloadAttributes.getSuggestedFeeRecipient(),
-                        // TODO Withdrawals TODO SLD should be null -> emptyList? or
+                        // TODO Withdrawals should be null -> emptyList? or
                         // Optional<List<Withdrawals>>?
                         payloadAttributes.getWithdrawals() == null
                             ? null
                             : payloadAttributes.getWithdrawals().stream()
                                 .map(WithdrawalParameter::toWithdrawal)
-                                .collect(Collectors.toList()))));
+                                .collect(toList()))));
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -179,7 +183,7 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                             w ->
                                 w.stream()
                                     .map(WithdrawalParameter::toWithdrawal)
-                                    .collect(Collectors.toList()))));
+                                    .collect(toList()))));
 
     payloadId.ifPresent(
         pid ->
@@ -199,13 +203,18 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
             Optional.empty()));
   }
 
-  private boolean payloadAttributesAreValid(
+  private boolean validatePayloadAttributes(
       final EnginePayloadAttributesParameterV2 payloadAttributes) {
-    // if pre-shanghai, must have null withdrawals
-    boolean isShanghai = false;
-    final boolean preShanghaiValidation = payloadAttributes.getWithdrawals() == null;
-    final boolean postShanghaiValidation = payloadAttributes.getWithdrawals() != null;
-    return isShanghai ? postShanghaiValidation : preShanghaiValidation;
+    // TODO Withdrawals move this into mergeCoordinator.updateForkChoice with the other
+    // payloadAttributes validation?
+    final List<Withdrawal> withdrawals =
+        Optional.ofNullable(payloadAttributes.getWithdrawals())
+            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
+            .orElse(null);
+    return protocolSchedule
+        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getWithdrawalsValidator()
+        .validateWithdrawals(withdrawals);
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
