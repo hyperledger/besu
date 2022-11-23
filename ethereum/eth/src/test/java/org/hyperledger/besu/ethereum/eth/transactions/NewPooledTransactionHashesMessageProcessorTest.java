@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage66;
 import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor.FetcherCreatorTask;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 
@@ -85,7 +85,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage66.create(asList(hash1, hash2, hash3)),
         now(),
         ofMinutes(1));
 
@@ -105,7 +105,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage66.create(asList(hash1, hash2, hash3)),
         now(),
         ofMinutes(1));
 
@@ -120,7 +120,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage66.create(asList(hash1, hash2, hash3)),
         now(),
         ofMinutes(1));
     verify(transactionPool, times(3)).getTransactionByHash(any());
@@ -130,7 +130,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldNotMarkReceivedExpiredTransactionsAsSeen() {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage66.create(asList(hash1, hash2, hash3)),
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
@@ -143,7 +143,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldNotAddReceivedTransactionsToTransactionPoolIfExpired() {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage66.create(asList(hash1, hash2, hash3)),
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
@@ -159,7 +159,10 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
 
     messageHandler.processNewPooledTransactionHashesMessage(
-        peer1, NewPooledTransactionHashesMessage.create(asList(hash1, hash2)), now(), ofMinutes(1));
+        peer1,
+        NewPooledTransactionHashesMessage66.create(asList(hash1, hash2)),
+        now(),
+        ofMinutes(1));
 
     verify(ethScheduler, times(1))
         .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
@@ -170,13 +173,13 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(Collections.singletonList(hash1)),
+        NewPooledTransactionHashesMessage66.create(Collections.singletonList(hash1)),
         now(),
         ofMinutes(1));
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(Collections.singletonList(hash2)),
+        NewPooledTransactionHashesMessage66.create(Collections.singletonList(hash2)),
         now(),
         ofMinutes(1));
 

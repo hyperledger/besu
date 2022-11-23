@@ -19,9 +19,11 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.AbstractNewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.util.List;
 
@@ -41,6 +43,9 @@ class NewPooledTransactionHashesMessageSender {
   }
 
   public void sendTransactionHashesToPeer(final EthPeer peer) {
+
+    final Capability capability = peer.getConnection().capability(EthProtocol.NAME);
+
     for (final List<Transaction> txBatch :
         Iterables.partition(
             transactionTracker.claimTransactionsToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
@@ -53,7 +58,10 @@ class NewPooledTransactionHashesMessageSender {
             txHashes::size,
             txHashes::toString);
 
-        peer.send(NewPooledTransactionHashesMessage.create(txHashes));
+        final AbstractNewPooledTransactionHashesMessage message =
+            AbstractNewPooledTransactionHashesMessage.create(txHashes, capability);
+
+        peer.send(message);
       } catch (final PeerNotConnected unused) {
         break;
       }

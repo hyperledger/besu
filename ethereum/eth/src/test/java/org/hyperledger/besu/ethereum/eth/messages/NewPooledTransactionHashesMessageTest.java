@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -31,10 +32,15 @@ public class NewPooledTransactionHashesMessageTest {
 
   @Test
   public void roundTripNewPooledTransactionHashesMessage() {
-    List<Hash> hashes = Arrays.asList(Hash.wrap(Bytes32.random()));
-    final NewPooledTransactionHashesMessage msg = NewPooledTransactionHashesMessage.create(hashes);
+    final List<Hash> hashes = Arrays.asList(Hash.wrap(Bytes32.random()));
+    final AbstractNewPooledTransactionHashesMessage msg =
+        NewPooledTransactionHashesMessage66.create(hashes);
     assertThat(msg.getCode()).isEqualTo(EthPV65.NEW_POOLED_TRANSACTION_HASHES);
-    assertThat(msg.pendingTransactions()).isEqualTo(hashes);
+    final List<Hash> pendingHashes =
+        msg.pendingTransactions().stream()
+            .map(TransactionAnnouncement::getHash)
+            .collect(Collectors.toList());
+    assertThat(pendingHashes).isEqualTo(hashes);
   }
 
   @Test
@@ -42,6 +48,6 @@ public class NewPooledTransactionHashesMessageTest {
     final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, Bytes.of(0));
 
     assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> NewPooledTransactionHashesMessage.readFrom(rawMsg));
+        .isThrownBy(() -> NewPooledTransactionHashesMessage66.readFrom(rawMsg));
   }
 }

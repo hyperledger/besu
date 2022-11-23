@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,54 +14,49 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
-import java.util.List;
+public class NewPooledTransactionHashesMessage66 extends AbstractNewPooledTransactionHashesMessage {
 
-import org.apache.tuweni.bytes.Bytes;
+  private List<TransactionAnnouncement> pendingTransactions;
 
-public final class NewPooledTransactionHashesMessage extends AbstractMessageData {
-
-  private static final int MESSAGE_CODE = EthPV65.NEW_POOLED_TRANSACTION_HASHES;
-  private List<Hash> pendingTransactions;
-
-  NewPooledTransactionHashesMessage(final Bytes rlp) {
+  NewPooledTransactionHashesMessage66(final Bytes rlp) {
     super(rlp);
   }
 
-  @Override
-  public int getCode() {
-    return MESSAGE_CODE;
-  }
-
-  public static NewPooledTransactionHashesMessage create(final List<Hash> pendingTransactions) {
+  public static AbstractNewPooledTransactionHashesMessage create(
+      final List<Hash> pendingTransactionsHashes) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeList(pendingTransactions, (h, w) -> w.writeBytes(h));
-    return new NewPooledTransactionHashesMessage(out.encoded());
+    out.writeList(pendingTransactionsHashes, (h, w) -> w.writeBytes(h));
+    return new NewPooledTransactionHashesMessage66(out.encoded());
   }
 
-  public static NewPooledTransactionHashesMessage readFrom(final MessageData message) {
-    if (message instanceof NewPooledTransactionHashesMessage) {
-      return (NewPooledTransactionHashesMessage) message;
+  public static AbstractNewPooledTransactionHashesMessage readFrom(final MessageData message) {
+    if (message instanceof NewPooledTransactionHashesMessage66) {
+      return (NewPooledTransactionHashesMessage66) message;
     }
     final int code = message.getCode();
-    if (code != MESSAGE_CODE) {
+    if (code != EthPV65.NEW_POOLED_TRANSACTION_HASHES) {
       throw new IllegalArgumentException(
           String.format(
               "Message has code %d and thus is not a NewPooledTransactionHashesMessage.", code));
     }
-
-    return new NewPooledTransactionHashesMessage(message.getData());
+    return new NewPooledTransactionHashesMessage66(message.getData());
   }
 
-  public List<Hash> pendingTransactions() {
+  @Override
+  public List<TransactionAnnouncement> pendingTransactions() {
     if (pendingTransactions == null) {
       final BytesValueRLPInput in = new BytesValueRLPInput(getData(), false);
-      pendingTransactions = in.readList(rlp -> Hash.wrap(rlp.readBytes32()));
+      final List<Hash> hashes = in.readList(rlp -> Hash.wrap(rlp.readBytes32()));
+      pendingTransactions =
+          hashes.stream().map(TransactionAnnouncement::new).collect(Collectors.toList());
     }
     return pendingTransactions;
   }

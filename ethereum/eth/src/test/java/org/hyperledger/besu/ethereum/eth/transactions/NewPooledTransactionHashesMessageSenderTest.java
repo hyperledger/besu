@@ -28,9 +28,13 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
+import org.hyperledger.besu.ethereum.eth.messages.AbstractNewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage66;
+import org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
@@ -81,6 +85,9 @@ public class NewPooledTransactionHashesMessageSenderTest {
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
     Transaction tx = mock(Transaction.class);
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
+
+    when(peer1.getConnection())
+        .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH67), (cap, msg, conn) -> {}));
   }
 
   @Test
@@ -141,8 +148,10 @@ public class NewPooledTransactionHashesMessageSenderTest {
   }
 
   private Set<Hash> getTransactionsFromMessage(final MessageData message) {
-    final NewPooledTransactionHashesMessage transactionsMessage =
-        NewPooledTransactionHashesMessage.readFrom(message);
-    return newHashSet(transactionsMessage.pendingTransactions());
+    final AbstractNewPooledTransactionHashesMessage transactionsMessage =
+        NewPooledTransactionHashesMessage66.readFrom(message);
+    return transactionsMessage.pendingTransactions().stream()
+        .map(TransactionAnnouncement::getHash)
+        .collect(Collectors.toSet());
   }
 }
