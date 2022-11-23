@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -49,6 +50,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -62,7 +66,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-// TODO Withdrawals TODO SLD make a thin V1/V2 layer OR dry up these tests (copied from
+// TODO Withdrawals make a thin V1/V2 layer OR dry up these tests (copied from
 // EngineForkchoiceUpdatedTest)
 @RunWith(MockitoJUnitRunner.class)
 public class EngineForkchoiceUpdatedV2Test {
@@ -74,6 +78,8 @@ public class EngineForkchoiceUpdatedV2Test {
   private static final EngineForkchoiceUpdatedParameter mockFcuParam =
       new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash);
 
+  @Mock private ProtocolSpec protocolSpec;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
@@ -88,8 +94,12 @@ public class EngineForkchoiceUpdatedV2Test {
   public void before() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     this.method =
-        new EngineForkchoiceUpdatedV2(vertx, protocolContext, mergeCoordinator, engineCallListener);
+        new EngineForkchoiceUpdatedV2(
+            vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
   }
 
   @Test
@@ -442,13 +452,8 @@ public class EngineForkchoiceUpdatedV2Test {
   }
 
   @Test
-  public void shouldReturnInvalidIfPreShanghaiAndWithdrawalsIsNotNull() {
+  public void shouldReturnInvalidIfWithdrawalsIsNotNull_WhenWithdrawalsProhibited() {
     // https://github.com/ethereum/execution-apis/blob/main/src/engine/specification.md#specification-3
-    // If withdrawal functionality is activated, client software MUST return
-    // error -38003: Invalid payload attributes if payloadAttributes.withdrawals is null
-
-    // TODO SLD Assume Shanghai active
-
     // If the [withdrawal] functionality is not activated, client software MUST return
     // error -38003: Invalid payload attributes if payloadAttributes.withdrawals is not null
     var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
@@ -475,13 +480,8 @@ public class EngineForkchoiceUpdatedV2Test {
   }
 
   @Test
-  public void shouldReturnValidIfPreShanghaiAndWithdrawalsIsNull() {
+  public void shouldReturnValidIfWithdrawalsIsNull_WhenWithdrawalsProhibited() {
     // https://github.com/ethereum/execution-apis/blob/main/src/engine/specification.md#specification-3
-    // If withdrawal functionality is activated, client software MUST return
-    // error -38003: Invalid payload attributes if payloadAttributes.withdrawals is null
-
-    // TODO SLD Assume Shanghai active
-
     // If the [withdrawal] functionality is not activated, client software MUST return
     // error -38003: Invalid payload attributes if payloadAttributes.withdrawals is not null
     var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
@@ -513,6 +513,84 @@ public class EngineForkchoiceUpdatedV2Test {
             payloadParams.getPrevRandao(),
             Address.ECREC,
             Optional.empty()))
+        .thenReturn(mockPayloadId);
+
+    assertSuccessWithPayloadForForkchoiceResult(
+        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+        Optional.of(payloadParams),
+        ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
+        VALID);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidIfWithdrawalsIsNull_WhenWithdrawalsAllowed() {
+    // https://github.com/ethereum/execution-apis/blob/main/src/engine/specification.md#specification-3
+    // If withdrawal functionality is activated, client software MUST return
+    // error -38003: Invalid payload attributes if payloadAttributes.withdrawals is null
+    when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
+
+    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
+    BlockHeader mockParent = builder.number(9L).buildHeader();
+    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+        .thenReturn(Optional.of(mockHeader));
+
+    var payloadParams =
+        new EnginePayloadAttributesParameterV2(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            null);
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+            Optional.of(payloadParams));
+
+    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnValidIfWithdrawalsIsNotNull_WhenWithdrawalsAllowed() {
+    // https://github.com/ethereum/execution-apis/blob/main/src/engine/specification.md#specification-3
+    // If withdrawal functionality is activated, client software MUST return
+    // error -38003: Invalid payload attributes if payloadAttributes.withdrawals is null
+    when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
+
+    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
+    BlockHeader mockParent = builder.number(9L).buildHeader();
+    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+        .thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+
+    var payloadParams =
+        new EnginePayloadAttributesParameterV2(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            emptyList());
+
+    var mockPayloadId =
+        PayloadIdentifier.forPayloadParams(
+            mockHeader.getHash(),
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            payloadParams.getSuggestedFeeRecipient());
+
+    when(mergeCoordinator.preparePayload(
+            mockHeader,
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            Address.ECREC,
+            Optional.of(emptyList())))
         .thenReturn(mockPayloadId);
 
     assertSuccessWithPayloadForForkchoiceResult(

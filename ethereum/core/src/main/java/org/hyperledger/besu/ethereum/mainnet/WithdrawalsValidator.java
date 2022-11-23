@@ -18,15 +18,25 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+
+import java.util.List;
 
 public interface WithdrawalsValidator {
 
   boolean validateRoot(Hash withdrawalRoot);
 
+  boolean validateWithdrawals(List<Withdrawal> withdrawals);
+
   class ProhibitedWithdrawals implements WithdrawalsValidator {
     @Override
     public boolean validateRoot(final Hash withdrawalRoot) {
       return withdrawalRoot.equals(Hash.EMPTY);
+    }
+
+    @Override
+    public boolean validateWithdrawals(final List<Withdrawal> withdrawals) {
+      return withdrawals == null;
     }
   }
 
@@ -34,6 +44,11 @@ public interface WithdrawalsValidator {
     @Override
     public boolean validateRoot(final Hash withdrawalRoot) {
       return !withdrawalRoot.equals(Hash.EMPTY);
+    }
+
+    @Override
+    public boolean validateWithdrawals(final List<Withdrawal> withdrawals) {
+      return withdrawals != null;
     }
   }
 }
