@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
@@ -102,7 +103,7 @@ public final class RangeManagerTest {
     final WorldStateStorage worldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie =
+    final MerklePatriciaTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
 
     final RangeStorageEntriesCollector collector =
@@ -141,7 +142,7 @@ public final class RangeManagerTest {
     final WorldStateStorage worldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie =
+    final MerklePatriciaTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
 
     final RangeStorageEntriesCollector collector =
@@ -171,5 +172,38 @@ public final class RangeManagerTest {
             accountStateTrie.getRootHash(), proofs, accounts, RangeManager.MAX_RANGE);
 
     Assertions.assertThat(newBeginElementInRange).isEmpty();
+  }
+
+  @Test
+  public void testGenerateRangeFromLocationWithoutPrefix() {
+    final Pair<Bytes, Bytes> range =
+        RangeManager.generateRangeFromLocation(Bytes.EMPTY, Bytes.fromHexString("0x0102"));
+    Assertions.assertThat(range.getFirst())
+        .isEqualTo(
+            Bytes.fromHexString(
+                "0x1200000000000000000000000000000000000000000000000000000000000000"));
+    Assertions.assertThat(range.getSecond())
+        .isEqualTo(
+            Bytes.fromHexString(
+                "0x12ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+  }
+
+  @Test
+  public void testGenerateRangeFromLocationWithPrefix() {
+    final Bytes32 prefix = Bytes32.random();
+    final Pair<Bytes, Bytes> range =
+        RangeManager.generateRangeFromLocation(prefix, Bytes.fromHexString("0x0102"));
+    Assertions.assertThat(range.getFirst())
+        .isEqualTo(
+            Bytes.concatenate(
+                prefix,
+                Bytes.fromHexString(
+                    "0x1200000000000000000000000000000000000000000000000000000000000000")));
+    Assertions.assertThat(range.getSecond())
+        .isEqualTo(
+            Bytes.concatenate(
+                prefix,
+                Bytes.fromHexString(
+                    "0x12ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")));
   }
 }

@@ -35,12 +35,15 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class BonsaiWorldStateKeyValueStorageTest {
@@ -168,7 +171,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getAccount_loadFromTrieWhenEmpty() {
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    MerklePatriciaTrie<Bytes32, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
@@ -192,7 +195,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getStorage_loadFromTrieWhenEmpty() {
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final MerklePatriciaTrie<Bytes32, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
@@ -349,6 +352,158 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     verify(peerTrieNodeFinder).getAccountStorageTrieNode(account, location, hashToFind);
     assertThat(accountStateTrieNodeResult).contains(bytesToFind);
+  }
+
+  @Test
+  public void pruneAccountState() {
+
+    final List<Hash> accounts =
+        List.of(
+            Hash.fromHexString("fe3b557e8fb62b89f4916b721be55ceb828dbd73E51637819376784576711112"),
+            Hash.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57E51637819376784576722222"),
+            Hash.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732E51637819376784576716751"));
+
+    final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
+
+    TrieGenerator.generateTrie(storage, accounts);
+
+    final Bytes location = Bytes.fromHexString("0x0F");
+
+    // check trie
+    Assertions.assertThat(storage.trieBranchStorage.getByPrefix(location))
+        .containsOnly(
+            Bytes.fromHexString("0x0F"),
+            Bytes.fromHexString("0x0F0E"),
+            Bytes.fromHexString("0x0F01"));
+    // check account flat db
+    Assertions.assertThat(storage.accountStorage.streamKeys().map(Bytes::wrap))
+        .containsAll(accounts);
+    // check storage flat db
+    Assertions.assertThat(storage.storageStorage.streamKeys().map(Bytes::wrap))
+        .hasSize(accounts.size() * 3); // each account has 3 values
+    accounts.forEach(
+        hash ->
+            Assertions.assertThat(
+                    storage
+                        .storageStorage
+                        .streamKeys()
+                        .map(Bytes::wrap)
+                        .filter(bytes -> bytes.commonPrefixLength(hash) == Bytes32.SIZE)
+                        .map(Bytes::wrap))
+                .isNotEmpty());
+    // check code flat db
+    Assertions.assertThat(storage.codeStorage.streamKeys().map(Bytes::wrap)).containsAll(accounts);
+
+    // prune the state
+    storage.pruneAccountState(location, Optional.of(Bytes.fromHexString("0x0F01")));
+
+    // check trie after
+    Assertions.assertThat(storage.trieBranchStorage.getByPrefix(location))
+        .containsOnly(Bytes.fromHexString("0x0F01"));
+    // check account flat db after
+    Assertions.assertThat(storage.accountStorage.streamKeys().map(Bytes::wrap))
+        .contains(accounts.get(1), accounts.get(2));
+    // check storage flat db after
+    Assertions.assertThat(storage.storageStorage.streamKeys().map(Bytes::wrap))
+        .hasSize((accounts.size() - 1) * 3); // only 2 accounts remaining
+    accounts.forEach(
+        hash -> {
+          Stream<Bytes> stream =
+              storage
+                  .storageStorage
+                  .streamKeys()
+                  .map(Bytes::wrap)
+                  .filter(bytes -> bytes.commonPrefixLength(hash) == Bytes32.SIZE)
+                  .map(Bytes::wrap);
+          if (hash.equals(accounts.get(0))) {
+            Assertions.assertThat(stream).isEmpty();
+          } else {
+            Assertions.assertThat(stream).isNotEmpty();
+          }
+        });
+    // check code flat db after
+    Assertions.assertThat(storage.codeStorage.streamKeys().map(Bytes::wrap))
+        .contains(accounts.get(1), accounts.get(2));
+  }
+
+  @Test
+  public void pruneStorageState() {
+
+    final List<Hash> accounts =
+        List.of(
+            Hash.fromHexString("fe3b557e8fb62b89f4916b721be55ceb828dbd73E51637819376784576711112"),
+            Hash.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57E51637819376784576722222"),
+            Hash.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732E51637819376784576716751"));
+
+    final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
+
+    TrieGenerator.generateTrie(storage, accounts);
+
+    // check trie
+    Assertions.assertThat(storage.trieBranchStorage.getByPrefix(accounts.get(0))).hasSize(4);
+
+    // check storage flat db
+    Assertions.assertThat(storage.storageStorage.streamKeys().map(Bytes::wrap))
+        .hasSize(accounts.size() * 3); // each account has 3 values
+    accounts.forEach(
+        hash ->
+            Assertions.assertThat(
+                    storage
+                        .storageStorage
+                        .streamKeys()
+                        .map(Bytes::wrap)
+                        .filter(bytes -> bytes.commonPrefixLength(hash) == Bytes32.SIZE)
+                        .map(Bytes::wrap))
+                .isNotEmpty());
+
+    // prune the state
+    storage.pruneStorageState(accounts.get(0), Bytes.EMPTY, Optional.empty());
+
+    // check trie after
+    Assertions.assertThat(storage.trieBranchStorage.getByPrefix(accounts.get(0))).isEmpty();
+    // check storage flat db after
+    accounts.forEach(
+        hash -> {
+          Stream<Bytes> stream =
+              storage
+                  .storageStorage
+                  .streamKeys()
+                  .map(Bytes::wrap)
+                  .filter(bytes -> bytes.commonPrefixLength(hash) == Bytes32.SIZE)
+                  .map(Bytes::wrap);
+          if (hash.equals(accounts.get(0))) {
+            Assertions.assertThat(stream).isEmpty();
+          } else {
+            Assertions.assertThat(stream).isNotEmpty();
+          }
+        });
+    Assertions.assertThat(storage.storageStorage.streamKeys().map(Bytes::wrap))
+        .hasSize((accounts.size() - 1) * 3); // only 2 accounts remaining
+    // check code flat db after
+    Assertions.assertThat(storage.codeStorage.streamKeys().map(Bytes::wrap)).containsAll(accounts);
+  }
+
+  @Test
+  public void pruneCode() {
+
+    final List<Hash> accounts =
+        List.of(
+            Hash.fromHexString("fe3b557e8fb62b89f4916b721be55ceb828dbd73E51637819376784576711112"),
+            Hash.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57E51637819376784576722222"),
+            Hash.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732E51637819376784576716751"));
+
+    final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
+
+    TrieGenerator.generateTrie(storage, accounts);
+
+    // check code flat db
+    Assertions.assertThat(storage.codeStorage.streamKeys().map(Bytes::wrap)).containsAll(accounts);
+
+    // prune the state
+    storage.pruneCodeState(accounts.get(0));
+    // check code flat db after
+    Assertions.assertThat(storage.codeStorage.streamKeys().map(Bytes::wrap))
+        .contains(accounts.get(1), accounts.get(2));
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {

@@ -87,9 +87,7 @@ public class FastDownloaderFactory {
           "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
     }
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clearFlatDatabase();
-    } else {
+    if (!(worldStateStorage instanceof BonsaiWorldStateKeyValueStorage)) {
       final Path queueDataDir = fastSyncDataDirectory.resolve("statequeue");
       if (queueDataDir.toFile().exists()) {
         LOG.warn(
@@ -122,7 +120,6 @@ public class FastDownloaderFactory {
                 syncState,
                 pivotBlockSelector,
                 metricsSystem),
-            worldStateStorage,
             worldStateDownloader,
             fastSyncStateStorage,
             taskCollection,

@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldState
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
@@ -45,15 +44,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
 import org.junit.Test;
 
 public class FastSyncDownloaderTest {
 
   @SuppressWarnings("unchecked")
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
-
-  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
 
   private final WorldStateDownloader worldStateDownloader = mock(FastWorldStateDownloader.class);
   private final FastSyncStateStorage storage = mock(FastSyncStateStorage.class);
@@ -68,17 +64,11 @@ public class FastSyncDownloaderTest {
   private final FastSyncDownloader<NodeDataRequest> downloader =
       new FastSyncDownloader<>(
           fastSyncActions,
-          worldStateStorage,
           worldStateDownloader,
           storage,
           taskCollection,
           fastSyncDataDirectory,
           FastSyncState.EMPTY_SYNC_STATE);
-
-  @Before
-  public void setup() {
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
-  }
 
   @Test
   public void shouldCompleteFastSyncSuccessfully() {
@@ -125,7 +115,6 @@ public class FastSyncDownloaderTest {
     final FastSyncDownloader<NodeDataRequest> resumedDownloader =
         new FastSyncDownloader<>(
             fastSyncActions,
-            worldStateStorage,
             worldStateDownloader,
             storage,
             taskCollection,

@@ -114,7 +114,6 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 syncState,
                 pivotBlockSelector,
                 metricsSystem),
-            worldStateStorage,
             snapWorldStateDownloader,
             fastSyncStateStorage,
             snapTaskCollection,

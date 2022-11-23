@@ -140,7 +140,6 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
             fastSyncActions,
-            worldStateStorage,
             snapWorldStateDownloader,
             fastSyncStateStorage,
             snapTaskCollection,
