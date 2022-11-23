@@ -143,12 +143,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   @Override
   public synchronized boolean checkCompletion(final BlockHeader header) {
 
+    LOG.info("checkCompletion "+internalFuture.isDone()+" "+pendingTrieNodeRequests.allTasksCompleted()+" "+pendingCodeRequests.allTasksCompleted());
     if (!internalFuture.isDone()
         && pendingAccountRequests.allTasksCompleted()
         && pendingCodeRequests.allTasksCompleted()
         && pendingStorageRequests.allTasksCompleted()
         && pendingBigStorageRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()) {
+      LOG.info("checkCompletion "+header +" "+snapSyncState.isHealInProgress()+" "+dynamicPivotBlockManager.isBlockchainBehind());
       if (!snapSyncState.isHealInProgress()) {
         startHeal();
       } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
@@ -181,6 +183,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public synchronized void startHeal() {
+    LOG.info("startHeal");
     snapContext.clearAccountRangeTasks();
     snapSyncState.setHealStatus(true);
     // try to find new pivot block before healing

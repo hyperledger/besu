@@ -335,7 +335,17 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                     return tasks;
                   })
               .andFinishWith(
-                  "batchCodeDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
+                  "batchCodeDataDownloaded", tasks -> {
+                    tasks.forEach(requestsToComplete::put);
+                        LOG.info("code task is empty ");
+                        if (tasks.isEmpty()) {
+                          LOG.info("found code task is empty "+snapSyncState
+                                  .getPivotBlockHeader());
+                          snapSyncState
+                                  .getPivotBlockHeader()
+                                  .ifPresent(blockHeader -> downloadState.checkCompletion(blockHeader));
+                        }
+                      });
 
       final Pipeline<Task<SnapDataRequest>> fetchHealDataPipeline =
           createPipelineFrom(
@@ -374,7 +384,10 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "batchTrieNodeDataDownloaded",
                   tasks -> {
                     tasks.forEach(requestsToComplete::put);
+                    LOG.info("check task is empty ");
                     if (tasks.isEmpty()) {
+                      LOG.info("found task is empty "+snapSyncState
+                              .getPivotBlockHeader());
                       snapSyncState
                           .getPivotBlockHeader()
                           .ifPresent(blockHeader -> downloadState.checkCompletion(blockHeader));
