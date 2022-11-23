@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.google.errorprone.annotations.MustBeClosed;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -257,26 +258,13 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
+  @MustBeClosed
   public MutableWorldState copy() {
-    // TODO: this is unsafe because the underlying persisted worldstate will likely have mutated if
-    // this
-    //  layer is not the current head
-    //  revisit with https://github.com/hyperledger/besu/issues/4641
-    final BonsaiPersistedWorldState bonsaiPersistedWorldState =
-        ((BonsaiPersistedWorldState) archive.getMutable());
-    BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =
-        new BonsaiInMemoryWorldStateKeyValueStorage(
-            bonsaiPersistedWorldState.getWorldStateStorage().accountStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().getMaybeFallbackNodeFinder());
-
+    // return an in-memory worldstate that is based on a persisted snapshot for this blockhash.
     return archive
-        .rollMutableStateToBlockHash(
-            new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage),
-            this.blockHash())
+        .getMutableSnapshot(this.blockHash())
+        .map(BonsaiSnapshotWorldState.class::cast)
+        .map(snapshot -> new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage()))
         .orElseThrow(
             () ->
                 new StorageException(
