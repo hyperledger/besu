@@ -345,15 +345,15 @@ public class BackwardSyncContext {
       LOG.debug("Head is already properly set");
       return;
     }
+
     if (blockchain.contains(head)) {
       LOG.debug("Changing head to {}", head);
       blockchain.rewindToBlock(head);
       return;
     }
-    if (blockchain.getChainHead().getHash().equals(lastSavedBlock.getHash())) {
-      debugLambda(LOG, "Rewinding head to lastSavedBlock {}", lastSavedBlock::toLogString);
-      blockchain.rewindToBlock(lastSavedBlock.getHash());
-    }
+
+    debugLambda(LOG, "Rewinding head to last saved block {}", lastSavedBlock::toLogString);
+    blockchain.rewindToBlock(lastSavedBlock.getHash());
   }
 
   public SyncState getSyncState() {
