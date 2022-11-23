@@ -26,10 +26,13 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class TransactionDecoderTest {
 
@@ -95,22 +98,24 @@ class TransactionDecoderTest {
     assertThat(transaction.getNonce()).isEqualTo(MAX_NONCE - 1);
   }
 
-  @Test
-  void shouldCalculateCorrectTransactionSize() {
-    for (final String rlp_tx :
-        List.of(
-            FRONTIER_TX_RLP,
-            EIP1559_TX_RLP,
-            GOQUORUM_PRIVATE_TX_RLP,
-            NONCE_64_BIT_MAX_MINUS_2_TX_RLP)) {
-      System.out.println(rlp_tx);
+  private static Collection<Object[]> dataTransactionSize() {
+    return Arrays.asList(
+        new Object[][] {
+          {FRONTIER_TX_RLP, "FRONTIER_TX_RLP"},
+          {EIP1559_TX_RLP, "EIP1559_TX_RLP"},
+          {GOQUORUM_PRIVATE_TX_RLP, "GOQUORUM_PRIVATE_TX_RLP"},
+          {NONCE_64_BIT_MAX_MINUS_2_TX_RLP, "NONCE_64_BIT_MAX_MINUS_2_TX_RLP"}
+        });
+  }
 
-      // Create bytes from String
-      final Bytes bytes = Bytes.fromHexString(rlp_tx);
-      // Decode bytes into a transaction
-      final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
-      // Bytes size should be equal to transaction size
-      assertThat(transaction.calculateSize()).isEqualTo(bytes.size());
-    }
+  @ParameterizedTest(name = "[{index}] {1}")
+  @MethodSource("dataTransactionSize")
+  void shouldCalculateCorrectTransactionSize(final String rlp_tx, final String ignoredName) {
+    // Create bytes from String
+    final Bytes bytes = Bytes.fromHexString(rlp_tx);
+    // Decode bytes into a transaction
+    final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
+    // Bytes size should be equal to transaction size
+    assertThat(transaction.calculateSize()).isEqualTo(bytes.size());
   }
 }
