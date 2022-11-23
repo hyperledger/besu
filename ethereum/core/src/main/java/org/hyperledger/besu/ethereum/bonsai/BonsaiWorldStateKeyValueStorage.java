@@ -32,8 +32,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -252,9 +250,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public void pruneAccountState(final Bytes location, final Optional<Bytes> maybeExclude) {
     final Pair<Bytes, Bytes> range = generateRangeFromLocation(Bytes.EMPTY, location);
-    final AtomicInteger eltRemoved = new AtomicInteger();
-    final AtomicReference<KeyValueStorageTransaction> nodeUpdaterTmp =
-        new AtomicReference<>(accountStorage.startTransaction());
+
+    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
+        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
 
     // cleaning the account trie node in this location
     pruneTrieNode(Bytes.EMPTY, location, maybeExclude);
@@ -275,22 +273,18 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                 // clean the storage and code of the deleted account
                 pruneStorageState(key, Bytes.EMPTY, Optional.empty());
                 pruneCodeState(key);
-                nodeUpdaterTmp.get().remove(key.toArrayUnsafe());
-                if (eltRemoved.getAndIncrement() % 100 == 0) {
-                  nodeUpdaterTmp.get().commit();
-                  nodeUpdaterTmp.set(accountStorage.startTransaction());
-                }
+                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
+                    .accountStorageTransaction.remove(key.toArrayUnsafe());
               }
             });
-    nodeUpdaterTmp.get().commit();
+    updater.close();
   }
 
   public void pruneStorageState(
       final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
     final Pair<Bytes, Bytes> range = generateRangeFromLocation(accountHash, location);
-    final AtomicInteger eltRemoved = new AtomicInteger();
-    final AtomicReference<KeyValueStorageTransaction> nodeUpdaterTmp =
-        new AtomicReference<>(storageStorage.startTransaction());
+    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
+        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
 
     // cleaning the storage trie node in this location
     pruneTrieNode(accountHash, location, maybeExclude);
@@ -308,18 +302,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                                       CompactEncoding.bytesToPath(key).slice(Bytes32.SIZE * 2))
                                   == bytes.size())
                       .isPresent();
-              // System.out.println("found with method " + index + " to remove accountHash " +
-              // accountHash + " " + key + " from " + range.getLeft() + " to " + range.getRight() +
-              // " for data " + data + " and location " + location);
               if (!shouldExclude) {
-                nodeUpdaterTmp.get().remove(key.toArrayUnsafe());
-                if (eltRemoved.getAndIncrement() % 100 == 0) {
-                  nodeUpdaterTmp.get().commit();
-                  nodeUpdaterTmp.set(storageStorage.startTransaction());
-                }
+                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
+                    .storageStorageTransaction.remove(key.toArrayUnsafe());
               }
             });
-    nodeUpdaterTmp.get().commit();
+    updater.close();
   }
 
   public void pruneCodeState(final Bytes accountHash) {
@@ -330,9 +318,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   private void pruneTrieNode(
       final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
-    final AtomicInteger eltRemoved = new AtomicInteger();
-    final AtomicReference<KeyValueStorageTransaction> nodeUpdaterTmp =
-        new AtomicReference<>(trieBranchStorage.startTransaction());
+    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
+        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
     trieBranchStorage
         .getByPrefix(Bytes.concatenate(accountHash, location))
         .forEach(
@@ -344,18 +331,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                               bytes.commonPrefixLength(key.slice(accountHash.size()))
                                   == bytes.size())
                       .isPresent();
-              // System.out.println("found with method " + index + " to remove trie node " +
-              // accountHash + " " + key + " from " + Bytes.concatenate(accountHash,location) + "
-              // for data " + data + " and location " + location);
               if (!shouldExclude) {
-                nodeUpdaterTmp.get().remove(key.toArrayUnsafe());
-                if (eltRemoved.getAndIncrement() % 100 == 0) {
-                  nodeUpdaterTmp.get().commit();
-                  nodeUpdaterTmp.set(trieBranchStorage.startTransaction());
-                }
+                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
+                    .trieBranchStorageTransaction.remove(key.toArrayUnsafe());
               }
             });
-    nodeUpdaterTmp.get().commit();
+    updater.close();
   }
 
   @Override

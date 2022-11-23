@@ -15,9 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.List;
@@ -41,6 +43,11 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
       return Stream.empty();
     }
 
+    // prune deprecated data if needed
+    if (isRequiresPersisting()) {
+      pruneNode(worldStateStorage);
+    }
+
     final List<Node<Bytes>> nodes =
         TrieNodeDecoder.decodeNodes(getLocation().orElse(Bytes.EMPTY), getData());
     return nodes.stream()
@@ -62,12 +69,20 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
         .peek(request -> request.registerParent(this));
   }
 
+  public DataStorageFormat getSyncMode(final WorldStateStorage worldStateStorage) {
+    return (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage)
+        ? DataStorageFormat.BONSAI
+        : DataStorageFormat.FOREST;
+  }
+
   private boolean nodeIsHashReferencedDescendant(final Node<Bytes> node) {
     return !Objects.equals(node.getHash(), getHash()) && node.isReferencedByHash();
   }
 
   protected abstract NodeDataRequest createChildNodeDataRequest(
       final Hash childHash, final Optional<Bytes> location);
+
+  public abstract void pruneNode(WorldStateStorage worldStateStorage);
 
   protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
       final WorldStateStorage worldStateStorage,

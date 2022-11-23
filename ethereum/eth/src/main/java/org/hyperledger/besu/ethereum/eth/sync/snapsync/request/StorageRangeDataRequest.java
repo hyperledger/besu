@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.util.RangeManager.findNewBeginElemen
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiIntermediateCommitCountUpdater;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -91,30 +92,27 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final SnapSyncState snapSyncState) {
 
     // search incomplete nodes in the range
+    final BonsaiIntermediateCommitCountUpdater<WorldStateStorage> countUpdater =
+        new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage, 1000);
     final AtomicInteger nbNodesSaved = new AtomicInteger();
-    final AtomicReference<Updater> nodeUpdaterTmp =
-        new AtomicReference<>(worldStateStorage.updater());
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
-          nodeUpdaterTmp.get().putAccountStorageTrieNode(accountHash, location, hash, value);
-          if (nbNodesSaved.getAndIncrement() % 1000 == 0) {
-            nodeUpdaterTmp.get().commit();
-            nodeUpdaterTmp.set(worldStateStorage.updater());
-          }
+          nbNodesSaved.incrementAndGet();
+          countUpdater.getUpdater().putAccountStorageTrieNode(accountHash, location, hash, value);
         };
 
     StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = (__, ___) -> {};
     if (getSyncMode(worldStateStorage) == BONSAI) {
       flatDatabaseUpdater =
           (key, value) ->
-              ((BonsaiWorldStateKeyValueStorage.Updater) nodeUpdaterTmp.get())
+              ((BonsaiWorldStateKeyValueStorage.Updater) countUpdater.getUpdater())
                   .putStorageValueBySlotHash(
                       accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
     }
 
     stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
 
-    nodeUpdaterTmp.get().commit();
+    countUpdater.close();
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
