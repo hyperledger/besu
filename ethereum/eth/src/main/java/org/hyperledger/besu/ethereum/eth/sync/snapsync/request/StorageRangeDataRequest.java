@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -93,12 +92,9 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     // search incomplete nodes in the range
     final BonsaiIntermediateCommitCountUpdater<WorldStateStorage> countUpdater =
         new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage, 1000);
-    final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
-        (location, hash, value) -> {
-          nbNodesSaved.incrementAndGet();
-          countUpdater.getUpdater().putAccountStorageTrieNode(accountHash, location, hash, value);
-        };
+        (location, hash, value) ->
+            countUpdater.getUpdater().putAccountStorageTrieNode(accountHash, location, hash, value);
 
     StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = (__, ___) -> {};
     if (getSyncMode(worldStateStorage) == BONSAI) {
@@ -111,11 +107,9 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
 
-    countUpdater.close();
-
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
-    return nbNodesSaved.get();
+    return countUpdater.close();
   }
 
   public void addResponse(

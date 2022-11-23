@@ -22,26 +22,27 @@ public class BonsaiIntermediateCommitCountUpdater<WORLDSTATE extends WorldStateS
 
   private final WORLDSTATE worldStateStorage;
 
-  private final Integer maxElement;
-  final AtomicInteger eltRemoved = new AtomicInteger();
+  private final Integer maxElements;
+  final AtomicInteger nbElements = new AtomicInteger();
   private WorldStateStorage.Updater updater;
 
   public BonsaiIntermediateCommitCountUpdater(
-      final WORLDSTATE worldStateStorage, final Integer maxTransactions) {
+      final WORLDSTATE worldStateStorage, final Integer maxElements) {
     this.updater = worldStateStorage.updater();
     this.worldStateStorage = worldStateStorage;
-    this.maxElement = maxTransactions;
+    this.maxElements = maxElements;
   }
 
   public WorldStateStorage.Updater getUpdater() {
-    if (eltRemoved.incrementAndGet() % maxElement == 0) {
+    if (nbElements.incrementAndGet() % maxElements == 0) {
       updater.commit();
       updater = worldStateStorage.updater();
     }
     return updater;
   }
 
-  public void close() {
+  public Integer close() {
     updater.commit();
+    return nbElements.get();
   }
 }
