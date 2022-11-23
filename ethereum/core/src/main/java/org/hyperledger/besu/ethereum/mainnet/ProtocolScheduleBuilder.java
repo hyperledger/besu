@@ -141,7 +141,8 @@ public class ProtocolScheduleBuilder {
             isRevertReasonEnabled,
             quorumCompatibilityMode,
             config.getEcip1017EraRounds(),
-            evmConfiguration);
+            evmConfiguration,
+            privacyParameters.isValidatePrivateTransactions());
 
     validateForkOrdering();
 
@@ -200,7 +201,8 @@ public class ProtocolScheduleBuilder {
                       config.getContractSizeLimit(),
                       config.getEvmStackSize(),
                       quorumCompatibilityMode,
-                      evmConfiguration));
+                      evmConfiguration,
+                      privacyParameters.isValidatePrivateTransactions()));
               protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
             });
 

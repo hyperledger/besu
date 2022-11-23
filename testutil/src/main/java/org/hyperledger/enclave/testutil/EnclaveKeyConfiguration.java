@@ -17,7 +17,7 @@ package org.hyperledger.enclave.testutil;
 public class EnclaveKeyConfiguration {
   private final String[] pubKeyPaths;
   private final String[] privKeyPaths;
-  private EnclaveEncryptorType enclaveEncryptorType;
+  private EnclaveEncryptorType enclaveEncryptorType = EnclaveEncryptorType.EC;
 
   public EnclaveKeyConfiguration(final String pubKeyPath, final String privKeyPath) {
     this.pubKeyPaths = new String[] {pubKeyPath};

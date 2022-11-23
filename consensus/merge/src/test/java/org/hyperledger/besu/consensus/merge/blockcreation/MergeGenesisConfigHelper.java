@@ -57,6 +57,6 @@ public interface MergeGenesisConfigHelper {
   }
 
   default ProtocolSchedule getMergeProtocolSchedule() {
-    return MergeProtocolSchedule.create(getPosGenesisConfigFile().getConfigOptions(), false);
+    return MergeProtocolSchedule.create(getPosGenesisConfigFile().getConfigOptions(), false, true);
   }
 }
