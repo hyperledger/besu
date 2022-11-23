@@ -58,7 +58,6 @@ public class PostMergeContextTest {
 
   @Test
   public void switchFromPoWToPoSStopSyncAndCallsSubscribers() {
-    when(mockSyncState.isInitialSyncPhaseDone()).thenReturn(true);
     when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.TRUE));
 
     postMergeContext.setIsPostMerge(Difficulty.of(10L));
@@ -71,6 +70,8 @@ public class PostMergeContextTest {
 
   @Test
   public void setPrePoSStateNotStopSync() {
+    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.FALSE));
+
     postMergeContext.setIsPostMerge(Difficulty.of(9L));
 
     verify(mockSyncState, never()).setReachedTerminalDifficulty(false);
