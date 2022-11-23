@@ -317,6 +317,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider;
   private GenesisConfigOptions genesisConfigOptions;
 
+  private RocksDBPlugin rocksDBPlugin;
+
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
 
@@ -1414,13 +1416,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       setMergeConfigOptions();
 
       instantiateSignatureAlgorithmFactory();
-      configureNativeLibs();
-      logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
+
+      logger.info("Starting Besu");
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
       validateOptions();
       configure();
+      configureNativeLibs();
       initController();
 
       besuPluginContext.beforeExternalServices();
@@ -1544,7 +1547,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
 
     // register built-in plugins
-    new RocksDBPlugin().register(besuPluginContext);
+    rocksDBPlugin = new RocksDBPlugin();
+    rocksDBPlugin.register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
@@ -1724,7 +1728,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void configureNativeLibs() {
     if (unstableNativeLibraryOptions.getNativeAltbn128()
         && AbstractAltBnPrecompiledContract.isNative()) {
-      logger.info("Using LibEthPairings native alt bn128");
+      logger.info("Using the native implementation of alt bn128");
     } else {
       AbstractAltBnPrecompiledContract.disableNative();
       logger.info("Using the Java implementation of alt bn128");
@@ -2028,8 +2032,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
 
-    logger.info("Connecting to {} static nodes.", staticNodes.size());
-    logger.trace("Static Nodes = {}", staticNodes);
     final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
@@ -2040,8 +2042,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
 
-    logger.info("Security Module: {}", securityModuleName);
     instantiateSignatureAlgorithmFactory();
+
+    logger.info(generateConfigurationOverview());
+    logger.info("Connecting to {} static nodes.", staticNodes.size());
+    logger.trace("Static Nodes = {}", staticNodes);
+    logger.info("Security Module: {}", securityModuleName);
   }
 
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration(
@@ -2200,7 +2206,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) {
         engineConfig.setAuthenticationPublicKeyFile(engineRPCOptionGroup.engineJwtKeyFile.toFile());
       } else {
-        logger.info(
+        logger.warn(
             "Engine API authentication enabled without key file. Expect ephemeral jwt.hex file in datadir");
       }
     }
@@ -3098,7 +3104,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final String staticNodesFilename = "static-nodes.json";
       staticNodesPath = dataDir().resolve(staticNodesFilename);
     }
-    logger.info("Static Nodes file = {}", staticNodesPath);
+    logger.debug("Static Nodes file = {}", staticNodesPath);
     return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
   }
 
@@ -3344,5 +3350,35 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
                 ? SyncMode.FAST
                 : SyncMode.FULL);
+  }
+
+  private String generateConfigurationOverview() {
+    final ConfigurationOverviewBuilder builder = new ConfigurationOverviewBuilder();
+
+    if (network != null) {
+      builder.setNetwork(network.normalize());
+    }
+
+    builder
+        .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())
+        .setSyncMode(syncMode.normalize());
+
+    if (jsonRpcConfiguration != null && jsonRpcConfiguration.isEnabled()) {
+      builder
+          .setRpcPort(jsonRpcConfiguration.getPort())
+          .setRpcHttpApis(jsonRpcConfiguration.getRpcApis());
+    }
+
+    if (engineJsonRpcConfiguration != null && engineJsonRpcConfiguration.isEnabled()) {
+      builder
+          .setEnginePort(engineJsonRpcConfiguration.getPort())
+          .setEngineApis(engineJsonRpcConfiguration.getRpcApis());
+    }
+
+    if (rocksDBPlugin.isHighSpecEnabled()) {
+      builder.setHighSpecEnabled();
+    }
+
+    return builder.build();
   }
 }

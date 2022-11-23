@@ -94,6 +94,10 @@ public class RocksDBCLIOptions {
         maxOpenFiles, maxBackgroundCompactions, backgroundThreadCount, cacheCapacity, isHighSpec);
   }
 
+  public boolean isHighSpec() {
+    return isHighSpec;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
