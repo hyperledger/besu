@@ -143,7 +143,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   @Override
   public synchronized boolean checkCompletion(final BlockHeader header) {
 
-    LOG.info("checkCompletion "+internalFuture.isDone()+" "+pendingTrieNodeRequests.allTasksCompleted()+" "+pendingCodeRequests.allTasksCompleted());
     if (!internalFuture.isDone()
         && pendingAccountRequests.allTasksCompleted()
         && pendingCodeRequests.allTasksCompleted()
