@@ -206,11 +206,6 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     final List<TransactionAnnouncement> announcementList = message.pendingTransactions();
 
-    final List<Hash> announcementHashes =
-        announcementList.stream()
-            .map(TransactionAnnouncement::getHash)
-            .collect(Collectors.toList());
-
     // for eth/66 the message should not contain size or type
     announcementList.forEach(
         t -> {
@@ -219,7 +214,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         });
 
     // assert all transaction hashes are the same as announcement message
-    assertThat(announcementHashes)
+    assertThat(TransactionAnnouncement.toHashList(announcementList))
         .containsExactlyElementsOf(
             expectedAnnouncementList.stream()
                 .map(TransactionAnnouncement::getHash)
@@ -241,8 +236,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   @Test
   public void shouldThrowRLPExceptionIfIncorrectVersion() {
 
-    final List<Hash> hashes =
-        transactionList.stream().map(Transaction::getHash).collect(Collectors.toList());
+    final List<Hash> hashes = Transaction.toHashList(transactionList);
 
     // message for Eth/68 with 66 data should throw RLPException
     final NewPooledTransactionHashesMessage message66 =

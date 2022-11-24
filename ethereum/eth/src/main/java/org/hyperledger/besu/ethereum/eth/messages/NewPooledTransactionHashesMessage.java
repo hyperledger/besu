@@ -14,6 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
+
+import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -21,12 +27,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes;
 
 public class NewPooledTransactionHashesMessage extends AbstractMessageData {
 
@@ -54,9 +54,7 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
     if (isEth68MessageData) {
       return createMessageForEth68(pendingTransactions);
     } else {
-      final List<Hash> hashes =
-          pendingTransactions.stream().map(Transaction::getHash).collect(Collectors.toList());
-      return createMessageForEth66(hashes);
+      return createMessageForEth66(toHashList(pendingTransactions));
     }
   }
 
@@ -86,13 +84,13 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
     return pendingTransactions;
   }
 
-  private static NewPooledTransactionHashesMessage createMessageForEth66(
+  public static NewPooledTransactionHashesMessage createMessageForEth66(
       final List<Hash> pendingTransactionsHashes) {
     return new NewPooledTransactionHashesMessage(
         TransactionAnnouncement.encodeForEth66(pendingTransactionsHashes), false);
   }
 
-  private static NewPooledTransactionHashesMessage createMessageForEth68(
+  public static NewPooledTransactionHashesMessage createMessageForEth68(
       final List<Transaction> pendingTransactions) {
     return new NewPooledTransactionHashesMessage(
         TransactionAnnouncement.encodeForEth68(pendingTransactions), true);

@@ -20,9 +20,11 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -96,6 +98,12 @@ public class TransactionAnnouncement {
     out.writeList(hashes, (h, w) -> w.writeBytes(h));
     out.endList();
     return out.encoded();
+  }
+
+  public static List<Hash> toHashList(final Collection<TransactionAnnouncement> transactions) {
+    return transactions.stream()
+        .map(TransactionAnnouncement::getHash)
+        .collect(Collectors.toUnmodifiableList());
   }
 
   @Override

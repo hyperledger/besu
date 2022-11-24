@@ -43,9 +43,7 @@ class NewPooledTransactionHashesMessageSender {
   }
 
   public void sendTransactionHashesToPeer(final EthPeer peer) {
-
     final Capability capability = peer.getConnection().capability(EthProtocol.NAME);
-
     for (final List<Transaction> txBatch :
         Iterables.partition(
             transactionTracker.claimTransactionsToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
@@ -60,7 +58,6 @@ class NewPooledTransactionHashesMessageSender {
 
         final NewPooledTransactionHashesMessage message =
             NewPooledTransactionHashesMessage.create(txBatch, EthProtocol.ETH68.equals(capability));
-
         peer.send(message);
       } catch (final PeerNotConnected unused) {
         break;
