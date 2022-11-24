@@ -34,8 +34,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class NewPooledTransactionHashesMessage extends AbstractMessageData {
   private static final int MESSAGE_CODE = EthPV65.NEW_POOLED_TRANSACTION_HASHES;
-  private final Capability capability;
   private List<TransactionAnnouncement> pendingTransactions;
+  private final Capability capability;
 
   @VisibleForTesting
   public NewPooledTransactionHashesMessage(final Bytes rlp, final Capability capability) {
@@ -47,15 +47,14 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
   public int getCode() {
     return MESSAGE_CODE;
   }
-
-  public static NewPooledTransactionHashesMessage readFrom(final MessageData message) {
-    return NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.ETH66);
-  }
-
   public static NewPooledTransactionHashesMessage create(
       final List<Transaction> pendingTransactions, final Capability capability) {
     return new NewPooledTransactionHashesMessage(
         getEncoder(capability).encode(pendingTransactions), capability);
+  }
+
+  public static NewPooledTransactionHashesMessage readFrom(final MessageData message) {
+    return NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.ETH66);
   }
 
   public static NewPooledTransactionHashesMessage readFrom(
