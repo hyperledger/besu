@@ -38,11 +38,8 @@ public class OptimizedMerkleTrieLoader {
   private final Cache<Bytes, Optional<Bytes>> foundNodes =
       CacheBuilder.newBuilder().maximumSize(100_000).build();
 
-  private Hash rootHash;
+  private final Hash rootHash;
   private final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
-
-  private final Set<Bytes> nodePaths;
-  private final Set<Bytes> empty;
 
   public OptimizedMerkleTrieLoader(
       final Hash rootHash,
@@ -50,8 +47,6 @@ public class OptimizedMerkleTrieLoader {
       final Set<Address> locations) {
     this.rootHash = rootHash;
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
-    this.nodePaths = Collections.synchronizedSet(new HashSet<>());
-    this.empty = Collections.synchronizedSet(new HashSet<>());
     load(locations);
   }
 
