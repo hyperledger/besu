@@ -43,7 +43,6 @@ class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCal
 
   @Override
   public void exec(final EthMessage message) {
-
     final Capability capability = message.getPeer().getConnection().capability(EthProtocol.NAME);
     final NewPooledTransactionHashesMessage transactionsMessage =
         NewPooledTransactionHashesMessage.readFrom(message.getData(), capability);
