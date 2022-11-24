@@ -1752,6 +1752,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateOptions() {
+    validateRequiredOptions();
     issueOptionWarnings();
     validateP2PInterface(p2PDiscoveryOptionGroup.p2pInterface);
     validateMiningParams();
@@ -1762,6 +1763,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateRpcOptionsParams();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
+  }
+
+  private void validateRequiredOptions() {
+    commandLine
+        .getCommandSpec()
+        .options()
+        .forEach(
+            option -> {
+              if (option.required() && option.stringValues().isEmpty()) {
+                throw new ParameterException(
+                    this.commandLine, "Missing required option: " + option.longestName());
+              }
+            });
   }
 
   @SuppressWarnings("ConstantConditions")
