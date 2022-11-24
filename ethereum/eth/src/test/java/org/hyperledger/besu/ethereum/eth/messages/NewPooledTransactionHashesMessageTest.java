@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -34,10 +33,7 @@ public class NewPooledTransactionHashesMessageTest {
     final List<Hash> hashes = List.of(Hash.wrap(Bytes32.random()));
     final NewPooledTransactionHashesMessage msg = NewPooledTransactionHashesMessage.create(hashes);
     assertThat(msg.getCode()).isEqualTo(EthPV65.NEW_POOLED_TRANSACTION_HASHES);
-    final List<Hash> pendingHashes =
-        msg.pendingTransactions().stream()
-            .map(TransactionAnnouncement::getHash)
-            .collect(Collectors.toList());
+    final List<Hash> pendingHashes = TransactionAnnouncement.toHashList(msg.pendingTransactions());
     assertThat(pendingHashes).isEqualTo(hashes);
   }
 
