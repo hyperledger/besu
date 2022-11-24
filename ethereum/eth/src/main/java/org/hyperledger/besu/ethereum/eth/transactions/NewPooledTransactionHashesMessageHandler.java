@@ -46,8 +46,7 @@ class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCal
 
     final Capability capability = message.getPeer().getConnection().capability(EthProtocol.NAME);
     final NewPooledTransactionHashesMessage transactionsMessage =
-        NewPooledTransactionHashesMessage.readFrom(
-            message.getData(), EthProtocol.ETH68.equals(capability));
+        NewPooledTransactionHashesMessage.readFrom(message.getData(), capability);
     final Instant startedAt = now();
     scheduler.scheduleTxWorkerTask(
         () ->

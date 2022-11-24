@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder.getEncoder;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -31,11 +31,11 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor.FetcherCreatorTask;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
@@ -67,12 +67,11 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   private final Transaction transaction1 = generator.transaction();
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
-  private final List<Transaction> transactionList =
-      List.of(transaction1, transaction2, transaction3);
   private final Hash hash1 = transaction1.getHash();
   private final Hash hash2 = transaction2.getHash();
   private final Hash hash3 = transaction3.getHash();
-
+  private final List<Transaction> transactionList =
+      List.of(transaction1, transaction2, transaction3);
   private NewPooledTransactionHashesMessageProcessor messageHandler;
   private StubMetricsSystem metricsSystem;
 
@@ -96,7 +95,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
         now(),
         ofMinutes(1));
 
@@ -116,7 +115,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
         now(),
         ofMinutes(1));
 
@@ -131,7 +130,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
         now(),
         ofMinutes(1));
     verify(transactionPool, times(3)).getTransactionByHash(any());
@@ -141,7 +140,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldNotMarkReceivedExpiredTransactionsAsSeen() {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
@@ -154,7 +153,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldNotAddReceivedTransactionsToTransactionPoolIfExpired() {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
@@ -170,7 +169,11 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
 
     messageHandler.processNewPooledTransactionHashesMessage(
-        peer1, NewPooledTransactionHashesMessage.create(asList(hash1, hash2)), now(), ofMinutes(1));
+        peer1,
+        NewPooledTransactionHashesMessage.create(
+            List.of(transaction1, transaction2), EthProtocol.ETH66),
+        now(),
+        ofMinutes(1));
 
     verify(ethScheduler, times(1))
         .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
@@ -181,13 +184,15 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(Collections.singletonList(hash1)),
+        NewPooledTransactionHashesMessage.create(
+            Collections.singletonList(transaction1), EthProtocol.ETH66),
         now(),
         ofMinutes(1));
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(Collections.singletonList(hash2)),
+        NewPooledTransactionHashesMessage.create(
+            Collections.singletonList(transaction2), EthProtocol.ETH66),
         now(),
         ofMinutes(1));
 
@@ -202,7 +207,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         transactionList.stream().map(TransactionAnnouncement::new).collect(Collectors.toList());
 
     final NewPooledTransactionHashesMessage message =
-        NewPooledTransactionHashesMessage.create(transactionList, false);
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66);
 
     // for eth/66 the message should not contain size or type
     message
@@ -227,7 +232,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         transactionList.stream().map(TransactionAnnouncement::new).collect(Collectors.toList());
 
     final NewPooledTransactionHashesMessage message =
-        NewPooledTransactionHashesMessage.create(transactionList, true);
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH68);
 
     final List<TransactionAnnouncement> announcementList = message.pendingTransactions();
     assertThat(announcementList).containsExactlyElementsOf(expectedTransactions);
@@ -236,18 +241,17 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   @Test
   public void shouldThrowRLPExceptionIfIncorrectVersion() {
 
-    final List<Hash> hashes = Transaction.toHashList(transactionList);
-
     // message for Eth/68 with 66 data should throw RLPException
     final NewPooledTransactionHashesMessage message66 =
-        new NewPooledTransactionHashesMessage(TransactionAnnouncement.encodeForEth66(hashes), true);
+        new NewPooledTransactionHashesMessage(
+            getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH68);
     // assert RLPException
     assertThrows(RLPException.class, message66::pendingTransactions);
 
     // message for Eth/66 with 68 data should throw RLPException
     final NewPooledTransactionHashesMessage message68 =
         new NewPooledTransactionHashesMessage(
-            TransactionAnnouncement.encodeForEth68(transactionList), false);
+            getEncoder(EthProtocol.ETH66).encode(transactionList), EthProtocol.ETH66);
     // assert RLPException
     assertThrows(RLPException.class, message68::pendingTransactions);
   }

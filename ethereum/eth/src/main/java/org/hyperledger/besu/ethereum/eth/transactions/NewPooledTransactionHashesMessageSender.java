@@ -57,7 +57,7 @@ class NewPooledTransactionHashesMessageSender {
             txHashes::toString);
 
         final NewPooledTransactionHashesMessage message =
-            NewPooledTransactionHashesMessage.create(txBatch, EthProtocol.ETH68.equals(capability));
+            NewPooledTransactionHashesMessage.create(txBatch, capability);
         peer.send(message);
       } catch (final PeerNotConnected unused) {
         break;

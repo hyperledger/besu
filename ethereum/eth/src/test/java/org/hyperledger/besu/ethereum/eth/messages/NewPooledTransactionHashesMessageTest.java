@@ -16,25 +16,29 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class NewPooledTransactionHashesMessageTest {
 
   @Test
   public void roundTripNewPooledTransactionHashesMessage() {
-    final List<Hash> hashes = List.of(Hash.wrap(Bytes32.random()));
-    final NewPooledTransactionHashesMessage msg = NewPooledTransactionHashesMessage.create(hashes);
+    final List<Transaction> transactions = List.of(new BlockDataGenerator().transaction());
+    final NewPooledTransactionHashesMessage msg =
+        NewPooledTransactionHashesMessage.create(transactions, EthProtocol.ETH66);
     assertThat(msg.getCode()).isEqualTo(EthPV65.NEW_POOLED_TRANSACTION_HASHES);
     final List<Hash> pendingHashes = msg.pendingTransactionHashes();
-    assertThat(pendingHashes).isEqualTo(hashes);
+    assertThat(pendingHashes).isEqualTo(toHashList(transactions));
   }
 
   @Test
