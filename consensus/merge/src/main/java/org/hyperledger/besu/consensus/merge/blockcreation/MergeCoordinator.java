@@ -390,33 +390,45 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockHash) {
+  public Optional<BlockHeader> getOrSyncHeadByHash(final Hash headHash, final Hash finalizedHash) {
     final var chain = protocolContext.getBlockchain();
-    final var optHeader = chain.getBlockHeader(blockHash);
+    final var maybeHeadHeader = chain.getBlockHeader(headHash);
 
-    if (optHeader.isPresent()) {
-      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
+    if (maybeHeadHeader.isPresent()) {
+      debugLambda(LOG, "BlockHeader {} is already present", maybeHeadHeader.get()::toLogString);
     } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
-      backwardSyncContext.syncBackwardsUntil(blockHash);
+      debugLambda(LOG, "Appending new head block hash {} to backward sync", headHash::toHexString);
+      backwardSyncContext.updateHead(headHash);
+      backwardSyncContext
+          .syncBackwardsUntil(headHash)
+          .thenRun(() -> updateFinalized(finalizedHash));
     }
-    return optHeader;
+    return maybeHeadHeader;
   }
 
-  @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(
-      final Hash blockHash, final Hash finalizedBlockHash) {
-    final var chain = protocolContext.getBlockchain();
-    final var optHeader = chain.getBlockHeader(blockHash);
-
-    if (optHeader.isPresent()) {
-      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
-    } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
-      backwardSyncContext.updateHeads(blockHash, finalizedBlockHash);
-      backwardSyncContext.syncBackwardsUntil(blockHash);
+  private void updateFinalized(final Hash finalizedHash) {
+    if (mergeContext
+        .getFinalized()
+        .map(BlockHeader::getHash)
+        .map(finalizedHash::equals)
+        .orElse(Boolean.FALSE)) {
+      LOG.debug("Finalized block already set to {}, nothing to do", finalizedHash);
+      return;
     }
-    return optHeader;
+
+    protocolContext
+        .getBlockchain()
+        .getBlockHeader(finalizedHash)
+        .ifPresentOrElse(
+            finalizedHeader -> {
+              debugLambda(
+                  LOG, "Setting finalized block header to {}", finalizedHeader::toLogString);
+              mergeContext.setFinalized(finalizedHeader);
+            },
+            () ->
+                LOG.warn(
+                    "Internal error, backward sync completed but failed to import finalized block {}",
+                    finalizedHash));
   }
 
   @Override
@@ -684,12 +696,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
-    LOG.debug(
-        "checking if block {}:{} is ancestor of {}:{}",
-        ancestorBlock.getNumber(),
-        ancestorBlock.getBlockHash(),
-        newBlock.getNumber(),
-        newBlock.getBlockHash());
+    debugLambda(
+        LOG,
+        "checking if block {} is ancestor of {}",
+        ancestorBlock::toLogString,
+        newBlock::toLogString);
 
     // start with self, because descending from yourself is valid
     Optional<BlockHeader> parentOf = Optional.of(newBlock);
@@ -705,10 +716,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         && ancestorBlock.getBlockHash().equals(parentOf.get().getBlockHash())) {
       return true;
     } else {
-      LOG.debug(
+      debugLambda(
+          LOG,
           "looped all the way back, did not find ancestor {} of child {}",
-          ancestorBlock.getBlockHash(),
-          newBlock.getBlockHash());
+          ancestorBlock::toLogString,
+          newBlock::toLogString);
       return false;
     }
   }

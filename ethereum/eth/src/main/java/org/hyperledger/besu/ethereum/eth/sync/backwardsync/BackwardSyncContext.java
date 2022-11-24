@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -58,13 +57,9 @@ public class BackwardSyncContext {
   private final AtomicReference<Status> currentBackwardSyncStatus = new AtomicReference<>();
   private final BackwardChain backwardChain;
   private int batchSize = BATCH_SIZE;
-  private Optional<Hash> maybeFinalized = Optional.empty();
   private Optional<Hash> maybeHead = Optional.empty();
-
   private final int maxRetries;
-
   private final long millisBetweenRetries = DEFAULT_MILLIS_BETWEEN_RETRIES;
-
   private final Subscribers<BadChainListener> badChainListeners = Subscribers.create();
 
   public BackwardSyncContext(
@@ -108,16 +103,17 @@ public class BackwardSyncContext {
         .orElse(Boolean.FALSE);
   }
 
-  public synchronized void updateHeads(final Hash head, final Hash finalizedBlockHash) {
-    if (Hash.ZERO.equals(finalizedBlockHash)) {
-      this.maybeFinalized = Optional.empty();
+  public synchronized void updateHead(final Hash headHash) {
+    if (Hash.ZERO.equals(headHash)) {
+      maybeHead = Optional.empty();
     } else {
-      this.maybeFinalized = Optional.ofNullable(finalizedBlockHash);
-    }
-    if (Hash.ZERO.equals(head)) {
-      this.maybeHead = Optional.empty();
-    } else {
-      this.maybeHead = Optional.ofNullable(head);
+      maybeHead = Optional.of(headHash);
+      Optional<Status> maybeCurrentStatus = Optional.ofNullable(currentBackwardSyncStatus.get());
+      maybeCurrentStatus.ifPresent(
+          status ->
+              backwardChain
+                  .getBlock(headHash)
+                  .ifPresent(block -> status.updateTargetHeight(block.getHeader().getNumber())));
     }
   }
 
@@ -126,7 +122,7 @@ public class BackwardSyncContext {
       backwardChain.addNewHash(newBlockHash);
     }
 
-    final var status = getOrStartSyncSession();
+    final Status status = getOrStartSyncSession();
     backwardChain
         .getBlock(newBlockHash)
         .ifPresent(
@@ -286,7 +282,7 @@ public class BackwardSyncContext {
   }
 
   // In rare case when we request too many headers/blocks we get response that does not contain all
-  // data and we might want to retry with smaller batch size
+  // data, and we might want to retry with smaller batch size
   public int getBatchSize() {
     return batchSize;
   }
@@ -335,19 +331,21 @@ public class BackwardSyncContext {
       LOG.debug("Nothing to do with the head");
       return;
     }
-    if (blockchain.getChainHead().getHash().equals(maybeHead.get())) {
+
+    final Hash head = maybeHead.get();
+    if (blockchain.getChainHead().getHash().equals(head)) {
       LOG.debug("Head is already properly set");
       return;
     }
-    if (blockchain.contains(maybeHead.get())) {
-      LOG.debug("Changing head to {}", maybeHead.get().toHexString());
-      blockchain.rewindToBlock(maybeHead.get());
+
+    if (blockchain.contains(head)) {
+      LOG.debug("Changing head to {}", head);
+      blockchain.rewindToBlock(head);
       return;
     }
-    if (blockchain.getChainHead().getHash().equals(lastSavedBlock.getHash())) {
-      LOG.debug("Rewinding head to lastSavedBlock {}", lastSavedBlock.getHash());
-      blockchain.rewindToBlock(lastSavedBlock.getHash());
-    }
+
+    debugLambda(LOG, "Rewinding head to last saved block {}", lastSavedBlock::toLogString);
+    blockchain.rewindToBlock(lastSavedBlock.getHash());
   }
 
   public SyncState getSyncState() {
@@ -356,13 +354,6 @@ public class BackwardSyncContext {
 
   public synchronized BackwardChain getBackwardChain() {
     return backwardChain;
-  }
-
-  public Optional<Hash> findMaybeFinalized() {
-    return Stream.of(maybeFinalized, getProtocolContext().getBlockchain().getFinalized())
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .findFirst();
   }
 
   public Status getStatus() {
