@@ -164,6 +164,17 @@ public class BackwardSyncStepTest {
   }
 
   @Test
+  public void shouldNotRequestHeaderIfAlreadyPresent() throws Exception {
+    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
+    final Block lookingForBlock = getBlockByNumber(LOCAL_HEIGHT);
+
+    final CompletableFuture<List<BlockHeader>> future =
+        step.requestHeaders(lookingForBlock.getHeader().getHash());
+
+    assertThat(future.get().isEmpty()).isTrue();
+  }
+
+  @Test
   public void shouldRequestHeaderBeforeCurrentHeight() throws Exception {
     extendBlockchain(REMOTE_HEIGHT + 1, context.getProtocolContext().getBlockchain());
 
