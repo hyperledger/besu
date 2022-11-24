@@ -15,12 +15,14 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import org.hyperledger.besu.util.number.PositiveNumber;
+
 import picocli.CommandLine;
 
 public class ChainDataPruningOptions {
 
   public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 50400;
-  public static final long DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
+  public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
 
   @CommandLine.Option(
       hidden = true,
@@ -44,7 +46,8 @@ public class ChainDataPruningOptions {
       names = {"--Xchain-data-pruning-frequency"},
       description =
           "The number of blocks added to the chain between two pruning operations. Must be non-negative (default: ${DEFAULT-VALUE})")
-  private final Long chainDataPruningBlocksFrequency = DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY;
+  private final PositiveNumber chainDataPruningBlocksFrequency =
+      PositiveNumber.fromInt(DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY);
 
   public static ChainDataPruningOptions create() {
     return new ChainDataPruningOptions();
@@ -59,6 +62,6 @@ public class ChainDataPruningOptions {
   }
 
   public Long getChainDataPruningBlocksFrequency() {
-    return chainDataPruningBlocksFrequency;
+    return (long) chainDataPruningBlocksFrequency.getValue();
   }
 }
