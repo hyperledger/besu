@@ -87,6 +87,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
     when(peer1.getConnection())
         .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH67), (cap, msg, conn) -> {}));
+    when(peer2.getConnection())
+        .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH67), (cap, msg, conn) -> {}));
   }
 
   @Test
@@ -100,6 +102,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
     verify(peer1).send(transactionsMessageContaining(transaction1, transaction2));
     verify(peer2).send(transactionsMessageContaining(transaction3));
+    verify(peer1).getConnection();
+    verify(peer2).getConnection();
     verifyNoMoreInteractions(peer1, peer2);
   }
 
