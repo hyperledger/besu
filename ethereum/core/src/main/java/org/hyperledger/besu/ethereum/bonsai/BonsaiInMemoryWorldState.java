@@ -65,7 +65,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
     OptimizedMerkleTrieLoader optimizedMerkleTrieLoader =
         new OptimizedMerkleTrieLoader(
-            worldStateStorage, worldStateUpdater.getAccountsToUpdate().keySet());
+            worldStateRootHash,worldStateStorage, worldStateUpdater.getAccountsToUpdate().keySet());
 
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =

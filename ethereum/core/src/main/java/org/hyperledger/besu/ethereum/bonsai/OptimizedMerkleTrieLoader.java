@@ -25,25 +25,30 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 public class OptimizedMerkleTrieLoader {
 
   private final Cache<Bytes, Optional<Bytes>> foundNodes =
       CacheBuilder.newBuilder().maximumSize(100_000).build();
 
+  private Hash rootHash;
   private final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
 
   private final Set<Bytes> nodePaths;
   private final Set<Bytes> empty;
 
   public OptimizedMerkleTrieLoader(
+      final Hash rootHash,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Set<Address> locations) {
+    this.rootHash = rootHash;
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.nodePaths = Collections.synchronizedSet(new HashSet<>());
     this.empty = Collections.synchronizedSet(new HashSet<>());
@@ -52,26 +57,19 @@ public class OptimizedMerkleTrieLoader {
 
   public void load(final Set<Address> locations) {
     locations.parallelStream()
-        .map(CompactEncoding::bytesToPath)
-        .forEach(
-            bytes -> {
-              for (int i = 0; i < bytes.size(); i++) {
-                nodePaths.add(bytes.slice(0, i));
-              }
-            });
-    nodePaths.parallelStream()
         .forEach(
             key -> {
-              if (empty.stream()
-                  .noneMatch(emptyKey -> key.commonPrefixLength(emptyKey) == emptyKey.size())) {
-                worldStateKeyValueStorage
-                    .trieBranchStorage
-                    .get(key.toArrayUnsafe())
-                    .map(Bytes::wrap)
-                    .ifPresentOrElse(
-                        node -> foundNodes.put(Hash.hash(node), Optional.of(node)),
-                        () -> empty.add(key));
-              }
+              final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+                      new StoredMerklePatriciaTrie<>(
+                              (location, hash) -> {
+                                Optional<Bytes> node = worldStateKeyValueStorage.getAccountStateTrieNode(location, hash);
+                                node.ifPresent(bytes -> foundNodes.put(Hash.hash(bytes),Optional.of(bytes)));
+                                return node;
+                              },
+                              rootHash,
+                              Function.identity(),
+                              Function.identity());
+              accountTrie.get(key);
             });
   }
 
