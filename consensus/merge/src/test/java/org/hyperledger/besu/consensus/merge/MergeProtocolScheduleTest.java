@@ -40,7 +40,7 @@ public class MergeProtocolScheduleTest {
             + "}";
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
-    final ProtocolSchedule protocolSchedule = MergeProtocolSchedule.create(config, false, true);
+    final ProtocolSchedule protocolSchedule = MergeProtocolSchedule.create(config, false);
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec londonSpec = protocolSchedule.getByBlockNumber(1559);
@@ -53,7 +53,7 @@ public class MergeProtocolScheduleTest {
   @Test
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec london =
-        MergeProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), false, true)
+        MergeProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), false)
             .getByBlockNumber(0);
 
     assertThat(london.getName()).isEqualTo("Frontier");

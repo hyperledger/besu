@@ -34,9 +34,7 @@ public class MergeProtocolSchedule {
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(1);
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
-      final boolean isRevertReasonEnabled,
-      final boolean validatePrivateTransactions) {
+      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
     return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
