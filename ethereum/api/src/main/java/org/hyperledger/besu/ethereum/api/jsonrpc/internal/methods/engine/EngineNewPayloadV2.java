@@ -151,6 +151,7 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
+            // TODO Withdrawals - Hash.EMPTY distinguishes from Hash.EMPTY_TRIE_HASH
             maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(Hash.EMPTY),
             headerFunctions);
 

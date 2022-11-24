@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -21,7 +25,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 /** Tests for {@link BodyValidation}. */
@@ -33,8 +36,23 @@ public final class BodyValidationTest {
       final BlockHeader header = ValidationTestUtils.readHeader(block);
       final BlockBody body = ValidationTestUtils.readBody(block);
       final Bytes32 transactionRoot = BodyValidation.transactionsRoot(body.getTransactions());
-      Assertions.assertThat(header.getTransactionsRoot()).isEqualTo(transactionRoot);
+      assertThat(header.getTransactionsRoot()).isEqualTo(transactionRoot);
     }
+  }
+
+  @Test
+  public void calculateEmptyTransactionsRoot() {
+    assertThat(BodyValidation.transactionsRoot(emptyList())).isEqualTo(Hash.EMPTY_TRIE_HASH);
+  }
+
+  @Test
+  public void calculateEmptyWithdrawalsRoot() {
+    assertThat(BodyValidation.withdrawalsRoot(emptyList())).isEqualTo(Hash.EMPTY_TRIE_HASH);
+  }
+
+  @Test
+  public void calculateEmptyReceiptsRoot() {
+    assertThat(BodyValidation.receiptsRoot(emptyList())).isEqualTo(Hash.EMPTY_TRIE_HASH);
   }
 
   @Test
@@ -43,7 +61,7 @@ public final class BodyValidationTest {
       final BlockHeader header = ValidationTestUtils.readHeader(block);
       final BlockBody body = ValidationTestUtils.readBody(block);
       final Bytes32 ommersHash = BodyValidation.ommersHash(body.getOmmers());
-      Assertions.assertThat(header.getOmmersHash()).isEqualTo(ommersHash);
+      assertThat(header.getOmmersHash()).isEqualTo(ommersHash);
     }
   }
 }

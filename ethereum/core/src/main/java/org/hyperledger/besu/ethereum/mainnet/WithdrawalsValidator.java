@@ -22,6 +22,9 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public interface WithdrawalsValidator {
 
   boolean validateRoot(Hash withdrawalRoot);
@@ -29,9 +32,16 @@ public interface WithdrawalsValidator {
   boolean validateWithdrawals(List<Withdrawal> withdrawals);
 
   class ProhibitedWithdrawals implements WithdrawalsValidator {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProhibitedWithdrawals.class);
+
     @Override
     public boolean validateRoot(final Hash withdrawalRoot) {
-      return withdrawalRoot.equals(Hash.EMPTY);
+      final boolean isValid = withdrawalRoot.equals(Hash.EMPTY);
+      if (!isValid) {
+        LOG.warn("Withdrawals root: {} should equal empty hash: {}", withdrawalRoot, Hash.EMPTY);
+      }
+      return isValid;
     }
 
     @Override
@@ -41,9 +51,17 @@ public interface WithdrawalsValidator {
   }
 
   class AllowedWithdrawals implements WithdrawalsValidator {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AllowedWithdrawals.class);
+
     @Override
     public boolean validateRoot(final Hash withdrawalRoot) {
-      return !withdrawalRoot.equals(Hash.EMPTY);
+      final boolean isValid = !withdrawalRoot.equals(Hash.EMPTY);
+      if (!isValid) {
+        LOG.warn(
+            "Withdrawals root: {} should not equal empty hash: {}", withdrawalRoot, Hash.EMPTY);
+      }
+      return isValid;
     }
 
     @Override

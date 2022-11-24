@@ -290,6 +290,7 @@ public class BlockDataGenerator {
             .coinbase(options.getCoinbase(address()))
             .stateRoot(options.getStateRoot(hash()))
             .transactionsRoot(BodyValidation.transactionsRoot(body.getTransactions()))
+            .withdrawalsRoot(options.getWithdrawalsRoot())
             .receiptsRoot(options.getReceiptsRoot(hash()))
             .logsBloom(options.getLogsBloom(logsBloom()))
             .difficulty(options.getDifficulty(Difficulty.of(uint256(4))))
@@ -327,7 +328,7 @@ public class BlockDataGenerator {
       defaultTxs.add(transaction(options.getTransactionTypes()));
     }
 
-    return new BlockBody(options.getTransactions(defaultTxs), ommers, Optional.empty());
+    return new BlockBody(options.getTransactions(defaultTxs), ommers, options.getWithdrawals());
   }
 
   private BlockHeader ommer() {
@@ -630,6 +631,8 @@ public class BlockDataGenerator {
     private TransactionType[] transactionTypes = TransactionType.values();
     private Optional<Address> coinbase = Optional.empty();
     private Optional<Optional<Wei>> maybeBaseFee = Optional.empty();
+    private Optional<List<Withdrawal>> maybeWithdrawals = Optional.empty();
+    private Hash withdrawalsRoot = Hash.EMPTY;
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -789,6 +792,24 @@ public class BlockDataGenerator {
 
     public BlockOptions setBaseFee(final Optional<Wei> baseFee) {
       this.maybeBaseFee = Optional.of(baseFee);
+      return this;
+    }
+
+    public Optional<List<Withdrawal>> getWithdrawals() {
+      return this.maybeWithdrawals;
+    }
+
+    public BlockOptions setWithdrawals(final Optional<List<Withdrawal>> withdrawals) {
+      this.maybeWithdrawals = withdrawals;
+      return this;
+    }
+
+    public Hash getWithdrawalsRoot() {
+      return this.withdrawalsRoot;
+    }
+
+    public BlockOptions setWithdrawalsRoot(final Hash root) {
+      this.withdrawalsRoot = root;
       return this;
     }
   }
