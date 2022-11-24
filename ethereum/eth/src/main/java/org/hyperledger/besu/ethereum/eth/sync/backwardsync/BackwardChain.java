@@ -142,6 +142,7 @@ public class BackwardChain {
         chainStorage.put(lastStoredPivot.get().getHash(), newPivot.getHash());
       } else {
         firstStoredAncestor = Optional.of(newPivot.getHeader());
+        debugLambda(LOG, "Re-pivoting to new target block {}", newPivot::toLogString);
       }
     }
     lastStoredPivot = Optional.of(newPivot.getHeader());
