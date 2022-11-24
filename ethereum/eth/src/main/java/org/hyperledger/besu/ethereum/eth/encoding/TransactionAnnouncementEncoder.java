@@ -38,7 +38,7 @@ public class TransactionAnnouncementEncoder {
   /**
    * Returns the correct encoder given an Eth Capability
    *
-   * <p>See <a href=" v">EIP-5793</a>
+   * <p>See <a href="https://eips.ethereum.org/EIPS/eip-5793">EIP-5793</a>
    *
    * @param capability the version of the eth protocol
    * @return the correct encoder

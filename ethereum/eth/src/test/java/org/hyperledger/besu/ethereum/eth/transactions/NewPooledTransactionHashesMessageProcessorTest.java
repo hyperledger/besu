@@ -244,14 +244,14 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     // message for Eth/68 with 66 data should throw RLPException
     final NewPooledTransactionHashesMessage message66 =
         new NewPooledTransactionHashesMessage(
-            getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH68);
+            getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH66);
     // assert RLPException
     assertThrows(RLPException.class, message66::pendingTransactions);
 
     // message for Eth/66 with 68 data should throw RLPException
     final NewPooledTransactionHashesMessage message68 =
         new NewPooledTransactionHashesMessage(
-            getEncoder(EthProtocol.ETH66).encode(transactionList), EthProtocol.ETH66);
+            getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH66);
     // assert RLPException
     assertThrows(RLPException.class, message68::pendingTransactions);
   }
