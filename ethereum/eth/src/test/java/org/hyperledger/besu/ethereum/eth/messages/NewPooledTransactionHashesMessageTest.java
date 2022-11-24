@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,9 +31,8 @@ public class NewPooledTransactionHashesMessageTest {
 
   @Test
   public void roundTripNewPooledTransactionHashesMessage() {
-    final List<Hash> hashes = Arrays.asList(Hash.wrap(Bytes32.random()));
-    final AbstractNewPooledTransactionHashesMessage msg =
-        NewPooledTransactionHashesMessage66.create(hashes);
+    final List<Hash> hashes = List.of(Hash.wrap(Bytes32.random()));
+    final NewPooledTransactionHashesMessage msg = NewPooledTransactionHashesMessage.create(hashes);
     assertThat(msg.getCode()).isEqualTo(EthPV65.NEW_POOLED_TRANSACTION_HASHES);
     final List<Hash> pendingHashes =
         msg.pendingTransactions().stream()
@@ -48,6 +46,6 @@ public class NewPooledTransactionHashesMessageTest {
     final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, Bytes.of(0));
 
     assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> NewPooledTransactionHashesMessage66.readFrom(rawMsg));
+        .isThrownBy(() -> NewPooledTransactionHashesMessage.readFrom(rawMsg));
   }
 }

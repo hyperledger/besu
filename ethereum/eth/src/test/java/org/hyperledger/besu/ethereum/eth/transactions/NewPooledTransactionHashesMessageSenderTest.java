@@ -31,9 +31,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
-import org.hyperledger.besu.ethereum.eth.messages.AbstractNewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage66;
+import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
@@ -148,8 +147,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
   }
 
   private Set<Hash> getTransactionsFromMessage(final MessageData message) {
-    final AbstractNewPooledTransactionHashesMessage transactionsMessage =
-        NewPooledTransactionHashesMessage66.readFrom(message);
+    final NewPooledTransactionHashesMessage transactionsMessage =
+        NewPooledTransactionHashesMessage.readFrom(message);
     return transactionsMessage.pendingTransactions().stream()
         .map(TransactionAnnouncement::getHash)
         .collect(Collectors.toSet());

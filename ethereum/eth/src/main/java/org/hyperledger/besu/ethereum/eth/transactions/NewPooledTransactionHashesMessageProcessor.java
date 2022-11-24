@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.BufferedGetPooledTransactionsFromPeerFetcher;
-import org.hyperledger.besu.ethereum.eth.messages.AbstractNewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -83,7 +83,7 @@ public class NewPooledTransactionHashesMessageProcessor {
 
   void processNewPooledTransactionHashesMessage(
       final EthPeer peer,
-      final AbstractNewPooledTransactionHashesMessage transactionsMessage,
+      final NewPooledTransactionHashesMessage transactionsMessage,
       final Instant startedAt,
       final Duration keepAlive) {
     // Check if message is not expired.
@@ -96,7 +96,7 @@ public class NewPooledTransactionHashesMessageProcessor {
 
   @SuppressWarnings("UnstableApiUsage")
   private void processNewPooledTransactionHashesMessage(
-      final EthPeer peer, final AbstractNewPooledTransactionHashesMessage transactionsMessage) {
+      final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
       final List<Hash> incomingTransactionHashes =
           transactionsMessage.pendingTransactions().stream()

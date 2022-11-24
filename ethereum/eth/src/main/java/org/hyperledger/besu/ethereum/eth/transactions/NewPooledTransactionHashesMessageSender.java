@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.AbstractNewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
@@ -50,7 +50,7 @@ class NewPooledTransactionHashesMessageSender {
         Iterables.partition(
             transactionTracker.claimTransactionsToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
       try {
-        List<Hash> txHashes = toHashList(txBatch);
+        final List<Hash> txHashes = toHashList(txBatch);
         traceLambda(
             LOG,
             "Sending transaction hashes to peer {}, transaction hashes count {}, list {}",
@@ -58,8 +58,8 @@ class NewPooledTransactionHashesMessageSender {
             txHashes::size,
             txHashes::toString);
 
-        final AbstractNewPooledTransactionHashesMessage message =
-            AbstractNewPooledTransactionHashesMessage.create(txHashes, capability);
+        final NewPooledTransactionHashesMessage message =
+            NewPooledTransactionHashesMessage.create(txBatch, EthProtocol.ETH68.equals(capability));
 
         peer.send(message);
       } catch (final PeerNotConnected unused) {
