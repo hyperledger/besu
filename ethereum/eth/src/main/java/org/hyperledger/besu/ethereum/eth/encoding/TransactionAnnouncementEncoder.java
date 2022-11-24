@@ -16,17 +16,15 @@ package org.hyperledger.besu.ethereum.eth.encoding;
 
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.TransactionType;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionAnnouncementEncoder {
 
@@ -35,6 +33,12 @@ public class TransactionAnnouncementEncoder {
     Bytes encode(List<Transaction> transaction);
   }
 
+  /**
+   * Returns the correct encoder given an Eth Capability
+   * See <a href=" v">EIP-5793</a>
+   * @param capability the version of the eth protocol
+   * @return the correct encoder
+   */
   public static Encoder getEncoder(final Capability capability) {
     if (capability.getVersion() >= EthProtocolVersion.V68) {
       return TransactionAnnouncementEncoder::encodeForEth68;
@@ -48,7 +52,7 @@ public class TransactionAnnouncementEncoder {
    * [hash_0: B_32, hash_1: B_32, ...]
    *
    * @param transactions the list to encode
-   * @return the encoded value
+   * @return the encoded value. The message data will contain only the transaction hashes
    */
   private static Bytes encodeForEth66(final List<Transaction> transactions) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -61,7 +65,7 @@ public class TransactionAnnouncementEncoder {
    * format: [[type_0: B_1, type_1: B_1, ...], [size_0: B_4, size_1: B_4, ...], ...]
    *
    * @param transactions the list to encode
-   * @return the encoded value
+   * @return the encoded value. The message data will contain hashes, types and sizes.
    */
   private static Bytes encodeForEth68(final List<Transaction> transactions) {
     final List<Integer> sizes = new ArrayList<>();

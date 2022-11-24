@@ -31,6 +31,12 @@ public class TransactionAnnouncementDecoder {
     List<TransactionAnnouncement> decode(RLPInput input);
   }
 
+  /**
+   * Returns the correct decoder given an Eth Capability
+   * See <a href=" v">EIP-5793</a>
+   * @param capability the version of the eth protocol
+   * @return the correct decoder
+   */
   public static Decoder getDecoder(final Capability capability) {
     if (capability.getVersion() >= EthProtocolVersion.V68) {
       return TransactionAnnouncementDecoder::decodeForEth68;
@@ -38,12 +44,25 @@ public class TransactionAnnouncementDecoder {
       return TransactionAnnouncementDecoder::decodeForEth66;
     }
   }
-
+  /**
+   * Decode the list of transactions in the NewPooledTransactionHashesMessage
+   * @param input input used to decode the NewPooledTransactionHashesMessage before Eth/68
+   * format: [hash_0: B_32, hash_1: B_32, ...]
+   * @return the list of TransactionAnnouncement decoded from the message. Only hash is present.
+   * size and type will return an Optional.empty()
+   */
   private static List<TransactionAnnouncement> decodeForEth66(final RLPInput input) {
     final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
     return hashes.stream().map(TransactionAnnouncement::new).collect(Collectors.toList());
   }
 
+  /**
+   * Decode the list of transactions in the NewPooledTransactionHashesMessage
+   *
+   * @param input input used to decode the NewPooledTransactionHashesMessage after Eth/68
+   * format: [[type_0: B_1, type_1: B_1, ...], [size_0: B_4, size_1: B_4, ...], ...]
+   * @return the list of TransactionAnnouncement decoded from the message with size, type and hash
+   */
   private static List<TransactionAnnouncement> decodeForEth68(final RLPInput input) {
     input.enterList();
     final List<TransactionType> types =
