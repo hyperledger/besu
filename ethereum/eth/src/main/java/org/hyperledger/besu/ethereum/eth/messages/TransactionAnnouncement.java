@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
@@ -61,15 +62,6 @@ public class TransactionAnnouncement {
     return Optional.ofNullable(size);
   }
 
-  public static List<TransactionAnnouncement> create(
-      final List<TransactionType> types, final List<Integer> sizes, final List<Hash> hashes) {
-    final List<TransactionAnnouncement> transactions = new ArrayList<>();
-    for (int i = 0; i < hashes.size(); i++) {
-      transactions.add(new TransactionAnnouncement(hashes.get(i), types.get(i), sizes.get(i)));
-    }
-    return transactions;
-  }
-
   public static Bytes encodeForEth66(final List<Hash> hashes) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeList(hashes, (h, w) -> w.writeBytes(h));
@@ -86,11 +78,7 @@ public class TransactionAnnouncement {
           sizes.add(transaction.calculateSize());
           hashes.add(transaction.getHash());
         });
-    return encodeForEth68(types, sizes, hashes);
-  }
 
-  public static Bytes encodeForEth68(
-      final List<TransactionType> types, final List<Integer> sizes, final List<Hash> hashes) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeList(types, (h, w) -> w.writeByte(h.getSerializedType()));
@@ -98,6 +86,30 @@ public class TransactionAnnouncement {
     out.writeList(hashes, (h, w) -> w.writeBytes(h));
     out.endList();
     return out.encoded();
+  }
+
+  public static List<TransactionAnnouncement> decodeForEth66(final RLPInput input) {
+    final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
+    return hashes.stream().map(TransactionAnnouncement::new).collect(Collectors.toList());
+  }
+
+  public static List<TransactionAnnouncement> decodeForEth68(final RLPInput input) {
+    input.enterList();
+    final List<TransactionType> types =
+        input.readList(rlp -> TransactionType.of(rlp.readByte() & 0xff));
+    final List<Integer> sizes = input.readList(RLPInput::readInt);
+    final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
+    input.leaveList();
+    return TransactionAnnouncement.create(types, sizes, hashes);
+  }
+
+  public static List<TransactionAnnouncement> create(
+      final List<TransactionType> types, final List<Integer> sizes, final List<Hash> hashes) {
+    final List<TransactionAnnouncement> transactions = new ArrayList<>();
+    for (int i = 0; i < hashes.size(); i++) {
+      transactions.add(new TransactionAnnouncement(hashes.get(i), types.get(i), sizes.get(i)));
+    }
+    return transactions;
   }
 
   public static List<Hash> toHashList(final Collection<TransactionAnnouncement> transactions) {

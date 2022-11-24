@@ -15,18 +15,21 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
+import static org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement.decodeForEth66;
+import static org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement.decodeForEth68;
+import static org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement.encodeForEth66;
+import static org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement.encodeForEth68;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.plugin.data.TransactionType;
+
+import java.util.List;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
 
 public class NewPooledTransactionHashesMessage extends AbstractMessageData {
 
@@ -46,20 +49,21 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
   }
 
   public static NewPooledTransactionHashesMessage create(final List<Hash> hashes) {
-    return createMessageForEth66(hashes);
+    return new NewPooledTransactionHashesMessage(encodeForEth66(hashes), false);
+  }
+
+  public static NewPooledTransactionHashesMessage readFrom(final MessageData message) {
+    return NewPooledTransactionHashesMessage.readFrom(message, false);
   }
 
   public static NewPooledTransactionHashesMessage create(
       final List<Transaction> pendingTransactions, final boolean isEth68MessageData) {
     if (isEth68MessageData) {
-      return createMessageForEth68(pendingTransactions);
+      return new NewPooledTransactionHashesMessage(encodeForEth68(pendingTransactions), true);
     } else {
-      return createMessageForEth66(toHashList(pendingTransactions));
+      return new NewPooledTransactionHashesMessage(
+          encodeForEth66(toHashList(pendingTransactions)), false);
     }
-  }
-
-  public static NewPooledTransactionHashesMessage readFrom(final MessageData message) {
-    return NewPooledTransactionHashesMessage.readFrom(message, false);
   }
 
   public static NewPooledTransactionHashesMessage readFrom(
@@ -79,37 +83,11 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
 
   public List<TransactionAnnouncement> pendingTransactions() {
     if (pendingTransactions == null) {
-      pendingTransactions = isEth68MessageData ? decodeForEth68() : decodeForEth66();
+      pendingTransactions =
+          isEth68MessageData
+              ? decodeForEth68(new BytesValueRLPInput(data, false))
+              : decodeForEth66(new BytesValueRLPInput(data, false));
     }
     return pendingTransactions;
-  }
-
-  public static NewPooledTransactionHashesMessage createMessageForEth66(
-      final List<Hash> pendingTransactionsHashes) {
-    return new NewPooledTransactionHashesMessage(
-        TransactionAnnouncement.encodeForEth66(pendingTransactionsHashes), false);
-  }
-
-  public static NewPooledTransactionHashesMessage createMessageForEth68(
-      final List<Transaction> pendingTransactions) {
-    return new NewPooledTransactionHashesMessage(
-        TransactionAnnouncement.encodeForEth68(pendingTransactions), true);
-  }
-
-  private List<TransactionAnnouncement> decodeForEth68() {
-    final RLPInput input = new BytesValueRLPInput(data, false);
-    input.enterList();
-    final List<TransactionType> types =
-        input.readList(rlp -> TransactionType.of(rlp.readByte() & 0xff));
-    final List<Integer> sizes = input.readList(RLPInput::readInt);
-    final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
-    input.leaveList();
-    return TransactionAnnouncement.create(types, sizes, hashes);
-  }
-
-  private List<TransactionAnnouncement> decodeForEth66() {
-    final RLPInput input = new BytesValueRLPInput(data, false);
-    final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
-    return hashes.stream().map(TransactionAnnouncement::new).collect(Collectors.toList());
   }
 }
