@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine.Option;
 
 public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> {
@@ -84,5 +85,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         bonsaiMaxLayersToLoad.toString(),
         BONSAI_STORAGE_FORMAT_USE_SNAPSHOTS,
         bonsaiUseSnapshots.toString());
+  }
+
+  public String normalizeDataStorageFormat() {
+    return StringUtils.capitalize(dataStorageFormat.toString().toLowerCase());
   }
 }

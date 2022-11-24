@@ -44,16 +44,16 @@ public class StaticNodesParser {
     try {
       return readEnodesFromPath(path, enodeDnsConfiguration);
     } catch (FileNotFoundException | NoSuchFileException ex) {
-      LOG.info("StaticNodes file {} does not exist, no static connections will be created.", path);
+      LOG.debug("StaticNodes file {} does not exist, no static connections will be created.", path);
       return emptySet();
     } catch (IOException ex) {
-      LOG.info("Unable to parse static nodes file ({})", path);
+      LOG.warn("Unable to parse static nodes file ({})", path);
       throw ex;
     } catch (DecodeException ex) {
-      LOG.info("Content of ({}} was invalid json, and could not be decoded.", path);
+      LOG.warn("Content of ({}} was invalid json, and could not be decoded.", path);
       throw ex;
     } catch (IllegalArgumentException ex) {
-      LOG.info("Parsing ({}) has failed due incorrectly formatted enode element.", path);
+      LOG.warn("Parsing ({}) has failed due incorrectly formatted enode element.", path);
       throw ex;
     }
   }
