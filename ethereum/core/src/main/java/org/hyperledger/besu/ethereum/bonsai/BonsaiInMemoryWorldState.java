@@ -63,10 +63,14 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
     // for manicured tries and composting, trim and compost here
 
+    OptimizedMerkleTrieLoader optimizedMerkleTrieLoader =
+        new OptimizedMerkleTrieLoader(
+            worldStateStorage, worldStateUpdater.getAccountsToUpdate().keySet());
+
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            this::getAccountStateTrieNode,
+            optimizedMerkleTrieLoader::getAccountStateTrieNode,
             worldStateRootHash,
             Function.identity(),
             Function.identity());
@@ -105,6 +109,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
       final BonsaiAccount accountOriginal = accountValue.getPrior();
       final Hash storageRoot =
           (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
+
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
               (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
