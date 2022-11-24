@@ -72,7 +72,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       deletePotentialOldStorageEntries(
           (BonsaiWorldStateKeyValueStorage) worldStateStorage,
           accountHash.get(),
-          getLocation().get(),
+          getLocation().orElse(Bytes.EMPTY),
           getData());
     }
   }
