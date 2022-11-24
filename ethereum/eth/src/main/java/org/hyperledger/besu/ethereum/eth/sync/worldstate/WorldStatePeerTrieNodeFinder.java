@@ -97,8 +97,8 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
     if (cachedValue.isPresent()) {
       return cachedValue;
     }
-    // Call findByGetNodeData only if protocol version < eth 67
     final Optional<Bytes> response =
+        // Call findByGetNodeData only if protocol version < eth 67
         (protocolManager.getHighestProtocolVersion() < EthProtocolVersion.V67
                 ? findByGetNodeData(Hash.wrap(nodeHash))
                 : Optional.<Bytes>empty())
