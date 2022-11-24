@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -141,4 +142,12 @@ public class SnapProtocolManager implements ProtocolManager {
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {}
+
+  @Override
+  public int getHighestProtocolVersion() {
+    return getSupportedCapabilities().stream()
+        .max(Comparator.comparing(Capability::getVersion))
+        .map(Capability::getVersion)
+        .orElse(0);
+  }
 }
