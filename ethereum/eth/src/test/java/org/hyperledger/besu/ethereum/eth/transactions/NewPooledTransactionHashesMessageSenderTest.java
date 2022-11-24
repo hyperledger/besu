@@ -153,8 +153,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
   private Set<Hash> getTransactionsFromMessage(final MessageData message) {
     final NewPooledTransactionHashesMessage transactionsMessage =
         NewPooledTransactionHashesMessage.readFrom(message);
-    return transactionsMessage.pendingTransactions().stream()
-        .map(TransactionAnnouncement::getHash)
-        .collect(Collectors.toSet());
+    return newHashSet(
+        TransactionAnnouncement.toHashList(transactionsMessage.pendingTransactions()));
   }
 }
