@@ -204,17 +204,17 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     final NewPooledTransactionHashesMessage message =
         NewPooledTransactionHashesMessage.create(transactionList, false);
 
-    final List<TransactionAnnouncement> announcementList = message.pendingTransactions();
-
     // for eth/66 the message should not contain size or type
-    announcementList.forEach(
-        t -> {
-          assertThat(t.getSize().isPresent()).isFalse();
-          assertThat(t.getType().isPresent()).isFalse();
-        });
+    message
+        .pendingTransactions()
+        .forEach(
+            t -> {
+              assertThat(t.getSize().isPresent()).isFalse();
+              assertThat(t.getType().isPresent()).isFalse();
+            });
 
     // assert all transaction hashes are the same as announcement message
-    assertThat(TransactionAnnouncement.toHashList(announcementList))
+    assertThat(message.pendingTransactionHashes())
         .containsExactlyElementsOf(
             expectedAnnouncementList.stream()
                 .map(TransactionAnnouncement::getHash)

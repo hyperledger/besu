@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -89,5 +90,11 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
               : decodeForEth66(new BytesValueRLPInput(data, false));
     }
     return pendingTransactions;
+  }
+
+  public List<Hash> pendingTransactionHashes() {
+    return pendingTransactions().stream()
+        .map(TransactionAnnouncement::getHash)
+        .collect(Collectors.toUnmodifiableList());
   }
 }

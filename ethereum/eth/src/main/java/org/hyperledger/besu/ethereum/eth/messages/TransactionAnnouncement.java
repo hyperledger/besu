@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -110,12 +109,6 @@ public class TransactionAnnouncement {
       transactions.add(new TransactionAnnouncement(hashes.get(i), types.get(i), sizes.get(i)));
     }
     return transactions;
-  }
-
-  public static List<Hash> toHashList(final Collection<TransactionAnnouncement> transactions) {
-    return transactions.stream()
-        .map(TransactionAnnouncement::getHash)
-        .collect(Collectors.toUnmodifiableList());
   }
 
   @Override

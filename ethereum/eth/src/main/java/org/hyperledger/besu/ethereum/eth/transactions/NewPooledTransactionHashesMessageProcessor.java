@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.BufferedGetPooledTransactionsFromPeerFetcher;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -98,8 +97,7 @@ public class NewPooledTransactionHashesMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      final List<Hash> incomingTransactionHashes =
-          TransactionAnnouncement.toHashList(transactionsMessage.pendingTransactions());
+      final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactionHashes();
 
       traceLambda(
           LOG,

@@ -33,7 +33,7 @@ public class NewPooledTransactionHashesMessageTest {
     final List<Hash> hashes = List.of(Hash.wrap(Bytes32.random()));
     final NewPooledTransactionHashesMessage msg = NewPooledTransactionHashesMessage.create(hashes);
     assertThat(msg.getCode()).isEqualTo(EthPV65.NEW_POOLED_TRANSACTION_HASHES);
-    final List<Hash> pendingHashes = TransactionAnnouncement.toHashList(msg.pendingTransactions());
+    final List<Hash> pendingHashes = msg.pendingTransactionHashes();
     assertThat(pendingHashes).isEqualTo(hashes);
   }
 
