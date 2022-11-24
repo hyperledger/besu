@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncement
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -47,14 +46,11 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
   public int getCode() {
     return MESSAGE_CODE;
   }
+
   public static NewPooledTransactionHashesMessage create(
       final List<Transaction> pendingTransactions, final Capability capability) {
     return new NewPooledTransactionHashesMessage(
         getEncoder(capability).encode(pendingTransactions), capability);
-  }
-
-  public static NewPooledTransactionHashesMessage readFrom(final MessageData message) {
-    return NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.ETH66);
   }
 
   public static NewPooledTransactionHashesMessage readFrom(

@@ -16,15 +16,17 @@ package org.hyperledger.besu.ethereum.eth.encoding;
 
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.TransactionType;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionAnnouncementEncoder {
 
@@ -35,7 +37,9 @@ public class TransactionAnnouncementEncoder {
 
   /**
    * Returns the correct encoder given an Eth Capability
-   * See <a href=" v">EIP-5793</a>
+   *
+   * <p>See <a href=" v">EIP-5793</a>
+   *
    * @param capability the version of the eth protocol
    * @return the correct encoder
    */
@@ -48,8 +52,9 @@ public class TransactionAnnouncementEncoder {
   }
 
   /**
-   * Encode a list of hashes for the NewPooledTransactionHashesMessage using the Eth/66 format:
-   * [hash_0: B_32, hash_1: B_32, ...]
+   * Encode a list of hashes for the NewPooledTransactionHashesMessage using the Eth/66
+   *
+   * <p>format: [hash_0: B_32, hash_1: B_32, ...]
    *
    * @param transactions the list to encode
    * @return the encoded value. The message data will contain only the transaction hashes
@@ -62,7 +67,8 @@ public class TransactionAnnouncementEncoder {
 
   /**
    * Encode a list of transactions for the NewPooledTransactionHashesMessage using the Eth/68
-   * format: [[type_0: B_1, type_1: B_1, ...], [size_0: B_4, size_1: B_4, ...], ...]
+   *
+   * <p>format: [[type_0: B_1, type_1: B_1, ...], [size_0: B_4, size_1: B_4, ...], ...]
    *
    * @param transactions the list to encode
    * @return the encoded value. The message data will contain hashes, types and sizes.

@@ -81,7 +81,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
   public void setUp() {
     transactionTracker = new PeerTransactionTracker();
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
-    Transaction tx = mock(Transaction.class);
+    final Transaction tx = mock(Transaction.class);
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
 
     when(peer1.getConnection())
@@ -151,7 +151,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   private Set<Hash> getTransactionsFromMessage(final MessageData message) {
     final NewPooledTransactionHashesMessage transactionsMessage =
-        NewPooledTransactionHashesMessage.readFrom(message);
+        NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.ETH66);
     return newHashSet(transactionsMessage.pendingTransactionHashes());
   }
 }

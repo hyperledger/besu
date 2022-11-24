@@ -46,6 +46,6 @@ public class NewPooledTransactionHashesMessageTest {
     final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, Bytes.of(0));
 
     assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> NewPooledTransactionHashesMessage.readFrom(rawMsg));
+        .isThrownBy(() -> NewPooledTransactionHashesMessage.readFrom(rawMsg, EthProtocol.ETH66));
   }
 }
