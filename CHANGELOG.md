@@ -23,6 +23,7 @@
 - Print an overview of configuration and system information at startup [#4451](https://github.com/hyperledger/besu/pull/4451)
 
 ### Bug Fixes
+- Restore updating chain head and finalized block during backward sync [#4718](https://github.com/hyperledger/besu/pull/4718)
 
 ### Download Links
 
@@ -75,7 +76,6 @@
 
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.tar.gz  / sha256: 88fb5df567e4ec3547d7d2970cfef00debbd020c0da66b19166d43779b3b2b85
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.zip / sha256: c8e39f7c879409cb9b47f4d3de5e9c521249083830a8c9a45e8a14a319fe195d
-
 
 ## 22.10.0-RC2
 
