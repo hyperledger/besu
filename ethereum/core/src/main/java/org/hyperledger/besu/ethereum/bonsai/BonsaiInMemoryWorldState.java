@@ -61,16 +61,11 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
               updateAccountStorage(worldStateUpdater, addressMapEntry);
             });
 
-    // for manicured tries and composting, trim and compost here
-
-    OptimizedMerkleTrieLoader optimizedMerkleTrieLoader =
-        new OptimizedMerkleTrieLoader(
-            worldStateRootHash,worldStateStorage, worldStateUpdater.getAccountsToUpdate().keySet());
 
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            optimizedMerkleTrieLoader::getAccountStateTrieNode,
+            (location, hash) -> archive.getOptimizedMerkleTrieLoader().getAccountStateTrieNode(worldStateStorage, location, hash),
             worldStateRootHash,
             Function.identity(),
             Function.identity());

@@ -17,13 +17,11 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
@@ -35,66 +33,38 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 public class OptimizedMerkleTrieLoader {
 
-  private final Cache<Bytes, Optional<Bytes>> foundNodes =
+  private final Cache<Bytes, Bytes> foundNodes =
       CacheBuilder.newBuilder().maximumSize(100_000).build();
 
-  private final Hash rootHash;
-  private final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
-
-  public OptimizedMerkleTrieLoader(
-      final Hash rootHash,
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Set<Address> locations) {
-    this.rootHash = rootHash;
-    this.worldStateKeyValueStorage = worldStateKeyValueStorage;
-    load(locations);
-  }
-
-  public void load(final Set<Address> locations) {
-    locations.parallelStream()
-        .forEach(
-            key -> {
-              final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
-                      new StoredMerklePatriciaTrie<>(
-                              (location, hash) -> {
-                                Optional<Bytes> node = worldStateKeyValueStorage.getAccountStateTrieNode(location, hash);
-                                node.ifPresent(bytes -> foundNodes.put(Hash.hash(bytes),Optional.of(bytes)));
-                                return node;
-                              },
-                              rootHash,
-                              Function.identity(),
-                              Function.identity());
-              accountTrie.get(key);
+    public void preLoadAccount(final BonsaiWorldStateKeyValueStorage worldStateStorage, final Hash worldStateRootHash, final Address account) {
+    CompletableFuture.runAsync(
+            () -> {
+                final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+                        new StoredMerklePatriciaTrie<>(
+                                (location, hash) -> {
+                                    Optional<Bytes> node = worldStateStorage.getAccountStateTrieNode(location, hash);
+                                    node.ifPresent(bytes -> foundNodes.put(Hash.hash(bytes),bytes));
+                                    return node;
+                                },
+                                worldStateRootHash,
+                                Function.identity(),
+                                Function.identity());
+                accountTrie.get(Hash.hash(account));
             });
   }
 
-  public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStateTrieNode(final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage, final Bytes location, final Bytes32 nodeHash) {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      try {
-        return foundNodes.get(
-            nodeHash, () -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));
-      } catch (ExecutionException e) {
-        throw new RuntimeException(e);
+      Optional<Bytes> node = Optional.ofNullable(foundNodes.getIfPresent(nodeHash));
+      if(node.isPresent()){
+        return node;
+      } else {
+        return worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash);
       }
     }
   }
 
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
-    } else {
-      try {
-        return foundNodes.get(
-            nodeHash,
-            () ->
-                worldStateKeyValueStorage.getAccountStorageTrieNode(
-                    accountHash, location, nodeHash));
-      } catch (ExecutionException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
+
 }

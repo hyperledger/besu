@@ -54,6 +54,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final TrieLogManager trieLogManager;
   private final BonsaiPersistedWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
+
+  private final OptimizedMerkleTrieLoader optimizedMerkleTrieLoader;
+
   private final boolean useSnapshots;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
@@ -104,6 +107,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     this.useSnapshots = useSnapshots;
+    this.optimizedMerkleTrieLoader = new OptimizedMerkleTrieLoader();
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
 
@@ -276,6 +280,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   BonsaiWorldStateUpdater getUpdaterFromPersistedState(
       final BonsaiPersistedWorldState mutableState) {
     return (BonsaiWorldStateUpdater) mutableState.updater();
+  }
+
+  public OptimizedMerkleTrieLoader getOptimizedMerkleTrieLoader() {
+    return optimizedMerkleTrieLoader;
   }
 
   @Override

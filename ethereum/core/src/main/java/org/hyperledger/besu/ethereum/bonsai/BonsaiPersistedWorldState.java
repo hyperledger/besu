@@ -56,6 +56,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   protected Hash worldStateRootHash;
   protected Hash worldStateBlockHash;
 
+
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
@@ -66,7 +67,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
     worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
-    updater = new BonsaiWorldStateUpdater(this);
+    updater = new BonsaiWorldStateUpdater(this,
+            (account)-> archive.getOptimizedMerkleTrieLoader().preLoadAccount(worldStateStorage, worldStateRootHash, account));
   }
 
   public BonsaiWorldStateArchive getArchive() {
@@ -116,7 +118,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            this::getAccountStateTrieNode,
+                (location, hash) -> archive.getOptimizedMerkleTrieLoader().getAccountStateTrieNode(worldStateStorage, location, hash),
             worldStateRootHash,
             Function.identity(),
             Function.identity());

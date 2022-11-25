@@ -38,16 +38,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.jetbrains.annotations.NotNull;
 
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
 
-  private final Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate =
-      new ConcurrentHashMap<>();
+  private final WrapperMap accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
@@ -56,13 +57,16 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   // alternative was to keep a giant pre-image cache of the entire trie.
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate =
       new ConcurrentHashMap<>();
+  private final Consumer<Address> accountPreload;
 
-  BonsaiWorldStateUpdater(final BonsaiWorldView world) {
+  BonsaiWorldStateUpdater(final BonsaiWorldView world, final Consumer<Address> accountPreload) {
     super(world);
+    this.accountPreload = accountPreload;
+    this.accountsToUpdate = new WrapperMap(accountPreload);
   }
 
   public BonsaiWorldStateUpdater copy() {
-    final BonsaiWorldStateUpdater copy = new BonsaiWorldStateUpdater(wrappedWorldView());
+    final BonsaiWorldStateUpdater copy = new BonsaiWorldStateUpdater(wrappedWorldView(), accountPreload);
     copy.cloneFromUpdater(this);
     return copy;
   }
@@ -686,5 +690,21 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         && storageToUpdate.isEmpty()
         && storageToClear.isEmpty()
         && codeToUpdate.isEmpty());
+  }
+
+  public static class WrapperMap extends ConcurrentHashMap<Address, BonsaiValue<BonsaiAccount>>{
+
+    private final Consumer<Address> addressConsumer;
+
+    public WrapperMap(final Consumer<Address> addressConsumer) {
+      this.addressConsumer = addressConsumer;
+    }
+
+    @Override
+    public BonsaiValue<BonsaiAccount> put(@NotNull final Address address, @NotNull final BonsaiValue<BonsaiAccount> value) {
+      addressConsumer.accept(address);
+      return super.put(address, value);
+    }
+
   }
 }
