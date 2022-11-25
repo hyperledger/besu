@@ -1461,7 +1461,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     registerConverters();
     handleUnstableOptions();
     preparePlugins();
-    detectJemalloc();
 
     final int exitCode =
         parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
@@ -1494,6 +1493,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       instantiateSignatureAlgorithmFactory();
 
       logger.info("Starting Besu");
+      detectJemalloc();
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
