@@ -1423,6 +1423,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
+      validateNearHearCheckPointSyncRequirements();
 
       instantiateSignatureAlgorithmFactory();
 
@@ -2002,6 +2003,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--fast-sync-min-peers can't be used with FULL sync-mode",
         !SyncMode.isFullSync(getDefaultSyncModeIfNotSet(syncMode)),
         singletonList("--fast-sync-min-peers"));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--Xnear-head-checkpoint-sync-enabled can only be used with X_CHECKPOINT sync-mode",
+        SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet(syncMode)),
+        singletonList("--Xnear-head-checkpoint-sync-enabled"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
@@ -3342,6 +3349,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         .getConfigOptions(genesisConfigOverrides))
             .getTerminalTotalDifficulty()
             .isPresent());
+  }
+
+  private void validateNearHearCheckPointSyncRequirements() {
+    final GenesisConfigOptions genesisOptions =
+        Optional.ofNullable(genesisConfigOptions)
+            .orElseGet(
+                () ->
+                    GenesisConfigFile.fromConfig(
+                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
+                        .getConfigOptions(genesisConfigOverrides));
+    final SynchronizerConfiguration synchronizerConfiguration =  unstableSynchronizerOptions.toDomainObject().build();
+    final OptionalLong mergeNetSplitBlockNumber = genesisOptions.getMergeNetSplitBlockNumber();
+
+    if(synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()
+        && mergeNetSplitBlockNumber.isEmpty()){
+      throw new InvalidConfigurationException("Near head checkpoint sync requires the mergeNetSplitBlock in the genesis file");
+    }
+    if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()
+        && (genesisOptions.getCheckpointOptions().getNumber().getAsLong()
+            < mergeNetSplitBlockNumber.getAsLong()))
+      throw new InvalidConfigurationException(
+          "Near head checkpoint sync requires a pivot block after the MergeSplitBlock");
   }
 
   private boolean isMergeEnabled() {
