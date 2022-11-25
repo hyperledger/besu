@@ -399,7 +399,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         OptionParser.format(snapsyncBytecodeCountPerRequest),
         SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
         OptionParser.format(snapsyncTrieNodeCountPerRequest),
-        OptionParser.format(isNearHeadCheckpointSyncEnabled),
-        NEAR_HEAD_CHECKPOINT_SYNC_FLAG);
+        NEAR_HEAD_CHECKPOINT_SYNC_FLAG,
+        OptionParser.format(isNearHeadCheckpointSyncEnabled));
   }
 }
