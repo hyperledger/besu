@@ -1414,7 +1414,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
-      validateNearHearCheckPointSyncRequirements();
 
       instantiateSignatureAlgorithmFactory();
 
@@ -1762,6 +1761,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateDnsOptionsParams();
     ensureValidPeerBoundParams();
     validateRpcOptionsParams();
+    validateNearHearCheckPointSyncRequirements();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
