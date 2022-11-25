@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
@@ -123,6 +124,13 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
     boolean payloadAttributesAreValid =
         maybePayloadAttributes.map(this::validatePayloadAttributes).orElse(true);
     if (!payloadAttributesAreValid) {
+      warnLambda(
+          LOG,
+          "Invalid payload attributes: {}",
+          () ->
+              maybePayloadAttributes
+                  .map(EnginePayloadAttributesParameterV2::serialize)
+                  .orElse(null));
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
     }
 

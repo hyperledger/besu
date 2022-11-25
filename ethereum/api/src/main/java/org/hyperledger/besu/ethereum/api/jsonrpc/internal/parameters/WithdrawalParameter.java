@@ -59,13 +59,12 @@ public class WithdrawalParameter {
         withdrawal.getAmount().toShortHexString());
   }
 
-  public String serialize() {
+  public JsonObject asJsonObject() {
     return new JsonObject()
         .put("index", index)
         .put("validatorIndex", validatorIndex)
         .put("address", address)
-        .put("amount", amount)
-        .encode();
+        .put("amount", amount);
   }
 
   @JsonGetter

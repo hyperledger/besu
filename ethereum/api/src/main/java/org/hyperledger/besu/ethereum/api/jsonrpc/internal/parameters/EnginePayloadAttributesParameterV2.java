@@ -69,7 +69,7 @@ public class EnginePayloadAttributesParameterV2 {
         .put(
             "withdrawals",
             Optional.ofNullable(withdrawals)
-                .map(w -> w.stream().map(WithdrawalParameter::serialize).collect(toList()))
+                .map(w -> w.stream().map(WithdrawalParameter::asJsonObject).collect(toList()))
                 .orElse(null))
         .encode();
   }
