@@ -282,8 +282,7 @@ public class SynchronizerConfiguration {
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
-
-    private boolean nearHeadCheckpointSyncEnabled = false;
+    private boolean nearHeadCheckpointSyncEnabled = DEFAULT_NEAR_HEAD_CHECKPOINT_SYNC;
 
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
