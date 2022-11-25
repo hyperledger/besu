@@ -5448,6 +5448,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void nearHeadCheckpointSyncShouldFailWhenGenesisHasNoMergeNetSplitBlock() {
+
+    parseCommand("--sync-mode", "X_CHECKPOINT", "--Xnear-head-checkpoint-sync-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Near head checkpoint sync requires the mergeNetSplitBlock in the genesis file");
+  }
+
+  @Test
   public void nearHeadCheckpointSyncShouldFailWhenGenesisUsesCheckpointFromPreMerge() {
     // using the default genesis which has a checkpoint sync block prior to the merge
     parseCommand("--sync-mode", "X_CHECKPOINT", "--Xnear-head-checkpoint-sync-enabled");
