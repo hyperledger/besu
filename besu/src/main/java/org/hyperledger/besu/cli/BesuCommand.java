@@ -3350,16 +3350,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         unstableSynchronizerOptions.toDomainObject().build();
     final OptionalLong mergeNetSplitBlockNumber = genesisOptions.getMergeNetSplitBlockNumber();
 
-    if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()
-        && mergeNetSplitBlockNumber.isEmpty()) {
-      throw new InvalidConfigurationException(
-          "Near head checkpoint sync requires the mergeNetSplitBlock in the genesis file");
+    if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()) {
+      mergeNetSplitBlockNumber.ifPresentOrElse(
+              value -> {
+                if (genesisOptions.getCheckpointOptions().getNumber().getAsLong() < value) {
+                  throw new InvalidConfigurationException(
+                          "Near head checkpoint sync requires a pivot block after the MergeSplitBlock");
+                }
+              },
+              () -> {
+                throw new InvalidConfigurationException(
+                        "Near head checkpoint sync requires the mergeNetSplitBlock in the genesis file");
+              });
     }
-    if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()
-        && (genesisOptions.getCheckpointOptions().getNumber().getAsLong()
-            < mergeNetSplitBlockNumber.getAsLong()))
-      throw new InvalidConfigurationException(
-          "Near head checkpoint sync requires a pivot block after the MergeSplitBlock");
   }
 
   private boolean isMergeEnabled() {
