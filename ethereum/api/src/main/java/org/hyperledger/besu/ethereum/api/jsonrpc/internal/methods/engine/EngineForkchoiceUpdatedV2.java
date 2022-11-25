@@ -208,7 +208,7 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
             .orElse(null);
     return protocolSchedule
-        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber() + 1)
         .getWithdrawalsValidator()
         .validateWithdrawals(withdrawals);
   }
