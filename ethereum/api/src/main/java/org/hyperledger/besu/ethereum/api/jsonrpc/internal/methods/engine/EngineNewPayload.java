@@ -96,6 +96,11 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     traceLambda(LOG, "blockparam: {}", () -> Json.encodePrettily(blockParam));
 
+    if (mergeContext.get().isSyncing()) {
+      LOG.debug("We are syncing");
+      return respondWith(reqId, blockParam, null, SYNCING);
+    }
+
     final List<Transaction> transactions;
     try {
       transactions =
@@ -182,12 +187,9 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
-    if (mergeContext.get().isSyncing() || parentHeader.isEmpty()) {
-      LOG.debug(
-          "isSyncing: {} parentHeaderMissing: {}, adding {} to backwardsync",
-          mergeContext.get().isSyncing(),
-          parentHeader.isEmpty(),
-          block.getHash());
+    if (parentHeader.isEmpty()) {
+      debugLambda(
+          LOG, "Parent of block {} is not present, append it to backward sync", block::toLogString);
       mergeCoordinator.appendNewPayloadToSync(block);
 
       return respondWith(reqId, blockParam, null, SYNCING);

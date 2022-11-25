@@ -433,15 +433,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public BlockProcessingResult validateBlock(final Block block) {
-
-    final var chain = protocolContext.getBlockchain();
-    chain
-        .getBlockHeader(block.getHeader().getParentHash())
-        .ifPresentOrElse(
-            blockHeader ->
-                debugLambda(LOG, "Parent of block {} is already present", block::toLogString),
-            () -> backwardSyncContext.syncBackwardsUntil(block));
-
     final var validationResult =
         protocolSchedule
             .getByBlockNumber(block.getHeader().getNumber())
