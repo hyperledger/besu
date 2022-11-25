@@ -46,7 +46,12 @@ public interface WithdrawalsValidator {
 
     @Override
     public boolean validateWithdrawals(final List<Withdrawal> withdrawals) {
-      return withdrawals == null;
+      final boolean isValid = withdrawals == null;
+      if (!isValid) {
+        LOG.warn(
+            "withdrawals should be null when Withdrawals are prohibited but were: {}", withdrawals);
+      }
+      return isValid;
     }
   }
 
@@ -66,7 +71,11 @@ public interface WithdrawalsValidator {
 
     @Override
     public boolean validateWithdrawals(final List<Withdrawal> withdrawals) {
-      return withdrawals != null;
+      final boolean isValid = withdrawals != null;
+      if (!isValid) {
+        LOG.warn("withdrawals should not be null when Withdrawals are activated");
+      }
+      return isValid;
     }
   }
 }
