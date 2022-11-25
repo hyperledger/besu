@@ -93,7 +93,7 @@ public class SynchronizerOptionsTest
 
   @Override
   protected List<String> getFieldsToIgnore() {
-    return Arrays.asList("fastSyncMinimumPeerCount");
+    return Arrays.asList("fastSyncMinimumPeerCount", "nearHeadCheckpointSyncEnabled");
   }
 
   @Override
