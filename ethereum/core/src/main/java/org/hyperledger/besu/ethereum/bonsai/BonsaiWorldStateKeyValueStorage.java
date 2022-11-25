@@ -114,7 +114,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
     Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    if (getFlatDatabaseMode().equals(FlatDatabaseMode.PARTIAL) && response.isEmpty()) {
+    /*if (getFlatDatabaseMode().equals(FlatDatabaseMode.PARTIAL) && response.isEmpty()) {
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (worldStateRootHash.isPresent()) {
         response =
@@ -124,7 +124,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
       }
-    }
+    }*/
     return response;
   }
 
@@ -197,7 +197,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         storageStorage
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
-    if (getFlatDatabaseMode().equals(FlatDatabaseMode.PARTIAL) && response.isEmpty()) {
+    /*if (getFlatDatabaseMode().equals(FlatDatabaseMode.PARTIAL) && response.isEmpty()) {
       final Optional<Bytes> account = getAccount(accountHash);
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (account.isPresent() && worldStateRootHash.isPresent()) {
@@ -214,7 +214,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
       }
-    }
+    }*/
     return response;
   }
 

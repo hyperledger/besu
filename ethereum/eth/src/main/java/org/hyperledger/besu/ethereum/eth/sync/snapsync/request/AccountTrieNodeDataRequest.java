@@ -24,7 +24,9 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -61,6 +63,24 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
       downloadState.setRootNodeData(data);
     }
     updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
+
+    if (getSyncMode(worldStateStorage) == BONSAI) {
+      deletePotentialOldAccountEntries(
+          (BonsaiWorldStateKeyValueStorage) worldStateStorage, getLocation(), data);
+      final Node<Bytes> node = TrieNodeDecoder.decode(getLocation(), data);
+      node.getValue()
+          .ifPresent(
+              value -> {
+                final Hash accountHash =
+                    Hash.wrap(
+                        Bytes32.wrap(
+                            CompactEncoding.pathToBytes(
+                                Bytes.concatenate(getLocation(), node.getPath()))));
+                ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                    .putAccountInfoState(accountHash, value);
+              });
+    }
+
     return 1;
   }
 
@@ -122,14 +142,6 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public void pruneNode(final WorldStateStorage worldStateStorage) {
-    if (getSyncMode(worldStateStorage) == BONSAI) {
-      deletePotentialOldAccountEntries(
-          (BonsaiWorldStateKeyValueStorage) worldStateStorage, getLocation(), data);
-    }
-  }
-
-  @Override
   protected Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
       final WorldStateStorage worldStateStorage,
       final Bytes location,
@@ -142,11 +154,6 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     final Hash accountHash =
         Hash.wrap(
             Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putAccountInfoState(accountHash, value)
-          .commit();
-    }
 
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
