@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.EvictingQueue;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.Optional;
@@ -31,10 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.EvictingQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 public class PostMergeContext implements MergeContext {
   private static final Logger LOG = LoggerFactory.getLogger(PostMergeContext.class);
@@ -63,6 +62,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
+  private boolean isNearHeadCheckpointSync;
 
   // TODO: cleanup - isChainPruningEnabled will not be required after
   // https://github.com/hyperledger/besu/pull/4703 is merged.
@@ -77,6 +77,7 @@ public class PostMergeContext implements MergeContext {
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
+    this.isNearHeadCheckpointSync = false;
   }
 
   public static PostMergeContext get() {
@@ -139,7 +140,9 @@ public class PostMergeContext implements MergeContext {
     return Optional.ofNullable(syncState.get()).map(s -> !s.isInSync()).orElse(Boolean.TRUE)
         // this is necessary for when we do not have a sync target yet, like at startup.
         // not being stopped at ttd implies we are syncing.
-        && !syncState.get().hasReachedTerminalDifficulty().orElse(Boolean.FALSE);
+        && Optional.ofNullable(syncState.get())
+            .map(s -> !s.hasReachedTerminalDifficulty().get())
+            .orElse(Boolean.FALSE);
   }
 
   @Override
@@ -278,5 +281,15 @@ public class PostMergeContext implements MergeContext {
   @Override
   public boolean isChainPruningEnabled() {
     return isChainPruningEnabled;
+  }
+
+  public PostMergeContext setIsNearHeadCheckpointSync(final boolean isNearHeadCheckpointSync) {
+    this.isNearHeadCheckpointSync = isNearHeadCheckpointSync;
+    return this;
+  }
+
+  @Override
+  public boolean isNearHeadCheckpointSync() {
+    return this.isNearHeadCheckpointSync;
   }
 }
