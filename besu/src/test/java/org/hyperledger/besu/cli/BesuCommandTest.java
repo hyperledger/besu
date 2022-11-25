@@ -105,6 +105,7 @@ import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -5424,5 +5425,42 @@ public class BesuCommandTest extends CommandTestAbstract {
         .contains("Port(s) '[8545]' already in use. Check for other processes using the port(s).");
 
     serverSocket.close();
+  }
+
+  @Test
+  public void nearHeadCheckpointSyncShouldFailWhenGenesisUsesCheckpointFromPreMerge() {
+    // using the default genesis which has a checkpoint sync block prior to the merge
+    parseCommand("--sync-mode", "X_CHECKPOINT", "--Xnear-head-checkpoint-sync-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Near head checkpoint sync requires a pivot block after the MergeSplitBlock");
+  }
+
+  @Test
+  public void nearHeadCheckpointSyncShouldFailWhenSyncModeIsNotCheckpoint() {
+
+    parseCommand("--sync-mode", "X_SNAP", "--Xnear-head-checkpoint-sync-enabled");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--Xnear-head-checkpoint-sync-enabled can only be used with X_CHECKPOINT sync-mode");
+  }
+
+  @Test
+  public void nearHeadCheckpointSyncWithPostMergeBlockSucceeds() throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
+            StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
+
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "X_CHECKPOINT",
+        "--Xnear-head-checkpoint-sync-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }
