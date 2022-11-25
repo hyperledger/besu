@@ -72,13 +72,13 @@ public class MainnetBlockBodyValidatorTest {
   }
 
   @Test
-  public void validateBodyLight_ReturnsTrue_WhenWithdrawalsAllowed_WithNullWithdrawals() {
+  public void validateBodyLight_ReturnsFalse_WhenWithdrawalsAllowed_WithNullWithdrawals() {
     whenWithdrawalsAllowed();
 
     final boolean result =
         validator.validateBodyLight(null, blockWithNullWithdrawals(), emptyList(), null);
 
-    assertThat(result).isTrue();
+    assertThat(result).isFalse();
   }
 
   @Test
