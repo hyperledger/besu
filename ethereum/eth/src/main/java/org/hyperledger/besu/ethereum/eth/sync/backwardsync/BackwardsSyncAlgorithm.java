@@ -63,11 +63,7 @@ public class BackwardsSyncAlgorithm {
               result -> {
                 LOG.info("Backward sync target block is {}", result.toLogString());
                 context.getBackwardChain().removeFromHashToAppend(firstHash.get());
-                context
-                    .getStatus()
-                    .setSyncRange(
-                        context.getProtocolContext().getBlockchain().getChainHeadBlockNumber(),
-                        result.getHeader().getNumber());
+                context.getStatus().updateTargetHeight(result.getHeader().getNumber());
               });
     }
     if (!context.isReady()) {
