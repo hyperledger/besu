@@ -3359,12 +3359,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     GenesisConfigFile.fromConfig(
                             genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
                         .getConfigOptions(genesisConfigOverrides));
-    final SynchronizerConfiguration synchronizerConfiguration =  unstableSynchronizerOptions.toDomainObject().build();
+    final SynchronizerConfiguration synchronizerConfiguration =
+        unstableSynchronizerOptions.toDomainObject().build();
     final OptionalLong mergeNetSplitBlockNumber = genesisOptions.getMergeNetSplitBlockNumber();
 
-    if(synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()
-        && mergeNetSplitBlockNumber.isEmpty()){
-      throw new InvalidConfigurationException("Near head checkpoint sync requires the mergeNetSplitBlock in the genesis file");
+    if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()
+        && mergeNetSplitBlockNumber.isEmpty()) {
+      throw new InvalidConfigurationException(
+          "Near head checkpoint sync requires the mergeNetSplitBlock in the genesis file");
     }
     if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()
         && (genesisOptions.getCheckpointOptions().getNumber().getAsLong()
