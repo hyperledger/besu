@@ -68,7 +68,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
     updater = new BonsaiWorldStateUpdater(this,
-            (account)-> archive.getOptimizedMerkleTrieLoader().preLoadAccount(worldStateStorage, worldStateRootHash, account));
+            (addr, value)-> archive.getOptimizedMerkleTrieLoader().preLoadAccount(worldStateStorage, worldStateRootHash, addr),
+            (addr, value) -> archive.getOptimizedMerkleTrieLoader().preLoadStorage(worldStateStorage,worldStateRootHash, addr, value)
+    );
   }
 
   public BonsaiWorldStateArchive getArchive() {
@@ -176,7 +178,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private void updateAccountStorageState(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater) {
-    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
+    for (final Map.Entry<Address, BonsaiWorldStateUpdater.StorageConsumingMap<BonsaiValue<UInt256>>> storageAccountUpdate :
         worldStateUpdater.getStorageToUpdate().entrySet()) {
       final Address updatedAddress = storageAccountUpdate.getKey();
       final Hash updatedAddressHash = Hash.hash(updatedAddress);
@@ -188,7 +190,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
         final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
             new StoredMerklePatriciaTrie<>(
-                (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
+                (location, key) -> archive.getOptimizedMerkleTrieLoader().getAccountStorageTrieNode(worldStateStorage,updatedAddressHash, location, key),
                 storageRoot,
                 Function.identity(),
                 Function.identity());

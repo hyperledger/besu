@@ -94,8 +94,8 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   }
 
   private void updateAccountStorage(
-      final BonsaiWorldStateUpdater worldStateUpdater,
-      final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate) {
+          final BonsaiWorldStateUpdater worldStateUpdater,
+          final Map.Entry<Address, BonsaiWorldStateUpdater.StorageConsumingMap<BonsaiValue<UInt256>>> storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
     final Hash updatedAddressHash = Hash.hash(updatedAddress);
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
@@ -107,7 +107,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
+              (location, key) -> archive.getOptimizedMerkleTrieLoader().getAccountStorageTrieNode(worldStateStorage,updatedAddressHash, location, key),
               storageRoot,
               Function.identity(),
               Function.identity());

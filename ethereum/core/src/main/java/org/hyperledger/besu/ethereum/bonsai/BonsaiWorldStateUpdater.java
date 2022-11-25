@@ -38,7 +38,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -48,25 +47,26 @@ import org.jetbrains.annotations.NotNull;
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
 
-  private final WrapperMap accountsToUpdate;
+  private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
+  private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
+  private final Consumer<Hash> storagePreloader;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
-  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate =
-      new ConcurrentHashMap<>();
-  private final Consumer<Address> accountPreload;
+  private final Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> storageToUpdate = new ConcurrentHashMap<>();
 
-  BonsaiWorldStateUpdater(final BonsaiWorldView world, final Consumer<Address> accountPreload) {
+  BonsaiWorldStateUpdater(final BonsaiWorldView world, final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader, final Consumer<Hash> storagePreloader) {
     super(world);
-    this.accountPreload = accountPreload;
-    this.accountsToUpdate = new WrapperMap(accountPreload);
+    this.accountsToUpdate = new AccountConsumingMap<>(accountPreloader);
+    this.accountPreloader = accountPreloader;
+    this.storagePreloader = storagePreloader;
   }
 
   public BonsaiWorldStateUpdater copy() {
-    final BonsaiWorldStateUpdater copy = new BonsaiWorldStateUpdater(wrappedWorldView(), accountPreload);
+    final BonsaiWorldStateUpdater copy = new BonsaiWorldStateUpdater(wrappedWorldView(), accountPreloader, storagePreloader);
     copy.cloneFromUpdater(this);
     return copy;
   }
@@ -131,7 +131,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return storageToClear;
   }
 
-  Map<Address, Map<Hash, BonsaiValue<UInt256>>> getStorageToUpdate() {
+  Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> getStorageToUpdate() {
     return storageToUpdate;
   }
 
@@ -188,7 +188,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
       // mark all updated storage as to be cleared
       final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
-          storageToUpdate.computeIfAbsent(deletedAddress, k -> new ConcurrentHashMap<>());
+          storageToUpdate.computeIfAbsent(deletedAddress, k -> new StorageConsumingMap<>(deletedAddress, storagePreloader));
       final Iterator<Map.Entry<Hash, BonsaiValue<UInt256>>> iter =
           deletedStorageUpdates.entrySet().iterator();
       while (iter.hasNext()) {
@@ -260,8 +260,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
 
-              final Map<Hash, BonsaiValue<UInt256>> pendingStorageUpdates =
-                  storageToUpdate.computeIfAbsent(updatedAddress, __ -> new ConcurrentHashMap<>());
+              final StorageConsumingMap<BonsaiValue<UInt256>> pendingStorageUpdates =
+                  storageToUpdate.computeIfAbsent(updatedAddress, __ -> new StorageConsumingMap<>(updatedAddress,storagePreloader));
               if (tracked.getStorageWasCleared()) {
                 storageToClear.add(updatedAddress);
                 pendingStorageUpdates.clear();
@@ -277,7 +277,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final Hash slotHash = Hash.hash(keyUInt);
                     final UInt256 value = storageUpdate.getValue();
-                    final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
+                    final    BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
                     if (pendingValue == null) {
                       pendingStorageUpdates.put(
                           slotHash,
@@ -337,7 +337,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     valueUInt.ifPresent(
         v ->
             storageToUpdate
-                .computeIfAbsent(address, key -> new HashMap<>())
+                .computeIfAbsent(address, key -> new StorageConsumingMap<>(address, storagePreloader))
                 .put(slotHash, new BonsaiValue<>(v, v)));
     return valueUInt;
   }
@@ -416,7 +416,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
           blockHash);
     }
 
-    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> updatesStorage :
+    for (final Map.Entry<Address,StorageConsumingMap<BonsaiValue<UInt256>>> updatesStorage :
         storageToUpdate.entrySet()) {
       final Address address = updatesStorage.getKey();
       for (final Map.Entry<Hash, BonsaiValue<UInt256>> slotUpdate :
@@ -592,7 +592,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   private Map<Hash, BonsaiValue<UInt256>> maybeCreateStorageMap(
       final Map<Hash, BonsaiValue<UInt256>> storageMap, final Address address) {
     if (storageMap == null) {
-      final Map<Hash, BonsaiValue<UInt256>> newMap = new HashMap<>();
+      final StorageConsumingMap<BonsaiValue<UInt256>> newMap = new StorageConsumingMap<>(address, storagePreloader);
       storageToUpdate.put(address, newMap);
       return newMap;
     } else {
@@ -621,7 +621,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if (storageValue.isPresent()) {
         slotValue = new BonsaiValue<>(storageValue.get(), storageValue.get());
         storageToUpdate
-            .computeIfAbsent(address, k -> new ConcurrentHashMap<>())
+            .computeIfAbsent(address, k -> new StorageConsumingMap<>(address, storagePreloader))
             .put(slotHash, slotValue);
       }
     }
@@ -692,19 +692,47 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         && codeToUpdate.isEmpty());
   }
 
-  public static class WrapperMap extends ConcurrentHashMap<Address, BonsaiValue<BonsaiAccount>>{
+  public static class AccountConsumingMap<T> extends ConcurrentHashMap<Address, T>{
 
-    private final Consumer<Address> addressConsumer;
+    private final Consumer<T> consumer;
 
-    public WrapperMap(final Consumer<Address> addressConsumer) {
-      this.addressConsumer = addressConsumer;
+    public AccountConsumingMap(final Consumer<T> consumer) {
+      this.consumer = consumer;
     }
 
     @Override
-    public BonsaiValue<BonsaiAccount> put(@NotNull final Address address, @NotNull final BonsaiValue<BonsaiAccount> value) {
-      addressConsumer.accept(address);
+    public T put(@NotNull final Address address, @NotNull final T value) {
+      consumer.process(address, value);
       return super.put(address, value);
     }
 
+    public Consumer<T> getConsumer() {
+      return consumer;
+    }
+  }
+
+  public static class  StorageConsumingMap <T> extends ConcurrentHashMap<Hash, T>{
+
+    private final Address address;
+    private final Consumer<Hash> consumer;
+
+    public StorageConsumingMap(final Address address, final Consumer<Hash> consumer) {
+      this.address = address;
+      this.consumer = consumer;
+    }
+
+    @Override
+    public T put(@NotNull final Hash slotHash, @NotNull final T value) {
+      consumer.process(address, slotHash);
+      return super.put(slotHash, value);
+    }
+
+    public Consumer<Hash> getConsumer() {
+      return consumer;
+    }
+  }
+
+  public interface Consumer<T>{
+    void process(final Address address, T value);
   }
 }
