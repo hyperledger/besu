@@ -26,14 +26,14 @@ public class ChainDataPruningOptions {
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xchain-data-pruning-enabled"},
+      names = {"--Xchain-pruning-enabled"},
       description =
           "Enable the chain pruner to actively prune old chain data (default: ${DEFAULT-VALUE})")
   private final Boolean chainDataPruningEnabled = Boolean.FALSE;
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xchain-data-pruning-blocks-retained"},
+      names = {"--Xchain-pruning-blocks-retained"},
       description =
           "The number of recent blocks for which to keep the chain data. Must be >= "
               + DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED
@@ -43,7 +43,7 @@ public class ChainDataPruningOptions {
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xchain-data-pruning-frequency"},
+      names = {"--Xchain-pruning-frequency"},
       description =
           "The number of blocks added to the chain between two pruning operations. Must be non-negative (default: ${DEFAULT-VALUE})")
   private final PositiveNumber chainDataPruningBlocksFrequency =
