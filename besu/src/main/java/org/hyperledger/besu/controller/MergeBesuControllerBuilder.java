@@ -183,7 +183,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .get()
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
-                    .orElse(Difficulty.ZERO));
+                    .orElse(Difficulty.ZERO))
+            .setIsNearHeadCheckpointSync(syncConfig.isNearHeadCheckpointSyncEnabled());
 
     blockchain
         .getFinalized()

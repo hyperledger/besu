@@ -63,6 +63,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
+  private boolean isNearHeadCheckpointSync;
 
   @VisibleForTesting
   PostMergeContext() {
@@ -73,6 +74,7 @@ public class PostMergeContext implements MergeContext {
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
+    this.isNearHeadCheckpointSync = false;
   }
 
   public static PostMergeContext get() {
@@ -135,7 +137,9 @@ public class PostMergeContext implements MergeContext {
     return Optional.ofNullable(syncState.get()).map(s -> !s.isInSync()).orElse(Boolean.TRUE)
         // this is necessary for when we do not have a sync target yet, like at startup.
         // not being stopped at ttd implies we are syncing.
-        && !syncState.get().hasReachedTerminalDifficulty().orElse(Boolean.FALSE);
+        && Optional.ofNullable(syncState.get())
+            .map(s -> !s.hasReachedTerminalDifficulty().get())
+            .orElse(Boolean.FALSE);
   }
 
   @Override
@@ -264,5 +268,15 @@ public class PostMergeContext implements MergeContext {
       this.payloadIdentifier = payloadIdentifier;
       this.block = block;
     }
+  }
+
+  public PostMergeContext setIsNearHeadCheckpointSync(final boolean isNearHeadCheckpointSync) {
+    this.isNearHeadCheckpointSync = isNearHeadCheckpointSync;
+    return this;
+  }
+
+  @Override
+  public boolean isNearHeadCheckpointSync() {
+    return this.isNearHeadCheckpointSync;
   }
 }

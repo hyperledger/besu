@@ -211,6 +211,12 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
 
+      if (configOptions.getMergeNetSplitBlockNumber().isPresent()
+          && (configOptions.getCheckpointOptions().getNumber().getAsLong()
+              > configOptions.getMergeNetSplitBlockNumber().getAsLong())) {
+        return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
+      }
+
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
         // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*

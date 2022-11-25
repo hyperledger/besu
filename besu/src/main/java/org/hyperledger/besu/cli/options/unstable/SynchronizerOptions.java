@@ -72,6 +72,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
 
+  private static final String NEAR_HEAD_CHECKPOINT_SYNC_FLAG =
+      "--Xnear-head-checkpoint-sync-enabled";
+
   @CommandLine.Option(
       names = BLOCK_PROPAGATION_RANGE_FLAG,
       hidden = true,
@@ -272,6 +275,13 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int snapsyncTrieNodeCountPerRequest =
       SnapSyncConfiguration.DEFAULT_TRIENODE_COUNT_PER_REQUEST;
 
+  @CommandLine.Option(
+      names = {NEAR_HEAD_CHECKPOINT_SYNC_FLAG},
+      hidden = true,
+      description = "Starts sync from a near-head pivot block.")
+  private Boolean isNearHeadCheckpointSyncEnabled =
+      SynchronizerConfiguration.DEFAULT_NEAR_HEAD_CHECKPOINT_SYNC;
+
   private SynchronizerOptions() {}
 
   public static SynchronizerOptions create() {
@@ -308,6 +318,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getBytecodeCountPerRequest();
     options.snapsyncTrieNodeCountPerRequest =
         config.getSnapSyncConfiguration().getTrienodeCountPerRequest();
+    options.isNearHeadCheckpointSyncEnabled = config.isNearHeadCheckpointSyncEnabled();
     return options;
   }
 
@@ -338,6 +349,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .bytecodeCountPerRequest(snapsyncBytecodeCountPerRequest)
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .build());
+    builder.setNearHeadCheckpointSyncEnabled(isNearHeadCheckpointSyncEnabled);
 
     return builder;
   }
@@ -386,6 +398,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
         OptionParser.format(snapsyncBytecodeCountPerRequest),
         SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncTrieNodeCountPerRequest));
+        OptionParser.format(snapsyncTrieNodeCountPerRequest),
+        OptionParser.format(isNearHeadCheckpointSyncEnabled),
+        NEAR_HEAD_CHECKPOINT_SYNC_FLAG);
   }
 }
