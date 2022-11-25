@@ -21,8 +21,10 @@
 - Remove some log statements that are keeping some objects live in heap for a long time, to reduce the amount of memory required during initial sync [#4705](https://github.com/hyperledger/besu/pull/4705)
 - Add field `type` to Transaction receipt object (eth_getTransactionReceipt) [#4505](https://github.com/hyperledger/besu/issues/4505)
 - Print an overview of configuration and system information at startup [#4451](https://github.com/hyperledger/besu/pull/4451)
+- Do not send new payloads to backward sync if initial sync is in progress [#4720](https://github.com/hyperledger/besu/issues/4720)
 
 ### Bug Fixes
+- Restore updating chain head and finalized block during backward sync [#4718](https://github.com/hyperledger/besu/pull/4718)
 
 ### Download Links
 
@@ -75,7 +77,6 @@
 
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.tar.gz  / sha256: 88fb5df567e4ec3547d7d2970cfef00debbd020c0da66b19166d43779b3b2b85
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.zip / sha256: c8e39f7c879409cb9b47f4d3de5e9c521249083830a8c9a45e8a14a319fe195d
-
 
 ## 22.10.0-RC2
 
