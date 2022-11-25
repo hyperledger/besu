@@ -109,7 +109,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   private boolean validateWithdrawals(final BlockHeader header, final BlockBody body) {
     final WithdrawalsValidator withdrawalsValidator =
         protocolSchedule.getByBlockNumber(header.getNumber()).getWithdrawalsValidator();
-    // this allows post-shanghai (AllowedWithdrawals) to work with V1 requests that contain null withdrawals
+    // this allows post-shanghai (AllowedWithdrawals) to work with V1 requests that contain null
+    // withdrawals
     if (body.getWithdrawals().isPresent()
         && !withdrawalsValidator.validateRoot(header.getWithdrawalRoot())) {
       LOG.warn("Invalid withdrawals root {}", header.getWithdrawalRoot());
