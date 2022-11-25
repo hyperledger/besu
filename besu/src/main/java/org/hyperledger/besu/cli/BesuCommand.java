@@ -1461,11 +1461,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     registerConverters();
     handleUnstableOptions();
     preparePlugins();
+    detectJemalloc();
 
     final int exitCode =
         parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
-
-    detectJemalloc();
 
     return exitCode;
   }
