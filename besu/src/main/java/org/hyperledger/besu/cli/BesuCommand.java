@@ -1423,7 +1423,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
-      validateNearHearCheckPointSyncRequirements();
 
       instantiateSignatureAlgorithmFactory();
 
@@ -1781,6 +1780,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     ensureValidPeerBoundParams();
     validateRpcOptionsParams();
     validateChainDataPruningParams();
+    validateNearHearCheckPointSyncRequirements();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
@@ -1929,17 +1929,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(
           this.commandLine,
           "Invalid value for option '--rpc-ws-api-methods-no-auth', options must be valid RPC methods");
-    }
-  }
-
-  public void validateChainDataPruningParams() {
-    if (unstableChainPruningOptions.getChainDataPruningEnabled()
-        && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
-            < ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
-      throw new ParameterException(
-          this.commandLine,
-          "--Xchain-pruning-blocks-retained must be >= "
-              + ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED);
     }
   }
 
@@ -2206,8 +2195,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
-        .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
-        .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject());
+        .maxPeers(p2PDiscoveryOptionGroup.maxPeers);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2943,7 +2931,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
-            .rpcMaxLogsRange(rpcMaxLogsRange)
             .build();
 
     addShutdownHook(runner);
@@ -3186,7 +3173,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
-  protected void checkIfRequiredPortsAreAvailable() {
+  private void checkIfRequiredPortsAreAvailable() {
     final List<Integer> unavailablePorts = new ArrayList<>();
     getEffectivePorts().stream()
         .filter(Objects::nonNull)
