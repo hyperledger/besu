@@ -211,8 +211,9 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
 
-      if (configOptions.getCheckpointOptions().getNumber().getAsLong()
-          > configOptions.getMergeNetSplitBlockNumber().getAsLong()) {
+      if (configOptions.getMergeNetSplitBlockNumber().isPresent()
+          && (configOptions.getCheckpointOptions().getNumber().getAsLong()
+              > configOptions.getMergeNetSplitBlockNumber().getAsLong())) {
         return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
       }
 
