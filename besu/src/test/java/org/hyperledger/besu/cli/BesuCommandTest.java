@@ -5442,7 +5442,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--sync-mode", "X_SNAP", "--Xnear-head-checkpoint-sync-enabled");
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--Xnear-head-checkpoint-sync-enabled can only be used with X_CHECKPOINT sync-mode");
+        .contains(
+            "--Xnear-head-checkpoint-sync-enabled can only be used with X_CHECKPOINT sync-mode");
   }
 
   @Test

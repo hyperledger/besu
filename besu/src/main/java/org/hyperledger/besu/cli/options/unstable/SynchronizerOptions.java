@@ -72,7 +72,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
 
-  private static final String NEAR_HEAD_CHECKPOINT_SYNC_FLAG = "--Xnear-head-checkpoint-sync-enabled";
+  private static final String NEAR_HEAD_CHECKPOINT_SYNC_FLAG =
+      "--Xnear-head-checkpoint-sync-enabled";
 
   @CommandLine.Option(
       names = BLOCK_PROPAGATION_RANGE_FLAG,
