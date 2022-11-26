@@ -62,12 +62,12 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     if (isRoot()) {
       downloadState.setRootNodeData(data);
     }
-    updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
 
     if (getSyncMode(worldStateStorage) == BONSAI) {
       deletePotentialOldAccountEntries(
           (BonsaiWorldStateKeyValueStorage) worldStateStorage, getLocation(), data);
       final Node<Bytes> node = TrieNodeDecoder.decode(getLocation(), data);
+      updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
       node.getValue()
           .ifPresent(
               value -> {

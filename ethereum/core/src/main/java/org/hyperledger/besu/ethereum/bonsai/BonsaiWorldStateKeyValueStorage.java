@@ -22,23 +22,18 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);

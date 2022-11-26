@@ -177,10 +177,14 @@ public class DynamicPivotBlockManager {
   }
 
   public void switchToNewPivotBlock(final BiConsumer<BlockHeader, Boolean> onSwitchDone) {
-      LOG.info("switchToNewPivotBlock "+lastPivotBlockFound);
+    LOG.info("switchToNewPivotBlock " + lastPivotBlockFound);
     lastPivotBlockFound.ifPresentOrElse(
         blockHeader -> {
-            LOG.info("switchToNewPivotBlock if"+syncState.getPivotBlockHeader().filter(blockHeader::equals).isEmpty()+" "+syncState.getPivotBlockHeader());
+          LOG.info(
+              "switchToNewPivotBlock if"
+                  + syncState.getPivotBlockHeader().filter(blockHeader::equals).isEmpty()
+                  + " "
+                  + syncState.getPivotBlockHeader());
           if (syncState.getPivotBlockHeader().filter(blockHeader::equals).isEmpty()) {
             debugLambda(
                 LOG,
@@ -193,8 +197,8 @@ public class DynamicPivotBlockManager {
           onSwitchDone.accept(blockHeader, true);
         },
         () -> {
-            LOG.info("switchToNewPivotBlock else"+syncState.getPivotBlockHeader());
-            onSwitchDone.accept(syncState.getPivotBlockHeader().orElseThrow(), false);
+          LOG.info("switchToNewPivotBlock else" + syncState.getPivotBlockHeader());
+          onSwitchDone.accept(syncState.getPivotBlockHeader().orElseThrow(), false);
         });
   }
 

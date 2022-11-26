@@ -51,11 +51,11 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
-    updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     if (getSyncMode(worldStateStorage) == BONSAI) {
       deletePotentialOldStorageEntries(
           (BonsaiWorldStateKeyValueStorage) worldStateStorage, accountHash, getLocation(), data);
       final Node<Bytes> node = TrieNodeDecoder.decode(getLocation(), data);
+      updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
       node.getValue()
           .ifPresent(
               value -> {
