@@ -69,7 +69,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
     updater = new BonsaiWorldStateUpdater(this,
             (addr, value)-> archive.getOptimizedMerkleTrieLoader().preLoadAccount(worldStateStorage, worldStateRootHash, addr),
-            (addr, value) -> archive.getOptimizedMerkleTrieLoader().preLoadStorage(worldStateStorage,worldStateRootHash, addr, value)
+            (addr, value) -> archive.getOptimizedMerkleTrieLoader().preLoadStorage(worldStateStorage, addr, value)
     );
   }
 

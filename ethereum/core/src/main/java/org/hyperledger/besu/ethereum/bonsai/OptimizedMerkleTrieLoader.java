@@ -15,15 +15,10 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 
-import java.math.BigInteger;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,7 +29,6 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 public class OptimizedMerkleTrieLoader {
 
@@ -42,9 +36,6 @@ public class OptimizedMerkleTrieLoader {
       CacheBuilder.newBuilder().maximumSize(100_000).build();
     private final Cache<Bytes, Bytes> storageNodes =
             CacheBuilder.newBuilder().maximumSize(200_000).build();
-
-    private final AtomicInteger accountNodeFound  = new AtomicInteger(0);
-    private final AtomicInteger storageNodeFound  = new AtomicInteger(0);
 
     public void preLoadAccount(final BonsaiWorldStateKeyValueStorage worldStateStorage, final Hash worldStateRootHash, final Address account) {
     CompletableFuture.runAsync(
@@ -63,34 +54,23 @@ public class OptimizedMerkleTrieLoader {
             });
   }
 
-    public void preLoadStorage(final BonsaiWorldStateKeyValueStorage worldStateStorage, final Hash worldStateRootHash, final Address account, final Hash slotHash) {
+    public void preLoadStorage(final BonsaiWorldStateKeyValueStorage worldStateStorage, final Address account, final Hash slotHash) {
         CompletableFuture.runAsync(
                 () -> {
-                    final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
-                            new StoredMerklePatriciaTrie<>(
-                                    (location, hash) -> {
-                                        Optional<Bytes> node = worldStateStorage.getAccountStateTrieNode(location, hash);
-                                        node.ifPresent(bytes -> accountsNodes.put(Hash.hash(bytes),bytes));
-                                        return node;
-                                    },
-                                    worldStateRootHash,
-                                    Function.identity(),
-                                    Function.identity());
-                    accountTrie.get(Hash.hash(account)).ifPresent(value -> {
-                        StateTrieAccountValue stateTrieAccountValue = StateTrieAccountValue.readFrom(RLP.input(value));
+                    final Hash accountHash = Hash.hash(account);
+                    worldStateStorage.getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY)).ifPresent(storageRoot -> {
                         final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
                                 new StoredMerklePatriciaTrie<>(
                                         (location, hash) -> {
-                                            Optional<Bytes> node = worldStateStorage.getAccountStorageTrieNode(Hash.hash(account), location, hash);
+                                            Optional<Bytes> node = worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash);
                                             node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes),bytes));
                                             return node;
                                         },
-                                        stateTrieAccountValue.getStorageRoot(),
+                                        Hash.hash(storageRoot),
                                         Function.identity(),
                                         Function.identity());
-                        storageTrie.get(Hash.hash(slotHash));
+                        storageTrie.get(slotHash);
                     });
-
                 });
     }
 
@@ -101,9 +81,6 @@ public class OptimizedMerkleTrieLoader {
     } else {
       Optional<Bytes> node = Optional.ofNullable(accountsNodes.getIfPresent(nodeHash));
       if(node.isPresent()){
-          if(accountNodeFound.incrementAndGet()%1000==0){
-              System.out.println("Found "+accountNodeFound.get()+" account nodes with cache size "+accountsNodes.size());
-          }
         return node;
       } else {
         return worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash);
@@ -118,9 +95,6 @@ public class OptimizedMerkleTrieLoader {
         } else {
             Optional<Bytes> node = Optional.ofNullable(storageNodes.getIfPresent(nodeHash));
             if(node.isPresent()){
-                if(storageNodeFound.incrementAndGet()%1000==0){
-                    System.out.println("Found "+storageNodeFound.get()+" storage nodes with cache size "+storageNodes.size());
-                }
                 return node;
             } else {
                 return worldStateKeyValueStorage.getAccountStorageTrieNode(accountHash,location, nodeHash);
