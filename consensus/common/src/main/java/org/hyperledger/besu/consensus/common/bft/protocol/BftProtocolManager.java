@@ -113,4 +113,9 @@ public class BftProtocolManager implements ProtocolManager {
       final boolean initiatedByPeer) {
     peers.remove(peerConnection);
   }
+
+  @Override
+  public int getHighestProtocolVersion() {
+    return supportedCapability.getVersion();
+  }
 }
