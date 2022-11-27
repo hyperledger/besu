@@ -47,8 +47,9 @@ public class OptimizedMerkleTrieLoader {
     CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
     cacheMetrics.addCache("accountsNodes", accountsNodes);
     cacheMetrics.addCache("storageNodes", storageNodes);
-    ((PrometheusMetricsSystem) metricsSystem)
-        .addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
+    if (metricsSystem instanceof PrometheusMetricsSystem)
+      ((PrometheusMetricsSystem) metricsSystem)
+          .addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
   }
 
   public void preLoadAccount(

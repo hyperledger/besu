@@ -34,6 +34,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
@@ -62,6 +64,8 @@ public class BonsaiSnapshotWorldStateArchiveTest {
 
   BonsaiWorldStateArchive bonsaiWorldStateArchive;
 
+  ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
+
   @Before
   public void setUp() {
     when(storageProvider.getStorageBySegmentIdentifier(any(KeyValueSegmentIdentifier.class)))
@@ -85,7 +89,8 @@ public class BonsaiSnapshotWorldStateArchiveTest {
             new BonsaiWorldStateKeyValueStorage(storageProvider),
             blockchain,
             Optional.of(1L),
-            true);
+            true,
+            metricsSystem);
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, chainHead.getHash(), true))
         .containsInstanceOf(BonsaiPersistedWorldState.class);
@@ -95,7 +100,10 @@ public class BonsaiSnapshotWorldStateArchiveTest {
   public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider), blockchain, Optional.of(512L));
+            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            blockchain,
+            Optional.of(512L),
+            metricsSystem);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -136,7 +144,8 @@ public class BonsaiSnapshotWorldStateArchiveTest {
                 new SnapshotTrieLogManager(blockchain, worldStateStorage, 12L, worldStatesByHash),
                 worldStateStorage,
                 blockchain,
-                true));
+                true,
+                metricsSystem));
     var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
     var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
     when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);
