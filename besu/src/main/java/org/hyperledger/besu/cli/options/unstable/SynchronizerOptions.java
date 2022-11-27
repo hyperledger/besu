@@ -279,7 +279,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       names = {NEAR_HEAD_CHECKPOINT_SYNC_FLAG},
       hidden = true,
       description = "Starts sync from a near-head pivot block.")
-  private Boolean isNearHeadCheckpointSyncEnabled =
+  private Boolean nearHeadCheckpointSyncEnabled =
       SynchronizerConfiguration.DEFAULT_NEAR_HEAD_CHECKPOINT_SYNC;
 
   private SynchronizerOptions() {}
@@ -318,7 +318,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getBytecodeCountPerRequest();
     options.snapsyncTrieNodeCountPerRequest =
         config.getSnapSyncConfiguration().getTrienodeCountPerRequest();
-    options.isNearHeadCheckpointSyncEnabled = config.isNearHeadCheckpointSyncEnabled();
+    options.nearHeadCheckpointSyncEnabled = config.isNearHeadCheckpointSyncEnabled();
     return options;
   }
 
@@ -349,7 +349,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .bytecodeCountPerRequest(snapsyncBytecodeCountPerRequest)
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .build());
-    builder.setNearHeadCheckpointSyncEnabled(isNearHeadCheckpointSyncEnabled);
+    builder.setNearHeadCheckpointSyncEnabled(nearHeadCheckpointSyncEnabled);
 
     return builder;
   }
@@ -398,8 +398,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
         OptionParser.format(snapsyncBytecodeCountPerRequest),
         SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncTrieNodeCountPerRequest),
-        NEAR_HEAD_CHECKPOINT_SYNC_FLAG,
-        OptionParser.format(isNearHeadCheckpointSyncEnabled));
+        OptionParser.format(snapsyncTrieNodeCountPerRequest));
   }
 }

@@ -71,7 +71,7 @@ public class SynchronizerConfiguration {
   private final SyncMode syncMode;
 
   // Near head Checkpoint sync
-  private final boolean isNearHeadCheckpointSyncEnabled;
+  private final boolean nearHeadCheckpointSyncEnabled;
 
   // Downloader config
   private final long downloaderChangeTargetThresholdByHeight;
@@ -108,7 +108,7 @@ public class SynchronizerConfiguration {
       final int computationParallelism,
       final int maxTrailingPeers,
       final long propagationManagerGetBlockTimeoutMillis,
-      final boolean isNearHeadCheckpointSyncEnabled) {
+      final boolean nearHeadCheckpointSyncEnabled) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -130,7 +130,7 @@ public class SynchronizerConfiguration {
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
     this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
-    this.isNearHeadCheckpointSyncEnabled = isNearHeadCheckpointSyncEnabled;
+    this.nearHeadCheckpointSyncEnabled = nearHeadCheckpointSyncEnabled;
   }
 
   public static Builder builder() {
@@ -147,7 +147,7 @@ public class SynchronizerConfiguration {
   }
 
   public boolean isNearHeadCheckpointSyncEnabled() {
-    return isNearHeadCheckpointSyncEnabled;
+    return nearHeadCheckpointSyncEnabled;
   }
 
   /**
@@ -401,8 +401,8 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder setNearHeadCheckpointSyncEnabled(final boolean isNearHeadCheckpointSyncEnabled) {
-      this.nearHeadCheckpointSyncEnabled = isNearHeadCheckpointSyncEnabled;
+    public Builder setNearHeadCheckpointSyncEnabled(final boolean nearHeadCheckpointSyncEnabled) {
+      this.nearHeadCheckpointSyncEnabled = nearHeadCheckpointSyncEnabled;
       return this;
     }
 
