@@ -25,6 +25,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
+import java.util.List;
+
 @RunWith(MockitoJUnitRunner.class)
 public class NetworkingOptionsTest
     extends AbstractCLIOptionsTest<NetworkingConfiguration, NetworkingOptions> {
@@ -211,5 +214,10 @@ public class NetworkingOptionsTest
   @Override
   NetworkingOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getNetworkingOptions();
+  }
+
+  @Override
+  protected List<String> getFieldsToIgnore(){
+    return Arrays.asList("rlpx.peerLowerBound");
   }
 }
