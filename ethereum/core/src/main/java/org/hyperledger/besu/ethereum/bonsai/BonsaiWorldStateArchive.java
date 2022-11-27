@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -101,13 +102,14 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final TrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
-      final boolean useSnapshots) {
+      final boolean useSnapshots,
+      final ObservableMetricsSystem metricsSystem) {
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     this.useSnapshots = useSnapshots;
-    this.optimizedMerkleTrieLoader = new OptimizedMerkleTrieLoader();
+    this.optimizedMerkleTrieLoader = new OptimizedMerkleTrieLoader(metricsSystem);
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
 

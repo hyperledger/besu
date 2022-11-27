@@ -61,11 +61,13 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
               updateAccountStorage(worldStateUpdater, addressMapEntry);
             });
 
-
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> archive.getOptimizedMerkleTrieLoader().getAccountStateTrieNode(worldStateStorage, location, hash),
+            (location, hash) ->
+                archive
+                    .getOptimizedMerkleTrieLoader()
+                    .getAccountStateTrieNode(worldStateStorage, location, hash),
             worldStateRootHash,
             Function.identity(),
             Function.identity());
@@ -94,8 +96,9 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   }
 
   private void updateAccountStorage(
-          final BonsaiWorldStateUpdater worldStateUpdater,
-          final Map.Entry<Address, BonsaiWorldStateUpdater.StorageConsumingMap<BonsaiValue<UInt256>>> storageAccountUpdate) {
+      final BonsaiWorldStateUpdater worldStateUpdater,
+      final Map.Entry<Address, BonsaiWorldStateUpdater.StorageConsumingMap<BonsaiValue<UInt256>>>
+          storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
     final Hash updatedAddressHash = Hash.hash(updatedAddress);
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
@@ -107,7 +110,11 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, key) -> archive.getOptimizedMerkleTrieLoader().getAccountStorageTrieNode(worldStateStorage,updatedAddressHash, location, key),
+              (location, key) ->
+                  archive
+                      .getOptimizedMerkleTrieLoader()
+                      .getAccountStorageTrieNode(
+                          worldStateStorage, updatedAddressHash, location, key),
               storageRoot,
               Function.identity(),
               Function.identity());

@@ -634,7 +634,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            dataStorageConfiguration.useBonsaiSnapshots());
+            dataStorageConfiguration.useBonsaiSnapshots(),
+            metricsSystem);
 
       case FOREST:
       default:
