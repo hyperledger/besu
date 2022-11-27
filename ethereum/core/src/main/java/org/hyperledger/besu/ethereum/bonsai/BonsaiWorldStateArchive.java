@@ -60,32 +60,39 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final boolean useSnapshots;
 
-  public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
+  public BonsaiWorldStateArchive(
+      final StorageProvider provider,
+      final Blockchain blockchain,
+      final ObservableMetricsSystem metricsSystem) {
     this(
         (BonsaiWorldStateKeyValueStorage)
             provider.createWorldStateStorage(DataStorageFormat.BONSAI),
         blockchain,
         Optional.empty(),
-        provider.isWorldStateSnappable());
-  }
-
-  public BonsaiWorldStateArchive(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final Blockchain blockchain,
-      final Optional<Long> maxLayersToLoad) {
-    // overload while snapshots are an experimental option:
-    this(
-        worldStateStorage,
-        blockchain,
-        maxLayersToLoad,
-        DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS);
+        provider.isWorldStateSnappable(),
+        metricsSystem);
   }
 
   public BonsaiWorldStateArchive(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
-      final boolean useSnapshots) {
+      final ObservableMetricsSystem metricsSystem) {
+    // overload while snapshots are an experimental option:
+    this(
+        worldStateStorage,
+        blockchain,
+        maxLayersToLoad,
+        DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS,
+        metricsSystem);
+  }
+
+  public BonsaiWorldStateArchive(
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final Blockchain blockchain,
+      final Optional<Long> maxLayersToLoad,
+      final boolean useSnapshots,
+      final ObservableMetricsSystem metricsSystem) {
     this(
         useSnapshots
             ? new SnapshotTrieLogManager(
@@ -94,7 +101,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
                 blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS)),
         worldStateStorage,
         blockchain,
-        useSnapshots);
+        useSnapshots,
+        metricsSystem);
   }
 
   @VisibleForTesting
