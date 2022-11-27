@@ -43,9 +43,9 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     final List<String> fieldsToIgnore = getFieldsToIgnore();
     final String[] ignored = fieldsToIgnore.toArray(new String[0]);
     assertThat(domainObjectFromOptions)
-            .usingRecursiveComparison()
-            .ignoringFields(ignored)
-            .isEqualTo(domainObject);
+        .usingRecursiveComparison()
+        .ignoringFields(ignored)
+        .isEqualTo(domainObject);
   }
 
   @Test
@@ -82,10 +82,9 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     // Check default values supplied by CLI match expected default values
     final String[] fieldsToIgnore = getFieldsWithComputedDefaults().toArray(new String[0]);
     assertThat(optionsFromCommand)
-            .usingRecursiveComparison()
-            .ignoringFields(fieldsToIgnore)
-            .isEqualTo(defaultOptions);
-
+        .usingRecursiveComparison()
+        .ignoringFields(fieldsToIgnore)
+        .isEqualTo(defaultOptions);
   }
 
   abstract D createDefaultDomainObject();
