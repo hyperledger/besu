@@ -73,6 +73,7 @@ public class DynamicPivotBlockManager {
   public void stop() {
     if (pivotBlockChecker != null && !pivotBlockChecker.isCancelled()) {
       pivotBlockChecker.cancel(true);
+      scheduler.shutdown();
       pivotBlockChecker = null;
       dynamicPivotBlockObservers.clear();
     }
