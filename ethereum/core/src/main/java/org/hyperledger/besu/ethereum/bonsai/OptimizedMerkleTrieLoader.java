@@ -41,7 +41,7 @@ public class OptimizedMerkleTrieLoader {
   private final Cache<Bytes, Bytes> storageNodes;
 
   public OptimizedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
-    accountsNodes = CacheBuilder.newBuilder().maximumSize(ACCOUNT_CACHE_SIZE).build();
+    accountsNodes = CacheBuilder.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
     storageNodes = CacheBuilder.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
 
     CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
