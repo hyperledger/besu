@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
+import static org.hyperledger.besu.evm.gascalculator.ShandongGasCalculator.MAX_INITCODE_SIZE;
+
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -22,6 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShandongGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -203,7 +206,7 @@ public class MainnetEVMs {
     registry.put(new InvalidOperation(gasCalculator));
     registry.put(new StopOperation(gasCalculator));
     registry.put(new SelfDestructOperation(gasCalculator));
-    registry.put(new CreateOperation(gasCalculator));
+    registry.put(new CreateOperation(gasCalculator, Integer.MAX_VALUE));
     registry.put(new CallOperation(gasCalculator));
     registry.put(new CallCodeOperation(gasCalculator));
 
@@ -311,7 +314,7 @@ public class MainnetEVMs {
   public static void registerConstantinopleOperations(
       final OperationRegistry registry, final GasCalculator gasCalculator) {
     registerByzantiumOperations(registry, gasCalculator);
-    registry.put(new Create2Operation(gasCalculator));
+    registry.put(new Create2Operation(gasCalculator, Integer.MAX_VALUE));
     registry.put(new SarOperation(gasCalculator));
     registry.put(new ShlOperation(gasCalculator));
     registry.put(new ShrOperation(gasCalculator));
@@ -427,8 +430,12 @@ public class MainnetEVMs {
     registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 
+  public static EVM shandong(final EvmConfiguration evmConfiguration) {
+    return london(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
   public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return shandong(new LondonGasCalculator(), chainId, evmConfiguration);
+    return shandong(new ShandongGasCalculator(), chainId, evmConfiguration);
   }
 
   public static EVM shandong(
@@ -456,5 +463,7 @@ public class MainnetEVMs {
     registerParisOperations(registry, gasCalculator, chainID);
     // Register the PUSH0 operation.
     registry.put(new Push0Operation(gasCalculator));
+    registry.put(new CreateOperation(gasCalculator, MAX_INITCODE_SIZE));
+    registry.put(new Create2Operation(gasCalculator, MAX_INITCODE_SIZE));
   }
 }
