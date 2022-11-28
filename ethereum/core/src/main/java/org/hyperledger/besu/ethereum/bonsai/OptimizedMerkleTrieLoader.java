@@ -36,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class OptimizedMerkleTrieLoader {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
-  private static final int STORAGE_CACHE_SIZE = 1_000_000;
+  private static final int STORAGE_CACHE_SIZE = 200_000;
   private final Cache<Bytes, Bytes> accountsNodes;
   private final Cache<Bytes, Bytes> storageNodes;
 
