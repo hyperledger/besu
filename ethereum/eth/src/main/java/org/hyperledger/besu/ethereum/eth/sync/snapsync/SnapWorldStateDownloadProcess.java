@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.DynamicPivotBlockManager.doNothingOnPivotChange;
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -51,6 +50,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
   private final Pipeline<Task<SnapDataRequest>> fetchCodePipeline;
   private final Pipeline<Task<SnapDataRequest>> fetchHealPipeline;
   private final WritePipe<Task<SnapDataRequest>> requestsToComplete;
+  private final DynamicPivotBlockManager pivotBlockManager;
 
   private SnapWorldStateDownloadProcess(
       final Pipeline<Task<SnapDataRequest>> fetchAccountPipeline,
@@ -59,7 +59,8 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
       final Pipeline<Task<SnapDataRequest>> fetchCodePipeline,
       final Pipeline<Task<SnapDataRequest>> fetchHealPipeline,
       final Pipeline<Task<SnapDataRequest>> completionPipeline,
-      final WritePipe<Task<SnapDataRequest>> requestsToComplete) {
+      final WritePipe<Task<SnapDataRequest>> requestsToComplete,
+      final DynamicPivotBlockManager pivotBlockManager) {
     this.fetchStorageDataPipeline = fetchStorageDataPipeline;
     this.fetchAccountPipeline = fetchAccountPipeline;
     this.fetchBigStorageDataPipeline = fetchBigStorageDataPipeline;
@@ -67,6 +68,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     this.fetchHealPipeline = fetchHealPipeline;
     this.completionPipeline = completionPipeline;
     this.requestsToComplete = requestsToComplete;
+    this.pivotBlockManager = pivotBlockManager;
   }
 
   public static Builder builder() {
@@ -85,6 +87,8 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     final CompletableFuture<Void> fetchHealFuture = ethScheduler.startPipeline(fetchHealPipeline);
     final CompletableFuture<Void> completionFuture = ethScheduler.startPipeline(completionPipeline);
 
+    pivotBlockManager.start();
+
     fetchAccountFuture
         .thenCombine(fetchStorageFuture, (unused, unused2) -> null)
         .thenCombine(fetchBigStorageFuture, (unused, unused2) -> null)
@@ -96,9 +100,11 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                 if (!(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
                   LOG.error("Pipeline failed", error);
                 }
+                pivotBlockManager.stop();
                 completionPipeline.abort();
               } else {
                 // No more data to fetch, so propagate the pipe closure onto the completion pipe.
+                pivotBlockManager.stop();
                 requestsToComplete.close();
               }
             });
@@ -108,6 +114,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
           if (!(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
             LOG.error("Pipeline failed", error);
           }
+          pivotBlockManager.stop();
           fetchAccountPipeline.abort();
           fetchStorageDataPipeline.abort();
           fetchBigStorageDataPipeline.abort();
@@ -228,12 +235,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .thenProcess(
-                  "checkNewPivotBlock-Account",
-                  tasks -> {
-                    pivotBlockManager.check(doNothingOnPivotChange);
-                    return tasks;
-                  })
               .thenProcessAsync(
                   "batchDownloadAccountData",
                   requestTask -> requestDataStep.requestAccount(requestTask),
@@ -251,12 +252,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   true,
                   "world_state_download")
               .inBatches(snapSyncConfiguration.getStorageCountPerRequest())
-              .thenProcess(
-                  "checkNewPivotBlock-Storage",
-                  tasks -> {
-                    pivotBlockManager.check(doNothingOnPivotChange);
-                    return tasks;
-                  })
               .thenProcessAsyncOrdered(
                   "batchDownloadStorageData",
                   requestTask -> requestDataStep.requestStorage(requestTask),
@@ -277,12 +272,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .thenProcess(
-                  "checkNewPivotBlock-BigStorage",
-                  tasks -> {
-                    pivotBlockManager.check(doNothingOnPivotChange);
-                    return tasks;
-                  })
               .thenProcessAsyncOrdered(
                   "batchDownloadBigStorageData",
                   requestTask -> requestDataStep.requestStorage(List.of(requestTask)),
@@ -316,14 +305,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                                   .map(BytecodeRequest::getCodeHash)
                                   .distinct()
                                   .count())
-              .thenProcess(
-                  "checkNewPivotBlock-Code",
-                  tasks -> {
-                    pivotBlockManager.check(
-                        (blockHeader, newBlockFound) ->
-                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
-                    return tasks;
-                  })
               .thenProcessAsyncOrdered(
                   "batchDownloadCodeData",
                   tasks -> requestDataStep.requestCode(tasks),
@@ -338,7 +319,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "batchCodeDataDownloaded",
                   tasks -> {
                     tasks.forEach(requestsToComplete::put);
-                    LOG.info("code task is empty ");
                     if (tasks.isEmpty()) {
                       LOG.info("found code task is empty " + snapSyncState.getPivotBlockHeader());
                       snapSyncState
@@ -362,14 +342,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   3,
                   bufferCapacity)
               .inBatches(snapSyncConfiguration.getTrienodeCountPerRequest())
-              .thenProcess(
-                  "checkNewPivotBlock-TrieNode",
-                  tasks -> {
-                    pivotBlockManager.check(
-                        (blockHeader, newBlockFound) ->
-                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
-                    return tasks;
-                  })
               .thenProcessAsync(
                   "batchDownloadTrieNodeData",
                   tasks -> requestDataStep.requestTrieNodeByPath(tasks),
@@ -384,7 +356,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "batchTrieNodeDataDownloaded",
                   tasks -> {
                     tasks.forEach(requestsToComplete::put);
-                    LOG.info(" check task is empty ");
                     if (tasks.isEmpty()) {
                       LOG.info("found task is empty " + snapSyncState.getPivotBlockHeader());
                       snapSyncState
@@ -400,16 +371,8 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
           fetchCodePipeline,
           fetchHealDataPipeline,
           completionPipeline,
-          requestsToComplete);
-    }
-  }
-
-  private static void reloadHealWhenNeeded(
-      final SnapSyncState snapSyncState,
-      final SnapWorldDownloadState downloadState,
-      final boolean newBlockFound) {
-    if (snapSyncState.isHealInProgress() && newBlockFound) {
-      downloadState.reloadHeal();
+          requestsToComplete,
+          pivotBlockManager);
     }
   }
 }
