@@ -21,6 +21,9 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_P2P_PEER_LOW
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -211,5 +214,10 @@ public class NetworkingOptionsTest
   @Override
   NetworkingOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getNetworkingOptions();
+  }
+
+  @Override
+  protected List<String> getFieldsToIgnore() {
+    return Arrays.asList("rlpx.peerLowerBound");
   }
 }
