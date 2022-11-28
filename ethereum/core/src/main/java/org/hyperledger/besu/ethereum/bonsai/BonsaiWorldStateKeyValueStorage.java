@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -183,20 +182,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
-      // after a snapsync/fastsync we only have the trie branches.
-      final Optional<Bytes> account = getAccount(accountHash);
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (account.isPresent() && worldStateRootHash.isPresent()) {
-        final StateTrieAccountValue accountValue =
-            StateTrieAccountValue.readFrom(
-                org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
+      final Optional<Hash> storageRoot =
+          getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY)).map(Hash::hash);
+      if (storageRoot.isPresent()) {
         response =
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(
                         (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
                         Function.identity(),
                         Function.identity()),
-                    accountValue.getStorageRoot())
+                    storageRoot.get())
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
       }
