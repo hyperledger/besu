@@ -18,12 +18,15 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Service provided by Besu to facilitate persistent data storage.
@@ -78,6 +81,13 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 
   Set<byte[]> getAllValuesFromKeysThat(final S segmentHandle, Predicate<byte[]> returnCondition);
+
+  TreeMap<Bytes, Bytes> getInRange(
+      final S segmentHandle, final Bytes startKeyHash, final Bytes endKeyHash);
+
+  List<Bytes> getByPrefix(final S segmentHandle, final Bytes prefix);
+
+  boolean isEmpty(S segmentHandle);
 
   void clear(S segmentHandle);
 

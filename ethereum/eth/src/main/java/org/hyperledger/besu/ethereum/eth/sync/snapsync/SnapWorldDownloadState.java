@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
+import org.hyperledger.besu.ethereum.util.RangeManager;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
@@ -197,7 +198,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public synchronized void reloadHeal() {
-    worldStateStorage.clearFlatDatabase();
     pendingTrieNodeRequests.clear();
     pendingCodeRequests.clear();
     snapSyncState.setHealStatus(false);

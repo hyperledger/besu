@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -271,6 +272,67 @@ public class RocksDBColumnarKeyValueStorage
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getValue)
         .collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public TreeMap<Bytes, Bytes> getInRange(
+      final RocksDbSegmentIdentifier segmentHandle,
+      final Bytes startKeyHash,
+      final Bytes endKeyHash) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    rocksIterator.seek(startKeyHash.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      final TreeMap<Bytes, Bytes> res = new TreeMap<>();
+      while (rocksDbKeyIterator.hasNext()) {
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        final Bytes key = Bytes.wrap(next.getKey());
+        if (key.compareTo(startKeyHash) >= 0) {
+          if (key.compareTo(endKeyHash) <= 0) {
+            res.put(key, Bytes.of(next.getValue()));
+          } else {
+            return res;
+          }
+        }
+      }
+      return res;
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
+  @Override
+  public List<Bytes> getByPrefix(final RocksDbSegmentIdentifier segmentHandle, final Bytes prefix) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    rocksIterator.seek(prefix.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      final List<Bytes> res = new ArrayList<>();
+      while (rocksDbKeyIterator.hasNext()) {
+        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
+        if (key.commonPrefixLength(prefix) == prefix.size()) {
+          res.add(key);
+        } else {
+          return res;
+        }
+      }
+      return res;
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
+  @Override
+  public boolean isEmpty(final RocksDbSegmentIdentifier segmentHandle) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    rocksIterator.seekToFirst();
+    try {
+      return rocksIterator.isValid();
+    } finally {
+      rocksIterator.close();
+    }
   }
 
   @Override

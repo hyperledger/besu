@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 
+import org.hyperledger.besu.ethereum.util.RangeManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
