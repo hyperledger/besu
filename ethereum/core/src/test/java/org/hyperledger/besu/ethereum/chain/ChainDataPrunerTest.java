@@ -25,7 +25,9 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 public class ChainDataPrunerTest {
@@ -55,7 +57,10 @@ public class ChainDataPrunerTest {
                 assertThat(blockchain.getBlockHeader(1)).isPresent();
               } else {
                 // Prune number - 512 only
-                assertThat(blockchain.getBlockHeader(number - 512)).isEmpty();
+                Awaitility.await()
+                    .pollInterval(1, TimeUnit.MILLISECONDS)
+                    .atMost(50, TimeUnit.MILLISECONDS)
+                    .until(() -> blockchain.getBlockHeader(number - 512).isEmpty());
                 assertThat(blockchain.getBlockHeader(number - 511)).isPresent();
               }
             });
@@ -88,12 +93,22 @@ public class ChainDataPrunerTest {
     assertThat(blockchain.getBlockByHash(canonicalChain.get(0).getHash())).isPresent();
     assertThat(blockchain.getBlockByHash(forkChain.get(0).getHash())).isPresent();
     for (int i = 512; i < 527; i++) {
+      final int index = i;
       Block blk = canonicalChain.get(i);
       blockchain.appendBlock(blk, gen.receipts(blk));
       // Prune block on canonical chain and fork for i - 512 only
-      assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 512).getHash())).isEmpty();
+      Awaitility.await()
+          .pollInterval(1, TimeUnit.MILLISECONDS)
+          .atMost(50, TimeUnit.MILLISECONDS)
+          .until(
+              () -> blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash()).isEmpty());
       assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 511).getHash())).isPresent();
-      assertThat(blockchain.getBlockByHash(forkChain.get(i - 512).getHash())).isEmpty();
+      Awaitility.await()
+          .pollInterval(1, TimeUnit.MILLISECONDS)
+          .atMost(50, TimeUnit.MILLISECONDS)
+          .until(
+              () -> blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash()).isEmpty());
+
       assertThat(blockchain.getBlockByHash(forkChain.get(i - 511).getHash())).isPresent();
     }
   }

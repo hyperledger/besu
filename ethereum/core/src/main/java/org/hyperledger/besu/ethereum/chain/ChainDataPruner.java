@@ -58,38 +58,45 @@ public class ChainDataPruner implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     LOG.debug("New block added event: " + event);
-    // Get pruning mark
-    final long blockNumber = event.getBlock().getHeader().getNumber();
-    long pruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
-    if (blockNumber < pruningMark) {
-      // Ignore and warn if block number < pruning mark, this normally indicates the blocksToRetain
-      // is too small.
-      LOG.warn(
-          "Block added event: "
-              + event
-              + " has a block number of "
-              + blockNumber
-              + " < pruning mark "
-              + pruningMark);
-      return;
-    }
-    // Append block into fork blocks.
-    final KeyValueStorageTransaction tx = prunerStorage.startTransaction();
-    final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
-    forkBlocks.add(event.getBlock().getHash());
-    prunerStorage.setForkBlocks(tx, blockNumber, forkBlocks);
-    // If a block is a new canonical head, start pruning.
-    if (event.isNewCanonicalHead()
-        && blockNumber - blocksToRetain - pruningMark >= pruningFrequency) {
-      while (blockNumber - pruningMark >= blocksToRetain) {
-        LOG.debug("Pruning chain data at pruning mark: " + pruningMark);
-        pruneChainDataAtBlock(tx, pruningMark);
-        pruningMark++;
-      }
-    }
-    // Update pruning mark and commit
-    prunerStorage.setPruningMark(tx, pruningMark);
-    tx.commit();
+    new Thread(
+            () -> {
+              synchronized (prunerStorage) {
+                // Get pruning mark
+                final long blockNumber = event.getBlock().getHeader().getNumber();
+                long pruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
+                if (blockNumber < pruningMark) {
+                  // Ignore and warn if block number < pruning mark, this normally indicates the
+                  // blocksToRetain
+                  // is too small.
+                  LOG.warn(
+                      "Block added event: "
+                          + event
+                          + " has a block number of "
+                          + blockNumber
+                          + " < pruning mark "
+                          + pruningMark);
+                  return;
+                }
+                // Append block into fork blocks.
+                final KeyValueStorageTransaction tx = prunerStorage.startTransaction();
+                final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
+                forkBlocks.add(event.getBlock().getHash());
+                prunerStorage.setForkBlocks(tx, blockNumber, forkBlocks);
+                // If a block is a new canonical head, start pruning.
+                if (event.isNewCanonicalHead()
+                    && blockNumber - blocksToRetain - pruningMark >= pruningFrequency) {
+                  while (blockNumber - pruningMark >= blocksToRetain) {
+                    LOG.debug("Pruning chain data at pruning mark: " + pruningMark);
+                    pruneChainDataAtBlock(tx, pruningMark);
+                    pruningMark++;
+                  }
+                }
+                // Update pruning mark and commit
+                prunerStorage.setPruningMark(tx, pruningMark);
+                tx.commit();
+              }
+            })
+        .start();
   }
 
   private void pruneChainDataAtBlock(final KeyValueStorageTransaction tx, final long blockNumber) {

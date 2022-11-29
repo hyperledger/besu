@@ -55,6 +55,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
+  implementation 'org.awaitility:awaitility'
 
   implementation 'org.xerial.snappy:snappy-java'
 
