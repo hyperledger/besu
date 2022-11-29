@@ -25,13 +25,13 @@ import java.util.Optional;
 
 public class TransactionAnnouncement {
   private final Hash hash;
-  private final TransactionType type;
-  private final Integer size;
+  private final Optional<TransactionType> type;
+  private final Optional<Integer> size;
 
   public TransactionAnnouncement(final Hash hash) {
     this.hash = hash;
-    this.type = null;
-    this.size = null;
+    this.type = Optional.empty();
+    this.size = Optional.empty();
   }
 
   public TransactionAnnouncement(final Transaction transaction) {
@@ -40,8 +40,8 @@ public class TransactionAnnouncement {
 
   public TransactionAnnouncement(final Hash hash, final TransactionType type, final Integer size) {
     this.hash = hash;
-    this.type = type;
-    this.size = size;
+    this.type = Optional.ofNullable(type);
+    this.size = Optional.ofNullable(size);
   }
 
   public Hash getHash() {
@@ -49,11 +49,11 @@ public class TransactionAnnouncement {
   }
 
   public Optional<TransactionType> getType() {
-    return Optional.ofNullable(type);
+    return type;
   }
 
   public Optional<Integer> getSize() {
-    return Optional.ofNullable(size);
+    return size;
   }
 
   public static List<TransactionAnnouncement> create(
