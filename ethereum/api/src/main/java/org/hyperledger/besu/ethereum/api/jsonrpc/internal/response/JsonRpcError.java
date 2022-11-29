@@ -72,7 +72,7 @@ public enum JsonRpcError {
   MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS(
       -32000, "Max priority fee per gas exceeds max fee per gas"),
   NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER(
-      -32000, "Transaction nonce it too distant from current sender nonce"),
+      -32000, "Transaction nonce is too distant from current sender nonce"),
   LOWER_NONCE_INVALID_TRANSACTION_EXISTS(
       -32000, "An invalid transaction with a lower nonce exists"),
 
