@@ -17,10 +17,12 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetTrieNodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetNodeDataFromPeerTask;
+import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -34,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
@@ -51,13 +54,18 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
 
   private static final long TIMEOUT_SECONDS = 1;
 
+  final ProtocolManager protocolManager;
   final EthContext ethContext;
   final Blockchain blockchain;
   final MetricsSystem metricsSystem;
 
   public WorldStatePeerTrieNodeFinder(
-      final EthContext ethContext, final Blockchain blockchain, final MetricsSystem metricsSystem) {
+      final EthContext ethContext,
+      final ProtocolManager protocolManager,
+      final Blockchain blockchain,
+      final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
+    this.protocolManager = protocolManager;
     this.blockchain = blockchain;
     this.metricsSystem = metricsSystem;
   }
@@ -90,7 +98,10 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
       return cachedValue;
     }
     final Optional<Bytes> response =
-        findByGetNodeData(Hash.wrap(nodeHash))
+        // Call findByGetNodeData only if protocol version < eth 67
+        (protocolManager.getHighestProtocolVersion() < EthProtocolVersion.V67
+                ? findByGetNodeData(Hash.wrap(nodeHash))
+                : Optional.<Bytes>empty())
             .or(
                 () ->
                     findByGetTrieNodeData(Hash.wrap(nodeHash), Optional.of(accountHash), location));
@@ -105,7 +116,11 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
     return response;
   }
 
+  @VisibleForTesting
   public Optional<Bytes> findByGetNodeData(final Hash nodeHash) {
+    if (protocolManager.getHighestProtocolVersion() >= EthProtocolVersion.V67) {
+      return Optional.empty();
+    }
     final BlockHeader chainHead = blockchain.getChainHeadHeader();
     final RetryingGetNodeDataFromPeerTask retryingGetNodeDataFromPeerTask =
         RetryingGetNodeDataFromPeerTask.forHashes(
@@ -125,6 +140,7 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
     return Optional.empty();
   }
 
+  @VisibleForTesting
   public Optional<Bytes> findByGetTrieNodeData(
       final Hash nodeHash, final Optional<Bytes32> accountHash, final Bytes location) {
     final BlockHeader chainHead = blockchain.getChainHeadHeader();
