@@ -117,10 +117,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             new RangeHeadersFetcher(
                 syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
             this::shouldContinueDownloadingFromPeer,
-            ethContext.getScheduler(),
             target.peer(),
             getCommonAncestor(target),
-            syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
             SyncTerminationCondition.never());
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(

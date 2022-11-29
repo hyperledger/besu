@@ -52,9 +52,10 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   }
 
   @Override
-  public void assignPeer(final EthPeer peer) {
+  public AbstractRetryingPeerTask<T> assignPeer(final EthPeer peer) {
     super.assignPeer(peer);
     triedPeers.add(peer);
+    return this;
   }
 
   protected abstract CompletableFuture<T> executeTaskOnCurrentPeer(final EthPeer peer);
