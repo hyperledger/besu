@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
@@ -58,7 +57,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final SnapSyncConfiguration snapSyncConfiguration;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
-  private final ProtocolContext protocolContext;
   private final WorldStateStorage worldStateStorage;
 
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
@@ -66,7 +64,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   public SnapWorldStateDownloader(
       final EthContext ethContext,
       final SnapPersistedContext snapContext,
-      final ProtocolContext protocolContext,
       final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
       final SnapSyncConfiguration snapSyncConfiguration,
@@ -76,7 +73,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final Clock clock,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
-    this.protocolContext = protocolContext;
     this.worldStateStorage = worldStateStorage;
     this.snapContext = snapContext;
     this.snapTaskCollection = snapTaskCollection;
@@ -136,7 +132,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           new SnapWorldDownloadState(
               worldStateStorage,
               snapContext,
-              protocolContext.getBlockchain(),
               snapSyncState,
               snapTaskCollection,
               maxNodeRequestsWithoutProgress,
@@ -179,7 +174,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final DynamicPivotBlockManager dynamicPivotBlockManager =
           new DynamicPivotBlockManager(
-              ethContext,
               fastSyncActions,
               snapSyncState,
               snapSyncConfiguration.getPivotBlockWindowValidity(),
