@@ -53,5 +53,4 @@ public class OptionParser {
   public static String format(final UInt256 value) {
     return value.toBigInteger().toString(10);
   }
-
 }
