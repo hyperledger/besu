@@ -65,13 +65,11 @@ dependencyManagement {
     dependency 'info.picocli:picocli:4.6.3'
 
     dependencySet(group: 'io.grpc', version: '1.47.0') {
-      entry'grpc-core'
-      entry'grpc-netty'
-      entry'grpc-stub'
+      entry 'grpc-all'
+      entry 'grpc-core'
+      entry 'grpc-netty'
+      entry 'grpc-stub'
     }
-
-    dependency 'io.jaegertracing:jaeger-client:1.8.0'
-    dependency 'io.jaegertracing:jaeger-proto:0.7.0'
 
     dependency 'io.kubernetes:client-java:15.0.1'
 
@@ -81,14 +79,16 @@ dependencyManagement {
     dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.78.Final', classifier: 'osx-x86_64'
     dependency 'io.netty:netty-transport-native-unix-common:4.1.78.Final'
 
-    dependency 'io.opentelemetry:opentelemetry-api:1.6.0'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.6.0-alpha'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.6.0'
-    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.6.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.6.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk:1.6.0'
-    dependency 'io.opentelemetry:opentelemetry-semconv:1.6.0-alpha'
-    dependency 'io.opentelemetry.proto:opentelemetry-proto:0.13.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-api:1.19.0'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.19.0'
+    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.19.0'
+    dependency 'io.opentelemetry.proto:opentelemetry-proto:0.19.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-sdk-metrics:1.19.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.19.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk:1.19.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.19.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-semconv:1.19.0-alpha'
+    dependency 'io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0:1.19.1-alpha'
 
     dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
     dependency 'io.opentracing:opentracing-api:0.33.0'
@@ -185,7 +185,7 @@ dependencyManagement {
     dependency 'org.openjdk.jmh:jmh-core:1.34'
     dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 
-    dependency 'org.rocksdb:rocksdbjni:7.6.0'
+    dependency 'org.rocksdb:rocksdbjni:7.7.3'
 
     dependency 'org.slf4j:slf4j-api:1.7.36'
 
@@ -206,5 +206,7 @@ dependencyManagement {
     dependency 'org.yaml:snakeyaml:1.32'
 
     dependency 'tech.pegasys.discovery:discovery:22.2.0'
+
+    dependency 'com.github.oshi:oshi-core:6.2.2'
   }
 }

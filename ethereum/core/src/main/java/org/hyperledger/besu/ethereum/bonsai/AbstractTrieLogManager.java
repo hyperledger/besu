@@ -103,11 +103,15 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
         .forEach(
             layer -> {
               cachedWorldStatesByHash.remove(layer.getTrieLog().getBlockHash());
-              try {
-                layer.getMutableWorldState().close();
-              } catch (Exception e) {
-                LOG.warn("Error closing bonsai worldstate layer", e);
-              }
+              Optional.ofNullable(layer.getMutableWorldState())
+                  .ifPresent(
+                      ws -> {
+                        try {
+                          ws.close();
+                        } catch (Exception e) {
+                          LOG.warn("Error closing bonsai worldstate layer", e);
+                        }
+                      });
             });
   }
 
@@ -131,7 +135,8 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
   @Override
   public Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
-      return Optional.of(cachedWorldStatesByHash.get(blockHash).getMutableWorldState());
+      return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
+          .map(T::getMutableWorldState);
     }
     return Optional.empty();
   }

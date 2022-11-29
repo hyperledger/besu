@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,8 @@ import org.apache.tuweni.bytes.Bytes;
   "to",
   "transactionHash",
   "transactionIndex",
-  "revertReason"
+  "revertReason",
+  "type"
 })
 public abstract class TransactionReceiptResult {
 
@@ -63,6 +65,7 @@ public abstract class TransactionReceiptResult {
   private final String revertReason;
 
   protected final TransactionReceipt receipt;
+  protected final String type;
 
   protected TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
     final Transaction txn = receiptWithMetadata.getTransaction();
@@ -88,6 +91,10 @@ public abstract class TransactionReceiptResult {
     this.transactionHash = txn.getHash().toString();
     this.transactionIndex = Quantity.create(receiptWithMetadata.getTransactionIndex());
     this.revertReason = receipt.getRevertReason().map(Bytes::toString).orElse(null);
+    this.type =
+        txn.getType().equals(TransactionType.FRONTIER)
+            ? Quantity.create(0)
+            : Quantity.create(txn.getType().getSerializedType());
   }
 
   @JsonGetter(value = "blockHash")
@@ -148,6 +155,11 @@ public abstract class TransactionReceiptResult {
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return transactionIndex;
+  }
+
+  @JsonGetter(value = "type")
+  public String getType() {
+    return type;
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)

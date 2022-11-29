@@ -30,7 +30,7 @@ class NetworkDeprecationMessageTest {
       names = {"RINKEBY", "ROPSTEN", "KILN"})
   void shouldGenerateDeprecationMessageForDeprecatedNetworks(final NetworkName network) {
     assertThat(NetworkDeprecationMessage.generate(network))
-        .contains(network.humanReadableNetworkName() + " is deprecated and will be shutdown");
+        .contains(network.normalize() + " is deprecated and will be shutdown");
   }
 
   @ParameterizedTest
@@ -40,6 +40,7 @@ class NetworkDeprecationMessageTest {
         "MAINNET",
         "SEPOLIA",
         "GOERLI",
+        "SHANDONG",
         "DEV",
         "CLASSIC",
         "KOTTI",
