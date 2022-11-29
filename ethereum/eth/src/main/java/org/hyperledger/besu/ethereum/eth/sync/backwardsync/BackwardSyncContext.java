@@ -118,45 +118,37 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
-    if (isTrusted(newBlockHash)) {
-      return maybeCurrentStatus
-          .map(Status::getCurrentFuture)
-          .orElseGet(() -> CompletableFuture.completedFuture(null));
+    if (!isTrusted(newBlockHash)) {
+      backwardChain.addNewHash(newBlockHash);
     }
-    backwardChain.addNewHash(newBlockHash);
-    return maybeCurrentStatus
-        .map(Status::getCurrentFuture)
-        .orElseGet(
-            () -> {
-              LOG.info("Starting a new backward sync session");
-              Status status = new Status(prepareBackwardSyncFutureWithRetry());
-              this.currentBackwardSyncStatus.set(status);
-              return status.currentFuture;
-            });
+
+    final Status status = getOrStartSyncSession();
+    backwardChain
+        .getBlock(newBlockHash)
+        .ifPresent(
+            newTargetBlock -> status.updateTargetHeight(newTargetBlock.getHeader().getNumber()));
+    return status.currentFuture;
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
-    Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
-    if (isTrusted(newPivot.getHash())) {
-      return maybeCurrentStatus
-          .map(Status::getCurrentFuture)
-          .orElseGet(() -> CompletableFuture.completedFuture(null));
+    if (!isTrusted(newPivot.getHash())) {
+      backwardChain.appendTrustedBlock(newPivot);
     }
-    backwardChain.appendTrustedBlock(newPivot);
-    return maybeCurrentStatus
-        .map(Status::getCurrentFuture)
-        .orElseGet(
-            () -> {
-              LOG.info("Starting a new backward sync session");
-              LOG.info("Backward sync target block is {}", newPivot.toLogString());
-              Status status = new Status(prepareBackwardSyncFutureWithRetry());
-              status.setSyncRange(
-                  getProtocolContext().getBlockchain().getChainHeadBlockNumber(),
-                  newPivot.getHeader().getNumber());
-              this.currentBackwardSyncStatus.set(status);
-              return status.currentFuture;
-            });
+
+    final Status status = getOrStartSyncSession();
+    status.updateTargetHeight(newPivot.getHeader().getNumber());
+    return status.currentFuture;
+  }
+
+  private Status getOrStartSyncSession() {
+    Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
+    return maybeCurrentStatus.orElseGet(
+        () -> {
+          LOG.info("Starting a new backward sync session");
+          Status newStatus = new Status(prepareBackwardSyncFutureWithRetry());
+          this.currentBackwardSyncStatus.set(newStatus);
+          return newStatus;
+        });
   }
 
   private boolean isTrusted(final Hash hash) {
@@ -418,20 +410,16 @@ public class BackwardSyncContext {
     }
   }
 
-  static class Status {
+  class Status {
     private final CompletableFuture<Void> currentFuture;
+    private final long initialChainHeight;
     private long targetChainHeight;
-    private long initialChainHeight;
 
-    private static long lastLogAt = 0;
+    private long lastLogAt = 0;
 
     public Status(final CompletableFuture<Void> currentFuture) {
       this.currentFuture = currentFuture;
-    }
-
-    public void setSyncRange(final long initialHeight, final long targetHeight) {
-      initialChainHeight = initialHeight;
-      targetChainHeight = targetHeight;
+      this.initialChainHeight = protocolContext.getBlockchain().getChainHeadBlockNumber();
     }
 
     public void updateTargetHeight(final long newTargetHeight) {
