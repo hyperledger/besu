@@ -174,7 +174,7 @@ public class BlockchainReferenceTestCaseSpec {
           Bytes.fromHexString(extraData), // extraData
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
-          Bytes.fromHexString(nonce).getLong(0),
+          Bytes.fromHexStringLenient(nonce).toLong(),
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -217,21 +217,21 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("blockHeader") final Object blockHeader,
         @JsonProperty("transactions") final Object transactions,
         @JsonProperty("uncleHeaders") final Object uncleHeaders) {
-      boolean valid = true;
+      boolean blockVaid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
       try {
         rlpAttempt = Bytes.fromHexString(rlp);
       } catch (final IllegalArgumentException e) {
-        valid = false;
+        blockVaid = false;
       }
       this.rlp = rlpAttempt;
 
       if (blockHeader == null && transactions == null && uncleHeaders == null) {
-        valid = false;
+        blockVaid = false;
       }
 
-      this.valid = valid;
+      this.valid = blockVaid;
     }
 
     public boolean isValid() {
@@ -250,7 +250,7 @@ public class BlockchainReferenceTestCaseSpec {
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)));
       return new Block(header, body);
     }
   }

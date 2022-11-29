@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+package org.hyperledger.besu.ethereum.forkid;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -21,6 +21,7 @@ import org.hyperledger.besu.util.EndianUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -39,6 +40,19 @@ public class ForkId {
     this(hash, Bytes.wrap(EndianUtils.longToBigEndian(next)).trimLeadingZeros());
   }
 
+  public static Optional<ForkId> fromRawForkId(final Object rawForkId) {
+    if (rawForkId != null) {
+      try {
+        @SuppressWarnings("unchecked")
+        final List<List<Bytes>> typedRawForkId = (List<List<Bytes>>) rawForkId;
+        return Optional.of(new ForkId(typedRawForkId.get(0).get(0), typedRawForkId.get(0).get(1)));
+      } catch (final Exception e) {
+        return Optional.empty();
+      }
+    }
+    return Optional.empty();
+  }
+
   public long getNext() {
     return next.toLong();
   }
@@ -48,7 +62,7 @@ public class ForkId {
   }
 
   public List<Bytes> getForkIdAsBytesList() {
-    List<Bytes> bytesList = new ArrayList<>();
+    final List<Bytes> bytesList = new ArrayList<>();
     bytesList.add(hash);
     bytesList.add(next);
 
@@ -99,6 +113,6 @@ public class ForkId {
 
   @Override
   public int hashCode() {
-    return super.hashCode();
+    return 31 * this.hash.hashCode() * this.next.hashCode();
   }
 }

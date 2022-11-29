@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
-public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
+public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
   public static final byte[] WORLD_BLOCK_HASH_KEY =
@@ -266,6 +266,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public void useFallbackNodeFinder(final Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder) {
     checkNotNull(maybeFallbackNodeFinder);
     this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
+  }
+
+  @Override
+  public void close() throws Exception {
+    // no-op
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {

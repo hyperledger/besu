@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.code.CodeFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -24,7 +25,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** A mock for representing EVM Code associated with an account. */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ReferenceTestCode extends Code {
+public class ReferenceTestCode implements Code {
+
+  private final Code code;
 
   /**
    * Public constructor.
@@ -33,6 +36,41 @@ public class ReferenceTestCode extends Code {
    */
   @JsonCreator
   public ReferenceTestCode(final String bytes) {
-    super(Bytes.fromHexString(bytes), Hash.hash(Bytes.fromHexString(bytes)));
+    this.code =
+        CodeFactory.createCode(
+            Bytes.fromHexString(bytes),
+            Hash.hash(Bytes.fromHexString(bytes)),
+            CodeFactory.MAX_KNOWN_CODE_VERSION,
+            false);
+  }
+
+  @Override
+  public int getSize() {
+    return code.getSize();
+  }
+
+  @Override
+  public Bytes getCodeBytes() {
+    return code.getCodeBytes();
+  }
+
+  @Override
+  public Bytes getContainerBytes() {
+    return code.getContainerBytes();
+  }
+
+  @Override
+  public Hash getCodeHash() {
+    return code.getCodeHash();
+  }
+
+  @Override
+  public boolean isJumpDestInvalid(final int jumpDestination) {
+    return code.isJumpDestInvalid(jumpDestination);
+  }
+
+  @Override
+  public boolean isValid() {
+    return code.isValid();
   }
 }

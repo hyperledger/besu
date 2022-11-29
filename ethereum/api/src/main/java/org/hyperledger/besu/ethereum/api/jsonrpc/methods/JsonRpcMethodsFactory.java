@@ -95,7 +95,12 @@ public class JsonRpcMethodsFactory {
                   natService,
                   ethPeers),
               new DebugJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
+                  blockchainQueries,
+                  protocolContext,
+                  protocolSchedule,
+                  metricsSystem,
+                  transactionPool,
+                  dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
