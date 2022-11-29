@@ -88,7 +88,8 @@ public class BesuNodeFactory {
         config.getRunCommand(),
         config.getKeyPair(),
         config.getPkiKeyStoreConfiguration(),
-        config.isStrictTxReplayProtectionEnabled());
+        config.isStrictTxReplayProtectionEnabled(),
+        config.getEnvironment());
   }
 
   public BesuNode createMinerNode(
@@ -512,6 +513,7 @@ public class BesuNodeFactory {
   public BesuNode createExecutionEngineGenesisNode(final String name, final String genesisPath)
       throws IOException {
     final String genesisFile = GenesisConfigurationFactory.readGenesisFile(genesisPath);
+
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -521,6 +523,7 @@ public class BesuNodeFactory {
             .miningEnabled()
             .jsonRpcEnabled()
             .engineRpcEnabled(true)
+            .jsonRpcDebug()
             .build());
   }
 

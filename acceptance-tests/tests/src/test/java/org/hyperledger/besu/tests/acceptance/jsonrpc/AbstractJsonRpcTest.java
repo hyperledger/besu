@@ -51,6 +51,7 @@ abstract class AbstractJsonRpcTest {
 
     public JsonRpcTestsContext(final String genesisFile) throws IOException {
       cluster = new Cluster(new NetConditions(new NetTransactions()));
+
       besuNode =
           new BesuNodeFactory().createExecutionEngineGenesisNode("executionEngine", genesisFile);
       cluster.start(besuNode);
@@ -78,16 +79,26 @@ abstract class AbstractJsonRpcTest {
     final JsonRpcTestCase testCase =
         testsContext.mapper.readValue(testCaseFileURI.toURL(), JsonRpcTestCase.class);
 
+    final String rpcMethod = String.valueOf(testCase.getRequest().get("method"));
+
     final Call testRequest =
         testsContext.httpClient.newCall(
             new Request.Builder()
-                .url(testsContext.besuNode.engineRpcUrl().get())
+                .url(getRpcUrl(rpcMethod))
                 .post(RequestBody.create(testCase.getRequest().toString(), MEDIA_TYPE_JSON))
                 .build());
     final Response response = testRequest.execute();
 
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
     assertThat(response.body().string()).isEqualTo(testCase.getResponse().toPrettyString());
+  }
+
+  private String getRpcUrl(final String rpcMethod) {
+    if (rpcMethod.contains("eth_") || rpcMethod.contains("engine_")) {
+      return testsContext.besuNode.engineRpcUrl().get();
+    }
+
+    return testsContext.besuNode.jsonRpcBaseUrl().get();
   }
 
   public static Iterable<Object[]> testCases(final String testCasesPath) throws URISyntaxException {

@@ -26,7 +26,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConf
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.io.Closer;
 import com.google.protobuf.ByteString;
@@ -34,7 +36,11 @@ import io.grpc.Server;
 import io.grpc.Status;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import io.jaegertracing.Configuration;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.opentelemetry.extension.trace.propagation.B3Propagator;
+import io.opentelemetry.instrumentation.okhttp.v3_0.OkHttpTelemetry;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceResponse;
 import io.opentelemetry.proto.collector.metrics.v1.MetricsServiceGrpc;
@@ -44,8 +50,9 @@ import io.opentelemetry.proto.collector.trace.v1.TraceServiceGrpc;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import io.opentelemetry.proto.trace.v1.ResourceSpans;
 import io.opentelemetry.proto.trace.v1.Span;
-import io.opentracing.Tracer;
-import io.opentracing.contrib.okhttp3.TracingCallFactory;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.samplers.Sampler;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -120,6 +127,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
+    System.setProperty("root.log.level", "DEBUG");
     Server server =
         NettyServerBuilder.forPort(4317)
             .addService(fakeTracesCollector)
@@ -135,12 +143,22 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
             .port(0)
             .hostsAllowlist(singletonList("*"))
             .build();
+    Map<String, String> env = new HashMap<>();
+    env.put("OTEL_METRIC_EXPORT_INTERVAL", "1000");
+    env.put("OTEL_TRACES_SAMPLER", "always_on");
+    env.put("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317");
+    env.put("OTEL_EXPORTER_OTLP_INSECURE", "true");
+    env.put("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc");
+    env.put("OTEL_BSP_SCHEDULE_DELAY", "1000");
+    env.put("OTEL_BSP_EXPORT_TIMEOUT", "3000");
+
     metricsNode =
         besu.create(
             new BesuNodeConfigurationBuilder()
                 .name("metrics-node")
                 .jsonRpcEnabled()
                 .metricsConfiguration(configuration)
+                .environment(env)
                 .build());
     cluster.start(metricsNode);
   }
@@ -170,11 +188,11 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
           net.netVersion().verify(metricsNode);
           List<ResourceSpans> spans = fakeTracesCollector.getReceivedSpans();
           assertThat(spans.isEmpty()).isFalse();
-          Span internalSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(0);
+          Span internalSpan = spans.get(0).getScopeSpans(0).getSpans(0);
           assertThat(internalSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_INTERNAL);
           ByteString parent = internalSpan.getParentSpanId();
           assertThat(parent.isEmpty()).isFalse();
-          Span serverSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(1);
+          Span serverSpan = spans.get(0).getScopeSpans(0).getSpans(1);
           assertThat(serverSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_SERVER);
           ByteString rootSpanId = serverSpan.getParentSpanId();
           assertThat(rootSpanId.isEmpty()).isTrue();
@@ -184,23 +202,26 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void traceReportingWithTraceId() {
     Duration timeout = Duration.ofSeconds(1);
-    OkHttpClient okClient =
-        new OkHttpClient.Builder()
-            .connectTimeout(timeout)
-            .readTimeout(timeout)
-            .writeTimeout(timeout)
-            .build();
     WaitUtils.waitFor(
         30,
         () -> {
-          // call the json RPC endpoint to generate a trace - with trace metadata of our own
-          Configuration config =
-              new Configuration("okhttp")
-                  .withSampler(
-                      Configuration.SamplerConfiguration.fromEnv().withType("const").withParam(1));
-
-          Tracer tracer = config.getTracer();
-          Call.Factory client = new TracingCallFactory(okClient, tracer);
+          OpenTelemetry openTelemetry =
+              OpenTelemetrySdk.builder()
+                  .setPropagators(
+                      ContextPropagators.create(
+                          TextMapPropagator.composite(B3Propagator.injectingSingleHeader())))
+                  .setTracerProvider(
+                      SdkTracerProvider.builder().setSampler(Sampler.alwaysOn()).build())
+                  .build();
+          Call.Factory client =
+              OkHttpTelemetry.builder(openTelemetry)
+                  .build()
+                  .newCallFactory(
+                      new OkHttpClient.Builder()
+                          .connectTimeout(timeout)
+                          .readTimeout(timeout)
+                          .writeTimeout(timeout)
+                          .build());
           Request request =
               new Request.Builder()
                   .url("http://localhost:" + metricsNode.getJsonRpcPort().get())
@@ -210,19 +231,22 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
                           MediaType.get("application/json")))
                   .build();
           Response response = client.newCall(request).execute();
-          assertThat(response.code()).isEqualTo(200);
-          response.close();
-          List<ResourceSpans> spans = new ArrayList<>(fakeTracesCollector.getReceivedSpans());
-          fakeTracesCollector.getReceivedSpans().clear();
-          assertThat(spans.isEmpty()).isFalse();
-          Span internalSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(0);
-          assertThat(internalSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_INTERNAL);
-          ByteString parent = internalSpan.getParentSpanId();
-          assertThat(parent.isEmpty()).isFalse();
-          Span serverSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(1);
-          assertThat(serverSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_SERVER);
-          ByteString rootSpanId = serverSpan.getParentSpanId();
-          assertThat(rootSpanId.isEmpty()).isFalse();
+          try {
+            assertThat(response.code()).isEqualTo(200);
+            List<ResourceSpans> spans = new ArrayList<>(fakeTracesCollector.getReceivedSpans());
+            assertThat(spans.isEmpty()).isFalse();
+            Span internalSpan = spans.get(0).getScopeSpans(0).getSpans(0);
+            assertThat(internalSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_INTERNAL);
+            ByteString parent = internalSpan.getParentSpanId();
+            assertThat(parent.isEmpty()).isFalse();
+            Span serverSpan = spans.get(0).getScopeSpans(0).getSpans(1);
+            assertThat(serverSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_SERVER);
+            ByteString rootSpanId = serverSpan.getParentSpanId();
+            assertThat(rootSpanId.isEmpty()).isFalse();
+          } finally {
+            response.close();
+            fakeTracesCollector.getReceivedSpans().clear();
+          }
         });
   }
 }
