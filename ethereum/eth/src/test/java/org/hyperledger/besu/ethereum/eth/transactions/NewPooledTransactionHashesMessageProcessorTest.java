@@ -18,6 +18,7 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementDecoder.getDecoder;
 import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder.getEncoder;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,13 +33,16 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor.FetcherCreatorTask;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -46,6 +50,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -254,5 +259,111 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH66);
     // assert RLPException
     assertThrows(RLPException.class, message68::pendingTransactions);
+  }
+
+  @Test
+  public void shouldEncodeTransactionsCorrectly_Eth68() {
+
+    final String expected =
+        "0xf879c3000102cf840000000184000000028400000003f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003";
+    final List<Hash> hashes =
+        List.of(
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000001"),
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000002"),
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000003"));
+    final List<Integer> sizes = List.of(1, 2, 3);
+    final List<TransactionType> types =
+        List.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
+
+    final Bytes bytes = TransactionAnnouncementEncoder.encodeForEth68(types, sizes, hashes);
+    assertThat(expected).isEqualTo(bytes.toHexString());
+  }
+
+  @Test
+  public void shouldDecodeBytesCorrectly_Eth68() {
+    /*
+     * [
+     * ["0x00","0x01","0x02"]
+     * ["0x00000001","0x00000002","0x00000003"],
+     * ["0x0000000000000000000000000000000000000000000000000000000000000001",
+     *  "0x0000000000000000000000000000000000000000000000000000000000000002",
+     *  "0x0000000000000000000000000000000000000000000000000000000000000003"]
+     * ]
+     */
+
+    final Bytes bytes =
+        Bytes.fromHexString(
+            "0xf879c3000102cf840000000184000000028400000003f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003");
+
+    final List<TransactionAnnouncement> announcementList =
+        getDecoder(EthProtocol.ETH68).decode(RLP.input(bytes));
+
+    final TransactionAnnouncement frontier = announcementList.get(0);
+    assertThat(frontier.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000001"));
+    assertThat(frontier.getType()).hasValue(TransactionType.FRONTIER);
+    assertThat(frontier.getSize()).hasValue(1);
+
+    final TransactionAnnouncement accessList = announcementList.get(1);
+    assertThat(accessList.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000002"));
+    assertThat(accessList.getType()).hasValue(TransactionType.ACCESS_LIST);
+    assertThat(accessList.getSize()).hasValue(2);
+
+    final TransactionAnnouncement eip1559 = announcementList.get(2);
+    assertThat(eip1559.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000003"));
+    assertThat(eip1559.getType()).hasValue(TransactionType.EIP1559);
+    assertThat(eip1559.getSize()).hasValue(3);
+  }
+
+  @Test
+  public void shouldEncodeAndDecodeTransactionAnnouncement_Eth66() {
+    final Transaction t1 = generator.transaction(TransactionType.FRONTIER);
+    final Transaction t2 = generator.transaction(TransactionType.ACCESS_LIST);
+    final Transaction t3 = generator.transaction(TransactionType.EIP1559);
+    final List<Transaction> list = List.of(t1, t2, t3);
+    final Bytes bytes = getEncoder(EthProtocol.ETH66).encode(list);
+
+    final List<TransactionAnnouncement> announcementList =
+        getDecoder(EthProtocol.ETH66).decode(RLP.input(bytes));
+
+    for (int i = 0; i < announcementList.size(); i++) {
+      final TransactionAnnouncement announcement = announcementList.get(i);
+      assertThat(announcement.getHash()).isEqualTo(list.get(i).getHash());
+      assertThat(announcement.getType()).isEmpty();
+      assertThat(announcement.getType()).isEmpty();
+    }
+  }
+
+  @Test
+  public void shouldEncodeAndDecodeTransactionAnnouncement_Eth68() {
+    final Transaction t1 = generator.transaction(TransactionType.FRONTIER);
+    final Transaction t2 = generator.transaction(TransactionType.ACCESS_LIST);
+    final Transaction t3 = generator.transaction(TransactionType.EIP1559);
+
+    final List<Transaction> list = List.of(t1, t2, t3);
+    final Bytes bytes = getEncoder(EthProtocol.ETH68).encode(list);
+
+    final List<TransactionAnnouncement> announcementList =
+        getDecoder(EthProtocol.ETH68).decode(RLP.input(bytes));
+
+    assertThat(announcementList.size()).isEqualTo(list.size());
+
+    for (final Transaction transaction : list) {
+      final TransactionAnnouncement announcement = announcementList.get(list.indexOf(transaction));
+      assertThat(announcement.getHash()).isEqualTo(transaction.getHash());
+      assertThat(announcement.getType()).hasValue(transaction.getType());
+      assertThat(announcement.getSize()).hasValue(transaction.calculateSize());
+    }
   }
 }

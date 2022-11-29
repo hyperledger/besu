@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionAnnouncementEncoder {
@@ -84,9 +85,16 @@ public class TransactionAnnouncementEncoder {
           hashes.add(transaction.getHash());
         });
 
+    return encodeForEth68(types, sizes, hashes);
+  }
+
+  @VisibleForTesting
+  public static Bytes encodeForEth68(
+      final List<TransactionType> types, final List<Integer> sizes, final List<Hash> hashes) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    out.writeList(types, (h, w) -> w.writeByte(h.getSerializedType()));
+    out.writeList(
+        types, (h, w) -> w.writeByte(h == TransactionType.FRONTIER ? 0x00 : h.getSerializedType()));
     out.writeList(sizes, (h, w) -> w.writeInt(h));
     out.writeList(hashes, (h, w) -> w.writeBytes(h));
     out.endList();

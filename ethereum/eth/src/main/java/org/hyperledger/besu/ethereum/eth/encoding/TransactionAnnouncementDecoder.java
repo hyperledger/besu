@@ -69,7 +69,11 @@ public class TransactionAnnouncementDecoder {
   private static List<TransactionAnnouncement> decodeForEth68(final RLPInput input) {
     input.enterList();
     final List<TransactionType> types =
-        input.readList(rlp -> TransactionType.of(rlp.readByte() & 0xff));
+        input.readList(
+            rlp -> {
+              final int type = rlp.readByte() & 0xff;
+              return type == 0 ? TransactionType.FRONTIER : TransactionType.of(type);
+            });
     final List<Integer> sizes = input.readList(RLPInput::readInt);
     final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
     input.leaveList();

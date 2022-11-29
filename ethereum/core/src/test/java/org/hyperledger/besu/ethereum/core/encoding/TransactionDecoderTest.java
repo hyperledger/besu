@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -117,5 +118,12 @@ class TransactionDecoderTest {
     final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
     // Bytes size should be equal to transaction size
     assertThat(transaction.calculateSize()).isEqualTo(bytes.size());
+  }
+
+  @Test
+  void shouldSerializeTypeCorrectly() {
+    assertThat(TransactionType.FRONTIER.getSerializedType()).isEqualTo((byte) 0x0);
+    assertThat(TransactionType.ACCESS_LIST.getSerializedType()).isEqualTo((byte) 0x1);
+    assertThat(TransactionType.EIP1559.getSerializedType()).isEqualTo((byte) 0x2);
   }
 }
