@@ -54,7 +54,4 @@ public class OptionParser {
     return value.toBigInteger().toString(10);
   }
 
-  public static String format(final Boolean value) {
-    return Boolean.toString(value);
-  }
 }
