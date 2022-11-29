@@ -18,19 +18,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.plugin.data.TransactionType;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -120,10 +117,4 @@ class TransactionDecoderTest {
     assertThat(transaction.calculateSize()).isEqualTo(bytes.size());
   }
 
-  @Test
-  void shouldSerializeTypeCorrectly() {
-    assertThat(TransactionType.FRONTIER.getSerializedType()).isEqualTo((byte) 0x0);
-    assertThat(TransactionType.ACCESS_LIST.getSerializedType()).isEqualTo((byte) 0x1);
-    assertThat(TransactionType.EIP1559.getSerializedType()).isEqualTo((byte) 0x2);
-  }
 }
