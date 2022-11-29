@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -28,20 +32,11 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class BigIntegerModularExponentiationPrecompiledContract
     extends AbstractPrecompiledContract {
 
-  public static final BigInteger BASE_OFFSET = BigInteger.valueOf(96);
+  public static final int BASE_OFFSET = 96;
   private static final int PARAMETER_LENGTH = 32;
   private static final int BASE_LENGTH_OFFSET = 0;
   private static final int EXPONENT_LENGTH_OFFSET = 32;
   private static final int MODULUS_LENGTH_OFFSET = 64;
-
-  private static final BigInteger BIGINT_4 = BigInteger.valueOf(4);
-  private static final BigInteger BIGINT_16 = BigInteger.valueOf(16);
-  private static final BigInteger BIGINT_64 = BigInteger.valueOf(64);
-  private static final BigInteger BIGINT_96 = BigInteger.valueOf(96);
-  private static final BigInteger BIGINT_480 = BigInteger.valueOf(480);
-  private static final BigInteger BIGINT_1024 = BigInteger.valueOf(1_024L);
-  private static final BigInteger BIGINT_3072 = BigInteger.valueOf(3_072L);
-  private static final BigInteger BIGINT_199680 = BigInteger.valueOf(199_680L);
 
   public BigIntegerModularExponentiationPrecompiledContract(final GasCalculator gasCalculator) {
     super("BigIntModExp", gasCalculator);
@@ -56,24 +51,24 @@ public class BigIntegerModularExponentiationPrecompiledContract
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    final BigInteger baseLength = baseLength(input);
-    final BigInteger exponentLength = exponentLength(input);
-    final BigInteger modulusLength = modulusLength(input);
+    final int baseLength = clampedToInt(baseLength(input));
+    final int exponentLength = clampedToInt(exponentLength(input));
+    final int modulusLength = clampedToInt(modulusLength(input));
     // If baseLength and modulusLength are zero
     // we could have a massively overflowing exp because it wouldn't have been filtered out at the
     // gas cost phase
-    if (baseLength.equals(BigInteger.ZERO) && modulusLength.equals(BigInteger.ZERO)) {
+    if ((baseLength == 0) && (modulusLength == 0)) {
       return PrecompileContractResult.success(Bytes.EMPTY);
     }
-    final BigInteger exponentOffset = BASE_OFFSET.add(baseLength);
-    final BigInteger modulusOffset = exponentOffset.add(exponentLength);
-    final BigInteger base = extractParameter(input, BASE_OFFSET, baseLength.intValue());
-    final BigInteger exp = extractParameter(input, exponentOffset, exponentLength.intValue());
-    final BigInteger mod = extractParameter(input, modulusOffset, modulusLength.intValue());
+    final int exponentOffset = BASE_OFFSET + baseLength;
+    final int modulusOffset = exponentOffset + exponentLength;
+    final BigInteger base = extractParameter(input, BASE_OFFSET, baseLength);
+    final BigInteger exp = extractParameter(input, exponentOffset, exponentLength);
+    final BigInteger mod = extractParameter(input, modulusOffset, modulusLength);
 
     final Bytes modExp;
     // Result must be the length of the modulus.
-    final MutableBytes result = MutableBytes.create(modulusLength.intValue());
+    final MutableBytes result = MutableBytes.create(modulusLength);
     if (mod.compareTo(BigInteger.ZERO) == 0) {
       modExp = MutableBytes.EMPTY;
     } else {
@@ -87,30 +82,29 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   // Equation to estimate the multiplication complexity.
-  public static BigInteger multiplicationComplexity(final BigInteger x) {
-    if (x.compareTo(BIGINT_64) <= 0) {
+  public static long multiplicationComplexity(final long x) {
+    if (x <= 64) {
       return square(x);
-    } else if (x.compareTo(BIGINT_1024) <= 0) {
-      return square(x).divide(BIGINT_4).add(BIGINT_96.multiply(x)).subtract(BIGINT_3072);
+    } else if (x <= 1024) {
+      return (square(x) / 4) + (x * 96) - 3072;
     } else {
-      return square(x).divide(BIGINT_16).add(BIGINT_480.multiply(x)).subtract(BIGINT_199680);
+      return (square(x) / 16) + (480 * x) - 199680;
     }
   }
 
-  public static BigInteger baseLength(final Bytes input) {
-    return extractParameter(input, BASE_LENGTH_OFFSET, PARAMETER_LENGTH);
+  public static long baseLength(final Bytes input) {
+    return extractParameterLong(input, BASE_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  public static BigInteger exponentLength(final Bytes input) {
-    return extractParameter(input, EXPONENT_LENGTH_OFFSET, PARAMETER_LENGTH);
+  public static long exponentLength(final Bytes input) {
+    return extractParameterLong(input, EXPONENT_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  public static BigInteger modulusLength(final Bytes input) {
-    return extractParameter(input, MODULUS_LENGTH_OFFSET, PARAMETER_LENGTH);
+  public static long modulusLength(final Bytes input) {
+    return extractParameterLong(input, MODULUS_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  private static BigInteger extractParameter(
-      final Bytes input, final int offset, final int length) {
+  public static BigInteger extractParameter(final Bytes input, final int offset, final int length) {
     if (offset > input.size() || length == 0) {
       return BigInteger.ZERO;
     }
@@ -118,15 +112,22 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return new BigInteger(1, raw);
   }
 
-  public static BigInteger extractParameter(
-      final Bytes input, final BigInteger offset, final int length) {
-    if (BigInteger.valueOf(input.size()).compareTo(offset) <= 0) {
-      return BigInteger.ZERO;
+  public static long extractParameterLong(final Bytes input, final int offset, final int length) {
+    if (offset >= input.size() || length == 0) {
+      return 0;
     }
-    return extractParameter(input, offset.intValue(), length);
+    Bytes num;
+    if (offset + length <= input.size()) {
+      num = input.slice(offset, length).trimLeadingZeros();
+    } else {
+      MutableBytes mut = MutableBytes.create(length);
+      input.slice(offset).copyTo(mut, 0);
+      num = mut.trimLeadingZeros();
+    }
+    return clampedToLong(num);
   }
 
-  private static BigInteger square(final BigInteger n) {
-    return n.multiply(n);
+  private static long square(final long n) {
+    return clampedMultiply(n, n);
   }
 }

@@ -16,11 +16,14 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.BLAKE2B_F_COMPRESSION;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
@@ -218,38 +221,29 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   @Override
   public long modExpGasCost(final Bytes input) {
-    final BigInteger baseLength =
-        BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
-    final BigInteger exponentLength =
+    final long baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
+    final long exponentLength =
         BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
-    final BigInteger modulusLength =
+    final long modulusLength =
         BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
-    final BigInteger exponentOffset =
-        BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
-    final int firstExponentBytesCap =
-        exponentLength.min(ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES).intValue();
+    final long exponentOffset =
+        clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
+    final long firstExponentBytesCap =
+        Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
     final BigInteger firstExpBytes =
         BigIntegerModularExponentiationPrecompiledContract.extractParameter(
-            input, exponentOffset, firstExponentBytesCap);
-    final BigInteger adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
-    final BigInteger multiplicationComplexity =
-        modulusLength
-            .max(baseLength)
-            .add(BigInteger.valueOf(7))
-            .divide(BigInteger.valueOf(8))
-            .pow(2);
+            input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+    final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
+    long multiplicationComplexity = (Math.max(modulusLength, baseLength) + 7L) / 8L;
+    multiplicationComplexity =
+        Words.clampedMultiply(multiplicationComplexity, multiplicationComplexity);
 
-    final BigInteger gasRequirement =
-        multiplicationComplexity
-            .multiply(adjustedExponentLength.max(BigInteger.ONE))
-            .divide(BigInteger.valueOf(3));
-
-    // Gas price is so large it will not fit in a Gas type, so a
-    // very very very unlikely high gas price is used instead.
-    if (gasRequirement.bitLength() > ByzantiumGasCalculator.MAX_GAS_BITS) {
-      return Long.MAX_VALUE;
-    } else {
-      return Math.max(gasRequirement.longValueExact(), 200L);
+    long gasRequirement =
+        clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
+    if (gasRequirement != Long.MAX_VALUE) {
+      gasRequirement /= 3;
     }
+
+    return Math.max(gasRequirement, 200L);
   }
 }
