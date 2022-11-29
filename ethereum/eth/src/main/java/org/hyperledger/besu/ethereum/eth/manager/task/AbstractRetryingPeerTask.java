@@ -72,6 +72,10 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     return this;
   }
 
+  protected boolean isEmptyResponse(final T peerResult) {
+    return isEmptyResponse.test(peerResult);
+  }
+
   public Optional<EthPeer> getAssignedPeer() {
     return assignedPeer;
   }
