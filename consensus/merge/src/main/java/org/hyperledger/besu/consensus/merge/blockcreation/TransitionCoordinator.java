@@ -183,14 +183,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockHash) {
-    return mergeCoordinator.getOrSyncHeaderByHash(blockHash);
-  }
-
-  @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(
-      final Hash blockHash, final Hash finalizedBlockHash) {
-    return mergeCoordinator.getOrSyncHeaderByHash(blockHash, finalizedBlockHash);
+  public Optional<BlockHeader> getOrSyncHeadByHash(final Hash headHash, final Hash finalizedHash) {
+    return mergeCoordinator.getOrSyncHeadByHash(headHash, finalizedHash);
   }
 
   @Override
@@ -204,8 +198,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public void addBadBlock(final Block block) {
-    mergeCoordinator.addBadBlock(block);
+  public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
+    mergeCoordinator.addBadBlock(block, maybeCause);
   }
 
   @Override

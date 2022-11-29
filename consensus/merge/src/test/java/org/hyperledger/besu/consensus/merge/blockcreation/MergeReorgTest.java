@@ -149,13 +149,23 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private void appendBlock(final Block block) {
     final BlockProcessingResult result = coordinator.validateBlock(block);
 
-    result
-        .getYield()
-        .ifPresentOrElse(
-            outputs -> blockchain.appendBlock(block, outputs.getReceipts()),
-            () -> {
-              throw new RuntimeException(result.errorMessage.get());
-            });
+    if (result.isSuccessful()) {
+      result
+          .getYield()
+          .ifPresentOrElse(
+              outputs -> blockchain.appendBlock(block, outputs.getReceipts()),
+              () -> {
+                if (result.causedBy().isPresent()) {
+                  throw new RuntimeException(result.errorMessage.get(), result.causedBy().get());
+                }
+                throw new RuntimeException(result.errorMessage.get());
+              });
+    } else {
+      if (result.causedBy().isPresent()) {
+        throw new RuntimeException(result.errorMessage.get(), result.causedBy().get());
+      }
+      throw new RuntimeException(result.errorMessage.get());
+    }
   }
 
   private List<Block> subChain(

@@ -69,6 +69,13 @@ public interface ProtocolManager extends AutoCloseable {
   void handleDisconnect(
       PeerConnection peerConnection, DisconnectReason disconnectReason, boolean initiatedByPeer);
 
+  /**
+   * Returns the highest capability in the list of capabilities supported by this manager.
+   *
+   * @return the highest capability
+   */
+  int getHighestProtocolVersion();
+
   @Override
   default void close() {
     stop();

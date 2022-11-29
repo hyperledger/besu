@@ -14,29 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Clock;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import org.junit.Test;
 
 public class BaseFeePendingTransactionsTest extends AbstractPendingTransactionsTestBase {
 
@@ -61,40 +50,5 @@ public class BaseFeePendingTransactionsTest extends AbstractPendingTransactionsT
           .maxPriorityFeePerGas(Optional.of(Wei.of(50L)));
     }
     return tx.createTransaction(KEYS1);
-  }
-
-  @Test
-  public void shouldEvictHighestNonceForSenderOfTheOldestTransactionFirst() {
-    final Account firstSender = mock(Account.class);
-    when(firstSender.getNonce()).thenReturn(0L);
-
-    final KeyPair firstSenderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
-    // first sender sends 2 txs
-    final Transaction oldestTx = transactionWithNonceSenderAndGasPrice(1, firstSenderKeys, 9);
-    final Transaction penultimateTx = transactionWithNonceSenderAndGasPrice(2, firstSenderKeys, 11);
-    transactions.addRemoteTransaction(oldestTx, Optional.of(firstSender));
-    transactions.addRemoteTransaction(penultimateTx, Optional.of(firstSender));
-
-    final List<Transaction> lowGasPriceTransactions =
-        IntStream.range(0, MAX_TRANSACTIONS - 2)
-            .mapToObj(
-                i ->
-                    transactionWithNonceSenderAndGasPrice(
-                        i + 1, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10))
-            .collect(Collectors.toUnmodifiableList());
-
-    // Fill the pool with transactions from random senders
-    lowGasPriceTransactions.forEach(tx -> transactions.addRemoteTransaction(tx, Optional.empty()));
-
-    // This should kick the tx with the highest nonce for the sender of the oldest tx, that is
-    // the penultimate tx
-    final Transaction highGasPriceTransaction =
-        transactionWithNonceSenderAndGasPrice(1, KEYS1, 100);
-    transactions.addRemoteTransaction(highGasPriceTransaction, Optional.empty());
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(penultimateTx);
-    assertTransactionPending(oldestTx);
-    IntStream.range(0, MAX_TRANSACTIONS - 2)
-        .forEach(i -> assertTransactionPending(lowGasPriceTransactions.get(i)));
   }
 }

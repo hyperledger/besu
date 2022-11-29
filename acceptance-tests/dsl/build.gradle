@@ -33,6 +33,7 @@ dependencies {
   implementation 'io.reactivex.rxjava2:rxjava'
   implementation 'io.vertx:vertx-core'
   implementation 'junit:junit'
+  implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-io'
   implementation 'org.apache.tuweni:tuweni-units'

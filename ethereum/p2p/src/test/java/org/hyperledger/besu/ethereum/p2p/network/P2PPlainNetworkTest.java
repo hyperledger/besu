@@ -24,6 +24,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -39,6 +42,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MockSubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -71,7 +75,10 @@ public class P2PPlainNetworkTest {
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
           .setDiscovery(DiscoveryConfiguration.create().setActive(false))
-          .setRlpx(RlpxConfiguration.create().setBindPort(0).setSupportedProtocols(subProtocol()));
+          .setRlpx(
+              RlpxConfiguration.create()
+                  .setBindPort(0)
+                  .setSupportedProtocols(MockSubProtocol.create()));
 
   @After
   public void closeVertx() {
@@ -144,7 +151,7 @@ public class P2PPlainNetworkTest {
                 RlpxConfiguration.create()
                     .setBindPort(0)
                     .setPeerUpperBound(maxPeers)
-                    .setSupportedProtocols(subProtocol()));
+                    .setSupportedProtocols(MockSubProtocol.create()));
     try (final P2PNetwork listener =
             builder("partner1client1").nodeKey(nodeKey).config(listenerConfig).build();
         final P2PNetwork connector1 = builder("partner1client1").build();
@@ -194,9 +201,9 @@ public class P2PPlainNetworkTest {
     final NodeKey listenerNodeKey = NodeKeyUtils.generate();
     final NodeKey connectorNodeKey = NodeKeyUtils.generate();
 
-    final SubProtocol subprotocol1 = subProtocol("eth");
+    final SubProtocol subprotocol1 = MockSubProtocol.create("eth");
     final Capability cap1 = Capability.create(subprotocol1.getName(), 63);
-    final SubProtocol subprotocol2 = subProtocol("oth");
+    final SubProtocol subprotocol2 = MockSubProtocol.create("oth");
     final Capability cap2 = Capability.create(subprotocol2.getName(), 63);
     try (final P2PNetwork listener =
             builder("partner1client1")
@@ -387,7 +394,7 @@ public class P2PPlainNetworkTest {
   }
 
   private byte[] buildPaddedMessage(final int messageSize) {
-    byte[] bytes = new byte[messageSize];
+    final byte[] bytes = new byte[messageSize];
     Arrays.fill(bytes, (byte) 9);
     return bytes;
   }
@@ -401,34 +408,6 @@ public class P2PPlainNetworkTest {
             .build());
   }
 
-  private static SubProtocol subProtocol() {
-    return subProtocol("eth");
-  }
-
-  private static SubProtocol subProtocol(final String name) {
-    return new SubProtocol() {
-      @Override
-      public String getName() {
-        return name;
-      }
-
-      @Override
-      public int messageSpace(final int protocolVersion) {
-        return 8;
-      }
-
-      @Override
-      public boolean isValidMessageCode(final int protocolVersion, final int code) {
-        return true;
-      }
-
-      @Override
-      public String messageName(final int protocolVersion, final int code) {
-        return INVALID_MESSAGE_NAME;
-      }
-    };
-  }
-
   private Path initNSSConfigFile(final Path srcFilePath) {
     Path ret = null;
     try {
@@ -440,7 +419,7 @@ public class P2PPlainNetworkTest {
       final Path targetFilePath = createTemporaryFile("nsscfg");
       Files.write(targetFilePath, updated.getBytes(Charsets.UTF_8));
       ret = targetFilePath;
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException("Error populating nss config file", e);
     }
     return ret;
@@ -451,7 +430,7 @@ public class P2PPlainNetworkTest {
     try {
       tempFile = File.createTempFile("temp", suffix);
       tempFile.deleteOnExit();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException("Error creating temporary file", e);
     }
     return tempFile.toPath();
@@ -506,13 +485,17 @@ public class P2PPlainNetworkTest {
               .withCrlPath(toPath(String.format(crl, name)));
           break;
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
     return Optional.of(builder.build());
   }
 
   private DefaultP2PNetwork.Builder builder(final String name) {
+    final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
+    final Block blockMock = mock(Block.class);
+    when(blockMock.getHash()).thenReturn(Hash.ZERO);
+    when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
     return DefaultP2PNetwork.builder()
         .vertx(vertx)
         .config(config)
@@ -521,6 +504,7 @@ public class P2PPlainNetworkTest {
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
         .storageProvider(new InMemoryKeyValueStorageProvider())
-        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
+        .forks(Collections.emptyList())
+        .blockchain(blockchainMock);
   }
 }

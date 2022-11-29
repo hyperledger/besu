@@ -134,6 +134,19 @@ public class MainnetProtocolScheduleTest {
   }
 
   @Test
+  public void shouldCreateShandongConfig() throws Exception {
+    final ProtocolSchedule sched =
+        MainnetProtocolSchedule.fromConfig(
+            GenesisConfigFile.fromConfig(
+                    Resources.toString(
+                        this.getClass().getResource("/shandong.json"), StandardCharsets.UTF_8))
+                .getConfigOptions(),
+            EvmConfiguration.DEFAULT);
+    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("Shandong");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Shandong");
+  }
+
+  @Test
   public void shouldCreateRinkebyConfig() throws Exception {
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(

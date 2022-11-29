@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
-public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
+public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
   public static final byte[] WORLD_BLOCK_HASH_KEY =
@@ -268,6 +268,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
   }
 
+  @Override
+  public void close() throws Exception {
+    // no-op
+  }
+
   public interface BonsaiUpdater extends WorldStateStorage.Updater {
     BonsaiUpdater removeCode(final Hash accountHash);
 
@@ -378,7 +383,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public BonsaiUpdater putStorageValueBySlotHash(
+    public synchronized BonsaiUpdater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
@@ -386,7 +391,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
+    public synchronized void removeStorageValueBySlotHash(
+        final Hash accountHash, final Hash slotHash) {
       storageStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
     }
 

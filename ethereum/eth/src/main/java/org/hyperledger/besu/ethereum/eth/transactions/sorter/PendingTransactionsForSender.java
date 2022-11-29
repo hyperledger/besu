@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.evm.account.Account;
 
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -105,6 +106,10 @@ public class PendingTransactionsForSender {
 
   public int transactionCount() {
     return pendingTransactions.size();
+  }
+
+  public List<PendingTransaction> getPendingTransactions(final long startingNonce) {
+    return List.copyOf(pendingTransactions.tailMap(startingNonce).values());
   }
 
   public Stream<PendingTransaction> streamPendingTransactions() {

@@ -159,7 +159,7 @@ public class EvmToolCommand implements Runnable {
     // add sub commands here
     commandLine.registerConverter(Address.class, Address::fromHexString);
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
-    commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
+    commandLine.registerConverter(Wei.class, arg -> Wei.of(Long.parseUnsignedLong(arg)));
 
     commandLine.setExecutionStrategy(resultHandler).execute(args);
   }
@@ -201,12 +201,34 @@ public class EvmToolCommand implements Runnable {
               .buildBlockHeader();
 
       Log4j2ConfiguratorUtil.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
-      int repeat = this.repeat;
+      int remainingIters = this.repeat;
       Log4j2ConfiguratorUtil.setLevel(
           "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
       final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
       Log4j2ConfiguratorUtil.setLevel(
           "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
+      final Transaction tx =
+          new Transaction(
+              0,
+              Wei.ZERO,
+              Long.MAX_VALUE,
+              Optional.ofNullable(receiver),
+              Wei.ZERO,
+              null,
+              callData,
+              sender,
+              Optional.empty());
+
+      final long intrinsicGasCost =
+          protocolSpec
+              .getGasCalculator()
+              .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
+      final long accessListCost =
+          tx.getAccessList()
+              .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
+              .orElse(0L);
+      long txGas = gas - intrinsicGasCost - accessListCost;
+
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
@@ -214,7 +236,7 @@ public class EvmToolCommand implements Runnable {
       final Stopwatch stopwatch = Stopwatch.createUnstarted();
       long lastTime = 0;
       do {
-        final boolean lastLoop = repeat == 0;
+        final boolean lastLoop = remainingIters == 0;
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
@@ -231,7 +253,7 @@ public class EvmToolCommand implements Runnable {
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .messageFrameStack(messageFrameStack)
                 .worldUpdater(updater)
-                .initialGas(gas)
+                .initialGas(txGas)
                 .contract(Address.ZERO)
                 .address(receiver)
                 .originator(sender)
@@ -269,41 +291,19 @@ public class EvmToolCommand implements Runnable {
           }
 
           if (lastLoop && messageFrameStack.isEmpty()) {
-            final Transaction tx =
-                new Transaction(
-                    0,
-                    Wei.ZERO,
-                    Long.MAX_VALUE,
-                    Optional.ofNullable(receiver),
-                    Wei.ZERO,
-                    null,
-                    callData,
-                    sender,
-                    Optional.empty());
-
-            final long intrinsicGasCost =
-                protocolSpec
-                    .getGasCalculator()
-                    .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
-            final long accessListCost =
-                tx.getAccessList()
-                    .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
-                    .orElse(0L);
-            final long evmGas = gas - messageFrame.getRemainingGas();
+            final long evmGas = txGas - messageFrame.getRemainingGas();
             out.println();
             out.println(
                 new JsonObject()
                     .put("gasUser", "0x" + Long.toHexString(evmGas))
                     .put("timens", lastTime)
                     .put("time", lastTime / 1000)
-                    .put(
-                        "gasTotal",
-                        "0x" + Long.toHexString(evmGas + intrinsicGasCost) + accessListCost));
+                    .put("gasTotal", "0x" + Long.toHexString(evmGas)));
           }
         }
         lastTime = stopwatch.elapsed().toNanos();
         stopwatch.reset();
-      } while (repeat-- > 0);
+      } while (remainingIters-- > 0);
 
     } catch (final IOException e) {
       LOG.error("Unable to create Genesis module", e);

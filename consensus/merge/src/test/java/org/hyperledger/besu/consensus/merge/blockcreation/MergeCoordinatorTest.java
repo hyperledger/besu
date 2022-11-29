@@ -19,10 +19,12 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -44,6 +46,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -61,11 +64,12 @@ import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -78,6 +82,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -117,9 +122,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private MergeCoordinator coordinator;
   private ProtocolContext protocolContext;
 
-  private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
+  private final ProtocolSchedule protocolSchedule = spy(getMergeProtocolSchedule());
   private final GenesisState genesisState =
-      GenesisState.fromConfig(getPosGenesisConfigFile(), mockProtocolSchedule);
+      GenesisState.fromConfig(getPosGenesisConfigFile(), protocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -146,12 +151,28 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   CompletableFuture<Void> blockCreationTask = CompletableFuture.completedFuture(null);
 
+  private final BadBlockManager badBlockManager = spy(new BadBlockManager());
+
   @Before
   public void setUp() {
     when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
     when(mergeContext.getTerminalTotalDifficulty())
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.of(terminalPowBlock()));
+    doAnswer(
+            getSpecInvocation -> {
+              ProtocolSpec spec = (ProtocolSpec) spy(getSpecInvocation.callRealMethod());
+              doAnswer(
+                      getBadBlockInvocation -> {
+                        return badBlockManager;
+                      })
+                  .when(spec)
+                  .getBadBlocksManager();
+              return spec;
+            })
+        .when(protocolSchedule)
+        .getByBlockNumber(anyLong());
+
     protocolContext = new ProtocolContext(blockchain, worldStateArchive, mergeContext);
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
@@ -166,10 +187,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             });
 
     MergeConfigOptions.setMergeEnabled(true);
+
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
-            mockProtocolSchedule,
+            protocolSchedule,
             proposalBuilderExecutor,
             transactions,
             miningParameters,
@@ -198,6 +220,84 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), block.capture());
 
     assertThat(block.getValue().getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
+  }
+
+  @Test
+  public void exceptionDuringBuildingBlockShouldNotBeInvalid()
+      throws ExecutionException, InterruptedException {
+
+    final int txPerBlock = 7;
+
+    MergeCoordinator.MergeBlockCreatorFactory mergeBlockCreatorFactory =
+        (parentHeader, address) -> {
+          MergeBlockCreator beingSpiedOn =
+              spy(
+                  new MergeBlockCreator(
+                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
+                      () -> Optional.of(30000000L),
+                      parent -> Bytes.EMPTY,
+                      transactions,
+                      protocolContext,
+                      protocolSchedule,
+                      this.miningParameters.getMinTransactionGasPrice(),
+                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
+                      this.miningParameters.getMinBlockOccupancyRatio(),
+                      parentHeader));
+
+          doCallRealMethod()
+              .doCallRealMethod()
+              .doThrow(new MerkleTrieException("missing leaf"))
+              .doCallRealMethod()
+              .when(beingSpiedOn)
+              .createBlock(any(), any(Bytes32.class), anyLong());
+          return beingSpiedOn;
+        };
+
+    MergeCoordinator willThrow =
+        spy(
+            new MergeCoordinator(
+                protocolContext,
+                protocolSchedule,
+                proposalBuilderExecutor,
+                miningParameters,
+                backwardSyncContext,
+                mergeBlockCreatorFactory));
+
+    final AtomicLong retries = new AtomicLong(0);
+    doAnswer(
+            invocation -> {
+              if (retries.getAndIncrement() < txPerBlock) {
+                // a new transaction every time a block is built
+                transactions.addLocalTransaction(
+                    createTransaction(retries.get() - 1), Optional.empty());
+              } else {
+                // when we have 5 transactions finalize block creation
+                willThrow.finalizeProposalById(invocation.getArgument(0, PayloadIdentifier.class));
+              }
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any(), any());
+
+    var payloadId =
+        willThrow.preparePayload(
+            genesisState.getBlock().getHeader(),
+            System.currentTimeMillis() / 1000,
+            Bytes32.random(),
+            suggestedFeeRecipient);
+
+    verify(willThrow, never()).addBadBlock(any(), any());
+    blockCreationTask.get();
+
+    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+
+    verify(mergeContext, times(txPerBlock + 1))
+        .putPayloadById(eq(payloadId), block.capture()); // +1 for the empty
+    assertThat(block.getValue().getBody().getTransactions().size()).isEqualTo(txPerBlock);
+    // this only verifies that adding the bad block didn't happen through the mergeCoordinator, it
+    // still may be called directly.
+    verify(badBlockManager, never()).addBadBlock(any(), any());
+    verify(willThrow, never()).addBadBlock(any(), any());
   }
 
   @Test
@@ -246,7 +346,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             invocation -> {
               if (invocation.getArgument(1, Block.class).getBody().getTransactions().isEmpty()) {
                 // this is called by the first empty block
-                doThrow(new StorageException("lock")) // first fail
+                doThrow(new MerkleTrieException("lock")) // first fail
                     .doCallRealMethod() // then work
                     .when(blockchain)
                     .getBlockHeader(any());
@@ -598,7 +698,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader mockHeader =
         headerGenerator.parentHash(Hash.fromHexStringLenient("0xdead")).buildHeader();
     when(blockchain.getBlockHeader(mockHeader.getHash())).thenReturn(Optional.of(mockHeader));
-    var res = coordinator.getOrSyncHeaderByHash(mockHeader.getHash());
+    var res = coordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO);
 
     assertThat(res).isPresent();
   }
@@ -610,7 +710,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     when(backwardSyncContext.syncBackwardsUntil(mockHeader.getBlockHash()))
         .thenReturn(CompletableFuture.completedFuture(null));
 
-    var res = coordinator.getOrSyncHeaderByHash(mockHeader.getHash());
+    var res = coordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO);
 
     assertThat(res).isNotPresent();
   }
@@ -671,7 +771,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     MergeCoordinator mockCoordinator =
         new MergeCoordinator(
             mockProtocolContext,
-            mockProtocolSchedule,
+            protocolSchedule,
             CompletableFuture::runAsync,
             transactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
@@ -732,7 +832,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     MergeCoordinator mockCoordinator =
         new MergeCoordinator(
             mockProtocolContext,
-            mockProtocolSchedule,
+            protocolSchedule,
             CompletableFuture::runAsync,
             transactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
@@ -923,7 +1023,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         spy(
             new MergeCoordinator(
                 mockProtocolContext,
-                mockProtocolSchedule,
+                protocolSchedule,
                 CompletableFuture::runAsync,
                 transactions,
                 new MiningParameters.Builder().coinbase(coinbase).build(),

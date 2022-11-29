@@ -25,12 +25,14 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.google.errorprone.annotations.MustBeClosed;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -256,23 +258,27 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
+  @MustBeClosed
   public MutableWorldState copy() {
-    final BonsaiPersistedWorldState bonsaiPersistedWorldState =
-        ((BonsaiPersistedWorldState) archive.getMutable());
-    BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =
-        new BonsaiInMemoryWorldStateKeyValueStorage(
-            bonsaiPersistedWorldState.getWorldStateStorage().accountStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().getMaybeFallbackNodeFinder());
-    return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
+    // return an in-memory worldstate that is based on a persisted snapshot for this blockhash.
+    return archive
+        .getMutableSnapshot(this.blockHash())
+        .map(BonsaiSnapshotWorldState.class::cast)
+        .map(snapshot -> new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage()))
+        .orElseThrow(
+            () ->
+                new StorageException(
+                    "Unable to copy Layered Worldstate for " + blockHash().toHexString()));
+  }
+
+  @Override
+  public boolean isPersistable() {
+    return false;
   }
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    throw new UnsupportedOperationException("Layered worldState can not be persisted.");
+    // no-op, layered worldstates do not persist, not even as a trielog.
   }
 
   @Override
