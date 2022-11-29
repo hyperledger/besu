@@ -21,6 +21,5 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public interface HeaderBasedProtocolSchedule {
 
-    public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader);
-
+  public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader);
 }

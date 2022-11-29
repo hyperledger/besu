@@ -295,5 +295,4 @@ public interface GenesisConfigOptions {
    * @return true, if you want the next block to use zero for the base fee.
    */
   boolean isZeroBaseFee();
-
 }

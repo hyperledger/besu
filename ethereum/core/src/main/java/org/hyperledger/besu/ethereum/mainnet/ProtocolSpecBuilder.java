@@ -288,31 +288,33 @@ public class ProtocolSpecBuilder {
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
     final BlockHeaderValidator blockHeaderValidator =
-            createBlockHeaderValidator(blockHeaderValidatorBuilder);
+        createBlockHeaderValidator(blockHeaderValidatorBuilder);
 
     final BlockHeaderValidator ommerHeaderValidator =
-            createBlockHeaderValidator(ommerHeaderValidatorBuilder);
+        createBlockHeaderValidator(ommerHeaderValidatorBuilder);
 
     final BlockBodyValidator blockBodyValidator = blockBodyValidatorBuilder.apply(protocolSchedule);
 
-    BlockProcessor blockProcessor =
-            createBlockProcessor(transactionProcessor);
+    BlockProcessor blockProcessor = createBlockProcessor(transactionProcessor);
     // Set private Tx Processor
-    PrivateTransactionProcessor privateTransactionProcessor = createPrivetTransactionProcessor(transactionValidator,
-            contractCreationProcessor,messageCallProcessor, precompileContractRegistry);
+    PrivateTransactionProcessor privateTransactionProcessor =
+        createPrivetTransactionProcessor(
+            transactionValidator,
+            contractCreationProcessor,
+            messageCallProcessor,
+            precompileContractRegistry);
 
-    if (privacyParameters.isEnabled()){
+    if (privacyParameters.isEnabled()) {
       blockProcessor =
-              new PrivacyBlockProcessor(
-                      blockProcessor,
-                      protocolSchedule,
-                      privacyParameters.getEnclave(),
-                      privacyParameters.getPrivateStateStorage(),
-                      privacyParameters.getPrivateWorldStateArchive(),
-                      privacyParameters.getPrivateStateRootResolver(),
-                      privacyParameters.getPrivateStateGenesisAllocator());
+          new PrivacyBlockProcessor(
+              blockProcessor,
+              protocolSchedule,
+              privacyParameters.getEnclave(),
+              privacyParameters.getPrivateStateStorage(),
+              privacyParameters.getPrivateWorldStateArchive(),
+              privacyParameters.getPrivateStateRootResolver(),
+              privacyParameters.getPrivateStateGenesisAllocator());
     }
-
 
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(
@@ -348,54 +350,58 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(powHasher));
   }
 
-  private PrivateTransactionProcessor createPrivetTransactionProcessor(final MainnetTransactionValidator transactionValidator, final AbstractMessageProcessor contractCreationProcessor, final AbstractMessageProcessor messageCallProcessor, final PrecompileContractRegistry precompileContractRegistry) {
+  private PrivateTransactionProcessor createPrivetTransactionProcessor(
+      final MainnetTransactionValidator transactionValidator,
+      final AbstractMessageProcessor contractCreationProcessor,
+      final AbstractMessageProcessor messageCallProcessor,
+      final PrecompileContractRegistry precompileContractRegistry) {
     PrivateTransactionProcessor privateTransactionProcessor = null;
     if (privacyParameters.isEnabled()) {
       final PrivateTransactionValidator privateTransactionValidator =
-              privateTransactionValidatorBuilder.apply();
+          privateTransactionValidatorBuilder.apply();
       privateTransactionProcessor =
-              privateTransactionProcessorBuilder.apply(
-                      transactionValidator,
-                      contractCreationProcessor,
-                      messageCallProcessor,
-                      privateTransactionValidator);
+          privateTransactionProcessorBuilder.apply(
+              transactionValidator,
+              contractCreationProcessor,
+              messageCallProcessor,
+              privateTransactionValidator);
 
       if (privacyParameters.isPrivacyPluginEnabled()) {
         final PrivacyPluginPrecompiledContract privacyPluginPrecompiledContract =
-                (PrivacyPluginPrecompiledContract) precompileContractRegistry.get(PLUGIN_PRIVACY);
+            (PrivacyPluginPrecompiledContract) precompileContractRegistry.get(PLUGIN_PRIVACY);
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
-                privateTransactionProcessor);
+            privateTransactionProcessor);
       } else if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
         final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
-                (FlexiblePrivacyPrecompiledContract) precompileContractRegistry.get(FLEXIBLE_PRIVACY);
+            (FlexiblePrivacyPrecompiledContract) precompileContractRegistry.get(FLEXIBLE_PRIVACY);
         flexiblePrivacyPrecompiledContract.setPrivateTransactionProcessor(
-                privateTransactionProcessor);
+            privateTransactionProcessor);
       } else {
         final PrivacyPrecompiledContract privacyPrecompiledContract =
-                (PrivacyPrecompiledContract) precompileContractRegistry.get(DEFAULT_PRIVACY);
+            (PrivacyPrecompiledContract) precompileContractRegistry.get(DEFAULT_PRIVACY);
         privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
       }
-
-
     }
     return privateTransactionProcessor;
   }
 
-  private BlockProcessor createBlockProcessor(final MainnetTransactionProcessor transactionProcessor) {
+  private BlockProcessor createBlockProcessor(
+      final MainnetTransactionProcessor transactionProcessor) {
     return blockProcessorBuilder.apply(
-            transactionProcessor,
-            transactionReceiptFactory,
-            blockReward,
-            miningBeneficiaryCalculator,
-            skipZeroBlockRewards,
-            privacyParameters.getGoQuorumPrivacyParameters());
+        transactionProcessor,
+        transactionReceiptFactory,
+        blockReward,
+        miningBeneficiaryCalculator,
+        skipZeroBlockRewards,
+        privacyParameters.getGoQuorumPrivacyParameters());
   }
 
-  private BlockHeaderValidator createBlockHeaderValidator(final Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder) {
+  private BlockHeaderValidator createBlockHeaderValidator(
+      final Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder) {
     return blockHeaderValidatorBuilder
-            .apply(feeMarket)
-            .difficultyCalculator(difficultyCalculator)
-            .build();
+        .apply(feeMarket)
+        .difficultyCalculator(difficultyCalculator)
+        .build();
   }
 
   public interface TransactionProcessorBuilder {

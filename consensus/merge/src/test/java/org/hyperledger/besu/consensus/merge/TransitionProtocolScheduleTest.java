@@ -25,10 +25,10 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.Optional;
 
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,8 +44,7 @@ public class TransitionProtocolScheduleTest {
   @Mock ProtocolSchedule preMergeProtocolSchedule;
   @Mock ProtocolSchedule postMergeProtocolSchedule;
 
-  @Mock
-  TimestampSchedule timestampSchedule;
+  @Mock TimestampSchedule timestampSchedule;
   @Mock BlockHeader blockHeader;
 
   private static final Difficulty TTD = Difficulty.of(100L);
@@ -60,7 +59,7 @@ public class TransitionProtocolScheduleTest {
 
     transitionProtocolSchedule =
         new TransitionProtocolSchedule(
-                preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext, timestampSchedule);
+            preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext, timestampSchedule);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
   }
 
@@ -69,7 +68,7 @@ public class TransitionProtocolScheduleTest {
     when(mergeContext.getFinalized()).thenReturn(Optional.of(mock(BlockHeader.class)));
     when(blockHeader.getNumber()).thenReturn(BLOCK_NUMBER);
 
-    transitionProtocolSchedule.getByBlockHeader( blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPostMergeProtocolScheduleReturned();
   }
@@ -81,7 +80,7 @@ public class TransitionProtocolScheduleTest {
 
     when(blockHeader.getNumber()).thenReturn(BLOCK_NUMBER);
 
-    transitionProtocolSchedule.getByBlockHeader( blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -100,7 +99,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(95L)));
 
-    transitionProtocolSchedule.getByBlockHeader( blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -119,7 +118,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(95L)));
 
-    transitionProtocolSchedule.getByBlockHeader( blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -138,7 +137,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(105L)));
 
-    transitionProtocolSchedule.getByBlockHeader( blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPostMergeProtocolScheduleReturned();
   }

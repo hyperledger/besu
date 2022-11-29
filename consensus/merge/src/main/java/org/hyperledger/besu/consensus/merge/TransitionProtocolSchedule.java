@@ -65,15 +65,14 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     return transitionUtils.getPostMergeObject();
   }
 
-
-@Override
-public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader){
+  @Override
+  public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader) {
     return this.timestampSchedule
-            .getByTimestamp(blockHeader.getTimestamp())
-            .orElseGet(()->getByBlockHeaderFromTransitionUtils(blockHeader));
-
+        .getByTimestamp(blockHeader.getTimestamp())
+        .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
   }
-  public ProtocolSpec getByBlockHeaderFromTransitionUtils( final BlockHeader blockHeader) {
+
+  public ProtocolSpec getByBlockHeaderFromTransitionUtils(final BlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
     if (transitionUtils.getMergeContext().getFinalized().isEmpty()) {
 
@@ -88,7 +87,10 @@ public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader){
 
       // otherwise check to see if this block represents a re-org TTD block:
       Difficulty parentDifficulty =
-          protocolContext.getBlockchain().getTotalDifficultyByHash(blockHeader.getParentHash()).orElseThrow();
+          protocolContext
+              .getBlockchain()
+              .getTotalDifficultyByHash(blockHeader.getParentHash())
+              .orElseThrow();
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
       Difficulty terminalDifficulty =
           transitionUtils.getMergeContext().getTerminalTotalDifficulty();
@@ -117,11 +119,14 @@ public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader){
 
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
-    return protocolContext.getBlockchain().getBlockByNumber(number)
-            .map(Block::getHeader)
-            .map(this::getByBlockHeader)
-            .orElse(transitionUtils.dispatchFunctionAccordingToMergeState(
-        protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
+    return protocolContext
+        .getBlockchain()
+        .getBlockByNumber(number)
+        .map(Block::getHeader)
+        .map(this::getByBlockHeader)
+        .orElse(
+            transitionUtils.dispatchFunctionAccordingToMergeState(
+                protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
   }
 
   @Override

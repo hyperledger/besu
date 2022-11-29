@@ -36,7 +36,8 @@ public interface ProtocolSchedule extends HeaderBasedProtocolSchedule {
       WorldStateArchive publicWorldStateArchive);
 
   @Override
-  default ProtocolSpec getByBlockHeader(final BlockHeader blockHeader){
+  default ProtocolSpec getByBlockHeader(final BlockHeader blockHeader) {
     return getByBlockNumber(blockHeader.getNumber());
-  };
+  }
+  ;
 }
