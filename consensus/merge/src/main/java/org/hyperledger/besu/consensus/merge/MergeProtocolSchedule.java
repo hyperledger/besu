@@ -60,21 +60,23 @@ public class MergeProtocolSchedule {
         .createProtocolSchedule();
   }
 
-
-  public static TimestampSchedule createTimeStamp(final GenesisConfigOptions config, final PrivacyParameters privacyParameters, final boolean isRevertReasonEnabled) {
+  public static TimestampSchedule createTimeStamp(
+      final GenesisConfigOptions config,
+      final PrivacyParameters privacyParameters,
+      final boolean isRevertReasonEnabled) {
     return new TimestampScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
             ProtocolSpecAdapters.create(
-                    0,
-                    (specBuilder) ->
-                            MergeProtocolSchedule.applyMergeSpecificModifications(
-                                    specBuilder, config.getChainId())),
+                0,
+                (specBuilder) ->
+                    MergeProtocolSchedule.applyMergeSpecificModifications(
+                        specBuilder, config.getChainId())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
             EvmConfiguration.DEFAULT)
-            .createTimeStampSchedule();
+        .createTimeStampSchedule();
   }
 
   private static ProtocolSpecBuilder applyMergeSpecificModifications(
@@ -95,5 +97,4 @@ public class MergeProtocolSchedule {
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
-
 }

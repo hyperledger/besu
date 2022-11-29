@@ -17,19 +17,19 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
-import java.math.BigInteger;
-import java.util.Optional;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.math.BigInteger;
+import java.util.Optional;
 
-public interface TimestampSchedule  extends HeaderBasedProtocolSchedule {
-     Optional<ProtocolSpec> getByTimestamp(final long timestamp);
+public interface TimestampSchedule extends HeaderBasedProtocolSchedule {
+  Optional<ProtocolSpec> getByTimestamp(final long timestamp);
 
-     Optional<BigInteger> getChainId();
+  Optional<BigInteger> getChainId();
 
-
-     @Override
-     default ProtocolSpec getByBlockHeader(final BlockHeader blockHeader){
-            return getByTimestamp(blockHeader.getTimestamp()).orElse(null);
-        };
+  @Override
+  default ProtocolSpec getByBlockHeader(final BlockHeader blockHeader) {
+    return getByTimestamp(blockHeader.getTimestamp()).orElse(null);
+  }
+  ;
 }

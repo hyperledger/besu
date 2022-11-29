@@ -168,7 +168,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    transitionProtocolSchedule = new TransitionProtocolSchedule(
+    transitionProtocolSchedule =
+        new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createTimestampProtocolSchedule());
@@ -176,8 +177,14 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected ProtocolContext createProtocolContext(final MutableBlockchain blockchain, final WorldStateArchive worldStateArchive, final ProtocolSchedule protocolSchedule, final ConsensusContextFactory consensusContextFactory) {
-    final ProtocolContext protocolContext = super.createProtocolContext(blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+  protected ProtocolContext createProtocolContext(
+      final MutableBlockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule,
+      final ConsensusContextFactory consensusContextFactory) {
+    final ProtocolContext protocolContext =
+        super.createProtocolContext(
+            blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     return protocolContext;
   }
