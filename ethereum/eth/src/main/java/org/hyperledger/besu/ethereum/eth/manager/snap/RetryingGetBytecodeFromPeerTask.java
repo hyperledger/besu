@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -64,6 +65,11 @@ public class RetryingGetBytecodeFromPeerTask
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
+              if (isEmptyResponse(peerResult.getResult())) {
+                peer.recordUselessResponse("GetBytecodeFromPeerTask");
+                throw new IncompleteResultsException(
+                    "No code returned by peer " + peer.getShortNodeId());
+              }
               result.complete(peerResult.getResult());
               return peerResult.getResult();
             });
