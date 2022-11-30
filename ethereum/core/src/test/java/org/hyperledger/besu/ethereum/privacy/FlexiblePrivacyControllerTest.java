@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -99,11 +99,9 @@ public class FlexiblePrivacyControllerTest {
   private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
 
   private static final List<String> PRIVACY_GROUP_ADDRESSES = List.of(ADDRESS1, ADDRESS2);
-  private static final Bytes SIMULATOR_RESULT_PREFIX =
-      Bytes.fromHexString(
-          "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002");
   private static final Bytes SIMULATOR_RESULT =
-      Bytes.concatenate(SIMULATOR_RESULT_PREFIX, Base64.decode(ADDRESS1), Base64.decode(ADDRESS2));
+      Bytes.fromHexString(
+          "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000020035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a00000000000000000000000000000000000000000000000000000000000000202a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b");
   private static final PrivacyGroup EXPECTED_PRIVACY_GROUP =
       new PrivacyGroup(
           PRIVACY_GROUP_ID, PrivacyGroup.Type.FLEXIBLE, "", "", PRIVACY_GROUP_ADDRESSES);
@@ -197,7 +195,7 @@ public class FlexiblePrivacyControllerTest {
   }
 
   @Test
-  public void findFleixblePrivacyGroups() {
+  public void findFlexiblePrivacyGroups() {
     mockingForFindPrivacyGroupByMembers();
     mockingForFindPrivacyGroupById();
 
@@ -262,13 +260,13 @@ public class FlexiblePrivacyControllerTest {
   @Test
   public void validateTransactionWithIncorrectNonceReturnsError() {
     when(privateTransactionValidator.validate(any(), any(), anyBoolean()))
-        .thenReturn(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
+        .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_HIGH));
 
     final PrivateTransaction transaction = buildPrivateTransaction(2).build();
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ADDRESS1);
-    assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_HIGH));
   }
 
   @Test

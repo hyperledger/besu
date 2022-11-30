@@ -61,7 +61,8 @@ public class GeneralStateReferenceTestTools {
         System.getProperty(
             "test.ethereum.state.eips",
             "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "London,Shanghai,Cancun");
+                + "Shandong,"
+                + "London,Merge,Shanghai,Cancun,Prague,Osaka,Bogota");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
   }
 
@@ -103,6 +104,11 @@ public class GeneralStateReferenceTestTools {
 
     // Don't do time consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
+    params.ignore("loopMul-.*");
+  }
+
+  private GeneralStateReferenceTestTools() {
+    // utility class
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {

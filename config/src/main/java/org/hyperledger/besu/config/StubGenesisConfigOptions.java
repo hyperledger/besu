@@ -44,6 +44,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
+  private OptionalLong shandongBlockNumber = OptionalLong.empty();
   private OptionalLong eip1153BlockNumber = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
@@ -218,6 +219,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getShandongBlockNumber() {
+    return shandongBlockNumber;
+  }
+
+  @Override
   public OptionalLong getEIP1153BlockNumber() {
     return eip1153BlockNumber;
   }
@@ -350,6 +356,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
+    getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
     getEIP1153BlockNumber().ifPresent(l -> builder.put("eip1153Block", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
@@ -491,6 +498,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions mergeNetSplitBlock(final long blockNumber) {
     mergeNetSplitBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions shandongBlock(final long blockNumber) {
+    shandongBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

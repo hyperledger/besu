@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 /**
  * Responsible for storing values against keys.
  *
@@ -62,6 +64,14 @@ public interface KeyValueStorage extends Closeable {
   Optional<byte[]> get(byte[] key) throws StorageException;
 
   /**
+   * Returns a stream of all keys and values.
+   *
+   * @return A stream of all keys and values in storage.
+   * @throws StorageException problem encountered during the retrieval attempt.
+   */
+  Stream<Pair<byte[], byte[]>> stream() throws StorageException;
+
+  /**
    * Returns a stream of all keys.
    *
    * @return A stream of all keys in storage.
@@ -88,6 +98,8 @@ public interface KeyValueStorage extends Closeable {
    * @return the set of keys that pass the condition.
    */
   Set<byte[]> getAllKeysThat(Predicate<byte[]> returnCondition);
+
+  Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition);
 
   /**
    * Begins a fresh transaction, for sequencing operations for later atomic execution.

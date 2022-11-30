@@ -1,0 +1,11 @@
+{
+  "request": {
+    "jsonrpc":"2.0","method":"debug_setHead","params":["0x1"],"id":1
+  },
+  "response": {
+    "jsonrpc" : "2.0",
+    "id" : 1,
+    "result" : "Success"
+  },
+  "statusCode": 200
+}

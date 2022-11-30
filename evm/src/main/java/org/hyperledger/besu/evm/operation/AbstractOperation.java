@@ -35,7 +35,7 @@ public abstract class AbstractOperation implements Operation {
 
   protected static final OperationResult ILLEGAL_STATE_CHANGE =
       new OperationResult(
-          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+          0L, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
 
   protected AbstractOperation(
       final int opcode,

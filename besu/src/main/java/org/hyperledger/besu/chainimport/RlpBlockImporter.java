@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -208,7 +209,7 @@ public class RlpBlockImporter implements Closeable {
       cumulativeTimer.start();
       segmentTimer.start();
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-      final boolean blockImported =
+      final BlockImportResult blockImported =
           blockImporter.importBlock(
               context,
               block,
@@ -216,7 +217,7 @@ public class RlpBlockImporter implements Closeable {
                   ? HeaderValidationMode.LIGHT_SKIP_DETACHED
                   : HeaderValidationMode.SKIP_DETACHED,
               skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
-      if (!blockImported) {
+      if (!blockImported.isImported()) {
         throw new IllegalStateException(
             "Invalid block at block number " + header.getNumber() + ".");
       }

@@ -19,12 +19,12 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.List;
 import java.util.Map;
@@ -49,8 +49,8 @@ public class PendingStateAdapter extends AdapterBase {
   }
 
   public List<TransactionAdapter> getTransactions() {
-    return pendingTransactions.getTransactionInfo().stream()
-        .map(AbstractPendingTransactionsSorter.TransactionInfo::getTransaction)
+    return pendingTransactions.getPendingTransactions().stream()
+        .map(PendingTransaction::getTransaction)
         .map(TransactionWithMetadata::new)
         .map(TransactionAdapter::new)
         .collect(Collectors.toList());
@@ -65,10 +65,8 @@ public class PendingStateAdapter extends AdapterBase {
     final Address addr = dataFetchingEnvironment.getArgument("address");
     final Long blockNumber = dataFetchingEnvironment.getArgument("blockNumber");
     final long latestBlockNumber = blockchainQuery.latestBlock().get().getHeader().getNumber();
-    final Optional<WorldState> optionalWorldState =
-        blockchainQuery.getWorldState(latestBlockNumber);
-    return optionalWorldState
-        .flatMap(worldState -> Optional.ofNullable(worldState.get(addr)))
+    return blockchainQuery
+        .getAndMapWorldState(latestBlockNumber, ws -> ws.get(addr))
         .map(AccountAdapter::new);
   }
 

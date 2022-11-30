@@ -44,6 +44,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.ZoneId;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -104,9 +105,9 @@ public abstract class AbstractMessageTaskTest<T, R> {
             protocolSchedule,
             protocolContext,
             ethContext,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             TransactionPoolConfiguration.DEFAULT);
     ethProtocolManager =

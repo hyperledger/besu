@@ -47,15 +47,13 @@ public class TStoreOperation extends AbstractOperation {
 
     final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {
-      return new OperationResult(
-          OptionalLong.of(remainingGas), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+      return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (remainingGas < cost) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     } else {
       account.setTransientStorageValue(key, value);
       frame.transientStorageWasUpdated(key, value);
-      return new OperationResult(OptionalLong.of(cost), Optional.empty());
+      return new OperationResult(cost, null);
     }
   }
 }

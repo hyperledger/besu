@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
 
 import java.util.Optional;
 
@@ -27,30 +28,37 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 @SuppressWarnings("unused") // reflected by GraphQL
 public class AccountAdapter extends AdapterBase {
-  private final Account account;
+
+  private final Optional<Account> account;
+  private final Address address;
 
   public AccountAdapter(final Account account) {
-    this.account = account;
+    this(account == null ? null : account.getAddress(), account);
+  }
+
+  public AccountAdapter(final Address address, final Account account) {
+    this.account = Optional.ofNullable(account);
+    this.address = address;
   }
 
   public Optional<Address> getAddress() {
-    return Optional.of(account.getAddress());
+    return Optional.of(address);
   }
 
   public Optional<Wei> getBalance() {
-    return Optional.of(account.getBalance());
+    return account.map(AccountState::getBalance).or(() -> Optional.of(Wei.ZERO));
   }
 
   public Optional<Long> getTransactionCount() {
-    return Optional.of(account.getNonce());
+    return account.map(AccountState::getNonce).or(() -> Optional.of(0L));
   }
 
   public Optional<Bytes> getCode() {
-    return Optional.of(account.getCode());
+    return account.map(AccountState::getCode);
   }
 
   public Optional<Bytes32> getStorage(final DataFetchingEnvironment environment) {
     final Bytes32 slot = environment.getArgument("slot");
-    return Optional.of(account.getStorageValue(UInt256.fromBytes(slot)));
+    return account.map(account -> account.getStorageValue(UInt256.fromBytes(slot)));
   }
 }

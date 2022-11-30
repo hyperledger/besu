@@ -36,7 +36,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  * not mutable. In other words, objects implementing this interface are not guaranteed to be
  * thread-safe, though some particular implementations may provide such guarantees.
  */
-public interface WorldState extends WorldView {
+public interface WorldState extends WorldView, AutoCloseable {
 
   /**
    * The root hash of the world state this represents.
@@ -120,5 +120,10 @@ public interface WorldState extends WorldView {
     public UInt256 getTransientStorageValue(final UInt256 key) {
       return accountState.getTransientStorageValue(key);
     }
+  }
+
+  @Override
+  default void close() throws Exception {
+    // default no-op
   }
 }

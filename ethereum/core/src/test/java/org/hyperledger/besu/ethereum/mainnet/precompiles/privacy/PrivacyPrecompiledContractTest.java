@@ -311,7 +311,7 @@ public class PrivacyPrecompiledContractTest {
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
             TransactionProcessingResult.invalid(
-                ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE))));
+                ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH))));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
     final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);

@@ -90,6 +90,11 @@ public class EthPeers {
     this.maxMessageSize = maxMessageSize;
     this.bestPeerComparator = HEAVIEST_CHAIN;
     metricsSystem.createIntegerGauge(
+        BesuMetricCategory.ETHEREUM,
+        "peer_count",
+        "The current number of peers connected",
+        () -> (int) streamAvailablePeers().count());
+    metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
         "Number of peer requests currently pending because peers are busy",
@@ -107,11 +112,8 @@ public class EthPeers {
             maxMessageSize,
             clock,
             permissioningProviders);
-    final EthPeer ethPeer = connections.putIfAbsent(peerConnection, peer);
-    LOG.debug(
-        "Adding new EthPeer {} {}",
-        peer.getShortNodeId(),
-        ethPeer == null ? "for the first time" : "");
+    connections.putIfAbsent(peerConnection, peer);
+    LOG.debug("Adding new EthPeer {}", peer.nodeId());
   }
 
   public void registerDisconnect(final PeerConnection connection) {
@@ -202,7 +204,17 @@ public class EthPeers {
     return connections.values().stream();
   }
 
+  private void removeDisconnectedPeers() {
+    final Collection<EthPeer> peerStream = connections.values();
+    for (EthPeer p : peerStream) {
+      if (p.isDisconnected()) {
+        connections.remove(p.getConnection());
+      }
+    }
+  }
+
   public Stream<EthPeer> streamAvailablePeers() {
+    removeDisconnectedPeers();
     return streamAllPeers()
         .filter(EthPeer::readyForRequests)
         .filter(peer -> !peer.isDisconnected());
