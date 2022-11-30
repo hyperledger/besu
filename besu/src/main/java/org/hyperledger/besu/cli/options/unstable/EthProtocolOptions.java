@@ -34,7 +34,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String LEGACY_ETH_64_FORK_ID_ENABLED =
       "--compatibility-eth64-forkid-enabled";
 
-  private static final String MAX_CAPABILITY = "--Xeth-max-capability";
+  private static final String MAX_CAPABILITY = "--Xeth-capability-max";
 
   @CommandLine.Option(
       hidden = true,

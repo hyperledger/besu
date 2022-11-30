@@ -142,7 +142,7 @@ public class EthProtocolOptionsTest
 
   @Test
   public void parsesValidEthMaxProtocol() {
-    final TestBesuCommand cmd = parseCommand("--Xeth-max-capability", "66");
+    final TestBesuCommand cmd = parseCommand("--Xeth-capability-max", "66");
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
