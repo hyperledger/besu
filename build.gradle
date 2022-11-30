@@ -122,7 +122,10 @@ allprojects {
     mavenCentral()
   }
 
-  dependencies { errorprone 'com.google.errorprone:error_prone_core' }
+  dependencies {
+    errorprone 'com.google.errorprone:error_prone_core'
+    errorprone 'tech.pegasys.tools.epchecks:errorprone-checks'
+  }
 
   apply plugin: 'com.diffplug.spotless'
   spotless {
@@ -183,6 +186,12 @@ allprojects {
       check('FieldCanBeFinal', CheckSeverity.WARN)
       check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
+
+      // TODO: Review/fix findings & enable checks.
+      check('MethodInputParametersMustBeFinal', CheckSeverity.OFF)
+      check('JavaCase', CheckSeverity.OFF)
+      check('ReferenceComparison', CheckSeverity.OFF)
+      check('MathTargetType', CheckSeverity.OFF)
     }
 
     options.encoding = 'UTF-8'
@@ -832,18 +841,6 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }
-}
-
-configurations { annotationProcessor }
-
-// Prevent errorprone-checks being dependent upon errorprone-checks!
-// However, ensure all subprojects comply with the custom rules.
-configure(subprojects.findAll { it.name != 'errorprone-checks' }) {
-  dependencies { annotationProcessor project(":errorprone-checks") }
-
-  tasks.withType(JavaCompile) {
-    options.annotationProcessorPath = configurations.annotationProcessor
-  }
 }
 
 // http://label-schema.org/rc1/
