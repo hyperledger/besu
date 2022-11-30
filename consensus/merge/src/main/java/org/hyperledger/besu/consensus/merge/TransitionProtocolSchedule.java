@@ -119,11 +119,12 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
-    return protocolContext
-        .getBlockchain()
-        .getBlockByNumber(number)
+
+    return Optional.ofNullable(protocolContext)
+        .map(ProtocolContext::getBlockchain)
+        .flatMap(blockchain -> blockchain.getBlockByNumber(number))
         .map(Block::getHeader)
-        .map(this::getByBlockHeader)
+        .map(timestampSchedule::getByBlockHeader)
         .orElse(
             transitionUtils.dispatchFunctionAccordingToMergeState(
                 protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
