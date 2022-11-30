@@ -18,6 +18,8 @@ package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.evm.operation.PushOperation;
 
+import java.util.BitSet;
+
 import org.apache.tuweni.bytes.Bytes;
 
 class OpcodesV1 {
@@ -294,36 +296,27 @@ class OpcodesV1 {
 
   static long[] validateAndCalculateJumpDests(final Bytes code) {
     final int size = code.size();
-    final long[] bitmap = new long[(size >> 6) + 1];
+    final BitSet bitmap = new BitSet(size);
     final byte[] rawCode = code.toArrayUnsafe();
     final int length = rawCode.length;
     int attribute = INVALID;
-    for (int i = 0; i < length; ) {
-      long thisEntry = 0L;
-      final int entryPos = i >> 6;
-      final int max = Math.min(64, length - (entryPos << 6));
-      int j = i & 0x3f;
-      for (; j < max; i++, j++) {
-        final int operationNum = rawCode[i] & 0xff;
-        attribute = opcodeAttributes[operationNum];
-        if ((attribute & INVALID) == INVALID) {
-          // undefined instruction
-          return null;
-        } else if ((attribute & JUMPDEST) == JUMPDEST) {
-          thisEntry |= 1L << j;
-        } else if (operationNum > PushOperation.PUSH_BASE
-            && operationNum <= PushOperation.PUSH_MAX) {
-          final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
-          j += multiByteDataLen;
-          i += multiByteDataLen;
-        }
+    for (int pos = 0; pos < length; pos++) {
+      final int operationNum = rawCode[pos] & 0xff;
+      attribute = opcodeAttributes[operationNum];
+      if ((attribute & INVALID) == INVALID) {
+        // undefined instruction
+        return null;
+      } else if ((attribute & JUMPDEST) == JUMPDEST) {
+        bitmap.set(pos);
+      } else if (operationNum > PushOperation.PUSH_BASE && operationNum <= PushOperation.PUSH_MAX) {
+        final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
+        pos += multiByteDataLen;
       }
-      bitmap[entryPos] = thisEntry;
     }
     if ((attribute & TERMINAL) != TERMINAL) {
       // no terminating instruction
       return null;
     }
-    return bitmap;
+    return bitmap.toLongArray();
   }
 }
