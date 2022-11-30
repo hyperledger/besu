@@ -224,8 +224,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       capabilities.add(EthProtocol.ETH67);
     }
 
-    capabilities.removeIf(
-        cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapabilityEnabled());
+    capabilities.removeIf(cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapability());
     return Collections.unmodifiableList(capabilities);
   }
 

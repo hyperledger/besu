@@ -1135,7 +1135,7 @@ public final class EthProtocolManagerTest {
 
     // Test with max capability = 65. should respect flag
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().maxEthCapabilityEnabled(EthProtocolVersion.V65).build();
+        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V65).build();
 
     assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH65, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH65, configuration);
@@ -1149,7 +1149,7 @@ public final class EthProtocolManagerTest {
 
     // Test with max capability = 67. should respect protocol
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().maxEthCapabilityEnabled(EthProtocolVersion.V67).build();
+        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V67).build();
 
     assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH67, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67, configuration);
