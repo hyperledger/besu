@@ -30,6 +30,7 @@ public class EthProtocolConfiguration {
   public static final int DEFAULT_MAX_GET_NODE_DATA = 384;
   public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
   public static final boolean DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED = false;
+  public static final int DEFAULT_MAX_CAPABILITY_ENABLED = Integer.MAX_VALUE;
 
   // Limit the size of p2p messages (in bytes)
   private final int maxMessageSize;
@@ -42,6 +43,7 @@ public class EthProtocolConfiguration {
   private final int maxGetNodeData;
   private final int maxGetPooledTransactions;
   private final boolean legacyEth64ForkIdEnabled;
+  private final int maxEthCapabilityEnabled;
 
   private EthProtocolConfiguration(
       final int maxMessageSize,
@@ -50,7 +52,8 @@ public class EthProtocolConfiguration {
       final int maxGetReceipts,
       final int maxGetNodeData,
       final int maxGetPooledTransactions,
-      final boolean legacyEth64ForkIdEnabled) {
+      final boolean legacyEth64ForkIdEnabled,
+      final int maxEthCapabilityEnabled) {
     this.maxMessageSize = maxMessageSize;
     this.maxGetBlockHeaders = maxGetBlockHeaders;
     this.maxGetBlockBodies = maxGetBlockBodies;
@@ -58,6 +61,7 @@ public class EthProtocolConfiguration {
     this.maxGetNodeData = maxGetNodeData;
     this.maxGetPooledTransactions = maxGetPooledTransactions;
     this.legacyEth64ForkIdEnabled = legacyEth64ForkIdEnabled;
+    this.maxEthCapabilityEnabled = maxEthCapabilityEnabled;
   }
 
   public static EthProtocolConfiguration defaultConfig() {
@@ -94,6 +98,10 @@ public class EthProtocolConfiguration {
 
   public boolean isLegacyEth64ForkIdEnabled() {
     return legacyEth64ForkIdEnabled;
+  }
+
+  public int getMaxEthCapabilityEnabled() {
+    return maxEthCapabilityEnabled;
   }
 
   @Override
@@ -149,6 +157,8 @@ public class EthProtocolConfiguration {
 
     private boolean legacyEth64ForkIdEnabled =
         EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
+
+    private int maxEthCapabilityEnabled = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY_ENABLED;
 
     public Builder maxMessageSize(final PositiveNumber maxMessageSize) {
       this.maxMessageSize = maxMessageSize;
@@ -215,6 +225,11 @@ public class EthProtocolConfiguration {
       return this;
     }
 
+    public Builder maxEthCapabilityEnabled(final int maxEthCapabilityEnabled) {
+      this.maxEthCapabilityEnabled = maxEthCapabilityEnabled;
+      return this;
+    }
+
     public EthProtocolConfiguration build() {
       return new EthProtocolConfiguration(
           maxMessageSize.getValue(),
@@ -223,7 +238,8 @@ public class EthProtocolConfiguration {
           maxGetReceipts.getValue(),
           maxGetNodeData.getValue(),
           maxGetPooledTransactions.getValue(),
-          legacyEth64ForkIdEnabled);
+          legacyEth64ForkIdEnabled,
+          maxEthCapabilityEnabled);
     }
   }
 }

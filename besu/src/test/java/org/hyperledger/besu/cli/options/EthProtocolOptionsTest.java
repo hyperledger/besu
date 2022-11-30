@@ -140,6 +140,18 @@ public class EthProtocolOptionsTest
             "Invalid value for option '--Xewp-max-get-node-data': cannot convert '-16' to PositiveNumber");
   }
 
+  @Test
+  public void parsesValidEthMaxProtocol() {
+    final TestBesuCommand cmd = parseCommand("--Xeth-max-capability-enabled", "66");
+
+    final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
+    final EthProtocolConfiguration config = options.toDomainObject();
+    assertThat(config.getMaxEthCapabilityEnabled()).isEqualTo(66);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Override
   EthProtocolConfiguration createDefaultDomainObject() {
     return EthProtocolConfiguration.builder().build();

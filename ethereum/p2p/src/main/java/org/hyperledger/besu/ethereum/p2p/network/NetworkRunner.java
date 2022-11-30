@@ -78,6 +78,15 @@ public class NetworkRunner implements AutoCloseable {
       LOG.info("Starting Network.");
       setupHandlers();
       network.start();
+
+      LOG.info(
+          "Max supported protocol: {}",
+          protocolManagers.stream()
+              .map(
+                  q ->
+                      String.format(
+                          "%s/%d", q.getSupportedProtocol(), q.getHighestProtocolVersion()))
+              .collect(Collectors.joining(", ")));
     } else {
       LOG.error("Attempted to start already running network.");
     }
