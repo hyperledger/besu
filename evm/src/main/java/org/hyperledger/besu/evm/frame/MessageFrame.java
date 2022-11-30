@@ -351,8 +351,8 @@ public class MessageFrame {
    *
    * @param amount The amount of gas to deduct
    */
-  public void decrementRemainingGas(final long amount) {
-    this.gasRemaining -= amount;
+  public long decrementRemainingGas(final long amount) {
+    return this.gasRemaining -= amount;
   }
 
   /**
