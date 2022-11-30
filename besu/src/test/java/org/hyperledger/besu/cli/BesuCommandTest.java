@@ -5448,13 +5448,23 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void nearHeadCheckpointSyncShouldFailWhenGenesisHasNoMergeNetSplitBlock() {
+  public void nearHeadCheckpointSyncShouldFailWhenGenesisHasNoTTD() throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("invalid_post_merge_near_head_checkpoint.json"),
+            StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
 
-    parseCommand("--sync-mode", "X_CHECKPOINT", "--Xnear-head-checkpoint-sync-enabled");
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "X_CHECKPOINT",
+        "--Xnear-head-checkpoint-sync-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Near head checkpoint sync requires the mergeNetSplitBlock in the genesis file");
+        .contains("Near head checkpoint sync requires TTD in the genesis file");
   }
 
   @Test
@@ -5464,7 +5474,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Near head checkpoint sync requires a pivot block after the MergeSplitBlock");
+        .contains(
+            "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
   }
 
   @Test
