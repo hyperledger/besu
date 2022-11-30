@@ -35,9 +35,6 @@ import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,7 +81,7 @@ public class TStoreOperationTest {
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
     final OperationResult result = operation.execute(frame, null);
-    assertThat(result.getHaltReason()).isEqualTo(Optional.of(INSUFFICIENT_GAS));
+    assertThat(result.getHaltReason()).isEqualTo(INSUFFICIENT_GAS);
   }
 
   @Test
@@ -98,7 +95,7 @@ public class TStoreOperationTest {
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
     final OperationResult result = operation.execute(frame, null);
-    assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(result.getHaltReason()).isEqualTo(null);
   }
 
   @Test
@@ -111,7 +108,7 @@ public class TStoreOperationTest {
     final TLoadOperation tload = new TLoadOperation(gasCalculator);
     frame.pushStackItem(UInt256.fromHexString("0x01"));
     final OperationResult tloadResult = tload.execute(frame, null);
-    assertThat(tloadResult.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(tloadResult.getHaltReason()).isEqualTo(null);
     UInt256 tloadValue = UInt256.fromBytes(frame.popStackItem());
     assertThat(tloadValue).isEqualTo(UInt256.ZERO);
   }
@@ -127,19 +124,19 @@ public class TStoreOperationTest {
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
     final OperationResult result = tstore.execute(frame, null);
-    assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(result.getHaltReason()).isEqualTo(null);
 
     TLoadOperation tload = new TLoadOperation(gasCalculator);
     frame.pushStackItem(UInt256.fromHexString("0x01"));
     OperationResult tloadResult = tload.execute(frame, null);
-    assertThat(tloadResult.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(tloadResult.getHaltReason()).isEqualTo(null);
     UInt256 tloadValue = UInt256.fromBytes(frame.popStackItem());
     assertThat(tloadValue).isEqualTo(UInt256.ONE);
 
     // Loading from a different location returns default value
     frame.pushStackItem(UInt256.fromHexString("0x02"));
     tloadResult = tload.execute(frame, null);
-    assertThat(tloadResult.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(tloadResult.getHaltReason()).isEqualTo(null);
     tloadValue = UInt256.fromBytes(frame.popStackItem());
     assertThat(tloadValue).isEqualTo(UInt256.ZERO);
   }
@@ -155,19 +152,19 @@ public class TStoreOperationTest {
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
     OperationResult result = tstore.execute(frame, null);
-    assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(result.getHaltReason()).isEqualTo(null);
 
     // Store 2 at position 1
     frame.pushStackItem(UInt256.fromHexString("0x02"));
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
     result = tstore.execute(frame, null);
-    assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(result.getHaltReason()).isEqualTo(null);
 
     final TLoadOperation tload = new TLoadOperation(gasCalculator);
     frame.pushStackItem(UInt256.fromHexString("0x01"));
     final OperationResult tloadResult = tload.execute(frame, null);
-    assertThat(tloadResult.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(tloadResult.getHaltReason()).isEqualTo(null);
     UInt256 tloadValue = UInt256.fromBytes(frame.popStackItem());
     assertThat(tloadValue).isEqualTo(UInt256.fromHexString("0x02"));
   }
@@ -184,15 +181,15 @@ public class TStoreOperationTest {
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
     OperationResult result = tstore.execute(frame, null);
-    assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(result.getHaltReason()).isEqualTo(null);
 
     // Reset value to 0
     frame.pushStackItem(UInt256.fromHexString("0x00"));
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
     result = tstore.execute(frame, null);
-    assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
+    assertThat(result.getHaltReason()).isEqualTo(null);
 
-    assertThat(result.getGasCost()).isEqualTo(OptionalLong.of(100L));
+    assertThat(result.getGasCost()).isEqualTo(100L);
   }
 }
