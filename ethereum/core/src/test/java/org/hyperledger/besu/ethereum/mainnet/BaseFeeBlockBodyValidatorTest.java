@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -54,7 +54,7 @@ public class BaseFeeBlockBodyValidatorTest {
   public void setup() {
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
 
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 
     when(block.getHeader()).thenReturn(blockHeader);
 
