@@ -307,6 +307,7 @@ class OpcodesV1 {
         final int operationNum = rawCode[i] & 0xff;
         attribute = opcodeAttributes[operationNum];
         if ((attribute & INVALID) == INVALID) {
+          // undefined instruction
           return null;
         } else if ((attribute & JUMPDEST) == JUMPDEST) {
           thisEntry |= 1L << j;
@@ -320,6 +321,7 @@ class OpcodesV1 {
       bitmap[entryPos] = thisEntry;
     }
     if ((attribute & TERMINAL) != TERMINAL) {
+      // no terminating instruction
       return null;
     }
     return bitmap;
