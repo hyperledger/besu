@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
@@ -47,7 +48,8 @@ import com.fasterxml.jackson.databind.JsonNode;
   "gasUsed",
   "timestamp",
   "uncles",
-  "transactions"
+  "transactions",
+  "withdrawalsRoot"
 })
 public class BlockResult implements JsonRpcResult {
 
@@ -73,6 +75,7 @@ public class BlockResult implements JsonRpcResult {
   protected final List<TransactionResult> transactions;
   private final List<JsonNode> ommers;
   private final String coinbase;
+  private final String withdrawalsRoot;
 
   public <T extends TransactionResult> BlockResult(
       final BlockHeader header,
@@ -112,6 +115,10 @@ public class BlockResult implements JsonRpcResult {
     this.ommers = ommers;
     this.transactions = transactions;
     this.coinbase = includeCoinbase ? header.getCoinbase().toString() : null;
+    this.withdrawalsRoot =
+        !header.getWithdrawalRoot().equals(Hash.EMPTY)
+            ? header.getWithdrawalRoot().toString()
+            : null;
   }
 
   @JsonGetter(value = "number")
@@ -223,5 +230,10 @@ public class BlockResult implements JsonRpcResult {
   @JsonInclude(Include.NON_NULL)
   public String getCoinbase() {
     return coinbase;
+  }
+
+  @JsonGetter(value = "withdrawalsRoot")
+  public String getWithdrawalsRoot() {
+    return withdrawalsRoot;
   }
 }
