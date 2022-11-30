@@ -17,11 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.feemarket.BaseFee;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256s;
 import org.slf4j.Logger;
@@ -70,16 +68,6 @@ public class LondonFeeMarket implements BaseFeeMarket {
   @Override
   public TransactionPriceCalculator getTransactionPriceCalculator() {
     return txPriceCalculator;
-  }
-
-  @Override
-  public Wei minTransactionPriceInNextBlock(
-      final Transaction transaction, final Supplier<Optional<Wei>> baseFeeSupplier) {
-    final Optional<Wei> baseFee = baseFeeSupplier.get();
-    Optional<Wei> minBaseFeeInNextBlock =
-        baseFee.map(bf -> new BaseFee(this, bf).getMinNextValue());
-
-    return this.getTransactionPriceCalculator().price(transaction, minBaseFeeInNextBlock);
   }
 
   @Override

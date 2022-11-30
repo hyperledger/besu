@@ -363,6 +363,11 @@ public class TransactionPool implements BlockAddedObserver {
       }
     } else {
       if (isMaxGasPriceBelowConfiguredMinGasPrice(transaction)) {
+        traceLambda(
+            LOG,
+            "Discard transaction {} below min gas price {}",
+            transaction::toTraceLog,
+            miningParameters::getMinTransactionGasPrice);
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }
     }

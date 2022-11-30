@@ -14,12 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
-
-import java.util.Optional;
-import java.util.function.Supplier;
 
 public class LegacyFeeMarket implements FeeMarket {
 
@@ -32,12 +28,6 @@ public class LegacyFeeMarket implements FeeMarket {
   @Override
   public TransactionPriceCalculator getTransactionPriceCalculator() {
     return txPriceCalculator;
-  }
-
-  @Override
-  public Wei minTransactionPriceInNextBlock(
-      final Transaction transaction, final Supplier<Optional<Wei>> baseFeeSupplier) {
-    return txPriceCalculator.price(transaction, Optional.empty());
   }
 
   @Override

@@ -208,7 +208,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   }
 
   @Test
-  public void shouldAcceptRemote1559TxsWhenMaxFeePerGasAboveMinGasPrice() {
+  public void shouldAcceptRemote1559TxsWhenMaxFeePerGasIsAtLeastEqualToMinGasPrice() {
     final Wei genesisBaseFee = Wei.of(100L);
     final Wei minGasPrice = Wei.of(200L);
     final Wei lastBlockBaseFee = minGasPrice.add(50L);
@@ -234,7 +234,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   }
 
   @Test
-  public void shouldAcceptLocal1559TxsWhenMaxFeePerGasAboveMinGasPrice() {
+  public void shouldAcceptLocal1559TxsWhenMaxFeePerGasIsAtLeastEqualToMinMinGasPrice() {
     final Wei genesisBaseFee = Wei.of(100L);
     final Wei minGasPrice = Wei.of(200L);
     final Wei lastBlockBaseFee = minGasPrice.add(50L);
