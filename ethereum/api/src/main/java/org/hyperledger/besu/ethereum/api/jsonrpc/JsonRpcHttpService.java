@@ -28,10 +28,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TimedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TracedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.Logging403ErrorHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -55,12 +57,13 @@ import javax.annotation.Nullable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
-import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.TracerProvider;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapPropagator;
@@ -124,6 +127,7 @@ public class JsonRpcHttpService {
   private final NatService natService;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
+  private TracerProvider tracerProvider;
   private Tracer tracer;
   private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
@@ -200,6 +204,9 @@ public class JsonRpcHttpService {
     this.livenessService = livenessService;
     this.readinessService = readinessService;
     this.maxActiveConnections = config.getMaxActiveConnections();
+    if (metricsSystem instanceof OpenTelemetrySystem) {
+      this.tracerProvider = ((OpenTelemetrySystem) metricsSystem).getTracerProvider();
+    }
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -214,10 +221,14 @@ public class JsonRpcHttpService {
   public CompletableFuture<?> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
-    this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
-
+    if (this.tracerProvider != null) {
+      this.tracer = tracerProvider.get("org.hyperledger.besu.jsonrpc", "1.0.0");
+    } else {
+      this.tracer = OpenTelemetry.noop().getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
+    }
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
+
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
 
@@ -298,7 +309,7 @@ public class JsonRpcHttpService {
 
     // Verify Host header to avoid rebind attack.
     router.route().handler(checkAllowlistHostHeader());
-
+    router.errorHandler(403, new Logging403ErrorHandler());
     router
         .route()
         .handler(

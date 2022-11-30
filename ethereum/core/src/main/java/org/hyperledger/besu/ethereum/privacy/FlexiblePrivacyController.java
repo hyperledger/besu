@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.FlexiblePrivacyGroupContract.decodeList;
 import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
@@ -130,7 +129,11 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
       if (rlpInput.nextSize() > 0) {
         return Optional.of(
             new PrivacyGroup(
-                privacyGroupId, PrivacyGroup.Type.FLEXIBLE, "", "", decodeList(rlpInput.raw())));
+                privacyGroupId,
+                PrivacyGroup.Type.FLEXIBLE,
+                "",
+                "",
+                FlexibleUtil.decodeList(rlpInput.raw())));
       }
     }
     return Optional.empty();
@@ -283,6 +286,7 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
             enclave.send(bytes.toBase64String(), privacyUserId, privateFor).getKey());
       }
     }
+
     return Optional.empty();
   }
 

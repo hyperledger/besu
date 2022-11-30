@@ -41,19 +41,16 @@ public class TLoadOperation extends AbstractOperation {
       final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
       final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
       if (frame.getRemainingGas() < cost) {
-        return new OperationResult(
-            OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         frame.pushStackItem(account.getTransientStorageValue(UInt256.fromBytes(key)));
 
-        return new OperationResult(OptionalLong.of(cost), Optional.empty());
+        return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+      return new OperationResult(cost, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

@@ -18,14 +18,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -60,7 +61,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -68,7 +68,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -140,12 +139,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   private final NatService natService;
 
-  private OptionalLong peerBondedObserverId = OptionalLong.empty();
-
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
-  private final Duration shutdownTimeout = Duration.ofMinutes(1);
+  private final Duration shutdownTimeout = Duration.ofSeconds(15);
   private DNSDaemon dnsDaemon;
 
   /**
@@ -215,7 +212,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
         .ifPresent(
             disco -> {
               // These lists are updated every 12h
-              // We retrieve the list every 30 minutes (1800000 msec)
+              // We retrieve the list every 10 minutes (600000 msec)
               LOG.info("Starting DNS discovery with URL {}", disco);
               config
                   .getDnsDiscoveryServerOverride()
@@ -229,7 +226,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       disco,
                       createDaemonListener(),
                       0L,
-                      1800000L,
+                      600000L,
                       config.getDnsDiscoveryServerOverride().orElse(null));
               dnsDaemon.start();
             });
@@ -257,8 +254,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     setLocalNode(address, listeningPort, discoveryPort);
 
-    peerBondedObserverId =
-        OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
+    // Call checkMaintainedConnectionPeers() now that the local node is up, for immediate peer
+    // additions
+    checkMaintainedConnectionPeers();
 
     // Periodically check maintained connections
     final int checkMaintainedConnectionsSec = config.getCheckMaintainedConnectionsFrequencySec();
@@ -282,8 +280,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
     rlpxAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
-    peerBondedObserverId.ifPresent(peerDiscoveryAgent::removePeerBondedObserver);
-    peerBondedObserverId = OptionalLong.empty();
     peerPermissions.close();
   }
 
@@ -350,14 +346,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
         peers.add(peer);
       }
       if (!peers.isEmpty()) {
-        final Optional<PeerDiscoveryController> peerDiscoveryController =
-            peerDiscoveryAgent.getPeerDiscoveryController();
-        if (peerDiscoveryController.isPresent()) {
-          final PeerDiscoveryController controller = peerDiscoveryController.get();
-          LOG.debug("Adding {} DNS peers to PeerTable", peers.size());
-          peers.forEach(controller::addToPeerTable);
-          peers.forEach(rlpxAgent::connect);
-        }
+        peers.stream().forEach(peerDiscoveryAgent::bond);
       }
     };
   }
@@ -367,8 +356,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
     if (!localNode.isReady()) {
       return;
     }
+    final EnodeURL localEnodeURL = localNode.getPeer().getEnodeURL();
     maintainedPeers
         .streamPeers()
+        .filter(peer -> !peer.getEnodeURL().getNodeId().equals(localEnodeURL.getNodeId()))
         .filter(p -> !rlpxAgent.getPeerConnection(p).isPresent())
         .forEach(rlpxAgent::connect);
   }
@@ -379,6 +370,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     rlpxAgent.connect(
         streamDiscoveredPeers()
             .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
+            .filter(peerDiscoveryAgent::checkForkId)
             .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection)));
   }
 
@@ -410,10 +402,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @Override
   public void subscribeDisconnect(final DisconnectCallback callback) {
     rlpxAgent.subscribeDisconnect(callback);
-  }
-
-  private void handlePeerBondedEvent(final PeerBondedEvent peerBondedEvent) {
-    rlpxAgent.connect(peerBondedEvent.getPeer());
   }
 
   @Override
@@ -490,8 +478,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
-    private Supplier<List<Bytes>> forkIdSupplier;
     private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
+    private Blockchain blockchain;
+    private List<Long> forks;
+    private boolean legacyForkIdEnabled = false;
 
     public P2PNetwork build() {
       validate();
@@ -502,14 +492,15 @@ public class DefaultP2PNetwork implements P2PNetwork {
       // Set up permissions
       // Fold peer reputation into permissions
       final PeerPermissionsDenylist misbehavingPeers = PeerPermissionsDenylist.create(500);
-      final PeerDenylistManager reputationManager = new PeerDenylistManager(misbehavingPeers);
+      final PeerDenylistManager reputationManager =
+          new PeerDenylistManager(misbehavingPeers, maintainedPeers);
       peerPermissions = PeerPermissions.combine(peerPermissions, misbehavingPeers);
 
       final MutableLocalNode localNode =
           MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
-      peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
       rlpxAgent = rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges) : rlpxAgent;
+      peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
 
       return new DefaultP2PNetwork(
           localNode,
@@ -532,10 +523,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(metricsSystem != null, "MetricsSystem must be set.");
       checkState(storageProvider != null, "StorageProvider must be set.");
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
-      checkState(forkIdSupplier != null, "ForkIdSupplier must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
+      final ForkIdManager forkIdManager =
+          new ForkIdManager(blockchain, forks, this.legacyForkIdEnabled);
 
       return new VertxPeerDiscoveryAgent(
           vertx,
@@ -545,7 +537,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
           natService,
           metricsSystem,
           storageProvider,
-          forkIdSupplier);
+          forkIdManager,
+          rlpxAgent);
     }
 
     private RlpxAgent createRlpxAgent(
@@ -638,15 +631,26 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
-      checkNotNull(forkIdSupplier);
-      this.forkIdSupplier = forkIdSupplier;
-      return this;
-    }
-
     public Builder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
       checkNotNull(p2pTLSConfiguration);
       this.p2pTLSConfiguration = p2pTLSConfiguration;
+      return this;
+    }
+
+    public Builder blockchain(final MutableBlockchain blockchain) {
+      checkNotNull(blockchain);
+      this.blockchain = blockchain;
+      return this;
+    }
+
+    public Builder forks(final List<Long> forks) {
+      checkNotNull(forks);
+      this.forks = forks;
+      return this;
+    }
+
+    public Builder legacyForkIdEnabled(final boolean legacyForkIdEnabled) {
+      this.legacyForkIdEnabled = legacyForkIdEnabled;
       return this;
     }
   }

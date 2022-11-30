@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -60,7 +59,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
         parentHeader);
   }
 
-  public Block createBlock(
+  public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Bytes32 random,
       final long timestamp) {
@@ -73,7 +72,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
   }
 
   @Override
-  public Block createBlock(
+  public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {

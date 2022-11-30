@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.math.BigInteger;
@@ -123,39 +124,36 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
    * @return a block with appropriately selected transactions, seals and ommers.
    */
   @Override
-  public Block createBlock(final long timestamp) {
+  public BlockCreationResult createBlock(final long timestamp) {
     return createBlock(Optional.empty(), Optional.empty(), timestamp);
   }
 
   @Override
-  public Block createBlock(
+  public BlockCreationResult createBlock(
       final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp) {
     return createBlock(Optional.of(transactions), Optional.of(ommers), timestamp);
   }
 
   @Override
-  public Block createBlock(
+  public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
     return createBlock(maybeTransactions, maybeOmmers, Optional.empty(), timestamp, true);
   }
 
-  protected Block createBlock(
+  protected BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
-    try {
+
+    try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
       final ProcessableBlockHeader processableBlockHeader =
           createPendingBlockHeader(timestamp, maybePrevRandao);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
-
-      throwIfStopped();
-
-      final MutableWorldState disposableWorldState = duplicateWorldStateAtParent();
 
       throwIfStopped();
 
@@ -201,13 +199,16 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
-      return new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
+      final Block block =
+          new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
+      return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
     } catch (final CancellationException ex) {
       throw ex;
+    } catch (final StorageException ex) {
+      throw ex;
     } catch (final Exception ex) {
-      // TODO(tmm): How are we going to know this has exploded, and thus restart it?
       throw new IllegalStateException(
           "Block creation failed unexpectedly. Will restart on next block added to chain.", ex);
     }
@@ -247,21 +248,35 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private MutableWorldState duplicateWorldStateAtParent() {
     final Hash parentStateRoot = parentHeader.getStateRoot();
-    final MutableWorldState worldState =
-        protocolContext
-            .getWorldStateArchive()
-            .getMutable(parentStateRoot, parentHeader.getHash(), false)
-            .orElseThrow(
-                () -> {
-                  LOG.info("Unable to create block because world state is not available");
-                  return new CancellationException(
-                      "World state not available for block "
-                          + parentHeader.getNumber()
-                          + " with state root "
-                          + parentStateRoot);
-                });
-
-    return worldState.copy();
+    return protocolContext
+        .getWorldStateArchive()
+        .getMutable(parentStateRoot, parentHeader.getHash(), false)
+        .map(
+            ws -> {
+              if (ws.isPersistable()) {
+                return ws;
+              } else {
+                var wsCopy = ws.copy();
+                try {
+                  ws.close();
+                } catch (Exception ex) {
+                  LOG.error(
+                      "unexpected error closing non-peristable worldstate + "
+                          + parentHeader.toLogString(),
+                      ex);
+                }
+                return wsCopy;
+              }
+            })
+        .orElseThrow(
+            () -> {
+              LOG.info("Unable to create block because world state is not available");
+              return new CancellationException(
+                  "World state not available for block "
+                      + parentHeader.getNumber()
+                      + " with state root "
+                      + parentStateRoot);
+            });
   }
 
   private List<BlockHeader> selectOmmers() {

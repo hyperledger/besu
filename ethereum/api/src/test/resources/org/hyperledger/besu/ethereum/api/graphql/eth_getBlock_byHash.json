@@ -11,7 +11,7 @@
         "transactions" : [ {
           "hash" : "0x9cc6c7e602c56aa30c554bb691377f8703d778cec8845f4b88c0f72516b304f4"
         } ],
-        "timestamp" : "0x561bc336",
+        "timestamp" : 1444660022,
         "difficulty" : "0x20740",
         "totalDifficulty" : "0x3e6cc0",
         "gasUsed" : 23585,

@@ -67,7 +67,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .header("Origin", "http://bar.me")
             .build();
 
@@ -82,7 +82,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .header("Origin", "http://foo.io")
             .build();
 
@@ -99,7 +99,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .header("Origin", "http://bar.me")
             .build();
 
@@ -115,7 +115,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .header("Origin", "http://hel.lo")
             .build();
 
@@ -130,7 +130,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .build();
 
     try (final Response response = client.newCall(request).execute()) {
@@ -144,7 +144,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .build();
 
     try (final Response response = client.newCall(request).execute()) {
@@ -158,7 +158,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .header("Origin", "http://bar.me")
             .build();
 
@@ -173,7 +173,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .header("Origin", "http://bar.me")
             .build();
 
@@ -188,7 +188,7 @@ public class GraphQLHttpServiceCorsTest {
 
     final Request request =
         new Request.Builder()
-            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .url(graphQLHttpService.url() + "/graphql?query={maxPriorityFeePerGas}")
             .method("OPTIONS", null)
             .header("Access-Control-Request-Method", "OPTIONS")
             .header("Origin", "http://foo.io")

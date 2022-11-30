@@ -88,7 +88,11 @@ public class TestContext {
 
   public Block createBlockForProposal(
       final BlockHeader parent, final int round, final long timestamp) {
-    return finalState.getBlockCreatorFactory().create(parent, round).createBlock(timestamp);
+    return finalState
+        .getBlockCreatorFactory()
+        .create(parent, round)
+        .createBlock(timestamp)
+        .getBlock();
   }
 
   public Block createBlockForProposalFromChainHead(final int round, final long timestamp) {

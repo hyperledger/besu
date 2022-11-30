@@ -25,8 +25,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.web3j.abi.DefaultFunctionReturnDecoder;
 import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.Function;
@@ -81,7 +81,7 @@ public class ValidatorContractController {
       final TransactionSimulatorResult result, final Function function) {
     if (result.isSuccessful()) {
       final List<Type> decodedList =
-          DefaultFunctionReturnDecoder.decode(
+          FunctionReturnDecoder.decode(
               result.getResult().getOutput().toHexString(), function.getOutputParameters());
 
       if (decodedList.isEmpty()) {

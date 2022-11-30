@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
 public class InMemoryKeyValueStorage implements KeyValueStorage {
@@ -77,7 +78,30 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getKey()))
+        .map(Pair::getKey)
+        .collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getKey()))
+        .map(Pair::getValue)
+        .collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> stream() {
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+          .map(bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()));
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -85,7 +109,8 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return ImmutableSet.copyOf(hashValueStore.keySet()).stream().map(Bytes::toArrayUnsafe);
+      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+          .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe());
     } finally {
       lock.unlock();
     }

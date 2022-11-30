@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_SIGNATURE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_VALUE_NOT_ZERO;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
@@ -70,7 +70,7 @@ public class PrivateTransactionValidatorTest {
     final ValidationResult<TransactionInvalidReason> validationResult =
         validator.validate(privateTransactionWithNonce(3L), 2L, false);
 
-    assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_HIGH));
   }
 
   @Test

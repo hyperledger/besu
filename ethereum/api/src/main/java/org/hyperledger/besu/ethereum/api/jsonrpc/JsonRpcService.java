@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TimedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TracedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.Logging403ErrorHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketMessageHandler;
@@ -38,6 +39,7 @@ import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -61,12 +63,13 @@ import javax.annotation.Nullable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
-import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.TracerProvider;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapPropagator;
@@ -134,6 +137,7 @@ public class JsonRpcService {
   private final NatService natService;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
+  private TracerProvider tracerProvider;
   private Tracer tracer;
   private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
@@ -182,6 +186,9 @@ public class JsonRpcService {
             "Time taken to process a JSON-RPC request",
             "methodName");
     JsonRpcProcessor jsonRpcProcessor = new BaseJsonRpcProcessor();
+    if (metricsSystem instanceof OpenTelemetrySystem) {
+      this.tracerProvider = ((OpenTelemetrySystem) metricsSystem).getTracerProvider();
+    }
 
     this.socketConfiguration =
         maybeSockets.isPresent() ? maybeSockets.get() : WebSocketConfiguration.createDefault();
@@ -214,8 +221,11 @@ public class JsonRpcService {
   public CompletableFuture<Void> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
-    this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
-
+    if (this.tracerProvider != null) {
+      this.tracer = tracerProvider.get("org.hyperledger.besu.jsonrpc", "1.0.0");
+    } else {
+      this.tracer = OpenTelemetry.noop().getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
+    }
     final CompletableFuture<Void> resultFuture = new CompletableFuture<>();
     try {
       // Create the HTTP server and a router object.
@@ -402,7 +412,7 @@ public class JsonRpcService {
 
     // Verify Host header to avoid rebind attack.
     router.route().handler(denyRouteToBlockedHost());
-
+    router.errorHandler(403, new Logging403ErrorHandler());
     router
         .route()
         .handler(
@@ -443,7 +453,8 @@ public class JsonRpcService {
                       authenticationService.get(),
                       config.getNoAuthRpcApis()),
                   rpcMethods),
-              tracer));
+              tracer),
+          false);
     } else {
       mainRoute.blockingHandler(
           HandlerFactory.jsonRpcExecutor(
@@ -451,7 +462,8 @@ public class JsonRpcService {
                   new TimedJsonRpcProcessor(
                       new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
                   rpcMethods),
-              tracer));
+              tracer),
+          false);
     }
 
     if (authenticationService.isPresent()) {

@@ -90,6 +90,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getMergeNetSplitBlockNumber();
 
+  OptionalLong getShandongBlockNumber();
+
   OptionalLong getEIP1153BlockNumber();
 
   Optional<Wei> getBaseFeePerGas();

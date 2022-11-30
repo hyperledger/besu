@@ -21,15 +21,15 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SStoreOperation extends AbstractOperation {
 
   public static final long FRONTIER_MINIMUM = 0L;
   public static final long EIP_1706_MINIMUM = 2300L;
+
+  protected static final OperationResult ILLEGAL_STATE_CHANGE =
+      new OperationResult(0L, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
 
   private final long minimumGasRemaining;
 
@@ -62,15 +62,11 @@ public class SStoreOperation extends AbstractOperation {
 
     final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {
-      return new OperationResult(
-          OptionalLong.of(remainingGas), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+      return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (remainingGas < cost) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     } else if (remainingGas <= minimumGasRemaining) {
-      return new OperationResult(
-          OptionalLong.of(minimumGasRemaining),
-          Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      return new OperationResult(minimumGasRemaining, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     // Increment the refund counter.
@@ -78,6 +74,6 @@ public class SStoreOperation extends AbstractOperation {
 
     account.setStorageValue(key, value);
     frame.storageWasUpdated(key, value);
-    return new OperationResult(OptionalLong.of(cost), Optional.empty());
+    return new OperationResult(cost, null);
   }
 }

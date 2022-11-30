@@ -15,131 +15,55 @@
 package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.operation.JumpDestOperation;
-import org.hyperledger.besu.evm.operation.PushOperation;
 
-import com.google.common.base.MoreObjects;
-import com.google.errorprone.annotations.RestrictedApi;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Represents EVM code associated with an account. */
-public class Code {
-
-  public static final Code EMPTY_CODE = new Code(Bytes.EMPTY, Hash.EMPTY);
-
-  /** The bytes representing the code. */
-  private final Bytes bytes;
-
-  /** The hash of the code, needed for accessing metadata about the bytecode */
-  private final Hash codeHash;
-
-  /** Used to cache valid jump destinations. */
-  long[] validJumpDestinations;
-
-  /** Syntactic sugar for an empty contract */
-  public static Code EMPTY = new Code(Bytes.EMPTY, Hash.EMPTY);
+public interface Code {
 
   /**
-   * Public constructor.
+   * Size of the code in bytes. This is for the whole container, not just the code section in
+   * formats that have sections.
    *
-   * @param bytes The byte representation of the code.
-   * @param codeHash the Hash of the bytes in the code.
+   * @return size of code in bytes.
    */
-  protected Code(final Bytes bytes, final Hash codeHash) {
-    this.bytes = bytes;
-    this.codeHash = codeHash;
-  }
-
-  @RestrictedApi(
-      explanation = "To be used for testing purpose only",
-      link = "",
-      allowedOnPath = ".*/src/test/.*")
-  public static Code createLegacyCode(final Bytes bytes, final Hash codeHash) {
-    return new Code(bytes, codeHash);
-  }
+  int getSize();
 
   /**
-   * Returns true if the object is equal to this; otherwise false.
+   * Gets the code bytes. For legacy code it is the whole container. For V1 it is the code section
+   * alone.
    *
-   * @param other The object to compare this with.
-   * @return True if the object is equal to this; otherwise false.
+   * @return the code bytes
    */
-  @Override
-  public boolean equals(final Object other) {
-    if (other == null) return false;
-    if (other == this) return true;
-    if (!(other instanceof Code)) return false;
-
-    final Code that = (Code) other;
-    return this.bytes.equals(that.bytes);
-  }
-
-  @Override
-  public int hashCode() {
-    return bytes.hashCode();
-  }
+  Bytes getCodeBytes();
 
   /**
-   * Size of the Code, in bytes
+   * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
+   * the same as getCodeBytes, for V1 it is the entire container, not just the data section.
    *
-   * @return The number of bytes in the code.
+   * @return container bytes.
    */
-  public int getSize() {
-    return bytes.size();
-  }
+  Bytes getContainerBytes();
 
-  public long[] calculateJumpDests() {
-    final int size = getSize();
-    final long[] bitmap = new long[(size >> 6) + 1];
-    final byte[] rawCode = getBytes().toArrayUnsafe();
-    final int length = rawCode.length;
-    for (int i = 0; i < length; ) {
-      long thisEntry = 0L;
-      final int entryPos = i >> 6;
-      final int max = Math.min(64, length - (entryPos << 6));
-      int j = i & 0x3F;
-      for (; j < max; i++, j++) {
-        final byte operationNum = rawCode[i];
-        if (operationNum == JumpDestOperation.OPCODE) {
-          thisEntry |= 1L << j;
-        } else if (operationNum > PushOperation.PUSH_BASE) {
-          // not needed - && operationNum <= PushOperation.PUSH_MAX
-          // Java quirk, all bytes are signed, and PUSH32 is 127, which is Byte.MAX_VALUE
-          // so we don't need to check the upper bound as it will never be violated
-          final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
-          j += multiByteDataLen;
-          i += multiByteDataLen;
-        }
-      }
-      bitmap[entryPos] = thisEntry;
-    }
-    this.validJumpDestinations = bitmap;
-    return bitmap;
-  }
+  /**
+   * Hash of the entire container
+   *
+   * @return hash of the code.
+   */
+  Hash getCodeHash();
 
-  public Bytes getBytes() {
-    return bytes;
-  }
+  /**
+   * For V0 and V1, is the target jump location valid?
+   *
+   * @param jumpDestination index from PC=0. Code section for v1, whole container in V0
+   * @return true if the operation is both a valid opcode and a JUMPDEST
+   */
+  boolean isJumpDestInvalid(final int jumpDestination);
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this).add("bytes", bytes).toString();
-  }
-
-  public Hash getCodeHash() {
-    return codeHash;
-  }
-
-  public boolean isJumpDestInvalid(final int jumpDestination) {
-    if (jumpDestination < 0 || jumpDestination >= getSize()) {
-      return true;
-    }
-    if (validJumpDestinations == null || validJumpDestinations.length == 0) {
-      validJumpDestinations = calculateJumpDests();
-    }
-
-    final long targetLong = validJumpDestinations[jumpDestination >>> 6];
-    final long targetBit = 1L << (jumpDestination & 0x3F);
-    return (targetLong & targetBit) == 0L;
-  }
+  /**
+   * Code is considered valid by the EVM.
+   *
+   * @return isValid
+   */
+  boolean isValid();
 }

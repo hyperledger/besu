@@ -114,8 +114,10 @@ public class FixedStack<T> {
   }
 
   public void set(final int offset, final T operand) {
-    if (offset < 0 || offset >= size()) {
-      throw new IndexOutOfBoundsException();
+    if (offset < 0) {
+      throw new UnderflowException();
+    } else if (offset >= size()) {
+      throw new OverflowException();
     }
 
     entries[top - offset] = operand;
@@ -129,7 +131,7 @@ public class FixedStack<T> {
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     for (int i = 0; i < entries.length; ++i) {
-      builder.append(String.format("\n0x%04X ", i)).append(entries[i]);
+      builder.append(String.format("%n0x%04X ", i)).append(entries[i]);
     }
     return builder.toString();
   }

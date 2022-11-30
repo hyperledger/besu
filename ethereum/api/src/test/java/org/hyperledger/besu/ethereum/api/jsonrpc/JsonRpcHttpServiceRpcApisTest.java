@@ -18,9 +18,11 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -30,6 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
@@ -69,7 +73,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -81,6 +84,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JsonRpcHttpServiceRpcApisTest {
+
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   private final Vertx vertx = Vertx.vertx();
@@ -220,7 +224,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     natService,
                     new HashMap<>(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    vertx));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -259,6 +264,10 @@ public class JsonRpcHttpServiceRpcApisTest {
             .setRlpx(RlpxConfiguration.create().setBindPort(0))
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(0));
 
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    final Block genesisBlock = mock(Block.class);
+    when(blockchain.getGenesisBlock()).thenReturn(genesisBlock);
+    when(genesisBlock.getHash()).thenReturn(Hash.ZERO);
     final P2PNetwork p2pNetwork =
         DefaultP2PNetwork.builder()
             .supportedCapabilities(Capability.create("eth", 63))
@@ -267,7 +276,8 @@ public class JsonRpcHttpServiceRpcApisTest {
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())
             .storageProvider(new InMemoryKeyValueStorageProvider())
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .blockchain(blockchain)
+            .forks(Collections.emptyList())
             .build();
 
     p2pNetwork.start();
@@ -318,7 +328,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     natService,
                     new HashMap<>(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    vertx));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -409,7 +420,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     P2PNetwork p2pNetwork = mock(P2PNetwork.class);
     MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
-    NatService natService = mock(NatService.class);
+    final NatService natService = mock(NatService.class);
 
     if (enabledNetServices[netServices.indexOf("jsonrpc")]) {
       jsonRpcConfiguration = createJsonRpcConfiguration();

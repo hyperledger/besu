@@ -30,6 +30,7 @@ jar {
 dependencies {
   api project(':plugin-api')
   api 'org.slf4j:slf4j-api'
+  implementation 'com.google.guava:guava'
 
   testImplementation project(':testutil')
   testImplementation 'junit:junit'

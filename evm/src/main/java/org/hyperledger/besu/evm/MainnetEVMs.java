@@ -83,6 +83,7 @@ import org.hyperledger.besu.evm.operation.OriginOperation;
 import org.hyperledger.besu.evm.operation.PCOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
+import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
@@ -104,9 +105,9 @@ import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
+import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
-import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 
 import java.math.BigInteger;
@@ -115,9 +116,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Provides EVMs supporting the appropriate operations for mainnet hard forks. */
-public abstract class MainnetEVMs {
+public class MainnetEVMs {
 
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
+
+  private MainnetEVMs() {
+    // utility class
+  }
 
   public static EVM frontier(final EvmConfiguration evmConfiguration) {
     return frontier(new FrontierGasCalculator(), evmConfiguration);
@@ -125,7 +130,11 @@ public abstract class MainnetEVMs {
 
   public static EVM frontier(
       final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
-    return new EVM(frontierOperations(gasCalculator), gasCalculator, evmConfiguration);
+    return new EVM(
+        frontierOperations(gasCalculator),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.FRONTIER);
   }
 
   public static OperationRegistry frontierOperations(final GasCalculator gasCalculator) {
@@ -136,6 +145,9 @@ public abstract class MainnetEVMs {
 
   public static void registerFrontierOperations(
       final OperationRegistry registry, final GasCalculator gasCalculator) {
+    for (int i = 0; i < 255; i++) {
+      registry.put(new InvalidOperation(i, gasCalculator));
+    }
     registry.put(new AddOperation(gasCalculator));
     registry.put(new MulOperation(gasCalculator));
     registry.put(new SubOperation(gasCalculator));
@@ -225,7 +237,11 @@ public abstract class MainnetEVMs {
 
   public static EVM homestead(
       final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
-    return new EVM(homesteadOperations(gasCalculator), gasCalculator, evmConfiguration);
+    return new EVM(
+        homesteadOperations(gasCalculator),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.HOMESTEAD);
   }
 
   public static OperationRegistry homesteadOperations(final GasCalculator gasCalculator) {
@@ -254,7 +270,11 @@ public abstract class MainnetEVMs {
 
   public static EVM byzantium(
       final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
-    return new EVM(byzantiumOperations(gasCalculator), gasCalculator, evmConfiguration);
+    return new EVM(
+        byzantiumOperations(gasCalculator),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.BYZANTIUM);
   }
 
   public static OperationRegistry byzantiumOperations(final GasCalculator gasCalculator) {
@@ -278,7 +298,11 @@ public abstract class MainnetEVMs {
 
   public static EVM constantinople(
       final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
-    return new EVM(constantinopleOperations(gasCalculator), gasCalculator, evmConfiguration);
+    return new EVM(
+        constantinopleOperations(gasCalculator),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.CONSTANTINOPLE);
   }
 
   public static OperationRegistry constantinopleOperations(final GasCalculator gasCalculator) {
@@ -313,7 +337,11 @@ public abstract class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
-    return new EVM(istanbulOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+    return new EVM(
+        istanbulOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.ISTANBUL);
   }
 
   public static OperationRegistry istanbulOperations(
@@ -354,7 +382,11 @@ public abstract class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
-    return new EVM(londonOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+    return new EVM(
+        londonOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.LONDON);
   }
 
   public static OperationRegistry londonOperations(
@@ -372,15 +404,15 @@ public abstract class MainnetEVMs {
     registry.put(new BaseFeeOperation(gasCalculator));
   }
 
-  public static EVM paris(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return paris(new LondonGasCalculator(), chainId, evmConfiguration);
-  }
-
   public static EVM paris(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
-    return new EVM(parisOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+    return new EVM(
+        parisOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.PARIS);
   }
 
   public static OperationRegistry parisOperations(
@@ -398,6 +430,37 @@ public abstract class MainnetEVMs {
     registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 
+  public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shandong(new LondonGasCalculator(), chainId, evmConfiguration);
+  }
+
+  public static EVM shandong(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        shandongOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.SHANDONG);
+  }
+
+  public static OperationRegistry shandongOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerShandongOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  public static void registerShandongOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerParisOperations(registry, gasCalculator, chainID);
+    // Register the PUSH0 operation.
+    registry.put(new Push0Operation(gasCalculator));
+  }
+
   // TODO EIP-1153 change for the actual fork name when known
   public static EVM eip1153(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     return eip1153(new EIP1153GasCalculator(), chainId, evmConfiguration);
@@ -407,7 +470,11 @@ public abstract class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
-    return new EVM(eip1153Operations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+    return new EVM(
+            eip1153Operations(gasCalculator, chainId),
+            gasCalculator,
+            evmConfiguration,
+            EvmSpecVersion.SHANGHAI);
   }
 
   public static OperationRegistry eip1153Operations(

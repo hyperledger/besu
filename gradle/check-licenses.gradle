@@ -132,6 +132,7 @@ downloadLicenses {
       'MIT',
       'The MIT License',
       'The MIT License (MIT)',
+      'SPDX-License-Identifier: MIT',
     ],
   ]
   licenses = [
@@ -199,7 +200,7 @@ task checkLicenses {
       if (!acceptedLicenses.contains((license.@name).toLowerCase())) {
         def depStrings = []
         license.dependency.each { depStrings << it.text() }
-        bads = bads + depStrings + " =>  ${license.@name} \n"
+        bads = bads + depStrings + " => ${license.@name} \n"
       }
     }
     if (bads != "") {

@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.ForkIds;
 import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.GenesisHash;
 import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.Network;
 import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.PeerCheckCase;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -506,6 +508,31 @@ public class EIP2124Test {
             2000000L,
             ForkIdTestUtil.wantForkId("0xc25efa5c", 0L),
             Optional.of(ForkIds.GOERLI),
+            empty()
+          },
+          // Shandong network test cases
+          {
+            "Shandong // Unsynced",
+            Network.SHANDONG,
+            0L,
+            ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
+            empty(),
+            empty()
+          },
+          {
+            "Shandong // First block",
+            Network.SHANDONG,
+            1L,
+            ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
+            empty(),
+            empty()
+          },
+          {
+            "Shandong // Future block",
+            Network.SHANDONG,
+            1000000L,
+            ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
+            empty(),
             empty()
           },
           // Private network test cases
