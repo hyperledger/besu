@@ -71,12 +71,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             this,
             (addr, value) ->
                 archive
-                    .getOptimizedMerkleTrieLoader()
+                    .getCachedMerkleTrieLoader()
                     .preLoadAccount(worldStateStorage, worldStateRootHash, addr),
             (addr, value) ->
                 archive
-                    .getOptimizedMerkleTrieLoader()
-                    .preLoadStorage(worldStateStorage, addr, value));
+                    .getCachedMerkleTrieLoader()
+                    .preLoadStorageSlot(worldStateStorage, addr, value));
   }
 
   public BonsaiWorldStateArchive getArchive() {
@@ -128,7 +128,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
                 archive
-                    .getOptimizedMerkleTrieLoader()
+                    .getCachedMerkleTrieLoader()
                     .getAccountStateTrieNode(worldStateStorage, location, hash),
             worldStateRootHash,
             Function.identity(),
@@ -201,7 +201,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             new StoredMerklePatriciaTrie<>(
                 (location, key) ->
                     archive
-                        .getOptimizedMerkleTrieLoader()
+                        .getCachedMerkleTrieLoader()
                         .getAccountStorageTrieNode(
                             worldStateStorage, updatedAddressHash, location, key),
                 storageRoot,

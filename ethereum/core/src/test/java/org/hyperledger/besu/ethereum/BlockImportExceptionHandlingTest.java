@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -76,10 +77,12 @@ public class BlockImportExceptionHandlingTest {
   private final WorldStateStorage worldStateStorage =
       new BonsaiWorldStateKeyValueStorage(storageProvider);
 
+  private CachedMerkleTrieLoader cachedMerkleTrieLoader;
+
   private final WorldStateArchive worldStateArchive =
       // contains a BonsaiPersistedWorldState which we need to spy on.
       // do we need to also test with a DefaultWorldStateArchive?
-      spy(new BonsaiWorldStateArchive(storageProvider, blockchain, new NoOpMetricsSystem()));
+      spy(new BonsaiWorldStateArchive(storageProvider, blockchain, cachedMerkleTrieLoader));
 
   private final BonsaiPersistedWorldState persisted =
       spy(
@@ -99,6 +102,7 @@ public class BlockImportExceptionHandlingTest {
     mainnetBlockValidator =
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+    cachedMerkleTrieLoader = new CachedMerkleTrieLoader(new NoOpMetricsSystem());
   }
 
   @Test

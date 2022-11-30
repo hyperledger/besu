@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,35 +55,35 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final BonsaiPersistedWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  private final OptimizedMerkleTrieLoader optimizedMerkleTrieLoader;
+  private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
   private final boolean useSnapshots;
 
   public BonsaiWorldStateArchive(
       final StorageProvider provider,
       final Blockchain blockchain,
-      final ObservableMetricsSystem metricsSystem) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     this(
         (BonsaiWorldStateKeyValueStorage)
             provider.createWorldStateStorage(DataStorageFormat.BONSAI),
         blockchain,
         Optional.empty(),
         provider.isWorldStateSnappable(),
-        metricsSystem);
+        cachedMerkleTrieLoader);
   }
 
   public BonsaiWorldStateArchive(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
-      final ObservableMetricsSystem metricsSystem) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     // overload while snapshots are an experimental option:
     this(
         worldStateStorage,
         blockchain,
         maxLayersToLoad,
         DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS,
-        metricsSystem);
+        cachedMerkleTrieLoader);
   }
 
   public BonsaiWorldStateArchive(
@@ -92,7 +91,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final boolean useSnapshots,
-      final ObservableMetricsSystem metricsSystem) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     this(
         useSnapshots
             ? new SnapshotTrieLogManager(
@@ -102,7 +101,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         worldStateStorage,
         blockchain,
         useSnapshots,
-        metricsSystem);
+        cachedMerkleTrieLoader);
   }
 
   @VisibleForTesting
@@ -111,13 +110,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final boolean useSnapshots,
-      final ObservableMetricsSystem metricsSystem) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     this.useSnapshots = useSnapshots;
-    this.optimizedMerkleTrieLoader = new OptimizedMerkleTrieLoader(metricsSystem);
+    this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
 
@@ -292,8 +291,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return (BonsaiWorldStateUpdater) mutableState.updater();
   }
 
-  public OptimizedMerkleTrieLoader getOptimizedMerkleTrieLoader() {
-    return optimizedMerkleTrieLoader;
+  public CachedMerkleTrieLoader getCachedMerkleTrieLoader() {
+    return cachedMerkleTrieLoader;
   }
 
   @Override

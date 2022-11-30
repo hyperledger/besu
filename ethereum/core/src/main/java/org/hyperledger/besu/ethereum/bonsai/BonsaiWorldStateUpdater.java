@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.common.collect.ForwardingMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -58,12 +59,16 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   private final Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> storageToUpdate =
       new ConcurrentHashMap<>();
 
+  BonsaiWorldStateUpdater(final BonsaiWorldView world) {
+    this(world, (__, ___) -> {}, (__, ___) -> {});
+  }
+
   BonsaiWorldStateUpdater(
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
       final Consumer<Hash> storagePreloader) {
     super(world);
-    this.accountsToUpdate = new AccountConsumingMap<>(accountPreloader);
+    this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
   }
@@ -193,7 +198,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       // mark all updated storage as to be cleared
       final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
           storageToUpdate.computeIfAbsent(
-              deletedAddress, k -> new StorageConsumingMap<>(deletedAddress, storagePreloader));
+              deletedAddress,
+              k ->
+                  new StorageConsumingMap<>(
+                      deletedAddress, new ConcurrentHashMap<>(), storagePreloader));
       final Iterator<Map.Entry<Hash, BonsaiValue<UInt256>>> iter =
           deletedStorageUpdates.entrySet().iterator();
       while (iter.hasNext()) {
@@ -268,7 +276,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
               final StorageConsumingMap<BonsaiValue<UInt256>> pendingStorageUpdates =
                   storageToUpdate.computeIfAbsent(
                       updatedAddress,
-                      __ -> new StorageConsumingMap<>(updatedAddress, storagePreloader));
+                      __ ->
+                          new StorageConsumingMap<>(
+                              updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
               if (tracked.getStorageWasCleared()) {
                 storageToClear.add(updatedAddress);
                 pendingStorageUpdates.clear();
@@ -345,7 +355,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         v ->
             storageToUpdate
                 .computeIfAbsent(
-                    address, key -> new StorageConsumingMap<>(address, storagePreloader))
+                    address,
+                    key ->
+                        new StorageConsumingMap<>(
+                            address, new ConcurrentHashMap<>(), storagePreloader))
                 .put(slotHash, new BonsaiValue<>(v, v)));
     return valueUInt;
   }
@@ -601,7 +614,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       final Map<Hash, BonsaiValue<UInt256>> storageMap, final Address address) {
     if (storageMap == null) {
       final StorageConsumingMap<BonsaiValue<UInt256>> newMap =
-          new StorageConsumingMap<>(address, storagePreloader);
+          new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader);
       storageToUpdate.put(address, newMap);
       return newMap;
     } else {
@@ -630,7 +643,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if (storageValue.isPresent()) {
         slotValue = new BonsaiValue<>(storageValue.get(), storageValue.get());
         storageToUpdate
-            .computeIfAbsent(address, k -> new StorageConsumingMap<>(address, storagePreloader))
+            .computeIfAbsent(
+                address,
+                k ->
+                    new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
             .put(slotHash, slotValue);
       }
     }
@@ -701,43 +717,62 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         && codeToUpdate.isEmpty());
   }
 
-  public static class AccountConsumingMap<T> extends ConcurrentHashMap<Address, T> {
+  public static class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
 
+    private final ConcurrentHashMap<Address, T> accounts;
     private final Consumer<T> consumer;
 
-    public AccountConsumingMap(final Consumer<T> consumer) {
+    public AccountConsumingMap(
+        final ConcurrentHashMap<Address, T> accounts, final Consumer<T> consumer) {
+      this.accounts = accounts;
       this.consumer = consumer;
     }
 
     @Override
     public T put(@NotNull final Address address, @NotNull final T value) {
       consumer.process(address, value);
-      return super.put(address, value);
+      return accounts.put(address, value);
     }
 
     public Consumer<T> getConsumer() {
       return consumer;
     }
+
+    @Override
+    protected Map<Address, T> delegate() {
+      return accounts;
+    }
   }
 
-  public static class StorageConsumingMap<T> extends ConcurrentHashMap<Hash, T> {
+  public static class StorageConsumingMap<T> extends ForwardingMap<Hash, T> {
 
     private final Address address;
+
+    private final ConcurrentHashMap<Hash, T> storages;
     private final Consumer<Hash> consumer;
 
-    public StorageConsumingMap(final Address address, final Consumer<Hash> consumer) {
+    public StorageConsumingMap(
+        final Address address,
+        final ConcurrentHashMap<Hash, T> storages,
+        final Consumer<Hash> consumer) {
       this.address = address;
+      this.storages = storages;
       this.consumer = consumer;
     }
 
     @Override
     public T put(@NotNull final Hash slotHash, @NotNull final T value) {
       consumer.process(address, slotHash);
-      return super.put(slotHash, value);
+      return storages.put(slotHash, value);
     }
 
     public Consumer<Hash> getConsumer() {
       return consumer;
+    }
+
+    @Override
+    protected Map<Hash, T> delegate() {
+      return storages;
     }
   }
 

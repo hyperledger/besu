@@ -110,7 +110,9 @@ public class LogRollingTests {
   @Before
   public void createStorage() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    archive = new BonsaiWorldStateArchive(provider, blockchain, new NoOpMetricsSystem());
+    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
+        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
+    archive = new BonsaiWorldStateArchive(provider, blockchain, cachedMerkleTrieLoader);
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -129,8 +131,10 @@ public class LogRollingTests {
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
     final InMemoryKeyValueStorageProvider secondProvider = new InMemoryKeyValueStorageProvider();
+    final CachedMerkleTrieLoader secondOptimizedMerkleTrieLoader =
+        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     secondArchive =
-        new BonsaiWorldStateArchive(secondProvider, blockchain, new NoOpMetricsSystem());
+        new BonsaiWorldStateArchive(secondProvider, blockchain, secondOptimizedMerkleTrieLoader);
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(

@@ -88,7 +88,7 @@ public class BonsaiWorldStateArchiveTest {
             blockchain,
             Optional.of(1L),
             false,
-            new NoOpMetricsSystem());
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, chainHead.getHash(), true))
         .containsInstanceOf(BonsaiPersistedWorldState.class);
@@ -102,7 +102,7 @@ public class BonsaiWorldStateArchiveTest {
             blockchain,
             Optional.of(512L),
             false,
-            new NoOpMetricsSystem());
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -118,7 +118,7 @@ public class BonsaiWorldStateArchiveTest {
             blockchain,
             Optional.of(512L),
             false,
-            new NoOpMetricsSystem());
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
 
@@ -151,7 +151,7 @@ public class BonsaiWorldStateArchiveTest {
                 worldStateStorage,
                 blockchain,
                 false,
-                new NoOpMetricsSystem()));
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -179,7 +179,7 @@ public class BonsaiWorldStateArchiveTest {
                 worldStateStorage,
                 blockchain,
                 false,
-                new NoOpMetricsSystem()));
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
 
     var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
     var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
@@ -227,7 +227,7 @@ public class BonsaiWorldStateArchiveTest {
                 worldStateStorage,
                 blockchain,
                 false,
-                new NoOpMetricsSystem()));
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
     var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
     var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
     when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);
@@ -279,7 +279,7 @@ public class BonsaiWorldStateArchiveTest {
                 worldStateStorage,
                 blockchain,
                 false,
-                new NoOpMetricsSystem()));
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
     var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
     var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
     when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);

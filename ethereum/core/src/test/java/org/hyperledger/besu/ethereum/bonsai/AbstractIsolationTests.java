@@ -115,7 +115,7 @@ public abstract class AbstractIsolationTests {
             blockchain,
             Optional.of(16L),
             shouldUseSnapshots(),
-            new NoOpMetricsSystem());
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     ws.persist(blockchain.getChainHeadHeader());
