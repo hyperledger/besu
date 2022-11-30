@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,9 +212,9 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
 
-      if (configOptions.getMergeNetSplitBlockNumber().isPresent()
-          && (configOptions.getCheckpointOptions().getNumber().getAsLong()
-              > configOptions.getMergeNetSplitBlockNumber().getAsLong())) {
+      if (configOptions.getTerminalTotalDifficulty().isPresent()
+          && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
+              .greaterOrEqualThan(configOptions.getTerminalTotalDifficulty().get()))) {
         return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
       }
 
