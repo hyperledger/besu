@@ -3334,15 +3334,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()) {
       terminalTotalDifficulty.ifPresentOrElse(
           value -> {
-            if (UInt256.fromHexString(genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
-                    .lessThan(value)) {
+            if (UInt256.fromHexString(
+                    genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
+                .lessThan(value)) {
               throw new InvalidConfigurationException(
                   "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
             }
           },
           () -> {
             throw new InvalidConfigurationException(
-                    "Near head checkpoint sync requires TTD in the genesis file");
+                "Near head checkpoint sync requires TTD in the genesis file");
           });
     }
   }
