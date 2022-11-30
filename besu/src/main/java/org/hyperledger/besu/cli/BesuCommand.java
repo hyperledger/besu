@@ -3329,19 +3329,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         .getConfigOptions(genesisConfigOverrides));
     final SynchronizerConfiguration synchronizerConfiguration =
         unstableSynchronizerOptions.toDomainObject().build();
-    final OptionalLong mergeNetSplitBlockNumber = genesisOptions.getMergeNetSplitBlockNumber();
+    final Optional<UInt256> terminalTotalDifficulty = genesisOptions.getTerminalTotalDifficulty();
 
     if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()) {
-      mergeNetSplitBlockNumber.ifPresentOrElse(
+      terminalTotalDifficulty.ifPresentOrElse(
           value -> {
-            if (genesisOptions.getCheckpointOptions().getNumber().getAsLong() < value) {
+            if (UInt256.fromHexString(genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
+                    .lessThan(value)) {
               throw new InvalidConfigurationException(
-                  "Near head checkpoint sync requires a pivot block after the MergeSplitBlock");
+                  "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
             }
           },
           () -> {
             throw new InvalidConfigurationException(
-                "Near head checkpoint sync requires the mergeNetSplitBlock in the genesis file");
+                    "Near head checkpoint sync requires TTD in the genesis file");
           });
     }
   }
