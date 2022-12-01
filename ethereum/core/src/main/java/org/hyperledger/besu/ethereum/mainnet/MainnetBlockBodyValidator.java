@@ -108,7 +108,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
   private boolean validateWithdrawals(final BlockHeader header, final BlockBody body) {
     final WithdrawalsValidator withdrawalsValidator =
-        protocolSchedule.getByBlockNumber(header.getNumber()).getWithdrawalsValidator();
+        protocolSchedule.getByBlockHeader(header).getWithdrawalsValidator();
     if (!withdrawalsValidator.validateRoot(header.getWithdrawalRoot())) {
       LOG.warn("Invalid withdrawals root {}", header.getWithdrawalRoot());
       return false;
