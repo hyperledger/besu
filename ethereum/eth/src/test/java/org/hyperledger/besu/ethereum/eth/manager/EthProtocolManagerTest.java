@@ -1145,6 +1145,26 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
+  public void shouldRespectChosenCapabilities() {
+
+    final List<Capability> expectedCapabilities = List.of(EthProtocol.ETH65, EthProtocol.ETH67);
+
+    // Pass list of desired capabilities to Eth Config
+    final EthProtocolConfiguration configuration =
+        EthProtocolConfiguration.builder()
+            .ethSupportedCapabilities(
+                expectedCapabilities.stream()
+                    .map(Capability::getVersion)
+                    .collect(Collectors.toList()))
+            .build();
+
+    final EthProtocolManager ethManager = createEthManager(SyncMode.X_SNAP, configuration);
+
+    assertThat(ethManager.getSupportedCapabilities())
+        .containsExactlyElementsOf(expectedCapabilities);
+  }
+
+  @Test
   public void shouldRespectProtocolForMaxCapabilityIfFlagGreaterThanProtocol() {
 
     // Test with max capability = 67. should respect protocol
@@ -1166,6 +1186,14 @@ public final class EthProtocolManagerTest {
       final SyncMode syncMode,
       final Capability capability,
       final EthProtocolConfiguration ethProtocolConfiguration) {
+
+    final EthProtocolManager ethManager = createEthManager(syncMode, ethProtocolConfiguration);
+
+    assertThat(capability.getVersion()).isEqualTo(ethManager.getHighestProtocolVersion());
+  }
+
+  private EthProtocolManager createEthManager(
+      final SyncMode syncMode, final EthProtocolConfiguration ethProtocolConfiguration) {
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
     when(syncConfig.getSyncMode()).thenReturn(syncMode);
     try (final EthProtocolManager ethManager =
@@ -1184,7 +1212,7 @@ public final class EthProtocolManagerTest {
             mock(EthScheduler.class),
             mock(ForkIdManager.class))) {
 
-      assertThat(capability.getVersion()).isEqualTo(ethManager.getHighestProtocolVersion());
+      return ethManager;
     }
   }
 }

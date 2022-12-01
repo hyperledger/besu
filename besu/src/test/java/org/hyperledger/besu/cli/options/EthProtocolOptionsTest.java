@@ -152,6 +152,19 @@ public class EthProtocolOptionsTest
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
+  @Test
+  public void parsesValidEthCapabilities() {
+
+    final TestBesuCommand cmd = parseCommand("--Xeth-capabilities", "66,67");
+
+    final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
+    final EthProtocolConfiguration config = options.toDomainObject();
+    assertThat(config.getEthSupportedCapabilities()).contains(66, 67);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Override
   EthProtocolConfiguration createDefaultDomainObject() {
     return EthProtocolConfiguration.builder().build();

@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.eth;
 import org.hyperledger.besu.util.number.ByteUnits;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
@@ -44,6 +46,7 @@ public class EthProtocolConfiguration {
   private final int maxGetPooledTransactions;
   private final boolean legacyEth64ForkIdEnabled;
   private final int maxEthCapability;
+  private final List<Integer> ethSupportedCapabilities;
 
   private EthProtocolConfiguration(
       final int maxMessageSize,
@@ -53,7 +56,8 @@ public class EthProtocolConfiguration {
       final int maxGetNodeData,
       final int maxGetPooledTransactions,
       final boolean legacyEth64ForkIdEnabled,
-      final int maxEthCapability) {
+      final int maxEthCapability,
+      final List<Integer> ethSupportedCapabilities) {
     this.maxMessageSize = maxMessageSize;
     this.maxGetBlockHeaders = maxGetBlockHeaders;
     this.maxGetBlockBodies = maxGetBlockBodies;
@@ -62,6 +66,7 @@ public class EthProtocolConfiguration {
     this.maxGetPooledTransactions = maxGetPooledTransactions;
     this.legacyEth64ForkIdEnabled = legacyEth64ForkIdEnabled;
     this.maxEthCapability = maxEthCapability;
+    this.ethSupportedCapabilities = ethSupportedCapabilities;
   }
 
   public static EthProtocolConfiguration defaultConfig() {
@@ -102,6 +107,10 @@ public class EthProtocolConfiguration {
 
   public int getMaxEthCapability() {
     return maxEthCapability;
+  }
+
+  public List<Integer> getEthSupportedCapabilities() {
+    return ethSupportedCapabilities;
   }
 
   @Override
@@ -159,6 +168,7 @@ public class EthProtocolConfiguration {
         EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
 
     private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
+    private List<Integer> ethSupportedCapabilities = new ArrayList<>();
 
     public Builder maxMessageSize(final PositiveNumber maxMessageSize) {
       this.maxMessageSize = maxMessageSize;
@@ -230,6 +240,11 @@ public class EthProtocolConfiguration {
       return this;
     }
 
+    public Builder ethSupportedCapabilities(final List<Integer> ethSupportedCapabilities) {
+      this.ethSupportedCapabilities = ethSupportedCapabilities;
+      return this;
+    }
+
     public EthProtocolConfiguration build() {
       return new EthProtocolConfiguration(
           maxMessageSize.getValue(),
@@ -239,7 +254,8 @@ public class EthProtocolConfiguration {
           maxGetNodeData.getValue(),
           maxGetPooledTransactions.getValue(),
           legacyEth64ForkIdEnabled,
-          maxEthCapability);
+          maxEthCapability,
+          ethSupportedCapabilities);
     }
   }
 }

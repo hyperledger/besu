@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
   private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
@@ -104,6 +105,15 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       description = "Max protocol version to support")
   private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
 
+  @Option(
+      hidden = true,
+      names = {"--Xeth-capabilities"},
+      paramLabel = "<INTEGER>",
+      split = ",",
+      description = "Comma separated Eth Protocol versions to enable",
+      arity = "0..*")
+  private final List<Integer> ethSupportedCapabilities = null;
+
   private EthProtocolOptions() {}
 
   public static EthProtocolOptions create() {
@@ -134,6 +144,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         .maxGetPooledTransactions(maxGetPooledTransactions)
         .legacyEth64ForkIdEnabled(legacyEth64ForkIdEnabled)
         .maxEthCapability(maxEthCapability)
+        .ethSupportedCapabilities(ethSupportedCapabilities)
         .build();
   }
 
