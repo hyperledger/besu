@@ -17,9 +17,9 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 public interface HeaderBasedProtocolSchedule {
 
-  public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader);
+  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
 }

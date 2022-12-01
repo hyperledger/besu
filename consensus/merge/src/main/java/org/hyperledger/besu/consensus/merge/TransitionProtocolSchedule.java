@@ -18,8 +18,8 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -66,13 +66,14 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader) {
+  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
         .getByTimestamp(blockHeader.getTimestamp())
         .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
   }
 
-  public ProtocolSpec getByBlockHeaderFromTransitionUtils(final BlockHeader blockHeader) {
+  public ProtocolSpec getByBlockHeaderFromTransitionUtils(
+      final ProcessableBlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
     if (transitionUtils.getMergeContext().getFinalized().isEmpty()) {
 

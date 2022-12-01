@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.merge;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -66,7 +66,7 @@ public class TransitionUtils<SwitchingObject> {
   }
 
   public static boolean isTerminalProofOfWorkBlock(
-      final BlockHeader header, final ProtocolContext context) {
+      final ProcessableBlockHeader header, final ProtocolContext context) {
 
     Difficulty headerDifficulty =
         Optional.ofNullable(header.getDifficulty()).orElse(Difficulty.ZERO);
