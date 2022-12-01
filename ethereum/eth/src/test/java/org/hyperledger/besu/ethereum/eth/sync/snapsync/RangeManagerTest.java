@@ -101,7 +101,7 @@ public final class RangeManagerTest {
     final WorldStateStorage worldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie =
+    final MerklePatriciaTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
 
     final RangeStorageEntriesCollector collector =
@@ -140,7 +140,7 @@ public final class RangeManagerTest {
     final WorldStateStorage worldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie =
+    final MerklePatriciaTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
 
     final RangeStorageEntriesCollector collector =
