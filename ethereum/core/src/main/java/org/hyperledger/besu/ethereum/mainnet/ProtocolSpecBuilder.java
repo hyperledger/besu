@@ -298,7 +298,7 @@ public class ProtocolSpecBuilder {
     BlockProcessor blockProcessor = createBlockProcessor(transactionProcessor);
     // Set private Tx Processor
     PrivateTransactionProcessor privateTransactionProcessor =
-        createPrivetTransactionProcessor(
+        createPrivateTransactionProcessor(
             transactionValidator,
             contractCreationProcessor,
             messageCallProcessor,
@@ -350,7 +350,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(powHasher));
   }
 
-  private PrivateTransactionProcessor createPrivetTransactionProcessor(
+  private PrivateTransactionProcessor createPrivateTransactionProcessor(
       final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,

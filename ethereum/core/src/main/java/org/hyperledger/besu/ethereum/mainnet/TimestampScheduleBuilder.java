@@ -99,7 +99,7 @@ public class TimestampScheduleBuilder {
 
   public TimestampSchedule createTimeStampSchedule() {
     final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
-    final MainNetTimestampSchedule timestampSchedule = new MainNetTimestampSchedule(chainId);
+    final DefaultTimestampSchedule timestampSchedule = new DefaultTimestampSchedule(chainId);
 
     final MainnetProtocolSpecFactory specFactory =
         new MainnetProtocolSpecFactory(
@@ -136,7 +136,7 @@ public class TimestampScheduleBuilder {
   }
 
   private void addProtocolSpec(
-      final MainNetTimestampSchedule protocolSchedule,
+      final DefaultTimestampSchedule protocolSchedule,
       final long timestamp,
       final ProtocolSpecBuilder definition) {
     definition
