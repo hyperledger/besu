@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
+import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadAttributes;
@@ -40,7 +41,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,17 +52,17 @@ import org.slf4j.LoggerFactory;
 
 public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV2.class);
-  private final ProtocolSchedule protocolSchedule;
+  private final TransitionProtocolSchedule transitionProtocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
 
   public EngineForkchoiceUpdatedV2(
       final Vertx vertx,
-      final ProtocolSchedule protocolSchedule,
+      final TransitionProtocolSchedule transitionProtocolSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
-    this.protocolSchedule = protocolSchedule;
+    this.transitionProtocolSchedule = transitionProtocolSchedule;
     this.mergeCoordinator = mergeCoordinator;
   }
 
@@ -219,8 +219,8 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
         Optional.ofNullable(payloadAttributes.getWithdrawals())
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
             .orElse(null);
-    return protocolSchedule
-        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber() + 1)
+    return transitionProtocolSchedule
+        .getByTimestamp(payloadAttributes.getTimestamp())
         .getWithdrawalsValidator()
         .validateWithdrawals(withdrawals);
   }

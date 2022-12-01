@@ -60,6 +60,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     return transitionUtils.getPostMergeObject();
   }
 
+  public ProtocolSpec getByTimestamp(final long timestamp) {
+    return timestampSchedule.getByTimestamp(timestamp).orElse(null);
+  }
+
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
