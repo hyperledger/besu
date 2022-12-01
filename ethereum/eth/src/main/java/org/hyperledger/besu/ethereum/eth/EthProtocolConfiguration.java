@@ -34,6 +34,8 @@ public class EthProtocolConfiguration {
   public static final boolean DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED = false;
   public static final int DEFAULT_MAX_CAPABILITY = Integer.MAX_VALUE;
 
+  public static final ArrayList<Integer> DEFAULT_ETH_CAPABILITIES = new ArrayList<>();
+
   // Limit the size of p2p messages (in bytes)
   private final int maxMessageSize;
 

@@ -179,6 +179,7 @@ public class EthProtocolOptionsTest
         .maxGetReceipts(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2)
         .maxGetNodeData(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2)
         .maxGetPooledTransactions(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2)
+        .ethSupportedCapabilities(EthProtocolConfiguration.DEFAULT_ETH_CAPABILITIES)
         .build();
   }
 

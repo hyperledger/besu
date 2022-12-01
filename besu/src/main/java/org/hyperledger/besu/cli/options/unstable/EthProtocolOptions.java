@@ -113,7 +113,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       split = ",",
       description = "Comma separated Eth Protocol versions to enable",
       arity = "0..*")
-  private List<Integer> ethSupportedCapabilities = null;
+  private List<Integer> ethSupportedCapabilities = EthProtocolConfiguration.DEFAULT_ETH_CAPABILITIES;
 
   private EthProtocolOptions() {}
 
