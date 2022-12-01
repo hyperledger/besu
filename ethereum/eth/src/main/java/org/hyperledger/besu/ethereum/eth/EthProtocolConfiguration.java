@@ -168,6 +168,7 @@ public class EthProtocolConfiguration {
         EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
 
     private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
+
     private List<Integer> ethSupportedCapabilities = new ArrayList<>();
 
     public Builder maxMessageSize(final PositiveNumber maxMessageSize) {
