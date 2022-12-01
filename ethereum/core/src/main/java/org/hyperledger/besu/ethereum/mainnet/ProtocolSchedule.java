@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -36,8 +36,7 @@ public interface ProtocolSchedule extends HeaderBasedProtocolSchedule {
       WorldStateArchive publicWorldStateArchive);
 
   @Override
-  default ProtocolSpec getByBlockHeader(final BlockHeader blockHeader) {
+  default ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
     return getByBlockNumber(blockHeader.getNumber());
   }
-  ;
 }
