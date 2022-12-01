@@ -18,10 +18,19 @@ package org.hyperledger.besu.evm.code;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class CodeV1Test {
+
+  public static final String ZERO_HEX = String.format("%02x", 0);
 
   @Test
   void calculatesJumpDestMap() {
@@ -31,5 +40,34 @@ class CodeV1Test {
     long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(layout.getSections()[1]);
 
     assertThat(jumpDest).containsExactly(0x2000);
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {"3000", "5000", "fe00", "0000"})
+  void testValidOpcodes(final String code) {
+    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
+    assertThat(jumpDest).isNotNull();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"00", "f3", "fd", "fe"})
+  void testValidCodeTerminator(final String code) {
+    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
+    assertThat(jumpDest).isNotNull();
+  }
+
+  @ParameterizedTest
+  @MethodSource("testPushValidImmediateArguments")
+  void testPushValidImmediate(final String code) {
+    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
+    assertThat(jumpDest).isNotNull();
+  }
+
+  private static Stream<Arguments> testPushValidImmediateArguments() {
+    final int codeBegin = 96;
+    return IntStream.range(0, 32)
+        .mapToObj(i -> String.format("%02x", codeBegin + i) + ZERO_HEX.repeat(i + 1) + ZERO_HEX)
+        .map(Arguments::arguments);
   }
 }
