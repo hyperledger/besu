@@ -168,7 +168,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getAccount_loadFromTrieWhenEmpty() {
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    MerklePatriciaTrie<Bytes32, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
@@ -192,7 +192,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getStorage_loadFromTrieWhenEmpty() {
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final MerklePatriciaTrie<Bytes32, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
