@@ -67,11 +67,12 @@ public class MergeProtocolSchedule {
     return new TimestampScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(
-                0,
-                (specBuilder) ->
-                    MergeProtocolSchedule.applyMergeSpecificModifications(
-                        specBuilder, config.getChainId())),
+            // TODO SLD might we need this if shanghaiTimestamp = 0?
+            /*ProtocolSpecAdapters.create(
+            0,
+            (specBuilder) ->
+                MergeProtocolSchedule.applyMergeSpecificModifications(
+                    specBuilder, config.getChainId())),*/
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),

@@ -44,44 +44,12 @@ public class TimestampScheduleBuilder {
   public TimestampScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
-    this(
-        config,
-        Optional.of(defaultChainId),
-        privacyParameters,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
-  }
-
-  public TimestampScheduleBuilder(
-      final GenesisConfigOptions config,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
-    this(
-        config,
-        Optional.empty(),
-        privacyParameters,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
-  }
-
-  private TimestampScheduleBuilder(
-      final GenesisConfigOptions config,
-      final Optional<BigInteger> defaultChainId,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
     this.config = config;
-    this.defaultChainId = defaultChainId;
+    this.defaultChainId = Optional.of(defaultChainId);
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
@@ -111,6 +79,8 @@ public class TimestampScheduleBuilder {
             config.getEcip1017EraRounds(),
             evmConfiguration);
 
+    // TODO SLD add validatorForkOrdering() by timestamp?
+
     final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
 
     // Create the ProtocolSchedule, such that the Dao/fork milestones can be inserted
@@ -124,7 +94,9 @@ public class TimestampScheduleBuilder {
 
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
       final MainnetProtocolSpecFactory specFactory) {
-    return Stream.of(create(config.getShanghaiTimestamp(), specFactory.shanghaiDefinition(config)))
+    return Stream.of(
+            create(config.getShanghaiTimestamp(), specFactory.shanghaiDefinition(config)),
+            create(config.getCancunTimestamp(), specFactory.cancunDefinition(config)))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(

@@ -186,7 +186,25 @@ public class MainnetProtocolSpecFactory {
   }
 
   public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return parisDefinition(genesisConfigOptions);
+    return MainnetProtocolSpecs.shanghaiDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
+  public ProtocolSpecBuilder cancunDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.cancunDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
   }
 
   public ProtocolSpecBuilder shandongDefinition(final GenesisConfigOptions genesisConfigOptions) {
