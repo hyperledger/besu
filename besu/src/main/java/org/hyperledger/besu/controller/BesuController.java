@@ -213,6 +213,7 @@ public class BesuController implements java.io.Closeable {
       }
 
       if (configOptions.getTerminalTotalDifficulty().isPresent()
+          && configOptions.getCheckpointOptions().isValid()
           && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
               .greaterOrEqualThan(configOptions.getTerminalTotalDifficulty().get()))) {
         return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);

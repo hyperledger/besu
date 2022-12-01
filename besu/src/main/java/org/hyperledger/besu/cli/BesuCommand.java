@@ -84,6 +84,7 @@ import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
@@ -3330,12 +3331,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final SynchronizerConfiguration synchronizerConfiguration =
         unstableSynchronizerOptions.toDomainObject().build();
     final Optional<UInt256> terminalTotalDifficulty = genesisOptions.getTerminalTotalDifficulty();
-
+    final CheckpointConfigOptions checkpointConfigOptions = genesisOptions.getCheckpointOptions();
     if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()) {
+      if (!checkpointConfigOptions.isValid()) {
+        throw new InvalidConfigurationException(
+            "Near head checkpoint sync requires a checkpoint block configured in the genesis file");
+      }
       terminalTotalDifficulty.ifPresentOrElse(
           value -> {
             if (UInt256.fromHexString(
-                    genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
+                    genesisOptions.getCheckpointOptions().getTotalDifficulty().orElse("0x0"))
                 .lessThan(value)) {
               throw new InvalidConfigurationException(
                   "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
