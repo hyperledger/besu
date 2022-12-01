@@ -216,7 +216,7 @@ public final class GenesisState {
   }
 
   private static boolean isShanghaiAtGenesis(final GenesisConfigFile genesis) {
-    final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTimestamp();
+    final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
     if (shanghaiTimestamp.isPresent()) {
       return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
     }
