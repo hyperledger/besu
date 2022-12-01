@@ -216,9 +216,9 @@ public final class GenesisState {
   }
 
   private static boolean isShanghaiAtGenesis(final GenesisConfigFile genesis) {
-    final OptionalLong shanghaiBlockNumber = genesis.getConfigOptions().getShanghaiBlockNumber();
-    if (shanghaiBlockNumber.isPresent()) {
-      return shanghaiBlockNumber.getAsLong() == BlockHeader.GENESIS_BLOCK_NUMBER;
+    final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTimestamp();
+    if (shanghaiTimestamp.isPresent()) {
+      return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
     }
     return false;
   }
