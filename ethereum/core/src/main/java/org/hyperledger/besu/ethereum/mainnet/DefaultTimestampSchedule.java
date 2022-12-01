@@ -24,12 +24,12 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-public class MainNetTimestampSchedule implements TimestampSchedule {
+public class DefaultTimestampSchedule implements TimestampSchedule {
   private final NavigableSet<TimedProtocolSpec> protocolSpecs =
       new TreeSet<>(Comparator.comparing(TimedProtocolSpec::getTimestamp).reversed());
   private final Optional<BigInteger> chainId;
 
-  public MainNetTimestampSchedule(final Optional<BigInteger> chainId) {
+  public DefaultTimestampSchedule(final Optional<BigInteger> chainId) {
     this.chainId = chainId;
   }
 
