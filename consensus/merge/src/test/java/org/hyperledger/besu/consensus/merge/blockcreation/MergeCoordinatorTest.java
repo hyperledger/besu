@@ -255,7 +255,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doThrow(new MerkleTrieException("missing leaf"))
               .doCallRealMethod()
               .when(beingSpiedOn)
-              .createBlock(any(), any(Bytes32.class), anyLong());
+              .createBlock(any(), any(Bytes32.class), anyLong(), any());
           return beingSpiedOn;
         };
 
@@ -290,7 +290,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.random(),
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     verify(willThrow, never()).addBadBlock(any(), any());
     blockCreationTask.get();
