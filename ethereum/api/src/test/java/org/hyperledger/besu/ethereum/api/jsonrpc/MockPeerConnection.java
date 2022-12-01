@@ -32,7 +32,7 @@ public class MockPeerConnection {
       final PeerInfo peerInfo,
       final InetSocketAddress localAddress,
       final InetSocketAddress remoteAddress) {
-    PeerConnection peerConnection = mock(PeerConnection.class);
+    final PeerConnection peerConnection = mock(PeerConnection.class);
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     when(peerConnection.getLocalAddress()).thenReturn(localAddress);
     when(peerConnection.getRemoteAddress()).thenReturn(remoteAddress);

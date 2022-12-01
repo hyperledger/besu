@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.Subscribers;
@@ -169,6 +170,9 @@ public final class MockNetwork {
     }
 
     @Override
+    public void subscribeOutgoingConnectRequest(final ShouldConnectCallback callback) {}
+
+    @Override
     public void subscribeDisconnect(final DisconnectCallback callback) {
       disconnectCallbacks.subscribe(callback);
     }
@@ -307,6 +311,16 @@ public final class MockNetwork {
     @Override
     public InetSocketAddress getRemoteAddress() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long getInitiatedAt() {
+      return 0;
+    }
+
+    @Override
+    public boolean inboundInitiated() {
+      return false;
     }
   }
 }

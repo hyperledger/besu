@@ -112,6 +112,16 @@ public class MockPeerConnection implements PeerConnection {
   }
 
   @Override
+  public long getInitiatedAt() {
+    return 0;
+  }
+
+  @Override
+  public boolean inboundInitiated() {
+    return false;
+  }
+
+  @Override
   public boolean isDisconnected() {
     return disconnected;
   }

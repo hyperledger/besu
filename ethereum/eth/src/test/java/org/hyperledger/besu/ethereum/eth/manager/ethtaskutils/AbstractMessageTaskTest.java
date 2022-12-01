@@ -41,9 +41,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -90,13 +88,6 @@ public abstract class AbstractMessageTaskTest<T, R> {
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
-    final NodeMessagePermissioningProvider nmpp =
-        new NodeMessagePermissioningProvider() {
-          @Override
-          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
-            return true;
-          }
-        };
     ethPeers =
         spy(
             new EthPeers(
@@ -104,7 +95,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 TestClock.fixed(),
                 metricsSystem,
                 EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-                Collections.singletonList(nmpp),
+                Collections.emptyList(),
                 Bytes.random(64),
                 25,
                 25,

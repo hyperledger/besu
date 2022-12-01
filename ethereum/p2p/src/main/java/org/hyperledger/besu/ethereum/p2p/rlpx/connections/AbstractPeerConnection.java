@@ -164,8 +164,10 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
-      final String stackTrace = ExceptionUtils.getStackTrace(new Exception());
-      LOG.info("DISCONNECTING connection {}, with stack trace: \n", this, stackTrace);
+      if (LOG.isDebugEnabled()) {
+        final String stackTrace = ExceptionUtils.getStackTrace(new Exception());
+        LOG.debug("DISCONNECTING connection {}, with stack trace: \n", this, stackTrace);
+      }
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
       LOG.debug(

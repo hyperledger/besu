@@ -57,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -108,16 +109,20 @@ public class Istanbul99ProtocolManagerTest {
       throws ExecutionException, InterruptedException, TimeoutException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(() -> false);
-    EthPeers peers =
+
+    final EthPeers peers =
         new EthPeers(
             Istanbul99Protocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
-            25,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            messagePermissioningProviders,
-            nodeKey.getPublicKey().getEncodedBytes());
-    EthMessages messages = new EthMessages();
+            Collections.emptyList(),
+            Bytes.random(64),
+            25,
+            25,
+            25,
+            false);
+    final EthMessages messages = new EthMessages();
 
     final BigInteger networkId = BigInteger.ONE;
     try (final EthProtocolManager ethManager =

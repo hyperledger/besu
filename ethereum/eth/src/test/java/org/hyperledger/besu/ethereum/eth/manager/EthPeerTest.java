@@ -475,7 +475,8 @@ public class EthPeerTest {
         Collections.emptyList(),
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         clock,
-        Collections.emptyList());
+        Collections.emptyList(),
+        Bytes.random(64));
   }
 
   private EthPeer createPeer(
@@ -492,7 +493,8 @@ public class EthPeerTest {
         peerValidators,
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         clock,
-        permissioningProviders);
+        permissioningProviders,
+        Bytes.random(64));
   }
 
   @FunctionalInterface

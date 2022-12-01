@@ -59,9 +59,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.Collections;
@@ -609,15 +607,6 @@ public abstract class AbstractBlockPropagationManagerTest {
         .isEqualTo(parentTotalDifficulty);
   }
 
-  private class AlwaysTrueNodeMessagePermissioningProvider
-      implements NodeMessagePermissioningProvider {
-    @Override
-    public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
-      return true;
-    }
-  }
-  ;
-
   @SuppressWarnings("unchecked")
   @Test
   public void shouldNotImportBlocksThatAreAlreadyBeingImported() {
@@ -631,7 +620,7 @@ public abstract class AbstractBlockPropagationManagerTest {
                 TestClock.fixed(),
                 metricsSystem,
                 EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-                Collections.singletonList(new AlwaysTrueNodeMessagePermissioningProvider()),
+                Collections.emptyList(),
                 Bytes.random(64),
                 25,
                 25,
@@ -761,13 +750,7 @@ public abstract class AbstractBlockPropagationManagerTest {
                 return invocation.getArgument(0, Supplier.class).get();
               }
             });
-    final NodeMessagePermissioningProvider nmpp =
-        new NodeMessagePermissioningProvider() {
-          @Override
-          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
-            return true;
-          }
-        };
+
     final EthContext ethContext =
         new EthContext(
             new EthPeers(
@@ -775,7 +758,7 @@ public abstract class AbstractBlockPropagationManagerTest {
                 TestClock.fixed(),
                 metricsSystem,
                 EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-                Collections.singletonList(nmpp),
+                Collections.emptyList(),
                 Bytes.random(64),
                 25,
                 25,

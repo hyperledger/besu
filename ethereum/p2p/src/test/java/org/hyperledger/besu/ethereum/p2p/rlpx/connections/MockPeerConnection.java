@@ -56,7 +56,8 @@ public class MockPeerConnection extends AbstractPeerConnection {
         connectionId,
         multiplexer,
         connectionEventDispatcher,
-        outboundMessagesCounter);
+        outboundMessagesCounter,
+        true); // TODO: new
   }
 
   public static MockPeerConnection create() {

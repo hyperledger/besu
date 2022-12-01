@@ -52,9 +52,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -484,20 +481,8 @@ public class EthPeer implements Comparable<EthPeer> {
           final PeerConnection oldConnection = this.connection;
           this.connection = newConnection;
           LOG.info("Changed conenction from {} to {}", oldConnection, newConnection);
-          final ScheduledExecutorService executorService =
-              Executors.newSingleThreadScheduledExecutor();
-          executorService.schedule(
-              () -> oldConnection.disconnect(DisconnectReason.ALREADY_CONNECTED),
-              5,
-              TimeUnit.SECONDS);
         } else {
           newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED);
-          final ScheduledExecutorService executorService =
-              Executors.newSingleThreadScheduledExecutor();
-          executorService.schedule(
-              () -> newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED),
-              5,
-              TimeUnit.SECONDS);
         }
       }
       final int actualHashCode = this.connection.hashCode();

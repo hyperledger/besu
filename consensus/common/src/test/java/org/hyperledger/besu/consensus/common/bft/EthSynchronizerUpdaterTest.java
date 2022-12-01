@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -42,7 +43,7 @@ public class EthSynchronizerUpdaterTest {
 
   @Test
   public void ethPeerIsMissingResultInNoUpdate() {
-    when(ethPeers.peer(any())).thenReturn(null);
+    when(ethPeers.peer(any(Bytes.class))).thenReturn(null);
 
     final EthSynchronizerUpdater updater = new EthSynchronizerUpdater(ethPeers);
 
@@ -53,7 +54,7 @@ public class EthSynchronizerUpdaterTest {
 
   @Test
   public void chainStateUpdateIsAttemptedIfEthPeerExists() {
-    when(ethPeers.peer(any())).thenReturn(ethPeer);
+    when(ethPeers.peer(any(Bytes.class))).thenReturn(ethPeer);
     when(ethPeer.chainState()).thenReturn(chainState);
 
     final EthSynchronizerUpdater updater = new EthSynchronizerUpdater(ethPeers);

@@ -421,6 +421,7 @@ public class DeFramerTest {
         Optional.ofNullable(expectedPeer),
         connectionEventDispatcher,
         connectFuture,
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        true);
   }
 }

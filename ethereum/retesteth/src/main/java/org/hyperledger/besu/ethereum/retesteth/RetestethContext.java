@@ -61,9 +61,7 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -192,14 +190,6 @@ public class RetestethContext {
             blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive());
 
-    final NodeMessagePermissioningProvider nmpp =
-        new NodeMessagePermissioningProvider() {
-          @Override
-          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
-            return true;
-          }
-        };
-
     final Bytes localNodeKey = Bytes.wrap(new byte[64]);
 
     // mining support
@@ -210,7 +200,7 @@ public class RetestethContext {
             retestethClock,
             metricsSystem,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-            Collections.singletonList(nmpp),
+            Collections.emptyList(),
             localNodeKey,
             25,
             25,
