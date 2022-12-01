@@ -50,8 +50,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.Optional;
@@ -79,7 +79,7 @@ public class EngineForkchoiceUpdatedV2Test {
       new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash);
 
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private TimestampSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
@@ -96,7 +96,7 @@ public class EngineForkchoiceUpdatedV2Test {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByTimestamp(anyLong())).thenReturn(Optional.of(protocolSpec));
     this.method =
         new EngineForkchoiceUpdatedV2(
             vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
@@ -125,7 +125,7 @@ public class EngineForkchoiceUpdatedV2Test {
   public void shouldReturnInvalidOnBadTerminalBlock() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(false);
     assertSuccessWithPayloadForForkchoiceResult(
@@ -162,7 +162,7 @@ public class EngineForkchoiceUpdatedV2Test {
   @Test
   public void shouldReturnValidWithoutFinalizedOrPayload() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
@@ -186,7 +186,7 @@ public class EngineForkchoiceUpdatedV2Test {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), parent.getHash()))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.updateForkChoice(
             mockHeader, parent.getHash(), parent.getHash(), Optional.empty()))
@@ -216,7 +216,7 @@ public class EngineForkchoiceUpdatedV2Test {
     BlockHeader mockParent = builder.number(9L).buildHeader();
     BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
@@ -231,7 +231,7 @@ public class EngineForkchoiceUpdatedV2Test {
   @Test
   public void shouldReturnValidWithoutFinalizedWithPayload() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
@@ -273,7 +273,7 @@ public class EngineForkchoiceUpdatedV2Test {
 
     when(blockchain.getBlockHeader(finalizedBlockHash)).thenReturn(Optional.empty());
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.getOrSyncHeaderByHash(newHead.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(newHead.getHash(), finalizedBlockHash))
         .thenReturn(Optional.of(newHead));
 
     var resp =
@@ -294,7 +294,7 @@ public class EngineForkchoiceUpdatedV2Test {
     when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.getOrSyncHeaderByHash(newHead.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(newHead.getHash(), finalized.getBlockHash()))
         .thenReturn(Optional.of(newHead));
     when(mergeCoordinator.isDescendantOf(finalized, newHead)).thenReturn(false);
 
@@ -320,7 +320,7 @@ public class EngineForkchoiceUpdatedV2Test {
 
     when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.getOrSyncHeaderByHash(newHead.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(newHead.getHash(), parent.getBlockHash()))
         .thenReturn(Optional.of(newHead));
 
     var resp =
@@ -347,7 +347,7 @@ public class EngineForkchoiceUpdatedV2Test {
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
     when(blockchain.getBlockHeader(safeBlockBlockHash)).thenReturn(Optional.empty());
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.getOrSyncHeaderByHash(newHead.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(newHead.getHash(), finalized.getBlockHash()))
         .thenReturn(Optional.of(newHead));
     when(mergeCoordinator.isDescendantOf(finalized, newHead)).thenReturn(true);
 
@@ -371,7 +371,7 @@ public class EngineForkchoiceUpdatedV2Test {
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
     when(blockchain.getBlockHeader(safeBlock.getHash())).thenReturn(Optional.of(safeBlock));
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.getOrSyncHeaderByHash(newHead.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(newHead.getHash(), finalized.getBlockHash()))
         .thenReturn(Optional.of(newHead));
     when(mergeCoordinator.isDescendantOf(finalized, newHead)).thenReturn(true);
     when(mergeCoordinator.isDescendantOf(finalized, safeBlock)).thenReturn(false);
@@ -396,7 +396,7 @@ public class EngineForkchoiceUpdatedV2Test {
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
     when(blockchain.getBlockHeader(safeBlock.getHash())).thenReturn(Optional.of(safeBlock));
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.getOrSyncHeaderByHash(newHead.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(newHead.getHash(), finalized.getBlockHash()))
         .thenReturn(Optional.of(newHead));
     when(mergeCoordinator.isDescendantOf(finalized, newHead)).thenReturn(true);
     when(mergeCoordinator.isDescendantOf(finalized, safeBlock)).thenReturn(true);
@@ -416,7 +416,7 @@ public class EngineForkchoiceUpdatedV2Test {
   public void shouldIgnoreUpdateToOldHeadAndNotPreparePayload() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
@@ -459,7 +459,7 @@ public class EngineForkchoiceUpdatedV2Test {
     var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
     BlockHeader mockParent = builder.number(9L).buildHeader();
     BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
 
     var payloadParams =
@@ -488,7 +488,7 @@ public class EngineForkchoiceUpdatedV2Test {
     BlockHeader mockParent = builder.number(9L).buildHeader();
     BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
@@ -534,7 +534,7 @@ public class EngineForkchoiceUpdatedV2Test {
     var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
     BlockHeader mockParent = builder.number(9L).buildHeader();
     BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
 
     var payloadParams =
@@ -566,7 +566,7 @@ public class EngineForkchoiceUpdatedV2Test {
     BlockHeader mockParent = builder.number(9L).buildHeader();
     BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeaderByHash(mockHeader.getHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
