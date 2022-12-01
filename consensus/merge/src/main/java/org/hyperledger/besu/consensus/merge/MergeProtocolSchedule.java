@@ -60,7 +60,7 @@ public class MergeProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  public static TimestampSchedule createTimeStamp(
+  public static TimestampSchedule createTimestamp(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
@@ -76,7 +76,7 @@ public class MergeProtocolSchedule {
             isRevertReasonEnabled,
             config.isQuorum(),
             EvmConfiguration.DEFAULT)
-        .createTimeStampSchedule();
+        .createTimestampSchedule();
   }
 
   private static ProtocolSpecBuilder applyMergeSpecificModifications(
