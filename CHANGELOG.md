@@ -23,6 +23,7 @@
 - Print an overview of configuration and system information at startup [#4451](https://github.com/hyperledger/besu/pull/4451)
 - Do not send new payloads to backward sync if initial sync is in progress [#4720](https://github.com/hyperledger/besu/issues/4720)
 - Improve the way transaction fee cap validation is done on London fee market to not depend on transient network conditions [#4598](https://github.com/hyperledger/besu/pull/4598) 
+- Preload and cache account and storage data from RocksDB to improve performance  [#4737](https://github.com/hyperledger/besu/issues/4737)
 
 ### Bug Fixes
 - Restore updating chain head and finalized block during backward sync [#4718](https://github.com/hyperledger/besu/pull/4718)
