@@ -46,12 +46,11 @@ public enum JsonRpcError {
   P2P_DISABLED(-32000, "P2P has been disabled. This functionality is not available"),
   P2P_NETWORK_NOT_RUNNING(-32000, "P2P network is not running"),
 
-  // Filter, Log & Subscription Errors
+  // Filter & Subscription Errors
   FILTER_NOT_FOUND(-32000, "Filter not found"),
   LOGS_FILTER_NOT_FOUND(-32000, "Logs filter not found"),
   SUBSCRIPTION_NOT_FOUND(-32000, "Subscription not found"),
   NO_MINING_WORK_FOUND(-32000, "No mining work available yet"),
-  EXCEEDS_RPC_MAX_BLOCK_RANGE(-32000, "Requested range exceeds maximum RPC range limit"),
 
   // Transaction validation failures
   NONCE_TOO_LOW(-32001, "Nonce too low"),
@@ -59,6 +58,7 @@ public enum JsonRpcError {
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),
+  EXCEEDS_RPC_MAX_BLOCK_RANGE(-32005, "Requested range exceeds maximum RPC range limit"),
   NONCE_TOO_HIGH(-32006, "Nonce too high"),
   TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
