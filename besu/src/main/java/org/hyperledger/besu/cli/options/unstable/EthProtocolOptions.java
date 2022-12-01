@@ -36,6 +36,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       "--compatibility-eth64-forkid-enabled";
 
   private static final String MAX_CAPABILITY = "--Xeth-capability-max";
+  private static final String ETH_SUPPORTED_CAPABILITIES = "--Xeth-capabilities";
 
   @CommandLine.Option(
       hidden = true,
@@ -107,12 +108,12 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
 
   @Option(
       hidden = true,
-      names = {"--Xeth-capabilities"},
+      names = {ETH_SUPPORTED_CAPABILITIES},
       paramLabel = "<INTEGER>",
       split = ",",
       description = "Comma separated Eth Protocol versions to enable",
       arity = "0..*")
-  private final List<Integer> ethSupportedCapabilities = null;
+  private List<Integer> ethSupportedCapabilities = null;
 
   private EthProtocolOptions() {}
 
@@ -130,6 +131,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
     options.maxGetPooledTransactions = PositiveNumber.fromInt(config.getMaxGetPooledTransactions());
     options.legacyEth64ForkIdEnabled = config.isLegacyEth64ForkIdEnabled();
     options.maxEthCapability = config.getMaxEthCapability();
+    options.ethSupportedCapabilities = config.getEthSupportedCapabilities();
     return options;
   }
 
