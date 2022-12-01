@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -65,6 +66,7 @@ public class BesuController implements java.io.Closeable {
   private final MiningParameters miningParameters;
   private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
+  private final EthPeers ethPeers;
 
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -81,7 +83,8 @@ public class BesuController implements java.io.Closeable {
       final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final NodeKey nodeKey,
       final List<Closeable> closeables,
-      final PluginServiceFactory additionalPluginServices) {
+      final PluginServiceFactory additionalPluginServices,
+      final EthPeers ethPeers) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -97,6 +100,7 @@ public class BesuController implements java.io.Closeable {
     this.closeables = closeables;
     this.miningParameters = miningParameters;
     this.additionalPluginServices = additionalPluginServices;
+    this.ethPeers = ethPeers;
   }
 
   public ProtocolContext getProtocolContext() {
@@ -133,6 +137,10 @@ public class BesuController implements java.io.Closeable {
 
   public MiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
+  }
+
+  public EthPeers getEthPeers() {
+    return ethPeers;
   }
 
   @Override

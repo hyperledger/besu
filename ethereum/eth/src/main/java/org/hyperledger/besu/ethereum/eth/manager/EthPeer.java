@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -51,6 +52,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,9 +72,12 @@ public class EthPeer implements Comparable<EthPeer> {
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
 
-  private final PeerConnection connection;
+  private PeerConnection connection;
 
   private final int maxTrackedSeenBlocks = 300;
+
+  private final List<Integer> connectionWithSentStatusMessage = new ArrayList<Integer>();
+  private final List<Integer> connectionWithReceivedStatusMessage = new ArrayList<Integer>();
 
   private final Set<Hash> knownBlocks =
       Collections.newSetFromMap(
@@ -81,6 +88,7 @@ public class EthPeer implements Comparable<EthPeer> {
                   return size() > maxTrackedSeenBlocks;
                 }
               }));
+  private final Bytes localNodeId;
 
   private Optional<BlockHeader> checkpointHeader = Optional.empty();
 
@@ -101,6 +109,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
+  private final Bytes id;
 
   private static final Map<Integer, Integer> roundMessages;
 
@@ -126,7 +135,8 @@ public class EthPeer implements Comparable<EthPeer> {
       final List<PeerValidator> peerValidators,
       final int maxMessageSize,
       final Clock clock,
-      final List<NodeMessagePermissioningProvider> permissioningProviders) {
+      final List<NodeMessagePermissioningProvider> permissioningProviders,
+      final Bytes localNodeId) {
     this.connection = connection;
     this.protocolName = protocolName;
     this.maxMessageSize = maxMessageSize;
@@ -137,6 +147,8 @@ public class EthPeer implements Comparable<EthPeer> {
     fullyValidated.set(peerValidators.isEmpty());
 
     this.requestManagers = new HashMap<>();
+    this.localNodeId = localNodeId;
+    this.id = connection.getPeer().getId();
 
     initEthRequestManagers();
     initSnapRequestManagers();
@@ -228,6 +240,16 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public RequestManager.ResponseStream send(
       final MessageData messageData, final String protocolName) throws PeerNotConnected {
+    return send(messageData, protocolName, this.connection);
+  }
+
+  /**
+   * This method is only used for sending the status message, as it is possible that we have
+   * multiple connections to the same peer at that time
+   */
+  public RequestManager.ResponseStream send(
+      final MessageData messageData, final String protocolName, final PeerConnection connection)
+      throws PeerNotConnected {
     if (connection.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
       LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this);
@@ -432,26 +454,63 @@ public class EthPeer implements Comparable<EthPeer> {
     knownBlocks.add(hash);
   }
 
-  public void registerStatusSent() {
-    statusHasBeenSentToPeer.set(true);
-    maybeExecuteStatusesExchangedCallback();
+  public void registerStatusSent(final PeerConnection connection) {
+    connectionWithSentStatusMessage.add(Integer.valueOf(connection.hashCode()));
+    LOG.info("adding connection with hash code {} to status sent", connection.hashCode());
+    maybeExecuteStatusesExchangedCallback(connection);
   }
 
   public void registerStatusReceived(
-      final Hash hash, final Difficulty td, final int protocolVersion) {
+      final Hash hash,
+      final Difficulty td,
+      final int protocolVersion,
+      final PeerConnection connection) {
     chainHeadState.statusReceived(hash, td);
     lastProtocolVersion.set(protocolVersion);
     statusHasBeenReceivedFromPeer.set(true);
-    maybeExecuteStatusesExchangedCallback();
+    connectionWithReceivedStatusMessage.add(Integer.valueOf(connection.hashCode()));
+    LOG.info("adding connection with hash code {} to status received", connection.hashCode());
+    maybeExecuteStatusesExchangedCallback(connection);
   }
 
-  private void maybeExecuteStatusesExchangedCallback() {
-    if (readyForRequests()) {
-      final Consumer<EthPeer> callback = onStatusesExchanged.getAndSet(null);
-      if (callback == null) {
-        return;
+  private void maybeExecuteStatusesExchangedCallback(final PeerConnection newConnection) {
+    final Integer hashCode = Integer.valueOf(newConnection.hashCode());
+    LOG.info("checking connection with hash code {}", hashCode);
+    if (connectionWithReceivedStatusMessage.contains(hashCode)
+        && connectionWithSentStatusMessage.contains(hashCode)) {
+      if (!this.connection.equals(newConnection)) {
+        // figure out which connection to keep
+        if (compareDuplicateConnections(this.connection, newConnection) < 0) {
+          final PeerConnection oldConnection = this.connection;
+          this.connection = newConnection;
+          LOG.info("Changed conenction from {} to {}", oldConnection, newConnection);
+          final ScheduledExecutorService executorService =
+              Executors.newSingleThreadScheduledExecutor();
+          executorService.schedule(
+              () -> oldConnection.disconnect(DisconnectReason.ALREADY_CONNECTED),
+              5,
+              TimeUnit.SECONDS);
+        } else {
+          newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED);
+          final ScheduledExecutorService executorService =
+              Executors.newSingleThreadScheduledExecutor();
+          executorService.schedule(
+              () -> newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED),
+              5,
+              TimeUnit.SECONDS);
+        }
       }
-      callback.accept(this);
+      final int actualHashCode = this.connection.hashCode();
+      if (connectionWithReceivedStatusMessage.contains(actualHashCode)
+          && connectionWithSentStatusMessage.contains(actualHashCode)) {
+        final Consumer<EthPeer> callback = onStatusesExchanged.getAndSet(null);
+        if (callback == null) {
+          return;
+        } else {
+          LOG.info("Executing callback connected to peer {}", this.id);
+          callback.accept(this);
+        }
+      }
     }
   }
 
@@ -586,6 +645,41 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public Optional<BlockHeader> getCheckpointHeader() {
     return checkpointHeader;
+  }
+
+  public Bytes getId() {
+    return id;
+  }
+
+  /**
+   * Compares two connections to the same peer to determine which connection should be kept
+   *
+   * @param a The first connection
+   * @param b The second connection
+   * @return A negative value if {@code a} should be kept, a positive value is {@code b} should be
+   *     kept
+   */
+  private int compareDuplicateConnections(final PeerConnection a, final PeerConnection b) {
+
+    if (a.isDisconnected() != b.isDisconnected()) {
+      // One connection has failed - prioritize the one that hasn't failed
+      return a.isDisconnected() ? 1 : -1;
+    }
+
+    final Bytes peerId = a.getPeer().getId();
+    // at this point a.Id == b.Id
+    if (a.inboundInitiated() != b.inboundInitiated()) {
+      // If we have connections initiated in different directions, keep the connection initiated
+      // by the node with the lower id
+      if (localNodeId.compareTo(peerId) < 0) {
+        return a.inboundInitiated() ? 1 : -1;
+      } else {
+        return a.inboundInitiated() ? -1 : 1;
+      }
+    }
+    // Otherwise, keep older connection
+    LOG.debug("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
+    return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
   }
 
   @FunctionalInterface

@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatMethod;
@@ -303,6 +304,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
+  public RlpxAgent getRlpxAgent() {
+    return rlpxAgent;
+  }
+
+  @Override
   public boolean addMaintainedConnectionPeer(final Peer peer) {
     if (localNode.isReady()
         && localNode.getPeer() != null
@@ -356,11 +362,15 @@ public class DefaultP2PNetwork implements P2PNetwork {
     if (!localNode.isReady()) {
       return;
     }
-    final EnodeURL localEnodeURL = localNode.getPeer().getEnodeURL();
+    final List<Bytes> doNotConnectTo =
+        rlpxAgent
+            .streamActiveConnections()
+            .map(c -> c.getPeer().getId())
+            .collect(Collectors.toList());
+    doNotConnectTo.add(localNode.getPeer().getEnodeURL().getNodeId());
     maintainedPeers
         .streamPeers()
-        .filter(peer -> !peer.getEnodeURL().getNodeId().equals(localEnodeURL.getNodeId()))
-        .filter(p -> !rlpxAgent.getPeerConnection(p).isPresent())
+        .filter(p -> !doNotConnectTo.contains(p.getId()))
         .forEach(rlpxAgent::connect);
   }
 
@@ -377,6 +387,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @Override
   public Collection<PeerConnection> getPeers() {
     return rlpxAgent.streamConnections().collect(Collectors.toList());
+  }
+
+  @Override
+  public int getPeerCount() {
+    return getRlpxAgent().getConnectionCount();
   }
 
   @Override
@@ -398,6 +413,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
   public void subscribeConnect(final ConnectCallback callback) {
     rlpxAgent.subscribeConnect(callback);
   }
+
+  @Override
+  public void subscribeOutgoingConnectRequest(final ShouldConnectCallback callback) {
+    rlpxAgent.subscribeOutgoingConnectRequest(callback);
+  }
+  ;
 
   @Override
   public void subscribeDisconnect(final DisconnectCallback callback) {
@@ -474,8 +495,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     private NatService natService = new NatService(Optional.empty());
-    private boolean randomPeerPriority;
-
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
     private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
@@ -550,7 +569,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .peerPrivileges(peerPrivileges)
           .localNode(localNode)
           .metricsSystem(metricsSystem)
-          .randomPeerPriority(randomPeerPriority)
           .p2pTLSConfiguration(p2pTLSConfiguration)
           .build();
     }
@@ -564,11 +582,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
       checkNotNull(rlpxAgent);
       this.rlpxAgent = rlpxAgent;
-      return this;
-    }
-
-    public Builder randomPeerPriority(final boolean randomPeerPriority) {
-      this.randomPeerPriority = randomPeerPriority;
       return this;
     }
 

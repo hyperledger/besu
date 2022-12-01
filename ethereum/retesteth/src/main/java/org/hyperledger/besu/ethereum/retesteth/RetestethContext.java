@@ -61,10 +61,13 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -189,6 +192,16 @@ public class RetestethContext {
             blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive());
 
+    final NodeMessagePermissioningProvider nmpp =
+        new NodeMessagePermissioningProvider() {
+          @Override
+          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
+            return true;
+          }
+        };
+
+    final Bytes localNodeKey = Bytes.wrap(new byte[64]);
+
     // mining support
 
     final EthPeers ethPeers =
@@ -196,8 +209,13 @@ public class RetestethContext {
             "reteseth",
             retestethClock,
             metricsSystem,
-            0,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.singletonList(nmpp),
+            localNodeKey,
+            25,
+            25,
+            25,
+            false);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);

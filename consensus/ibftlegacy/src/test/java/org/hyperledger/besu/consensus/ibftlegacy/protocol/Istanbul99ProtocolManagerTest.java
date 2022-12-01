@@ -114,7 +114,9 @@ public class Istanbul99ProtocolManagerTest {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            messagePermissioningProviders,
+            nodeKey.getPublicKey().getEncodedBytes());
     EthMessages messages = new EthMessages();
 
     final BigInteger networkId = BigInteger.ONE;

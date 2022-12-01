@@ -38,12 +38,16 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalLong;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class EthProtocolManagerTestUtil {
 
@@ -68,16 +72,28 @@ public class EthProtocolManagerTestUtil {
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final Optional<MergePeerFilter> mergePeerFilter) {
 
-    EthPeers peers =
+    NodeMessagePermissioningProvider pp =
+        new NodeMessagePermissioningProvider() {
+          @Override
+          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
+            return true;
+          }
+        };
+    final EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            pp,
+            Bytes.random(64),
             25,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    EthMessages messages = new EthMessages();
-    EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
-    EthContext ethContext = new EthContext(peers, messages, ethScheduler);
+            25,
+            25,
+            false);
+    final EthMessages messages = new EthMessages();
+    final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
+    final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
 
     return new EthProtocolManager(
         blockchain,
@@ -175,14 +191,26 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration) {
-    EthPeers peers =
+    final NodeMessagePermissioningProvider nmpp =
+        new NodeMessagePermissioningProvider() {
+          @Override
+          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
+            return true;
+          }
+        };
+    final EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.singletonList(nmpp),
+            Bytes.random(64),
             25,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    EthMessages messages = new EthMessages();
+            25,
+            25,
+            false);
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -202,14 +230,26 @@ public class EthProtocolManagerTestUtil {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration,
       final ForkIdManager forkIdManager) {
-    EthPeers peers =
+    final NodeMessagePermissioningProvider nmpp =
+        new NodeMessagePermissioningProvider() {
+          @Override
+          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
+            return true;
+          }
+        };
+    final EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.singletonList(nmpp),
+            Bytes.random(64),
             25,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    EthMessages messages = new EthMessages();
+            25,
+            25,
+            false);
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -225,14 +265,26 @@ public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
       final Blockchain blockchain, final EthScheduler ethScheduler) {
-    EthPeers peers =
+    final NodeMessagePermissioningProvider nmpp =
+        new NodeMessagePermissioningProvider() {
+          @Override
+          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
+            return true;
+          }
+        };
+    final EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.singletonList(nmpp),
+            Bytes.random(64),
             25,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    EthMessages messages = new EthMessages();
+            25,
+            25,
+            false);
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,

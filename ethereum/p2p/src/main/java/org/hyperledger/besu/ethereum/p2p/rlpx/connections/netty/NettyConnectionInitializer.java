@@ -138,7 +138,7 @@ public class NettyConnectionInitializer
 
   @Override
   public CompletableFuture<Void> stop() {
-    CompletableFuture<Void> stoppedFuture = new CompletableFuture<>();
+    final CompletableFuture<Void> stoppedFuture = new CompletableFuture<>();
     if (!started.get() || !stopped.compareAndSet(false, true)) {
       stoppedFuture.completeExceptionally(
           new IllegalStateException("Illegal attempt to stop " + this.getClass().getSimpleName()));

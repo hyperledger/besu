@@ -1653,22 +1653,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void enableRandomConnectionPrioritization() {
-    parseCommand("--random-peer-priority-enabled");
-    verify(mockRunnerBuilder).randomPeerPriority(eq(true));
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void randomConnectionPrioritizationDisabledByDefault() {
-    parseCommand();
-    verify(mockRunnerBuilder).randomPeerPriority(eq(false));
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void syncMode_fast() {
     parseCommand("--sync-mode", "FAST");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
@@ -1859,7 +1843,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void launcherDefaultOptionValue() {
-    TestBesuCommand besuCommand = parseCommand();
+    final TestBesuCommand besuCommand = parseCommand();
 
     assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isFalse();
     assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
@@ -3323,7 +3307,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcWsApiPropertyMustBeUsed() {
-    TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
+    final TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
 
     assertThat(command).isNotNull();
     verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());

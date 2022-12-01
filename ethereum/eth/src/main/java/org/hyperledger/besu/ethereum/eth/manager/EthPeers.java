@@ -16,15 +16,18 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -32,11 +35,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalNotification;
+import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,40 +65,52 @@ public class EthPeers {
       Comparator.comparing(EthPeer::outstandingRequests)
           .thenComparing(EthPeer::getLastRequestTimestamp);
 
-  private final Map<PeerConnection, EthPeer> connections = new ConcurrentHashMap<>();
+  private final Map<Bytes, EthPeer> connections = new ConcurrentHashMap<>();
+  // If entries in the notReadyConnections are not removed or
+  private final Cache<PeerConnection, EthPeer> notReadyConnections =
+      CacheBuilder.newBuilder()
+          .expireAfterWrite(Duration.ofSeconds(20L))
+          .concurrencyLevel(1)
+          .removalListener(this::onCacheRemoval)
+          .build();
   private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
-  private final int maxPeers;
   private final int maxMessageSize;
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
+  private final int peerLowerBound;
+  private final int peerUpperBound;
+  private final int maxRemotelyInitiatedConnections;
+  private final Boolean randomPeerPriority;
+  private final Bytes nodeIdMask = Bytes.random(64);
 
   private Comparator<EthPeer> bestPeerComparator;
+  private final Bytes localNodeId;
+  private RlpxAgent rlpxAgent;
 
   public EthPeers(
       final String protocolName,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final int maxPeers,
-      final int maxMessageSize) {
-    this(protocolName, clock, metricsSystem, maxPeers, maxMessageSize, Collections.emptyList());
-  }
-
-  public EthPeers(
-      final String protocolName,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
-      final int maxPeers,
       final int maxMessageSize,
-      final List<NodeMessagePermissioningProvider> permissioningProviders) {
+      final List<NodeMessagePermissioningProvider> permissioningProviders,
+      final Bytes encodedBytes,
+      final int peerLowerBound,
+      final int peerUpperBound,
+      final int maxRemotelyInitiatedConnections,
+      final Boolean randomPeerPriority) {
     this.protocolName = protocolName;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
-    this.maxPeers = maxPeers;
     this.maxMessageSize = maxMessageSize;
     this.bestPeerComparator = HEAVIEST_CHAIN;
+    this.localNodeId = encodedBytes;
+    this.peerLowerBound = peerLowerBound;
+    this.peerUpperBound = peerUpperBound;
+    this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
+    this.randomPeerPriority = randomPeerPriority;
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
         "peer_count",
@@ -101,23 +123,78 @@ public class EthPeers {
         pendingRequests::size);
   }
 
-  public void registerConnection(
-      final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
-    final EthPeer peer =
-        new EthPeer(
-            peerConnection,
-            protocolName,
-            this::invokeConnectionCallbacks,
-            peerValidators,
-            maxMessageSize,
-            clock,
-            permissioningProviders);
-    connections.putIfAbsent(peerConnection, peer);
-    LOG.debug("Adding new EthPeer {}", peer.nodeId());
+  public void registerNewConnection(
+      final PeerConnection newConnection, final List<PeerValidator> peerValidators) {
+    final AtomicBoolean addToNotReadyConnections = new AtomicBoolean(false);
+    final AtomicReference<EthPeer> ethPeer = new AtomicReference<>();
+    final Bytes id = newConnection.getPeer().getId();
+    connections.compute(
+        id,
+        (c, p) -> {
+          if (p != null && !p.isDisconnected()) {
+            return p; // Keep existing peer with the existing connection.
+          }
+          final List<PeerConnection> nrcWithPeer = getNotReadyConnections(id);
+          if (!nrcWithPeer.isEmpty()) {
+            ethPeer.set(notReadyConnections.getIfPresent(nrcWithPeer.get(0)));
+            if (nrcWithPeer.stream()
+                .anyMatch(
+                    conn ->
+                        (conn.inboundInitiated() == newConnection.inboundInitiated())
+                            && !conn.isDisconnected())) {
+              LOG.info(
+                  "Found connection from same peer and initiated by the same side in not ready connections. Peer {}",
+                  id);
+              return null;
+            }
+          }
+          addToNotReadyConnections.set(true);
+          return null;
+        });
+    if (addToNotReadyConnections.get()) {
+      EthPeer peer = ethPeer.get();
+      if (peer == null) {
+        peer =
+            new EthPeer(
+                newConnection,
+                protocolName,
+                this::ethPeerStatusExchanged,
+                peerValidators,
+                maxMessageSize,
+                clock,
+                permissioningProviders,
+                localNodeId);
+      }
+
+      synchronized (notReadyConnections) {
+        LOG.info(
+            "Adding connection {} with peer {} into notReadyConnections map", newConnection, id);
+        final Optional<EthPeer> peerInList =
+            notReadyConnections.asMap().values().stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst();
+        if (peerInList.isEmpty()) {
+          notReadyConnections.put(newConnection, peer);
+        } else {
+          notReadyConnections.put(newConnection, peerInList.get());
+        }
+      }
+
+    } else {
+      newConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+      LOG.info("disconnecting connection {} with peer {}", newConnection, id);
+    }
+  }
+
+  @NotNull
+  private List<PeerConnection> getNotReadyConnections(final Bytes id) {
+    return notReadyConnections.asMap().keySet().stream()
+        .filter(nrc -> nrc.getPeer().getId().equals(id))
+        .collect(Collectors.toList());
   }
 
   public void registerDisconnect(final PeerConnection connection) {
-    final EthPeer peer = connections.remove(connection);
+    final EthPeer peer = connections.remove(connection.getPeer().getId());
     if (peer != null) {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
       peer.handleDisconnect();
@@ -139,8 +216,17 @@ public class EthPeers {
     }
   }
 
-  public EthPeer peer(final PeerConnection peerConnection) {
-    return connections.get(peerConnection);
+  public EthPeer peer(final PeerConnection connection) {
+    final EthPeer peer = notReadyConnections.getIfPresent(connection);
+    if (peer != null) {
+      return peer;
+    } else {
+      return connections.get(connection.getPeer().getId());
+    }
+  }
+
+  public EthPeer peer(final Bytes peerId) {
+    return connections.get(peerId);
   }
 
   public PendingPeerRequest executePeerRequest(
@@ -193,11 +279,12 @@ public class EthPeers {
   }
 
   public int peerCount() {
+    removeDisconnectedPeers();
     return connections.size();
   }
 
   public int getMaxPeers() {
-    return maxPeers;
+    return peerUpperBound;
   }
 
   public Stream<EthPeer> streamAllPeers() {
@@ -205,12 +292,13 @@ public class EthPeers {
   }
 
   private void removeDisconnectedPeers() {
-    final Collection<EthPeer> peerStream = connections.values();
-    for (EthPeer p : peerStream) {
-      if (p.isDisconnected()) {
-        connections.remove(p.getConnection());
-      }
-    }
+    connections.values().stream()
+        .forEach(
+            ep -> {
+              if (ep.isDisconnected()) {
+                connections.remove(ep.getConnection(), ep);
+              }
+            });
   }
 
   public Stream<EthPeer> streamAvailablePeers() {
@@ -246,6 +334,43 @@ public class EthPeers {
     return bestPeerComparator;
   }
 
+  public void setRlpxAgent(final RlpxAgent rlpxAgent) {
+    this.rlpxAgent = rlpxAgent;
+    rlpxAgent.setGetAllActiveConnectionsCallback(this::getAllActiveConnections);
+    rlpxAgent.setGetAllConnectionsCallback(this::getAllConnections);
+  }
+
+  private Stream<PeerConnection> getAllActiveConnections() {
+    return connections.values().stream()
+        .map(p -> p.getConnection())
+        .filter(c -> !c.isDisconnected());
+  }
+
+  private Stream<PeerConnection> getAllConnections() {
+    return Stream.concat(
+            connections.values().stream().map(p -> p.getConnection()),
+            notReadyConnections.asMap().keySet().stream())
+        .distinct()
+        .filter(c -> !c.isDisconnected());
+  }
+
+  public boolean shouldConnectOutbound(final Peer peer) {
+    final Bytes id = peer.getId();
+    if (connections.containsKey(id)) {
+      return false;
+    }
+    if (peerCount() < peerLowerBound) {
+      final List<PeerConnection> notReadyConnections = getNotReadyConnections(id);
+      if (!notReadyConnections.isEmpty()) {
+        // we already have a connection that we have initiated that is getting ready
+        if (!notReadyConnections.stream().anyMatch(c -> !c.inboundInitiated())) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   @FunctionalInterface
   public interface ConnectCallback {
     void onPeerConnected(EthPeer newPeer);
@@ -264,7 +389,148 @@ public class EthPeers {
     return connections.size() + " EthPeers {\n" + connectionsList + '}';
   }
 
-  private void invokeConnectionCallbacks(final EthPeer peer) {
-    connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
+  private void ethPeerStatusExchanged(final EthPeer peer) {
+    if (addPeerToEthPeers(peer)) {
+      connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
+    }
+  }
+
+  private int comparePeerPriorities(final EthPeer p1, final EthPeer p2) {
+    final PeerConnection a = p1.getConnection();
+    final PeerConnection b = p2.getConnection();
+    final boolean aIgnoresPeerLimits = rlpxAgent.canExceedConnectionLimits(a.getPeer());
+    final boolean bIgnoresPeerLimits = rlpxAgent.canExceedConnectionLimits(b.getPeer());
+    if (aIgnoresPeerLimits && !bIgnoresPeerLimits) {
+      return -1;
+    } else if (bIgnoresPeerLimits && !aIgnoresPeerLimits) {
+      return 1;
+    } else {
+      return randomPeerPriority
+          ? compareByMaskedNodeId(a, b)
+          : compareConnectionInitiationTimes(a, b);
+    }
+  }
+
+  private int compareConnectionInitiationTimes(final PeerConnection a, final PeerConnection b) {
+    return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
+  }
+
+  private int compareByMaskedNodeId(final PeerConnection a, final PeerConnection b) {
+    return a.getPeer().getId().xor(nodeIdMask).compareTo(b.getPeer().getId().xor(nodeIdMask));
+  }
+
+  private void enforceRemoteConnectionLimits() {
+    if (!shouldLimitRemoteConnections() || peerCount() < maxRemotelyInitiatedConnections) {
+      // Nothing to do
+      return;
+    }
+
+    getActivePrioritizedPeers()
+        .filter(p -> p.getConnection().inboundInitiated())
+        .filter(p -> !rlpxAgent.canExceedConnectionLimits(p.getConnection().getPeer()))
+        .skip(maxRemotelyInitiatedConnections)
+        .forEach(
+            conn -> {
+              LOG.debug(
+                  "Too many remotely initiated connections. Disconnect low-priority connection: {}, maxRemote={}",
+                  conn,
+                  maxRemotelyInitiatedConnections);
+              conn.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+            });
+  }
+
+  private Stream<EthPeer> getActivePrioritizedPeers() {
+    return connections.values().stream()
+        .filter(p -> !p.getConnection().isDisconnected())
+        .sorted(this::comparePeerPriorities);
+  }
+
+  private void enforceConnectionLimits() {
+    if (peerCount() < peerUpperBound) {
+      // Nothing to do - we're under our limits
+      return;
+    }
+    getActivePrioritizedPeers()
+        .skip(peerUpperBound)
+        .map(EthPeer::getConnection)
+        .filter(c -> !rlpxAgent.canExceedConnectionLimits(c.getPeer()))
+        .forEach(
+            conn -> {
+              LOG.debug(
+                  "Too many connections. Disconnect low-priority connection: {}, maxConnections={}",
+                  conn,
+                  peerUpperBound);
+              conn.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+            });
+  }
+
+  private boolean remoteConnectionLimitReached() {
+    return shouldLimitRemoteConnections()
+        && countUntrustedRemotelyInitiatedConnections() >= maxRemotelyInitiatedConnections;
+  }
+
+  private boolean shouldLimitRemoteConnections() {
+    return maxRemotelyInitiatedConnections < peerUpperBound;
+  }
+
+  private long countUntrustedRemotelyInitiatedConnections() {
+    return connections.values().stream()
+        .map(ep -> ep.getConnection())
+        .filter(c -> c.inboundInitiated())
+        .filter(c -> !c.isDisconnected())
+        .filter(conn -> !rlpxAgent.canExceedConnectionLimits(conn.getPeer()))
+        .count();
+  }
+
+  private void onCacheRemoval(
+      final RemovalNotification<PeerConnection, EthPeer> removalNotification) {
+    if (removalNotification.wasEvicted()) {
+      final PeerConnection peerConnectionRemoved = removalNotification.getKey();
+      final PeerConnection peerConnectionOfEthPeer = removalNotification.getValue().getConnection();
+      if (!peerConnectionRemoved.equals(peerConnectionOfEthPeer)) {
+        // this means that there is another connection to the same peer that was selected or
+        peerConnectionRemoved.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+      }
+    }
+  }
+
+  private boolean addPeerToEthPeers(final EthPeer peer) {
+    // We have a connection to a peer that is on the right chain and is willing to connect to us.
+    // Figure out whether we want to keep this peer and add it to the EthPeers connections.
+    final Bytes id = peer.getId();
+    if (!randomPeerPriority) {
+      // Disconnect if too many peers
+      if (!rlpxAgent.canExceedConnectionLimits(peer.getConnection().getPeer())
+          && peerCount() >= peerUpperBound) {
+        LOG.debug(
+            "Too many peers. Disconnect incoming connection: {} currentCount {}, max {}",
+            peer.getConnection(),
+            peerCount(),
+            peerUpperBound);
+        peer.getConnection().disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+        return false;
+      }
+      // Disconnect if too many remotely-initiated connections
+      if (!rlpxAgent.canExceedConnectionLimits(peer.getConnection().getPeer())
+          && remoteConnectionLimitReached()) {
+        LOG.debug(
+            "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
+            peer.getConnection(),
+            maxRemotelyInitiatedConnections);
+        peer.getConnection().disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+        return false;
+      }
+      final boolean added = connections.putIfAbsent(id, peer) == null;
+      if (added)
+        LOG.info(
+            "Added peer {} with connection {} to connections", peer.getId(), peer.getConnection());
+      return added;
+    } else {
+      // randomPeerPriority! Add the peer and if there are too many connections fix it
+      connections.putIfAbsent(id, peer);
+      enforceRemoteConnectionLimits();
+      enforceConnectionLimits();
+      return connections.containsKey(id);
+    }
   }
 }

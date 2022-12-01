@@ -182,7 +182,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             node.getPkiKeyStoreConfiguration()
                 .map(pkiConfig -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .maxPeers(maxPeers);
+        .maxPeers(maxPeers)
+        .networkConfiguration(node.getNetworkingConfiguration())
+        .randomPeerPriority(false);
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)

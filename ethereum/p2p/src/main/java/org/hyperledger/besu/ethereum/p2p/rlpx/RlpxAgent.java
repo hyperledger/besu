@@ -16,11 +16,9 @@ package org.hyperledger.besu.ethereum.p2p.rlpx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.Objects.isNull;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -31,11 +29,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerRlpxPermissions;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.RlpxConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyTLSConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -45,13 +43,10 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,23 +61,17 @@ public class RlpxAgent {
   private final PeerConnectionEvents connectionEvents;
   private final ConnectionInitializer connectionInitializer;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
+  private final List<ShouldConnectCallback> outgoingConnectRequestSubscribers = new ArrayList<>();
 
   private final PeerRlpxPermissions peerPermissions;
   private final PeerPrivileges peerPrivileges;
-  private final int upperBoundConnections;
-  private final int lowerBoundConnections;
-  private final boolean randomPeerPriority;
-  private final int maxRemotelyInitiatedConnections;
-  // xor'ing with this mask will allow us to randomly let new peers connect
-  // without allowing the counterparty to play nodeId farming games
-  private final Bytes nodeIdMask = Bytes.random(SECPPublicKey.BYTE_LENGTH);
-
-  final Map<Bytes, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
-
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   private final Counter connectedPeersCounter;
+
+  private Callable<Stream<PeerConnection>> getAllConnectionsCallback;
+  private Callable<Stream<PeerConnection>> getAllActiveConnectionsCallback;
 
   private RlpxAgent(
       final LocalNode localNode,
@@ -91,20 +80,12 @@ public class RlpxAgent {
       final PeerRlpxPermissions peerPermissions,
       final PeerPrivileges peerPrivileges,
       final int upperBoundConnections,
-      final int lowerBoundConnections,
-      final int maxRemotelyInitiatedConnections,
-      final boolean randomPeerPriority,
       final MetricsSystem metricsSystem) {
     this.localNode = localNode;
     this.connectionEvents = connectionEvents;
     this.connectionInitializer = connectionInitializer;
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
-    this.upperBoundConnections = upperBoundConnections;
-    this.lowerBoundConnections = lowerBoundConnections;
-    this.randomPeerPriority = randomPeerPriority;
-    this.maxRemotelyInitiatedConnections =
-        Math.min(upperBoundConnections, maxRemotelyInitiatedConnections);
 
     // Setup metrics
     connectedPeersCounter =
@@ -158,47 +139,59 @@ public class RlpxAgent {
   }
 
   public Stream<? extends PeerConnection> streamConnections() {
-    return connectionsById.values().stream()
-        .filter(RlpxConnection::isActive)
-        .map(RlpxConnection::getPeerConnection);
+    try {
+      return getAllConnectionsCallback.call();
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public Stream<? extends PeerConnection> streamActiveConnections() {
+    try {
+      return getAllActiveConnectionsCallback.call();
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public int getConnectionCount() {
-    return Math.toIntExact(streamConnections().count());
+    try {
+      return (int) getAllActiveConnectionsCallback.call().count();
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void connect(final Stream<? extends Peer> peerStream) {
     if (!localNode.isReady()) {
       return;
     }
-    peerStream
-        .takeWhile(peer -> Math.max(0, lowerBoundConnections - getConnectionCount()) > 0)
-        .filter(peer -> !connectionsById.containsKey(peer.getId()))
-        .filter(peer -> peer.getEnodeURL().isListening())
-        .filter(peerPermissions::allowNewOutboundConnectionTo)
-        .forEach(this::connect);
+    peerStream.forEach(this::connect);
   }
 
   private String logConnectionsByIdToString() {
-    final String connectionsList =
-        connectionsById.values().stream()
-            .map(RlpxConnection::toString)
-            .collect(Collectors.joining(",\n"));
-    return connectionsById.size() + " ConnectionsById {\n" + connectionsList + "}";
+    final String connectionsList;
+    try {
+      connectionsList =
+          getAllActiveConnectionsCallback
+              .call()
+              .map(PeerConnection::toString)
+              .collect(Collectors.joining(",\n"));
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
+    return getConnectionCount() + " ConnectionsById {\n" + connectionsList + "}";
   }
 
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
-    final RlpxConnection connection = connectionsById.remove(peerId);
-    if (connection != null) {
-      connection.disconnect(reason);
+    try {
+      getAllActiveConnectionsCallback
+          .call()
+          .filter(c -> c.getPeer().getId().equals(peerId))
+          .forEach(c -> c.disconnect(reason));
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
     }
-  }
-
-  public Optional<CompletableFuture<PeerConnection>> getPeerConnection(final Peer peer) {
-    final RlpxConnection connection = connectionsById.get(peer.getId());
-    return Optional.ofNullable(connection)
-        .filter(conn -> !conn.isFailedOrDisconnected())
-        .map(RlpxConnection::getFuture);
   }
 
   /**
@@ -225,54 +218,32 @@ public class RlpxAgent {
       return CompletableFuture.failedFuture((new IllegalArgumentException(errorMsg)));
     }
 
-    // Shortcut checks if we're already connected
-    final Optional<CompletableFuture<PeerConnection>> peerConnection = getPeerConnection(peer);
-    if (peerConnection.isPresent()) {
-      return peerConnection.get();
-    }
-    // Check max peers
-    if (!peerPrivileges.canExceedConnectionLimits(peer)
-        && getConnectionCount() >= upperBoundConnections) {
-      final String errorMsg =
-          "Max peer connections established ("
-              + upperBoundConnections
-              + "). Cannot connect to peer: "
-              + peer;
-      return CompletableFuture.failedFuture(new IllegalStateException(errorMsg));
-    }
     // Check permissions
     if (!peerPermissions.allowNewOutboundConnectionTo(peer)) {
       return CompletableFuture.failedFuture(peerPermissions.newOutboundConnectionException(peer));
     }
 
-    // Initiate connection or return existing connection
-    final AtomicReference<CompletableFuture<PeerConnection>> connectionFuture =
-        new AtomicReference<>();
-    connectionsById.compute(
-        peer.getId(),
-        (id, existingConnection) -> {
-          if (existingConnection != null && !existingConnection.isFailedOrDisconnected()) {
-            // We're already connected or connecting
-            connectionFuture.set(existingConnection.getFuture());
-            return existingConnection;
-          } else {
-            // We're initiating a new connection
-            final CompletableFuture<PeerConnection> future = initiateOutboundConnection(peer);
-            connectionFuture.set(future);
-            final RlpxConnection newConnection = RlpxConnection.outboundConnection(peer, future);
-            newConnection.subscribeConnectionEstablished(
-                (conn) -> {
-                  this.dispatchConnect(conn.getPeerConnection());
-                  this.enforceConnectionLimits();
-                },
-                (failedConn) -> cleanUpPeerConnection(failedConn.getId()));
-            return newConnection;
-          }
-        });
+    final CompletableFuture<PeerConnection> peerConnectionCompletableFuture;
+    if (checkWhetherToConnect(peer)) {
+      peerConnectionCompletableFuture = initiateOutboundConnection(peer);
+      peerConnectionCompletableFuture.whenComplete(
+          (peerConnection, throwable) -> {
+            if (throwable == null) {
+              dispatchConnect(peerConnection);
+            }
+          });
+    } else {
+      final String errorMsg =
+          "None of the ProtocolManagers want to connect to peer " + peer.getId();
+      LOG.debug(errorMsg);
+      return CompletableFuture.failedFuture((new RuntimeException(errorMsg)));
+    }
+    return peerConnectionCompletableFuture;
+  }
 
-    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
-
-    return connectionFuture.get();
+  private boolean checkWhetherToConnect(final Peer peer) {
+    return outgoingConnectRequestSubscribers.stream()
+        .anyMatch(callback -> callback.shouldConnect(peer));
   }
 
   private void setupListeners() {
@@ -286,19 +257,6 @@ public class RlpxAgent {
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
     traceLambda(LOG, "{}", this::logConnectionsByIdToString);
-    cleanUpPeerConnection(peerConnection.getPeer().getId());
-  }
-
-  private void cleanUpPeerConnection(final Bytes peerId) {
-    connectionsById.compute(
-        peerId,
-        (id, trackedConnection) -> {
-          if (isNull(trackedConnection) || trackedConnection.isFailedOrDisconnected()) {
-            // Remove if failed or disconnected
-            return null;
-          }
-          return trackedConnection;
-        });
   }
 
   private void handlePermissionsUpdate(
@@ -308,23 +266,23 @@ public class RlpxAgent {
       return;
     }
 
-    final List<RlpxConnection> connectionsToCheck =
-        peers
-            .map(
-                updatedPeers ->
-                    updatedPeers.stream()
-                        .map(peer -> connectionsById.get(peer.getId()))
-                        .filter(connection -> !isNull(connection))
-                        .collect(Collectors.toList()))
-            .orElse(new ArrayList<>(connectionsById.values()));
+    final Stream<? extends PeerConnection> connectionsToCheck;
+    if (peers.isPresent()) {
+      final List<Bytes> changedPeersIds =
+          peers.get().stream().map(p -> p.getId()).collect(Collectors.toList());
+      connectionsToCheck =
+          streamConnections().filter(c -> changedPeersIds.contains(c.getPeer().getId()));
+    } else {
+      connectionsToCheck = streamConnections();
+    }
 
     connectionsToCheck.forEach(
         connection -> {
           if (!peerPermissions.allowOngoingConnection(
-              connection.getPeer(), connection.initiatedRemotely())) {
+              connection.getPeer(), connection.inboundInitiated())) {
             LOG.debug(
                 "Disconnecting from peer that is not permitted to maintain ongoing connection: {}",
-                connection.getPeerConnection());
+                connection);
             connection.disconnect(DisconnectReason.REQUESTED);
           }
         });
@@ -348,7 +306,22 @@ public class RlpxAgent {
             });
   }
 
+  public boolean canExceedConnectionLimits(final Peer peer) {
+    return peerPrivileges.canExceedConnectionLimits(peer);
+  }
+
+  public void setGetAllConnectionsCallback(final Callable<Stream<PeerConnection>> callback) {
+    this.getAllConnectionsCallback = callback;
+  }
+
+  public void setGetAllActiveConnectionsCallback(final Callable<Stream<PeerConnection>> callback) {
+    this.getAllActiveConnectionsCallback = callback;
+  }
+
   private void handleIncomingConnection(final PeerConnection peerConnection) {
+    // TODO: when we get here, we are already connected and have spent the time and effort to go
+    // through the handshake. We might want to put in a check before doing the handshake if we want
+    // to connect to that peer at that time
     final Peer peer = peerConnection.getPeer();
     // Deny connection if our local node isn't ready
     if (!localNode.isReady()) {
@@ -356,28 +329,7 @@ public class RlpxAgent {
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
       return;
     }
-    if (!randomPeerPriority) {
-      // Disconnect if too many peers
-      if (!peerPrivileges.canExceedConnectionLimits(peer)
-          && getConnectionCount() >= upperBoundConnections) {
-        LOG.debug(
-            "Too many peers. Disconnect incoming connection: {} currentCount {}, max {}",
-            peerConnection,
-            getConnectionCount(),
-            upperBoundConnections);
-        peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
-        return;
-      }
-      // Disconnect if too many remotely-initiated connections
-      if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
-        LOG.debug(
-            "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
-            peerConnection,
-            maxRemotelyInitiatedConnections);
-        peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
-        return;
-      }
-    }
+
     // Disconnect if not permitted
     if (!peerPermissions.allowNewInboundConnectionFrom(peer)) {
       LOG.debug(
@@ -386,171 +338,7 @@ public class RlpxAgent {
       return;
     }
 
-    // Track this new connection, deduplicating existing connection if necessary
-    final AtomicBoolean newConnectionAccepted = new AtomicBoolean(false);
-    final RlpxConnection inboundConnection = RlpxConnection.inboundConnection(peerConnection);
-    // Our disconnect handler runs connectionsById.compute(), so don't actually execute the
-    // disconnect command until we've returned from our compute() calculation
-    final AtomicReference<Runnable> disconnectAction = new AtomicReference<>();
-    connectionsById.compute(
-        peer.getId(),
-        (nodeId, existingConnection) -> {
-          if (existingConnection == null) {
-            // The new connection is unique, set it and return
-            LOG.debug("Inbound connection established with {}", peerConnection.getPeer().getId());
-            newConnectionAccepted.set(true);
-            return inboundConnection;
-          }
-          // We already have an existing connection, figure out which connection to keep
-          if (compareDuplicateConnections(inboundConnection, existingConnection) < 0) {
-            // Keep the inbound connection
-            LOG.debug(
-                "Duplicate connection detected, disconnecting previously established connection in favor of new inbound connection for peer:  {}",
-                peerConnection.getPeer().getId());
-            disconnectAction.set(
-                () -> existingConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
-            newConnectionAccepted.set(true);
-            return inboundConnection;
-          } else {
-            // Keep the existing connection
-            LOG.debug(
-                "Duplicate connection detected, disconnecting inbound connection in favor of previously established connection for peer:  {}",
-                peerConnection.getPeer().getId());
-            disconnectAction.set(
-                () -> inboundConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
-            return existingConnection;
-          }
-        });
-
-    if (!isNull(disconnectAction.get())) {
-      disconnectAction.get().run();
-    }
-    if (newConnectionAccepted.get()) {
-      dispatchConnect(peerConnection);
-    }
-    // Check remote connections again to control for race conditions
-    enforceRemoteConnectionLimits();
-    enforceConnectionLimits();
-    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
-  }
-
-  private boolean shouldLimitRemoteConnections() {
-    return maxRemotelyInitiatedConnections < upperBoundConnections;
-  }
-
-  private boolean remoteConnectionLimitReached() {
-    return shouldLimitRemoteConnections()
-        && countUntrustedRemotelyInitiatedConnections() >= maxRemotelyInitiatedConnections;
-  }
-
-  private long countUntrustedRemotelyInitiatedConnections() {
-    return connectionsById.values().stream()
-        .filter(RlpxConnection::isActive)
-        .filter(RlpxConnection::initiatedRemotely)
-        .filter(conn -> !peerPrivileges.canExceedConnectionLimits(conn.getPeer()))
-        .count();
-  }
-
-  private void enforceRemoteConnectionLimits() {
-    if (!shouldLimitRemoteConnections()
-        || connectionsById.size() < maxRemotelyInitiatedConnections) {
-      // Nothing to do
-      return;
-    }
-
-    getActivePrioritizedConnections()
-        .filter(RlpxConnection::initiatedRemotely)
-        .filter(conn -> !peerPrivileges.canExceedConnectionLimits(conn.getPeer()))
-        .skip(maxRemotelyInitiatedConnections)
-        .forEach(
-            conn -> {
-              LOG.debug(
-                  "Too many remotely initiated connections. Disconnect low-priority connection: {}, maxRemote={}",
-                  conn,
-                  maxRemotelyInitiatedConnections);
-              conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
-            });
-  }
-
-  private void enforceConnectionLimits() {
-    if (connectionsById.size() < upperBoundConnections) {
-      // Nothing to do - we're under our limits
-      return;
-    }
-
-    getActivePrioritizedConnections()
-        .skip(upperBoundConnections)
-        .filter(c -> !peerPrivileges.canExceedConnectionLimits(c.getPeer()))
-        .forEach(
-            conn -> {
-              LOG.debug(
-                  "Too many connections. Disconnect low-priority connection: {}, maxConnections={}",
-                  conn,
-                  upperBoundConnections);
-              conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
-            });
-  }
-
-  private Stream<RlpxConnection> getActivePrioritizedConnections() {
-    return connectionsById.values().stream()
-        .filter(RlpxConnection::isActive)
-        .sorted(this::comparePeerPriorities);
-  }
-
-  private int comparePeerPriorities(final RlpxConnection a, final RlpxConnection b) {
-    final boolean aIgnoresPeerLimits = peerPrivileges.canExceedConnectionLimits(a.getPeer());
-    final boolean bIgnoresPeerLimits = peerPrivileges.canExceedConnectionLimits(b.getPeer());
-    if (aIgnoresPeerLimits && !bIgnoresPeerLimits) {
-      return -1;
-    } else if (bIgnoresPeerLimits && !aIgnoresPeerLimits) {
-      return 1;
-    } else {
-      return randomPeerPriority
-          ? compareByMaskedNodeId(a, b)
-          : compareConnectionInitiationTimes(a, b);
-    }
-  }
-
-  private int compareConnectionInitiationTimes(final RlpxConnection a, final RlpxConnection b) {
-    return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
-  }
-
-  private int compareByMaskedNodeId(final RlpxConnection a, final RlpxConnection b) {
-    return a.getPeer().getId().xor(nodeIdMask).compareTo(b.getPeer().getId().xor(nodeIdMask));
-  }
-
-  /**
-   * Compares two connections to the same peer to determine which connection should be kept
-   *
-   * @param a The first connection
-   * @param b The second connection
-   * @return A negative value if {@code a} should be kept, a positive value is {@code b} should be
-   *     kept
-   */
-  private int compareDuplicateConnections(final RlpxConnection a, final RlpxConnection b) {
-    checkState(localNode.isReady());
-    checkState(Objects.equals(a.getPeer().getId(), b.getPeer().getId()));
-
-    if (a.isFailedOrDisconnected() != b.isFailedOrDisconnected()) {
-      // One connection has failed - prioritize the one that hasn't failed
-      return a.isFailedOrDisconnected() ? 1 : -1;
-    }
-
-    final Bytes peerId = a.getPeer().getId();
-    final Bytes localId = localNode.getPeer().getId();
-    // at this point a.Id == b.Id
-    if (a.initiatedRemotely() != b.initiatedRemotely()) {
-      // If we have connections initiated in different directions, keep the connection initiated
-      // by the node with the lower id
-      if (localId.compareTo(peerId) < 0) {
-        return a.initiatedLocally() ? -1 : 1;
-      } else {
-        return a.initiatedLocally() ? 1 : -1;
-      }
-    }
-    // Otherwise, keep older connection
-    LOG.debug("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
-    return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
+    dispatchConnect(peerConnection);
   }
 
   public void subscribeMessage(final Capability capability, final MessageCallback callback) {
@@ -559,6 +347,10 @@ public class RlpxAgent {
 
   public void subscribeConnect(final ConnectCallback callback) {
     connectSubscribers.subscribe(callback);
+  }
+
+  public void subscribeOutgoingConnectRequest(final ShouldConnectCallback callback) {
+    outgoingConnectRequestSubscribers.add(callback);
   }
 
   public void subscribeDisconnect(final DisconnectCallback callback) {
@@ -578,7 +370,6 @@ public class RlpxAgent {
     private PeerPermissions peerPermissions;
     private ConnectionInitializer connectionInitializer;
     private PeerConnectionEvents connectionEvents;
-    private boolean randomPeerPriority;
     private MetricsSystem metricsSystem;
     private Optional<TLSConfiguration> p2pTLSConfiguration;
 
@@ -618,9 +409,6 @@ public class RlpxAgent {
           rlpxPermissions,
           peerPrivileges,
           config.getPeerUpperBound(),
-          config.getPeerLowerBound(),
-          config.getMaxRemotelyInitiatedConnections(),
-          randomPeerPriority,
           metricsSystem);
     }
 
@@ -678,11 +466,6 @@ public class RlpxAgent {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
-      return this;
-    }
-
-    public Builder randomPeerPriority(final boolean randomPeerPriority) {
-      this.randomPeerPriority = randomPeerPriority;
       return this;
     }
 

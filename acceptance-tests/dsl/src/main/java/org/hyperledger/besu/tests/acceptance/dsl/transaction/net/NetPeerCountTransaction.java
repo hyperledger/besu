@@ -22,9 +22,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import java.io.IOException;
 import java.math.BigInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.core.methods.response.NetPeerCount;
 
 public class NetPeerCountTransaction implements Transaction<BigInteger> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(NetPeerCountTransaction.class);
 
   NetPeerCountTransaction() {}
 
@@ -34,9 +38,10 @@ public class NetPeerCountTransaction implements Transaction<BigInteger> {
       final NetPeerCount result = node.net().netPeerCount().send();
       assertThat(result).isNotNull();
       if (result.hasError()) {
+        LOG.info("Error in result: {}", result.getError().getMessage());
         throw new RuntimeException(result.getError().getMessage());
       }
-      assertThat(result.hasError()).isFalse();
+      LOG.info("Result: {}", result.getQuantity());
       return result.getQuantity();
     } catch (final IOException e) {
       throw new RuntimeException(e);

@@ -59,7 +59,9 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.Closeable;
@@ -128,14 +130,25 @@ public class TestNode implements Closeable {
     when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
 
     final EthMessages ethMessages = new EthMessages();
-
+    final NodeMessagePermissioningProvider nmpp =
+        new NodeMessagePermissioningProvider() {
+          @Override
+          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
+            return true;
+          }
+        };
     final EthPeers ethPeers =
         new EthPeers(
             EthProtocol.NAME,
             TestClock.fixed(),
             metricsSystem,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.singletonList(nmpp),
+            Bytes.random(64),
             25,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+            25,
+            25,
+            false);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);

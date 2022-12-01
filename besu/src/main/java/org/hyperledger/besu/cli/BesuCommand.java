@@ -2091,8 +2091,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void initController() {
+  private BesuController initController() {
     besuController = buildController();
+    return besuController;
   }
 
   public BesuController buildController() {
@@ -2109,6 +2110,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .fromEthNetworkConfig(updateNetworkConfig(network), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
+        .networkConfiguration(unstableNetworkingOptions.toDomainObject())
         .dataDirectory(dataDir())
         .miningParameters(
             new MiningParameters.Builder()
@@ -2149,7 +2151,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
-        .maxPeers(p2PDiscoveryOptionGroup.maxPeers);
+        .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
+        .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2862,7 +2865,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .fractionRemoteConnectionsAllowed(
                 Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
                     .getValue())
-            .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .legacyForkId(unstableEthProtocolOptions.toDomainObject().isLegacyEth64ForkIdEnabled())
             .graphQLConfiguration(graphQLConfiguration)

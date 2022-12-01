@@ -19,9 +19,11 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.Closeable;
@@ -83,8 +85,9 @@ public interface P2PNetwork extends Closeable {
    *
    * @param callback The callback to invoke when a new connection is established
    */
-  void subscribeConnect(ConnectCallback callback);
+  void subscribeConnect(final ConnectCallback callback);
 
+  void subscribeOutgoingConnectRequest(final ShouldConnectCallback callback);
   /**
    * Subscribe a {@link Consumer} to all incoming new Peer disconnect events.
    *
@@ -149,4 +152,9 @@ public interface P2PNetwork extends Closeable {
   Optional<EnodeURL> getLocalEnode();
 
   void updateNodeRecord();
+
+  default RlpxAgent getRlpxAgent() {
+    return null;
+  }
+  ;
 }

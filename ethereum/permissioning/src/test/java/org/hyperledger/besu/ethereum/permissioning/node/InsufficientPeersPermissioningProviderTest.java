@@ -183,21 +183,21 @@ public class InsufficientPeersPermissioningProviderTest {
         ArgumentCaptor.forClass(ConnectCallback.class);
 
     verify(p2pNetwork).subscribeConnect(callbackCaptor.capture());
-    final ConnectCallback connectCallback = callbackCaptor.getValue();
+    final ConnectCallback incomingConnectCallback = callbackCaptor.getValue();
 
     final Runnable updatePermsCallback = mock(Runnable.class);
 
     provider.subscribeToUpdates(updatePermsCallback);
 
-    connectCallback.onConnect(peerConnectionMatching(ENODE_2));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_2));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_4));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_4));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_5));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_5));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(1)).run();
   }
 
@@ -215,7 +215,7 @@ public class InsufficientPeersPermissioningProviderTest {
     final ArgumentCaptor<ConnectCallback> connectCallbackCaptor =
         ArgumentCaptor.forClass(ConnectCallback.class);
     verify(p2pNetwork).subscribeConnect(connectCallbackCaptor.capture());
-    final ConnectCallback connectCallback = connectCallbackCaptor.getValue();
+    final ConnectCallback incomingConnectCallback = connectCallbackCaptor.getValue();
 
     final ArgumentCaptor<DisconnectCallback> disconnectCallbackCaptor =
         ArgumentCaptor.forClass(DisconnectCallback.class);
@@ -226,13 +226,13 @@ public class InsufficientPeersPermissioningProviderTest {
 
     provider.subscribeToUpdates(updatePermsCallback);
 
-    connectCallback.onConnect(peerConnectionMatching(ENODE_2));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_2));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_4));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_4));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_5));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_5));
     verify(updatePermsCallback, times(1)).run();
     disconnectCallback.onDisconnect(peerConnectionMatching(ENODE_2), null, true);
     verify(updatePermsCallback, times(1)).run();

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.network;
 
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 public class NetworkRunner implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(NetworkRunner.class);
+  private static P2PNetwork p2PNetwork;
 
   private final CountDownLatch shutdown = new CountDownLatch(1);
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -148,6 +150,9 @@ public class NetworkRunner implements AutoCloseable {
             protocolManager.handleNewConnection(connection);
           });
 
+      network.subscribeOutgoingConnectRequest(
+          (peer) -> protocolManager.shouldConnectOutbound(peer));
+
       network.subscribeDisconnect(
           (connection, disconnectReason, initiatedByPeer) -> {
             if (Collections.disjoint(
@@ -162,6 +167,10 @@ public class NetworkRunner implements AutoCloseable {
   @Override
   public void close() {
     stop();
+  }
+
+  public RlpxAgent getRlpxAgent() {
+    return p2PNetwork.getRlpxAgent();
   }
 
   public static class Builder {
@@ -185,8 +194,8 @@ public class NetworkRunner implements AutoCloseable {
               "No sub-protocol found corresponding to supported capability: " + cap);
         }
       }
-      final P2PNetwork network = networkProvider.build(caps);
-      return new NetworkRunner(network, subProtocolMap, protocolManagers, metricsSystem);
+      p2PNetwork = networkProvider.build(caps);
+      return new NetworkRunner(p2PNetwork, subProtocolMap, protocolManagers, metricsSystem);
     }
 
     public Builder protocolManagers(final List<ProtocolManager> protocolManagers) {

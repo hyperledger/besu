@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
@@ -107,10 +108,16 @@ public class BftProtocolManager implements ProtocolManager {
   }
 
   @Override
+  public boolean shouldConnectOutbound(final Peer peer) {
+    return false; // for now the EthProtocolManager should take care of this
+  }
+
+  @Override
   public void handleDisconnect(
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
-    peers.remove(peerConnection);
+    peers.remove(
+        peerConnection); // Do we have to check that this connection is the actual connection
   }
 }

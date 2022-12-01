@@ -41,15 +41,19 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -86,14 +90,26 @@ public abstract class AbstractMessageTaskTest<T, R> {
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
+    final NodeMessagePermissioningProvider nmpp =
+        new NodeMessagePermissioningProvider() {
+          @Override
+          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
+            return true;
+          }
+        };
     ethPeers =
         spy(
             new EthPeers(
                 EthProtocol.NAME,
                 TestClock.fixed(),
                 metricsSystem,
-                MAX_PEERS,
-                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE));
+                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+                Collections.singletonList(nmpp),
+                Bytes.random(64),
+                25,
+                25,
+                25,
+                false));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(

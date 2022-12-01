@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -264,7 +265,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     // Handle STATUS processing
     if (code == EthPV62.STATUS) {
-      handleStatusMessage(ethPeer, messageData);
+      handleStatusMessage(ethPeer, message);
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
@@ -333,11 +334,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
-    ethPeers.registerConnection(connection, peerValidators);
+    ethPeers.registerNewConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer()) {
-      return;
-    }
 
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId =
@@ -353,9 +351,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.debug("Sending status message to {}.", peer);
-      peer.send(status, getSupportedProtocol());
-      peer.registerStatusSent();
+      LOG.debug("Sending status message to {} for connection {}.", peer.getId(), connection);
+      peer.send(status, getSupportedProtocol(), connection);
+      peer.registerStatusSent(connection);
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
@@ -363,22 +361,36 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   @Override
+  public boolean shouldConnectOutbound(final Peer peer) {
+    // if we have an existing connection to that peer return null
+    if (peer.getForkId().map(forkId -> forkIdManager.peerCheck(forkId)).orElse(true)) {
+      if (ethPeers.shouldConnectOutbound(peer)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public void handleDisconnect(
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
-    ethPeers.registerDisconnect(connection);
-    LOG.debug(
-        "Disconnect - {} - {} - {} - {} peers left",
-        initiatedByPeer ? "Inbound" : "Outbound",
-        reason,
-        connection.getPeerInfo(),
-        ethPeers.peerCount());
-    LOG.trace("{}", ethPeers);
+    final EthPeer peer = ethPeers.peer(connection.getPeer().getId());
+    if (peer != null && peer.getConnection().equals(connection)) {
+      ethPeers.registerDisconnect(connection);
+      LOG.debug(
+          "Disconnect - {} - {} - {} - {} peers left",
+          initiatedByPeer ? "Inbound" : "Outbound",
+          reason,
+          connection.getPeer().getId(),
+          ethPeers.peerCount());
+      LOG.debug("{}", ethPeers);
+    }
   }
 
-  private void handleStatusMessage(final EthPeer peer, final MessageData data) {
-    final StatusMessage status = StatusMessage.readFrom(data);
+  private void handleStatusMessage(final EthPeer peer, final Message message) {
+    final StatusMessage status = StatusMessage.readFrom(message.getData());
     try {
       if (!status.networkId().equals(networkId)) {
         LOG.debug("Mismatched network id: {}, EthPeer {}", status.networkId(), peer);
@@ -404,7 +416,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(
-            status.bestHash(), status.totalDifficulty(), status.protocolVersion());
+            status.bestHash(),
+            status.totalDifficulty(),
+            status.protocolVersion(),
+            message.getConnection());
       }
     } catch (final RLPException e) {
       LOG.debug("Unable to parse status message from peer {}.", peer, e);

@@ -70,6 +70,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -139,6 +140,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
+  private NetworkingConfiguration networkingConfiguration;
+  private Boolean randomPeerPriority;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -267,6 +270,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  public BesuControllerBuilder networkConfiguration(
+      final NetworkingConfiguration networkingConfiguration) {
+    this.networkingConfiguration = networkingConfiguration;
+    return this;
+  }
+
+  public BesuControllerBuilder randomPeerPriority(final Boolean randomPeerPriority) {
+    this.randomPeerPriority = randomPeerPriority;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -282,6 +296,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(storageProvider, "Must supply a storage provider");
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
     checkNotNull(evmConfiguration, "Missing evm config");
+    checkNotNull(networkingConfiguration, "Missing network configuration");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
@@ -343,9 +358,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             getSupportedProtocol(),
             clock,
             metricsSystem,
-            maxPeers,
             maxMessageSize,
-            messagePermissioningProviders);
+            messagePermissioningProviders,
+            nodeKey.getPublicKey().getEncodedBytes(),
+            networkingConfiguration.getRlpx().getPeerLowerBound(),
+            networkingConfiguration.getRlpx().getPeerUpperBound(),
+            networkingConfiguration.getRlpx().getMaxRemotelyInitiatedConnections(),
+            randomPeerPriority);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
@@ -462,7 +481,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalJsonRpcMethodFactory,
         nodeKey,
         closeables,
-        additionalPluginServices);
+        additionalPluginServices,
+        ethPeers);
   }
 
   protected Synchronizer createSynchronizer(

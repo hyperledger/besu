@@ -188,7 +188,6 @@ public class RunnerBuilder {
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
-  private boolean randomPeerPriority;
   private StorageProvider storageProvider;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
@@ -282,11 +281,6 @@ public class RunnerBuilder {
   public RunnerBuilder fractionRemoteConnectionsAllowed(
       final float fractionRemoteConnectionsAllowed) {
     this.fractionRemoteConnectionsAllowed = fractionRemoteConnectionsAllowed;
-    return this;
-  }
-
-  public RunnerBuilder randomPeerPriority(final boolean randomPeerPriority) {
-    this.randomPeerPriority = randomPeerPriority;
     return this;
   }
 
@@ -488,7 +482,6 @@ public class RunnerBuilder {
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
                 .natService(natService)
-                .randomPeerPriority(randomPeerPriority)
                 .storageProvider(storageProvider)
                 .p2pTLSConfiguration(p2pTLSConfiguration)
                 .blockchain(context.getBlockchain())
@@ -502,6 +495,8 @@ public class RunnerBuilder {
             .network(p2pEnabled ? activeNetwork : inactiveNetwork)
             .metricsSystem(metricsSystem)
             .build();
+
+    besuController.getEthPeers().setRlpxAgent(networkRunner.getRlpxAgent());
 
     final P2PNetwork network = networkRunner.getNetwork();
     // ForkId in Ethereum Node Record needs updating when we transition to a new protocol spec

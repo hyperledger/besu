@@ -122,4 +122,8 @@ public interface PeerConnection {
   default EnodeURL getRemoteEnode() {
     return getPeer().getEnodeURL();
   }
+
+  public long getInitiatedAt();
+
+  public boolean inboundInitiated();
 }
