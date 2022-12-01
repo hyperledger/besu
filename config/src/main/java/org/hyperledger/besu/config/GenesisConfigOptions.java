@@ -92,6 +92,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getShanghaiTimestamp();
 
+  OptionalLong getCancunTimestamp();
+
   OptionalLong getShandongBlockNumber();
 
   Optional<Wei> getBaseFeePerGas();
