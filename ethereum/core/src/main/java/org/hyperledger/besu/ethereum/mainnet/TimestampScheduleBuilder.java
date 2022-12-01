@@ -97,7 +97,7 @@ public class TimestampScheduleBuilder {
     return Optional.of(new BuilderMapEntry(timestamp, builder));
   }
 
-  public TimestampSchedule createTimeStampSchedule() {
+  public TimestampSchedule createTimestampSchedule() {
     final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
     final DefaultTimestampSchedule timestampSchedule = new DefaultTimestampSchedule(chainId);
 

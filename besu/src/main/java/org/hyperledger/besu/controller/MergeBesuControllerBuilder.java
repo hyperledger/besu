@@ -236,7 +236,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   public TimestampSchedule createTimestampProtocolSchedule() {
-    return MergeProtocolSchedule.createTimeStamp(
+    return MergeProtocolSchedule.createTimestamp(
         configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled);
   }
 }
