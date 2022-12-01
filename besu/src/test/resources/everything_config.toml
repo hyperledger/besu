@@ -163,6 +163,7 @@ privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-onchain-groups-enabled=false
 privacy-flexible-groups-enabled=false
+privacy-validate-private-transactions=true
 
 # Transaction Pool
 tx-pool-retention-hours=999

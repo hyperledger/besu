@@ -77,6 +77,7 @@ public class PrivacyParameters {
   private PrivateWorldStateReader privateWorldStateReader;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
   private PrivacyPluginService privacyPluginService;
+  private boolean validatePrivateTransactions = true;
 
   public Address getPrivacyAddress() {
     if (isPrivacyPluginEnabled()) {
@@ -238,23 +239,12 @@ public class PrivacyParameters {
     }
   }
 
-  @Override
-  public String toString() {
-    return "PrivacyParameters{"
-        + "enabled="
-        + enabled
-        + ", multiTenancyEnabled = "
-        + multiTenancyEnabled
-        + ", privacyPluginEnabled = "
-        + privacyPluginEnabled
-        + ", flexiblePrivacyGroupsEnabled = "
-        + flexiblePrivacyGroupsEnabled
-        + ", enclaveUri='"
-        + enclaveUri
-        + ", privatePayloadEncryptionService='"
-        + privacyPluginService.getClass().getSimpleName()
-        + '\''
-        + '}';
+  private void setValidatePrivateTransactions(final boolean validatePrivateTransactions) {
+    this.validatePrivateTransactions = validatePrivateTransactions;
+  }
+
+  public boolean isValidatePrivateTransactions() {
+    return validatePrivateTransactions;
   }
 
   public static class Builder {
@@ -274,6 +264,7 @@ public class PrivacyParameters {
     private boolean privacyPluginEnabled;
     private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
     private PrivacyPluginService privacyPluginService;
+    private boolean validatePrivateTransactions;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -349,6 +340,11 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setValidatePrivateTransactions(final boolean validatePrivateTransactions) {
+      this.validatePrivateTransactions = validatePrivateTransactions;
+      return this;
+    }
+
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -399,6 +395,8 @@ public class PrivacyParameters {
       config.setFlexiblePrivacyGroupsEnabled(flexiblePrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
       config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
+      config.setValidatePrivateTransactions(validatePrivateTransactions);
+
       return config;
     }
   }

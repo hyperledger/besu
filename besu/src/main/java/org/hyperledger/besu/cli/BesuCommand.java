@@ -917,6 +917,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description =
             "!!DEPRECATED!! Use `--privacy-flexible-groups-enabled` instead. Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
     private final Boolean isOnchainPrivacyGroupsEnabled = false;
+
+    @Option(
+        names = {"--privacy-validate-private-transactions"},
+        description =
+            "Enable private transaction validation (if your validators can't see private transactions you may wish to disable this) (default: ${DEFAULT-VALUE})")
+    private final Boolean validatePrivateTransactions = true;
   }
 
   // Metrics Option Group
@@ -2678,15 +2684,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
       }
 
-      privacyParametersBuilder.setEnabled(true);
-      privacyParametersBuilder.setEnclaveUrl(privacyOptionGroup.privacyUrl);
-      privacyParametersBuilder.setMultiTenancyEnabled(
-          privacyOptionGroup.isPrivacyMultiTenancyEnabled);
-      privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
-          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
-              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled);
-      privacyParametersBuilder.setPrivacyPluginEnabled(
-          unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
+      privacyParametersBuilder
+          .setEnabled(true)
+          .setEnclaveUrl(privacyOptionGroup.privacyUrl)
+          .setMultiTenancyEnabled(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
+          .setFlexiblePrivacyGroupsEnabled(
+              privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
+                  || privacyOptionGroup.isOnchainPrivacyGroupsEnabled)
+          .setPrivacyPluginEnabled(unstablePrivacyPluginOptions.isPrivacyPluginEnabled())
+          .setValidatePrivateTransactions(privacyOptionGroup.validatePrivateTransactions);
 
       final boolean hasPrivacyPublicKey = privacyOptionGroup.privacyPublicKeyFile != null;
 

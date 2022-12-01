@@ -52,6 +52,7 @@ public class PrivateTransactionProcessor {
   private final MainnetTransactionValidator transactionValidator;
 
   private final PrivateTransactionValidator privateTransactionValidator;
+  private final boolean validatePrivateTransactions;
 
   private final AbstractMessageProcessor contractCreationProcessor;
 
@@ -68,13 +69,15 @@ public class PrivateTransactionProcessor {
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final PrivateTransactionValidator privateTransactionValidator) {
+      final PrivateTransactionValidator privateTransactionValidator,
+      final boolean validatePrivateTransactions) {
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
     this.privateTransactionValidator = privateTransactionValidator;
+    this.validatePrivateTransactions = validatePrivateTransactions;
   }
 
   public TransactionProcessingResult processTransaction(
@@ -92,23 +95,24 @@ public class PrivateTransactionProcessor {
 
       final Address senderAddress = transaction.getSender();
       final EvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
-      final MutableAccount sender =
+      final MutableAccount privateSender =
           maybePrivateSender != null
               ? maybePrivateSender.getMutable()
               : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
       final ValidationResult<TransactionInvalidReason> validationResult =
-          privateTransactionValidator.validate(transaction, sender.getNonce(), false);
+          privateTransactionValidator.validate(
+              transaction, privateSender.getNonce(), validatePrivateTransactions);
       if (!validationResult.isValid()) {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      final long previousNonce = sender.incrementNonce();
+      final long previousNonce = privateSender.incrementNonce();
       LOG.trace(
           "Incremented private sender {} nonce ({} -> {})",
           senderAddress,
           previousNonce,
-          sender.getNonce());
+          privateSender.getNonce());
 
       final WorldUpdater mutablePrivateWorldStateUpdater =
           new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
