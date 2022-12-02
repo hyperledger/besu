@@ -417,4 +417,24 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     final String actualMessage = exception.getMessage();
     assertThat(actualMessage).isEqualTo(expectedMessage);
   }
+
+  @Test
+  public void shouldThrowRLPExceptionWhenTypeIsInvalid() {
+    final Bytes invalidMessageBytes =
+        Bytes.fromHexString(
+            // [["0x09"],["0x00000002"],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
+            "0xeac109c58400000002e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
+
+    final Exception exception =
+        assertThrows(
+            RLPException.class,
+            () -> {
+              TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
+                  .decode(RLP.input(invalidMessageBytes));
+            });
+
+    final String expectedMessage = "Unsupported transaction type";
+    final String actualMessage = exception.getCause().getMessage();
+    assertThat(actualMessage).contains(expectedMessage);
+  }
 }
