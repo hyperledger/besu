@@ -1,13 +1,12 @@
 # Changelog
 ## 22.10.2
-
-### Breaking Changes
-
-### Additions and Improvements
+This is a hotfix release to resolve a race condition that results in segfaults, introduced in 22.10.1 release.
 
 ### Bug Fixes
+- bugfix for async operations on Snashot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
 
 ### Download Links
+
 
 ## 22.10.1
 
