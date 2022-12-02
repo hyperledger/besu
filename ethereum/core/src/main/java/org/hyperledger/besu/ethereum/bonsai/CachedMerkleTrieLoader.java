@@ -67,6 +67,7 @@ public class CachedMerkleTrieLoader {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Hash worldStateRootHash,
       final Address account) {
+    final long worldStateSubscriberId = worldStateStorage.subscribe();
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
@@ -81,6 +82,8 @@ public class CachedMerkleTrieLoader {
       accountTrie.get(Hash.hash(account));
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
+    } finally {
+      worldStateStorage.unSubscribe(worldStateSubscriberId);
     }
   }
 
@@ -101,6 +104,7 @@ public class CachedMerkleTrieLoader {
         .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
         .ifPresent(
             storageRoot -> {
+              final long worldStateSubscriberId = worldStateStorage.subscribe();
               try {
                 final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
                     new StoredMerklePatriciaTrie<>(
@@ -117,6 +121,8 @@ public class CachedMerkleTrieLoader {
                 storageTrie.get(slotHash);
               } catch (MerkleTrieException e) {
                 // ignore exception for the cache
+              } finally {
+                worldStateStorage.unSubscribe(worldStateSubscriberId);
               }
             });
   }
@@ -125,15 +131,11 @@ public class CachedMerkleTrieLoader {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Bytes location,
       final Bytes32 nodeHash) {
-    if (!worldStateKeyValueStorage.isClosed()) {
-      if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-        return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
-      } else {
-        return Optional.ofNullable(accountNodes.getIfPresent(nodeHash))
-            .or(() -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));
-      }
+    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      throw new MerkleTrieException("storage is closed");
+      return Optional.ofNullable(accountNodes.getIfPresent(nodeHash))
+          .or(() -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));
     }
   }
 
@@ -142,18 +144,14 @@ public class CachedMerkleTrieLoader {
       final Hash accountHash,
       final Bytes location,
       final Bytes32 nodeHash) {
-    if (!worldStateKeyValueStorage.isClosed()) {
-      if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-        return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
-      } else {
-        return Optional.ofNullable(storageNodes.getIfPresent(nodeHash))
-            .or(
-                () ->
-                    worldStateKeyValueStorage.getAccountStorageTrieNode(
-                        accountHash, location, nodeHash));
-      }
+    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      throw new MerkleTrieException("storage is closed");
+      return Optional.ofNullable(storageNodes.getIfPresent(nodeHash))
+          .or(
+              () ->
+                  worldStateKeyValueStorage.getAccountStorageTrieNode(
+                      accountHash, location, nodeHash));
     }
   }
 }
