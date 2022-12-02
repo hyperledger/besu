@@ -1045,6 +1045,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
   }
 
+  @Ignore
   @Test
   public void testGenesisPathShanghaiEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
