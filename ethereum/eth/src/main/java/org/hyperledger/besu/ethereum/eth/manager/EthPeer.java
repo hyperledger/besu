@@ -243,6 +243,12 @@ public class EthPeer implements Comparable<EthPeer> {
   /**
    * This method is only used for sending the status message, as it is possible that we have
    * multiple connections to the same peer at that time
+   *
+   * @param messageData the data to send
+   * @param protocolName the protocol to use for sending
+   * @param connection the connection to use for sending
+   * @return the response stream from the peer
+   * @throws PeerNotConnected
    */
   public RequestManager.ResponseStream send(
       final MessageData messageData, final String protocolName, final PeerConnection connection)
