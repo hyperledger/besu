@@ -85,6 +85,15 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     }
   }
 
+  protected void tryClose() throws Exception {
+    if (!isClosed.get() && subscribers.getSubscriberCount() < 1) {
+      accountStorage.close();
+      codeStorage.close();
+      storageStorage.close();
+      trieBranchStorage.close();
+    }
+  }
+
   public static class SnapshotUpdater implements BonsaiWorldStateKeyValueStorage.BonsaiUpdater {
 
     private final SnappedKeyValueStorage accountStorage;
