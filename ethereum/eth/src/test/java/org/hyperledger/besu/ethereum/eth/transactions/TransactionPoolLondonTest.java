@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -164,7 +165,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee() {
     when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
-    whenBlockBaseFeeIsZero();
+    whenBlockBaseFeeIs(Wei.ZERO);
 
     final Transaction frontierTransaction = createFrontierTransaction(0, Wei.ZERO);
 
@@ -176,7 +177,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   public void shouldAcceptZeroGasPrice1559TxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee() {
     when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
-    whenBlockBaseFeeIsZero();
+    whenBlockBaseFeeIs(Wei.ZERO);
 
     final Transaction transaction = createTransaction(0, Wei.ZERO);
 
@@ -194,16 +195,91 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   }
 
   @Test
+  public void shouldRejectRemote1559TxsWhenMaxFeePerGasBelowMinGasPrice() {
+    final Wei genesisBaseFee = Wei.of(100L);
+    final Wei minGasPrice = Wei.of(200L);
+    final Wei lastBlockBaseFee = minGasPrice.add(50L);
+    final Wei txMaxFeePerGas = minGasPrice.subtract(1L);
+
+    assertThat(
+            add1559TxAndGetPendingTxsCount(
+                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, false))
+        .isEqualTo(0);
+  }
+
+  @Test
+  public void shouldAcceptRemote1559TxsWhenMaxFeePerGasIsAtLeastEqualToMinGasPrice() {
+    final Wei genesisBaseFee = Wei.of(100L);
+    final Wei minGasPrice = Wei.of(200L);
+    final Wei lastBlockBaseFee = minGasPrice.add(50L);
+    final Wei txMaxFeePerGas = minGasPrice;
+
+    assertThat(
+            add1559TxAndGetPendingTxsCount(
+                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, false))
+        .isEqualTo(1);
+  }
+
+  @Test
+  public void shouldRejectLocal1559TxsWhenMaxFeePerGasBelowMinGasPrice() {
+    final Wei genesisBaseFee = Wei.of(100L);
+    final Wei minGasPrice = Wei.of(200L);
+    final Wei lastBlockBaseFee = minGasPrice.add(50L);
+    final Wei txMaxFeePerGas = minGasPrice.subtract(1L);
+
+    assertThat(
+            add1559TxAndGetPendingTxsCount(
+                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, true))
+        .isEqualTo(0);
+  }
+
+  @Test
+  public void shouldAcceptLocal1559TxsWhenMaxFeePerGasIsAtLeastEqualToMinMinGasPrice() {
+    final Wei genesisBaseFee = Wei.of(100L);
+    final Wei minGasPrice = Wei.of(200L);
+    final Wei lastBlockBaseFee = minGasPrice.add(50L);
+    final Wei txMaxFeePerGas = minGasPrice;
+
+    assertThat(
+            add1559TxAndGetPendingTxsCount(
+                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, true))
+        .isEqualTo(1);
+  }
+
+  private int add1559TxAndGetPendingTxsCount(
+      final Wei genesisBaseFee,
+      final Wei minGasPrice,
+      final Wei lastBlockBaseFee,
+      final Wei txMaxFeePerGas,
+      final boolean isLocal) {
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(minGasPrice);
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(genesisBaseFee)));
+    whenBlockBaseFeeIs(lastBlockBaseFee);
+
+    final Transaction transaction = createTransaction(0, txMaxFeePerGas);
+
+    givenTransactionIsValid(transaction);
+
+    if (isLocal) {
+      transactionPool.addLocalTransaction(transaction);
+    } else {
+      transactionPool.addRemoteTransactions(List.of(transaction));
+    }
+
+    return transactions.size();
+  }
+
+  @Test
   @Override
   @Ignore
   public void shouldRejectLocalTransactionIfFeeCapExceeded() {
     // ignore since this is going to fail until the branch with the fix is released
   }
 
-  private void whenBlockBaseFeeIsZero() {
+  private void whenBlockBaseFeeIs(final Wei baseFee) {
     final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockchain.getChainHeadHeader())
-            .baseFee(Wei.ZERO)
+            .baseFee(baseFee)
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .parentHash(blockchain.getChainHeadHash())
             .buildBlockHeader();
