@@ -451,6 +451,7 @@ public class EthPeer implements Comparable<EthPeer> {
       if (callback == null) {
         return;
       }
+      LOG.debug("Status message exchange successful with a peer on a matching chain. {}", this);
       callback.accept(this);
     }
   }

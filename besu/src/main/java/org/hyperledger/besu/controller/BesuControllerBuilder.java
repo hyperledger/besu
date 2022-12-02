@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -300,8 +301,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString());
 
+    final CachedMerkleTrieLoader cachedMerkleTrieLoader = new CachedMerkleTrieLoader(metricsSystem);
+
     final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(worldStateStorage, blockchain);
+        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
 
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
@@ -628,14 +631,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private WorldStateArchive createWorldStateArchive(
-      final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
+      final WorldStateStorage worldStateStorage,
+      final Blockchain blockchain,
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
         return new BonsaiWorldStateArchive(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            dataStorageConfiguration.useBonsaiSnapshots());
+            dataStorageConfiguration.useBonsaiSnapshots(),
+            cachedMerkleTrieLoader);
 
       case FOREST:
       default:
