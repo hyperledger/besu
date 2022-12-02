@@ -161,7 +161,7 @@ public class MODEXPPrecompiledContractTest {
         "00000000000000000000000000000000000000000000000000000000000000e300000000000000000000000000000000000000000000000000",
         null,
         1580L,
-        21520L
+        280L
       },
       {
         "00000000008000000000000000000000000000000000000000000000000000000000000400000000000000000000000a",
@@ -204,6 +204,6 @@ public class MODEXPPrecompiledContractTest {
   public void testGasPrice() {
     final Bytes input = Bytes.fromHexString(this.input);
     assertThat(byzantiumContract.gasRequirement(input)).isEqualTo(eip198Gas);
-    //    assertThat(berlinContract.gasRequirement(input)).isEqualTo(eip2565Gas);
+    assertThat(berlinContract.gasRequirement(input)).isEqualTo(eip2565Gas);
   }
 }
