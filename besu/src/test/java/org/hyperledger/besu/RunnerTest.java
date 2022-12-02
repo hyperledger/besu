@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -164,6 +165,7 @@ public final class RunnerTest {
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
+    final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
     final BigInteger networkId = BigInteger.valueOf(2929);
 
     // Setup state with block data
@@ -183,6 +185,7 @@ public final class RunnerTest {
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .networkConfiguration(NetworkingConfiguration.create())
             .build()) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
@@ -204,6 +207,7 @@ public final class RunnerTest {
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .networkConfiguration(NetworkingConfiguration.create())
             .build();
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -274,6 +278,7 @@ public final class RunnerTest {
               .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
               .gasLimitCalculator(GasLimitCalculator.constant())
               .evmConfiguration(EvmConfiguration.DEFAULT)
+              .networkConfiguration(NetworkingConfiguration.create())
               .build();
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
@@ -301,7 +306,7 @@ public final class RunnerTest {
       final OkHttpClient client = new OkHttpClient();
       Awaitility.await()
           .ignoreExceptions()
-          .atMost(5L, TimeUnit.MINUTES)
+          .atMost(3L, TimeUnit.MINUTES)
           .untilAsserted(
               () -> {
                 final String baseUrl = String.format("http://%s:%s", listenHost, behindJsonRpcPort);
@@ -383,7 +388,7 @@ public final class RunnerTest {
       final Future<String> future = promise.future();
       Awaitility.await()
           .catchUncaughtExceptions()
-          .atMost(5L, TimeUnit.MINUTES)
+          .atMost(3L, TimeUnit.MINUTES)
           .until(future::isComplete);
     } finally {
       if (runnerBehind != null) {

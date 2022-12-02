@@ -28,6 +28,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -47,6 +48,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -79,6 +81,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MergeBesuControllerBuilderTest {
 
   private MergeBesuControllerBuilder besuControllerBuilder;
+  private static final NodeKey nodeKey = NodeKeyUtils.generate();
 
   @Mock GenesisConfigFile genesisConfigFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
@@ -90,7 +93,6 @@ public class MergeBesuControllerBuilderTest {
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
   @Mock TransactionPoolConfiguration poolConfiguration;
-  @Mock NodeKey nodeKey;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
   @Mock WorldStateStorage worldStateStorage;
@@ -158,6 +160,7 @@ public class MergeBesuControllerBuilderTest {
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .networkConfiguration(NetworkingConfiguration.create())
             .networkId(networkId);
   }
 
