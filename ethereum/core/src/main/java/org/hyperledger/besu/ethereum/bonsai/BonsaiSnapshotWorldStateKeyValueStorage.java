@@ -102,7 +102,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   protected void tryClose() throws Exception {
-    if (!isClosed.get() && subscribers.getSubscriberCount() < 1) {
+    if (isClosed.get() && subscribers.getSubscriberCount() < 1) {
       accountStorage.close();
       codeStorage.close();
       storageStorage.close();
