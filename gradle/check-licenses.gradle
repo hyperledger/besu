@@ -111,7 +111,8 @@ downloadLicenses {
       license('BSD 3-clause', 'http://opensource.org/licenses/BSD-3-Clause'),
     ],
     (cc0) : [
-      'CC0'
+      'CC0',
+      'CC0 1.0 Universal'
     ],
     (cddl) : [
       'CDDL 1.0',
