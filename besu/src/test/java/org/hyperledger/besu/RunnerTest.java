@@ -165,7 +165,6 @@ public final class RunnerTest {
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-    final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
     final BigInteger networkId = BigInteger.valueOf(2929);
 
     // Setup state with block data
