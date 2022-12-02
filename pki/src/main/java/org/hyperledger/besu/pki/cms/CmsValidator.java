@@ -70,7 +70,7 @@ public class CmsValidator {
    *     is trusted, otherwise returns false.
    */
   public boolean validate(final Bytes cms, final Bytes expectedContent) {
-    if (cms == null || cms == Bytes.EMPTY) {
+    if (cms == null || cms.isEmpty()) {
       return false;
     }
 

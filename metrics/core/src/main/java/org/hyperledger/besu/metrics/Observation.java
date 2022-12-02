@@ -63,7 +63,7 @@ public class Observation {
       return false;
     }
     final Observation that = (Observation) o;
-    return category == that.category
+    return Objects.equals(category, that.category)
         && Objects.equals(metricName, that.metricName)
         && Objects.equals(labels, that.labels)
         && Objects.equals(value, that.value);
