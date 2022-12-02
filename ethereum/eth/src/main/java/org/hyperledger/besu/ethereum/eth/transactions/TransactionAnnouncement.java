@@ -58,7 +58,7 @@ public class TransactionAnnouncement {
 
   public static List<TransactionAnnouncement> create(
       final List<TransactionType> types, final List<Integer> sizes, final List<Hash> hashes) {
-    final List<TransactionAnnouncement> transactions = new ArrayList<>();
+    final List<TransactionAnnouncement> transactions = new ArrayList<>(hashes.size());
     for (int i = 0; i < hashes.size(); i++) {
       transactions.add(new TransactionAnnouncement(hashes.get(i), types.get(i), sizes.get(i)));
     }

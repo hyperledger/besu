@@ -75,9 +75,9 @@ public class TransactionAnnouncementEncoder {
    * @return the encoded value. The message data will contain hashes, types and sizes.
    */
   private static Bytes encodeForEth68(final List<Transaction> transactions) {
-    final List<Integer> sizes = new ArrayList<>();
-    final List<TransactionType> types = new ArrayList<>();
-    final List<Hash> hashes = new ArrayList<>();
+    final List<Integer> sizes = new ArrayList<>(transactions.size());
+    final List<TransactionType> types = new ArrayList<>(transactions.size());
+    final List<Hash> hashes = new ArrayList<>(transactions.size());
     transactions.forEach(
         transaction -> {
           types.add(transaction.getType());
