@@ -67,11 +67,12 @@ public class CachedMerkleTrieLoader {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Hash worldStateRootHash,
       final Address account) {
+    final long worldStateSubscriberId = worldStateStorage.subscribe();
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               (location, hash) -> {
-                Optional<Bytes> node = worldStateStorage.getAccountStateTrieNode(location, hash);
+                Optional<Bytes> node = getAccountStateTrieNode(worldStateStorage, location, hash);
                 node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
                 return node;
               },
@@ -81,6 +82,8 @@ public class CachedMerkleTrieLoader {
       accountTrie.get(Hash.hash(account));
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
+    } finally {
+      worldStateStorage.unSubscribe(worldStateSubscriberId);
     }
   }
 
@@ -101,13 +104,14 @@ public class CachedMerkleTrieLoader {
         .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
         .ifPresent(
             storageRoot -> {
+              final long worldStateSubscriberId = worldStateStorage.subscribe();
               try {
                 final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
                     new StoredMerklePatriciaTrie<>(
                         (location, hash) -> {
                           Optional<Bytes> node =
-                              worldStateStorage.getAccountStorageTrieNode(
-                                  accountHash, location, hash);
+                              getAccountStorageTrieNode(
+                                  worldStateStorage, accountHash, location, hash);
                           node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
                           return node;
                         },
@@ -117,6 +121,8 @@ public class CachedMerkleTrieLoader {
                 storageTrie.get(slotHash);
               } catch (MerkleTrieException e) {
                 // ignore exception for the cache
+              } finally {
+                worldStateStorage.unSubscribe(worldStateSubscriberId);
               }
             });
   }
