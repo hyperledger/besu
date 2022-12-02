@@ -94,7 +94,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final ChainState chainHeadState = new ChainState();
-  private final AtomicBoolean statusHasBeenSentToPeer = new AtomicBoolean(false);
+  private final AtomicBoolean readyForRequests = new AtomicBoolean(false);
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
@@ -458,9 +458,11 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void registerStatusSent(final PeerConnection connection) {
-    connectionWithSentStatusMessage.add(Integer.valueOf(connection.hashCode()));
-    LOG.info("adding connection with hash code {} to status sent", connection.hashCode());
-    maybeExecuteStatusesExchangedCallback(connection);
+    synchronized (this) {
+      connectionWithSentStatusMessage.add(Integer.valueOf(connection.hashCode()));
+      LOG.info("adding connection with hash code {} to status sent", connection.hashCode());
+      maybeExecuteStatusesExchangedCallback(connection);
+    }
   }
 
   public void registerStatusReceived(
@@ -468,12 +470,14 @@ public class EthPeer implements Comparable<EthPeer> {
       final Difficulty td,
       final int protocolVersion,
       final PeerConnection connection) {
-    chainHeadState.statusReceived(hash, td);
-    lastProtocolVersion.set(protocolVersion);
-    statusHasBeenReceivedFromPeer.set(true);
-    connectionWithReceivedStatusMessage.add(Integer.valueOf(connection.hashCode()));
-    LOG.info("adding connection with hash code {} to status received", connection.hashCode());
-    maybeExecuteStatusesExchangedCallback(connection);
+    synchronized (this) {
+      chainHeadState.statusReceived(hash, td);
+      lastProtocolVersion.set(protocolVersion);
+      statusHasBeenReceivedFromPeer.set(true);
+      connectionWithReceivedStatusMessage.add(Integer.valueOf(connection.hashCode()));
+      LOG.info("adding connection with hash code {} to status received", connection.hashCode());
+      maybeExecuteStatusesExchangedCallback(connection);
+    }
   }
 
   private void maybeExecuteStatusesExchangedCallback(final PeerConnection newConnection) {
@@ -487,13 +491,12 @@ public class EthPeer implements Comparable<EthPeer> {
           final PeerConnection oldConnection = this.connection;
           this.connection = newConnection;
           LOG.info("Changed conenction from {} to {}", oldConnection, newConnection);
-        } else {
-          newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED);
         }
       }
       final int actualHashCode = this.connection.hashCode();
       if (connectionWithReceivedStatusMessage.contains(actualHashCode)
           && connectionWithSentStatusMessage.contains(actualHashCode)) {
+        readyForRequests.set(true);
         final Consumer<EthPeer> callback = onStatusesExchanged.getAndSet(null);
         if (callback == null) {
           return;
@@ -511,7 +514,7 @@ public class EthPeer implements Comparable<EthPeer> {
    * @return true if the peer is ready to accept requests for data.
    */
   public boolean readyForRequests() {
-    return statusHasBeenSentToPeer.get() && statusHasBeenReceivedFromPeer.get();
+    return readyForRequests.get();
   }
 
   /**
@@ -521,15 +524,6 @@ public class EthPeer implements Comparable<EthPeer> {
    */
   boolean statusHasBeenReceived() {
     return statusHasBeenReceivedFromPeer.get();
-  }
-
-  /**
-   * Return true if we have sent a status message to this peer.
-   *
-   * @return true if we have sent a status message to this peer.
-   */
-  boolean statusHasBeenSentToPeer() {
-    return statusHasBeenSentToPeer.get();
   }
 
   public boolean hasSeenBlock(final Hash hash) {
@@ -607,7 +601,7 @@ public class EthPeer implements Comparable<EthPeer> {
         isFullyValidated(),
         isDisconnected(),
         connection.getPeerInfo().getClientId(),
-        System.identityHashCode(connection),
+        connection,
         connection.getPeer().getEnodeURLString());
   }
 
@@ -658,7 +652,7 @@ public class EthPeer implements Comparable<EthPeer> {
     }
 
     final Bytes peerId = a.getPeer().getId();
-    // at this point a.Id == b.Id
+    // peerId is the id of the other node
     if (a.inboundInitiated() != b.inboundInitiated()) {
       // If we have connections initiated in different directions, keep the connection initiated
       // by the node with the lower id

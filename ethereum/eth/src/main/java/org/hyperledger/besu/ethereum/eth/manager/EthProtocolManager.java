@@ -414,7 +414,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         LOG.debug("Post-merge disconnect: peer still PoW {}", peer);
         handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
-        LOG.debug("Received status message from {}: {}", peer, status);
+        LOG.debug(
+            "Received status message from {}: {} with connection",
+            peer,
+            status,
+            message.getConnection());
         peer.registerStatusReceived(
             status.bestHash(),
             status.totalDifficulty(),

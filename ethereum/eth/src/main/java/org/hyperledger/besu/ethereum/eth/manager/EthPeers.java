@@ -96,7 +96,7 @@ public class EthPeers {
       final MetricsSystem metricsSystem,
       final int maxMessageSize,
       final List<NodeMessagePermissioningProvider> permissioningProviders,
-      final Bytes encodedBytes,
+      final Bytes localNodeId,
       final int peerLowerBound,
       final int peerUpperBound,
       final int maxRemotelyInitiatedConnections,
@@ -106,7 +106,7 @@ public class EthPeers {
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
     this.bestPeerComparator = HEAVIEST_CHAIN;
-    this.localNodeId = encodedBytes;
+    this.localNodeId = localNodeId;
     this.peerLowerBound = peerLowerBound;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
