@@ -47,7 +47,7 @@ public class StackTrieTest {
     final WorldStateStorage recreatedWorldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie =
+    final MerklePatriciaTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, nbAccounts);
 
     final StackTrie stackTrie =
@@ -99,7 +99,7 @@ public class StackTrieTest {
     final WorldStateStorage recreatedWorldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie =
+    final MerklePatriciaTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, nbAccounts);
 
     final StackTrie stackTrie =

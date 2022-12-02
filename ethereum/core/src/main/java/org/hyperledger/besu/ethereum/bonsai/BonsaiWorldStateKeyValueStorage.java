@@ -183,7 +183,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
-      // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> account = getAccount(accountHash);
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (account.isPresent() && worldStateRootHash.isPresent()) {
