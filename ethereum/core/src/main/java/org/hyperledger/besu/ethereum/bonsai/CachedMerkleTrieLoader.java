@@ -100,31 +100,33 @@ public class CachedMerkleTrieLoader {
       final Address account,
       final Hash slotHash) {
     final Hash accountHash = Hash.hash(account);
-    worldStateStorage
-        .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
-        .ifPresent(
-            storageRoot -> {
-              final long worldStateSubscriberId = worldStateStorage.subscribe();
-              try {
-                final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-                    new StoredMerklePatriciaTrie<>(
-                        (location, hash) -> {
-                          Optional<Bytes> node =
-                              getAccountStorageTrieNode(
-                                  worldStateStorage, accountHash, location, hash);
-                          node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
-                          return node;
-                        },
-                        Hash.hash(storageRoot),
-                        Function.identity(),
-                        Function.identity());
-                storageTrie.get(slotHash);
-              } catch (MerkleTrieException e) {
-                // ignore exception for the cache
-              } finally {
-                worldStateStorage.unSubscribe(worldStateSubscriberId);
-              }
-            });
+    final long worldStateSubscriberId = worldStateStorage.subscribe();
+    try {
+      worldStateStorage
+          .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
+          .ifPresent(
+              storageRoot -> {
+                try {
+                  final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+                      new StoredMerklePatriciaTrie<>(
+                          (location, hash) -> {
+                            Optional<Bytes> node =
+                                getAccountStorageTrieNode(
+                                    worldStateStorage, accountHash, location, hash);
+                            node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
+                            return node;
+                          },
+                          Hash.hash(storageRoot),
+                          Function.identity(),
+                          Function.identity());
+                  storageTrie.get(slotHash);
+                } catch (MerkleTrieException e) {
+                  // ignore exception for the cache
+                }
+              });
+    } finally {
+      worldStateStorage.unSubscribe(worldStateSubscriberId);
+    }
   }
 
   public Optional<Bytes> getAccountStateTrieNode(
