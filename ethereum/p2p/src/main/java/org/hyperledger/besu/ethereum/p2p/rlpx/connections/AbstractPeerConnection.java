@@ -154,7 +154,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     // Always ensure the context gets closed immediately even if we previously sent a disconnect
     // message and are waiting to close.
     closeConnectionImmediately();
-    LOG.debug("Terminating connection {}, reason {}", System.identityHashCode(this), reason);
+    LOG.debug("Terminating connection {}, reason {}", this, reason);
   }
 
   protected abstract void closeConnectionImmediately();
@@ -165,16 +165,12 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
       if (LOG.isDebugEnabled()) {
-        final String stackTrace = ExceptionUtils.getStackTrace(new Exception());
+        final String stackTrace = ExceptionUtils.getStackTrace(new RuntimeException("here"));
         LOG.debug("DISCONNECTING connection {}, with stack trace: \n", this, stackTrace);
       }
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
-      LOG.debug(
-          "Disconnecting connection {} with peer {}, reason {}",
-          System.identityHashCode(this),
-          this.getPeer().getId(),
-          reason);
+      LOG.debug("Disconnecting connection {}, reason {}", this, reason);
       closeConnection();
     }
   }
@@ -224,11 +220,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public String toString() {
-    return "[Connection with identity hashCode "
-        + System.identityHashCode(this)
+    return "[Connection with hashCode "
+        + hashCode()
         + " with peer "
         + this.peer.getId()
-        + "inboundInitiated "
+        + " inboundInitiated "
         + inboundInitiated
         + " initAt "
         + initiatedAt
