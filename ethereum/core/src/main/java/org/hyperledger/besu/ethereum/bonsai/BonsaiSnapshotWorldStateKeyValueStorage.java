@@ -15,6 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -25,9 +27,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage {
 
@@ -72,13 +71,13 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public boolean isClose() {
+  public boolean isClosed() {
     return isClosed.get();
   }
 
   @Override
   public void close() throws Exception {
-    if (isClosed.getAndSet(true)) {
+    if (!isClosed.getAndSet(true)) {
       accountStorage.close();
       codeStorage.close();
       storageStorage.close();

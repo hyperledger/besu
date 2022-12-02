@@ -125,7 +125,7 @@ public class CachedMerkleTrieLoader {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Bytes location,
       final Bytes32 nodeHash) {
-    if (!worldStateKeyValueStorage.isClose()) {
+    if (!worldStateKeyValueStorage.isClosed()) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
       } else {
@@ -142,7 +142,7 @@ public class CachedMerkleTrieLoader {
       final Hash accountHash,
       final Bytes location,
       final Bytes32 nodeHash) {
-    if (!worldStateKeyValueStorage.isClose()) {
+    if (!worldStateKeyValueStorage.isClosed()) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
       } else {
