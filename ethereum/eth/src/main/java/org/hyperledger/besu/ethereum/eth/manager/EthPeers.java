@@ -296,7 +296,7 @@ public class EthPeers {
         .forEach(
             ep -> {
               if (ep.isDisconnected()) {
-                connections.remove(ep.getConnection(), ep);
+                connections.remove(ep.getId(), ep);
               }
             });
   }
