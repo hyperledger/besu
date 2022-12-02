@@ -92,6 +92,11 @@ public class TransactionAnnouncementEncoder {
   public static Bytes encodeForEth68(
       final List<TransactionType> types, final List<Integer> sizes, final List<Hash> hashes) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    // Check if lists have the same size
+    if (!(types.size() == hashes.size() && hashes.size() == sizes.size())) {
+      throw new IllegalArgumentException(
+          "Hashes, sizes and types must have the same number of elements");
+    }
     out.startList();
     out.writeList(
         types, (h, w) -> w.writeByte(h == TransactionType.FRONTIER ? 0x00 : h.getSerializedType()));

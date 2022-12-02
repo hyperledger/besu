@@ -33,6 +33,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementDecoder;
 import org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -45,6 +46,7 @@ import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -365,5 +367,54 @@ public class NewPooledTransactionHashesMessageProcessorTest {
       assertThat(announcement.getType()).hasValue(transaction.getType());
       assertThat(announcement.getSize()).hasValue(transaction.calculateSize());
     }
+  }
+
+  @Test
+  public void shouldThrowInvalidArgumentExceptionWhenCreatingListsWithDifferentSizes() {
+    final Exception exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+              TransactionAnnouncement.create(new ArrayList<>(), List.of(1), new ArrayList<>());
+            });
+    final String expectedMessage = "Hashes, sizes and types must have the same number of elements";
+    final String actualMessage = exception.getMessage();
+    assertThat(actualMessage).isEqualTo(expectedMessage);
+  }
+
+  @Test
+  public void shouldThrowInvalidArgumentExceptionWhenEncodingListsWithDifferentSizes() {
+    final Exception exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+              TransactionAnnouncementEncoder.encodeForEth68(
+                  new ArrayList<>(), List.of(1), new ArrayList<>());
+            });
+    final String expectedMessage = "Hashes, sizes and types must have the same number of elements";
+    final String actualMessage = exception.getMessage();
+    assertThat(actualMessage).isEqualTo(expectedMessage);
+  }
+
+  @Test
+  @SuppressWarnings("UnusedVariable")
+  public void shouldThrowRLPExceptionWhenDecodingListsWithDifferentSizes() {
+
+    // [[],[],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
+    final Bytes invalidMessageBytes =
+        Bytes.fromHexString(
+            "0xe4c0c0e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
+
+    final Exception exception =
+        assertThrows(
+            RLPException.class,
+            () -> {
+              TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
+                  .decode(RLP.input(invalidMessageBytes));
+            });
+
+    final String expectedMessage = "Hashes, sizes and types must have the same number of elements";
+    final String actualMessage = exception.getMessage();
+    assertThat(actualMessage).isEqualTo(expectedMessage);
   }
 }

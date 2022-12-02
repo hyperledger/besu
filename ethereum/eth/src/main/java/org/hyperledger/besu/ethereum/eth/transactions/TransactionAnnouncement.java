@@ -58,6 +58,11 @@ public class TransactionAnnouncement {
 
   public static List<TransactionAnnouncement> create(
       final List<TransactionType> types, final List<Integer> sizes, final List<Hash> hashes) {
+    // Check if lists have the same size
+    if (!(types.size() == hashes.size() && hashes.size() == sizes.size())) {
+      throw new IllegalArgumentException(
+          "Hashes, sizes and types must have the same number of elements");
+    }
     final List<TransactionAnnouncement> transactions = new ArrayList<>(hashes.size());
     for (int i = 0; i < hashes.size(); i++) {
       transactions.add(new TransactionAnnouncement(hashes.get(i), types.get(i), sizes.get(i)));

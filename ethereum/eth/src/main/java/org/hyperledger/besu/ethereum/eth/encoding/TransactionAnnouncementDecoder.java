@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -77,6 +78,9 @@ public class TransactionAnnouncementDecoder {
     final List<Integer> sizes = input.readList(RLPInput::readInt);
     final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
     input.leaveList();
+    if (!(types.size() == hashes.size() && hashes.size() == sizes.size())) {
+      throw new RLPException("Hashes, sizes and types must have the same number of elements");
+    }
     return TransactionAnnouncement.create(types, sizes, hashes);
   }
 }
