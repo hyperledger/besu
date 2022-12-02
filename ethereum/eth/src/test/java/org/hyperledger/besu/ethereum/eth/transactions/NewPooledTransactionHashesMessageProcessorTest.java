@@ -309,7 +309,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             Hash.fromHexString(
                 "0x0000000000000000000000000000000000000000000000000000000000000001"));
     assertThat(frontier.getType()).hasValue(TransactionType.FRONTIER);
-    assertThat(frontier.getSize()).hasValue(1);
+    assertThat(frontier.getSize()).hasValue(1L);
 
     final TransactionAnnouncement accessList = announcementList.get(1);
     assertThat(accessList.getHash())
@@ -317,7 +317,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             Hash.fromHexString(
                 "0x0000000000000000000000000000000000000000000000000000000000000002"));
     assertThat(accessList.getType()).hasValue(TransactionType.ACCESS_LIST);
-    assertThat(accessList.getSize()).hasValue(2);
+    assertThat(accessList.getSize()).hasValue(2L);
 
     final TransactionAnnouncement eip1559 = announcementList.get(2);
     assertThat(eip1559.getHash())
@@ -325,7 +325,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             Hash.fromHexString(
                 "0x0000000000000000000000000000000000000000000000000000000000000003"));
     assertThat(eip1559.getType()).hasValue(TransactionType.EIP1559);
-    assertThat(eip1559.getSize()).hasValue(3);
+    assertThat(eip1559.getSize()).hasValue(3L);
   }
 
   @Test
@@ -365,7 +365,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
       final TransactionAnnouncement announcement = announcementList.get(list.indexOf(transaction));
       assertThat(announcement.getHash()).isEqualTo(transaction.getHash());
       assertThat(announcement.getType()).hasValue(transaction.getType());
-      assertThat(announcement.getSize()).hasValue(transaction.calculateSize());
+      assertThat(announcement.getSize()).hasValue((long) transaction.calculateSize());
     }
   }
 
@@ -375,7 +375,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         assertThrows(
             IllegalArgumentException.class,
             () -> {
-              TransactionAnnouncement.create(new ArrayList<>(), List.of(1), new ArrayList<>());
+              TransactionAnnouncement.create(new ArrayList<>(), List.of(1L), new ArrayList<>());
             });
     final String expectedMessage = "Hashes, sizes and types must have the same number of elements";
     final String actualMessage = exception.getMessage();
@@ -434,6 +434,26 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             });
 
     final String expectedMessage = "Unsupported transaction type";
+    final String actualMessage = exception.getCause().getMessage();
+    assertThat(actualMessage).contains(expectedMessage);
+  }
+
+  @Test
+  public void shouldThrowRLPExceptionWhenSizeSizeGreaterThanFourBytes() {
+    final Bytes invalidMessageBytes =
+        Bytes.fromHexString(
+            // [["0x02"],["0xffffffff01"],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
+            "0xebc102c685ffffffff00e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
+
+    final Exception exception =
+        assertThrows(
+            RLPException.class,
+            () -> {
+              TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
+                  .decode(RLP.input(invalidMessageBytes));
+            });
+
+    final String expectedMessage = "Cannot read a 4-byte int";
     final String actualMessage = exception.getCause().getMessage();
     assertThat(actualMessage).contains(expectedMessage);
   }

@@ -26,7 +26,7 @@ import java.util.Optional;
 public class TransactionAnnouncement {
   private final Hash hash;
   private final Optional<TransactionType> type;
-  private final Optional<Integer> size;
+  private final Optional<Long> size;
 
   public TransactionAnnouncement(final Hash hash) {
     this.hash = hash;
@@ -35,10 +35,10 @@ public class TransactionAnnouncement {
   }
 
   public TransactionAnnouncement(final Transaction transaction) {
-    this(transaction.getHash(), transaction.getType(), transaction.calculateSize());
+    this(transaction.getHash(), transaction.getType(), (long) transaction.calculateSize());
   }
 
-  public TransactionAnnouncement(final Hash hash, final TransactionType type, final Integer size) {
+  public TransactionAnnouncement(final Hash hash, final TransactionType type, final Long size) {
     this.hash = hash;
     this.type = Optional.ofNullable(type);
     this.size = Optional.ofNullable(size);
@@ -52,12 +52,12 @@ public class TransactionAnnouncement {
     return type;
   }
 
-  public Optional<Integer> getSize() {
+  public Optional<Long> getSize() {
     return size;
   }
 
   public static List<TransactionAnnouncement> create(
-      final List<TransactionType> types, final List<Integer> sizes, final List<Hash> hashes) {
+      final List<TransactionType> types, final List<Long> sizes, final List<Hash> hashes) {
     // Check if lists have the same size
     if (!(types.size() == hashes.size() && hashes.size() == sizes.size())) {
       throw new IllegalArgumentException(
