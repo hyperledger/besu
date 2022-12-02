@@ -56,7 +56,6 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
             .map(MergeMiningCoordinator.class::cast);
-
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethPeers = ethPeers;
