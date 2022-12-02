@@ -49,8 +49,7 @@ public class TaskGenerator {
     final WorldStateProofProvider worldStateProofProvider =
         new WorldStateProofProvider(worldStateStorage);
 
-    final MerklePatriciaTrie<Bytes32, Bytes> trie =
-        TrieGenerator.generateTrie(worldStateStorage, 1);
+    final MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(worldStateStorage, 1);
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
             Bytes32.ZERO, RangeManager.MAX_RANGE, 1, Integer.MAX_VALUE);

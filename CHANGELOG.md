@@ -1,4 +1,14 @@
 # Changelog
+## 22.10.2
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
 ## 22.10.1
 
 ### Breaking Changes
@@ -24,11 +34,14 @@
 - Print an overview of configuration and system information at startup [#4451](https://github.com/hyperledger/besu/pull/4451)
 - Do not send new payloads to backward sync if initial sync is in progress [#4720](https://github.com/hyperledger/besu/issues/4720)
 - Improve the way transaction fee cap validation is done on London fee market to not depend on transient network conditions [#4598](https://github.com/hyperledger/besu/pull/4598) 
+- Preload and cache account and storage data from RocksDB to improve performance  [#4737](https://github.com/hyperledger/besu/issues/4737)
 
 ### Bug Fixes
 - Restore updating chain head and finalized block during backward sync [#4718](https://github.com/hyperledger/besu/pull/4718)
 
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.1/besu-22.10.1.tar.gz  / sha256: b6757b9fc69b782cdabb95b1e784d31b1effcc2e25c6b198b2f9d6b3786c7a8a
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.1/besu-22.10.1.zip / sha256: 0dbee534620c7cc0fac0596e6df0c7f8a74be9df9cecd9d4f1407016f30fb9a1
 
 ## 22.10.0
 
