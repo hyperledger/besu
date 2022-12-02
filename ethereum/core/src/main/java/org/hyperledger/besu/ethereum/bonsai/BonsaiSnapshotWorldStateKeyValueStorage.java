@@ -24,10 +24,14 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage {
+
+  private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   public BonsaiSnapshotWorldStateKeyValueStorage(final StorageProvider snappableStorageProvider) {
     this(
@@ -68,11 +72,18 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
+  public boolean isClose() {
+    return isClosed.get();
+  }
+
+  @Override
   public void close() throws Exception {
-    accountStorage.close();
-    codeStorage.close();
-    storageStorage.close();
-    trieBranchStorage.close();
+    if (isClosed.getAndSet(true)) {
+      accountStorage.close();
+      codeStorage.close();
+      storageStorage.close();
+      trieBranchStorage.close();
+    }
   }
 
   public static class SnapshotUpdater implements BonsaiWorldStateKeyValueStorage.BonsaiUpdater {
