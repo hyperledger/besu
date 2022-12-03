@@ -105,9 +105,9 @@ import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
-import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
+import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 
 import java.math.BigInteger;
@@ -471,10 +471,10 @@ public class MainnetEVMs {
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
     return new EVM(
-            eip1153Operations(gasCalculator, chainId),
-            gasCalculator,
-            evmConfiguration,
-            EvmSpecVersion.SHANGHAI);
+        eip1153Operations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.SHANGHAI);
   }
 
   public static OperationRegistry eip1153Operations(

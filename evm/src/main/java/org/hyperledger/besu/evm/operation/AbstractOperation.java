@@ -17,9 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 /**
  * All {@link Operation} implementations should inherit from this class to get the setting of some
  * members for free.
@@ -34,8 +31,7 @@ public abstract class AbstractOperation implements Operation {
   private final GasCalculator gasCalculator;
 
   protected static final OperationResult ILLEGAL_STATE_CHANGE =
-      new OperationResult(
-          0L, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      new OperationResult(0L, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
 
   protected AbstractOperation(
       final int opcode,
