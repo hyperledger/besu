@@ -248,7 +248,7 @@ public class EthPeer implements Comparable<EthPeer> {
    * @param protocolName the protocol to use for sending
    * @param connection the connection to use for sending
    * @return the response stream from the peer
-   * @throws PeerNotConnected if the peer has been disconnected
+   * @throws PeerNotConnected if the peer is not connected
    */
   public RequestManager.ResponseStream send(
       final MessageData messageData, final String protocolName, final PeerConnection connection)
