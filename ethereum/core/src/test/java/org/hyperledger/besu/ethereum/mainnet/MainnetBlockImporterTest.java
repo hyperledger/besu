@@ -53,10 +53,12 @@ public class MainnetBlockImporterTest {
   public void doNotImportBlockIfBlockchainAlreadyHasBlock() {
     when(blockchain.contains(hash)).thenReturn(true);
 
-    assertThat(
-            blockImporter.importBlock(
-                context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL))
-        .isTrue();
+    final BlockImportResult result =
+        blockImporter.importBlock(
+            context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL);
+
+    assertThat(result.isImported()).isTrue();
+
     verify(blockValidator, never())
         .validateAndProcessBlock(
             context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL);

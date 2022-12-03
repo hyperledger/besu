@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -73,7 +72,6 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     when(query.blockByNumber(ArgumentMatchers.anyLong()))
         .thenReturn(Optional.of(new BlockWithMetadata<>(header, null, null, null, 0)));
     when(header.getCoinbase()).thenReturn(testAddress);
-    when(query.getWorldState(anyLong())).thenReturn(Optional.of(mutableWorldState));
 
     final Optional<NormalBlockAdapter> maybeBlock = fetcher.get(environment);
     assertThat(maybeBlock).isPresent();

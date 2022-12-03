@@ -73,23 +73,21 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public long addNewForkchoiceMessageListener(
-      final ForkchoiceMessageListener forkchoiceMessageListener) {
-    return postMergeContext.addNewForkchoiceMessageListener(forkchoiceMessageListener);
+  public long addNewUnverifiedForkchoiceListener(
+      final UnverifiedForkchoiceListener unverifiedForkchoiceListener) {
+    return postMergeContext.addNewUnverifiedForkchoiceListener(unverifiedForkchoiceListener);
   }
 
   @Override
-  public void removeNewForkchoiceMessageListener(final long subscriberId) {
-    postMergeContext.removeNewForkchoiceMessageListener(subscriberId);
+  public void removeNewUnverifiedForkchoiceListener(final long subscriberId) {
+    postMergeContext.removeNewUnverifiedForkchoiceListener(subscriberId);
   }
 
   @Override
-  public void fireNewUnverifiedForkchoiceMessageEvent(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    postMergeContext.fireNewUnverifiedForkchoiceMessageEvent(
-        headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
+  public void fireNewUnverifiedForkchoiceEvent(
+      final Hash headBlockHash, final Hash safeBlockHash, final Hash finalizedBlockHash) {
+    postMergeContext.fireNewUnverifiedForkchoiceEvent(
+        headBlockHash, safeBlockHash, finalizedBlockHash);
   }
 
   @Override

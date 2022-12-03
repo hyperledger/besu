@@ -70,14 +70,14 @@ public class IbftProposeValidatorVoteTest {
   public void exceptionWhenNoAddressSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
   }
 
   @Test
   public void exceptionWhenInvalidBoolParameterSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams(Address.fromHexString("1"), "c")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
   }
 
   @Test

@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Bool;
 import org.web3j.abi.datatypes.DynamicArray;
+import org.web3j.abi.datatypes.DynamicBytes;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.generated.Bytes32;
@@ -44,7 +45,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the <a
  * href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
- * <p>Generated with web3j version 4.5.16.
+ * <p>Generated with web3j version 1.4.1.
  */
 @SuppressWarnings("rawtypes")
 public class FlexiblePrivacyGroupManagementInterface extends Contract {
@@ -107,10 +108,10 @@ public class FlexiblePrivacyGroupManagementInterface extends Contract {
         new Function(
             FUNC_ADDPARTICIPANTS,
             Arrays.<Type>asList(
-                new org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.generated.Bytes32>(
-                    org.web3j.abi.datatypes.generated.Bytes32.class,
+                new org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.DynamicBytes>(
+                    org.web3j.abi.datatypes.DynamicBytes.class,
                     org.web3j.abi.Utils.typeMap(
-                        publicEnclaveKeys, org.web3j.abi.datatypes.generated.Bytes32.class))),
+                        publicEnclaveKeys, org.web3j.abi.datatypes.DynamicBytes.class))),
             Collections.<TypeReference<?>>emptyList());
     return executeRemoteCallTransaction(function);
   }
@@ -136,7 +137,7 @@ public class FlexiblePrivacyGroupManagementInterface extends Contract {
         new Function(
             FUNC_GETPARTICIPANTS,
             Arrays.<Type>asList(),
-            Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Bytes32>>() {}));
+            Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<DynamicBytes>>() {}));
     return new RemoteFunctionCall<List>(
         function,
         new Callable<List>() {
@@ -168,7 +169,7 @@ public class FlexiblePrivacyGroupManagementInterface extends Contract {
     final Function function =
         new Function(
             FUNC_REMOVEPARTICIPANT,
-            Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(participant)),
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.DynamicBytes(participant)),
             Collections.<TypeReference<?>>emptyList());
     return executeRemoteCallTransaction(function);
   }

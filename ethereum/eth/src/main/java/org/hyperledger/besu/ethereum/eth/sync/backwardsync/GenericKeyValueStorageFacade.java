@@ -15,6 +15,7 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -22,6 +23,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class GenericKeyValueStorageFacade<K, V> implements Closeable {
   protected final KeyValueStorage storage;
@@ -57,6 +61,13 @@ public class GenericKeyValueStorageFacade<K, V> implements Closeable {
     keyValueStorageTransaction.commit();
   }
 
+  public void putAll(
+      final Consumer<KeyValueStorageTransaction> keyValueStorageTransactionConsumer) {
+    final KeyValueStorageTransaction keyValueStorageTransaction = storage.startTransaction();
+    keyValueStorageTransactionConsumer.accept(keyValueStorageTransaction);
+    keyValueStorageTransaction.commit();
+  }
+
   public void drop(final K key) {
     storage.tryDelete(keyConvertor.toBytes(key));
   }
@@ -77,5 +88,11 @@ public class GenericKeyValueStorageFacade<K, V> implements Closeable {
           keyConvertor.toBytes(entry.getKey()), valueConvertor.toBytes(entry.getValue()));
     }
     keyValueStorageTransaction.commit();
+  }
+
+  public Stream<V> streamValuesFromKeysThat(final Predicate<byte[]> returnCondition)
+      throws StorageException {
+    return storage.getAllValuesFromKeysThat(returnCondition).stream()
+        .map(valueConvertor::fromBytes);
   }
 }

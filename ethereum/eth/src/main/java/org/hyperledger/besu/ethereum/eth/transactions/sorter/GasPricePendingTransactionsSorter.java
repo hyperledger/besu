@@ -18,14 +18,13 @@ import static java.util.Comparator.comparing;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
 import java.util.Iterator;
 import java.util.NavigableSet;
-import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
@@ -37,27 +36,20 @@ import java.util.function.Supplier;
  */
 public class GasPricePendingTransactionsSorter extends AbstractPendingTransactionsSorter {
 
-  private final NavigableSet<TransactionInfo> prioritizedTransactions =
+  private final NavigableSet<PendingTransaction> prioritizedTransactions =
       new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
-              .thenComparing(TransactionInfo::getGasPrice)
-              .thenComparing(TransactionInfo::getSequence)
+          comparing(PendingTransaction::isReceivedFromLocalSource)
+              .thenComparing(PendingTransaction::getGasPrice)
+              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
   public GasPricePendingTransactionsSorter(
-      final int maxTransactionRetentionHours,
-      final int maxPendingTransactions,
+      final TransactionPoolConfiguration poolConfig,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final Percentage priceBump) {
-    super(
-        maxTransactionRetentionHours,
-        maxPendingTransactions,
-        clock,
-        metricsSystem,
-        chainHeadHeaderSupplier,
-        priceBump);
+      final Supplier<BlockHeader> chainHeadHeaderSupplier) {
+    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier);
   }
 
   @Override
@@ -66,48 +58,22 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
   }
 
   @Override
-  protected void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (lock) {
-      final TransactionInfo removedTransactionInfo =
-          pendingTransactions.remove(transaction.getHash());
-      if (removedTransactionInfo != null) {
-        prioritizedTransactions.remove(removedTransactionInfo);
-        removeTransactionTrackedBySenderAndNonce(transaction);
-        incrementTransactionRemovedCounter(
-            removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
-      }
-    }
-  }
-
-  @Override
-  protected Iterator<TransactionInfo> prioritizedTransactions() {
+  protected Iterator<PendingTransaction> prioritizedTransactions() {
     return prioritizedTransactions.iterator();
   }
 
   @Override
-  protected TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
-    Optional<Transaction> droppedTransaction = Optional.empty();
-    synchronized (lock) {
-      if (pendingTransactions.containsKey(transactionInfo.getHash())) {
-        return TransactionAddedStatus.ALREADY_KNOWN;
-      }
+  protected void prioritizeTransaction(final PendingTransaction pendingTx) {
+    prioritizedTransactions.add(pendingTx);
+  }
 
-      final TransactionAddedStatus transactionAddedStatus =
-          addTransactionForSenderAndNonce(transactionInfo);
-      if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
-        return transactionAddedStatus;
-      }
-      prioritizedTransactions.add(transactionInfo);
-      pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
+  @Override
+  protected void removePrioritizedTransaction(final PendingTransaction removedPendingTx) {
+    prioritizedTransactions.remove(removedPendingTx);
+  }
 
-      if (pendingTransactions.size() > maxPendingTransactions) {
-        final TransactionInfo toRemove = prioritizedTransactions.last();
-        doRemoveTransaction(toRemove.getTransaction(), false);
-        droppedTransaction = Optional.of(toRemove.getTransaction());
-      }
-    }
-    notifyTransactionAdded(transactionInfo.getTransaction());
-    droppedTransaction.ifPresent(this::notifyTransactionDropped);
-    return TransactionAddedStatus.ADDED;
+  @Override
+  protected PendingTransaction getLeastPriorityTransaction() {
+    return prioritizedTransactions.last();
   }
 }

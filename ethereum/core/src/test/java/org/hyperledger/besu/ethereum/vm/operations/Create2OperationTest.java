@@ -24,9 +24,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operation.Create2Operation;
@@ -142,7 +142,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(Code.createLegacyCode(codeBytes, Hash.hash(codeBytes)))
+            .code(CodeFactory.createCode(codeBytes, Hash.hash(codeBytes), 0, true))
             .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
@@ -168,7 +168,8 @@ public class Create2OperationTest {
     when(evm.getCode(any(), any()))
         .thenAnswer(
             invocation ->
-                Code.createLegacyCode(invocation.getArgument(1), invocation.getArgument(0)));
+                CodeFactory.createCode(
+                    invocation.getArgument(1), invocation.getArgument(0), 0, true));
   }
 
   @Test
@@ -180,8 +181,7 @@ public class Create2OperationTest {
   @Test
   public void shouldCalculateGasPrice() {
     final OperationResult result = operation.execute(messageFrame, evm);
-    assertThat(result.getHaltReason()).isEmpty();
-    assertThat(result.getGasCost().isPresent()).isTrue();
-    assertThat(result.getGasCost().getAsLong()).isEqualTo(expectedGas);
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(result.getGasCost()).isEqualTo(expectedGas);
   }
 }

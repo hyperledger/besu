@@ -19,9 +19,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.FinalizedBlockHashSupplier;
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.consensus.merge.PandaPrinter;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -33,7 +32,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -64,7 +62,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromFinalizedBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.TransitionPivotSelector;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -87,6 +84,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.io.Closeable;
@@ -377,8 +375,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
-    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
+    final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
+    final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -387,7 +385,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             clock,
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             miningParameters,
             transactionPoolConfiguration);
 
@@ -396,7 +394,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
             protocolContext,
-            fastSyncEnabled,
+            syncConfig,
             transactionPool,
             ethereumWireProtocolConfiguration,
             ethPeers,
@@ -409,7 +407,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
 
-    final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
+    final PivotBlockSelector pivotBlockSelector =
+        createPivotSelector(
+            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
 
     final Synchronizer synchronizer =
         createSynchronizer(
@@ -421,8 +421,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             ethProtocolManager,
             pivotBlockSelector);
-
-    synchronizer.subscribeInSync(new PandaPrinter());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -467,7 +465,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalPluginServices);
   }
 
-  private Synchronizer createSynchronizer(
+  protected Synchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorage worldStateStorage,
       final ProtocolContext protocolContext,
@@ -477,9 +475,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthProtocolManager ethProtocolManager,
       final PivotBlockSelector pivotBlockSelector) {
 
-    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
-
-    DefaultSynchronizer toUse =
+    final DefaultSynchronizer toUse =
         new DefaultSynchronizer(
             syncConfig,
             protocolSchedule,
@@ -490,53 +486,51 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             syncState,
             dataDirectory,
+            storageProvider,
             clock,
             metricsSystem,
             getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+            ethProtocolManager,
             pivotBlockSelector);
-    if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
-      LOG.info(
-          "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .addNewForkchoiceMessageListener(toUse);
-    }
 
     return toUse;
   }
 
-  private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
+  private PivotBlockSelector createPivotSelector(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final MetricsSystem metricsSystem) {
 
-    final PivotSelectorFromPeers pivotSelectorFromPeers = new PivotSelectorFromPeers(syncConfig);
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
 
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
-      LOG.info(
-          "TTD difficulty is present, creating initial sync phase with transition to PoS support");
+      LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-      final FinalizedBlockHashSupplier finalizedBlockHashSupplier =
-          new FinalizedBlockHashSupplier();
+      final UnverifiedForkchoiceSupplier unverifiedForkchoiceSupplier =
+          new UnverifiedForkchoiceSupplier();
       final long subscriptionId =
-          mergeContext.addNewForkchoiceMessageListener(finalizedBlockHashSupplier);
+          mergeContext.addNewUnverifiedForkchoiceListener(unverifiedForkchoiceSupplier);
 
-      final Runnable unsubscribeFinalizedBlockHashListener =
+      final Runnable unsubscribeForkchoiceListener =
           () -> {
-            mergeContext.removeNewForkchoiceMessageListener(subscriptionId);
-            LOG.info("Initial sync done, unsubscribe finalized block hash supplier");
+            mergeContext.removeNewUnverifiedForkchoiceListener(subscriptionId);
+            LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
-      return new TransitionPivotSelector(
+      return new PivotSelectorFromFinalizedBlock(
+          protocolContext,
+          protocolSchedule,
+          ethContext,
+          metricsSystem,
           genesisConfigOptions,
-          finalizedBlockHashSupplier,
-          pivotSelectorFromPeers,
-          new PivotSelectorFromFinalizedBlock(
-              genesisConfigOptions,
-              finalizedBlockHashSupplier,
-              unsubscribeFinalizedBlockHashListener));
+          unverifiedForkchoiceSupplier,
+          unsubscribeForkchoiceListener);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
-      return pivotSelectorFromPeers;
+      return new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem);
     }
   }
 
@@ -590,7 +584,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext protocolContext,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
@@ -610,7 +604,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethContext,
         peerValidators,
         mergePeerFilter,
-        fastSyncEnabled,
+        synchronizerConfiguration,
         scheduler,
         genesisConfig.getForks());
   }
@@ -638,12 +632,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
         return new BonsaiWorldStateArchive(
-            new TrieLogManager(
-                blockchain,
-                (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-                dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            storageProvider,
-            blockchain);
+            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            dataStorageConfiguration.useBonsaiSnapshots());
+
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

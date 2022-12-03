@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -245,9 +246,9 @@ public class BlockchainSetupUtil {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-      final boolean result =
+      final BlockImportResult result =
           blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);
-      if (!result) {
+      if (!result.isImported()) {
         throw new IllegalStateException("Unable to import block " + block.getHeader().getNumber());
       }
     }

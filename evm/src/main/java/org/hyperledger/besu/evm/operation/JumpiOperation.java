@@ -20,9 +20,6 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import org.apache.tuweni.bytes.Bytes;
 
 public class JumpiOperation extends AbstractFixedCostOperation {
@@ -33,9 +30,8 @@ public class JumpiOperation extends AbstractFixedCostOperation {
   public JumpiOperation(final GasCalculator gasCalculator) {
     super(0x57, "JUMPI", 2, 0, 1, gasCalculator, gasCalculator.getHighTierGasCost());
     invalidJumpResponse =
-        new Operation.OperationResult(
-            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
-    jumpResponse = new OperationResult(OptionalLong.of(gasCost), Optional.empty(), 0);
+        new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+    jumpResponse = new OperationResult(gasCost, null, 0);
   }
 
   @Override

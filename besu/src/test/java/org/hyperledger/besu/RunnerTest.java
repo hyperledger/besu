@@ -17,6 +17,11 @@ package org.hyperledger.besu;
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_BACKGROUND_COMPACTIONS;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -43,6 +48,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -87,7 +93,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.junit.After;
@@ -101,11 +106,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Tests for {@link Runner}. */
 @RunWith(MockitoJUnitRunner.class)
 public final class RunnerTest {
-
-  private static final int MAX_OPEN_FILES = 1024;
-  private static final long CACHE_CAPACITY = 8388608;
-  private static final int MAX_BACKGROUND_COMPACTIONS = 4;
-  private static final int BACKGROUND_THREAD_COUNT = 4;
 
   private Vertx vertx;
 
@@ -223,7 +223,6 @@ public final class RunnerTest {
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
             .storageProvider(new InMemoryKeyValueStorageProvider())
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl());
 
     Runner runnerBehind = null;
@@ -239,7 +238,6 @@ public final class RunnerTest {
             .dataDir(dbAhead)
             .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
-            .forkIdSupplier(() -> controllerAhead.getProtocolManager().getForkIdAsBytesList())
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     try {
@@ -294,7 +292,6 @@ public final class RunnerTest {
               .metricsConfiguration(behindMetricsConfiguration)
               .dataDir(temp.newFolder().toPath())
               .metricsSystem(noOpMetricsSystem)
-              .forkIdSupplier(() -> controllerBehind.getProtocolManager().getForkIdAsBytesList())
               .build();
 
       runnerBehind.startExternalServices();
@@ -415,10 +412,11 @@ public final class RunnerTest {
             new RocksDBKeyValueStorageFactory(
                 () ->
                     new RocksDBFactoryConfiguration(
-                        MAX_OPEN_FILES,
-                        MAX_BACKGROUND_COMPACTIONS,
-                        BACKGROUND_THREAD_COUNT,
-                        CACHE_CAPACITY),
+                        DEFAULT_MAX_OPEN_FILES,
+                        DEFAULT_MAX_BACKGROUND_COMPACTIONS,
+                        DEFAULT_BACKGROUND_THREAD_COUNT,
+                        DEFAULT_CACHE_CAPACITY,
+                        DEFAULT_IS_HIGH_SPEC),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
@@ -464,9 +462,9 @@ public final class RunnerTest {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-      final boolean result =
+      final BlockImportResult result =
           blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);
-      if (!result) {
+      if (!result.isImported()) {
         throw new IllegalStateException("Unable to import block " + block.getHeader().getNumber());
       }
     }

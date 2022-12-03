@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ import org.junit.Test;
 
 public class RequestManagerTest {
 
-  private final AtomicLong requestIdCounter = new AtomicLong(0);
+  private final AtomicLong requestIdCounter = new AtomicLong(1);
 
   @Test
   public void dispatchesMessagesReceivedAfterRegisteringCallback() throws Exception {
@@ -72,7 +73,7 @@ public class RequestManagerTest {
       requestManager.dispatchResponse(mockMessage);
 
       // Response handler should get message
-      assertThat(receivedMessages.size()).isEqualTo(1);
+      assertThat(receivedMessages).hasSize(1);
       assertResponseCorrect(receivedMessages.get(0), mockMessage, supportsRequestId);
       assertThat(closedCount.get()).isEqualTo(1);
     }
@@ -109,7 +110,7 @@ public class RequestManagerTest {
 
       // Response handler should get message
       stream.then(responseHandler);
-      assertThat(receivedMessages.size()).isEqualTo(1);
+      assertThat(receivedMessages).hasSize(1);
       assertResponseCorrect(receivedMessages.get(0), mockMessage, supportsRequestId);
       assertThat(closedCount.get()).isEqualTo(1);
     }
@@ -146,16 +147,16 @@ public class RequestManagerTest {
 
     // Response handler should get messages sent before it is registered
     stream.then(responseHandler);
-    assertThat(receivedMessages.size()).isEqualTo(1);
+    assertThat(receivedMessages).hasSize(1);
     assertResponseCorrect(receivedMessages.get(0), mockMessage, false);
-    assertThat(closedCount.get()).isEqualTo(0);
+    assertThat(closedCount.get()).isZero();
 
     // Dispatch second message
     mockMessage = mockMessage(peer, false);
     requestManager.dispatchResponse(mockMessage);
 
     // Response handler should get messages sent after it is registered
-    assertThat(receivedMessages.size()).isEqualTo(2);
+    assertThat(receivedMessages).hasSize(2);
     assertResponseCorrect(receivedMessages.get(1), mockMessage, false);
     assertThat(closedCount.get()).isEqualTo(1);
   }
@@ -202,27 +203,27 @@ public class RequestManagerTest {
     requestManager.dispatchResponse(mockMessage);
 
     // Response handler A should get message
-    assertThat(receivedMessagesA.size()).isEqualTo(1);
+    assertThat(receivedMessagesA).hasSize(1);
     assertResponseCorrect(receivedMessagesA.get(0), mockMessage, false);
-    assertThat(closedCountA.get()).isEqualTo(0);
+    assertThat(closedCountA.get()).isZero();
 
     streamB.then(responseHandlerB);
 
     // Response handler B should get message
-    assertThat(receivedMessagesB.size()).isEqualTo(1);
+    assertThat(receivedMessagesB).hasSize(1);
     assertResponseCorrect(receivedMessagesB.get(0), mockMessage, false);
-    assertThat(closedCountB.get()).isEqualTo(0);
+    assertThat(closedCountB.get()).isZero();
 
     // Dispatch second message
     mockMessage = mockMessage(peer, false);
     requestManager.dispatchResponse(mockMessage);
 
     // Response handler A should get message
-    assertThat(receivedMessagesA.size()).isEqualTo(2);
+    assertThat(receivedMessagesA).hasSize(2);
     assertResponseCorrect(receivedMessagesA.get(1), mockMessage, false);
     assertThat(closedCountA.get()).isEqualTo(1);
     // Response handler B should get message
-    assertThat(receivedMessagesB.size()).isEqualTo(2);
+    assertThat(receivedMessagesB).hasSize(2);
     assertResponseCorrect(receivedMessagesB.get(1), mockMessage, false);
     assertThat(closedCountB.get()).isEqualTo(1);
   }
@@ -308,5 +309,30 @@ public class RequestManagerTest {
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         TestClock.fixed(),
         Collections.emptyList());
+  }
+
+  @Test
+  public void disconnectsPeerOnBadMessage() throws Exception {
+    for (final boolean supportsRequestId : List.of(true, false)) {
+      final EthPeer peer = createPeer();
+      final RequestManager requestManager =
+          new RequestManager(peer, supportsRequestId, EthProtocol.NAME);
+
+      requestManager
+          .dispatchRequest(
+              messageData -> RLP.input(messageData.getData()).nextSize(),
+              new RawMessage(0x01, Bytes.EMPTY))
+          .then(
+              (closed, msg, p) -> {
+                if (!closed) {
+                  RLP.input(msg.getData()).skipNext();
+                }
+              });
+      final EthMessage mockMessage =
+          new EthMessage(peer, new RawMessage(1, Bytes.of(0x81, 0x82, 0x83, 0x84)));
+
+      requestManager.dispatchResponse(mockMessage);
+      assertThat(peer.isDisconnected()).isTrue();
+    }
   }
 }

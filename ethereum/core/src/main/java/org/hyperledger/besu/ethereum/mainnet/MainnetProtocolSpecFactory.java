@@ -185,6 +185,17 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
+  public ProtocolSpecBuilder shandongDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.shandongDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
   public ProtocolSpecBuilder eip1153Definition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.eip1153Definition(
         chainId,

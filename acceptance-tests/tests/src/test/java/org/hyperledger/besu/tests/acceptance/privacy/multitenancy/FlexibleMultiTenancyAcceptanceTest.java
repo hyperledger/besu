@@ -16,6 +16,9 @@ package org.hyperledger.besu.tests.acceptance.privacy.multitenancy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
+import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -32,6 +35,7 @@ import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -53,14 +57,21 @@ import org.web3j.utils.Restriction;
 public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
+  private final EnclaveEncryptorType enclaveEncryptorType;
 
-  public FlexibleMultiTenancyAcceptanceTest(final EnclaveType enclaveType) {
+  public FlexibleMultiTenancyAcceptanceTest(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType) {
     this.enclaveType = enclaveType;
+    this.enclaveEncryptorType = enclaveEncryptorType;
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<EnclaveType> enclaveTypes() {
-    return EnclaveType.valuesForTests();
+  @Parameterized.Parameters(name = "{0} enclave type with {1} encryptor")
+  public static Collection<Object[]> enclaveParameters() {
+    return Arrays.asList(
+        new Object[][] {
+          {TESSERA, NACL},
+          {TESSERA, EC}
+        });
   }
 
   private static final PermissioningTransactions permissioningTransactions =
@@ -75,7 +86,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
     alice =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "node1",
-            PrivacyAccountResolver.MULTI_TENANCY.resolve(EnclaveEncryptorType.NACL),
+            PrivacyAccountResolver.MULTI_TENANCY.resolve(enclaveEncryptorType),
             true,
             enclaveType,
             Optional.empty());
@@ -448,7 +459,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
             privacyGroupId, groupCreatorNode, groupCreatorTenant);
     final PrivateTransactionReceipt expectedReceipt =
         buildExpectedAddMemberTransactionReceipt(
-            privacyGroupId, groupCreatorNode, groupCreatorTenant, members.toArray(new String[] {}));
+            privacyGroupId, groupCreatorNode, groupCreatorTenant, members);
 
     for (final MultiTenancyPrivacyNode mtpn : multiTenancyPrivacyNodes) {
       final PrivacyNode privacyNode = mtpn.getPrivacyNode();

@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,7 +27,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.QosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -46,35 +43,37 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(VertxUnitRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class EngineExchangeTransitionConfigurationTest {
   private EngineExchangeTransitionConfiguration method;
   private static final Vertx vertx = Vertx.vertx();
-  private final ProtocolContext protocolContext = mock(ProtocolContext.class);
-  private final MergeContext mergeContext = mock(MergeContext.class);
+
+  @Mock private ProtocolContext protocolContext;
+
+  @Mock private MergeContext mergeContext;
+
+  @Mock private EngineCallListener engineCallListener;
 
   @Before
   public void setUp() {
-    when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
 
-    this.method = new EngineExchangeTransitionConfiguration(vertx, protocolContext);
+    this.method =
+        new EngineExchangeTransitionConfiguration(vertx, protocolContext, engineCallListener);
   }
 
   @Test
@@ -99,6 +98,7 @@ public class EngineExchangeTransitionConfigurationTest {
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
     assertThat(result.getTerminalBlockHash()).isEqualTo(mockBlockHeader.getHash());
     assertThat(result.getTerminalBlockNumber()).isEqualTo(mockBlockHeader.getNumber());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -115,12 +115,11 @@ public class EngineExchangeTransitionConfigurationTest {
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
     assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO);
     assertThat(result.getTerminalBlockNumber()).isEqualTo(0L);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
   public void shouldReturnDefaultOnNoTerminalTotalDifficultyConfigured() {
-    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.empty());
-
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
@@ -135,6 +134,7 @@ public class EngineExchangeTransitionConfigurationTest {
                     10)));
     assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO);
     assertThat(result.getTerminalBlockNumber()).isEqualTo(0L);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -154,6 +154,7 @@ public class EngineExchangeTransitionConfigurationTest {
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(24));
     assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.fromHexStringLenient("0x01"));
     assertThat(result.getTerminalBlockNumber()).isEqualTo(42);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -173,6 +174,7 @@ public class EngineExchangeTransitionConfigurationTest {
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(24));
     assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.fromHexStringLenient("0x01"));
     assertThat(result.getTerminalBlockNumber()).isEqualTo(42);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -209,102 +211,6 @@ public class EngineExchangeTransitionConfigurationTest {
     assertThat(res.get("terminalBlockHash"))
         .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
     assertThat(res.get("terminalTotalDifficulty")).isEqualTo("0x0");
-  }
-
-  @Test
-  public void shouldWarnWhenExchangeConfigNotCalledWithinTimeout(final TestContext ctx) {
-    final long TEST_QOS_TIMEOUT = 75L;
-    final Async async = ctx.async();
-    final AtomicInteger logCounter = new AtomicInteger(0);
-    final var spyMethod = spy(method);
-    final var spyTimer =
-        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
-    when(spyMethod.getQosTimer()).thenReturn(spyTimer);
-    spyTimer.resetTimer();
-
-    vertx.setTimer(
-        100L,
-        z -> {
-          try {
-            // just once on construction:
-            verify(spyTimer, times(1)).resetTimer();
-          } catch (Exception ex) {
-            ctx.fail(ex);
-          }
-          // assert one warn:
-          ctx.assertEquals(1, logCounter.get());
-          async.complete();
-        });
-  }
-
-  @Test
-  public void shouldNotWarnWhenTimerExecutesBeforeTimeout(final TestContext ctx) {
-    final long TEST_QOS_TIMEOUT = 500L;
-    final Async async = ctx.async();
-    final AtomicInteger logCounter = new AtomicInteger(0);
-    final var spyMethod = spy(method);
-    final var spyTimer =
-        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
-    when(spyMethod.getQosTimer()).thenReturn(spyTimer);
-    spyTimer.resetTimer();
-
-    vertx.setTimer(
-        50L,
-        z -> {
-          try {
-            // just once on construction:
-            verify(spyTimer, times(1)).resetTimer();
-          } catch (Exception ex) {
-            ctx.fail(ex);
-          }
-          // should not warn
-          ctx.assertEquals(0, logCounter.get());
-          async.complete();
-        });
-  }
-
-  @Test
-  public void shouldNotWarnWhenExchangeConfigurationCalledWithinTimeout(final TestContext ctx) {
-    final long TEST_QOS_TIMEOUT = 75L;
-    final Async async = ctx.async();
-    final AtomicInteger logCounter = new AtomicInteger(0);
-    final var spyMethod = spy(method);
-    final var spyTimer =
-        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
-    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
-    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
-    when(spyMethod.getQosTimer()).thenReturn(spyTimer);
-    spyTimer.resetTimer();
-
-    // call exchangeTransitionConfiguration 50 milliseconds hence to reset our QoS timer
-    vertx.setTimer(
-        50L,
-        z ->
-            spyMethod.syncResponse(
-                new JsonRpcRequestContext(
-                    new JsonRpcRequest(
-                        "2.0",
-                        RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION.getMethodName(),
-                        new Object[] {
-                          new EngineExchangeTransitionConfigurationParameter(
-                              "24",
-                              Hash.fromHexStringLenient("0x01").toHexString(),
-                              new UnsignedLongParameter(0))
-                        }))));
-
-    vertx.setTimer(
-        100L,
-        z -> {
-          try {
-            // once on construction, once on call:
-            verify(spyTimer, times(2)).resetTimer();
-          } catch (Exception ex) {
-            ctx.fail(ex);
-          }
-          // should not warn
-          ctx.assertEquals(0, logCounter.get());
-          async.complete();
-        });
   }
 
   private JsonRpcResponse resp(final EngineExchangeTransitionConfigurationParameter param) {

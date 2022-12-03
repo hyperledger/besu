@@ -312,9 +312,14 @@ public class FlexiblePrivacyPrecompiledContractTest {
     // array length too big
     assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
         Bytes.concatenate(
+            // offset
             Bytes32.fromHexStringLenient("0x0"),
             // array length
             Bytes32.fromHexStringLenient("0x1"),
+            // offset
+            Bytes32.fromHexStringLenient("0x0"),
+            // member public key size
+            Bytes32.fromHexStringLenient("0x20"),
             // first array content
             Bytes32.fromHexStringLenient("0x1")));
   }
@@ -332,6 +337,10 @@ public class FlexiblePrivacyPrecompiledContractTest {
             Bytes32.fromHexStringLenient("0x0"),
             // array length
             Bytes32.fromHexStringLenient("0x2"),
+            // offset
+            Bytes32.fromHexStringLenient("0x0"),
+            // member public key size
+            Bytes32.fromHexStringLenient("0x20"),
             // first array content
             Bytes32.fromHexStringLenient("0x1")));
   }
@@ -383,7 +392,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
             TransactionProcessingResult.invalid(
-                ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE))));
+                ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH))));
 
     final FlexiblePrivacyPrecompiledContract contractSpy = spy(contract);
     Mockito.doReturn(true)

@@ -46,6 +46,8 @@ public class TransactionTestFixture {
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
 
+  private Optional<BigInteger> v = Optional.empty();
+
   public Transaction createTransaction(final KeyPair keys) {
     final Transaction.Builder builder = Transaction.builder();
     builder
@@ -62,6 +64,8 @@ public class TransactionTestFixture {
 
     maxPriorityFeePerGas.ifPresent(builder::maxPriorityFeePerGas);
     maxFeePerGas.ifPresent(builder::maxFeePerGas);
+
+    v.ifPresent(builder::v);
 
     return builder.signAndBuild(keys);
   }
@@ -118,6 +122,11 @@ public class TransactionTestFixture {
 
   public TransactionTestFixture maxFeePerGas(final Optional<Wei> maxFeePerGas) {
     this.maxFeePerGas = maxFeePerGas;
+    return this;
+  }
+
+  public TransactionTestFixture v(final Optional<BigInteger> v) {
+    this.v = v;
     return this;
   }
 }

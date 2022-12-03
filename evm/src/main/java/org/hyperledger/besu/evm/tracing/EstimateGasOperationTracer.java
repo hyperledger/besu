@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.tracing;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.SStoreOperation;
 
 public class EstimateGasOperationTracer implements OperationTracer {
@@ -24,18 +25,13 @@ public class EstimateGasOperationTracer implements OperationTracer {
   private long sStoreStipendNeeded = 0L;
 
   @Override
-  public void traceExecution(
-      final MessageFrame frame, final OperationTracer.ExecuteOperation executeOperation) {
-    try {
-      executeOperation.execute();
-    } finally {
-      if (frame.getCurrentOperation() instanceof SStoreOperation && sStoreStipendNeeded == 0L) {
-        sStoreStipendNeeded =
-            ((SStoreOperation) frame.getCurrentOperation()).getMinimumGasRemaining();
-      }
-      if (maxDepth < frame.getMessageStackDepth()) {
-        maxDepth = frame.getMessageStackDepth();
-      }
+  public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
+    if (frame.getCurrentOperation() instanceof SStoreOperation && sStoreStipendNeeded == 0L) {
+      sStoreStipendNeeded =
+          ((SStoreOperation) frame.getCurrentOperation()).getMinimumGasRemaining();
+    }
+    if (maxDepth < frame.getMessageStackDepth()) {
+      maxDepth = frame.getMessageStackDepth();
     }
   }
 

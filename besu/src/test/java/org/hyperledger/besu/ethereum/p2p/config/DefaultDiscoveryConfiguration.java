@@ -96,6 +96,15 @@ public class DefaultDiscoveryConfiguration {
                   "enode://9246d00bc8fd1742e5ad2428b80fc4dc45d786283e05ef6edbd9002cbc335d40998444732fbe921cb88e1d2c73d1b1de53bae6a2237996e9bfe14f871baf7066@18.168.182.86:30303")
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
+  public static final List<EnodeURL> SHANDONG_BOOTSTRAP_NODES =
+      Collections.unmodifiableList(
+          Stream.of(
+                  "enode://15c459fb9cd636f9f7640dfc0f4a6445467205fc6731063acdee9befa2ab35ad690a7240fdddef5da9d088c29a52029ceaf9ef1aea889927ced972d4b19b8edc@46.101.126.45:30303",
+                  "enode://a37852e9193aa15b41c207c9718c938c2b0c970c32dc91205f1206530271b1fcc6a5876f4e2db288528aaa44bf27f4c5eb0c0eaeb29c18c9e735023e892c3ccc@178.128.203.243:30303",
+                  "enode://d2b77d96763ae59ad1ca6206cff48da5c40b9f289bd501db4df589b72cb877193280f8f79111aebb4cefec32b07ccfab8646821d8a29ecae8ea0124c8f23bdd3@142.93.173.170:30303",
+                  "enode://87f7d55159c662bf8e9d1246386a75175ecefc3c2b19275afeeda95126a3a31e2a46d22894a3357aa964efdfd5d6144885ce525fc53fc9edbe7cd71cfa3ac4a4@164.92.174.56:30303")
+              .map(EnodeURLImpl::fromString)
+              .collect(toList()));
   public static final List<EnodeURL> CLASSIC_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(

@@ -58,7 +58,7 @@ public enum JsonRpcError {
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),
-  INCORRECT_NONCE(-32006, "Incorrect nonce"),
+  NONCE_TOO_HIGH(-32006, "Nonce too high"),
   TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
@@ -70,7 +70,11 @@ public enum JsonRpcError {
   GAS_PRICE_MUST_BE_ZERO(-3200, "gasPrice must be set to zero on a GoQuorum compatible network"),
   TRANSACTION_NOT_FOUND(-32000, "Transaction not found"),
   MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS(
-      32000, "Max priority fee per gas exceeds max fee per gas"),
+      -32000, "Max priority fee per gas exceeds max fee per gas"),
+  NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER(
+      -32000, "Transaction nonce is too distant from current sender nonce"),
+  LOWER_NONCE_INVALID_TRANSACTION_EXISTS(
+      -32000, "An invalid transaction with a lower nonce exists"),
 
   // Execution engine failures
   UNKNOWN_PAYLOAD(-32001, "Payload does not exist / is not available"),

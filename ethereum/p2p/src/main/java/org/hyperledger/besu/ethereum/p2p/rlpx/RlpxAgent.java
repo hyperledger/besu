@@ -113,11 +113,6 @@ public class RlpxAgent {
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
-        "peer_count",
-        "The current number of peers connected",
-        this::getConnectionCount);
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.ETHEREUM,
         "peer_limit",
         "The maximum number of peers this node allows to connect",
         () -> upperBoundConnections);
