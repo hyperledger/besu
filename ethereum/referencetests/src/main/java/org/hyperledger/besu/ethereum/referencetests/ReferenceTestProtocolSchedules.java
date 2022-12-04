@@ -77,8 +77,6 @@ public class ReferenceTestProtocolSchedules {
         "Shanghai",
         createSchedule(new StubGenesisConfigOptions().shandongBlock(0).baseFeePerGas(0x0a)));
     builder.put("Shandong", createSchedule(new StubGenesisConfigOptions().shandongBlock(0)));
-    builder.put(
-        "MergeNetSplit", createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0)));
     builder.put("EIP1153", createSchedule(new StubGenesisConfigOptions().eip1153Block(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }

@@ -71,7 +71,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private QbftConfigOptions qbftConfigOptions = JsonQbftConfigOptions.DEFAULT;
   private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
-  private final DiscoveryOptions discoveryOptions = DiscoveryOptions.DEFAULT;
+  private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
 
   @Override
   public String getConsensusEngine() {
@@ -135,7 +135,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public DiscoveryOptions getDiscoveryOptions() {
-    return discoveryOptions;
+    return DISCOVERY_OPTIONS;
   }
 
   @Override
@@ -331,21 +331,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-    getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
+    getChainId().ifPresent(id -> builder.put("chainId", id));
 
     // mainnet fork blocks
     getHomesteadBlockNumber().ifPresent(l -> builder.put("homesteadBlock", l));
-    getDaoForkBlock()
-        .ifPresent(
-            l -> {
-              builder.put("daoForkBlock", l);
-            });
+    getDaoForkBlock().ifPresent(l -> builder.put("daoForkBlock", l));
     getTangerineWhistleBlockNumber().ifPresent(l -> builder.put("eip150Block", l));
-    getSpuriousDragonBlockNumber()
-        .ifPresent(
-            l -> {
-              builder.put("eip158Block", l);
-            });
+    getSpuriousDragonBlockNumber().ifPresent(l -> builder.put("eip158Block", l));
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getPetersburgBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
