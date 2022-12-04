@@ -125,7 +125,7 @@ class OpcodesV1 {
     INVALID, // 0X5c
     INVALID, // 0X5d
     INVALID, // 0X5e
-    INVALID, // 0X5f - ?PUSH0?
+    VALID, // 0X5f - PUSH0
     VALID, // 0x60 - PUSH1
     VALID, // 0x61 - PUSH2
     VALID, // 0x62 - PUSH3
