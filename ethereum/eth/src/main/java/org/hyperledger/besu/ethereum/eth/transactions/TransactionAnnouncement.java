@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -29,19 +31,22 @@ public class TransactionAnnouncement {
   private final Optional<Long> size;
 
   public TransactionAnnouncement(final Hash hash) {
-    this.hash = hash;
+    this.hash = checkNotNull(hash, "Hash cannot be null");
     this.type = Optional.empty();
     this.size = Optional.empty();
   }
 
   public TransactionAnnouncement(final Transaction transaction) {
-    this(transaction.getHash(), transaction.getType(), (long) transaction.calculateSize());
+    this(
+        checkNotNull(transaction, "Transaction cannot be null").getHash(),
+        transaction.getType(),
+        (long) transaction.calculateSize());
   }
 
   public TransactionAnnouncement(final Hash hash, final TransactionType type, final Long size) {
-    this.hash = hash;
-    this.type = Optional.ofNullable(type);
-    this.size = Optional.ofNullable(size);
+    this.hash = checkNotNull(hash, "Hash cannot be null");
+    this.type = Optional.of(checkNotNull(type, "Type cannot be null"));
+    this.size = Optional.of(checkNotNull(size, "Size cannot be null"));
   }
 
   public Hash getHash() {

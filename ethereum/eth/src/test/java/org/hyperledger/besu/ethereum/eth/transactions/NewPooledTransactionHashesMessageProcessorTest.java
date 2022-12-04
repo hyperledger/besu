@@ -457,4 +457,40 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     final String actualMessage = exception.getCause().getMessage();
     assertThat(actualMessage).contains(expectedMessage);
   }
+
+  @Test
+  public void shouldThrowNullPointerIfArgumentsAreNull() {
+    final Hash hash = Hash.hash(Bytes.random(32));
+    assertThat(
+            assertThrows(NullPointerException.class, () -> new TransactionAnnouncement((Hash) null))
+                .getMessage())
+        .isEqualTo("Hash cannot be null");
+
+    assertThat(
+            assertThrows(
+                    NullPointerException.class,
+                    () -> new TransactionAnnouncement(null, TransactionType.EIP1559, 0L))
+                .getMessage())
+        .isEqualTo("Hash cannot be null");
+
+    assertThat(
+            assertThrows(
+                    NullPointerException.class, () -> new TransactionAnnouncement(hash, null, 0L))
+                .getMessage())
+        .isEqualTo("Type cannot be null");
+
+    assertThat(
+            assertThrows(
+                    NullPointerException.class,
+                    () -> new TransactionAnnouncement(hash, TransactionType.EIP1559, null))
+                .getMessage())
+        .isEqualTo("Size cannot be null");
+
+    assertThat(
+            assertThrows(
+                    NullPointerException.class,
+                    () -> new TransactionAnnouncement((Transaction) null))
+                .getMessage())
+        .isEqualTo("Transaction cannot be null");
+  }
 }
