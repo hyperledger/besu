@@ -376,16 +376,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
-    final EthPeer peer = ethPeers.peer(connection.getPeer().getId());
-    if (peer != null && peer.getConnection().equals(connection)) {
-      ethPeers.registerDisconnect(connection);
+    if (ethPeers.registerDisconnect(connection)) {
       LOG.debug(
-          "Disconnect - {} - {} - {} - {} peers left",
+          "Disconnect - {} - {} - {} - {} peers left\n{}",
           initiatedByPeer ? "Inbound" : "Outbound",
           reason,
           connection.getPeer().getId(),
-          ethPeers.peerCount());
-      LOG.debug("{}", ethPeers);
+          ethPeers.peerCount(),
+          ethPeers);
     }
   }
 
@@ -415,7 +413,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
         LOG.debug(
-            "Received status message from {}: {} with connection",
+            "Received status message from {}: {} with connection {}",
             peer,
             status,
             message.getConnection());

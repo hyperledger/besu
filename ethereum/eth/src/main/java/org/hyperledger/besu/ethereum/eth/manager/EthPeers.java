@@ -145,11 +145,11 @@ public class EthPeers {
               LOG.info(
                   "Found connection from same peer and initiated by the same side in not ready connections. Peer {}",
                   id);
-              return null;
+              return p;
             }
           }
           addToNotReadyConnections.set(true);
-          return null;
+          return p;
         });
     if (addToNotReadyConnections.get()) {
       EthPeer peer = ethPeer.get();
@@ -181,7 +181,8 @@ public class EthPeers {
       }
 
     } else {
-      newConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+      newConnection.disconnect(
+          DisconnectMessage.DisconnectReason.ALREADY_CONNECTED); // ?? could this be the problem?
       LOG.info("disconnecting connection {} with peer {}", newConnection, id);
     }
   }
@@ -193,15 +194,33 @@ public class EthPeers {
         .collect(Collectors.toList());
   }
 
-  public void registerDisconnect(final PeerConnection connection) {
-    final EthPeer peer = connections.remove(connection.getPeer().getId());
-    if (peer != null) {
-      disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
-      peer.handleDisconnect();
-      abortPendingRequestsAssignedToDisconnectedPeers();
-      LOG.debug("Disconnected EthPeer {}", peer);
+  public boolean registerDisconnect(final PeerConnection connection) {
+    final Bytes id = connection.getPeer().getId();
+    final EthPeer peer = connections.get(id);
+    return registerDisconnect(id, peer, connection);
+  }
+
+  private boolean registerDisconnect(
+      final Bytes id, final EthPeer peer, final PeerConnection connection) {
+    boolean removed = false;
+    if (peer != null && peer.getConnection().equals(connection)) {
+      if (peer != null) {
+        if (!peerHasNonReadyConnection(id)) {
+          // make sure we do not remove the peer if there is a non ready connection to that peer
+          removed = connections.remove(id, peer);
+          disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
+          peer.handleDisconnect();
+          abortPendingRequestsAssignedToDisconnectedPeers();
+          LOG.debug("Disconnected EthPeer {}", peer);
+        }
+      }
     }
     reattemptPendingPeerRequests();
+    return removed;
+  }
+
+  private boolean peerHasNonReadyConnection(final Bytes id) {
+    return getNotReadyConnections(id).stream().anyMatch(conn -> !conn.isDisconnected());
   }
 
   private void abortPendingRequestsAssignedToDisconnectedPeers() {
@@ -296,7 +315,7 @@ public class EthPeers {
         .forEach(
             ep -> {
               if (ep.isDisconnected()) {
-                connections.remove(ep.getId(), ep);
+                registerDisconnect(ep.getId(), ep, ep.getConnection());
               }
             });
   }
@@ -441,7 +460,7 @@ public class EthPeers {
 
   private Stream<EthPeer> getActivePrioritizedPeers() {
     return connections.values().stream()
-        .filter(p -> !p.getConnection().isDisconnected())
+        .filter(p -> !p.isDisconnected())
         .sorted(this::comparePeerPriorities);
   }
 
@@ -451,6 +470,7 @@ public class EthPeers {
       return;
     }
     getActivePrioritizedPeers()
+        .filter(p -> !p.isDisconnected())
         .skip(peerUpperBound)
         .map(EthPeer::getConnection)
         .filter(c -> !rlpxAgent.canExceedConnectionLimits(c.getPeer()))
@@ -488,7 +508,7 @@ public class EthPeers {
       final PeerConnection peerConnectionRemoved = removalNotification.getKey();
       final PeerConnection peerConnectionOfEthPeer = removalNotification.getValue().getConnection();
       if (!peerConnectionRemoved.equals(peerConnectionOfEthPeer)) {
-        // this means that there is another connection to the same peer that was selected or
+        // If this connection is not the connection of the EthPeer by now we can disconnect
         peerConnectionRemoved.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
       }
     }
@@ -520,7 +540,7 @@ public class EthPeers {
         peer.getConnection().disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
-      final boolean added = connections.putIfAbsent(id, peer) == null;
+      final boolean added = (connections.putIfAbsent(id, peer) == null);
       if (added)
         LOG.info(
             "Added peer {} with connection {} to connections", peer.getId(), peer.getConnection());
