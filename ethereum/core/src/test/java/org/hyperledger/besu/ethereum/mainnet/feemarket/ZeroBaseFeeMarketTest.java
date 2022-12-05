@@ -58,21 +58,6 @@ public class ZeroBaseFeeMarketTest {
   }
 
   @Test
-  public void minTransactionPriceInNextBlockShouldHandleZeroBaseFee() {
-    final Transaction transaction =
-        new TransactionTestFixture()
-            .type(TransactionType.EIP1559)
-            .maxFeePerGas(Optional.of(Wei.of(8)))
-            .maxPriorityFeePerGas(Optional.of(Wei.of(8)))
-            .gasPrice(null)
-            .createTransaction(KEY_PAIR1);
-    assertThat(
-            zeroBaseFeeMarket.minTransactionPriceInNextBlock(
-                transaction, () -> Optional.of(Wei.ZERO)))
-        .isEqualTo(Wei.of(8));
-  }
-
-  @Test
   public void getTransactionPriceCalculatorShouldBeEIP1559() {
     // only eip1559 will read the fee per gas values
     final Transaction transaction =
@@ -96,7 +81,7 @@ public class ZeroBaseFeeMarketTest {
             .type(TransactionType.FRONTIER)
             .gasPrice(Wei.of(7))
             .createTransaction(KEY_PAIR1);
-    assertThat(zeroBaseFeeMarket.satisfiesFloorTxCost(transaction)).isTrue();
+    assertThat(zeroBaseFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
   }
 
   @Test
@@ -108,7 +93,7 @@ public class ZeroBaseFeeMarketTest {
             .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
             .gasPrice(null)
             .createTransaction(KEY_PAIR1);
-    assertThat(zeroBaseFeeMarket.satisfiesFloorTxCost(transaction)).isTrue();
+    assertThat(zeroBaseFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
   }
 
   @Test
