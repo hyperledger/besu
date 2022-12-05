@@ -12,7 +12,6 @@
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Antoine Toulme   | atoulme          | atoulme          |
-| Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
