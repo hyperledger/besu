@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Collection;
@@ -39,11 +38,11 @@ public class ChainDataPruner implements BlockAddedObserver {
 
   public ChainDataPruner(
       final BlockchainStorage blockchainStorage,
-      final KeyValueStorage storage,
+      final ChainDataPrunerStorage prunerStorage,
       final long blocksToRetain,
       final long pruningFrequency) {
     this.blockchainStorage = blockchainStorage;
-    this.prunerStorage = new ChainDataPrunerStorage(storage);
+    this.prunerStorage = prunerStorage;
     this.blocksToRetain = blocksToRetain;
     this.pruningFrequency = pruningFrequency;
     this.pruningExecutor =

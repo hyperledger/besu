@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
+import org.hyperledger.besu.ethereum.chain.ChainDataPrunerStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -340,8 +341,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ChainDataPruner chainDataPruner =
           new ChainDataPruner(
               blockchainStorage,
-              storageProvider.getStorageBySegmentIdentifier(
-                  KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE),
+              new ChainDataPrunerStorage(
+                  storageProvider.getStorageBySegmentIdentifier(
+                      KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
               chainDataPruningBlocksRetained,
               chainDataPruningFrequency);
       blockchain.observeBlockAdded(chainDataPruner);
