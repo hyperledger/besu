@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 public abstract class AbstractPeerConnection implements PeerConnection {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerConnection.class);
@@ -164,10 +165,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
-      if (LOG.isDebugEnabled()) {
-        final String stackTrace = ExceptionUtils.getStackTrace(new RuntimeException("here"));
-        LOG.debug("DISCONNECTING connection {}, with stack trace: \n", this, stackTrace);
-      }
+      debugLambda(LOG, "DISCONNECTING connection {}, with stack trace: {}", () -> this, () ->  ExceptionUtils.getStackTrace(new RuntimeException("here")));
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
       LOG.debug("Disconnecting connection {}, reason {}", this, reason);
