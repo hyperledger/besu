@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -52,10 +53,11 @@ public class EthGetLogsTest {
   private EthGetLogs method;
 
   @Mock BlockchainQueries blockchainQueries;
+  @Mock Optional<Long> maxLogRange;
 
   @Before
   public void setUp() {
-    method = new EthGetLogs(blockchainQueries);
+    method = new EthGetLogs(blockchainQueries, maxLogRange);
   }
 
   @Test
@@ -269,6 +271,19 @@ public class EthGetLogsTest {
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+  }
+
+  @Test
+  public void shouldFailIfParamsExceedMaxRange() {
+    final JsonRpcRequestContext request = buildRequest(0, 50);
+
+    when(maxLogRange.isPresent()).thenReturn(true);
+    when(maxLogRange.get()).thenReturn(20L);
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.EXCEEDS_RPC_MAX_BLOCK_RANGE);
   }
 
   private JsonRpcRequestContext buildRequest(final long fromBlock, final long toBlock) {

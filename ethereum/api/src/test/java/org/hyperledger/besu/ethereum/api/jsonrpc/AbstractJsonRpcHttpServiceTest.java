@@ -191,7 +191,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             new HashMap<>(),
             folder.getRoot().toPath(),
             mock(EthPeers.class),
-            syncVertx);
+            syncVertx,
+            Optional.empty());
   }
 
   protected void startService() throws Exception {
