@@ -79,7 +79,7 @@ public class TimestampScheduleBuilder {
             config.getEcip1017EraRounds(),
             evmConfiguration);
 
-    // TODO SLD add validatorForkOrdering() by timestamp?
+    validatorEthereumForkOrdering();
 
     final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
 
@@ -90,6 +90,26 @@ public class TimestampScheduleBuilder {
 
     LOG.info("Timestamp schedule created with milestones: {}", timestampSchedule.listMilestones());
     return timestampSchedule;
+  }
+
+  private void validatorEthereumForkOrdering() {
+    long lastForkTimestamp = 0;
+    lastForkTimestamp =
+        validateForkOrder("Shanghai", config.getShanghaiTimestamp(), lastForkTimestamp);
+    lastForkTimestamp = validateForkOrder("Cancun", config.getCancunTimestamp(), lastForkTimestamp);
+    assert (lastForkTimestamp >= 0);
+  }
+
+  private long validateForkOrder(
+      final String forkName, final OptionalLong thisForkTimestamp, final long lastForkTimestamp) {
+    final long referenceForkTimestamp = thisForkTimestamp.orElse(lastForkTimestamp);
+    if (lastForkTimestamp > referenceForkTimestamp) {
+      throw new RuntimeException(
+          String.format(
+              "Genesis Config Error: '%s' is scheduled for timestamp %d but it must be on or after timestamp %d.",
+              forkName, thisForkTimestamp.getAsLong(), lastForkTimestamp));
+    }
+    return referenceForkTimestamp;
   }
 
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(

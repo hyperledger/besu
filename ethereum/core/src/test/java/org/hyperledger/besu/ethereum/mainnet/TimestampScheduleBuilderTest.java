@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -51,7 +52,7 @@ public class TimestampScheduleBuilderTest {
   }
 
   @Test
-  public void createTimestampSchedule() {
+  public void createTimestampScheduleInOrder() {
     config.shanghaiTimestamp(1);
     config.cancunTimestamp(3);
     final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
@@ -74,5 +75,32 @@ public class TimestampScheduleBuilderTest {
         .isPresent()
         .map(ProtocolSpec::getName)
         .hasValue("Cancun");
+  }
+
+  @Test
+  public void createTimestampScheduleOverlappingUsesLatestFork() {
+    config.shanghaiTimestamp(0);
+    config.cancunTimestamp(0);
+    final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
+
+    assertThat(timestampSchedule.getChainId()).contains(chainId);
+    assertThat(timestampSchedule.getByTimestamp(0))
+        .isPresent()
+        .map(ProtocolSpec::getName)
+        .hasValue("Cancun");
+    assertThat(timestampSchedule.getByTimestamp(1))
+        .isPresent()
+        .map(ProtocolSpec::getName)
+        .hasValue("Cancun");
+  }
+
+  @Test
+  public void createTimestampScheduleOutOfOrderThrows() {
+    config.shanghaiTimestamp(3);
+    config.cancunTimestamp(2);
+    assertThatThrownBy(() -> builder.createTimestampSchedule())
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage(
+            "Genesis Config Error: 'Cancun' is scheduled for timestamp 2 but it must be on or after timestamp 3.");
   }
 }
