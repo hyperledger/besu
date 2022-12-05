@@ -193,6 +193,7 @@ public class RunnerBuilder {
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
+  private Optional<Long> rpcMaxLogsRange;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -395,6 +396,11 @@ public class RunnerBuilder {
   public RunnerBuilder jsonRpcIpcConfiguration(
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration) {
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
+    return this;
+  }
+
+  public RunnerBuilder rpcMaxLogsRange(final Long rpcMaxLogsRange) {
+    this.rpcMaxLogsRange = rpcMaxLogsRange > 0 ? Optional.of(rpcMaxLogsRange) : Optional.empty();
     return this;
   }
 
@@ -1019,7 +1025,8 @@ public class RunnerBuilder {
                 namedPlugins,
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers(),
-                consensusEngineServer);
+                consensusEngineServer,
+                rpcMaxLogsRange);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =

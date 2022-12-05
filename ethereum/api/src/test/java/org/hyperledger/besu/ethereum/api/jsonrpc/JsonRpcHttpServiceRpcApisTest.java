@@ -225,7 +225,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     new HashMap<>(),
                     folder.getRoot().toPath(),
                     mock(EthPeers.class),
-                    vertx));
+                    vertx,
+                    Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -329,7 +330,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     new HashMap<>(),
                     folder.getRoot().toPath(),
                     mock(EthPeers.class),
-                    vertx));
+                    vertx,
+                    Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
