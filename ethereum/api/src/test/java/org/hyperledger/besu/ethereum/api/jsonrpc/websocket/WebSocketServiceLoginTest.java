@@ -185,7 +185,8 @@ public class WebSocketServiceLoginTest {
                     new HashMap<>(),
                     folder.getRoot().toPath(),
                     mock(EthPeers.class),
-                    vertx));
+                    vertx,
+                    Optional.empty()));
 
     websocketMethods.putAll(rpcMethods);
     webSocketMessageHandlerSpy =

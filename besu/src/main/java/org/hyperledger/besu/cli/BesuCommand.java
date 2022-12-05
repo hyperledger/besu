@@ -1289,6 +1289,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the static node file containing the static nodes for this node to connect to")
   private final Path staticNodesFile = null;
 
+  @CommandLine.Option(
+      names = {"--rpc-max-logs-range"},
+      description =
+          "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
+  private final Long rpcMaxLogsRange = 1000L;
+
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -2927,6 +2933,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
+            .rpcMaxLogsRange(rpcMaxLogsRange)
             .build();
 
     addShutdownHook(runner);
