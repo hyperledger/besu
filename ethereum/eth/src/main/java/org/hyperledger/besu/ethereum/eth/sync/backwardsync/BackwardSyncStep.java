@@ -59,6 +59,12 @@ public class BackwardSyncStep {
 
   @VisibleForTesting
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
+    if (context.getProtocolContext().getBlockchain().contains(hash)) {
+      LOG.debug(
+          "Hash {} already present in local blockchain no need to request headers to peers", hash);
+      return CompletableFuture.completedFuture(List.of());
+    }
+
     final int batchSize = context.getBatchSize();
     LOG.debug("Requesting headers for hash {}, with batch size {}", hash, batchSize);
 

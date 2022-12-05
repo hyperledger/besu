@@ -30,6 +30,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -37,7 +38,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
-public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
+public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
   public static final byte[] WORLD_BLOCK_HASH_KEY =
@@ -183,7 +184,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
-      // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> account = getAccount(accountHash);
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (account.isPresent() && worldStateRootHash.isPresent()) {
@@ -266,6 +266,26 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public void useFallbackNodeFinder(final Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder) {
     checkNotNull(maybeFallbackNodeFinder);
     this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
+  }
+
+  public void safeExecute(final Consumer<KeyValueStorage> toExec) throws Exception {
+    final long id = subscribe();
+    toExec.accept((KeyValueStorage) this);
+    unSubscribe(id);
+  }
+
+  public long subscribe() {
+    // No op because close() is not implemented for BonsaiWorldStateKeyValueStorage
+    return 0;
+  }
+
+  public void unSubscribe(final long id) {
+    // No op because close() is not implemented for BonsaiWorldStateKeyValueStorage
+  }
+
+  @Override
+  public void close() throws Exception {
+    // No need to close because BonsaiWorldStateKeyValueStorage is persistent
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {

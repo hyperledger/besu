@@ -120,4 +120,9 @@ public class BftProtocolManager implements ProtocolManager {
     peers.remove(
         peerConnection); // Do we have to check that this connection is the actual connection
   }
+
+  @Override
+  public int getHighestProtocolVersion() {
+    return supportedCapability.getVersion();
+  }
 }

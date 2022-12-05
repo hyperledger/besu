@@ -61,12 +61,13 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
               updateAccountStorage(worldStateUpdater, addressMapEntry);
             });
 
-    // for manicured tries and composting, trim and compost here
-
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            this::getAccountStateTrieNode,
+            (location, hash) ->
+                archive
+                    .getCachedMerkleTrieLoader()
+                    .getAccountStateTrieNode(worldStateStorage, location, hash),
             worldStateRootHash,
             Function.identity(),
             Function.identity());
@@ -96,7 +97,8 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
   private void updateAccountStorage(
       final BonsaiWorldStateUpdater worldStateUpdater,
-      final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate) {
+      final Map.Entry<Address, BonsaiWorldStateUpdater.StorageConsumingMap<BonsaiValue<UInt256>>>
+          storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
     final Hash updatedAddressHash = Hash.hash(updatedAddress);
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
@@ -105,9 +107,14 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
       final BonsaiAccount accountOriginal = accountValue.getPrior();
       final Hash storageRoot =
           (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
+
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
+              (location, key) ->
+                  archive
+                      .getCachedMerkleTrieLoader()
+                      .getAccountStorageTrieNode(
+                          worldStateStorage, updatedAddressHash, location, key),
               storageRoot,
               Function.identity(),
               Function.identity());
@@ -143,5 +150,11 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     worldStateRootHash = newWorldStateRootHash;
     worldStateBlockHash = blockHeader.getBlockHash();
     isPersisted = true;
+  }
+
+  @Override
+  public void close() throws Exception {
+    // if storage is snapshot-based we need to close:
+    worldStateStorage.close();
   }
 }

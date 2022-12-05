@@ -123,7 +123,8 @@ public class JsonRpcHttpServiceHostAllowlistTest {
                     new HashMap<>(),
                     folder.getRoot().toPath(),
                     mock(EthPeers.class),
-                    vertx));
+                    vertx,
+                    Optional.empty()));
     service = createJsonRpcHttpService();
     service.start().join();
 

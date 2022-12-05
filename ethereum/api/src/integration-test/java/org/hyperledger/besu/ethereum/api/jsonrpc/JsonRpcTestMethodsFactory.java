@@ -184,6 +184,7 @@ public class JsonRpcTestMethodsFactory {
             new HashMap<>(),
             dataDir,
             ethPeers,
-            Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)));
+            Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
+            Optional.empty());
   }
 }

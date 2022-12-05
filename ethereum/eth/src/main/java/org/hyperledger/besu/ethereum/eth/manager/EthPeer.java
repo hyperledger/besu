@@ -490,7 +490,7 @@ public class EthPeer implements Comparable<EthPeer> {
         if (compareDuplicateConnections(this.connection, newConnection) < 0) {
           final PeerConnection oldConnection = this.connection;
           this.connection = newConnection;
-          LOG.info("Changed conenction from {} to {}", oldConnection, newConnection);
+          LOG.info("Changed connection from {} to {}", oldConnection, newConnection);
         }
       }
       final int actualHashCode = this.connection.hashCode();
@@ -502,7 +502,7 @@ public class EthPeer implements Comparable<EthPeer> {
           return;
         } else {
           LOG.info("Executing callback connected to peer {}", this.id);
-          callback.accept(this);
+          LOG.debug("Status message exchange successful with a peer on a matching chain. {}", this);callback.accept(this);
         }
       }
     }

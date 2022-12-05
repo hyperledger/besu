@@ -255,6 +255,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
     verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
+    verify(mockRunnerBuilder).rpcMaxLogsRange(eq(1000L));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());
@@ -1560,6 +1561,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcMaxLogsRangeOptionMustBeUsed() {
+    final long rpcMaxLogsRange = 150L;
+    parseCommand("--rpc-max-logs-range", Long.toString(rpcMaxLogsRange));
+
+    verify(mockRunnerBuilder).rpcMaxLogsRange(longArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(longArgumentCaptor.getValue()).isEqualTo(rpcMaxLogsRange);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -5271,7 +5286,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger).info("Using the native implementation of the signature algorithm");
 
     assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
-    verify(mockLogger).info("Using LibEthPairings native alt bn128");
+    verify(mockLogger).info("Using the native implementation of alt bn128");
   }
 
   @Test
@@ -5408,5 +5423,41 @@ public class BesuCommandTest extends CommandTestAbstract {
         .contains("Port(s) '[8545]' already in use. Check for other processes using the port(s).");
 
     serverSocket.close();
+  }
+
+  @Test
+  public void presentRequiredOptionShouldPass() {
+    parseCommandWithRequiredOption("--accept-terms-and-conditions", "true");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void missingRequiredOptionShouldFail() {
+    parseCommandWithRequiredOption();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
+  }
+
+  @Test
+  public void havingRequiredOptionInEnvVarShouldFail() {
+    setEnvironmentVariable("BESU_ACCEPT_TERMS_AND_CONDITIONS", "true");
+    parseCommandWithRequiredOption();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
+  }
+
+  @Test
+  public void havingRequiredOptionInConfigShouldFail() throws IOException {
+    final Path toml = createTempFile("toml", "accept-terms-and-conditions=true\n");
+    parseCommandWithRequiredOption("--config-file", toml.toString());
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
   }
 }

@@ -36,6 +36,7 @@ import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import org.slf4j.Logger;
@@ -102,7 +103,11 @@ public class JsonRpcExecutor {
 
   private Optional<JsonRpcError> validateMethodAvailability(final JsonRpcRequest request) {
     final String name = request.getMethod();
-    LOG.debug("JSON-RPC request -> {} {}", name, request.getParams());
+
+    if (LOG.isDebugEnabled()) {
+      final JsonArray params = JsonObject.mapFrom(request).getJsonArray("params");
+      LOG.debug("JSON-RPC request -> {} {}", name, params);
+    }
 
     final JsonRpcMethod method = rpcMethods.get(name);
 

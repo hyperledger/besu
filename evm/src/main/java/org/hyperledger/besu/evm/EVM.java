@@ -292,8 +292,9 @@ public class EVM {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
         frame.setExceptionalHaltReason(Optional.of(haltReason));
         frame.setState(State.EXCEPTIONAL_HALT);
-      } else {
-        frame.decrementRemainingGas(result.getGasCost());
+      } else if (frame.decrementRemainingGas(result.getGasCost()) < 0) {
+        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+        frame.setState(State.EXCEPTIONAL_HALT);
       }
       if (frame.getState() == State.CODE_EXECUTING) {
         final int currentPC = frame.getPC();
