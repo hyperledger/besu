@@ -37,6 +37,7 @@
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
+| Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
@@ -44,6 +45,7 @@
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
+| Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
