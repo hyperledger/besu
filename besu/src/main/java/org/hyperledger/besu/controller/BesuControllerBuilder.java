@@ -321,8 +321,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString());
 
+    final CachedMerkleTrieLoader cachedMerkleTrieLoader = new CachedMerkleTrieLoader(metricsSystem);
+
+    final WorldStateArchive worldStateArchive =
+        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
+
+    if (blockchain.getChainHeadBlockNumber() < 1) {
+      genesisState.writeStateTo(worldStateArchive.getMutable());
+    }
+
+    final ProtocolContext protocolContext =
+        createProtocolContext(
+            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
+    validateContext(protocolContext);
+
     if (isChainDataPruningEnabled) {
-      ChainDataPruner.enablePruning();
+      protocolContext.setIsChainPruningEnabled(true);
       final ChainDataPruner chainDataPruner =
           new ChainDataPruner(
               blockchainStorage,
@@ -337,20 +351,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               + " and frequency to be: "
               + chainDataPruningFrequency);
     }
-
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader = new CachedMerkleTrieLoader(metricsSystem);
-
-    final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
-
-    if (blockchain.getChainHeadBlockNumber() < 1) {
-      genesisState.writeStateTo(worldStateArchive.getMutable());
-    }
-
-    final ProtocolContext protocolContext =
-        createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
-    validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());

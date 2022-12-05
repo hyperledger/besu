@@ -21,7 +21,7 @@ import picocli.CommandLine;
 
 public class ChainDataPruningOptions {
 
-  public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 50400;
+  public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 5040;
   public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
 
   @CommandLine.Option(

@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
-import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -121,7 +120,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)
-        && !ChainDataPruner.isPruningEnabled()) {
+        && !protocolContext.isChainPruningEnabled()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcSuccessResponse(
           requestId,

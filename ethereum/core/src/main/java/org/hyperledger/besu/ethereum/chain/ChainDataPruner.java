@@ -26,10 +26,6 @@ import org.slf4j.LoggerFactory;
 
 public class ChainDataPruner implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(ChainDataPruner.class);
-
-  // TODO: cleanup - pruningEnabled will not be required after
-  // https://github.com/hyperledger/besu/pull/4703 is merged.
-  private static boolean pruningEnabled = false;
   private final BlockchainStorage blockchainStorage;
   private final ChainDataPrunerStorage prunerStorage;
   private final long blocksToRetain;
@@ -45,14 +41,6 @@ public class ChainDataPruner implements BlockAddedObserver {
     this.prunerStorage = new ChainDataPrunerStorage(storage);
     this.blocksToRetain = blocksToRetain;
     this.pruningFrequency = pruningFrequency;
-  }
-
-  public static void enablePruning() {
-    pruningEnabled = true;
-  }
-
-  public static boolean isPruningEnabled() {
-    return pruningEnabled;
   }
 
   @Override

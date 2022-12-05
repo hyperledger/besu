@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
-import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -198,7 +197,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)
-        && !ChainDataPruner.isPruningEnabled()) {
+        && !protocolContext.isChainPruningEnabled()) {
       mergeCoordinator.addBadBlock(block, Optional.empty());
       return respondWithInvalid(
           reqId,
