@@ -46,7 +46,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogTopic;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.math.BigInteger;
@@ -219,31 +218,37 @@ public class GraphQLDataFetchers {
       final Address addr = dataFetchingEnvironment.getArgument("address");
       final Long bn = dataFetchingEnvironment.getArgument("blockNumber");
       if (bn != null) {
-        final Optional<WorldState> ws = blockchainQuery.getWorldState(bn);
-        if (ws.isPresent()) {
-          final Account account = ws.get().get(addr);
-          if (account == null) {
-            return Optional.of(new EmptyAccountAdapter(addr));
-          }
-          return Optional.of(new AccountAdapter(account));
-        } else if (bn > blockchainQuery.getBlockchain().getChainHeadBlockNumber()) {
-          // block is past chainhead
-          throw new GraphQLException(GraphQLError.INVALID_PARAMS);
-        } else {
-          // we don't have that block
-          throw new GraphQLException(GraphQLError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
-        }
+        return blockchainQuery
+            .getAndMapWorldState(
+                bn,
+                ws -> {
+                  final Account account = ws.get(addr);
+                  if (account == null) {
+                    return new EmptyAccountAdapter(addr);
+                  }
+                  return new AccountAdapter(account);
+                })
+            .or(
+                () -> {
+                  if (bn > blockchainQuery.getBlockchain().getChainHeadBlockNumber()) {
+                    // block is past chainhead
+                    throw new GraphQLException(GraphQLError.INVALID_PARAMS);
+                  } else {
+                    // we don't have that block
+                    throw new GraphQLException(GraphQLError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+                  }
+                });
       } else {
         // return account on latest block
         final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
-        final Optional<WorldState> ows = blockchainQuery.getWorldState(latestBn);
-        return ows.flatMap(
+        return blockchainQuery.getAndMapWorldState(
+            latestBn,
             ws -> {
               final Account account = ws.get(addr);
               if (account == null) {
-                return Optional.of(new EmptyAccountAdapter(addr));
+                return new EmptyAccountAdapter(addr);
               }
-              return Optional.of(new AccountAdapter(account));
+              return new AccountAdapter(account);
             });
       }
     };

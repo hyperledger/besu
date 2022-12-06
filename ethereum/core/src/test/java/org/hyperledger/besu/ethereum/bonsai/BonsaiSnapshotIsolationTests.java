@@ -17,107 +17,21 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 
-import org.hyperledger.besu.config.GenesisAllocation;
-import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
-import org.hyperledger.besu.ethereum.chain.GenesisState;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.BesuConfiguration;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.time.Clock;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class BonsaiSnapshotIsolationTests {
-
-  private BonsaiWorldStateArchive archive;
-  private ProtocolContext protocolContext;
-  final Function<String, KeyPair> asKeyPair =
-      key ->
-          SignatureAlgorithmFactory.getInstance()
-              .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
-  final Function<GenesisAllocation, Address> extractAddress =
-      ga -> Address.fromHexString(ga.getAddress());
-
-  private final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(GenesisConfigFile.development().getConfigOptions());
-  private final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
-  private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-  private final AbstractPendingTransactionsSorter sorter =
-      new GasPricePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build(),
-          Clock.systemUTC(),
-          new NoOpMetricsSystem(),
-          blockchain::getChainHeadHeader);
-
-  private final List<GenesisAllocation> accounts =
-      GenesisConfigFile.development()
-          .streamAllocations()
-          .filter(ga -> ga.getPrivateKey().isPresent())
-          .collect(Collectors.toList());
-
-  KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
-
-  @Rule public final TemporaryFolder tempData = new TemporaryFolder();
-
-  @Before
-  public void createStorage() {
-    //    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    archive = new BonsaiWorldStateArchive(createKeyValueStorageProvider(), blockchain);
-    var ws = archive.getMutable();
-    genesisState.writeStateTo(ws);
-    ws.persist(blockchain.getChainHeadHeader());
-    protocolContext = new ProtocolContext(blockchain, archive, null);
-  }
+public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
 
   @Test
   public void testIsolatedFromHead_behindHead() {
@@ -135,6 +49,11 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
+        .isNotEmpty();
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(secondBlock.getHash()))
+        .isNotEmpty();
+
     assertThat(archive.getMutable().get(testAddress)).isNotNull();
     assertThat(archive.getMutable().get(testAddress).getBalance())
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
@@ -147,6 +66,13 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(isolated2.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+
+    try {
+      isolated.get().close();
+      isolated2.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -157,6 +83,9 @@ public class BonsaiSnapshotIsolationTests {
 
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(isolated.get(), firstBlock);
+
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
+        .isNotEmpty();
 
     assertThat(res.isSuccessful()).isTrue();
     assertThat(isolated.get().get(testAddress)).isNotNull();
@@ -171,12 +100,17 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(archive.getMutable().get(testAddress)).isNull();
 
     // roll the persisted world state to the new trie log from the persisted snapshot
-    var ws = archive.getMutable(firstBlock.getHeader().getNumber(), true);
+    var ws = archive.getMutable(null, firstBlock.getHash());
     assertThat(ws).isPresent();
     assertThat(ws.get().get(testAddress)).isNotNull();
     assertThat(ws.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(ws.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+    try {
+      isolated.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -238,15 +172,63 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(firstBlockTrieLog).isNotEmpty();
     assertThat(firstBlockTrieLog.get().getAccount(testAddress)).isNotEmpty();
     assertThat(firstBlockTrieLog.get().getAccount(altTestAddress)).isEmpty();
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
+        .isNotEmpty();
+
     var cloneForkTrieLog = archive.getTrieLogManager().getTrieLogLayer(cloneForkBlock.getHash());
     assertThat(cloneForkTrieLog.get().getAccount(testAddress)).isEmpty();
     assertThat(cloneForkTrieLog.get().getAccount(altTestAddress)).isNotEmpty();
+
+    try {
+      isolated.close();
+      isolatedClone.close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
   public void assertSnapshotDoesNotClose() {
-    // TODO: add unit test to assert snapshot does not close on clone if parent tx is closed
+    Address testAddress = Address.fromHexString("0xdeadbeef");
 
+    // create a snapshot worldstate, and then clone it:
+    var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash()).get();
+
+    // execute a block with a single transaction on the first snapshot:
+    var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
+    var res = executeBlock(isolated, firstBlock);
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
+        .isNotEmpty();
+
+    assertThat(res.isSuccessful()).isTrue();
+    Consumer<MutableWorldState> checkIsolatedState =
+        (ws) -> {
+          assertThat(ws.rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+          assertThat(ws.get(testAddress)).isNotNull();
+          assertThat(ws.get(testAddress).getBalance())
+              .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+        };
+    checkIsolatedState.accept(isolated);
+
+    var isolatedClone = isolated.copy();
+    checkIsolatedState.accept(isolatedClone);
+
+    try {
+      // close the first snapshot worldstate.  The second worldstate should still be able to read
+      // through its snapshot
+      isolated.close();
+    } catch (Exception ex) {
+      // meh
+    }
+
+    // copy of closed isolated worldstate should still pass check
+    checkIsolatedState.accept(isolatedClone);
+
+    try {
+      isolatedClone.close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -269,7 +251,7 @@ public class BonsaiSnapshotIsolationTests {
 
     // roll chain and worldstate to block 2
     blockchain.rewindToBlock(2L);
-    var block1State = archive.getMutable(2L, true);
+    var block1State = archive.getMutable(null, block2.getHash());
 
     // BonsaiPersistedWorldState should be at block 2
     assertThat(block1State.get().get(testAddress)).isNotNull();
@@ -291,6 +273,13 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolatedRollBack.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(isolatedRollBack.get().rootHash()).isEqualTo(block1.getHeader().getStateRoot());
+
+    try {
+      isolatedRollForward.get().close();
+      isolatedRollBack.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -318,133 +307,5 @@ public class BonsaiSnapshotIsolationTests {
     }
 
     assertThat(head.get(testAddress)).isNull();
-  }
-
-  private Transaction burnTransaction(final KeyPair sender, final Long nonce, final Address to) {
-    return new TransactionTestFixture()
-        .sender(Address.extract(Hash.hash(sender.getPublicKey().getEncodedBytes())))
-        .to(Optional.of(to))
-        .value(Wei.of(1_000_000_000_000_000_000L))
-        .gasLimit(21_000L)
-        .nonce(nonce)
-        .createTransaction(sender);
-  }
-
-  private Block forTransactions(final List<Transaction> transactions) {
-    return forTransactions(transactions, blockchain.getChainHeadHeader());
-  }
-
-  private Block forTransactions(final List<Transaction> transactions, final BlockHeader forHeader) {
-    return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, sorter)
-        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
-        .getBlock();
-  }
-
-  private BlockProcessor.Result executeBlock(final MutableWorldState ws, final Block block) {
-    var res =
-        protocolSchedule
-            .getByBlockNumber(0)
-            .getBlockProcessor()
-            .processBlock(blockchain, ws, block);
-    blockchain.appendBlock(block, res.getReceipts());
-    return res;
-  }
-
-  static class TestBlockCreator extends AbstractBlockCreator {
-    private TestBlockCreator(
-        final Address coinbase,
-        final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final Supplier<Optional<Long>> targetGasLimitSupplier,
-        final ExtraDataCalculator extraDataCalculator,
-        final AbstractPendingTransactionsSorter pendingTransactions,
-        final ProtocolContext protocolContext,
-        final ProtocolSchedule protocolSchedule,
-        final Wei minTransactionGasPrice,
-        final Double minBlockOccupancyRatio,
-        final BlockHeader parentHeader) {
-      super(
-          coinbase,
-          miningBeneficiaryCalculator,
-          targetGasLimitSupplier,
-          extraDataCalculator,
-          pendingTransactions,
-          protocolContext,
-          protocolSchedule,
-          minTransactionGasPrice,
-          minBlockOccupancyRatio,
-          parentHeader);
-    }
-
-    static TestBlockCreator forHeader(
-        final BlockHeader parentHeader,
-        final ProtocolContext protocolContext,
-        final ProtocolSchedule protocolSchedule,
-        final AbstractPendingTransactionsSorter sorter) {
-      return new TestBlockCreator(
-          Address.ZERO,
-          __ -> Address.ZERO,
-          () -> Optional.of(30_000_000L),
-          __ -> Bytes.fromHexString("deadbeef"),
-          sorter,
-          protocolContext,
-          protocolSchedule,
-          Wei.of(1L),
-          0d,
-          parentHeader);
-    }
-
-    @Override
-    protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-      return BlockHeaderBuilder.create()
-          .difficulty(Difficulty.ZERO)
-          .mixHash(Hash.ZERO)
-          .populateFrom(sealableBlockHeader)
-          .nonce(0L)
-          .blockHeaderFunctions(blockHeaderFunctions)
-          .buildBlockHeader();
-    }
-  }
-
-  // storage provider which uses a temporary directory based rocksdb
-  private StorageProvider createKeyValueStorageProvider() {
-    try {
-      tempData.create();
-      return new KeyValueStorageProviderBuilder()
-          .withStorageFactory(
-              new RocksDBKeyValueStorageFactory(
-                  () ->
-                      new RocksDBFactoryConfiguration(
-                          1024 /* MAX_OPEN_FILES*/,
-                          4 /*MAX_BACKGROUND_COMPACTIONS*/,
-                          4 /*BACKGROUND_THREAD_COUNT*/,
-                          8388608 /*CACHE_CAPACITY*/,
-                          false),
-                  Arrays.asList(KeyValueSegmentIdentifier.values()),
-                  2,
-                  RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-          .withCommonConfiguration(
-              new BesuConfiguration() {
-
-                @Override
-                public Path getStoragePath() {
-                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database")
-                      .toPath();
-                }
-
-                @Override
-                public Path getDataPath() {
-                  return tempData.getRoot().toPath();
-                }
-
-                @Override
-                public int getDatabaseVersion() {
-                  return 2;
-                }
-              })
-          .withMetricsSystem(new NoOpMetricsSystem())
-          .build();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

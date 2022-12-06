@@ -45,4 +45,6 @@ public interface StorageProvider extends Closeable {
   GoQuorumPrivateStorage createGoQuorumPrivateStorage();
 
   boolean isWorldStateIterable();
+
+  boolean isWorldStateSnappable();
 }

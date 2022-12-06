@@ -15,17 +15,51 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
+
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
+import org.hyperledger.besu.util.Subscribers;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
+
+  private final AtomicBoolean isClosed = new AtomicBoolean(false);
+  private final Subscribers<Integer> subscribers = Subscribers.create();
+
+  public BonsaiSnapshotWorldStateKeyValueStorage(final StorageProvider snappableStorageProvider) {
+    this(
+        snappableStorageProvider
+            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE)
+            .takeSnapshot(),
+        snappableStorageProvider
+            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE)
+            .takeSnapshot(),
+        snappableStorageProvider
+            .getSnappableStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE)
+            .takeSnapshot(),
+        snappableStorageProvider
+            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE)
+            .takeSnapshot(),
+        snappableStorageProvider.getStorageBySegmentIdentifier(
+            KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+  }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final SnappedKeyValueStorage accountStorage,
@@ -46,9 +80,40 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         trieLogStorage);
   }
 
+  @Override
+  public synchronized long subscribe() {
+    if (isClosed.get()) {
+      throw new RuntimeException("BonsaiSnapshotWorldStateKeyValueStorage already closed");
+    }
+    return subscribers.subscribe(0);
+  }
+
+  @Override
+  public synchronized void unSubscribe(final long id) {
+    subscribers.unsubscribe(id);
+    try {
+      tryClose();
+    } catch (Exception e) {
+      warnLambda(LOG, "exception while trying to close : {}", e::getMessage);
+    }
+  }
+
+  @Override
+  public synchronized void close() throws Exception {
+    isClosed.getAndSet(true);
+    tryClose();
+  }
+
+  protected void tryClose() throws Exception {
+    if (isClosed.get() && subscribers.getSubscriberCount() < 1) {
+      accountStorage.close();
+      codeStorage.close();
+      storageStorage.close();
+      trieBranchStorage.close();
+    }
+  }
+
   public static class SnapshotUpdater implements BonsaiWorldStateKeyValueStorage.BonsaiUpdater {
-    //    private static final Logger LOG =
-    // LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
 
     private final SnappedKeyValueStorage accountStorage;
     private final SnappedKeyValueStorage codeStorage;

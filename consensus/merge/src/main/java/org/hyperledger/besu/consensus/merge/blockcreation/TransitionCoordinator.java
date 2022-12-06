@@ -18,7 +18,7 @@ import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -137,12 +137,12 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Result rememberBlock(final Block block) {
+  public BlockProcessingResult rememberBlock(final Block block) {
     return mergeCoordinator.rememberBlock(block);
   }
 
   @Override
-  public Result validateBlock(final Block block) {
+  public BlockProcessingResult validateBlock(final Block block) {
     return mergeCoordinator.validateBlock(block);
   }
 
@@ -183,14 +183,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockHash) {
-    return mergeCoordinator.getOrSyncHeaderByHash(blockHash);
-  }
-
-  @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(
-      final Hash blockHash, final Hash finalizedBlockHash) {
-    return mergeCoordinator.getOrSyncHeaderByHash(blockHash, finalizedBlockHash);
+  public Optional<BlockHeader> getOrSyncHeadByHash(final Hash headHash, final Hash finalizedHash) {
+    return mergeCoordinator.getOrSyncHeadByHash(headHash, finalizedHash);
   }
 
   @Override
@@ -204,8 +198,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public void addBadBlock(final Block block) {
-    mergeCoordinator.addBadBlock(block);
+  public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
+    mergeCoordinator.addBadBlock(block, maybeCause);
   }
 
   @Override

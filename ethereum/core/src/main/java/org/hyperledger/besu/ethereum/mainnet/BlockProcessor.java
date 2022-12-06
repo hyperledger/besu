@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -22,10 +23,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.List;
-import java.util.Optional;
 
 /** Processes a block. */
 public interface BlockProcessor {
@@ -62,21 +61,6 @@ public interface BlockProcessor {
     default boolean isFailed() {
       return !isSuccessful();
     }
-
-    default Optional<Throwable> causedBy() {
-      return Optional.empty();
-    }
-
-    default boolean internalError() {
-      if (causedBy().isPresent()) {
-        Throwable t = causedBy().get();
-        // As new "internal only" types of exception are discovered, add them here.
-        if (t instanceof StorageException) {
-          return true;
-        }
-      }
-      return false;
-    }
   }
 
   /**
@@ -87,7 +71,7 @@ public interface BlockProcessor {
    * @param block the block to process
    * @return the block processing result
    */
-  default Result processBlock(
+  default BlockProcessingResult processBlock(
       final Blockchain blockchain, final MutableWorldState worldState, final Block block) {
     return processBlock(
         blockchain,
@@ -108,7 +92,7 @@ public interface BlockProcessor {
    * @param ommers the block ommers
    * @return the block processing result
    */
-  default Result processBlock(
+  default BlockProcessingResult processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
@@ -128,7 +112,7 @@ public interface BlockProcessor {
    * @param privateMetadataUpdater the updater used to update the private metadata for the block
    * @return the block processing result
    */
-  Result processBlock(
+  BlockProcessingResult processBlock(
       Blockchain blockchain,
       MutableWorldState worldState,
       BlockHeader blockHeader,
@@ -145,7 +129,7 @@ public interface BlockProcessor {
    * @param block the block to process
    * @return the block processing result
    */
-  default Result processBlock(
+  default BlockProcessingResult processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final MutableWorldState privateWorldState,

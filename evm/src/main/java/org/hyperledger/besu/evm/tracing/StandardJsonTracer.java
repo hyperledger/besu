@@ -33,8 +33,14 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class StandardJsonTracer implements OperationTracer {
 
+  private static final Joiner commaJoiner = Joiner.on(',');
   private final PrintStream out;
   private final boolean showMemory;
+  private int pc;
+  private List<String> stack;
+  private String gas;
+  private Bytes memory;
+  private int memorySize;
 
   public StandardJsonTracer(final PrintStream out, final boolean showMemory) {
     this.out = out;
@@ -53,15 +59,17 @@ public class StandardJsonTracer implements OperationTracer {
     return bytes.isZero() ? "0x0" : bytes.toShortHexString();
   }
 
-  final Joiner commaJoiner = Joiner.on(',');
-
-  private List<String> preExecuteStack;
-
   @Override
   public void tracePreExecution(final MessageFrame messageFrame) {
-    preExecuteStack = new ArrayList<>(messageFrame.stackSize());
+    stack = new ArrayList<>(messageFrame.stackSize());
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
-      preExecuteStack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
+      stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
+    }
+    pc = messageFrame.getPC();
+    gas = shortNumber(messageFrame.getRemainingGas());
+    memorySize = messageFrame.memoryWordSize() * 32;
+    if (showMemory) {
+      memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
     }
   }
 
@@ -69,9 +77,7 @@ public class StandardJsonTracer implements OperationTracer {
   public void tracePostExecution(
       final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
-    final int pc = messageFrame.getPC();
     final int opcode = currentOp.getOpcode();
-    final String remainingGas = shortNumber(messageFrame.getRemainingGas());
     final Bytes returnData = messageFrame.getReturnData();
     final int depth = messageFrame.getMessageStackDepth() + 1;
 
@@ -79,22 +85,14 @@ public class StandardJsonTracer implements OperationTracer {
     sb.append("{");
     sb.append("\"pc\":").append(pc).append(",");
     sb.append("\"op\":").append(opcode).append(",");
-    sb.append("\"gas\":\"").append(remainingGas).append("\",");
-    sb.append("\"gasCost\":\"")
-        .append(executeResult.getGasCost() != 0 ? shortNumber(executeResult.getGasCost()) : "")
-        .append("\",");
+    sb.append("\"gas\":\"").append(gas).append("\",");
+    sb.append("\"gasCost\":\"").append(shortNumber(executeResult.getGasCost())).append("\",");
     if (showMemory) {
-      final Bytes memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
-      sb.append("\"memSize\":").append(memory.size()).append(",");
-    } else {
-      sb.append("\"memory\":\"0x\",");
-      sb.append("\"memSize\":").append(messageFrame.memoryByteSize()).append(",");
     }
-    sb.append("\"stack\":[").append(commaJoiner.join(preExecuteStack)).append("],");
-    sb.append("\"returnData\":")
-        .append(returnData.size() > 0 ? '"' + returnData.toHexString() + '"' : "null")
-        .append(",");
+    sb.append("\"memSize\":").append(memorySize).append(",");
+    sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
+    sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     sb.append("\"depth\":").append(depth).append(",");
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\",");
@@ -107,7 +105,7 @@ public class StandardJsonTracer implements OperationTracer {
     out.println(sb);
   }
 
-  static String quoteEscape(final Bytes bytes) {
+  private static String quoteEscape(final Bytes bytes) {
     final StringBuilder result = new StringBuilder(bytes.size());
     for (final byte b : bytes.toArrayUnsafe()) {
       final int c = Byte.toUnsignedInt(b);

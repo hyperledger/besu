@@ -75,7 +75,8 @@ public class JsonRpcMethodsFactory {
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
       final EthPeers ethPeers,
-      final Vertx consensusEngineServer) {
+      final Vertx consensusEngineServer,
+      final Optional<Long> maxLogRange) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -94,7 +95,12 @@ public class JsonRpcMethodsFactory {
                   natService,
                   ethPeers),
               new DebugJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
+                  blockchainQueries,
+                  protocolContext,
+                  protocolSchedule,
+                  metricsSystem,
+                  transactionPool,
+                  dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
@@ -109,7 +115,8 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   miningCoordinator,
                   supportedCapabilities,
-                  privacyParameters),
+                  privacyParameters,
+                  maxLogRange),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,

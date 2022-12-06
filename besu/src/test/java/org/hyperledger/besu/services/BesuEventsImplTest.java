@@ -89,8 +89,8 @@ public class BesuEventsImplTest {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEY_PAIR1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
-  private static final org.hyperledger.besu.ethereum.core.Transaction TX1 = createTransaction(1);
-  private static final org.hyperledger.besu.ethereum.core.Transaction TX2 = createTransaction(2);
+  private static final org.hyperledger.besu.ethereum.core.Transaction TX1 = createTransaction(0);
+  private static final org.hyperledger.besu.ethereum.core.Transaction TX2 = createTransaction(1);
 
   @Mock private ProtocolSchedule mockProtocolSchedule;
   @Mock private ProtocolContext mockProtocolContext;
@@ -417,9 +417,10 @@ public class BesuEventsImplTest {
     serviceImpl.addTransactionDroppedListener(result::set);
 
     assertThat(result.get()).isNull();
-    // The max pool size is configured to 1 so adding two transactions should trigger a drop
+    // sending a replacement with higher gas should drop the previous one
     transactionPool.addLocalTransaction(TX1);
-    transactionPool.addLocalTransaction(TX2);
+    transactionPool.addLocalTransaction(
+        bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(2)));
 
     assertThat(result.get()).isNotNull();
   }
@@ -431,13 +432,17 @@ public class BesuEventsImplTest {
 
     assertThat(result.get()).isNull();
     transactionPool.addLocalTransaction(TX1);
-    transactionPool.addLocalTransaction(TX2);
+    // first replacement with higher gas should drop the previous one
+    transactionPool.addLocalTransaction(
+        bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(2)));
 
     assertThat(result.get()).isNotNull();
     serviceImpl.removeTransactionDroppedListener(id);
     result.set(null);
 
-    transactionPool.addLocalTransaction(TX2);
+    // second replacement with higher gas should drop the previous one
+    transactionPool.addLocalTransaction(
+        bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(4)));
     assertThat(result.get()).isNull();
   }
 
@@ -488,6 +493,15 @@ public class BesuEventsImplTest {
     return new TransactionTestFixture()
         .nonce(transactionNumber)
         .gasLimit(0)
+        .createTransaction(KEY_PAIR1);
+  }
+
+  private static org.hyperledger.besu.ethereum.core.Transaction bumpTransactionGasPrice(
+      final Transaction originalTx, final Wei gasPriceBump) {
+    return new TransactionTestFixture()
+        .nonce(originalTx.getNonce())
+        .gasPrice(Wei.fromQuantity(originalTx.getGasPrice().get()).add(gasPriceBump))
+        .gasLimit(originalTx.getGasLimit())
         .createTransaction(KEY_PAIR1);
   }
 }

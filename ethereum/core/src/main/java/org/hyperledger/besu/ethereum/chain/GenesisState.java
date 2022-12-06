@@ -266,7 +266,7 @@ public final class GenesisState {
       storage
           .entrySet()
           .forEach(
-              (entry) -> {
+              entry -> {
                 final UInt256 key =
                     withNiceErrorMessage("storage key", entry.getKey(), UInt256::fromHexString);
                 final UInt256 value =

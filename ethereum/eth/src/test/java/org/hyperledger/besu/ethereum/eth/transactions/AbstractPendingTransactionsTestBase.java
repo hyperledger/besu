@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult.COMPLETE_OPERATION;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult.CONTINUE;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
@@ -48,6 +48,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -773,5 +775,36 @@ public abstract class AbstractPendingTransactionsTestBase {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
     return blockHeader;
+  }
+
+  @Test
+  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+    transactions.subscribeDroppedTransactions(
+        transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
+
+    // Fill the pool with transactions from random senders
+    final List<Transaction> lowGasPriceTransactions =
+        IntStream.range(0, MAX_TRANSACTIONS)
+            .mapToObj(
+                i -> {
+                  final Account randomSender = mock(Account.class);
+                  final Transaction lowPriceTx =
+                      transactionWithNonceSenderAndGasPrice(
+                          0, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10);
+                  transactions.addRemoteTransaction(lowPriceTx, Optional.of(randomSender));
+                  return lowPriceTx;
+                })
+            .collect(Collectors.toUnmodifiableList());
+
+    // This should kick the oldest tx with the low gas price out, namely the first one we added
+    final Account highPriceSender = mock(Account.class);
+    final Transaction highGasPriceTransaction =
+        transactionWithNonceSenderAndGasPrice(0, KEYS1, 100);
+    transactions.addRemoteTransaction(highGasPriceTransaction, Optional.of(highPriceSender));
+    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+
+    assertTransactionPending(highGasPriceTransaction);
+    assertTransactionNotPending(lowGasPriceTransactions.get(0));
+    lowGasPriceTransactions.stream().skip(1).forEach(this::assertTransactionPending);
   }
 }

@@ -28,7 +28,7 @@ public class MissingNode<V> extends NullNode<V> {
   public MissingNode(final Bytes32 hash, final Bytes location) {
     this.hash = hash;
     this.location = location;
-    this.path = (location == Bytes.EMPTY) ? Bytes.EMPTY : location.slice(0, location.size() - 1);
+    this.path = location.isEmpty() ? Bytes.EMPTY : location.slice(0, location.size() - 1);
   }
 
   @Override

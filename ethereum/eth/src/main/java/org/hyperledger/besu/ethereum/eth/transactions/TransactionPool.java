@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -33,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -42,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -52,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,17 +113,26 @@ public class TransactionPool implements BlockAddedObserver {
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
     final ValidationResultAndAccount validationResult = validateLocalTransaction(transaction);
+
     if (validationResult.result.isValid()) {
-      if (!configuration.getTxFeeCap().isZero()
-          && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
-        return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
-      }
+
       final TransactionAddedStatus transactionAddedStatus =
           pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
+
       if (!transactionAddedStatus.equals(ADDED)) {
-        duplicateTransactionCounter.labels(LOCAL).inc();
-        return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
+        if (transactionAddedStatus.equals(ALREADY_KNOWN)) {
+          duplicateTransactionCounter.labels(LOCAL).inc();
+        }
+        return ValidationResult.invalid(
+            transactionAddedStatus
+                .getInvalidReason()
+                .orElseGet(
+                    () -> {
+                      LOG.warn("Missing invalid reason for status {}", transactionAddedStatus);
+                      return INTERNAL_ERROR;
+                    }));
       }
+
       final Collection<Transaction> txs = singletonList(transaction);
       transactionBroadcaster.onTransactionsAdded(txs);
     }
@@ -128,38 +140,31 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResult.result;
   }
 
-  private boolean effectiveGasPriceIsAboveConfiguredMinGasPrice(final Transaction transaction) {
-    return transaction
-        .getGasPrice()
-        .map(Optional::of)
-        .orElse(transaction.getMaxFeePerGas())
-        .map(g -> g.greaterOrEqualThan(miningParameters.getMinTransactionGasPrice()))
-        .orElse(false);
+  private Optional<Wei> getMaxGasPrice(final Transaction transaction) {
+    return transaction.getGasPrice().map(Optional::of).orElse(transaction.getMaxFeePerGas());
+  }
+
+  private boolean isMaxGasPriceBelowConfiguredMinGasPrice(final Transaction transaction) {
+    return getMaxGasPrice(transaction)
+        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
+        .orElse(true);
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
     final List<Transaction> addedTransactions = new ArrayList<>(transactions.size());
     LOG.trace("Adding {} remote transactions", transactions.size());
+
     for (final Transaction transaction : transactions) {
+
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
         traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
         // We already have this transaction, don't even validate it.
         duplicateTransactionCounter.labels(REMOTE).inc();
         continue;
       }
-      final Wei transactionGasPrice = minTransactionGasPrice(transaction);
-      if (transactionGasPrice.compareTo(miningParameters.getMinTransactionGasPrice()) < 0) {
-        traceLambda(
-            LOG,
-            "Discard transaction {} below min gas price {}",
-            transaction::toTraceLog,
-            miningParameters::getMinTransactionGasPrice);
-        pendingTransactions
-            .signalInvalidTransaction(transaction)
-            .forEach(pendingTransactions::removeTransaction);
-        continue;
-      }
+
       final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
+
       if (validationResult.result.isValid()) {
         final TransactionAddedStatus status =
             pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
@@ -182,10 +187,11 @@ public class TransactionPool implements BlockAddedObserver {
             transaction::toTraceLog,
             validationResult.result::getInvalidReason);
         pendingTransactions
-            .signalInvalidTransaction(transaction)
+            .signalInvalidAndGetDependentTransactions(transaction)
             .forEach(pendingTransactions::removeTransaction);
       }
     }
+
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
       traceLambda(
@@ -218,10 +224,26 @@ public class TransactionPool implements BlockAddedObserver {
     LOG.trace("Block added event {}", event);
     event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
     pendingTransactions.manageBlockAdded(event.getBlock());
-    var readdTransactions = event.getRemovedTransactions();
-    if (!readdTransactions.isEmpty()) {
-      LOG.trace("Readding {} transactions from a block event", readdTransactions.size());
-      addRemoteTransactions(readdTransactions);
+    reAddTransactions(event.getRemovedTransactions());
+  }
+
+  private void reAddTransactions(final List<Transaction> reAddTransactions) {
+    if (!reAddTransactions.isEmpty()) {
+      var txsByOrigin =
+          reAddTransactions.stream()
+              .collect(
+                  Collectors.partitioningBy(
+                      tx -> pendingTransactions.isLocalSender(tx.getSender())));
+      var reAddLocalTxs = txsByOrigin.get(true);
+      var reAddRemoteTxs = txsByOrigin.get(false);
+      if (!reAddLocalTxs.isEmpty()) {
+        LOG.trace("Re-adding {} local transactions from a block event", reAddLocalTxs.size());
+        reAddLocalTxs.forEach(this::addLocalTransaction);
+      }
+      if (!reAddRemoteTxs.isEmpty()) {
+        LOG.trace("Re-adding {} remote transactions from a block event", reAddRemoteTxs.size());
+        addRemoteTransactions(reAddRemoteTxs);
+      }
     }
   }
 
@@ -258,22 +280,10 @@ public class TransactionPool implements BlockAddedObserver {
     final FeeMarket feeMarket =
         protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber()).getFeeMarket();
 
-    // Check whether it's a GoQuorum transaction
-    boolean goQuorumCompatibilityMode = getTransactionValidator().getGoQuorumCompatibilityMode();
-    if (transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)) {
-      final Optional<Wei> weiValue = ofNullable(transaction.getValue());
-      if (weiValue.isPresent() && !weiValue.get().isZero()) {
-        return ValidationResultAndAccount.invalid(
-            TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
-      }
-    }
-
-    // allow local transactions to be below minGas as long as we are mining and the transaction is
-    // executable:
-    if ((!effectiveGasPriceIsAboveConfiguredMinGasPrice(transaction)
-            && !miningParameters.isMiningEnabled())
-        || (!feeMarket.satisfiesFloorTxCost(transaction))) {
-      return ValidationResultAndAccount.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
+    final TransactionInvalidReason priceInvalidReason =
+        validatePrice(transaction, isLocal, feeMarket);
+    if (priceInvalidReason != null) {
+      return ValidationResultAndAccount.invalid(priceInvalidReason);
     }
 
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
@@ -306,28 +316,62 @@ public class TransactionPool implements BlockAddedObserver {
           "EIP-1559 transaction are not allowed yet");
     }
 
-    return protocolContext
-        .getWorldStateArchive()
-        .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
-        .map(
-            worldState -> {
-              try {
-                final Account senderAccount = worldState.get(transaction.getSender());
-                return new ValidationResultAndAccount(
-                    senderAccount,
-                    getTransactionValidator()
-                        .validateForSender(
-                            transaction,
-                            senderAccount,
-                            TransactionValidationParams.transactionPool()));
-              } catch (MerkleTrieException ex) {
-                LOG.debug(
-                    "MerkleTrieException while validating transaction for sender {}",
-                    transaction.getSender());
-                return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
-              }
-            })
-        .orElseGet(() -> ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
+    try (var worldState =
+        protocolContext
+            .getWorldStateArchive()
+            .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
+            .orElseThrow()) {
+      final Account senderAccount = worldState.get(transaction.getSender());
+      return new ValidationResultAndAccount(
+          senderAccount,
+          getTransactionValidator()
+              .validateForSender(
+                  transaction, senderAccount, TransactionValidationParams.transactionPool()));
+    } catch (MerkleTrieException ex) {
+      LOG.debug(
+          "MerkleTrieException while validating transaction for sender {}",
+          transaction.getSender());
+      return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+    } catch (Exception ex) {
+      return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+    }
+  }
+
+  private TransactionInvalidReason validatePrice(
+      final Transaction transaction, final boolean isLocal, final FeeMarket feeMarket) {
+
+    // Check whether it's a GoQuorum transaction
+    boolean goQuorumCompatibilityMode = getTransactionValidator().getGoQuorumCompatibilityMode();
+    if (transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)) {
+      final Optional<Wei> weiValue = ofNullable(transaction.getValue());
+      if (weiValue.isPresent() && !weiValue.get().isZero()) {
+        return TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED;
+      }
+    }
+
+    if (isLocal) {
+      if (!configuration.getTxFeeCap().isZero()
+          && getMaxGasPrice(transaction).get().greaterThan(configuration.getTxFeeCap())) {
+        return TransactionInvalidReason.TX_FEECAP_EXCEEDED;
+      }
+      // allow local transactions to be below minGas as long as we are mining
+      // or at least gas price is above the configured floor
+      if ((!miningParameters.isMiningEnabled()
+              && isMaxGasPriceBelowConfiguredMinGasPrice(transaction))
+          || !feeMarket.satisfiesFloorTxFee(transaction)) {
+        return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
+      }
+    } else {
+      if (isMaxGasPriceBelowConfiguredMinGasPrice(transaction)) {
+        traceLambda(
+            LOG,
+            "Discard transaction {} below min gas price {}",
+            transaction::toTraceLog,
+            miningParameters::getMinTransactionGasPrice);
+        return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
+      }
+    }
+    return null;
   }
 
   private boolean strictReplayProtectionShouldBeEnforceLocally(
@@ -350,17 +394,6 @@ public class TransactionPool implements BlockAddedObserver {
     return blockchain.getBlockHeader(blockchain.getChainHeadHash());
   }
 
-  private Wei minTransactionGasPrice(final Transaction transaction) {
-    return getChainHeadBlockHeader()
-        .map(
-            chainHeadBlockHeader ->
-                protocolSchedule
-                    .getByBlockNumber(chainHeadBlockHeader.getNumber())
-                    .getFeeMarket()
-                    .minTransactionPriceInNextBlock(transaction, chainHeadBlockHeader::getBaseFee))
-        .orElse(Wei.ZERO);
-  }
-
   public interface TransactionBatchAddedListener {
 
     void onTransactionsAdded(Iterable<Transaction> transactions);
@@ -373,7 +406,10 @@ public class TransactionPool implements BlockAddedObserver {
     ValidationResultAndAccount(
         final Account account, final ValidationResult<TransactionInvalidReason> result) {
       this.result = result;
-      this.maybeAccount = Optional.ofNullable(account);
+      this.maybeAccount =
+          Optional.ofNullable(account)
+              .map(
+                  acct -> new SimpleAccount(acct.getAddress(), acct.getNonce(), acct.getBalance()));
     }
 
     ValidationResultAndAccount(final ValidationResult<TransactionInvalidReason> result) {

@@ -15,7 +15,9 @@
 package org.hyperledger.besu.services.tasks;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -83,6 +85,10 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
     if (closed.get()) {
       throw new IllegalStateException("Attempt to access closed " + getClass().getSimpleName());
     }
+  }
+
+  public synchronized List<T> asList() {
+    return new ArrayList<>(internalQueue);
   }
 
   private synchronized void handleFailedTask(final InMemoryTask<T> task) {

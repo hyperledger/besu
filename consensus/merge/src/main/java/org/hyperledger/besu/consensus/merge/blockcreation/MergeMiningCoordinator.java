@@ -19,7 +19,7 @@ import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoor
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,9 +41,9 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
     return true;
   }
 
-  Result rememberBlock(final Block block);
+  BlockProcessingResult rememberBlock(final Block block);
 
-  Result validateBlock(final Block block);
+  BlockProcessingResult validateBlock(final Block block);
 
   ForkchoiceResult updateForkChoice(
       final BlockHeader newHead,
@@ -63,13 +63,11 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   CompletableFuture<Void> appendNewPayloadToSync(Block newPayload);
 
-  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash);
+  Optional<BlockHeader> getOrSyncHeadByHash(Hash headHash, Hash finalizedHash);
 
   boolean isMiningBeforeMerge();
 
-  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash, Hash finalizedBlockHash);
-
-  void addBadBlock(final Block block);
+  void addBadBlock(final Block block, Optional<Throwable> maybeCause);
 
   boolean isBadBlock(Hash blockHash);
 

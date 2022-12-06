@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,8 +33,8 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
@@ -113,7 +115,8 @@ public class EngineNewPayloadTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
     when(mergeCoordinator.rememberBlock(any()))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
+        .thenReturn(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -134,7 +137,7 @@ public class EngineNewPayloadTest {
         .thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
-    when(mergeCoordinator.rememberBlock(any())).thenReturn(new Result("error 42"));
+    when(mergeCoordinator.rememberBlock(any())).thenReturn(new BlockProcessingResult("error 42"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -196,7 +199,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
-    verify(mergeCoordinator, atLeastOnce()).addBadBlock(any());
+    verify(mergeCoordinator, atLeastOnce()).addBadBlock(any(), any());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -219,7 +222,7 @@ public class EngineNewPayloadTest {
   }
 
   @Test
-  public void shouldNotReturnInvalidOnInternalException() {
+  public void shouldNotReturnInvalidOnStorageException() {
     BlockHeader mockHeader = createBlockHeader();
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
@@ -229,14 +232,57 @@ public class EngineNewPayloadTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
     when(mergeCoordinator.rememberBlock(any()))
-        .thenReturn(new Result("kablooey", new StorageException(new Exception())));
+        .thenReturn(
+            new BlockProcessingResult(Optional.empty(), new StorageException("database bedlam")));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     fromErrorResp(resp);
     verify(engineCallListener, times(1)).executionEngineCalled();
-    verify(mergeCoordinator, times(0)).addBadBlock(any());
+    verify(mergeCoordinator, times(0)).addBadBlock(any(), any());
     // verify mainnetBlockValidator does not add to bad block manager
+  }
+
+  @Test
+  public void shouldNotReturnInvalidOnHandledMerkleTrieException() {
+    BlockHeader mockHeader = createBlockHeader();
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
+    when(mergeCoordinator.rememberBlock(any()))
+        .thenReturn(
+            new BlockProcessingResult(Optional.empty(), new MerkleTrieException("missing leaf")));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    verify(engineCallListener, times(1)).executionEngineCalled();
+    verify(mergeCoordinator, times(0)).addBadBlock(any(), any());
+
+    fromErrorResp(resp);
+  }
+
+  @Test
+  public void shouldNotReturnInvalidOnThrownMerkleTrieException() {
+    BlockHeader mockHeader = createBlockHeader();
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
+    when(mergeCoordinator.rememberBlock(any())).thenThrow(new MerkleTrieException("missing leaf"));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    verify(engineCallListener, times(1)).executionEngineCalled();
+    verify(mergeCoordinator, never()).addBadBlock(any(), any());
+
+    fromErrorResp(resp);
   }
 
   @Test
@@ -305,10 +351,7 @@ public class EngineNewPayloadTest {
   @Test
   public void shouldRespondWithSyncingDuringForwardSync() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
-    when(mergeCoordinator.appendNewPayloadToSync(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);

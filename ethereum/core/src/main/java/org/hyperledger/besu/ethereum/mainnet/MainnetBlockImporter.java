@@ -45,14 +45,15 @@ public class MainnetBlockImporter implements BlockImporter {
         blockValidator.validateAndProcessBlock(
             context, block, headerValidationMode, ommerValidationMode);
 
-    result.blockProcessingOutputs.ifPresent(
-        processingOutputs ->
-            context.getBlockchain().appendBlock(block, processingOutputs.receipts));
+    if (result.isSuccessful()) {
+      result
+          .getYield()
+          .ifPresent(
+              processingOutputs ->
+                  context.getBlockchain().appendBlock(block, processingOutputs.getReceipts()));
+    }
 
-    return result
-        .blockProcessingOutputs
-        .map(blockProcessingOutputs -> new BlockImportResult(true))
-        .orElseGet(() -> new BlockImportResult(false));
+    return new BlockImportResult(result.isSuccessful());
   }
 
   @Override

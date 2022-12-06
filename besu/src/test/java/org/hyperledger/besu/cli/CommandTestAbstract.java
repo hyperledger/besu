@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import org.apache.tuweni.bytes.Bytes;
@@ -173,6 +174,7 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
+  @Captor protected ArgumentCaptor<Long> longArgumentCaptor;
   @Captor protected ArgumentCaptor<Float> floatCaptor;
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
@@ -224,6 +226,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
+
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
@@ -279,8 +282,9 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.ethstatsUrl(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.ethstatsContact(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.forkIdSupplier(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.rpcMaxLogsRange(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -319,6 +323,8 @@ public abstract class CommandTestAbstract {
 
   @Before
   public void setUpStreams() {
+    // reset the global opentelemetry singleton
+    GlobalOpenTelemetry.resetForTest();
     commandOutput.reset();
     commandErrorOutput.reset();
     System.setOut(new PrintStream(commandOutput));
@@ -348,35 +354,60 @@ public abstract class CommandTestAbstract {
     return parseCommand(System.in, args);
   }
 
+  protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
+    return parseCommand(false, in, args);
+  }
+
+  protected TestBesuCommand parseCommandWithRequiredOption(final String... args) {
+    return parseCommand(true, System.in, args);
+  }
+
   private JsonBlockImporter jsonBlockImporterFactory(final BesuController controller) {
     return jsonBlockImporter;
   }
 
-  protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
+  protected TestBesuCommand parseCommand(
+      final boolean requiredOption, final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
     System.setProperty("picocli.ansi", "false");
+    // reset GlobalOpenTelemetry
+    GlobalOpenTelemetry.resetForTest();
 
     final TestBesuCommand besuCommand =
-        new TestBesuCommand(
-            mockLogger,
-            () -> rlpBlockImporter,
-            this::jsonBlockImporterFactory,
-            (blockchain) -> rlpBlockExporter,
-            mockRunnerBuilder,
-            mockControllerBuilderFactory,
-            mockBesuPluginContext,
-            environment,
-            storageService,
-            securityModuleService,
-            mockPkiBlockCreationConfigProvider,
-            privacyPluginService);
+        requiredOption
+            ? new TestBesuCommandWithRequiredOption(
+                mockLogger,
+                () -> rlpBlockImporter,
+                this::jsonBlockImporterFactory,
+                (blockchain) -> rlpBlockExporter,
+                mockRunnerBuilder,
+                mockControllerBuilderFactory,
+                mockBesuPluginContext,
+                environment,
+                storageService,
+                securityModuleService,
+                mockPkiBlockCreationConfigProvider,
+                privacyPluginService)
+            : new TestBesuCommand(
+                mockLogger,
+                () -> rlpBlockImporter,
+                this::jsonBlockImporterFactory,
+                (blockchain) -> rlpBlockExporter,
+                mockRunnerBuilder,
+                mockControllerBuilderFactory,
+                mockBesuPluginContext,
+                environment,
+                storageService,
+                securityModuleService,
+                mockPkiBlockCreationConfigProvider,
+                privacyPluginService);
     besuCommands.add(besuCommand);
 
-    File defaultKeyFile =
+    final File defaultKeyFile =
         KeyPairUtil.getDefaultKeyFile(DefaultCommandValues.getDefaultBesuDataPath(besuCommand));
     try {
       Files.writeString(defaultKeyFile.toPath(), keyPair.getPrivateKey().toString());
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
@@ -480,6 +511,49 @@ public abstract class CommandTestAbstract {
         vertx.close(event -> closed.set(true));
         Awaitility.waitAtMost(30, TimeUnit.SECONDS).until(closed::get);
       }
+    }
+  }
+
+  @CommandLine.Command
+  public static class TestBesuCommandWithRequiredOption extends TestBesuCommand {
+
+    @CommandLine.Option(
+        names = {"--accept-terms-and-conditions"},
+        description = "You must explicitly accept terms and conditions",
+        arity = "1",
+        required = true)
+    private final Boolean acceptTermsAndConditions = false;
+
+    TestBesuCommandWithRequiredOption(
+        final Logger mockLogger,
+        final Supplier<RlpBlockImporter> mockBlockImporter,
+        final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+        final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+        final RunnerBuilder mockRunnerBuilder,
+        final BesuController.Builder controllerBuilderFactory,
+        final BesuPluginContextImpl besuPluginContext,
+        final Map<String, String> environment,
+        final StorageServiceImpl storageService,
+        final SecurityModuleServiceImpl securityModuleService,
+        final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
+        final PrivacyPluginServiceImpl privacyPluginService) {
+      super(
+          mockLogger,
+          mockBlockImporter,
+          jsonBlockImporterFactory,
+          rlpBlockExporterFactory,
+          mockRunnerBuilder,
+          controllerBuilderFactory,
+          besuPluginContext,
+          environment,
+          storageService,
+          securityModuleService,
+          pkiBlockCreationConfigProvider,
+          privacyPluginService);
+    }
+
+    public Boolean getAcceptTermsAndConditions() {
+      return acceptTermsAndConditions;
     }
   }
 }

@@ -40,7 +40,8 @@
       "root": "0xb55d027526b3f56953584db678b5c3d1a418812c0106b0cfbc3c912c7898dfe5",
       "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
       "transactionHash": "0x185a9154a0acc4e0ffc84029aee0f3dbf57ff0b84ec7624cb80e7373a03e8aeb",
-      "transactionIndex": "0x0"
+      "transactionIndex": "0x0",
+      "type" : "0x0"
     }
   },
   "statusCode": 200
