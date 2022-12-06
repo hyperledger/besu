@@ -1,6 +1,9 @@
 # Changelog
 ## 22.10.3
 
+### Additions and Improvements
+- Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
+
 ### Breaking Changes
 - Added `--rpc-max-logs-range` CLI option to allow limiting the number of blocks queried by `eth_getLogs` RPC API. Default value: 1000 [#4597](https://github.com/hyperledger/besu/pull/4597)
 
