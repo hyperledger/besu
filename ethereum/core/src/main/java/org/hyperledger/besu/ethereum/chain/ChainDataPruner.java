@@ -57,31 +57,25 @@ public class ChainDataPruner implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    LOG.debug("New block added event: " + event);
     pruningExecutor.submit(
         () -> {
-          // Get pruning mark
           final long blockNumber = event.getBlock().getHeader().getNumber();
           long pruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
           if (blockNumber < pruningMark) {
-            // Ignore and warn if block number < pruning mark, this normally indicates the
-            // blocksToRetain
-            // is too small.
             LOG.warn(
                 "Block added event: "
                     + event
                     + " has a block number of "
                     + blockNumber
                     + " < pruning mark "
-                    + pruningMark);
+                    + pruningMark
+                    + " which normally indicates the blocksToRetain is too small");
             return;
           }
-          // Append block into fork blocks.
           final KeyValueStorageTransaction tx = prunerStorage.startTransaction();
           final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
           forkBlocks.add(event.getBlock().getHash());
           prunerStorage.setForkBlocks(tx, blockNumber, forkBlocks);
-          // If a block is a new canonical head, start pruning.
           if (event.isNewCanonicalHead()
               && blockNumber - blocksToRetain - pruningMark >= pruningFrequency) {
             while (blockNumber - pruningMark >= blocksToRetain) {
@@ -90,18 +84,15 @@ public class ChainDataPruner implements BlockAddedObserver {
               pruningMark++;
             }
           }
-          // Update pruning mark and commit
           prunerStorage.setPruningMark(tx, pruningMark);
           tx.commit();
         });
   }
 
   private void pruneChainDataAtBlock(final KeyValueStorageTransaction tx, final long blockNumber) {
-    // Get a collection of old fork blocks that need to be pruned.
     final Collection<Hash> oldForkBlocks = prunerStorage.getForkBlocks(blockNumber);
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     for (Hash toPrune : oldForkBlocks) {
-      // Prune block header, body, receipts, total difficulty and transaction locations.
       updater.removeBlockHeader(toPrune);
       updater.removeBlockBody(toPrune);
       updater.removeTransactionReceipts(toPrune);
@@ -114,10 +105,8 @@ public class ChainDataPruner implements BlockAddedObserver {
                       .getTransactions()
                       .forEach(t -> updater.removeTransactionLocation(t.getHash())));
     }
-    // Prune canonical chain mapping and commit.
     updater.removeBlockHash(blockNumber);
     updater.commit();
-    // Remove old fork blocks.
     prunerStorage.removeForkBlocks(tx, blockNumber);
   }
 }
