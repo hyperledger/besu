@@ -1,5 +1,7 @@
 # Changelog
 ## 22.10.3
+
+### Additions and Improvements
 - Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
 
 ### Bug Fixes
