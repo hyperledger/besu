@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.chain.ChainDataPruner.MAX_PRUNING_WORKER;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
@@ -40,7 +43,17 @@ public class ChainDataPrunerTest {
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
-            blockchainStorage, new ChainDataPrunerStorage(new InMemoryKeyValueStorage()), 512, 0);
+            blockchainStorage,
+            new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            512,
+            0,
+            new ThreadPoolExecutor(
+                1,
+                1,
+                60L,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(MAX_PRUNING_WORKER),
+                new ThreadPoolExecutor.DiscardPolicy()));
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -75,7 +88,17 @@ public class ChainDataPrunerTest {
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
-            blockchainStorage, new ChainDataPrunerStorage(new InMemoryKeyValueStorage()), 512, 0);
+            blockchainStorage,
+            new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            512,
+            0,
+            new ThreadPoolExecutor(
+                1,
+                1,
+                60L,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(MAX_PRUNING_WORKER),
+                new ThreadPoolExecutor.DiscardPolicy()));
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(

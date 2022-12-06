@@ -19,40 +19,31 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ChainDataPruner implements BlockAddedObserver {
+  public static final int MAX_PRUNING_WORKER = 16;
   private static final Logger LOG = LoggerFactory.getLogger(ChainDataPruner.class);
   private final BlockchainStorage blockchainStorage;
   private final ChainDataPrunerStorage prunerStorage;
   private final long blocksToRetain;
   private final long pruningFrequency;
   private final ExecutorService pruningExecutor;
-  private static final int MAX_PRUNING_WORKER = 16;
 
   public ChainDataPruner(
       final BlockchainStorage blockchainStorage,
       final ChainDataPrunerStorage prunerStorage,
       final long blocksToRetain,
-      final long pruningFrequency) {
+      final long pruningFrequency,
+      final ExecutorService pruningExecutor) {
     this.blockchainStorage = blockchainStorage;
     this.prunerStorage = prunerStorage;
     this.blocksToRetain = blocksToRetain;
     this.pruningFrequency = pruningFrequency;
-    this.pruningExecutor =
-        new ThreadPoolExecutor(
-            1,
-            1,
-            60L,
-            TimeUnit.SECONDS,
-            new ArrayBlockingQueue<>(MAX_PRUNING_WORKER),
-            new ThreadPoolExecutor.DiscardPolicy());
+    this.pruningExecutor = pruningExecutor;
   }
 
   @Override
@@ -79,7 +70,7 @@ public class ChainDataPruner implements BlockAddedObserver {
           final long newPruningMark = blockNumber - blocksToRetain;
           if (event.isNewCanonicalHead()
               && newPruningMark - currentPruningMark >= pruningFrequency) {
-            long currentRetainedBlock = blockNumber - currentPruningMark;
+            long currentRetainedBlock = blockNumber - currentPruningMark + 1;
             while (currentRetainedBlock > blocksToRetain) {
               LOG.debug("Pruning chain data with block height of " + currentPruningMark);
               pruneChainDataAtBlock(tx, currentPruningMark);

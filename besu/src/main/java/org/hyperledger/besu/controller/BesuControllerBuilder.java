@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
@@ -345,7 +346,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                   storageProvider.getStorageBySegmentIdentifier(
                       KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
               chainDataPruningBlocksRetained,
-              chainDataPruningFrequency);
+              chainDataPruningFrequency,
+              MonitoredExecutors.newBoundedThreadPool(
+                  ChainDataPruner.class.getSimpleName(),
+                  1,
+                  1,
+                  ChainDataPruner.MAX_PRUNING_WORKER,
+                  metricsSystem));
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
           "Chain data pruning enabled with recent blocks retained to be: "
