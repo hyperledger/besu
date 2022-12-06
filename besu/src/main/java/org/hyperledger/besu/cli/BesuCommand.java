@@ -1924,8 +1924,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public void validateChainDataPruningParams() {
-    if (unstableChainDataPruningOptions.getChainDataPruningEnabled()) {
-      if (unstableChainDataPruningOptions.getChainDataPruningBlocksRetained()
+    if (unstableChainDataPruningOptions.getChainDataPruningEnabled() && unstableChainDataPruningOptions.getChainDataPruningBlocksRetained()
           < ChainDataPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
         throw new ParameterException(
             this.commandLine,
