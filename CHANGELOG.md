@@ -1,6 +1,9 @@
 # Changelog
 ## 22.10.3
 
+### Breaking Changes
+- Added `--rpc-max-logs-range` CLI option to allow limiting the number of blocks queried by `eth_getLogs` RPC API. Default value: 1000 [#4597](https://github.com/hyperledger/besu/pull/4597)
+
 ### Bug Fixes
 
 ### Download Links
