@@ -33,6 +33,7 @@ public class EthProtocolVersion {
   public static final int V65 = 65;
   public static final int V66 = 66;
   public static final int V67 = 67;
+  public static final int V68 = 68;
 
   /** eth/62 (2015) */
   private static final List<Integer> eth62Messages =
@@ -128,6 +129,7 @@ public class EthProtocolVersion {
       case EthProtocolVersion.V66:
         return eth65Messages;
       case EthProtocolVersion.V67:
+      case EthProtocolVersion.V68:
         return eth67Messages;
       default:
         return Collections.emptyList();
