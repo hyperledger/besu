@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -22,9 +23,12 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.Optional;
@@ -49,6 +53,7 @@ public class TransitionProtocolScheduleTest {
 
   private static final Difficulty TTD = Difficulty.of(100L);
   private static final long BLOCK_NUMBER = 29L;
+  private static final long TIMESTAMP = 1L;
   private TransitionProtocolSchedule transitionProtocolSchedule;
 
   @Before
@@ -56,6 +61,8 @@ public class TransitionProtocolScheduleTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
     when(mergeContext.getTerminalTotalDifficulty()).thenReturn(TTD);
+    when(blockHeader.getTimestamp()).thenReturn(TIMESTAMP);
+    when(timestampSchedule.getByTimestamp(TIMESTAMP)).thenReturn(Optional.empty());
 
     transitionProtocolSchedule =
         new TransitionProtocolSchedule(
@@ -142,6 +149,51 @@ public class TransitionProtocolScheduleTest {
     verifyPostMergeProtocolScheduleReturned();
   }
 
+  @Test
+  public void getByBlockHeader_returnsTimestampScheduleIfPresent() {
+    when(timestampSchedule.getByTimestamp(TIMESTAMP))
+        .thenReturn(Optional.of(mock(ProtocolSpec.class)));
+
+    assertThat(transitionProtocolSchedule.getByBlockHeader(blockHeader)).isNotNull();
+
+    verify(timestampSchedule).getByTimestamp(TIMESTAMP);
+    verifyNoMergeScheduleInteractions();
+  }
+
+  @Test
+  public void getByBlockNumber_returnsTimestampScheduleIfPresent() {
+    final Block block = new Block(blockHeader, BlockBody.empty());
+    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.of(block));
+    when(timestampSchedule.getByBlockHeader(blockHeader)).thenReturn(mock(ProtocolSpec.class));
+
+    assertThat(transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER)).isNotNull();
+
+    verify(timestampSchedule).getByBlockHeader(blockHeader);
+    verifyNoMergeScheduleInteractions();
+  }
+
+  // TODO SLD is this correct behaviour?
+  @Test
+  public void getByBlockNumber_delegatesToMergeScheduleWhenBlockNotFound() {
+    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.empty());
+    when(mergeContext.isPostMerge()).thenReturn(false);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPreMergeProtocolScheduleReturned();
+  }
+
+  @Test
+  public void getByBlockNumber_delegatesToMergeScheduleWhenTimestampScheduleDoesNotExist() {
+    final Block block = new Block(blockHeader, BlockBody.empty());
+    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.of(block));
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPostMergeProtocolScheduleReturned();
+  }
+
   private void verifyPreMergeProtocolScheduleReturned() {
     verify(preMergeProtocolSchedule).getByBlockNumber(BLOCK_NUMBER);
     verifyNoInteractions(postMergeProtocolSchedule);
@@ -150,5 +202,10 @@ public class TransitionProtocolScheduleTest {
   private void verifyPostMergeProtocolScheduleReturned() {
     verify(postMergeProtocolSchedule).getByBlockNumber(BLOCK_NUMBER);
     verifyNoInteractions(preMergeProtocolSchedule);
+  }
+
+  private void verifyNoMergeScheduleInteractions() {
+    verifyNoInteractions(preMergeProtocolSchedule);
+    verifyNoInteractions(postMergeProtocolSchedule);
   }
 }

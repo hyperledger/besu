@@ -126,9 +126,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         .flatMap(blockchain -> blockchain.getBlockByNumber(number))
         .map(Block::getHeader)
         .map(timestampSchedule::getByBlockHeader)
-        .orElse(
-            transitionUtils.dispatchFunctionAccordingToMergeState(
-                protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
+        .orElseGet(
+            () ->
+                transitionUtils.dispatchFunctionAccordingToMergeState(
+                    protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
   }
 
   @Override
