@@ -41,7 +41,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   private static final Logger LOG =
       LoggerFactory.getLogger(BigIntegerModularExponentiationPrecompiledContract.class);
 
-  static final boolean useNative = LibArithmetic.ENABLED;
+  static boolean useNative = LibArithmetic.ENABLED;
   public static final int BASE_OFFSET = 96;
   private static final int PARAMETER_LENGTH = 32;
   private static final int BASE_LENGTH_OFFSET = 0;
@@ -50,6 +50,14 @@ public class BigIntegerModularExponentiationPrecompiledContract
 
   public BigIntegerModularExponentiationPrecompiledContract(final GasCalculator gasCalculator) {
     super("BigIntModExp", gasCalculator);
+  }
+
+  public static void disableNative() {
+    useNative = false;
+  }
+
+  public static boolean isNative() {
+    return useNative;
   }
 
   @Override
