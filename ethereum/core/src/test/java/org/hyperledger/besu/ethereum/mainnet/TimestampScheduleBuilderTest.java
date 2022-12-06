@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -32,6 +34,7 @@ public class TimestampScheduleBuilderTest {
   private final BigInteger defaultChainId = BigInteger.ONE;
   private final PrivacyParameters privacyParameters = new PrivacyParameters();
   private final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
+  private final BlockHeader BLOCK_HEADER = new BlockHeaderTestFixture().timestamp(1L).buildHeader();
   private TimestampScheduleBuilder builder;
   private StubGenesisConfigOptions config;
 
@@ -102,5 +105,21 @@ public class TimestampScheduleBuilderTest {
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
             "Genesis Config Error: 'Cancun' is scheduled for timestamp 2 but it must be on or after timestamp 3.");
+  }
+
+  @Test
+  public void getByBlockHeader_whenSpecFound() {
+    config.shanghaiTimestamp(1);
+    final TimestampSchedule schedule = builder.createTimestampSchedule();
+
+    assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNotNull();
+  }
+
+  @Test
+  public void getByBlockHeader_whenSpecNotFoundReturnsNull() {
+    config.shanghaiTimestamp(2);
+    final TimestampSchedule schedule = builder.createTimestampSchedule();
+
+    assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNull();
   }
 }
