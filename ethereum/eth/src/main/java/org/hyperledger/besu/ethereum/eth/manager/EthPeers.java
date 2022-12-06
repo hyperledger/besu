@@ -204,15 +204,13 @@ public class EthPeers {
       final Bytes id, final EthPeer peer, final PeerConnection connection) {
     boolean removed = false;
     if (peer != null && peer.getConnection().equals(connection)) {
-      if (peer != null) {
-        if (!peerHasNonReadyConnection(id)) {
-          // make sure we do not remove the peer if there is a non ready connection to that peer
-          removed = connections.remove(id, peer);
-          disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
-          peer.handleDisconnect();
-          abortPendingRequestsAssignedToDisconnectedPeers();
-          LOG.debug("Disconnected EthPeer {}", peer);
-        }
+      if (!peerHasNonReadyConnection(id)) {
+        // make sure we do not remove the peer if there is a non ready connection to that peer
+        removed = connections.remove(id, peer);
+        disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
+        peer.handleDisconnect();
+        abortPendingRequestsAssignedToDisconnectedPeers();
+        LOG.debug("Disconnected EthPeer {}", peer);
       }
     }
     reattemptPendingPeerRequests();
