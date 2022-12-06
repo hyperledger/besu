@@ -29,7 +29,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
       new TreeSet<>(Comparator.comparing(TimedProtocolSpec::getTimestamp).reversed());
   private final Optional<BigInteger> chainId;
 
-  public DefaultTimestampSchedule(final Optional<BigInteger> chainId) {
+  DefaultTimestampSchedule(final Optional<BigInteger> chainId) {
     this.chainId = chainId;
   }
 
@@ -48,21 +48,21 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
     return chainId;
   }
 
-  public void putMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
+  void putMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
     final TimedProtocolSpec scheduledProtocolSpec = new TimedProtocolSpec(timestamp, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
   }
 
-  public String listMilestones() {
+  String listMilestones() {
     return protocolSpecs.stream()
         .sorted(Comparator.comparing(TimedProtocolSpec::getTimestamp))
         .map(spec -> spec.getSpec().getName() + ": " + spec.getTimestamp())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
-  public static class TimedProtocolSpec {
+  private static class TimedProtocolSpec {
     private final long timestamp;
     private final ProtocolSpec spec;
 
