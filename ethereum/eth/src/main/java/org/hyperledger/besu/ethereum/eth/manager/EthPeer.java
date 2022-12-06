@@ -502,7 +502,8 @@ public class EthPeer implements Comparable<EthPeer> {
           return;
         } else {
           LOG.info("Executing callback connected to peer {}", this.id);
-          LOG.debug("Status message exchange successful with a peer on a matching chain. {}", this);callback.accept(this);
+          LOG.debug("Status message exchange successful with a peer on a matching chain. {}", this);
+          callback.accept(this);
         }
       }
     }

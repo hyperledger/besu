@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.CapabilityMultiplexer;
@@ -36,7 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 public abstract class AbstractPeerConnection implements PeerConnection {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerConnection.class);
@@ -165,7 +166,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
-      debugLambda(LOG, "DISCONNECTING connection {}, with stack trace: {}", () -> this, () ->  ExceptionUtils.getStackTrace(new RuntimeException("here")));
+      debugLambda(
+          LOG,
+          "DISCONNECTING connection {}, with stack trace: {}",
+          () -> this,
+          () -> ExceptionUtils.getStackTrace(new RuntimeException("here")));
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
       LOG.debug("Disconnecting connection {}, reason {}", this, reason);
