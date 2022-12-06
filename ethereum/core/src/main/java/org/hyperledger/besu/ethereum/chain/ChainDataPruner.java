@@ -60,15 +60,15 @@ public class ChainDataPruner implements BlockAddedObserver {
     pruningExecutor.submit(
         () -> {
           final long blockNumber = event.getBlock().getHeader().getNumber();
-          long pruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
-          if (blockNumber < pruningMark) {
+          long currentPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
+          if (blockNumber < currentPruningMark) {
             LOG.warn(
                 "Block added event: "
                     + event
                     + " has a block number of "
                     + blockNumber
                     + " < pruning mark "
-                    + pruningMark
+                    + currentPruningMark
                     + " which normally indicates the blocksToRetain is too small");
             return;
           }
@@ -76,15 +76,18 @@ public class ChainDataPruner implements BlockAddedObserver {
           final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
           forkBlocks.add(event.getBlock().getHash());
           prunerStorage.setForkBlocks(tx, blockNumber, forkBlocks);
+          final long newPruningMark = blockNumber - blocksToRetain;
           if (event.isNewCanonicalHead()
-              && blockNumber - blocksToRetain - pruningMark >= pruningFrequency) {
-            while (blockNumber - pruningMark >= blocksToRetain) {
-              LOG.debug("Pruning chain data at pruning mark: " + pruningMark);
-              pruneChainDataAtBlock(tx, pruningMark);
-              pruningMark++;
+              && newPruningMark - currentPruningMark >= pruningFrequency) {
+            long currentRetainedBlock = blockNumber - currentPruningMark;
+            while (currentRetainedBlock > blocksToRetain) {
+              LOG.debug("Pruning chain data at pruning mark: " + currentPruningMark);
+              pruneChainDataAtBlock(tx, currentPruningMark);
+              currentPruningMark++;
+              currentRetainedBlock = blockNumber - currentPruningMark;
             }
           }
-          prunerStorage.setPruningMark(tx, pruningMark);
+          prunerStorage.setPruningMark(tx, currentPruningMark);
           tx.commit();
         });
   }
