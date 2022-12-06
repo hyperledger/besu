@@ -114,7 +114,8 @@ public abstract class AbstractIsolationTests {
                 createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI),
             blockchain,
             Optional.of(16L),
-            shouldUseSnapshots());
+            shouldUseSnapshots(),
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     ws.persist(blockchain.getChainHeadHeader());
