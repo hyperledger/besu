@@ -1,5 +1,6 @@
 # Changelog
 ## 22.10.3
+- Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
 
 ### Bug Fixes
 
@@ -29,7 +30,6 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2
 - Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
 - Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 - Implement Eth/67 sub-protocol [#4596](https://github.com/hyperledger/besu/issues/4596)
-- Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)
 - Enable RocksDB Bloom filters to improve read performance [#4682](https://github.com/hyperledger/besu/pull/4682)
 - Backward sync: use retry switching peer when fetching data from peers [#4656](https://github.com/hyperledger/besu/pull/4656)
