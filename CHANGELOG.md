@@ -3,6 +3,11 @@
 
 ### Breaking Changes
 - Added `--rpc-max-logs-range` CLI option to allow limiting the number of blocks queried by `eth_getLogs` RPC API. Default value: 1000 [#4597](https://github.com/hyperledger/besu/pull/4597)
+- The `graalvm` docker variant no longer meets the performance requirements for Ethereum Mainnet.  The `openjdk-11` and `openjdk-latest` variants are recommended in its place.
+
+### Additions and Improvements
+- Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
+- Increase the speed of modexp gas execution and execution. [#4780](https://github.com/hyperledger/besu/pull/4780)
 
 ### Additions and Improvements
 - Add chain data pruning feature with three experimental CLI options: `--Xchain-data-pruning-enabled`, `--Xchain-data-pruning-blocks-retained` and `--Xchain-data-pruning-frequency` [#4686](https://github.com/hyperledger/besu/pull/4686)
@@ -18,8 +23,8 @@ This is a hotfix release to resolve a race condition that results in segfaults, 
 - bugfix for async operations on Snashot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
 
 ### Download Links
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.tar.gz  / sha256: TBA
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.zip / sha256: TBA
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.tar.gz  / sha256: cdb36141e3cba6379d35016e0a2de2edba579d4786124b5f7257b1e4a68867a2
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.zip / sha256: 4c9208f684762670cb4f2c6ebfb6930e05e339a7c3c586fe8caa9f26462830aa
 
 
 ## 22.10.1

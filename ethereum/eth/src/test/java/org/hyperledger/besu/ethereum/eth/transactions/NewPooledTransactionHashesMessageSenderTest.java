@@ -28,7 +28,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
@@ -79,8 +81,13 @@ public class NewPooledTransactionHashesMessageSenderTest {
   public void setUp() {
     transactionTracker = new PeerTransactionTracker();
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
-    Transaction tx = mock(Transaction.class);
+    final Transaction tx = mock(Transaction.class);
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
+
+    when(peer1.getConnection())
+        .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH67), (cap, msg, conn) -> {}));
+    when(peer2.getConnection())
+        .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH67), (cap, msg, conn) -> {}));
   }
 
   @Test
@@ -94,6 +101,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
     verify(peer1).send(transactionsMessageContaining(transaction1, transaction2));
     verify(peer2).send(transactionsMessageContaining(transaction3));
+    verify(peer1).getConnection();
+    verify(peer2).getConnection();
     verifyNoMoreInteractions(peer1, peer2);
   }
 
@@ -142,7 +151,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   private Set<Hash> getTransactionsFromMessage(final MessageData message) {
     final NewPooledTransactionHashesMessage transactionsMessage =
-        NewPooledTransactionHashesMessage.readFrom(message);
-    return newHashSet(transactionsMessage.pendingTransactions());
+        NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.ETH66);
+    return newHashSet(transactionsMessage.pendingTransactionHashes());
   }
 }

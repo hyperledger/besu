@@ -41,6 +41,7 @@ dependencies {
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
 
   implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.hyperledger.besu:arithmetic'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'net.java.dev.jna:jna'
   implementation 'com.github.ben-manes.caffeine:caffeine'

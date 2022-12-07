@@ -36,6 +36,7 @@ public class EthProtocol implements SubProtocol {
   public static final Capability ETH65 = Capability.create(NAME, EthProtocolVersion.V65);
   public static final Capability ETH66 = Capability.create(NAME, EthProtocolVersion.V66);
   public static final Capability ETH67 = Capability.create(NAME, EthProtocolVersion.V67);
+  public static final Capability ETH68 = Capability.create(NAME, EthProtocolVersion.V68);
 
   public static boolean requestIdCompatible(final int code) {
     return Set.of(
@@ -67,6 +68,7 @@ public class EthProtocol implements SubProtocol {
       case EthProtocolVersion.V65:
       case EthProtocolVersion.V66:
       case EthProtocolVersion.V67:
+      case EthProtocolVersion.V68:
         // same number of messages in each range, eth65 defines messages in the middle of the
         // range defined by eth63 and eth64 defines no new ranges.
         return 17;
