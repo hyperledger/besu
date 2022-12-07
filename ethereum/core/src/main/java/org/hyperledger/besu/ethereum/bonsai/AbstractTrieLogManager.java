@@ -42,7 +42,7 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
   protected final Map<Bytes32, T> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
 
-  public AbstractTrieLogManager(
+  AbstractTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
@@ -95,24 +95,26 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
   }
 
   synchronized void scrubCachedLayers(final long newMaxHeight) {
-    final long waterline = newMaxHeight - RETAINED_LAYERS;
-    cachedWorldStatesByHash.values().stream()
-        .filter(layer -> layer.getHeight() < waterline)
-        .collect(Collectors.toList())
-        .stream()
-        .forEach(
-            layer -> {
-              cachedWorldStatesByHash.remove(layer.getTrieLog().getBlockHash());
-              Optional.ofNullable(layer.getMutableWorldState())
-                  .ifPresent(
-                      ws -> {
-                        try {
-                          ws.close();
-                        } catch (Exception e) {
-                          LOG.warn("Error closing bonsai worldstate layer", e);
-                        }
-                      });
-            });
+    if (cachedWorldStatesByHash.size() > RETAINED_LAYERS) {
+      final long waterline = newMaxHeight - RETAINED_LAYERS;
+      cachedWorldStatesByHash.values().stream()
+          .filter(layer -> layer.getHeight() < waterline)
+          .collect(Collectors.toList())
+          .stream()
+          .forEach(
+              layer -> {
+                cachedWorldStatesByHash.remove(layer.getTrieLog().getBlockHash());
+                Optional.ofNullable(layer.getMutableWorldState())
+                    .ifPresent(
+                        ws -> {
+                          try {
+                            ws.close();
+                          } catch (Exception e) {
+                            LOG.warn("Error closing bonsai worldstate layer", e);
+                          }
+                        });
+              });
+    }
   }
 
   private void persistTrieLog(

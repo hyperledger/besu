@@ -32,7 +32,7 @@ public class LayeredTrieLogManager
     extends AbstractTrieLogManager<LayeredTrieLogManager.LayeredWorldStateCache> {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredTrieLogManager.class);
 
-  public LayeredTrieLogManager(
+  LayeredTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
@@ -45,11 +45,6 @@ public class LayeredTrieLogManager
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad) {
     this(blockchain, worldStateStorage, maxLayersToLoad, new HashMap<>());
-  }
-
-  public LayeredTrieLogManager(
-      final Blockchain blockchain, final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this(blockchain, worldStateStorage, RETAINED_LAYERS, new HashMap<>());
   }
 
   @Override

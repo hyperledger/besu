@@ -43,7 +43,7 @@ public class SnapshotTrieLogManager
     this(blockchain, worldStateStorage, maxLayersToLoad, new HashMap<>());
   }
 
-  public SnapshotTrieLogManager(
+  SnapshotTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
@@ -52,7 +52,7 @@ public class SnapshotTrieLogManager
   }
 
   @Override
-  public void addCachedLayer(
+  public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
