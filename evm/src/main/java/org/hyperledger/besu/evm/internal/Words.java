@@ -41,17 +41,6 @@ public interface Words {
    * @return An address build from the right-most 160-bits of the {@code bytes} (as according to the
    *     VM specification (Appendix H. of the Yellow paper)).
    */
-  static Address toAddress(final Bytes32 bytes) {
-    return Address.wrap(bytes.slice(bytes.size() - Address.SIZE, Address.SIZE));
-  }
-
-  /**
-   * Extract an address from the provided address.
-   *
-   * @param bytes The word to extract the address from.
-   * @return An address build from the right-most 160-bits of the {@code bytes} (as according to the
-   *     VM specification (Appendix H. of the Yellow paper)).
-   */
   static Address toAddress(final Bytes bytes) {
     final int size = bytes.size();
     if (size < 20) {
