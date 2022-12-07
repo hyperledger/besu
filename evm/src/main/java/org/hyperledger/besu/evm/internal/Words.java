@@ -144,7 +144,8 @@ public interface Words {
    *
    * @param a first value
    * @param b second value
-   * @return value of a times b if no over/underflows or Integer.MAX_VALUE/Integer.MIN_VALUE otherwise
+   * @return value of a times b if no over/underflows or Integer.MAX_VALUE/Integer.MIN_VALUE
+   *     otherwise
    */
   static int clampedMultiply(final int a, final int b) {
     try {
