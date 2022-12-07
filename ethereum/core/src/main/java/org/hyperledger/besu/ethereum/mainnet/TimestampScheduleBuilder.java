@@ -110,8 +110,6 @@ public class TimestampScheduleBuilder {
         .forEach(
             e -> addProtocolSpec(timestampSchedule, e.getTimestamp(), e.getBuilder(), e.modifier));
 
-    // TODO SLD add modifiers to daoForkBlock? (and classicForkBlock?)
-
     LOG.info("Timestamp schedule created with milestones: {}", timestampSchedule.listMilestones());
     return timestampSchedule;
   }

@@ -68,7 +68,6 @@ public class MergeProtocolSchedule {
     return new TimestampScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            // TODO SLD might we need this if shanghaiTimestamp = 0?
             TimestampProtocolSpecAdapters.create(
                 config.getShanghaiTimestamp().orElse(0),
                 (specBuilder) ->
