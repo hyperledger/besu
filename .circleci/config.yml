@@ -23,7 +23,7 @@ executors:
 
   besu_arm64_executor_med: # 2cpu, 8G ram
     machine:
-      image: ubuntu-2204:2022.10.1
+      image: ubuntu-2004:202101-01
     resource_class: arm.medium
     working_directory: ~/project
     environment:
@@ -48,7 +48,7 @@ executors:
 
   xl_machine_executor:
     machine:
-      image: ubuntu-2204:2022.10.1 #Ubuntu 22.04, Docker v20.10.18, Docker Compose v2.10.2, Google Cloud SDK updates
+      image: ubuntu-2004:202201-02 #Ubuntu 20.04, Docker v20.10.12, Docker Compose v1.29.2, Google Cloud SDK updates
     resource_class: xlarge
 
   trivy_executor:
