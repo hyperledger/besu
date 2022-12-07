@@ -185,8 +185,6 @@ public class BonsaiSnapshotWorldStateArchiveTest {
     when(worldStateStorage.updater()).thenReturn(bonsaiUpdater);
     var snapshotTrieLogManager = new SnapshotTrieLogManager(blockchain, worldStateStorage, 12L);
     var mockArchive = mock(BonsaiWorldStateArchive.class);
-    when(mockArchive.getMutableSnapshot(any()))
-        .thenReturn(Optional.of(mock(BonsaiSnapshotWorldState.class)));
     BonsaiWorldStateUpdater mockUpdater = mock(BonsaiWorldStateUpdater.class);
 
     doAnswer(
