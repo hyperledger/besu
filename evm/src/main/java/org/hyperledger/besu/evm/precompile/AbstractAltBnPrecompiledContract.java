@@ -35,7 +35,16 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
   private static final Logger LOG = LoggerFactory.getLogger(AbstractAltBnPrecompiledContract.class);
 
   // use the native library implementation, if it is available
-  static boolean useNative = LibEthPairings.ENABLED;
+  static boolean useNative;
+
+  static {
+    try {
+      useNative = LibEthPairings.ENABLED;
+    } catch (UnsatisfiedLinkError ule) {
+      LOG.info("altbn128 native precompile not available: {}", ule.getMessage());
+      useNative = false;
+    }
+  }
 
   public static void disableNative() {
     useNative = false;
