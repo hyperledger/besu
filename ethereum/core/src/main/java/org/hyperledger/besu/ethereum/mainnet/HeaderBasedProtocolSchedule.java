@@ -19,7 +19,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
-// TODO SLD should this be ProtocolSchedule and the other be BlockNumberBasedProtocolSchedule?
 public interface HeaderBasedProtocolSchedule {
 
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
