@@ -43,7 +43,7 @@ public class EthSynchronizerUpdaterTest {
 
   @Test
   public void ethPeerIsMissingResultInNoUpdate() {
-    when(ethPeers.peer(any(Bytes.class))).thenReturn(null);
+    when(ethPeers.peer(any(PeerConnection.class))).thenReturn(null);
 
     final EthSynchronizerUpdater updater = new EthSynchronizerUpdater(ethPeers);
 
@@ -54,7 +54,7 @@ public class EthSynchronizerUpdaterTest {
 
   @Test
   public void chainStateUpdateIsAttemptedIfEthPeerExists() {
-    when(ethPeers.peer(any(Bytes.class))).thenReturn(ethPeer);
+    when(ethPeers.peer(any(PeerConnection.class))).thenReturn(ethPeer);
     when(ethPeer.chainState()).thenReturn(chainState);
 
     final EthSynchronizerUpdater updater = new EthSynchronizerUpdater(ethPeers);
