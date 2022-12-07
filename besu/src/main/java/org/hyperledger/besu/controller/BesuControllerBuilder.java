@@ -144,7 +144,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
-  protected ChainPrunerConfiguration chainPrunerConfiguration;
+  protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;

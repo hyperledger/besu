@@ -226,12 +226,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.isChainDataPruningEnabled(anyBoolean()))
-        .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.chainDataPruningBlocksRetained(anyLong()))
-        .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.chainDataPruningFrequency(anyLong()))
-        .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.chainPruningConfiguration(any())).thenReturn(mockControllerBuilder);
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);

@@ -16,6 +16,8 @@
 package org.hyperledger.besu.ethereum.chain;
 
 public class ChainPrunerConfiguration {
+  public static final ChainPrunerConfiguration DEFAULT =
+      new ChainPrunerConfiguration(false, 7200, 256);
   private final boolean chainPruningEnabled;
   private final long chainPruningBlocksRetained;
   private final long chainPruningBlocksFrequency;
