@@ -97,7 +97,7 @@ public class NewPooledTransactionHashesMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactions();
+      final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactionHashes();
 
       traceLambda(
           LOG,

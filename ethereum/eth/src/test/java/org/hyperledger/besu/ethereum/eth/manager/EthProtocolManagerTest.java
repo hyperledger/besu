@@ -1124,9 +1124,9 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void shouldUseRightCapabilityDependingOnSyncMode() {
-    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH67);
-    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH67);
+    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH68);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66);
   }
