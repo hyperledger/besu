@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.function.Function;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +39,11 @@ public class TimestampScheduleBuilderTest {
   private TimestampScheduleBuilder builder;
   private StubGenesisConfigOptions config;
 
+  //  @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
+  private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier = Function.identity();
+
+  private final long FIRST_TIMESTAMP_FORK = 1L;
+
   @Before
   public void setup() {
     config = new StubGenesisConfigOptions();
@@ -48,6 +54,7 @@ public class TimestampScheduleBuilderTest {
         new TimestampScheduleBuilder(
             config,
             defaultChainId,
+            TimestampProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             privacyParameters,
             isRevertReasonEnabled,
             quorumCompatibilityMode,
@@ -56,7 +63,7 @@ public class TimestampScheduleBuilderTest {
 
   @Test
   public void createTimestampScheduleInOrder() {
-    config.shanghaiTimestamp(1);
+    config.shanghaiTimestamp(FIRST_TIMESTAMP_FORK);
     config.cancunTimestamp(3);
     final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
 
@@ -109,7 +116,7 @@ public class TimestampScheduleBuilderTest {
 
   @Test
   public void getByBlockHeader_whenSpecFound() {
-    config.shanghaiTimestamp(1);
+    config.shanghaiTimestamp(FIRST_TIMESTAMP_FORK);
     final TimestampSchedule schedule = builder.createTimestampSchedule();
 
     assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNotNull();
@@ -117,7 +124,16 @@ public class TimestampScheduleBuilderTest {
 
   @Test
   public void getByBlockHeader_whenSpecNotFoundReturnsNull() {
-    config.shanghaiTimestamp(2);
+    config.shanghaiTimestamp(2L);
+    builder =
+        new TimestampScheduleBuilder(
+            config,
+            defaultChainId,
+            TimestampProtocolSpecAdapters.create(2L, modifier),
+            privacyParameters,
+            false,
+            false,
+            evmConfiguration);
     final TimestampSchedule schedule = builder.createTimestampSchedule();
 
     assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNull();

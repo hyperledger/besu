@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +35,7 @@ public class TimestampScheduleBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(TimestampScheduleBuilder.class);
   private final GenesisConfigOptions config;
+  private final TimestampProtocolSpecAdapters protocolSpecAdapters;
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
@@ -44,12 +46,14 @@ public class TimestampScheduleBuilder {
   public TimestampScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
+      final TimestampProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
     this.config = config;
     this.defaultChainId = Optional.of(defaultChainId);
+    this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
@@ -62,7 +66,9 @@ public class TimestampScheduleBuilder {
       return Optional.empty();
     }
     final long timestamp = optionalTimestamp.getAsLong();
-    return Optional.of(new BuilderMapEntry(timestamp, builder));
+    return Optional.of(
+        new BuilderMapEntry(
+            timestamp, builder, protocolSpecAdapters.getModifierForBlock(timestamp)));
   }
 
   public TimestampSchedule createTimestampSchedule() {
@@ -83,10 +89,28 @@ public class TimestampScheduleBuilder {
 
     final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
 
+    // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
+    // inserted _AT_ the modifier block entry.
+    protocolSpecAdapters.stream()
+        .forEach(
+            entry -> {
+              final long modifierBlock = entry.getKey();
+              final BuilderMapEntry parent =
+                  Optional.ofNullable(builders.floorEntry(modifierBlock))
+                      .orElse(builders.firstEntry())
+                      .getValue();
+              builders.put(
+                  modifierBlock,
+                  new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
+            });
+
     // Create the ProtocolSchedule, such that the Dao/fork milestones can be inserted
     builders
         .values()
-        .forEach(e -> addProtocolSpec(timestampSchedule, e.getTimestamp(), e.getBuilder()));
+        .forEach(
+            e -> addProtocolSpec(timestampSchedule, e.getTimestamp(), e.getBuilder(), e.modifier));
+
+    // TODO SLD add modifiers to daoForkBlock? (and classicForkBlock?)
 
     LOG.info("Timestamp schedule created with milestones: {}", timestampSchedule.listMilestones());
     return timestampSchedule;
@@ -130,24 +154,30 @@ public class TimestampScheduleBuilder {
   private void addProtocolSpec(
       final DefaultTimestampSchedule protocolSchedule,
       final long timestamp,
-      final ProtocolSpecBuilder definition) {
+      final ProtocolSpecBuilder definition,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
     definition
         .badBlocksManager(badBlockManager)
         .privacyParameters(privacyParameters)
         .privateTransactionValidatorBuilder(
             () -> new PrivateTransactionValidator(protocolSchedule.getChainId()));
 
-    protocolSchedule.putMilestone(timestamp, definition.build(protocolSchedule));
+    protocolSchedule.putMilestone(timestamp, modifier.apply(definition).build(protocolSchedule));
   }
 
   private static class BuilderMapEntry {
 
     private final long timestamp;
     private final ProtocolSpecBuilder builder;
+    private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
 
-    public BuilderMapEntry(final long timestamp, final ProtocolSpecBuilder builder) {
+    public BuilderMapEntry(
+        final long timestamp,
+        final ProtocolSpecBuilder builder,
+        final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
       this.timestamp = timestamp;
       this.builder = builder;
+      this.modifier = modifier;
     }
 
     public long getTimestamp() {

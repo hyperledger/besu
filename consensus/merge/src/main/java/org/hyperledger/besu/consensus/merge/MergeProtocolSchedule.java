@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.TimestampProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -68,11 +69,11 @@ public class MergeProtocolSchedule {
             config,
             DEFAULT_CHAIN_ID,
             // TODO SLD might we need this if shanghaiTimestamp = 0?
-            /*ProtocolSpecAdapters.create(
-            0,
-            (specBuilder) ->
-                MergeProtocolSchedule.applyMergeSpecificModifications(
-                    specBuilder, config.getChainId())),*/
+            TimestampProtocolSpecAdapters.create(
+                config.getShanghaiTimestamp().orElse(0),
+                (specBuilder) ->
+                    MergeProtocolSchedule.applyMergeSpecificModifications(
+                        specBuilder, config.getChainId())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
