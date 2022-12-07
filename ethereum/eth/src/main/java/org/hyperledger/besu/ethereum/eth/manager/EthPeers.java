@@ -353,8 +353,10 @@ public class EthPeers {
 
   public void setRlpxAgent(final RlpxAgent rlpxAgent) {
     this.rlpxAgent = rlpxAgent;
-    rlpxAgent.setGetAllActiveConnectionsCallback(this::getAllActiveConnections);
-    rlpxAgent.setGetAllConnectionsCallback(this::getAllConnections);
+    if (rlpxAgent != null) {
+      rlpxAgent.setGetAllActiveConnectionsCallback(this::getAllActiveConnections);
+      rlpxAgent.setGetAllConnectionsCallback(this::getAllConnections);
+    }
   }
 
   private Stream<PeerConnection> getAllActiveConnections() {
@@ -415,17 +417,22 @@ public class EthPeers {
   private int comparePeerPriorities(final EthPeer p1, final EthPeer p2) {
     final PeerConnection a = p1.getConnection();
     final PeerConnection b = p2.getConnection();
-    final boolean aIgnoresPeerLimits = rlpxAgent.canExceedConnectionLimits(a.getPeer());
-    final boolean bIgnoresPeerLimits = rlpxAgent.canExceedConnectionLimits(b.getPeer());
-    if (aIgnoresPeerLimits && !bIgnoresPeerLimits) {
+    final boolean aCanExceedPeerLimits = canExceedPeerLimits(a);
+    final boolean bCanExceedPeerLimits = canExceedPeerLimits(b);
+    if (aCanExceedPeerLimits && !bCanExceedPeerLimits) {
       return -1;
-    } else if (bIgnoresPeerLimits && !aIgnoresPeerLimits) {
+    } else if (bCanExceedPeerLimits && !aCanExceedPeerLimits) {
       return 1;
     } else {
       return randomPeerPriority
           ? compareByMaskedNodeId(a, b)
           : compareConnectionInitiationTimes(a, b);
     }
+  }
+
+  private boolean canExceedPeerLimits(PeerConnection a) {
+    if (rlpxAgent == null) { return true; }
+    return rlpxAgent.canExceedConnectionLimits(a.getPeer());
   }
 
   private int compareConnectionInitiationTimes(final PeerConnection a, final PeerConnection b) {
@@ -444,7 +451,7 @@ public class EthPeers {
 
     getActivePrioritizedPeers()
         .filter(p -> p.getConnection().inboundInitiated())
-        .filter(p -> !rlpxAgent.canExceedConnectionLimits(p.getConnection().getPeer()))
+        .filter(p -> !canExceedPeerLimits(p.getConnection()))
         .skip(maxRemotelyInitiatedConnections)
         .forEach(
             conn -> {
@@ -471,7 +478,7 @@ public class EthPeers {
         .filter(p -> !p.isDisconnected())
         .skip(peerUpperBound)
         .map(EthPeer::getConnection)
-        .filter(c -> !rlpxAgent.canExceedConnectionLimits(c.getPeer()))
+        .filter(c -> !canExceedPeerLimits(c))
         .forEach(
             conn -> {
               LOG.debug(
@@ -496,7 +503,7 @@ public class EthPeers {
         .map(ep -> ep.getConnection())
         .filter(c -> c.inboundInitiated())
         .filter(c -> !c.isDisconnected())
-        .filter(conn -> !rlpxAgent.canExceedConnectionLimits(conn.getPeer()))
+        .filter(conn -> !canExceedPeerLimits(conn))
         .count();
   }
 
@@ -518,7 +525,7 @@ public class EthPeers {
     final Bytes id = peer.getId();
     if (!randomPeerPriority) {
       // Disconnect if too many peers
-      if (!rlpxAgent.canExceedConnectionLimits(peer.getConnection().getPeer())
+      if (!canExceedPeerLimits(peer.getConnection())
           && peerCount() >= peerUpperBound) {
         LOG.debug(
             "Too many peers. Disconnect incoming connection: {} currentCount {}, max {}",
@@ -529,7 +536,7 @@ public class EthPeers {
         return false;
       }
       // Disconnect if too many remotely-initiated connections
-      if (!rlpxAgent.canExceedConnectionLimits(peer.getConnection().getPeer())
+      if (!canExceedPeerLimits(peer.getConnection())
           && remoteConnectionLimitReached()) {
         LOG.debug(
             "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",

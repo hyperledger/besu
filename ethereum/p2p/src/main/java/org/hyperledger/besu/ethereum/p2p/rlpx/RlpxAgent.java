@@ -97,6 +97,15 @@ public class RlpxAgent {
         "peer_limit",
         "The maximum number of peers this node allows to connect",
         () -> upperBoundConnections);
+
+
+    // placeholders for callbacks
+    if (getAllActiveConnectionsCallback == null) {
+      setGetAllActiveConnectionsCallback(() -> Stream.empty());
+    }
+    if (getAllConnectionsCallback == null) {
+      setGetAllConnectionsCallback(() -> Stream.empty());
+    }
   }
 
   public static Builder builder() {
