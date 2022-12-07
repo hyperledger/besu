@@ -80,7 +80,16 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     private long rounds; // unsigned integer represented as long
 
     private final long[] v;
-    private static boolean useNative = LibBlake2bf.ENABLED;
+    private static boolean useNative;
+
+    static {
+      try {
+        useNative = LibBlake2bf.ENABLED;
+      } catch (UnsatisfiedLinkError ule) {
+        LOG.info("blake2bf native precompile not available: {}", ule.getMessage());
+        useNative = false;
+      }
+    }
 
     Blake2bfDigest() {
       if (!useNative) {

@@ -18,24 +18,40 @@ import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.sun.jna.ptr.IntByReference;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // The big integer modular exponentiation precompiled contract defined in EIP-198.
 public class BigIntegerModularExponentiationPrecompiledContract
     extends AbstractPrecompiledContract {
 
-  // private static final Logger LOG =
-  //    LoggerFactory.getLogger(BigIntegerModularExponentiationPrecompiledContract.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BigIntegerModularExponentiationPrecompiledContract.class);
 
-  static boolean useNative = false;
+  static boolean useNative;
+
+  static {
+    try {
+      useNative = LibArithmetic.ENABLED;
+    } catch (UnsatisfiedLinkError ule) {
+      LOG.info("modexp native precompile not available: {}", ule.getMessage());
+      useNative = false;
+    }
+  }
+
   public static final int BASE_OFFSET = 96;
   private static final int PARAMETER_LENGTH = 32;
   private static final int BASE_LENGTH_OFFSET = 0;
@@ -153,19 +169,18 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   public PrecompileContractResult computeNative(final @Nonnull Bytes input) {
-    return computeDefault(input);
-    //    final int modulusLength = clampedToInt(modulusLength(input));
-    //    final IntByReference o_len = new IntByReference(modulusLength);
-    //
-    //    final byte[] result = new byte[modulusLength];
-    //    final int errorNo =
-    //        LibArithmetic.modexp_precompiled(input.toArrayUnsafe(), input.size(), result, o_len);
-    //    if (errorNo == 0) {
-    //      return PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue()));
-    //    } else {
-    //      LOG.trace("Error executing precompiled contract {}: {}", getName(), errorNo);
-    //      return PrecompileContractResult.halt(
-    //          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
-    //    }
+    final int modulusLength = clampedToInt(modulusLength(input));
+    final IntByReference o_len = new IntByReference(modulusLength);
+
+    final byte[] result = new byte[modulusLength];
+    final int errorNo =
+        LibArithmetic.modexp_precompiled(input.toArrayUnsafe(), input.size(), result, o_len);
+    if (errorNo == 0) {
+      return PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue()));
+    } else {
+      LOG.trace("Error executing precompiled contract {}: {}", getName(), errorNo);
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+    }
   }
 }
