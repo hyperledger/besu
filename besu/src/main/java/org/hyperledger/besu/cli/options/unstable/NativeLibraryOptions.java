@@ -45,6 +45,15 @@ public class NativeLibraryOptions {
       arity = "1")
   private final Boolean nativeBlake2bf = Boolean.TRUE;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xmodexp-native-enabled"},
+      description =
+          "Per default a native library is used for modexp. "
+              + "If the Java implementation should be used instead, this option must be set to false",
+      arity = "1")
+  private final Boolean nativeModExp = Boolean.TRUE;
+
   public static NativeLibraryOptions create() {
     return new NativeLibraryOptions();
   }
@@ -59,5 +68,9 @@ public class NativeLibraryOptions {
 
   public Boolean getNativeBlake2bf() {
     return nativeBlake2bf;
+  }
+
+  public Boolean getNativeModExp() {
+    return nativeModExp;
   }
 }
