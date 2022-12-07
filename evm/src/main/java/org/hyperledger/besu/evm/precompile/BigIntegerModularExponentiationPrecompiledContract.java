@@ -157,6 +157,9 @@ public class BigIntegerModularExponentiationPrecompiledContract
     if (offset + length <= input.size()) {
       num = input.slice(offset, length).trimLeadingZeros();
     } else {
+      // Ethereum's memory is always infinitely full of zeros, but we don't store those zeros, just what we write.
+      // If we are asked for a range that is outside the written memory create a result of the correct size (defaults
+      // to zeros) and copy the memory we do have into that result.
       MutableBytes mut = MutableBytes.create(length);
       input.slice(offset).copyTo(mut, 0);
       num = mut.trimLeadingZeros();

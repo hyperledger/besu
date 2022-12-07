@@ -140,11 +140,11 @@ public interface Words {
   }
 
   /**
-   * Multiplies a and b, but if an underflow/overflow occurs return the Long max/min value
+   * Multiplies a and b, but if an underflow/overflow occurs return the Integer max/min value
    *
    * @param a first value
    * @param b second value
-   * @return value of a times b if no over/underflows or Long.MAX_VALUE/Long.MIN_VALUE otherwise
+   * @return value of a times b if no over/underflows or Integer.MAX_VALUE/Integer.MIN_VALUE otherwise
    */
   static int clampedMultiply(final int a, final int b) {
     try {
