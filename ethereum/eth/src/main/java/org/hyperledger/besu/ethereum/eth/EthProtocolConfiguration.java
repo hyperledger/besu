@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
+import com.google.common.base.MoreObjects;
+import java.util.ArrayList;
+import java.util.Objects;
 import org.hyperledger.besu.util.number.ByteUnits;
 import org.hyperledger.besu.util.number.PositiveNumber;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import com.google.common.base.MoreObjects;
 
 public class EthProtocolConfiguration {
 
@@ -33,6 +30,8 @@ public class EthProtocolConfiguration {
   public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
   public static final boolean DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED = false;
   public static final int DEFAULT_MAX_CAPABILITY = Integer.MAX_VALUE;
+
+  public static final int DEFAULT_MIN_CAPABILITY = 0;
 
   public static final ArrayList<Integer> DEFAULT_ETH_CAPABILITIES = new ArrayList<>();
 
@@ -48,7 +47,7 @@ public class EthProtocolConfiguration {
   private final int maxGetPooledTransactions;
   private final boolean legacyEth64ForkIdEnabled;
   private final int maxEthCapability;
-  private final List<Integer> ethSupportedCapabilities;
+  private final int minEthCapability;
 
   private EthProtocolConfiguration(
       final int maxMessageSize,
@@ -59,7 +58,7 @@ public class EthProtocolConfiguration {
       final int maxGetPooledTransactions,
       final boolean legacyEth64ForkIdEnabled,
       final int maxEthCapability,
-      final List<Integer> ethSupportedCapabilities) {
+      final int minEthCapability) {
     this.maxMessageSize = maxMessageSize;
     this.maxGetBlockHeaders = maxGetBlockHeaders;
     this.maxGetBlockBodies = maxGetBlockBodies;
@@ -68,7 +67,7 @@ public class EthProtocolConfiguration {
     this.maxGetPooledTransactions = maxGetPooledTransactions;
     this.legacyEth64ForkIdEnabled = legacyEth64ForkIdEnabled;
     this.maxEthCapability = maxEthCapability;
-    this.ethSupportedCapabilities = ethSupportedCapabilities;
+    this.minEthCapability = minEthCapability;
   }
 
   public static EthProtocolConfiguration defaultConfig() {
@@ -111,8 +110,8 @@ public class EthProtocolConfiguration {
     return maxEthCapability;
   }
 
-  public List<Integer> getEthSupportedCapabilities() {
-    return ethSupportedCapabilities;
+  public int getMinEthCapability() {
+    return minEthCapability;
   }
 
   @Override
@@ -171,7 +170,7 @@ public class EthProtocolConfiguration {
 
     private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
 
-    private List<Integer> ethSupportedCapabilities = new ArrayList<>();
+    private int minEthCapability = EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY;
 
     public Builder maxMessageSize(final PositiveNumber maxMessageSize) {
       this.maxMessageSize = maxMessageSize;
@@ -243,8 +242,8 @@ public class EthProtocolConfiguration {
       return this;
     }
 
-    public Builder ethSupportedCapabilities(final List<Integer> ethSupportedCapabilities) {
-      this.ethSupportedCapabilities = ethSupportedCapabilities;
+    public Builder minEthCapability(final int minEthCapability) {
+      this.minEthCapability = minEthCapability;
       return this;
     }
 
@@ -258,7 +257,7 @@ public class EthProtocolConfiguration {
           maxGetPooledTransactions.getValue(),
           legacyEth64ForkIdEnabled,
           maxEthCapability,
-          ethSupportedCapabilities);
+          minEthCapability);
     }
   }
 }

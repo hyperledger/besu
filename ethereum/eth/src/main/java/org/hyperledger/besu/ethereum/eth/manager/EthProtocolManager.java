@@ -225,13 +225,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     }
 
     capabilities.removeIf(cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapability());
-
-    // if besu started with supported capabilities, remove any that was not in the list
-    if (!ethProtocolConfiguration.getEthSupportedCapabilities().isEmpty()) {
-      capabilities.removeIf(
-          cap ->
-              !ethProtocolConfiguration.getEthSupportedCapabilities().contains(cap.getVersion()));
-    }
+    capabilities.removeIf(cap -> cap.getVersion() < ethProtocolConfiguration.getMinEthCapability());
 
     return Collections.unmodifiableList(capabilities);
   }

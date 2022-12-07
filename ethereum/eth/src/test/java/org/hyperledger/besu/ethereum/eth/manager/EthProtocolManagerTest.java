@@ -1131,7 +1131,7 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
-  public void shouldRespectFlagForMaxCapabilityIfFlagLessThanProtocol() {
+  public void shouldRespectFlagForMaxCapability() {
 
     // Test with max capability = 65. should respect flag
     final EthProtocolConfiguration configuration =
@@ -1145,23 +1145,16 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
-  public void shouldRespectChosenCapabilities() {
+  public void shouldRespectFlagForMinCapability() {
 
-    final List<Capability> expectedCapabilities = List.of(EthProtocol.ETH65, EthProtocol.ETH67);
-
-    // Pass list of desired capabilities to Eth Config
+    // If min cap = v64, should not contain v63
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder()
-            .ethSupportedCapabilities(
-                expectedCapabilities.stream()
-                    .map(Capability::getVersion)
-                    .collect(Collectors.toList()))
-            .build();
+        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V64).build();
 
     final EthProtocolManager ethManager = createEthManager(SyncMode.X_SNAP, configuration);
 
-    assertThat(ethManager.getSupportedCapabilities())
-        .containsExactlyElementsOf(expectedCapabilities);
+    assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH64);
+    assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH63);
   }
 
   @Test

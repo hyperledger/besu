@@ -14,16 +14,13 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import java.util.Arrays;
+import java.util.List;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
-
-import java.util.Arrays;
-import java.util.List;
-
 import picocli.CommandLine;
-import picocli.CommandLine.Option;
 
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
   private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
@@ -36,7 +33,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       "--compatibility-eth64-forkid-enabled";
 
   private static final String MAX_CAPABILITY = "--Xeth-capability-max";
-  private static final String ETH_SUPPORTED_CAPABILITIES = "--Xeth-capabilities";
+  private static final String MIN_CAPABILITY = "--Xeth-capability-min";
 
   @CommandLine.Option(
       hidden = true,
@@ -106,15 +103,12 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       description = "Max protocol version to support")
   private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
 
-  @Option(
+  @CommandLine.Option(
       hidden = true,
-      names = {ETH_SUPPORTED_CAPABILITIES},
+      names = {MIN_CAPABILITY},
       paramLabel = "<INTEGER>",
-      split = ",",
-      description = "Comma separated Eth Protocol versions to enable",
-      arity = "0..*")
-  private List<Integer> ethSupportedCapabilities =
-      EthProtocolConfiguration.DEFAULT_ETH_CAPABILITIES;
+      description = "Min protocol version to support")
+  private int minEthCapability = EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY;
 
   private EthProtocolOptions() {}
 
@@ -132,7 +126,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
     options.maxGetPooledTransactions = PositiveNumber.fromInt(config.getMaxGetPooledTransactions());
     options.legacyEth64ForkIdEnabled = config.isLegacyEth64ForkIdEnabled();
     options.maxEthCapability = config.getMaxEthCapability();
-    options.ethSupportedCapabilities = config.getEthSupportedCapabilities();
+    options.minEthCapability = config.getMinEthCapability();
     return options;
   }
 
@@ -147,7 +141,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         .maxGetPooledTransactions(maxGetPooledTransactions)
         .legacyEth64ForkIdEnabled(legacyEth64ForkIdEnabled)
         .maxEthCapability(maxEthCapability)
-        .ethSupportedCapabilities(ethSupportedCapabilities)
+        .minEthCapability(minEthCapability)
         .build();
   }
 
