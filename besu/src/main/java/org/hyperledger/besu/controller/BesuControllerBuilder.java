@@ -327,7 +327,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     validateContext(protocolContext);
 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
-      protocolContext.setIsChainPruningEnabled(true);
+      protocolContext.getConsensusContext(MergeContext.class).setIsChainPruningEnabled(true);
       final ChainDataPruner chainDataPruner =
           new ChainDataPruner(
               blockchainStorage,

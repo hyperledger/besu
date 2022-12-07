@@ -29,7 +29,6 @@ public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ConsensusContext consensusContext;
-  private boolean isChainPruningEnabled = false;
 
   public ProtocolContext(
       final MutableBlockchain blockchain,
@@ -67,15 +66,5 @@ public class ProtocolContext {
     return Optional.ofNullable(consensusContext)
         .filter(c -> klass.isAssignableFrom(c.getClass()))
         .map(klass::cast);
-  }
-
-  // TODO: cleanup - isChainPruningEnabled will not be required after
-  // https://github.com/hyperledger/besu/pull/4703 is merged.
-  public void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {
-    this.isChainPruningEnabled = isChainPruningEnabled;
-  }
-
-  public boolean isChainPruningEnabled() {
-    return isChainPruningEnabled;
   }
 }
