@@ -1,13 +1,12 @@
 # Changelog
 ## 22.10.3
 
-### Additions and Improvements
-- Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
-
 ### Breaking Changes
 - Added `--rpc-max-logs-range` CLI option to allow limiting the number of blocks queried by `eth_getLogs` RPC API. Default value: 1000 [#4597](https://github.com/hyperledger/besu/pull/4597)
+- The `graalvm` docker variant no longer meets the performance requirements for Ethereum Mainnet.  The `openjdk-11` and `openjdk-latest` variants are recommended in its place.
 
 ### Additions and Improvements
+- Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
 - Increase the speed of modexp gas execution and execution. [#4780](https://github.com/hyperledger/besu/pull/4780)
 
 ### Bug Fixes
