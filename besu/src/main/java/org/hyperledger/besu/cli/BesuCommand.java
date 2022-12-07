@@ -2192,11 +2192,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
         .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
-        .isChainDataPruningEnabled(unstableChainDataPruningOptions.getChainDataPruningEnabled())
-        .chainDataPruningBlocksRetained(
-            unstableChainDataPruningOptions.getChainDataPruningBlocksRetained())
-        .chainDataPruningFrequency(
-            unstableChainDataPruningOptions.getChainDataPruningBlocksFrequency());
+        .chainPruningConfiguration(unstableChainDataPruningOptions.toDomainObject());
   }
 
   private GraphQLConfiguration graphQLConfiguration() {

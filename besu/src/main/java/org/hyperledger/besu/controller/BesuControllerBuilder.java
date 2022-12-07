@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
 import org.hyperledger.besu.ethereum.chain.ChainDataPrunerStorage;
+import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -143,9 +144,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
-  protected boolean isChainDataPruningEnabled;
-  protected long chainDataPruningBlocksRetained;
-  protected long chainDataPruningFrequency;
+  protected ChainPrunerConfiguration chainPrunerConfiguration;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -274,19 +273,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
-  public BesuControllerBuilder isChainDataPruningEnabled(final boolean isChainDataPruningEnabled) {
-    this.isChainDataPruningEnabled = isChainDataPruningEnabled;
-    return this;
-  }
-
-  public BesuControllerBuilder chainDataPruningBlocksRetained(
-      final long chainDataPruningBlocksRetained) {
-    this.chainDataPruningBlocksRetained = chainDataPruningBlocksRetained;
-    return this;
-  }
-
-  public BesuControllerBuilder chainDataPruningFrequency(final long chainDataPruningFrequency) {
-    this.chainDataPruningFrequency = chainDataPruningFrequency;
+  public BesuControllerBuilder chainPruningConfiguration(
+      final ChainPrunerConfiguration chainPrunerConfiguration) {
+    this.chainPrunerConfiguration = chainPrunerConfiguration;
     return this;
   }
 
@@ -337,7 +326,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
     validateContext(protocolContext);
 
-    if (isChainDataPruningEnabled) {
+    if (chainPrunerConfiguration.getChainPruningEnabled()) {
       protocolContext.setIsChainPruningEnabled(true);
       final ChainDataPruner chainDataPruner =
           new ChainDataPruner(
@@ -345,8 +334,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               new ChainDataPrunerStorage(
                   storageProvider.getStorageBySegmentIdentifier(
                       KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
-              chainDataPruningBlocksRetained,
-              chainDataPruningFrequency,
+              chainPrunerConfiguration.getChainPruningBlocksRetained(),
+              chainPrunerConfiguration.getChainPruningBlocksFrequency(),
               MonitoredExecutors.newBoundedThreadPool(
                   ChainDataPruner.class.getSimpleName(),
                   1,
@@ -356,9 +345,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
           "Chain data pruning enabled with recent blocks retained to be: "
-              + chainDataPruningBlocksRetained
+              + chainPrunerConfiguration.getChainPruningBlocksRetained()
               + " and frequency to be: "
-              + chainDataPruningFrequency);
+              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
     }
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(

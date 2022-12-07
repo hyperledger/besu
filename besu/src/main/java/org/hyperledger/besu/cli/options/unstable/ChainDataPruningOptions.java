@@ -15,25 +15,33 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import org.hyperledger.besu.cli.options.CLIOptions;
+import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
+
+import java.util.Arrays;
+import java.util.List;
 
 import picocli.CommandLine;
 
-public class ChainDataPruningOptions {
-
+public class ChainDataPruningOptions implements CLIOptions<ChainPrunerConfiguration> {
+  private static final String CHAIN_PRUNING_ENABLED_FLAG = "--Xchain-pruning-enabled";
+  private static final String CHAIN_PRUNING_BLOCKS_RETAINED_FLAG =
+      "--Xchain-pruning-blocks-retained";
+  private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
   public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 7200;
   public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xchain-pruning-enabled"},
+      names = {CHAIN_PRUNING_ENABLED_FLAG},
       description =
           "Enable the chain pruner to actively prune old chain data (default: ${DEFAULT-VALUE})")
   private final Boolean chainDataPruningEnabled = Boolean.FALSE;
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xchain-pruning-blocks-retained"},
+      names = {CHAIN_PRUNING_BLOCKS_RETAINED_FLAG},
       description =
           "The number of recent blocks for which to keep the chain data. Must be >= "
               + DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED
@@ -43,7 +51,7 @@ public class ChainDataPruningOptions {
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xchain-pruning-frequency"},
+      names = {CHAIN_PRUNING_FREQUENCY_FLAG},
       description =
           "The number of blocks added to the chain between two pruning operations. Must be non-negative (default: ${DEFAULT-VALUE})")
   private final PositiveNumber chainDataPruningBlocksFrequency =
@@ -61,7 +69,22 @@ public class ChainDataPruningOptions {
     return chainDataPruningBlocksRetained;
   }
 
-  public Long getChainDataPruningBlocksFrequency() {
-    return (long) chainDataPruningBlocksFrequency.getValue();
+  @Override
+  public ChainPrunerConfiguration toDomainObject() {
+    return new ChainPrunerConfiguration(
+        chainDataPruningEnabled,
+        chainDataPruningBlocksRetained,
+        chainDataPruningBlocksFrequency.getValue());
+  }
+
+  @Override
+  public List<String> getCLIOptions() {
+    return Arrays.asList(
+        CHAIN_PRUNING_ENABLED_FLAG,
+        chainDataPruningEnabled.toString(),
+        CHAIN_PRUNING_BLOCKS_RETAINED_FLAG,
+        chainDataPruningBlocksRetained.toString(),
+        CHAIN_PRUNING_FREQUENCY_FLAG,
+        chainDataPruningBlocksFrequency.toString());
   }
 }
