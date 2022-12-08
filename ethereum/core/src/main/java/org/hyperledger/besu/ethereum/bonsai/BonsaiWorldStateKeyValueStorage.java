@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.ethereum.util.RangeManager.generateRangeFromLocation;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -39,6 +40,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
@@ -333,6 +335,97 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public void clearFlatDatabase() {
     accountStorage.clear();
     storageStorage.clear();
+  }
+
+  public void pruneAccountState(final Bytes location, final Optional<Bytes> maybeExclude) {
+    final Pair<Bytes, Bytes> range = generateRangeFromLocation(Bytes.EMPTY, location);
+
+    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
+        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
+
+    // cleaning the account trie node in this location
+    pruneTrieNode(Bytes.EMPTY, location, maybeExclude);
+
+    // cleaning the account flat database by searching for the keys that are in the range
+    accountStorage
+        .getInRange(range.getFirst(), range.getSecond())
+        .forEach(
+            (key, value) -> {
+              final boolean shouldExclude =
+                  maybeExclude
+                      .filter(
+                          bytes ->
+                              bytes.commonPrefixLength(CompactEncoding.bytesToPath(key))
+                                  == bytes.size())
+                      .isPresent();
+              if (!shouldExclude) {
+                // clean the storage and code of the deleted account
+                pruneStorageState(key, Bytes.EMPTY, Optional.empty());
+                pruneCodeState(key);
+                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
+                    .accountStorageTransaction.remove(key.toArrayUnsafe());
+              }
+            });
+    updater.close();
+  }
+
+  public void pruneStorageState(
+      final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
+    final Pair<Bytes, Bytes> range = generateRangeFromLocation(accountHash, location);
+    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
+        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
+
+    // cleaning the storage trie node in this location
+    pruneTrieNode(accountHash, location, maybeExclude);
+
+    // cleaning the storage flat database by searching for the keys that are in the range
+    storageStorage
+        .getInRange(range.getFirst(), range.getSecond())
+        .forEach(
+            (key, value) -> {
+              final boolean shouldExclude =
+                  maybeExclude
+                      .filter(
+                          bytes ->
+                              bytes.commonPrefixLength(
+                                      CompactEncoding.bytesToPath(key).slice(Bytes32.SIZE * 2))
+                                  == bytes.size())
+                      .isPresent();
+              if (!shouldExclude) {
+                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
+                    .storageStorageTransaction.remove(key.toArrayUnsafe());
+              }
+            });
+    updater.close();
+  }
+
+  public void pruneCodeState(final Bytes accountHash) {
+    final KeyValueStorageTransaction transaction = codeStorage.startTransaction();
+    transaction.remove(accountHash.toArrayUnsafe());
+    transaction.commit();
+  }
+
+  private void pruneTrieNode(
+      final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
+    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
+        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
+    trieBranchStorage
+        .getByPrefix(Bytes.concatenate(accountHash, location))
+        .forEach(
+            (key) -> {
+              final boolean shouldExclude =
+                  maybeExclude
+                      .filter(
+                          bytes ->
+                              bytes.commonPrefixLength(key.slice(accountHash.size()))
+                                  == bytes.size())
+                      .isPresent();
+              if (!shouldExclude) {
+                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
+                    .trieBranchStorageTransaction.remove(key.toArrayUnsafe());
+              }
+            });
+    updater.close();
   }
 
   @Override

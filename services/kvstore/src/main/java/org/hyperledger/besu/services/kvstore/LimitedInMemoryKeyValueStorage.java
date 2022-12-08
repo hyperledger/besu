@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -143,6 +144,18 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
     return KeyValueStorage.super.getMoreClosedByPrefix(prefix);
+  }
+
+  @Override
+  public List<Bytes> getByPrefix(final Bytes prefix) {
+    return stream()
+        .filter(
+            pair -> {
+              final Bytes key = Bytes.of(pair.getKey());
+              return key.commonPrefixLength(prefix) == prefix.size();
+            })
+        .map(pair -> Bytes.of(pair.getKey()))
+        .collect(Collectors.toList());
   }
 
   @Override

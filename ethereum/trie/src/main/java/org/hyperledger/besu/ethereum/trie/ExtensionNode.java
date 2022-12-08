@@ -28,7 +28,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class ExtensionNode<V> implements Node<V> {
+public class ExtensionNode<V> implements Node<V> {
 
   private final Optional<Bytes> location;
   private final Bytes path;

@@ -18,6 +18,7 @@ import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -95,6 +96,8 @@ public interface KeyValueStorage extends Closeable {
   default Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
     return Optional.empty();
   }
+
+  List<Bytes> getByPrefix(final Bytes prefix);
 
   Map<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash);
   /**

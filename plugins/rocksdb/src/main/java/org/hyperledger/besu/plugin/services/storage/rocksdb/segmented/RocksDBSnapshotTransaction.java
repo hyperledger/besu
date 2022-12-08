@@ -21,6 +21,8 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -127,6 +129,27 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
         }
       }
       return Optional.empty();
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
+  public List<Bytes> getByPrefix(final Bytes prefix) {
+    final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
+    rocksIterator.seek(prefix.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      final List<Bytes> res = new ArrayList<>();
+      while (rocksDbKeyIterator.hasNext()) {
+        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
+        if (key.commonPrefixLength(prefix) == prefix.size()) {
+          res.add(key);
+        } else {
+          return res;
+        }
+      }
+      return res;
     } finally {
       rocksDbKeyIterator.close();
       rocksIterator.close();

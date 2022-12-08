@@ -18,10 +18,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.TRIE_NODE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
@@ -104,6 +106,12 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
               }
             })
         .peek(request -> request.registerParent(this));
+  }
+
+  protected DataStorageFormat getSyncMode(final WorldStateStorage worldStateStorage) {
+    return (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage)
+        ? DataStorageFormat.BONSAI
+        : DataStorageFormat.FOREST;
   }
 
   public boolean isRoot() {

@@ -14,13 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
+import static org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDeletionProcessor.deletePotentialOldAccountEntries;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
+
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -55,6 +61,11 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
       final SnapSyncState snapSyncState) {
     if (isRoot()) {
       downloadState.setRootNodeData(data);
+    }
+
+    if (getSyncMode(worldStateStorage) == BONSAI) {
+      final Node<Bytes> node = TrieNodeDecoder.decode(getLocation(), data);
+      deletePotentialOldAccountEntries((BonsaiWorldStateKeyValueStorage) worldStateStorage, node);
     }
     updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
     return 1;

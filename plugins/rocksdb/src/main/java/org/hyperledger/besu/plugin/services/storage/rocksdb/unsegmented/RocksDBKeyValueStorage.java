@@ -28,6 +28,8 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -183,6 +185,28 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
         }
       }
       return Optional.empty();
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
+  @Override
+  public List<Bytes> getByPrefix(final Bytes prefix) {
+    final RocksIterator rocksIterator = db.newIterator();
+    rocksIterator.seek(prefix.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      final List<Bytes> res = new ArrayList<>();
+      while (rocksDbKeyIterator.hasNext()) {
+        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
+        if (key.commonPrefixLength(prefix) == prefix.size()) {
+          res.add(key);
+        } else {
+          return res;
+        }
+      }
+      return res;
     } finally {
       rocksDbKeyIterator.close();
       rocksIterator.close();

@@ -280,6 +280,28 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
+  public List<Bytes> getByPrefix(final RocksDbSegmentIdentifier segmentHandle, final Bytes prefix) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    rocksIterator.seek(prefix.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      final List<Bytes> res = new ArrayList<>();
+      while (rocksDbKeyIterator.hasNext()) {
+        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
+        if (key.commonPrefixLength(prefix) == prefix.size()) {
+          res.add(key);
+        } else {
+          return res;
+        }
+      }
+      return res;
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
+  @Override
   public TreeMap<Bytes, Bytes> getInRange(
       final RocksDbSegmentIdentifier segmentHandle,
       final Bytes startKeyHash,

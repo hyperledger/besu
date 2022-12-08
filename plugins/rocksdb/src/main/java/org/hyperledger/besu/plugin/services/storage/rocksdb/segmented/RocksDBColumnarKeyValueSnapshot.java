@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -76,6 +77,11 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   @Override
   public TreeMap<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
     return snapTx.getInRange(startKeyHash, endKeyHash);
+  }
+
+  @Override
+  public List<Bytes> getByPrefix(final Bytes prefix) {
+    return snapTx.getByPrefix(prefix);
   }
 
   @Override
