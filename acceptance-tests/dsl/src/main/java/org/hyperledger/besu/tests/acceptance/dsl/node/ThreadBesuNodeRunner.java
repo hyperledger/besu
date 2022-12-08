@@ -147,8 +147,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .setBootNodes(bootnodes);
     node.getConfiguration().getGenesisConfig().ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
+    final GenesisConfigFile genesisConfig =
+        GenesisConfigFile.fromConfig(ethNetworkConfig.getGenesisConfig());
     final BesuControllerBuilder builder =
-        new BesuController.Builder().fromEthNetworkConfig(ethNetworkConfig);
+        new BesuController.Builder()
+            .fromConfigOptions(genesisConfig.getConfigOptions(), null)
+            .genesisConfigFile(genesisConfig)
+            .networkId(ethNetworkConfig.getNetworkId());
 
     final KeyValueStorageProvider storageProvider =
         new KeyValueStorageProviderBuilder()

@@ -106,8 +106,10 @@ public class PrivacyTest {
             .setEnclaveFactory(new EnclaveFactory(vertx))
             .setFlexiblePrivacyGroupsEnabled(flexibleEnabled)
             .build();
+    final GenesisConfigFile genesisConfig = GenesisConfigFile.mainnet();
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.mainnet())
+        .fromConfigOptions(genesisConfig.getConfigOptions(), null)
+        .genesisConfigFile(genesisConfig)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())

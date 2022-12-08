@@ -62,9 +62,11 @@ public final class RlpBlockImporterTest {
     final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("1000.blocks");
     BlockTestUtil.write1000Blocks(source);
+    final GenesisConfigFile genesisConfig = GenesisConfigFile.mainnet();
     final BesuController targetController =
         new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.mainnet())
+            .fromConfigOptions(genesisConfig.getConfigOptions(), null)
+            .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -94,9 +96,11 @@ public final class RlpBlockImporterTest {
     final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("badpow.blocks");
     BlockTestUtil.writeBadPowBlocks(source);
+    final GenesisConfigFile genesisConfig = GenesisConfigFile.mainnet();
     final BesuController targetController =
         new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.mainnet())
+            .fromConfigOptions(genesisConfig.getConfigOptions(), null)
+            .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -123,9 +127,11 @@ public final class RlpBlockImporterTest {
     final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("badpow.blocks");
     BlockTestUtil.writeBadPowBlocks(source);
+    final GenesisConfigFile genesisConfig = GenesisConfigFile.mainnet();
     final BesuController targetController =
         new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.mainnet())
+            .fromConfigOptions(genesisConfig.getConfigOptions(), null)
+            .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -164,9 +170,11 @@ public final class RlpBlockImporterTest {
       throw new IllegalStateException(ex);
     }
 
+    final GenesisConfigFile genesisConfig = GenesisConfigFile.fromConfig(config);
     final BesuController controller =
         new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.fromConfig(config))
+            .fromConfigOptions(genesisConfig.getConfigOptions(), null)
+            .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())

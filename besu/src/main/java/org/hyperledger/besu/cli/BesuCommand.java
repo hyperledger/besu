@@ -2131,8 +2131,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
+    final EthNetworkConfig networkConfig = updateNetworkConfig(network);
+    final GenesisConfigFile genesisConfig =
+        GenesisConfigFile.fromConfig(networkConfig.getGenesisConfig());
+    final GenesisConfigOptions configOptions =
+        genesisConfig.getConfigOptions(genesisConfigOverrides);
     return controllerBuilderFactory
-        .fromEthNetworkConfig(updateNetworkConfig(network), genesisConfigOverrides)
+        .fromConfigOptions(configOptions, networkConfig)
+        .genesisConfigFile(genesisConfig)
+        .networkId(networkConfig.getNetworkId())
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())

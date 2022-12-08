@@ -186,9 +186,11 @@ public class PrivacyReorgTest {
     privateStateRootResolver =
         new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
 
+    final GenesisConfigFile genesisConfig = GenesisConfigFile.development();
     besuController =
         new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.development())
+            .fromConfigOptions(genesisConfig.getConfigOptions(), null)
+            .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())

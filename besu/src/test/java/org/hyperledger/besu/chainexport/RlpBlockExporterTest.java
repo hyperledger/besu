@@ -82,8 +82,10 @@ public final class RlpBlockExporterTest {
 
   private static BesuController createController() throws IOException {
     final Path dataDir = folder.newFolder().toPath();
+    final GenesisConfigFile genesisConfig = GenesisConfigFile.mainnet();
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.mainnet())
+        .fromConfigOptions(genesisConfig.getConfigOptions(), null)
+        .genesisConfigFile(genesisConfig)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())

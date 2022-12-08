@@ -48,7 +48,12 @@ public class BesuControllerTest {
   @Test
   public void missingQbftStartBlock() {
     mockGenesisConfigForMigration("ibft2", OptionalLong.empty());
-    assertThatThrownBy(() -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile))
+    assertThatThrownBy(
+            () -> {
+              new BesuController.Builder()
+                  .fromConfigOptions(genesisConfigFile.getConfigOptions(), null)
+                  .genesisConfigFile(genesisConfigFile);
+            })
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Missing QBFT startBlock config in genesis file");
   }
@@ -56,7 +61,12 @@ public class BesuControllerTest {
   @Test
   public void invalidQbftStartBlock() {
     mockGenesisConfigForMigration("ibft2", OptionalLong.of(-1L));
-    assertThatThrownBy(() -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile))
+    assertThatThrownBy(
+            () -> {
+              new BesuController.Builder()
+                  .fromConfigOptions(genesisConfigFile.getConfigOptions(), null)
+                  .genesisConfigFile(genesisConfigFile);
+            })
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Invalid QBFT startBlock config in genesis file");
   }
@@ -67,7 +77,12 @@ public class BesuControllerTest {
     when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
     // explicitly not setting isIbftLegacy() or isIbft2() for genesisConfigOptions
 
-    assertThatThrownBy(() -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile))
+    assertThatThrownBy(
+            () -> {
+              new BesuController.Builder()
+                  .fromConfigOptions(genesisConfigFile.getConfigOptions(), null)
+                  .genesisConfigFile(genesisConfigFile);
+            })
         .isInstanceOf(IllegalStateException.class)
         .hasMessage(
             "Invalid genesis migration config. Migration is supported from IBFT (legacy) or IBFT2 to QBFT)");
@@ -79,7 +94,9 @@ public class BesuControllerTest {
     mockGenesisConfigForMigration("ibft2", OptionalLong.of(qbftStartBlock));
 
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisConfig(genesisConfigFile);
+        new BesuController.Builder()
+            .fromConfigOptions(genesisConfigFile.getConfigOptions(), null)
+            .genesisConfigFile(genesisConfigFile);
 
     assertThat(besuControllerBuilder).isInstanceOf(ConsensusScheduleBesuControllerBuilder.class);
 
@@ -99,7 +116,9 @@ public class BesuControllerTest {
     mockGenesisConfigForMigration("ibftLegacy", OptionalLong.of(qbftStartBlock));
 
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisConfig(genesisConfigFile);
+        new BesuController.Builder()
+            .fromConfigOptions(genesisConfigFile.getConfigOptions(), null)
+            .genesisConfigFile(genesisConfigFile);
 
     assertThat(besuControllerBuilder).isInstanceOf(ConsensusScheduleBesuControllerBuilder.class);
 

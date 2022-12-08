@@ -413,7 +413,8 @@ public abstract class JsonBlockImporterTest {
       throws IOException {
     final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()
-        .fromGenesisConfig(genesisConfigFile)
+        .fromConfigOptions(genesisConfigFile.getConfigOptions(), null)
+        .genesisConfigFile(genesisConfigFile)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
