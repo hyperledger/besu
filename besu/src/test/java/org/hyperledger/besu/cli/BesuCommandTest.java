@@ -5448,7 +5448,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void nearHeadCheckpointSyncShouldFailWhenGenesisHasNoTTD() throws IOException {
+  public void checkpointPostMergeShouldFailWhenGenesisHasNoTTD() throws IOException {
     final String configText =
         Resources.toString(
             Resources.getResource("invalid_post_merge_near_head_checkpoint.json"),
@@ -5460,7 +5460,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         genesisFile.toString(),
         "--sync-mode",
         "X_CHECKPOINT",
-        "--Xnear-head-checkpoint-sync-enabled");
+        "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -5468,9 +5468,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void nearHeadCheckpointSyncShouldFailWhenGenesisUsesCheckpointFromPreMerge() {
+  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge() {
     // using the default genesis which has a checkpoint sync block prior to the merge
-    parseCommand("--sync-mode", "X_CHECKPOINT", "--Xnear-head-checkpoint-sync-enabled");
+    parseCommand("--sync-mode", "X_CHECKPOINT", "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -5479,16 +5479,15 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void nearHeadCheckpointSyncShouldFailWhenSyncModeIsNotCheckpoint() {
+  public void checkpointPostMergeShouldFailWhenSyncModeIsNotCheckpoint() {
 
-    parseCommand("--sync-mode", "X_SNAP", "--Xnear-head-checkpoint-sync-enabled");
+    parseCommand("--sync-mode", "X_SNAP", "--Xcheckpoint-post-merge-enabled");
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--Xnear-head-checkpoint-sync-enabled can only be used with X_CHECKPOINT sync-mode");
+        .contains("--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode");
   }
 
   @Test
-  public void nearHeadCheckpointSyncWithPostMergeBlockSucceeds() throws IOException {
+  public void checkpointPostMergeWithPostMergeBlockSucceeds() throws IOException {
     final String configText =
         Resources.toString(
             Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
@@ -5500,7 +5499,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         genesisFile.toString(),
         "--sync-mode",
         "X_CHECKPOINT",
-        "--Xnear-head-checkpoint-sync-enabled");
+        "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

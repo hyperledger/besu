@@ -141,7 +141,7 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public boolean isNearHeadCheckpointSync() {
+  public boolean isCheckpointPostMergeSync() {
     return false;
   }
 }

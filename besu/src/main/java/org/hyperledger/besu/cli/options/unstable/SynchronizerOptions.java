@@ -14,18 +14,17 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import com.google.common.collect.Range;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.List;
-
-import com.google.common.collect.Range;
-import org.apache.tuweni.units.bigints.UInt256;
-import picocli.CommandLine;
 
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {
   private static final String BLOCK_PROPAGATION_RANGE_FLAG =
@@ -72,8 +71,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
 
-  private static final String NEAR_HEAD_CHECKPOINT_SYNC_FLAG =
-      "--Xnear-head-checkpoint-sync-enabled";
+  private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
   @CommandLine.Option(
       names = BLOCK_PROPAGATION_RANGE_FLAG,
@@ -276,11 +274,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_TRIENODE_COUNT_PER_REQUEST;
 
   @CommandLine.Option(
-      names = {NEAR_HEAD_CHECKPOINT_SYNC_FLAG},
+      names = {CHECKPOINT_POST_MERGE_FLAG},
       hidden = true,
-      description = "Starts sync from a near-head pivot block.")
-  private Boolean nearHeadCheckpointSyncEnabled =
-      SynchronizerConfiguration.DEFAULT_NEAR_HEAD_CHECKPOINT_SYNC;
+      description = "Enable the sync to start from a post-merge block.")
+  private Boolean checkpointPostMergeSyncEnabled =
+      SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
   private SynchronizerOptions() {}
 
@@ -318,7 +316,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getBytecodeCountPerRequest();
     options.snapsyncTrieNodeCountPerRequest =
         config.getSnapSyncConfiguration().getTrienodeCountPerRequest();
-    options.nearHeadCheckpointSyncEnabled = config.isNearHeadCheckpointSyncEnabled();
+    options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     return options;
   }
 
@@ -349,7 +347,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .bytecodeCountPerRequest(snapsyncBytecodeCountPerRequest)
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .build());
-    builder.setNearHeadCheckpointSyncEnabled(nearHeadCheckpointSyncEnabled);
+    builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
     return builder;
   }

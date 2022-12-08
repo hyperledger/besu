@@ -212,10 +212,7 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
 
-      if (configOptions.getTerminalTotalDifficulty().isPresent()
-          && configOptions.getCheckpointOptions().isValid()
-          && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
-              .greaterOrEqualThan(configOptions.getTerminalTotalDifficulty().get()))) {
+      if (isCheckpointBlockTotalDifficultyGreaterThanTTD(configOptions)) {
         return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
       }
 
@@ -265,6 +262,13 @@ public class BesuController implements java.io.Closeable {
       }
 
       return startBlock;
+    }
+
+    private boolean isCheckpointBlockTotalDifficultyGreaterThanTTD(GenesisConfigOptions configOptions){
+      return configOptions.getTerminalTotalDifficulty().isPresent()
+              && configOptions.getCheckpointOptions().isValid()
+              && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
+              .greaterThan(configOptions.getTerminalTotalDifficulty().get()));
     }
   }
 }

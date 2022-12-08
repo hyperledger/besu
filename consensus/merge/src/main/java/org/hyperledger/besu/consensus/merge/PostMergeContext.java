@@ -62,7 +62,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
-  private boolean isNearHeadCheckpointSync;
+  private boolean isCheckpointPostMergeSync;
 
   // TODO: cleanup - isChainPruningEnabled will not be required after
   // https://github.com/hyperledger/besu/pull/4703 is merged.
@@ -77,7 +77,7 @@ public class PostMergeContext implements MergeContext {
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
-    this.isNearHeadCheckpointSync = false;
+    this.isCheckpointPostMergeSync = false;
   }
 
   public static PostMergeContext get() {
@@ -141,8 +141,8 @@ public class PostMergeContext implements MergeContext {
         // this is necessary for when we do not have a sync target yet, like at startup.
         // not being stopped at ttd implies we are syncing.
         && Optional.ofNullable(syncState.get())
-            .map(s -> !s.hasReachedTerminalDifficulty().get())
-            .orElse(Boolean.FALSE);
+            .map(s -> !s.hasReachedTerminalDifficulty().orElse(Boolean.FALSE))
+            .orElse(Boolean.TRUE);
   }
 
   @Override
@@ -283,13 +283,13 @@ public class PostMergeContext implements MergeContext {
     return isChainPruningEnabled;
   }
 
-  public PostMergeContext setIsNearHeadCheckpointSync(final boolean isNearHeadCheckpointSync) {
-    this.isNearHeadCheckpointSync = isNearHeadCheckpointSync;
+  public PostMergeContext setIsNearHeadCheckpointSync(final boolean isCheckpointPostMergeSync) {
+    this.isCheckpointPostMergeSync = isCheckpointPostMergeSync;
     return this;
   }
 
   @Override
-  public boolean isNearHeadCheckpointSync() {
-    return this.isNearHeadCheckpointSync;
+  public boolean isCheckpointPostMergeSync() {
+    return this.isCheckpointPostMergeSync;
   }
 }

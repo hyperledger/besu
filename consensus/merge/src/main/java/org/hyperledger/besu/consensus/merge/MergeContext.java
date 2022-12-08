@@ -72,5 +72,5 @@ public interface MergeContext extends ConsensusContext {
     return false;
   }
 
-  boolean isNearHeadCheckpointSync();
+  boolean isCheckpointPostMergeSync();
 }
