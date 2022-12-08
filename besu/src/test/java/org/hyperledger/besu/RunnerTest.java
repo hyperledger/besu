@@ -95,6 +95,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -232,12 +233,12 @@ public final class RunnerTest {
               new InMemoryKeyValueStorageProvider(),
               noOpMetricsSystem);
 
-      final EnodeURL enode = runnerAhead.getLocalEnode().get();
+      final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
               EthNetworkConfig.jsonConfig(DEV),
               DEV.getNetworkId(),
-              Collections.singletonList(enode),
+              Collections.singletonList(aheadEnode),
               null);
 
       runnerBehind =
@@ -263,39 +264,21 @@ public final class RunnerTest {
           .untilAsserted(
               () -> {
                 final String baseUrl = String.format("http://%s:%s", listenHost, behindJsonRpcPort);
-                try (final Response resp =
+                try (final Response blockNumberResp =
                     client
-                        .newCall(
-                            new Request.Builder()
-                                .post(
-                                    RequestBody.create(
-                                        MediaType.parse("application/json; charset=utf-8"),
-                                        "{\"jsonrpc\":\"2.0\",\"id\":"
-                                            + Json.encode(7)
-                                            + ",\"method\":\"eth_blockNumber\"}"))
-                                .url(baseUrl)
-                                .build())
+                        .newCall(getRequest("eth_blockNumber", baseUrl))
                         .execute()) {
 
-                  assertThat(resp.code()).isEqualTo(200);
+                  assertThat(blockNumberResp.code()).isEqualTo(200);
                   final Response syncingResp =
                       client
-                          .newCall(
-                              new Request.Builder()
-                                  .post(
-                                      RequestBody.create(
-                                          MediaType.parse("application/json; charset=utf-8"),
-                                          "{\"jsonrpc\":\"2.0\",\"id\":"
-                                              + Json.encode(7)
-                                              + ",\"method\":\"eth_syncing\"}"))
-                                  .url(baseUrl)
-                                  .build())
+                          .newCall(getRequest("eth_syncing", baseUrl))
                           .execute();
                   assertThat(syncingResp.code()).isEqualTo(200);
 
                   final int currentBlock =
                       UInt256.fromHexString(
-                              new JsonObject(resp.body().string()).getString("result"))
+                              new JsonObject(blockNumberResp.body().string()).getString("result"))
                           .intValue();
                   final JsonObject responseJson = new JsonObject(syncingResp.body().string());
                   if (currentBlock < blockCount) {
@@ -308,7 +291,7 @@ public final class RunnerTest {
                     assertThat(syncResultCurrentBlock).isLessThan(blockCount);
                   }
                   assertThat(currentBlock).isEqualTo(blockCount);
-                  resp.close();
+                  blockNumberResp.close();
 
                   // when we have synced to blockCount, eth_syncing should return false
                   final boolean syncResult = responseJson.getBoolean("result");
@@ -349,6 +332,19 @@ public final class RunnerTest {
         runnerBehind.awaitStop();
       }
     }
+  }
+
+  @NotNull
+  private Request getRequest(final String method, final String baseUrl) {
+    return new Request.Builder()
+            .post(
+                    RequestBody.create(
+                            MediaType.parse("application/json; charset=utf-8"),
+                            "{\"jsonrpc\":\"2.0\",\"id\":"
+                                    + Json.encode(7)
+                                    + ",\"method\":\"" + method + "\"}"))
+            .url(baseUrl)
+            .build();
   }
 
   private GenesisConfigFile getFastSyncGenesis() {
