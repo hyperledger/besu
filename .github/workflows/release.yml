@@ -11,6 +11,6 @@ jobs:
       - name: pull tagged image
         run: docker pull ${{ secrets.DOCKER_ORG }}/besu:gitSha-${{ github.sha }}-openjdk-11-amd64
       - name: apply latest tag
-        run: docker tag ${{ secrets.DOCKER_ORG }}/besu:gitSha-${{ github.sha }}-openjdk-11-amd64 latest
+        run: docker tag ${{ secrets.DOCKER_ORG }}/besu:gitSha-${{ github.sha }}-openjdk-11-amd64 ${{ secrets.DOCKER_ORG }}/besu:latest
       - name: push
         run: docker push ${{ secrets.DOCKER_ORG }}/besu:latest
