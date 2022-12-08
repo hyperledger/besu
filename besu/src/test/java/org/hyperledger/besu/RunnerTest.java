@@ -167,29 +167,18 @@ public final class RunnerTest {
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
 
-    // Setup state with block data
-    try (final BesuController controller =
-        getController(
-            genesisConfig,
-            syncConfigAhead,
-            dataDirAhead,
-            aheadDbNodeKey,
-            createKeyValueStorageProvider(dataDirAhead, dbAhead),
-            noOpMetricsSystem)) {
-      setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
-    }
-
-    // TODO do we really need to set up the ahead controller twice?
 
     // Setup Runner with blocks
     final BesuController controllerAhead =
-        getController(
-            genesisConfig,
-            syncConfigAhead,
-            dataDirAhead,
-            aheadDbNodeKey,
-            createKeyValueStorageProvider(dataDirAhead, dbAhead),
-            noOpMetricsSystem);
+            getController(
+                    genesisConfig,
+                    syncConfigAhead,
+                    dataDirAhead,
+                    aheadDbNodeKey,
+                    createKeyValueStorageProvider(dataDirAhead, dbAhead),
+                    noOpMetricsSystem);
+    setupState(blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
+
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final Path pidPath = temp.getRoot().toPath().resolve("pid");
     final RunnerBuilder runnerBuilder =
