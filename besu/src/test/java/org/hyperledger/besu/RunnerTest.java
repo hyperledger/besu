@@ -265,15 +265,11 @@ public final class RunnerTest {
               () -> {
                 final String baseUrl = String.format("http://%s:%s", listenHost, behindJsonRpcPort);
                 try (final Response blockNumberResp =
-                    client
-                        .newCall(getRequest("eth_blockNumber", baseUrl))
-                        .execute()) {
+                    client.newCall(getRequest("eth_blockNumber", baseUrl)).execute()) {
 
                   assertThat(blockNumberResp.code()).isEqualTo(200);
                   final Response syncingResp =
-                      client
-                          .newCall(getRequest("eth_syncing", baseUrl))
-                          .execute();
+                      client.newCall(getRequest("eth_syncing", baseUrl)).execute();
                   assertThat(syncingResp.code()).isEqualTo(200);
 
                   final int currentBlock =
@@ -281,8 +277,10 @@ public final class RunnerTest {
                               new JsonObject(blockNumberResp.body().string()).getString("result"))
                           .intValue();
                   final JsonObject responseJson = new JsonObject(syncingResp.body().string());
+
+                  // if not yet at blockCount, we should get a sync result from eth_syncing
                   if (currentBlock < blockCount) {
-                    // if not yet at blockCount, we should get a sync result from eth_syncing
+                    // if the test fails here, it means that the node is not syncing
                     assertThat(responseJson.getValue("result")).isInstanceOf(JsonObject.class);
                     final int syncResultCurrentBlock =
                         UInt256.fromHexString(
@@ -337,14 +335,16 @@ public final class RunnerTest {
   @NotNull
   private Request getRequest(final String method, final String baseUrl) {
     return new Request.Builder()
-            .post(
-                    RequestBody.create(
-                            MediaType.parse("application/json; charset=utf-8"),
-                            "{\"jsonrpc\":\"2.0\",\"id\":"
-                                    + Json.encode(7)
-                                    + ",\"method\":\"" + method + "\"}"))
-            .url(baseUrl)
-            .build();
+        .post(
+            RequestBody.create(
+                MediaType.parse("application/json; charset=utf-8"),
+                "{\"jsonrpc\":\"2.0\",\"id\":"
+                    + Json.encode(7)
+                    + ",\"method\":\""
+                    + method
+                    + "\"}"))
+        .url(baseUrl)
+        .build();
   }
 
   private GenesisConfigFile getFastSyncGenesis() {
