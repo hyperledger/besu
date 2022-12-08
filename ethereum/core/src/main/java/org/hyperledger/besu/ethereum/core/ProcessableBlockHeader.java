@@ -160,6 +160,6 @@ public class ProcessableBlockHeader implements BlockValues {
   }
 
   public String toLogString() {
-    return getNumber() + " (time: " + getTimestamp() + ")";
+    return getNumber() + " (timestamp: " + getTimestamp() + ")";
   }
 }
