@@ -256,6 +256,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
     verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
+    verify(mockRunnerBuilder).rpcMaxLogsRange(eq(1000L));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());
@@ -1561,6 +1562,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcMaxLogsRangeOptionMustBeUsed() {
+    final long rpcMaxLogsRange = 150L;
+    parseCommand("--rpc-max-logs-range", Long.toString(rpcMaxLogsRange));
+
+    verify(mockRunnerBuilder).rpcMaxLogsRange(longArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(longArgumentCaptor.getValue()).isEqualTo(rpcMaxLogsRange);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

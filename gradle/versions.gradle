@@ -100,6 +100,7 @@ dependencyManagement {
     dependency 'io.prometheus:simpleclient_common:0.9.0'
     dependency 'io.prometheus:simpleclient_hotspot:0.9.0'
     dependency 'io.prometheus:simpleclient_pushgateway:0.9.0'
+    dependency 'io.prometheus:simpleclient_guava:0.16.0'
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
@@ -152,10 +153,13 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
-    dependency 'org.hyperledger.besu:bls12-381:0.6.1'
-    dependency 'org.hyperledger.besu:secp256k1:0.6.1'
-    dependency 'org.hyperledger.besu:secp256r1:0.6.1'
-    dependency 'org.hyperledger.besu:blake2bf:0.6.1'
+    dependencySet(group: 'org.hyperledger.besu', version: '0.7.1') {
+      entry 'arithmetic'
+      entry 'bls12-381'
+      entry 'secp256k1'
+      entry 'secp256r1'
+      entry 'blake2bf'
+    }
 
     dependency 'org.immutables:value-annotations:2.9.0'
     dependency 'org.immutables:value:2.9.0'
