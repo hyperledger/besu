@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
-import com.google.common.base.MoreObjects;
-import java.util.ArrayList;
-import java.util.Objects;
 import org.hyperledger.besu.util.number.ByteUnits;
 import org.hyperledger.besu.util.number.PositiveNumber;
+
+import java.util.ArrayList;
+import java.util.Objects;
+
+import com.google.common.base.MoreObjects;
 
 public class EthProtocolConfiguration {
 

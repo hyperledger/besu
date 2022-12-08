@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import java.util.Arrays;
-import java.util.List;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
+
+import java.util.Arrays;
+import java.util.List;
+
 import picocli.CommandLine;
 
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
