@@ -139,6 +139,10 @@ public class TimestampScheduleBuilder {
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
       final MainnetProtocolSpecFactory specFactory) {
     return Stream.of(
+            // generally this TimestampSchedule will not have an entry for 0 instead it is relying
+            // on defaulting to a MergeProtocolSchedule in
+            // TransitionProtocolSchedule.getByBlockHeader if the given timestamp is before the
+            // first entry in TimestampSchedule
             create(config.getShanghaiTimestamp(), specFactory.shanghaiDefinition(config)),
             create(config.getCancunTimestamp(), specFactory.cancunDefinition(config)))
         .filter(Optional::isPresent)
