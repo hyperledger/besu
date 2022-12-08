@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -173,13 +174,14 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void getByBlockNumber_delegatesToMergeScheduleWhenBlockNotFound() {
+  public void getByBlockNumber_throwsWhenBlockNotFound() {
     when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.empty());
-    when(mergeContext.isPostMerge()).thenReturn(false);
 
-    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
-
-    verifyPreMergeProtocolScheduleReturned();
+    assertThatThrownBy(() -> transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage(
+            "Cannot determine protocol schedule based on block number %s since block does not exist in the chain",
+            BLOCK_NUMBER);
   }
 
   @Test
