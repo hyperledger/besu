@@ -3,14 +3,14 @@ on:
   release:
     types: released
 jobs:
-  dockerPromote:
+  dockerPromoteX64:
     runs-on: ubuntu-latest
     steps:
       - name: Login to DockerHub
         run: echo ${{ secrets.DOCKER_PASSWORD_RW }} | docker login -u ${{ secrets.DOCKER_USER_RW }} --password-stdin
       - name: pull tagged image
-        run: docker pull ${{ secrets.DOCKER_ORG }}/besu:${{ github.sha }}
+        run: docker pull ${{ secrets.DOCKER_ORG }}/besu:gitSha-${{ github.sha }}-openjdk-11-amd64
       - name: apply latest tag
-        run: docker tag ${{ secrets.DOCKER_ORG }}/besu:${{ github.sha }} latest
+        run: docker tag ${{ secrets.DOCKER_ORG }}/besu:gitSha-${{ github.sha }}-openjdk-11-amd64 latest
       - name: push
         run: docker push

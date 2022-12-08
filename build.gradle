@@ -726,7 +726,8 @@ task dockerUpload {
   def additionalTags = []
 
   if (project.hasProperty('gitSha')) {
-    additionalTags.add('gitSha')
+      def shaTag = "gitSha-${project.property('gitSha')}"
+      additionalTags.add(shaTag)
   }
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
