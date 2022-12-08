@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ChainDataPruner implements BlockAddedObserver {
-  public static final int MAX_PRUNING_WORKER = 16;
+  public static final int MAX_PRUNING_THREAD_QUEUE_SIZE = 16;
   private static final Logger LOG = LoggerFactory.getLogger(ChainDataPruner.class);
   private final BlockchainStorage blockchainStorage;
   private final ChainDataPrunerStorage prunerStorage;
@@ -58,7 +58,7 @@ public class ChainDataPruner implements BlockAddedObserver {
               + blockNumber
               + " < pruning mark "
               + storedPruningMark
-              + " which normally indicates the blocksToRetain is too small");
+              + " which normally indicates chain-pruning-blocks-retained is too small");
       return;
     }
     final KeyValueStorageTransaction tx1 = prunerStorage.startTransaction();

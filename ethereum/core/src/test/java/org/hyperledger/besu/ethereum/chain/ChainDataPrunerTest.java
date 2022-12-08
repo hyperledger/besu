@@ -16,7 +16,7 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.chain.ChainDataPruner.MAX_PRUNING_WORKER;
+import static org.hyperledger.besu.ethereum.chain.ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -52,7 +52,7 @@ public class ChainDataPrunerTest {
                 1,
                 60L,
                 TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(MAX_PRUNING_WORKER),
+                new ArrayBlockingQueue<>(MAX_PRUNING_THREAD_QUEUE_SIZE),
                 new ThreadPoolExecutor.DiscardPolicy()));
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
@@ -97,7 +97,7 @@ public class ChainDataPrunerTest {
                 1,
                 60L,
                 TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(MAX_PRUNING_WORKER),
+                new ArrayBlockingQueue<>(MAX_PRUNING_THREAD_QUEUE_SIZE),
                 new ThreadPoolExecutor.DiscardPolicy()));
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =

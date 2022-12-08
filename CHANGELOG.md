@@ -8,8 +8,6 @@
 ### Additions and Improvements
 - Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
 - Increase the speed of modexp gas execution and execution. [#4780](https://github.com/hyperledger/besu/pull/4780)
-
-### Additions and Improvements
 - Add chain data pruning feature with three experimental CLI options: `--Xchain-data-pruning-enabled`, `--Xchain-data-pruning-blocks-retained` and `--Xchain-data-pruning-frequency` [#4686](https://github.com/hyperledger/besu/pull/4686)
 
 ### Bug Fixes

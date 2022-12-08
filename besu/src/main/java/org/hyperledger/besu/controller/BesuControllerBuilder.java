@@ -340,7 +340,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                   ChainDataPruner.class.getSimpleName(),
                   1,
                   1,
-                  ChainDataPruner.MAX_PRUNING_WORKER,
+                  ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
                   metricsSystem));
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
