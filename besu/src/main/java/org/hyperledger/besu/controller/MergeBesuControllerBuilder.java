@@ -233,4 +233,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     }
     return retval;
   }
+
+  @Override
+  public BesuController build() {
+    BesuController controller = super.build();
+    PostMergeContext.get().setSyncState(controller.getSyncState());
+    return controller;
+  }
 }

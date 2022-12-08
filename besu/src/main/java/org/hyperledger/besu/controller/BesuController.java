@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -173,10 +174,14 @@ public class BesuController implements java.io.Closeable {
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
       final BesuControllerBuilder builder = internalFromConfigOptions(configOptions);
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
-        // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
-        // series of classes removed after we successfully transition to PoS
-        // https://github.com/hyperledger/besu/issues/2897
-        return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder());
+        if (configOptions.getTerminalTotalDifficulty().get().equals(UInt256.ZERO)) {
+          return new MergeBesuControllerBuilder();
+        } else {
+          // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
+          // series of classes removed after we successfully transition to PoS
+          // https://github.com/hyperledger/besu/issues/2897
+          return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder());
+        }
       }
       return builder;
     }
