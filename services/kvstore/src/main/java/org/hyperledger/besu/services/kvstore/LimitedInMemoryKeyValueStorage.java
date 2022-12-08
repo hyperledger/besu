@@ -29,6 +29,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
@@ -137,6 +138,22 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public KeyValueStorageTransaction startTransaction() throws StorageException {
     return new KeyValueStorageTransactionTransitionValidatorDecorator(new MemoryTransaction());
+  }
+
+  @Override
+  public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
+    return KeyValueStorage.super.getMoreClosedByPrefix(prefix);
+  }
+
+  @Override
+  public Map<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+    return stream()
+        .filter(
+            pair -> {
+              final Bytes key = Bytes.of(pair.getKey());
+              return key.compareTo(startKeyHash) >= 0 && key.compareTo(endKeyHash) <= 0;
+            })
+        .collect(Collectors.toMap(o -> Bytes.of(o.getKey()), o -> Bytes.of(o.getValue())));
   }
 
   private class MemoryTransaction implements KeyValueStorageTransaction {

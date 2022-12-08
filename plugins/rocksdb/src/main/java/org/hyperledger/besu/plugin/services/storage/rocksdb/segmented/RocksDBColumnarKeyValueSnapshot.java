@@ -26,10 +26,12 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdenti
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.OptimisticTransactionDB;
 
 public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
@@ -69,6 +71,16 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   public boolean tryDelete(final byte[] key) throws StorageException {
     snapTx.remove(key);
     return true;
+  }
+
+  @Override
+  public TreeMap<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+    return snapTx.getInRange(startKeyHash, endKeyHash);
+  }
+
+  @Override
+  public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
+    return snapTx.getMoreClosedByPrefix(prefix);
   }
 
   @Override

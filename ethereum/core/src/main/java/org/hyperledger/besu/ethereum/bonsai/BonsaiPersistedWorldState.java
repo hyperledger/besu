@@ -25,6 +25,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
@@ -69,14 +72,27 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     updater =
         new BonsaiWorldStateUpdater(
             this,
-            (addr, value) ->
+            new BonsaiWorldStateUpdater.Consumer<>() {
+              @Override
+              public void accept(final Address address, final BonsaiValue<BonsaiAccount> value) {
                 archive
                     .getCachedMerkleTrieLoader()
-                    .preLoadAccount(worldStateStorage, worldStateRootHash, addr),
-            (addr, value) ->
+                    .preLoadAccount(worldStateStorage, worldStateRootHash, address);
+              }
+
+              @Override
+              public void accept(final Address address) {
+                archive.getCachedMerkleTrieLoader().preLoadAllAccount(worldStateStorage, address);
+              }
+            },
+            new BonsaiWorldStateUpdater.Consumer<>() {
+              @Override
+              public void accept(final Address address, final Hash value) {
                 archive
                     .getCachedMerkleTrieLoader()
-                    .preLoadStorageSlot(worldStateStorage, addr, value));
+                    .preLoadStorageSlot(worldStateStorage, address, value);
+              }
+            });
   }
 
   public BonsaiWorldStateArchive getArchive() {
@@ -158,12 +174,19 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       if (updatedAccount == null) {
         final Hash addressHash = Hash.hash(accountKey);
-        accountTrie.remove(addressHash);
-        stateUpdater.removeAccountInfoState(addressHash);
+        // stateUpdater.removeAccountInfoState(addressHash);
+        accountTrie.removePath(
+            CompactEncoding.bytesToPath(addressHash),
+            new RemoveVisitor<>() {
+              @Override
+              public void remove(final Node<Bytes> node, final Bytes path) {
+                stateUpdater.removeAccountStateTrieNode(node.getLocation().get(), node.getHash());
+              }
+            });
       } else {
         final Hash addressHash = updatedAccount.getAddressHash();
         final Bytes accountValue = updatedAccount.serializeAccount();
-        stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
+        // stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
         accountTrie.put(addressHash, accountValue);
       }
     }
@@ -215,10 +238,18 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
           final Hash keyHash = storageUpdate.getKey();
           final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
           if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-            stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
-            storageTrie.remove(keyHash);
+            storageTrie.removePath(
+                CompactEncoding.bytesToPath(keyHash),
+                new RemoveVisitor<>() {
+                  @Override
+                  public void remove(final Node<Bytes> node, final Bytes path) {
+                    stateUpdater.removeAccountStateTrieNode(
+                        Bytes.concatenate(updatedAddressHash, node.getLocation().get()),
+                        node.getHash());
+                  }
+                });
           } else {
-            stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorage);
+            // stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorage);
             storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
           }
         }
@@ -239,7 +270,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private void clearStorage(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater) {
-    for (final Address address : worldStateUpdater.getStorageToClear()) {
+    for (final Address address : worldStateUpdater.getAccountsToDelete()) {
       // because we are clearing persisted values we need the account root as persisted
       final BonsaiAccount oldAccount =
           worldStateStorage
@@ -254,7 +285,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Hash addressHash = Hash.hash(address);
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, key) -> getStorageTrieNode(addressHash, location, key),
+              (location, key) ->
+                  archive
+                      .getCachedMerkleTrieLoader()
+                      .getAccountStorageTrieNode(worldStateStorage, addressHash, location, key),
               oldAccount.getStorageRoot(),
               Function.identity(),
               Function.identity());
@@ -263,8 +297,17 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         entriesToDelete
             .keySet()
             .forEach(
-                k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
-        entriesToDelete.keySet().forEach(storageTrie::remove);
+                keyHash ->
+                    storageTrie.removePath(
+                        CompactEncoding.bytesToPath(keyHash),
+                        new RemoveVisitor<>() {
+                          @Override
+                          public void remove(final Node<Bytes> node, final Bytes path) {
+                            stateUpdater.removeAccountStateTrieNode(
+                                Bytes.concatenate(addressHash, node.getLocation().get()),
+                                node.getHash());
+                          }
+                        }));
         if (entriesToDelete.size() == 256) {
           entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
         } else {

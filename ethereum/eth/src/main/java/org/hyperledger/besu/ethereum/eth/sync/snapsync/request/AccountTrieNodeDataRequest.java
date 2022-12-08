@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -131,11 +130,11 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     final Hash accountHash =
         Hash.wrap(
             Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+    /*if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putAccountInfoState(accountHash, value)
           .commit();
-    }
+    }*/
 
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {

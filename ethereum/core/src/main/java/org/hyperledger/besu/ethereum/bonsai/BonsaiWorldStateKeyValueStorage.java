@@ -19,9 +19,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
+import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -29,6 +33,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -38,6 +43,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
+@SuppressWarnings({"unused", "MismatchedQueryAndUpdateOfCollection", "ModifiedButNotUsed"})
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
@@ -98,20 +104,61 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    if (response.isEmpty()) {
-      // after a snapsync/fastsync we only have the trie branches.
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (worldStateRootHash.isPresent()) {
-        response =
-            new StoredMerklePatriciaTrie<>(
-                    new StoredNodeFactory<>(
-                        this::getAccountStateTrieNode, Function.identity(), Function.identity()),
-                    Bytes32.wrap(worldStateRootHash.get()))
-                .get(accountHash);
-      }
+    final Bytes completePath = CompactEncoding.bytesToPath(accountHash);
+    Optional<org.apache.commons.lang3.tuple.Pair<byte[], byte[]>> moreClosedByPrefix =
+        trieBranchStorage.getMoreClosedByPrefix(completePath);
+    Optional<Bytes> byte1 =
+        moreClosedByPrefix
+            .map(
+                pair ->
+                    TrieNodeDecoder.decode(Bytes.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
+            .filter(
+                leaf ->
+                    leaf instanceof LeafNode
+                        && Bytes.concatenate(leaf.getLocation().get(), leaf.getPath())
+                            .equals(completePath))
+            .flatMap(Node::getValue);
+    Optional<Bytes> byte2 = Optional.empty();
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    ArrayList<String> dd = new ArrayList<>();
+    if (worldStateRootHash.isPresent()) {
+      byte2 =
+          new StoredMerklePatriciaTrie<>(
+                  new StoredNodeFactory<>(
+                      (location, hash) -> {
+                        Optional<Bytes> accountStateTrieNode =
+                            getAccountStateTrieNode(location, hash);
+                        dd.add(
+                            "trie -> "
+                                + accountHash
+                                + " "
+                                + location
+                                + " "
+                                + accountStateTrieNode
+                                + " "
+                                + hash);
+                        return accountStateTrieNode;
+                      },
+                      Function.identity(),
+                      Function.identity()),
+                  Bytes32.wrap(worldStateRootHash.get()))
+              .get(accountHash);
+
+      /*if (!byte2.equals(byte1)) {
+        System.out.println(
+            "account "
+                + accountHash
+                + " "
+                + " "
+                + byte1
+                + " "
+                + byte2
+                + " "
+                + moreClosedByPrefix.map(org.apache.commons.lang3.tuple.Pair::getKey));
+        dd.forEach(System.out::println);
+      }*/
     }
-    return response;
+    return byte2;
   }
 
   @Override
@@ -179,29 +226,83 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    Optional<Bytes> response =
-        storageStorage
-            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-            .map(Bytes::wrap);
-    if (response.isEmpty()) {
-      final Optional<Bytes> account = getAccount(accountHash);
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (account.isPresent() && worldStateRootHash.isPresent()) {
-        final StateTrieAccountValue accountValue =
-            StateTrieAccountValue.readFrom(
-                org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
-        response =
+    final Bytes completePath = CompactEncoding.bytesToPath(slotHash);
+    Optional<org.apache.commons.lang3.tuple.Pair<byte[], byte[]>> moreClosedByPrefix =
+        trieBranchStorage.getMoreClosedByPrefix(Bytes.concatenate(accountHash, completePath));
+
+    Optional<Bytes> bytes1 =
+        moreClosedByPrefix
+            .map(
+                pair ->
+                    TrieNodeDecoder.decode(Bytes.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
+            .filter(
+                leaf ->
+                    leaf instanceof LeafNode
+                        && Bytes.concatenate(leaf.getLocation().get(), leaf.getPath())
+                            .equals(completePath))
+            .flatMap(Node::getValue)
+            .map(value -> Bytes32.leftPad(RLP.decodeValue(value)));
+
+    Optional<Bytes> bytes2 = Optional.empty();
+
+    Optional<Bytes> account = Optional.empty();
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    if (worldStateRootHash.isPresent()) {
+      account =
+          new StoredMerklePatriciaTrie<>(
+                  new StoredNodeFactory<>(
+                      this::getAccountStateTrieNode, Function.identity(), Function.identity()),
+                  Bytes32.wrap(worldStateRootHash.get()))
+              .get(accountHash);
+    }
+    if (account.isPresent()) {
+      final StateTrieAccountValue accountValue =
+          StateTrieAccountValue.readFrom(
+              org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
+      bytes2 =
+          new StoredMerklePatriciaTrie<>(
+                  new StoredNodeFactory<>(
+                      (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                      Function.identity(),
+                      Function.identity()),
+                  accountValue.getStorageRoot())
+              .get(slotHash)
+              .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+
+      final Optional<Hash> storageRoot =
+          getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY)).map(Hash::hash);
+      if (storageRoot.isPresent()) {
+        Optional<Bytes> byte3r =
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(
                         (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
                         Function.identity(),
                         Function.identity()),
-                    accountValue.getStorageRoot())
+                    storageRoot.get())
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+        /*if (!bytes2.equals(bytes1)) {
+          System.out.println(
+              "storage "
+                  + accountHash
+                  + " "
+                  + slotHash
+                  + " "
+                  + bytes1
+                  + " "
+                  + bytes2
+                  + " "
+                  + byte3r
+                  + " "
+                  + storageRoot
+                  + " "
+                  + accountValue.getStorageRoot()
+                  + " "
+                  + moreClosedByPrefix.map(org.apache.commons.lang3.tuple.Pair::getKey));
+        }*/
       }
     }
-    return response;
+    return bytes2;
   }
 
   @Override
@@ -408,7 +509,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     @Override
     public synchronized void removeStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash) {
-      storageStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
+      trieBranchStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
     }
 
     @Override

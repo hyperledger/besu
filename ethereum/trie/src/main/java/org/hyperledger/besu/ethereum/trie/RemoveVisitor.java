@@ -22,7 +22,7 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   private final boolean allowFlatten;
 
   public RemoveVisitor() {
-    allowFlatten = true;
+    this(true);
   }
 
   public RemoveVisitor(final boolean allowFlatten) {
@@ -63,11 +63,20 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
-    return (commonPathLength == leafPath.size()) ? NULL_NODE_RESULT : leafNode;
+    if (commonPathLength == leafPath.size()) {
+      remove(leafNode, path);
+      return NULL_NODE_RESULT;
+    }
+    return leafNode;
   }
 
   @Override
   public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+    remove(nullNode, path);
     return NULL_NODE_RESULT;
+  }
+
+  public void remove(final Node<V> node, final Bytes path) {
+    // nothing to do
   }
 }

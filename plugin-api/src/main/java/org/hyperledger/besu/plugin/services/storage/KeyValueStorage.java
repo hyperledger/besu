@@ -18,12 +18,14 @@ import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.Closeable;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Responsible for storing values against keys.
@@ -90,6 +92,11 @@ public interface KeyValueStorage extends Closeable {
    */
   boolean tryDelete(byte[] key) throws StorageException;
 
+  default Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
+    return Optional.empty();
+  }
+
+  Map<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash);
   /**
    * Performs an evaluation against each key in the store, returning the set of entries that pass.
    *

@@ -29,7 +29,7 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class LeafNode<V> implements Node<V> {
+public class LeafNode<V> implements Node<V> {
   private final Optional<Bytes> location;
   private final Bytes path;
   private final V value;

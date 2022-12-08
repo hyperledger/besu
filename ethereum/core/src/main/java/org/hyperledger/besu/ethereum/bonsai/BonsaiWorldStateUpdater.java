@@ -39,6 +39,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.collect.ForwardingMap;
+import com.google.common.collect.ForwardingSet;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -48,10 +49,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     implements BonsaiWorldView {
 
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
+  private final AccountConsumingSet<?> accountsToDelete;
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
   private final Consumer<Hash> storagePreloader;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
-  private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
@@ -60,7 +61,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       new ConcurrentHashMap<>();
 
   BonsaiWorldStateUpdater(final BonsaiWorldView world) {
-    this(world, (__, ___) -> {}, (__, ___) -> {});
+    this(world, new Consumer<>() {}, new Consumer<>() {});
   }
 
   BonsaiWorldStateUpdater(
@@ -69,6 +70,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       final Consumer<Hash> storagePreloader) {
     super(world);
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
+    this.accountsToDelete =
+        new AccountConsumingSet<>(Collections.synchronizedSet(new HashSet<>()), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
   }
@@ -83,7 +86,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   void cloneFromUpdater(final BonsaiWorldStateUpdater source) {
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
-    storageToClear.addAll(source.storageToClear);
+    accountsToDelete.addAll(source.accountsToDelete);
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
@@ -136,8 +139,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return codeToUpdate;
   }
 
-  public Set<Address> getStorageToClear() {
-    return storageToClear;
+  public Set<Address> getAccountsToDelete() {
+    return accountsToDelete;
   }
 
   Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> getStorageToUpdate() {
@@ -183,7 +186,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
           accountsToUpdate.computeIfAbsent(
               deletedAddress,
               __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
-      storageToClear.add(deletedAddress);
+      accountsToDelete.add(deletedAddress);
       final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
         codeValue.setUpdated(null);
@@ -280,7 +283,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                           new StorageConsumingMap<>(
                               updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
               if (tracked.getStorageWasCleared()) {
-                storageToClear.add(updatedAddress);
+                accountsToDelete.add(updatedAddress);
                 pendingStorageUpdates.clear();
               }
 
@@ -384,7 +387,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         }
       }
     }
-    if (storageToClear.contains(address)) {
+    if (accountsToDelete.contains(address)) {
       return UInt256.ZERO;
     }
     return getStorageValue(address, storageKey);
@@ -701,7 +704,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   public void reset() {
-    storageToClear.clear();
+    accountsToDelete.clear();
     storageToUpdate.clear();
     codeToUpdate.clear();
     accountsToUpdate.clear();
@@ -713,7 +716,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         && updatedAccounts.isEmpty()
         && deletedAccounts.isEmpty()
         && storageToUpdate.isEmpty()
-        && storageToClear.isEmpty()
+        && accountsToDelete.isEmpty()
         && codeToUpdate.isEmpty());
   }
 
@@ -730,8 +733,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
     @Override
     public T put(@NotNull final Address address, @NotNull final T value) {
-      consumer.process(address, value);
-      return accounts.put(address, value);
+      consumer.accept(address, value);
+      return super.put(address, value);
     }
 
     public Consumer<T> getConsumer() {
@@ -762,8 +765,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
     @Override
     public T put(@NotNull final Hash slotHash, @NotNull final T value) {
-      consumer.process(address, slotHash);
-      return storages.put(slotHash, value);
+      consumer.accept(address, slotHash);
+      return super.put(slotHash, value);
     }
 
     public Consumer<Hash> getConsumer() {
@@ -776,7 +779,40 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     }
   }
 
+  public static class AccountConsumingSet<T> extends ForwardingSet<Address> {
+
+    private final Set<Address> accounts;
+    private final Consumer<T> consumer;
+
+    public AccountConsumingSet(final Set<Address> accounts, final Consumer<T> consumer) {
+      this.accounts = accounts;
+      this.consumer = consumer;
+    }
+
+    @Override
+    public boolean add(final Address element) {
+      consumer.accept(element);
+      return super.add(element);
+    }
+
+    public Consumer<T> getConsumer() {
+      return consumer;
+    }
+
+    @Override
+    protected Set<Address> delegate() {
+      return accounts;
+    }
+  }
+
   public interface Consumer<T> {
-    void process(final Address address, T value);
+
+    default void accept(final Address address, final T value) {
+      // no op
+    }
+
+    default void accept(final Address address) {
+      // no op
+    }
   }
 }

@@ -22,9 +22,11 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.ReadOptions;
@@ -110,14 +112,59 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     }
   }
 
+  public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
+    final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
+    // System.out.println("seek for p rev snapshot "+prefix);
+    rocksIterator.seekForPrev(prefix.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      if (rocksDbKeyIterator.hasNext()) {
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        final Bytes key = Bytes.wrap(next.getKey());
+        // System.out.println("-> "+prefix+" "+key);
+        if (key.commonPrefixLength(prefix) == key.size()) {
+          return Optional.of(next);
+        }
+      }
+      return Optional.empty();
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
+  public TreeMap<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+    final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
+    rocksIterator.seek(startKeyHash.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      final TreeMap<Bytes, Bytes> res = new TreeMap<>();
+      while (rocksDbKeyIterator.hasNext()) {
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        final Bytes key = Bytes.wrap(next.getKey());
+        if (key.compareTo(startKeyHash) >= 0) {
+          if (key.compareTo(endKeyHash) <= 0) {
+            res.put(key, Bytes.of(next.getValue()));
+          } else {
+            return res;
+          }
+        }
+      }
+      return res;
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
   public Stream<Pair<byte[], byte[]>> stream() {
-    final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
+    final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
   }
 
   public Stream<byte[]> streamKeys() {
-    final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
+    final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
   }

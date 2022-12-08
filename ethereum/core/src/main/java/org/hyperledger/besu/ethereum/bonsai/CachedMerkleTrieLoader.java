@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.util.RangeManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
@@ -32,23 +33,24 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.prometheus.client.guava.cache.CacheMetricsCollector;
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class CachedMerkleTrieLoader {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
-  private static final int STORAGE_CACHE_SIZE = 200_000;
+  private static final int STORAGE_CACHE_SIZE = 400_000;
   private final Cache<Bytes, Bytes> accountNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
-  private final Cache<Bytes, Bytes> storageNodes =
+  private final Cache<Bytes, Bytes> slotNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
 
   public CachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
 
     CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
     cacheMetrics.addCache("accountsNodes", accountNodes);
-    cacheMetrics.addCache("storageNodes", storageNodes);
+    cacheMetrics.addCache("slotNodes", slotNodes);
     if (metricsSystem instanceof PrometheusMetricsSystem)
       ((PrometheusMetricsSystem) metricsSystem)
           .addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
@@ -94,6 +96,18 @@ public class CachedMerkleTrieLoader {
     CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateStorage, account, slotHash));
   }
 
+  public void preLoadAllAccount(
+      final BonsaiWorldStateKeyValueStorage worldStateStorage, final Address account) {
+    final Pair<Bytes, Bytes> range =
+        RangeManager.generateRangeFromLocation(Hash.hash(account), Bytes.EMPTY);
+    CompletableFuture.runAsync(
+        () ->
+            worldStateStorage
+                .trieBranchStorage
+                .getInRange(range.getFirst(), range.getSecond())
+                .forEach(slotNodes::put));
+  }
+
   @VisibleForTesting
   public void cacheStorageNodes(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
@@ -113,7 +127,7 @@ public class CachedMerkleTrieLoader {
                             Optional<Bytes> node =
                                 getAccountStorageTrieNode(
                                     worldStateStorage, accountHash, location, hash);
-                            node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
+                            node.ifPresent(bytes -> slotNodes.put(Hash.hash(bytes), bytes));
                             return node;
                           },
                           Hash.hash(storageRoot),
@@ -149,7 +163,7 @@ public class CachedMerkleTrieLoader {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return Optional.ofNullable(storageNodes.getIfPresent(nodeHash))
+      return Optional.ofNullable(slotNodes.getIfPresent(nodeHash))
           .or(
               () ->
                   worldStateKeyValueStorage.getAccountStorageTrieNode(

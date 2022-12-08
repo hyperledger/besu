@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -252,6 +253,57 @@ public class RocksDBColumnarKeyValueStorage
       } else {
         throw new StorageException(e);
       }
+    }
+  }
+
+  @Override
+  public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(
+      final RocksDbSegmentIdentifier segmentHandle, final Bytes prefix) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    // System.out.println("seek for p rev "+prefix);
+    rocksIterator.seekForPrev(prefix.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      if (rocksDbKeyIterator.hasNext()) {
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        final Bytes key = Bytes.wrap(next.getKey());
+        // System.out.println("-> "+prefix+" "+key);
+        if (key.commonPrefixLength(prefix) == key.size()) {
+          return Optional.of(next);
+        }
+      }
+      return Optional.empty();
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
+  @Override
+  public TreeMap<Bytes, Bytes> getInRange(
+      final RocksDbSegmentIdentifier segmentHandle,
+      final Bytes startKeyHash,
+      final Bytes endKeyHash) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    rocksIterator.seek(startKeyHash.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      final TreeMap<Bytes, Bytes> res = new TreeMap<>();
+      while (rocksDbKeyIterator.hasNext()) {
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        final Bytes key = Bytes.wrap(next.getKey());
+        if (key.compareTo(startKeyHash) >= 0) {
+          if (key.compareTo(endKeyHash) <= 0) {
+            res.put(key, Bytes.of(next.getValue()));
+          } else {
+            return res;
+          }
+        }
+      }
+      return res;
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
     }
   }
 
