@@ -167,17 +167,17 @@ public final class RunnerTest {
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
 
-
     // Setup Runner with blocks
     final BesuController controllerAhead =
-            getController(
-                    genesisConfig,
-                    syncConfigAhead,
-                    dataDirAhead,
-                    aheadDbNodeKey,
-                    createKeyValueStorageProvider(dataDirAhead, dbAhead),
-                    noOpMetricsSystem);
-    setupState(blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
+        getController(
+            genesisConfig,
+            syncConfigAhead,
+            dataDirAhead,
+            aheadDbNodeKey,
+            createKeyValueStorageProvider(dataDirAhead, dbAhead),
+            noOpMetricsSystem);
+    setupState(
+        blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
 
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final Path pidPath = temp.getRoot().toPath().resolve("pid");
@@ -234,11 +234,11 @@ public final class RunnerTest {
 
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
-              new EthNetworkConfig(
-                      EthNetworkConfig.jsonConfig(DEV),
-                      DEV.getNetworkId(),
-                      Collections.singletonList(enode),
-                      null);
+          new EthNetworkConfig(
+              EthNetworkConfig.jsonConfig(DEV),
+              DEV.getNetworkId(),
+              Collections.singletonList(enode),
+              null);
 
       runnerBehind =
           runnerBuilder
