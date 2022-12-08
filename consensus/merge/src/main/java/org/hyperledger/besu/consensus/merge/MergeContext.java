@@ -66,5 +66,5 @@ public interface MergeContext extends ConsensusContext {
 
   Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
 
-  boolean isNearHeadCheckpointSync();
+  boolean isCheckpointPostMergeSync();
 }

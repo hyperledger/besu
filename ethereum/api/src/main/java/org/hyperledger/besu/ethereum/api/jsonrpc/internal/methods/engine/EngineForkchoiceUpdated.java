@@ -119,7 +119,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
-    if (!mergeContext.get().isNearHeadCheckpointSync()
+    if (!mergeContext.get().isCheckpointPostMergeSync()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcSuccessResponse(

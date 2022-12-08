@@ -1762,7 +1762,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateDnsOptionsParams();
     ensureValidPeerBoundParams();
     validateRpcOptionsParams();
-    validateNearHearCheckPointSyncRequirements();
+    validatePostMergeCheckpointBlockRequirements();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
@@ -1977,9 +1977,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "--Xnear-head-checkpoint-sync-enabled can only be used with X_CHECKPOINT sync-mode",
+        "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
         SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet(syncMode)),
-        singletonList("--Xnear-head-checkpoint-sync-enabled"));
+        singletonList("--Xcheckpoint-post-merge-enabled"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
@@ -3320,7 +3320,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .isPresent());
   }
 
-  private void validateNearHearCheckPointSyncRequirements() {
+  private void validatePostMergeCheckpointBlockRequirements() {
     final GenesisConfigOptions genesisOptions =
         Optional.ofNullable(genesisConfigOptions)
             .orElseGet(
@@ -3332,7 +3332,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         unstableSynchronizerOptions.toDomainObject().build();
     final Optional<UInt256> terminalTotalDifficulty = genesisOptions.getTerminalTotalDifficulty();
     final CheckpointConfigOptions checkpointConfigOptions = genesisOptions.getCheckpointOptions();
-    if (synchronizerConfiguration.isNearHeadCheckpointSyncEnabled()) {
+    if (synchronizerConfiguration.isCheckpointPostMergeEnabled()) {
       if (!checkpointConfigOptions.isValid()) {
         throw new InvalidConfigurationException(
             "Near head checkpoint sync requires a checkpoint block configured in the genesis file");
@@ -3341,7 +3341,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           value -> {
             if (UInt256.fromHexString(
                     genesisOptions.getCheckpointOptions().getTotalDifficulty().orElse("0x0"))
-                .lessThan(value)) {
+                .lessOrEqualThan(value)) {
               throw new InvalidConfigurationException(
                   "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
             }

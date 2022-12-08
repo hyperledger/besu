@@ -50,7 +50,7 @@ public class SynchronizerConfiguration {
   public static final long DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS =
       TimeUnit.SECONDS.toMillis(60);
 
-  public static final boolean DEFAULT_NEAR_HEAD_CHECKPOINT_SYNC = false;
+  public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
 
   // Fast sync config
   private final int fastSyncPivotDistance;
@@ -71,7 +71,7 @@ public class SynchronizerConfiguration {
   private final SyncMode syncMode;
 
   // Near head Checkpoint sync
-  private final boolean nearHeadCheckpointSyncEnabled;
+  private final boolean checkpointPostMergeEnabled;
 
   // Downloader config
   private final long downloaderChangeTargetThresholdByHeight;
@@ -108,7 +108,7 @@ public class SynchronizerConfiguration {
       final int computationParallelism,
       final int maxTrailingPeers,
       final long propagationManagerGetBlockTimeoutMillis,
-      final boolean nearHeadCheckpointSyncEnabled) {
+      final boolean checkpointPostMergeEnabled) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -130,7 +130,7 @@ public class SynchronizerConfiguration {
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
     this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
-    this.nearHeadCheckpointSyncEnabled = nearHeadCheckpointSyncEnabled;
+    this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
   }
 
   public static Builder builder() {
@@ -146,8 +146,8 @@ public class SynchronizerConfiguration {
     return syncMode;
   }
 
-  public boolean isNearHeadCheckpointSyncEnabled() {
-    return nearHeadCheckpointSyncEnabled;
+  public boolean isCheckpointPostMergeEnabled() {
+    return checkpointPostMergeEnabled;
   }
 
   /**
@@ -282,7 +282,7 @@ public class SynchronizerConfiguration {
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
-    private boolean nearHeadCheckpointSyncEnabled = DEFAULT_NEAR_HEAD_CHECKPOINT_SYNC;
+    private boolean checkpointPostMergeEnabled = DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
@@ -401,8 +401,8 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder setNearHeadCheckpointSyncEnabled(final boolean nearHeadCheckpointSyncEnabled) {
-      this.nearHeadCheckpointSyncEnabled = nearHeadCheckpointSyncEnabled;
+    public Builder checkpointPostMergeEnabled(final boolean checkpointPostMergeEnabled) {
+      this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
       return this;
     }
 
@@ -429,7 +429,7 @@ public class SynchronizerConfiguration {
           computationParallelism,
           maxTrailingPeers,
           propagationManagerGetBlockTimeoutMillis,
-          nearHeadCheckpointSyncEnabled);
+          checkpointPostMergeEnabled);
     }
   }
 }

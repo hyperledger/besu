@@ -196,7 +196,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // TODO: post-merge cleanup
-    if (!mergeContext.get().isNearHeadCheckpointSync()
+    if (!mergeContext.get().isCheckpointPostMergeSync()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
       mergeCoordinator.addBadBlock(block, Optional.empty());
       return respondWithInvalid(
