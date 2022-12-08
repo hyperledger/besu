@@ -1,4 +1,4 @@
-name: release
+name: release besu
 on:
   release:
     types: released
@@ -13,4 +13,4 @@ jobs:
       - name: apply latest tag
         run: docker tag ${{ secrets.DOCKER_ORG }}/besu:gitSha-${{ github.sha }}-openjdk-11-amd64 latest
       - name: push
-        run: docker push
+        run: docker push ${{ secrets.DOCKER_ORG }}/besu:latest
