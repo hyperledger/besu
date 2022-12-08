@@ -9,8 +9,8 @@ jobs:
       - name: Login to DockerHub
         run: echo ${{ secrets.DOCKER_PASSWORD_RW }} | docker login -u ${{ secrets.DOCKER_USER_RW }} --password-stdin
       - name: pull tagged image
-        run: docker pull hyperledger/besu:${{ github.sha }}
+        run: docker pull ${{ secrets.DOCKER_ORG }}/besu:${{ github.sha }}
       - name: apply latest tag
-        run: docker tag hyperledger/besu:${{ github.sha }} latest
+        run: docker tag ${{ secrets.DOCKER_ORG }}/besu:${{ github.sha }} latest
       - name: push
         run: docker push
