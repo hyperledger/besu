@@ -18,6 +18,7 @@
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
+| Gabriel Fukushima| gfukushima       | gfukushima       |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
