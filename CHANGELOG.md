@@ -8,6 +8,7 @@
 ### Additions and Improvements
 - Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
 - Increase the speed of modexp gas execution and execution. [#4780](https://github.com/hyperledger/besu/pull/4780)
+- Set the default curve in the EVMTool, like is done in production operations [#4790](https://github.com/hyperledger/besu/pull/4790)
 
 ### Bug Fixes
 
