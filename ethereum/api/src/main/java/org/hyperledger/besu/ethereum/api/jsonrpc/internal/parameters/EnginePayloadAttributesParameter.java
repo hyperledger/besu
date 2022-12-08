@@ -17,10 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.datatypes.Address;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EnginePayloadAttributesParameter {
 
   final Long timestamp;

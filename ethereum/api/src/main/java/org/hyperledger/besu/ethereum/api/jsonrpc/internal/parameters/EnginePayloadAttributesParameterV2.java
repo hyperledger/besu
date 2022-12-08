@@ -22,10 +22,12 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EnginePayloadAttributesParameterV2 {
 
   final Long timestamp;
