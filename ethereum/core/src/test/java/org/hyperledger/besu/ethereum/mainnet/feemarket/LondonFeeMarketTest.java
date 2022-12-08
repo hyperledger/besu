@@ -41,7 +41,7 @@ public class LondonFeeMarketTest {
             .createTransaction(KEY_PAIR1);
 
     final LondonFeeMarket londonFeeMarket = new LondonFeeMarket(0);
-    assertThat(londonFeeMarket.satisfiesFloorTxCost(transaction)).isTrue();
+    assertThat(londonFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
   }
 
   @Test
@@ -55,7 +55,7 @@ public class LondonFeeMarketTest {
             .createTransaction(KEY_PAIR1);
 
     final LondonFeeMarket londonFeeMarket = new LondonFeeMarket(0);
-    assertThat(londonFeeMarket.satisfiesFloorTxCost(transaction)).isFalse();
+    assertThat(londonFeeMarket.satisfiesFloorTxFee(transaction)).isFalse();
   }
 
   @Test
@@ -69,6 +69,6 @@ public class LondonFeeMarketTest {
             .createTransaction(KEY_PAIR1);
 
     final LondonFeeMarket londonFeeMarket = new LondonFeeMarket(0, Optional.of(Wei.ZERO));
-    assertThat(londonFeeMarket.satisfiesFloorTxCost(transaction)).isTrue();
+    assertThat(londonFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
   }
 }
