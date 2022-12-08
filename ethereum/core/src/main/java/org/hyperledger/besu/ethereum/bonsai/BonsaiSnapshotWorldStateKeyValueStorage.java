@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -40,7 +39,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
 
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
-  private final Subscribers<Integer> subscribers = Subscribers.create();
 
   public BonsaiSnapshotWorldStateKeyValueStorage(final StorageProvider snappableStorageProvider) {
     this(
@@ -59,6 +57,12 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
             .takeSnapshot(),
         snappableStorageProvider.getStorageBySegmentIdentifier(
             KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+  }
+
+  @Override
+  public void clearFlatDatabase() {
+    accountStorage.clear();
+    storageStorage.clear();
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
@@ -81,16 +85,16 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public synchronized long subscribe() {
+  public synchronized long subscribe(BonsaiStorageSubscriber sub) {
     if (isClosed.get()) {
       throw new RuntimeException("BonsaiSnapshotWorldStateKeyValueStorage already closed");
     }
-    return subscribers.subscribe(0);
+    return super.subscribe(sub);
   }
 
   @Override
   public synchronized void unSubscribe(final long id) {
-    subscribers.unsubscribe(id);
+    super.unSubscribe(id);
     try {
       tryClose();
     } catch (Exception e) {
@@ -106,6 +110,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   protected void tryClose() throws Exception {
     if (isClosed.get() && subscribers.getSubscriberCount() < 1) {
+      subscribers.forEach(BonsaiStorageSubscriber::onClose);
       accountStorage.close();
       codeStorage.close();
       storageStorage.close();

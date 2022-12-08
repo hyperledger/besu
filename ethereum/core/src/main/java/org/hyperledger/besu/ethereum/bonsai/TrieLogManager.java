@@ -21,21 +21,21 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 
 import java.util.Optional;
 
-public interface TrieLogManager {
+public interface TrieLogManager<I extends MutableWorldState> {
 
   void saveTrieLog(
       final BonsaiWorldStateArchive worldStateArchive,
       final BonsaiWorldStateUpdater localUpdater,
-      final Hash worldStateRootHash,
+      final I cachedState,
       final BlockHeader blockHeader);
 
-  Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash);
+  Optional<? extends MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash);
 
   long getMaxLayersToLoad();
 
   void addCachedLayer(
       final BlockHeader blockHeader,
-      final Hash worldStateRootHash,
+      final I cachedState,
       final TrieLogLayer trieLog,
       final BonsaiWorldStateArchive worldStateArchive);
 
@@ -43,11 +43,12 @@ public interface TrieLogManager {
 
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
 
-  interface CachedWorldState {
+  interface CachedWorldState<Z extends MutableWorldState>
+      extends BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
     long getHeight();
 
     TrieLogLayer getTrieLog();
 
-    MutableWorldState getMutableWorldState();
+    Z getMutableWorldState();
   }
 }

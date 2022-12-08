@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.TrieLogManager.CachedWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -32,21 +31,22 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractTrieLogManager<T extends CachedWorldState> implements TrieLogManager {
+public abstract class AbstractTrieLogManager<T extends MutableWorldState>
+    implements TrieLogManager<T> {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTrieLogManager.class);
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
 
   protected final Blockchain blockchain;
   protected final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  protected final Map<Bytes32, T> cachedWorldStatesByHash;
+  protected final Map<Bytes32, CachedWorldState<T>> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
 
   AbstractTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, T> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedWorldState<T>> cachedWorldStatesByHash) {
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
@@ -57,7 +57,7 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
   public synchronized void saveTrieLog(
       final BonsaiWorldStateArchive worldStateArchive,
       final BonsaiWorldStateUpdater localUpdater,
-      final Hash worldStateRootHash,
+      final T cachedState,
       final BlockHeader blockHeader) {
     // do not overwrite a trielog layer that already exists in the database.
     // if it's only in memory we need to save it
@@ -68,8 +68,8 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
       boolean success = false;
       try {
         final TrieLogLayer trieLog =
-            prepareTrieLog(blockHeader, worldStateRootHash, localUpdater, worldStateArchive);
-        persistTrieLog(blockHeader, worldStateRootHash, trieLog, stateUpdater);
+            prepareTrieLog(blockHeader, cachedState, localUpdater, worldStateArchive);
+        persistTrieLog(blockHeader, cachedState.rootHash(), trieLog, stateUpdater);
         success = true;
       } finally {
         if (success) {
@@ -83,16 +83,22 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
 
   private TrieLogLayer prepareTrieLog(
       final BlockHeader blockHeader,
-      final Hash currentWorldStateRootHash,
+      final T cachedState,
       final BonsaiWorldStateUpdater localUpdater,
       final BonsaiWorldStateArchive worldStateArchive) {
     debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
     final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
     trieLog.freeze();
-    addCachedLayer(blockHeader, currentWorldStateRootHash, trieLog, worldStateArchive);
+    addCachedLayer(blockHeader, cachedState, trieLog, worldStateArchive);
     scrubCachedLayers(blockHeader.getNumber());
     return trieLog;
   }
+
+  public abstract void addCachedLayer(
+      final BlockHeader blockHeader,
+      final T cachedState,
+      final TrieLogLayer trieLog,
+      final BonsaiWorldStateArchive worldStateArchive);
 
   synchronized void scrubCachedLayers(final long newMaxHeight) {
     if (cachedWorldStatesByHash.size() > RETAINED_LAYERS) {
@@ -135,10 +141,10 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
   }
 
   @Override
-  public Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
+  public Optional<T> getBonsaiCachedWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
-          .map(T::getMutableWorldState);
+          .map(z -> z.getMutableWorldState());
     }
     return Optional.empty();
   }
@@ -155,5 +161,14 @@ public abstract class AbstractTrieLogManager<T extends CachedWorldState> impleme
     } else {
       return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
+  }
+
+  interface CachedWorldState<Z extends MutableWorldState>
+      extends BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
+    long getHeight();
+
+    TrieLogLayer getTrieLog();
+
+    Z getMutableWorldState();
   }
 }

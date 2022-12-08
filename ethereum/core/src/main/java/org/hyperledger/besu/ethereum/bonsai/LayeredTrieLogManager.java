@@ -28,15 +28,14 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LayeredTrieLogManager
-    extends AbstractTrieLogManager<LayeredTrieLogManager.LayeredWorldStateCache> {
+public class LayeredTrieLogManager extends AbstractTrieLogManager<BonsaiLayeredWorldState> {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredTrieLogManager.class);
 
   LayeredTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, LayeredWorldStateCache> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedWorldState<BonsaiLayeredWorldState>> cachedWorldStatesByHash) {
     super(blockchain, worldStateStorage, maxLayersToLoad, cachedWorldStatesByHash);
   }
 
@@ -50,7 +49,7 @@ public class LayeredTrieLogManager
   @Override
   public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
-      final Hash worldStateRootHash,
+      final BonsaiLayeredWorldState cachedState,
       final TrieLogLayer trieLog,
       final BonsaiWorldStateArchive worldStateArchive) {
 
@@ -60,13 +59,13 @@ public class LayeredTrieLogManager
             worldStateArchive,
             Optional.of((BonsaiPersistedWorldState) worldStateArchive.getMutable()),
             blockHeader.getNumber(),
-            worldStateRootHash,
+            cachedState.rootHash(),
             trieLog);
     debugLambda(
         LOG,
         "adding layered world state for block {}, state root hash {}",
         blockHeader::toLogString,
-        worldStateRootHash::toHexString);
+        () -> cachedState.rootHash().toShortHexString());
     cachedWorldStatesByHash.put(
         blockHeader.getHash(), new LayeredWorldStateCache(bonsaiLayeredWorldState));
   }
@@ -86,7 +85,7 @@ public class LayeredTrieLogManager
         });
   }
 
-  public static class LayeredWorldStateCache implements CachedWorldState {
+  public static class LayeredWorldStateCache implements CachedWorldState<BonsaiLayeredWorldState> {
 
     final BonsaiLayeredWorldState layeredWorldState;
 

@@ -25,15 +25,13 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SnapshotTrieLogManager
-    extends AbstractTrieLogManager<SnapshotTrieLogManager.CachedSnapshotWorldState> {
+public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapshotWorldState> {
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotTrieLogManager.class);
 
   public SnapshotTrieLogManager(
@@ -47,14 +45,14 @@ public class SnapshotTrieLogManager
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, CachedSnapshotWorldState> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedWorldState<BonsaiSnapshotWorldState>> cachedWorldStatesByHash) {
     super(blockchain, worldStateStorage, maxLayersToLoad, cachedWorldStatesByHash);
   }
 
   @Override
   public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
-      final Hash worldStateRootHash,
+      final BonsaiSnapshotWorldState cachedState,
       final TrieLogLayer trieLog,
       final BonsaiWorldStateArchive worldStateArchive) {
 
@@ -62,49 +60,69 @@ public class SnapshotTrieLogManager
         LOG,
         "adding snapshot world state for block {}, state root hash {}",
         blockHeader::toLogString,
-        worldStateRootHash::toHexString);
+        () -> cachedState.rootHash().toShortHexString());
     cachedWorldStatesByHash.put(
         blockHeader.getHash(),
-        new CachedSnapshotWorldState(
-            () ->
-                worldStateArchive
-                    .getMutableSnapshot(blockHeader.getHash())
-                    .map(BonsaiSnapshotWorldState.class::cast)
-                    .orElse(null),
-            trieLog,
-            blockHeader.getNumber()));
+        new CachedSnapshotWorldState(cachedState, trieLog, blockHeader.getNumber()));
   }
 
   @Override
-  public Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
+  public void updateCachedLayers(Hash blockParentHash, Hash blockHash) {
+    // no-op.
+  }
+
+  @Override
+  public Optional<BonsaiSnapshotWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
+    LOG.info(
+        "getting cached worldstate for "
+            + blockHash.toShortHexString()
+            + " current states: "
+            + cachedWorldStatesByHash.size());
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
-          .map(CachedSnapshotWorldState::getMutableWorldState)
-          .map(MutableWorldState::copy);
+          .map(z -> z.getMutableWorldState())
+          .map(MutableWorldState::copy)
+          .map(BonsaiSnapshotWorldState.class::cast);
     }
     return Optional.empty();
   }
 
-  @Override
-  public void updateCachedLayers(final Hash blockParentHash, final Hash blockHash) {
-    // fetch the snapshot supplier as soon as its block has been added:
-    Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
-        .ifPresent(CachedSnapshotWorldState::getMutableWorldState);
-  }
+  public static class CachedSnapshotWorldState
+      implements CachedWorldState<BonsaiSnapshotWorldState> {
 
-  public static class CachedSnapshotWorldState implements CachedWorldState {
-
-    final Supplier<BonsaiSnapshotWorldState> snapshot;
+    final BonsaiSnapshotWorldState snapshot;
+    final Long worldStateSubscriberId;
     final TrieLogLayer trieLog;
     final long height;
+    final AtomicBoolean isClosed = new AtomicBoolean(false);
 
     public CachedSnapshotWorldState(
-        final Supplier<BonsaiSnapshotWorldState> snapshotSupplier,
-        final TrieLogLayer trieLog,
-        final long height) {
-      this.snapshot = Suppliers.memoize(snapshotSupplier::get);
+        final BonsaiSnapshotWorldState snapshot, final TrieLogLayer trieLog, final long height) {
+      this.worldStateSubscriberId = snapshot.worldStateStorage.subscribe(this);
+      this.snapshot = snapshot;
       this.trieLog = trieLog;
       this.height = height;
+    }
+
+    private void setClosed() {
+      if (!isClosed.compareAndExchange(false, true)) {
+        snapshot.worldStateStorage.unSubscribe(worldStateSubscriberId);
+      }
+    }
+
+    @Override
+    public void onClose() {
+      setClosed();
+    }
+
+    @Override
+    public void onClear() {
+      setClosed();
+    }
+
+    @Override
+    public void onClearFlatDatabase() {
+      setClosed();
     }
 
     @Override
@@ -118,8 +136,11 @@ public class SnapshotTrieLogManager
     }
 
     @Override
-    public MutableWorldState getMutableWorldState() {
-      return snapshot.get();
+    public BonsaiSnapshotWorldState getMutableWorldState() {
+      if (isClosed.get()) {
+        return null;
+      }
+      return snapshot;
     }
   }
 }
