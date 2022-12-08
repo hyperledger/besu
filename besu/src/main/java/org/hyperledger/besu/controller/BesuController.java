@@ -264,10 +264,11 @@ public class BesuController implements java.io.Closeable {
       return startBlock;
     }
 
-    private boolean isCheckpointBlockTotalDifficultyGreaterThanTTD(GenesisConfigOptions configOptions){
+    private boolean isCheckpointBlockTotalDifficultyGreaterThanTTD(
+        final GenesisConfigOptions configOptions) {
       return configOptions.getTerminalTotalDifficulty().isPresent()
-              && configOptions.getCheckpointOptions().isValid()
-              && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
+          && configOptions.getCheckpointOptions().isValid()
+          && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
               .greaterThan(configOptions.getTerminalTotalDifficulty().get()));
     }
   }
