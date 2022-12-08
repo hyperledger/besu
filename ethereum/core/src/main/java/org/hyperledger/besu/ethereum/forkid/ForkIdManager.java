@@ -31,7 +31,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-// TODO SLD
 public class ForkIdManager {
 
   private final Hash genesisHash;

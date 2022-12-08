@@ -91,18 +91,20 @@ public class TimestampScheduleBuilder {
 
     // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
     // inserted _AT_ the modifier block entry.
-    protocolSpecAdapters.stream()
-        .forEach(
-            entry -> {
-              final long modifierBlock = entry.getKey();
-              final BuilderMapEntry parent =
-                  Optional.ofNullable(builders.floorEntry(modifierBlock))
-                      .orElse(builders.firstEntry())
-                      .getValue();
-              builders.put(
-                  modifierBlock,
-                  new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
-            });
+    if (!builders.isEmpty()) {
+      protocolSpecAdapters.stream()
+          .forEach(
+              entry -> {
+                final long modifierBlock = entry.getKey();
+                final BuilderMapEntry parent =
+                    Optional.ofNullable(builders.floorEntry(modifierBlock))
+                        .orElse(builders.firstEntry())
+                        .getValue();
+                builders.put(
+                    modifierBlock,
+                    new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
+              });
+    }
 
     // Create the ProtocolSchedule, such that the Dao/fork milestones can be inserted
     builders

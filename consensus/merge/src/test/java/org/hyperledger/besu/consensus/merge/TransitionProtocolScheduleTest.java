@@ -172,7 +172,6 @@ public class TransitionProtocolScheduleTest {
     verifyNoMergeScheduleInteractions();
   }
 
-  // TODO SLD is this correct behaviour?
   @Test
   public void getByBlockNumber_delegatesToMergeScheduleWhenBlockNotFound() {
     when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.empty());
