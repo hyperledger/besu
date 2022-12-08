@@ -355,7 +355,7 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" -PgitSha=<< pipeline.git.revision >> dockerUpload
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
   publishArm64Docker:
     executor: besu_arm64_executor_med
@@ -367,7 +367,7 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" "-PgitSha=<< pipeline.git.revision >> dockerUpload
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
   manifestDocker:
     executor: besu_executor_med
     steps:
