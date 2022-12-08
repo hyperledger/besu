@@ -50,9 +50,9 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
   }
 
   @Override
-  public synchronized void addCachedLayer(
+  protected synchronized void addCachedLayer(
       final BlockHeader blockHeader,
-      final BonsaiSnapshotWorldState cachedState,
+      final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
       final BonsaiWorldStateArchive worldStateArchive) {
 
@@ -60,10 +60,14 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
         LOG,
         "adding snapshot world state for block {}, state root hash {}",
         blockHeader::toLogString,
-        () -> cachedState.rootHash().toShortHexString());
+        worldStateRootHash::toShortHexString);
+
+    BonsaiSnapshotWorldState snapshot =
+        BonsaiSnapshotWorldState.create(worldStateArchive, worldStateStorage);
+
     cachedWorldStatesByHash.put(
         blockHeader.getHash(),
-        new CachedSnapshotWorldState(cachedState, trieLog, blockHeader.getNumber()));
+        new CachedSnapshotWorldState(snapshot, trieLog, blockHeader.getNumber()));
   }
 
   @Override
@@ -72,7 +76,7 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
   }
 
   @Override
-  public Optional<BonsaiSnapshotWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
+  public Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
     LOG.info(
         "getting cached worldstate for "
             + blockHash.toShortHexString()
@@ -80,9 +84,8 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
             + cachedWorldStatesByHash.size());
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
-          .map(z -> z.getMutableWorldState())
-          .map(MutableWorldState::copy)
-          .map(BonsaiSnapshotWorldState.class::cast);
+          .map(CachedWorldState::getMutableWorldState)
+          .map(MutableWorldState::copy);
     }
     return Optional.empty();
   }
@@ -108,11 +111,6 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
       if (!isClosed.compareAndExchange(false, true)) {
         snapshot.worldStateStorage.unSubscribe(worldStateSubscriberId);
       }
-    }
-
-    @Override
-    public void onClose() {
-      setClosed();
     }
 
     @Override

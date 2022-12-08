@@ -49,7 +49,7 @@ public class LayeredTrieLogManager extends AbstractTrieLogManager<BonsaiLayeredW
   @Override
   public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
-      final BonsaiLayeredWorldState cachedState,
+      final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
       final BonsaiWorldStateArchive worldStateArchive) {
 
@@ -59,13 +59,13 @@ public class LayeredTrieLogManager extends AbstractTrieLogManager<BonsaiLayeredW
             worldStateArchive,
             Optional.of((BonsaiPersistedWorldState) worldStateArchive.getMutable()),
             blockHeader.getNumber(),
-            cachedState.rootHash(),
+            worldStateRootHash,
             trieLog);
     debugLambda(
         LOG,
         "adding layered world state for block {}, state root hash {}",
         blockHeader::toLogString,
-        () -> cachedState.rootHash().toShortHexString());
+        worldStateRootHash::toShortHexString);
     cachedWorldStatesByHash.put(
         blockHeader.getHash(), new LayeredWorldStateCache(bonsaiLayeredWorldState));
   }
