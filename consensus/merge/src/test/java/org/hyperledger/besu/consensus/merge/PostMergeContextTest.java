@@ -202,15 +202,14 @@ public class PostMergeContextTest {
     assertThat(postMergeContext.retrieveBlockById(evictedPayloadId)).isEmpty();
   }
 
-
   @Test
-  public void syncStateNullShouldNotThrowWhenIsSyncingIsCalled(){
-    //simulate a possible syncState null when we still have got a syncState set yet.
+  public void syncStateNullShouldNotThrowWhenIsSyncingIsCalled() {
+    // simulate a possible syncState null when we still have got a syncState set yet.
     final SyncState syncState = null;
     postMergeContext.setSyncState(syncState);
     assertThat(postMergeContext.isSyncing()).isTrue();
 
-    //after setting a syncState things should progress as expected.
+    // after setting a syncState things should progress as expected.
     postMergeContext.setSyncState(mockSyncState);
 
     when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.FALSE));
