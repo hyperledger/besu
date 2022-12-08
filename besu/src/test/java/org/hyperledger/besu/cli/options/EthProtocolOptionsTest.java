@@ -153,13 +153,12 @@ public class EthProtocolOptionsTest
   }
 
   @Test
-  public void parsesValidEthCapabilities() {
-
-    final TestBesuCommand cmd = parseCommand("--Xeth-capabilities", "66,67");
+  public void parsesValidEthMinProtocol() {
+    final TestBesuCommand cmd = parseCommand("--Xeth-capability-min", "66");
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getEthSupportedCapabilities()).contains(66, 67);
+    assertThat(config.getMinEthCapability()).isEqualTo(66);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -179,7 +178,8 @@ public class EthProtocolOptionsTest
         .maxGetReceipts(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2)
         .maxGetNodeData(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2)
         .maxGetPooledTransactions(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2)
-        .ethSupportedCapabilities(EthProtocolConfiguration.DEFAULT_ETH_CAPABILITIES)
+        .maxEthCapability(EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY)
+        .minEthCapability(EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY)
         .build();
   }
 
