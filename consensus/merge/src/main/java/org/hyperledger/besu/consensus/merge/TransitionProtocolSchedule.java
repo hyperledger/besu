@@ -121,18 +121,11 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
 
-    Block block =
-        Optional.ofNullable(protocolContext)
-            .map(ProtocolContext::getBlockchain)
-            .flatMap(blockchain -> blockchain.getBlockByNumber(number))
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        String.format(
-                            "Cannot determine protocol schedule based on block number %s since block does not exist in the chain",
-                            number)));
-
-    return Optional.ofNullable(timestampSchedule.getByBlockHeader(block.getHeader()))
+    return Optional.ofNullable(protocolContext)
+        .map(ProtocolContext::getBlockchain)
+        .flatMap(blockchain -> blockchain.getBlockByNumber(number))
+        .map(Block::getHeader)
+        .map(timestampSchedule::getByBlockHeader)
         .orElseGet(
             () ->
                 transitionUtils.dispatchFunctionAccordingToMergeState(
