@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth;
 import org.hyperledger.besu.util.number.ByteUnits;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
-import java.util.ArrayList;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
