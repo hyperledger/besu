@@ -107,6 +107,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public final class RunnerTest {
 
+  public static final BigInteger NETWORK_ID = BigInteger.valueOf(2929);
   private Vertx vertx;
 
   @Before
@@ -161,56 +162,35 @@ public final class RunnerTest {
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
     final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dbAhead));
+    final NodeKey behindDbNodeKey = NodeKeyUtils.generate();
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-    final BigInteger networkId = BigInteger.valueOf(2929);
 
     // Setup state with block data
     try (final BesuController controller =
-        new MainnetBesuControllerBuilder()
-            .genesisConfigFile(genesisConfig)
-            .synchronizerConfiguration(syncConfigAhead)
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .dataDirectory(dataDirAhead)
-            .networkId(networkId)
-            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
-            .nodeKey(aheadDbNodeKey)
-            .metricsSystem(noOpMetricsSystem)
-            .privacyParameters(PrivacyParameters.DEFAULT)
-            .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-            .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
-            .gasLimitCalculator(GasLimitCalculator.constant())
-            .evmConfiguration(EvmConfiguration.DEFAULT)
-            .build()) {
+        getController(
+            genesisConfig,
+            syncConfigAhead,
+            dataDirAhead,
+            aheadDbNodeKey,
+            createKeyValueStorageProvider(dataDirAhead, dbAhead),
+            noOpMetricsSystem)) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
 
+    // TODO do we really need to set up the ahead controller twice?
+
     // Setup Runner with blocks
     final BesuController controllerAhead =
-        new MainnetBesuControllerBuilder()
-            .genesisConfigFile(genesisConfig)
-            .synchronizerConfiguration(syncConfigAhead)
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .dataDirectory(dataDirAhead)
-            .networkId(networkId)
-            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
-            .nodeKey(aheadDbNodeKey)
-            .metricsSystem(noOpMetricsSystem)
-            .privacyParameters(PrivacyParameters.DEFAULT)
-            .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-            .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
-            .gasLimitCalculator(GasLimitCalculator.constant())
-            .evmConfiguration(EvmConfiguration.DEFAULT)
-            .build();
+        getController(
+            genesisConfig,
+            syncConfigAhead,
+            dataDirAhead,
+            aheadDbNodeKey,
+            createKeyValueStorageProvider(dataDirAhead, dbAhead),
+            noOpMetricsSystem);
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
-    final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
-    final GraphQLConfiguration aheadGraphQLConfiguration = graphQLConfiguration();
-    final WebSocketConfiguration aheadWebSocketConfiguration = wsRpcConfiguration();
-    final JsonRpcIpcConfiguration aheadJsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
-    final MetricsConfiguration aheadMetricsConfiguration = metricsConfiguration();
     final Path pidPath = temp.getRoot().toPath().resolve("pid");
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
@@ -230,11 +210,11 @@ public final class RunnerTest {
         runnerBuilder
             .besuController(controllerAhead)
             .ethNetworkConfig(EthNetworkConfig.getNetworkConfig(DEV))
-            .jsonRpcConfiguration(aheadJsonRpcConfiguration)
-            .graphQLConfiguration(aheadGraphQLConfiguration)
-            .webSocketConfiguration(aheadWebSocketConfiguration)
-            .jsonRpcIpcConfiguration(aheadJsonRpcIpcConfiguration)
-            .metricsConfiguration(aheadMetricsConfiguration)
+            .jsonRpcConfiguration(jsonRpcConfiguration())
+            .graphQLConfiguration(graphQLConfiguration())
+            .webSocketConfiguration(wsRpcConfiguration())
+            .jsonRpcIpcConfiguration(new JsonRpcIpcConfiguration())
+            .metricsConfiguration(metricsConfiguration())
             .dataDir(dbAhead)
             .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
@@ -252,45 +232,34 @@ public final class RunnerTest {
               .fastSyncMinimumPeerCount(1)
               .build();
       final Path dataDirBehind = temp.newFolder().toPath();
-      final JsonRpcConfiguration behindJsonRpcConfiguration = jsonRpcConfiguration();
-      final GraphQLConfiguration behindGraphQLConfiguration = graphQLConfiguration();
-      final WebSocketConfiguration behindWebSocketConfiguration = wsRpcConfiguration();
-      final MetricsConfiguration behindMetricsConfiguration = metricsConfiguration();
 
       // Setup runner with no block data
       final BesuController controllerBehind =
-          new MainnetBesuControllerBuilder()
-              .genesisConfigFile(genesisConfig)
-              .synchronizerConfiguration(syncConfigBehind)
-              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-              .dataDirectory(dataDirBehind)
-              .networkId(networkId)
-              .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
-              .nodeKey(NodeKeyUtils.generate())
-              .storageProvider(new InMemoryKeyValueStorageProvider())
-              .metricsSystem(noOpMetricsSystem)
-              .privacyParameters(PrivacyParameters.DEFAULT)
-              .clock(TestClock.fixed())
-              .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-              .gasLimitCalculator(GasLimitCalculator.constant())
-              .evmConfiguration(EvmConfiguration.DEFAULT)
-              .build();
+          getController(
+              genesisConfig,
+              syncConfigBehind,
+              dataDirBehind,
+              behindDbNodeKey,
+              new InMemoryKeyValueStorageProvider(),
+              noOpMetricsSystem);
+
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
-          new EthNetworkConfig(
-              EthNetworkConfig.jsonConfig(DEV),
-              DEV.getNetworkId(),
-              Collections.singletonList(enode),
-              null);
+              new EthNetworkConfig(
+                      EthNetworkConfig.jsonConfig(DEV),
+                      DEV.getNetworkId(),
+                      Collections.singletonList(enode),
+                      null);
+
       runnerBehind =
           runnerBuilder
               .besuController(controllerBehind)
               .ethNetworkConfig(behindEthNetworkConfiguration)
-              .jsonRpcConfiguration(behindJsonRpcConfiguration)
-              .graphQLConfiguration(behindGraphQLConfiguration)
-              .webSocketConfiguration(behindWebSocketConfiguration)
-              .metricsConfiguration(behindMetricsConfiguration)
-              .dataDir(temp.newFolder().toPath())
+              .jsonRpcConfiguration(jsonRpcConfiguration())
+              .graphQLConfiguration(graphQLConfiguration())
+              .webSocketConfiguration(wsRpcConfiguration())
+              .metricsConfiguration(metricsConfiguration())
+              .dataDir(dataDirBehind)
               .metricsSystem(noOpMetricsSystem)
               .build();
 
@@ -301,7 +270,7 @@ public final class RunnerTest {
       final OkHttpClient client = new OkHttpClient();
       Awaitility.await()
           .ignoreExceptions()
-          .atMost(5L, TimeUnit.MINUTES)
+          .atMost(2L, TimeUnit.MINUTES)
           .untilAsserted(
               () -> {
                 final String baseUrl = String.format("http://%s:%s", listenHost, behindJsonRpcPort);
@@ -383,7 +352,7 @@ public final class RunnerTest {
       final Future<String> future = promise.future();
       Awaitility.await()
           .catchUncaughtExceptions()
-          .atMost(5L, TimeUnit.MINUTES)
+          .atMost(2L, TimeUnit.MINUTES)
           .until(future::isComplete);
     } finally {
       if (runnerBehind != null) {
@@ -468,5 +437,30 @@ public final class RunnerTest {
         throw new IllegalStateException("Unable to import block " + block.getHeader().getNumber());
       }
     }
+  }
+
+  private BesuController getController(
+      final GenesisConfigFile genesisConfig,
+      final SynchronizerConfiguration syncConfig,
+      final Path dataDir,
+      final NodeKey nodeKey,
+      final StorageProvider storageProvider,
+      final ObservableMetricsSystem metricsSystem) {
+    return new MainnetBesuControllerBuilder()
+        .genesisConfigFile(genesisConfig)
+        .synchronizerConfiguration(syncConfig)
+        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .dataDirectory(dataDir)
+        .networkId(NETWORK_ID)
+        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
+        .nodeKey(nodeKey)
+        .storageProvider(storageProvider)
+        .metricsSystem(metricsSystem)
+        .privacyParameters(PrivacyParameters.DEFAULT)
+        .clock(TestClock.fixed())
+        .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+        .gasLimitCalculator(GasLimitCalculator.constant())
+        .evmConfiguration(EvmConfiguration.DEFAULT)
+        .build();
   }
 }
