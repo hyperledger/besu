@@ -38,13 +38,17 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return EMPTY;
   }
 
-  /** @return The list of transactions of the block. */
+  /**
+   * @return The list of transactions of the block.
+   */
   @Override
   public List<Transaction> getTransactions() {
     return transactions;
   }
 
-  /** @return The list of ommers of the block. */
+  /**
+   * @return The list of ommers of the block.
+   */
   @Override
   public List<BlockHeader> getOmmers() {
     return ommers;
