@@ -145,7 +145,9 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
       this.refRlp = refRlp;
     }
 
-    /** @return True if the node needs to be persisted. */
+    /**
+     * @return True if the node needs to be persisted.
+     */
     @Override
     public boolean isDirty() {
       return false;

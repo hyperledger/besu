@@ -20,7 +20,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.spotless' version '6.10.0'
+  id 'com.diffplug.spotless' version '6.12.0'
   id 'com.github.ben-manes.versions' version '0.42.0'
   id 'com.github.hierynomus.license' version '0.16.1-fix'
   id 'com.jfrog.artifactory' version '4.28.3'
@@ -83,7 +83,7 @@ allprojects {
   version = rootProject.version
 
   jacoco {
-    toolVersion = '0.8.7'
+    toolVersion = '0.8.8'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -131,7 +131,7 @@ allprojects {
       target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
-      googleJavaFormat('1.10.0')
+      googleJavaFormat('1.15.0')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
