@@ -56,7 +56,6 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
-  implementation 'org.awaitility:awaitility'
 
   implementation 'io.prometheus:simpleclient_guava'
 
@@ -82,6 +81,7 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.awaitility:awaitility'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 

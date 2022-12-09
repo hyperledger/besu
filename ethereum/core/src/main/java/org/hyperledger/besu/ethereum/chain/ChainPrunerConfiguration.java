@@ -18,28 +18,26 @@ package org.hyperledger.besu.ethereum.chain;
 public class ChainPrunerConfiguration {
   public static final ChainPrunerConfiguration DEFAULT =
       new ChainPrunerConfiguration(false, 7200, 256);
-  private final boolean chainPruningEnabled;
-  private final long chainPruningBlocksRetained;
-  private final long chainPruningBlocksFrequency;
+  private final boolean enabled;
+  private final long blocksRetained;
+  private final long blocksFrequency;
 
   public ChainPrunerConfiguration(
-      final boolean chainPruningEnabled,
-      final long chainPruningBlocksRetained,
-      final long chainPruningBlocksFrequency) {
-    this.chainPruningEnabled = chainPruningEnabled;
-    this.chainPruningBlocksRetained = chainPruningBlocksRetained;
-    this.chainPruningBlocksFrequency = chainPruningBlocksFrequency;
+      final boolean enabled, final long blocksRetained, final long blocksFrequency) {
+    this.enabled = enabled;
+    this.blocksRetained = blocksRetained;
+    this.blocksFrequency = blocksFrequency;
   }
 
   public long getChainPruningBlocksRetained() {
-    return chainPruningBlocksRetained;
+    return blocksRetained;
   }
 
   public boolean getChainPruningEnabled() {
-    return chainPruningEnabled;
+    return enabled;
   }
 
   public long getChainPruningBlocksFrequency() {
-    return chainPruningBlocksFrequency;
+    return blocksFrequency;
   }
 }

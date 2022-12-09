@@ -73,8 +73,8 @@ public class ChainDataPruner implements BlockAddedObserver {
           final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
           long currentPruningMark = storedPruningMark;
           final long newPruningMark = blockNumber - blocksToRetain;
-          if (event.isNewCanonicalHead()
-              && newPruningMark - currentPruningMark >= pruningFrequency) {
+          final long blocksToBePruned = newPruningMark - currentPruningMark;
+          if (event.isNewCanonicalHead() && blocksToBePruned >= pruningFrequency) {
             long currentRetainedBlock = blockNumber - currentPruningMark + 1;
             while (currentRetainedBlock > blocksToRetain) {
               LOG.debug("Pruning chain data with block height of " + currentPruningMark);
@@ -91,7 +91,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   private void pruneChainDataAtBlock(final KeyValueStorageTransaction tx, final long blockNumber) {
     final Collection<Hash> oldForkBlocks = prunerStorage.getForkBlocks(blockNumber);
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
-    for (Hash toPrune : oldForkBlocks) {
+    for (final Hash toPrune : oldForkBlocks) {
       updater.removeBlockHeader(toPrune);
       updater.removeBlockBody(toPrune);
       updater.removeTransactionReceipts(toPrune);

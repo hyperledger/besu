@@ -24,7 +24,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
-public class ChainDataPruningOptions implements CLIOptions<ChainPrunerConfiguration> {
+public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration> {
   private static final String CHAIN_PRUNING_ENABLED_FLAG = "--Xchain-pruning-enabled";
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_FLAG =
       "--Xchain-pruning-blocks-retained";
@@ -57,8 +57,8 @@ public class ChainDataPruningOptions implements CLIOptions<ChainPrunerConfigurat
   private final PositiveNumber chainDataPruningBlocksFrequency =
       PositiveNumber.fromInt(DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY);
 
-  public static ChainDataPruningOptions create() {
-    return new ChainDataPruningOptions();
+  public static ChainPruningOptions create() {
+    return new ChainPruningOptions();
   }
 
   public Boolean getChainDataPruningEnabled() {

@@ -327,21 +327,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     validateContext(protocolContext);
 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
-      protocolContext.getConsensusContext(MergeContext.class).setIsChainPruningEnabled(true);
-      final ChainDataPruner chainDataPruner =
-          new ChainDataPruner(
-              blockchainStorage,
-              new ChainDataPrunerStorage(
-                  storageProvider.getStorageBySegmentIdentifier(
-                      KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
-              chainPrunerConfiguration.getChainPruningBlocksRetained(),
-              chainPrunerConfiguration.getChainPruningBlocksFrequency(),
-              MonitoredExecutors.newBoundedThreadPool(
-                  ChainDataPruner.class.getSimpleName(),
-                  1,
-                  1,
-                  ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
-                  metricsSystem));
+      protocolContext
+          .safeConsensusContext(MergeContext.class)
+          .ifPresent(
+              mergeContext -> {
+                mergeContext.setIsChainPruningEnabled(true);
+              });
+      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
           "Chain data pruning enabled with recent blocks retained to be: "
@@ -684,6 +676,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             storageProvider.createWorldStatePreimageStorage();
         return new DefaultWorldStateArchive(worldStateStorage, preimageStorage);
     }
+  }
+
+  private ChainDataPruner createChainPruner(final BlockchainStorage blockchainStorage) {
+    return new ChainDataPruner(
+        blockchainStorage,
+        new ChainDataPrunerStorage(
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
+        chainPrunerConfiguration.getChainPruningBlocksRetained(),
+        chainPrunerConfiguration.getChainPruningBlocksFrequency(),
+        MonitoredExecutors.newBoundedThreadPool(
+            ChainDataPruner.class.getSimpleName(),
+            1,
+            1,
+            ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
+            metricsSystem));
   }
 
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
