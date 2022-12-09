@@ -52,7 +52,6 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -284,7 +283,7 @@ public final class RunnerTest {
                   final int peerCount = getNumber(peerCountResp);
                   peerCountResp.close();
 
-                  // if the test fails here, it means the node is not peering ->
+                  // if the test fails here, it means the node is not peering. check your config.
                   // Expecting value to be true but was false
                   assertThat(peerCount > 0).isTrue();
 
@@ -358,12 +357,8 @@ public final class RunnerTest {
     return new Request.Builder()
         .post(
             RequestBody.create(
-                MediaType.parse("application/json; charset=utf-8"),
-                "{\"jsonrpc\":\"2.0\",\"id\":"
-                    + Json.encode(7)
-                    + ",\"method\":\""
-                    + method
-                    + "\"}"))
+                "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(7) + ",\"method\":\"" + method + "\"}",
+                MediaType.parse("application/json; charset=utf-8")))
         .url(baseUrl)
         .build();
   }
