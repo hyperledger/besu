@@ -104,8 +104,9 @@ public class BackwardSyncStep {
       saveHeader(blockHeader);
     }
 
-    logProgress(blockHeaders.get(blockHeaders.size() - 1).getNumber());
-
+    if (!blockHeaders.isEmpty()) {
+      logProgress(blockHeaders.get(blockHeaders.size() - 1).getNumber());
+    }
     return null;
   }
 

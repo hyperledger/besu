@@ -318,6 +318,8 @@ public class RocksDBColumnarKeyValueStorage
           } else {
             return res;
           }
+        } else {
+          return res;
         }
       }
       return res;

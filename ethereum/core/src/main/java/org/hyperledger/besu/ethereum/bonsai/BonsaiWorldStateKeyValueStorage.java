@@ -309,21 +309,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return bytes2;*/
   }
 
-  public static void main(final String[] args) {
-    System.out.println(
-        TrieNodeDecoder.decode(
-                Bytes.EMPTY,
-                Bytes.fromHexString(
-                    "0xe19f20a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee30c"))
-            .getPath());
-    System.out.println(
-        TrieNodeDecoder.decode(
-                Bytes.EMPTY,
-                Bytes.fromHexString(
-                    "0xe19f37a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee30b"))
-            .getPath());
-  }
-
   @Override
   public Optional<Bytes> getNodeData(final Bytes location, final Bytes32 hash) {
     return Optional.empty();

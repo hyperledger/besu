@@ -297,28 +297,33 @@ public class BackwardSyncContext {
 
   protected Void saveBlock(final Block block) {
     traceLambda(LOG, "Going to validate block {}", block::toLogString);
-    var optResult =
-        this.getBlockValidatorForBlock(block)
-            .validateAndProcessBlock(
-                this.getProtocolContext(),
-                block,
-                HeaderValidationMode.FULL,
-                HeaderValidationMode.NONE);
-    if (optResult.isSuccessful()) {
-      traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
-      optResult.getYield().get().getWorldState().persist(block.getHeader());
-      this.getProtocolContext()
-          .getBlockchain()
-          .appendBlock(block, optResult.getYield().get().getReceipts());
-      possiblyMoveHead(block);
-      logBlockImportProgress(block.getHeader().getNumber());
-    } else {
-      emitBadChainEvent(block);
-      throw new BackwardSyncException(
-          "Cannot save block "
-              + block.toLogString()
-              + " because of "
-              + optResult.errorMessage.orElseThrow());
+    try {
+      System.out.println("validateAndProcessBlock");
+      var optResult =
+          this.getBlockValidatorForBlock(block)
+              .validateAndProcessBlock(
+                  this.getProtocolContext(),
+                  block,
+                  HeaderValidationMode.FULL,
+                  HeaderValidationMode.NONE);
+      if (optResult.isSuccessful()) {
+        traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
+        optResult.getYield().get().getWorldState().persist(block.getHeader());
+        this.getProtocolContext()
+            .getBlockchain()
+            .appendBlock(block, optResult.getYield().get().getReceipts());
+        possiblyMoveHead(block);
+        logBlockImportProgress(block.getHeader().getNumber());
+      } else {
+        emitBadChainEvent(block);
+        throw new BackwardSyncException(
+            "Cannot save block "
+                + block.toLogString()
+                + " because of "
+                + optResult.errorMessage.orElseThrow());
+      }
+    } catch (RuntimeException e) {
+      System.out.println(e.getMessage());
     }
 
     return null;

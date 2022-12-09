@@ -224,6 +224,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
           } else {
             return res;
           }
+        } else {
+          return res;
         }
       }
       return res;

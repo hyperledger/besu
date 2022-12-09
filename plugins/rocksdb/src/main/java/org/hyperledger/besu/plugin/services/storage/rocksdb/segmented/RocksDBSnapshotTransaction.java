@@ -187,6 +187,8 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
           } else {
             return res;
           }
+        } else {
+          return res;
         }
       }
       return res;
