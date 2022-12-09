@@ -607,7 +607,9 @@ artifactoryPublish {
 }
 
 def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-def dockerImageName = project.hasProperty("dockerImageName") ? project.getProperty("dockerImageName") : "hyperledger/besu"
+def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
+def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
+def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
   "openjdk-17",
   "openjdk-17-debug",
@@ -640,18 +642,25 @@ task distDocker {
   def dockerBuildDir = "build/docker-besu/"
 
   doLast {
-    for (def variant in dockerVariants) {
+    for (def jvmVariant in dockerVariants) {
       copy {
-        from file("${projectDir}/docker/${variant}/Dockerfile")
+        from file("${projectDir}/docker/${jvmVariant}/Dockerfile")
         into(dockerBuildDir)
       }
       exec {
-        def image = "${dockerImageName}:${dockerBuildVersion}-${variant}"
+        def image = "${dockerImageName}:${dockerBuildVersion}-${jvmVariant}"
         executable "sh"
         workingDir dockerBuildDir
         args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
       }
     }
+
+    def shaTag = "gitSha-${getCheckedOutGitCommitHash(40)}" //full length sha
+    exec {
+      executable "sh"
+      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${shaTag}'"
+    }
+
     // tag the "default" (which is the variant in the zero position)
     exec {
       executable "sh"
@@ -731,10 +740,9 @@ task dockerUpload {
   }
 
   def isInterimBuild = (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
-  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
 
   if (!isInterimBuild) {
-    additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -761,6 +769,7 @@ task dockerUpload {
 }
 
 task manifestDocker {
+  dependsOn distDocker
 
   def image = "${dockerImageName}:${dockerBuildVersion}"
   def archs = ["arm64", "amd64"]
@@ -771,7 +780,6 @@ task manifestDocker {
   }
 
   if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
-    tags.add("${dockerImageName}:latest")
     tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -866,15 +874,16 @@ def calculateVersion() {
   return version
 }
 
-def getCheckedOutGitCommitHash() {
+
+def getCheckedOutGitCommitHash(length = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
     if (!file(gitFolder).isDirectory()) {
       // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
       // Read the file, cut off the front, and trim the whitespace.
-      gitFolder = file(gitFolder).text.substring(8).trim() + "/"
+      gitFolder = file(gitFolder).text.substring(length).trim() + "/"
     }
-    def takeFromHash = 8
+    def takeFromHash = length
     /*
      * '.git/HEAD' contains either
      *      in case of detached head: the currently checked out commit hash
