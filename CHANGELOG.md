@@ -8,6 +8,8 @@
 ### Additions and Improvements
 - Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
 - Increase the speed of modexp gas execution and execution. [#4780](https://github.com/hyperledger/besu/pull/4780)
+- Added experimental CLI options `--Xeth-capability-max` and `--Xeth-capability-min` to specify a range of capabilities to be supported by the Eth protocol. [#4752](https://github.com/hyperledger/besu/pull/4752)
+- Set the default curve in the EVMTool, like is done in production operations [#4790](https://github.com/hyperledger/besu/pull/4790)
 - Add chain data pruning feature with three experimental CLI options: `--Xchain-data-pruning-enabled`, `--Xchain-data-pruning-blocks-retained` and `--Xchain-data-pruning-frequency` [#4686](https://github.com/hyperledger/besu/pull/4686)
 
 ### Bug Fixes
