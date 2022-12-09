@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -70,6 +71,7 @@ import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -266,35 +268,47 @@ public final class RunnerTest {
                 final String baseUrl = String.format("http://%s:%s", listenHost, behindJsonRpcPort);
                 try (final Response blockNumberResp =
                     client.newCall(getRequest("eth_blockNumber", baseUrl)).execute()) {
-
                   assertThat(blockNumberResp.code()).isEqualTo(200);
+                  final int currentBlock = getNumber(blockNumberResp);
+                  blockNumberResp.close();
+
                   final Response syncingResp =
                       client.newCall(getRequest("eth_syncing", baseUrl)).execute();
                   assertThat(syncingResp.code()).isEqualTo(200);
+                  final JsonObject syncingRespJson = new JsonObject(syncingResp.body().string());
+                  syncingResp.close();
 
-                  final int currentBlock =
-                      UInt256.fromHexString(
-                              new JsonObject(blockNumberResp.body().string()).getString("result"))
-                          .intValue();
-                  final JsonObject responseJson = new JsonObject(syncingResp.body().string());
+                  final Response peerCountResp =
+                      client.newCall(getRequest("net_peerCount", baseUrl)).execute();
+                  assertThat(peerCountResp.code()).isEqualTo(200);
+                  final int peerCount = getNumber(peerCountResp);
+                  peerCountResp.close();
+
+                  // if the test fails here, it means the node is not peering ->
+                  // Expecting value to be true but was false
+                  assertThat(peerCount > 0).isTrue();
 
                   // if not yet at blockCount, we should get a sync result from eth_syncing
                   if (currentBlock < blockCount) {
-                    // if the test fails here, it means that the node is not syncing
-                    assertThat(responseJson.getValue("result")).isInstanceOf(JsonObject.class);
+                    // if the test fails here, it means that the node is not syncing ->
+                    //                    Expecting actual:
+                    //                    false
+                    //                    to be an instance of:
+                    //                    io.vertx.core.json.JsonObject
+                    //                    but was instance of:
+                    //                    java.lang.Boolean
+                    assertThat(syncingRespJson.getValue("result")).isInstanceOf(JsonObject.class);
                     final int syncResultCurrentBlock =
                         UInt256.fromHexString(
-                                responseJson.getJsonObject("result").getString("currentBlock"))
+                                syncingRespJson.getJsonObject("result").getString("currentBlock"))
                             .intValue();
                     assertThat(syncResultCurrentBlock).isLessThan(blockCount);
                   }
                   assertThat(currentBlock).isEqualTo(blockCount);
-                  blockNumberResp.close();
 
                   // when we have synced to blockCount, eth_syncing should return false
-                  final boolean syncResult = responseJson.getBoolean("result");
+                  final boolean syncResult = syncingRespJson.getBoolean("result");
                   assertThat(syncResult).isFalse();
-                  syncingResp.close();
                 }
               });
       final Promise<String> promise = Promise.promise();
@@ -330,6 +344,13 @@ public final class RunnerTest {
         runnerBehind.awaitStop();
       }
     }
+  }
+
+  private int getNumber(final Response response) throws IOException {
+    final int currentBlock =
+        UInt256.fromHexString(new JsonObject(response.body().string()).getString("result"))
+            .intValue();
+    return currentBlock;
   }
 
   @NotNull
