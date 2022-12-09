@@ -301,7 +301,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             () ->
                 archive
                     .getTrieLogManager()
-                    .saveTrieLog(archive, localUpdater, worldStateRootHash, blockHeader);
+                    .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
 
         stateUpdater
             .getTrieBranchStorageTransaction()
