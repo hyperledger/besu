@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -27,7 +28,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
  * non-persisting mutable world state rather than writing worldstate changes directly.
  */
 public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
-    implements SnapshotMutableWorldState {
+    implements SnapshotMutableWorldState, BonsaiStorageSubscriber {
 
   private final SnappedKeyValueStorage accountSnap;
   private final SnappedKeyValueStorage codeSnap;

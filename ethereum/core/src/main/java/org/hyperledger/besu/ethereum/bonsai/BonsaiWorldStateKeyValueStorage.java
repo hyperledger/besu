@@ -271,7 +271,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
   }
 
-  public synchronized long subscribe(BonsaiStorageSubscriber sub) {
+  public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
     return subscribers.subscribe(sub);
   }
 

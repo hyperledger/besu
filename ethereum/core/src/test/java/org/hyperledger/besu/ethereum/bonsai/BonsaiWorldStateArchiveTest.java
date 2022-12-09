@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.AbstractTrieLogManager.CachedWorldState;
 import org.hyperledger.besu.ethereum.bonsai.LayeredTrieLogManager.LayeredWorldStateCache;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -208,7 +209,8 @@ public class BonsaiWorldStateArchiveTest {
     final BlockHeader blockHeaderChainB =
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
-    final Map<Bytes32, LayeredWorldStateCache> layeredWorldStatesByHash = mock(HashMap.class);
+    final Map<Bytes32, CachedWorldState<BonsaiLayeredWorldState>> layeredWorldStatesByHash =
+        mock(HashMap.class);
     when(layeredWorldStatesByHash.containsKey(any(Bytes32.class))).thenReturn(true);
     when(layeredWorldStatesByHash.get(eq(blockHeaderChainA.getHash())))
         .thenReturn(
@@ -262,7 +264,8 @@ public class BonsaiWorldStateArchiveTest {
     final BlockHeader blockHeaderChainB =
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
-    final Map<Bytes32, LayeredWorldStateCache> layeredWorldStatesByHash = mock(HashMap.class);
+    final Map<Bytes32, CachedWorldState<BonsaiLayeredWorldState>> layeredWorldStatesByHash =
+        mock(HashMap.class);
     when(layeredWorldStatesByHash.containsKey(any(Bytes32.class))).thenReturn(true);
     when(layeredWorldStatesByHash.get(eq(blockHeaderChainA.getHash())))
         .thenReturn(

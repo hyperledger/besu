@@ -167,6 +167,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
             SnapDataRequest.createAccountTrieNodeDataRequest(
                 stateRoot, Bytes.EMPTY, snapContext.getInconsistentAccounts()));
       } else { // start from scratch
+        LOG.info("CLEARING WORLDSTATE STORAGE!");
         worldStateStorage.clear();
         ranges.forEach(
             (key, value) ->

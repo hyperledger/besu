@@ -18,27 +18,29 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapshotWorldState> {
+public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapshotWorldState>
+    implements BonsaiStorageSubscriber {
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotTrieLogManager.class);
 
   public SnapshotTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad) {
-    this(blockchain, worldStateStorage, maxLayersToLoad, new HashMap<>());
+    this(blockchain, worldStateStorage, maxLayersToLoad, new ConcurrentHashMap<>());
   }
 
   SnapshotTrieLogManager(
@@ -47,6 +49,7 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
       final long maxLayersToLoad,
       final Map<Bytes32, CachedWorldState<BonsaiSnapshotWorldState>> cachedWorldStatesByHash) {
     super(blockchain, worldStateStorage, maxLayersToLoad, cachedWorldStatesByHash);
+    worldStateStorage.subscribe(this);
   }
 
   @Override
@@ -71,23 +74,34 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
   }
 
   @Override
-  public void updateCachedLayers(Hash blockParentHash, Hash blockHash) {
+  public void updateCachedLayers(final Hash blockParentHash, final Hash blockHash) {
     // no-op.
   }
 
   @Override
-  public Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
-    LOG.info(
-        "getting cached worldstate for "
-            + blockHash.toShortHexString()
-            + " current states: "
-            + cachedWorldStatesByHash.size());
+  public synchronized Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
           .map(CachedWorldState::getMutableWorldState)
           .map(MutableWorldState::copy);
     }
     return Optional.empty();
+  }
+
+  @Override
+  public synchronized void onClear() {
+    dropArchive();
+  }
+
+  @Override
+  public synchronized void onClearFlatDatabase() {
+    dropArchive();;
+  }
+
+  private void dropArchive() {
+    // drop all cached snapshot worldstates, they are unsafe when the db has been truncated
+    LOG.info("Key-value storage truncated, dropping cached worldstates");
+    cachedWorldStatesByHash.keySet().forEach(cachedWorldStatesByHash::remove);
   }
 
   public static class CachedSnapshotWorldState
@@ -114,12 +128,17 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
     }
 
     @Override
-    public void onClear() {
+    public synchronized void onClose() {
       setClosed();
     }
 
     @Override
-    public void onClearFlatDatabase() {
+    public synchronized void onClear() {
+      setClosed();
+    }
+
+    @Override
+    public synchronized void onClearFlatDatabase() {
       setClosed();
     }
 
@@ -134,7 +153,7 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
     }
 
     @Override
-    public BonsaiSnapshotWorldState getMutableWorldState() {
+    public synchronized BonsaiSnapshotWorldState getMutableWorldState() {
       if (isClosed.get()) {
         return null;
       }

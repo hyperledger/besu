@@ -85,7 +85,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public synchronized long subscribe(BonsaiStorageSubscriber sub) {
+  public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
     if (isClosed.get()) {
       throw new RuntimeException("BonsaiSnapshotWorldStateKeyValueStorage already closed");
     }
