@@ -32,13 +32,18 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   @Override
   public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
     final Bytes extensionPath = extensionNode.getPath();
+
+    System.out.println("remove 5" + extensionNode.getLocation() + " " + path);
     final int commonPathLength = extensionPath.commonPrefixLength(path);
     assert commonPathLength < path.size()
         : "Visiting path doesn't end with a non-matching terminator";
 
     if (commonPathLength == extensionPath.size()) {
       final Node<V> newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
-      return extensionNode.replaceChild(newChild);
+      final Node<V> updatedNode = extensionNode.replaceChild(newChild);
+      if (!(updatedNode instanceof ExtensionNode)) {
+        remove(extensionNode.getChild());
+      }
     }
 
     // path diverges before the end of the extension, so it cannot match
@@ -50,13 +55,37 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
 
+    System.out.println(
+        "remove 4" + branchNode.getLocation() + " " + path + " " + branchNode.getRlp());
     final byte childIndex = path.get(0);
     if (childIndex == CompactEncoding.LEAF_TERMINATOR) {
-      return branchNode.removeValue();
+      final Node<V> updatedNode = branchNode.removeValue();
+      if (!(updatedNode instanceof BranchNode)) {
+        branchNode
+            .getChildren()
+            .forEach(
+                child -> {
+                  if (!(child instanceof NullNode)) {
+                    remove(child);
+                  }
+                });
+      }
+      return updatedNode;
     }
 
     final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
-    return branchNode.replaceChild(childIndex, updatedChild, allowFlatten);
+    final Node<V> updatedNode = branchNode.replaceChild(childIndex, updatedChild, allowFlatten);
+    if (!(updatedNode instanceof BranchNode)) {
+      branchNode
+          .getChildren()
+          .forEach(
+              child -> {
+                if (!(child instanceof NullNode)) {
+                  remove(child);
+                }
+              });
+    }
+    return updatedNode;
   }
 
   @Override
@@ -64,7 +93,7 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
     final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
     if (commonPathLength == leafPath.size()) {
-      remove(leafNode, path);
+      remove(leafNode);
       return NULL_NODE_RESULT;
     }
     return leafNode;
@@ -72,11 +101,10 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
 
   @Override
   public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
-    remove(nullNode, path);
     return NULL_NODE_RESULT;
   }
 
-  public void remove(final Node<V> node, final Bytes path) {
+  public void remove(final Node<V> node) {
     // nothing to do
   }
 }

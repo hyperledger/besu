@@ -18,7 +18,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -78,9 +77,9 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    */
   boolean tryDelete(S segmentHandle, byte[] key) throws StorageException;
 
-  Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final S segmentHandle, final Bytes prefix);
+  TreeMap<Bytes, Bytes> getByPrefix(final S segmentHandle, final Bytes prefix);
 
-  List<Bytes> getByPrefix(final S segmentHandle, final Bytes prefix);
+  Optional<Pair<Bytes, Bytes>> getNearestKey(final S segmentHandle, final Bytes key);
 
   TreeMap<Bytes, Bytes> getInRange(
       final S segmentHandle, final Bytes startKeyHash, final Bytes endKeyHash);

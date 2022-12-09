@@ -257,22 +257,23 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(
+  public TreeMap<Bytes, Bytes> getByPrefix(
       final RocksDbSegmentIdentifier segmentHandle, final Bytes prefix) {
     final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
-    // System.out.println("seek for p rev "+prefix);
-    rocksIterator.seekForPrev(prefix.toArrayUnsafe());
+    rocksIterator.seek(prefix.toArrayUnsafe());
     final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
     try {
-      if (rocksDbKeyIterator.hasNext()) {
+      final TreeMap<Bytes, Bytes> res = new TreeMap<>();
+      while (rocksDbKeyIterator.hasNext()) {
         final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
-        final Bytes key = Bytes.wrap(next.getKey());
-        // System.out.println("-> "+prefix+" "+key);
-        if (key.commonPrefixLength(prefix) == key.size()) {
-          return Optional.of(next);
+        final Bytes foundKey = Bytes.wrap(next.getKey());
+        if (foundKey.commonPrefixLength(prefix) == prefix.size()) {
+          res.put(foundKey, Bytes.of(next.getValue()));
+        } else {
+          return res;
         }
       }
-      return Optional.empty();
+      return res;
     } finally {
       rocksDbKeyIterator.close();
       rocksIterator.close();
@@ -280,21 +281,18 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public List<Bytes> getByPrefix(final RocksDbSegmentIdentifier segmentHandle, final Bytes prefix) {
+  public Optional<Pair<Bytes, Bytes>> getNearestKey(
+      final RocksDbSegmentIdentifier segmentHandle, final Bytes key) {
     final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
-    rocksIterator.seek(prefix.toArrayUnsafe());
+    // System.out.println("seek for p rev "+prefix);
+    rocksIterator.seekForPrev(key.toArrayUnsafe());
     final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
     try {
-      final List<Bytes> res = new ArrayList<>();
-      while (rocksDbKeyIterator.hasNext()) {
-        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
-        if (key.commonPrefixLength(prefix) == prefix.size()) {
-          res.add(key);
-        } else {
-          return res;
-        }
+      if (rocksDbKeyIterator.hasNext()) {
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        return Optional.of(Pair.of(Bytes.wrap(next.getKey()), Bytes.wrap(next.getValue())));
       }
-      return res;
+      return Optional.empty();
     } finally {
       rocksDbKeyIterator.close();
       rocksIterator.close();

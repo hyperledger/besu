@@ -150,6 +150,8 @@ public class LeafNode<V> implements Node<V> {
     return "Leaf:"
         + "\n\tRef: "
         + getRlpRef()
+        + "\n\tLocation: "
+        + getLocation()
         + "\n\tPath: "
         + CompactEncoding.encode(path)
         + "\n\tValue: "

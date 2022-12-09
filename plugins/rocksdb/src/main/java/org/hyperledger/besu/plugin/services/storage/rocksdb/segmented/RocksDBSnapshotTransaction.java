@@ -21,8 +21,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -135,16 +133,34 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     }
   }
 
-  public List<Bytes> getByPrefix(final Bytes prefix) {
+  public Optional<Pair<Bytes, Bytes>> getNearestKey(final Bytes key) {
+    final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
+    // System.out.println("seek for p rev "+prefix);
+    rocksIterator.seekForPrev(key.toArrayUnsafe());
+    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
+    try {
+      if (rocksDbKeyIterator.hasNext()) {
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        return Optional.of(Pair.of(Bytes.wrap(next.getKey()), Bytes.wrap(next.getValue())));
+      }
+      return Optional.empty();
+    } finally {
+      rocksDbKeyIterator.close();
+      rocksIterator.close();
+    }
+  }
+
+  public TreeMap<Bytes, Bytes> getByPrefix(final Bytes prefix) {
     final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
     rocksIterator.seek(prefix.toArrayUnsafe());
     final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
     try {
-      final List<Bytes> res = new ArrayList<>();
+      final TreeMap<Bytes, Bytes> res = new TreeMap<>();
       while (rocksDbKeyIterator.hasNext()) {
-        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        final Bytes key = Bytes.wrap(next.getKey());
         if (key.commonPrefixLength(prefix) == prefix.size()) {
-          res.add(key);
+          res.put(key, Bytes.of(next.getValue()));
         } else {
           return res;
         }

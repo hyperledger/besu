@@ -21,7 +21,6 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -93,13 +92,13 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   }
 
   @Override
-  public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
-    return storage.getMoreClosedByPrefix(segmentHandle, prefix);
+  public TreeMap<Bytes, Bytes> getByPrefix(final Bytes prefix) {
+    return storage.getByPrefix(segmentHandle, prefix);
   }
 
   @Override
-  public List<Bytes> getByPrefix(final Bytes prefix) {
-    return storage.getByPrefix(segmentHandle, prefix);
+  public Optional<Pair<Bytes, Bytes>> getNearestKey(final Bytes key) {
+    return storage.getNearestKey(segmentHandle, key);
   }
 
   @Override

@@ -179,8 +179,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             CompactEncoding.bytesToPath(addressHash),
             new RemoveVisitor<>() {
               @Override
-              public void remove(final Node<Bytes> node, final Bytes path) {
-                stateUpdater.removeAccountStateTrieNode(node.getLocation().get(), node.getHash());
+              public void remove(final Node<Bytes> node) {
+                stateUpdater.removeAccountStateTrieNode(
+                    node.getLocation().orElse(Bytes.EMPTY), node.getHash());
               }
             });
       } else {
@@ -242,9 +243,17 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                 CompactEncoding.bytesToPath(keyHash),
                 new RemoveVisitor<>() {
                   @Override
-                  public void remove(final Node<Bytes> node, final Bytes path) {
+                  public void remove(final Node<Bytes> node) {
+                    System.out.println(
+                        "remove "
+                            + updatedAddressHash
+                            + " "
+                            + node.print()
+                            + " "
+                            + node.getLocation());
                     stateUpdater.removeAccountStateTrieNode(
-                        Bytes.concatenate(updatedAddressHash, node.getLocation().get()),
+                        Bytes.concatenate(
+                            updatedAddressHash, node.getLocation().orElse(Bytes.EMPTY)),
                         node.getHash());
                   }
                 });
@@ -266,6 +275,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       // for manicured tries and composting, trim and compost here
     }
   }
+
+  public static void main(final String[] args) {}
 
   private void clearStorage(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
@@ -302,7 +313,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                         CompactEncoding.bytesToPath(keyHash),
                         new RemoveVisitor<>() {
                           @Override
-                          public void remove(final Node<Bytes> node, final Bytes path) {
+                          public void remove(final Node<Bytes> node) {
                             stateUpdater.removeAccountStateTrieNode(
                                 Bytes.concatenate(addressHash, node.getLocation().get()),
                                 node.getHash());

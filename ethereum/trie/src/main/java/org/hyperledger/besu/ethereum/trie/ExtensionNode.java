@@ -164,6 +164,8 @@ public class ExtensionNode<V> implements Node<V> {
         .append("Extension:")
         .append("\n\tRef: ")
         .append(getRlpRef())
+        .append("\n\tLocation: ")
+        .append(getLocation())
         .append("\n\tPath: ")
         .append(CompactEncoding.encode(path))
         .append("\n\t")

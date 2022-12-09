@@ -24,23 +24,18 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
-import kotlin.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
@@ -106,21 +101,17 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    final Bytes completePath = CompactEncoding.bytesToPath(accountHash);
-    Optional<org.apache.commons.lang3.tuple.Pair<byte[], byte[]>> moreClosedByPrefix =
-        trieBranchStorage.getMoreClosedByPrefix(completePath);
-    Optional<Bytes> byte1 =
-        moreClosedByPrefix
-            .map(
-                pair ->
-                    TrieNodeDecoder.decode(Bytes.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
-            .filter(
-                leaf ->
-                    leaf instanceof LeafNode
-                        && Bytes.concatenate(leaf.getLocation().get(), leaf.getPath())
-                            .equals(completePath))
-            .flatMap(Node::getValue);
-    Optional<Bytes> byte2 = Optional.empty();
+    final Bytes accountPath = CompactEncoding.bytesToPath(accountHash);
+    Optional<Pair<Bytes, Bytes>> nearestKey = trieBranchStorage.getNearestKey(accountPath);
+    return nearestKey
+        .map(pair -> TrieNodeDecoder.decode(pair.getKey(), pair.getValue()))
+        .filter(
+            leaf ->
+                leaf instanceof LeafNode
+                    && Bytes.concatenate(leaf.getLocation().orElse(Bytes.EMPTY), leaf.getPath())
+                        .equals(accountPath))
+        .flatMap(Node::getValue);
+    /*Optional<Bytes> byte2 = Optional.empty();
     final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
     ArrayList<String> dd = new ArrayList<>();
     if (worldStateRootHash.isPresent()) {
@@ -146,7 +137,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                   Bytes32.wrap(worldStateRootHash.get()))
               .get(accountHash);
 
-      /*if (!byte2.equals(byte1)) {
+      if (!byte2.equals(byte1)) {
         System.out.println(
             "account "
                 + accountHash
@@ -156,11 +147,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                 + " "
                 + byte2
                 + " "
-                + moreClosedByPrefix.map(org.apache.commons.lang3.tuple.Pair::getKey));
+                + nearestKey.map(org.apache.commons.lang3.tuple.Pair::getKey));
         dd.forEach(System.out::println);
-      }*/
+      }
     }
-    return byte2;
+    return byte2;*/
   }
 
   @Override
@@ -228,24 +219,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    final Bytes completePath = CompactEncoding.bytesToPath(slotHash);
-    Optional<org.apache.commons.lang3.tuple.Pair<byte[], byte[]>> moreClosedByPrefix =
-        trieBranchStorage.getMoreClosedByPrefix(Bytes.concatenate(accountHash, completePath));
+    final Bytes slotPath = Bytes.concatenate(accountHash, CompactEncoding.bytesToPath(slotHash));
+    Optional<Pair<Bytes, Bytes>> moreClosedByPrefix = trieBranchStorage.getNearestKey(slotPath);
 
-    Optional<Bytes> bytes1 =
-        moreClosedByPrefix
-            .map(
-                pair ->
-                    TrieNodeDecoder.decode(Bytes.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
-            .filter(
-                leaf ->
-                    leaf instanceof LeafNode
-                        && Bytes.concatenate(leaf.getLocation().get(), leaf.getPath())
-                            .equals(completePath))
-            .flatMap(Node::getValue)
-            .map(value -> Bytes32.leftPad(RLP.decodeValue(value)));
+    return moreClosedByPrefix
+        .map(pair -> TrieNodeDecoder.decode(Bytes.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
+        .filter(
+            leaf ->
+                leaf instanceof LeafNode
+                    && Bytes.concatenate(leaf.getLocation().orElse(Bytes.EMPTY), leaf.getPath())
+                        .equals(slotPath))
+        .flatMap(Node::getValue)
+        .map(value -> Bytes32.leftPad(RLP.decodeValue(value)));
 
-    Optional<Bytes> bytes2 = Optional.empty();
+    /*Optional<Bytes> bytes2 = Optional.empty();
 
     Optional<Bytes> account = Optional.empty();
     final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
@@ -257,6 +244,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                   Bytes32.wrap(worldStateRootHash.get()))
               .get(accountHash);
     }
+    ArrayList<String> rr = new ArrayList<>();
     if (account.isPresent()) {
       final StateTrieAccountValue accountValue =
           StateTrieAccountValue.readFrom(
@@ -264,7 +252,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       bytes2 =
           new StoredMerklePatriciaTrie<>(
                   new StoredNodeFactory<>(
-                      (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                      (location, hash) -> {
+                        Optional<Bytes> accountStorageTrieNode =
+                            getAccountStorageTrieNode(accountHash, location, hash);
+                        rr.add(
+                            "trie "
+                                + accountHash
+                                + " "
+                                + slotHash
+                                + " "
+                                + location
+                                + " "
+                                + accountStorageTrieNode);
+                        return accountStorageTrieNode;
+                      },
                       Function.identity(),
                       Function.identity()),
                   accountValue.getStorageRoot())
@@ -283,14 +284,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                     storageRoot.get())
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-        /*if (!bytes2.equals(bytes1)) {
+        if (!bytes2.equals(bytes1)) {
           System.out.println(
               "storage "
                   + accountHash
                   + " "
                   + slotHash
                   + " "
-                  + bytes1
+                  + moreClosedByPrefix
+                      .map(pair -> Bytes.wrap(pair.getKey()) + "/" + Bytes.wrap(pair.getValue()))
+                      .orElse("")
                   + " "
                   + bytes2
                   + " "
@@ -298,13 +301,27 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                   + " "
                   + storageRoot
                   + " "
-                  + accountValue.getStorageRoot()
-                  + " "
-                  + moreClosedByPrefix.map(org.apache.commons.lang3.tuple.Pair::getKey));
-        }*/
+                  + accountValue.getStorageRoot());
+          rr.forEach(System.out::println);
+        }
       }
     }
-    return bytes2;
+    return bytes2;*/
+  }
+
+  public static void main(final String[] args) {
+    System.out.println(
+        TrieNodeDecoder.decode(
+                Bytes.EMPTY,
+                Bytes.fromHexString(
+                    "0xe19f20a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee30c"))
+            .getPath());
+    System.out.println(
+        TrieNodeDecoder.decode(
+                Bytes.EMPTY,
+                Bytes.fromHexString(
+                    "0xe19f37a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee30b"))
+            .getPath());
   }
 
   @Override
@@ -348,7 +365,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     // cleaning the account flat database by searching for the keys that are in the range
     accountStorage
-        .getInRange(range.getFirst(), range.getSecond())
+        .getInRange(range.getLeft(), range.getRight())
         .forEach(
             (key, value) -> {
               final boolean shouldExclude =
@@ -380,7 +397,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     // cleaning the storage flat database by searching for the keys that are in the range
     storageStorage
-        .getInRange(range.getFirst(), range.getSecond())
+        .getInRange(range.getLeft(), range.getRight())
         .forEach(
             (key, value) -> {
               final boolean shouldExclude =
@@ -412,7 +429,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     trieBranchStorage
         .getByPrefix(Bytes.concatenate(accountHash, location))
         .forEach(
-            (key) -> {
+            (key, value) -> {
               final boolean shouldExclude =
                   maybeExclude
                       .filter(

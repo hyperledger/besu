@@ -246,6 +246,8 @@ public class BranchNode<V> implements Node<V> {
         builder.append("\n\t").append(branchLabel).append(childRep);
       }
     }
+    builder.append("\n\tLocation: ");
+    builder.append(getLocation());
     builder.append("\n\tValue: ").append(getValue().map(Object::toString).orElse("empty"));
     return builder.toString();
   }

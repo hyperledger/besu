@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 
-import kotlin.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -77,7 +77,7 @@ public class RangeManager {
     mutableBytes.set(size, (byte) 0x10);
     final Bytes right = Bytes.concatenate(prefix, CompactEncoding.pathToBytes(mutableBytes));
 
-    return new Pair<>(left, right);
+    return Pair.of(left, right);
   }
 
   /**

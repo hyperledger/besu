@@ -28,8 +28,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -170,21 +168,22 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
+  public TreeMap<Bytes, Bytes> getByPrefix(final Bytes prefix) {
     final RocksIterator rocksIterator = db.newIterator();
-    // System.out.println("seek for p rev " + prefix);
-    rocksIterator.seekForPrev(prefix.toArrayUnsafe());
+    rocksIterator.seek(prefix.toArrayUnsafe());
     final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
     try {
-      if (rocksDbKeyIterator.hasNext()) {
+      final TreeMap<Bytes, Bytes> res = new TreeMap<>();
+      while (rocksDbKeyIterator.hasNext()) {
         final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
         final Bytes key = Bytes.wrap(next.getKey());
-        // System.out.println("-> " + prefix + " " + key);
-        if (key.commonPrefixLength(prefix) == key.size()) {
-          return Optional.of(next);
+        if (key.commonPrefixLength(prefix) == prefix.size()) {
+          res.put(key, Bytes.of(next.getValue()));
+        } else {
+          return res;
         }
       }
-      return Optional.empty();
+      return res;
     } finally {
       rocksDbKeyIterator.close();
       rocksIterator.close();
@@ -192,21 +191,17 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public List<Bytes> getByPrefix(final Bytes prefix) {
+  public Optional<Pair<Bytes, Bytes>> getNearestKey(final Bytes key) {
     final RocksIterator rocksIterator = db.newIterator();
-    rocksIterator.seek(prefix.toArrayUnsafe());
+    // System.out.println("seek for p rev "+prefix);
+    rocksIterator.seekForPrev(key.toArrayUnsafe());
     final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
     try {
-      final List<Bytes> res = new ArrayList<>();
-      while (rocksDbKeyIterator.hasNext()) {
-        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
-        if (key.commonPrefixLength(prefix) == prefix.size()) {
-          res.add(key);
-        } else {
-          return res;
-        }
+      if (rocksDbKeyIterator.hasNext()) {
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        return Optional.of(Pair.of(Bytes.wrap(next.getKey()), Bytes.wrap(next.getValue())));
       }
-      return res;
+      return Optional.empty();
     } finally {
       rocksDbKeyIterator.close();
       rocksIterator.close();

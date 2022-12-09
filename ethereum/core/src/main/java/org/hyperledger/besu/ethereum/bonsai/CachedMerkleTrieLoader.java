@@ -33,7 +33,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.prometheus.client.guava.cache.CacheMetricsCollector;
-import kotlin.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -104,7 +104,7 @@ public class CachedMerkleTrieLoader {
         () ->
             worldStateStorage
                 .trieBranchStorage
-                .getInRange(range.getFirst(), range.getSecond())
+                .getInRange(range.getLeft(), range.getRight())
                 .forEach(slotNodes::put));
   }
 
