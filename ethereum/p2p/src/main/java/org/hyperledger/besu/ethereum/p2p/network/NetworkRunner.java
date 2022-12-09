@@ -80,7 +80,7 @@ public class NetworkRunner implements AutoCloseable {
       network.start();
 
       LOG.info(
-          "Max supported protocol: {}",
+          "Supported capabilities: {}",
           protocolManagers.stream()
               .map(q -> String.format("%s", q.getSupportedCapabilities()))
               .collect(Collectors.joining(", ")));
