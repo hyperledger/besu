@@ -61,15 +61,16 @@ public class ChainDataPruner implements BlockAddedObserver {
               + " which normally indicates chain-pruning-blocks-retained is too small");
       return;
     }
-    final KeyValueStorageTransaction tx1 = prunerStorage.startTransaction();
+    final KeyValueStorageTransaction recordBlockHashesTransaction =
+        prunerStorage.startTransaction();
     final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
     forkBlocks.add(event.getBlock().getHash());
-    prunerStorage.setForkBlocks(tx1, blockNumber, forkBlocks);
-    tx1.commit();
+    prunerStorage.setForkBlocks(recordBlockHashesTransaction, blockNumber, forkBlocks);
+    recordBlockHashesTransaction.commit();
 
     pruningExecutor.submit(
         () -> {
-          final KeyValueStorageTransaction tx2 = prunerStorage.startTransaction();
+          final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
           long currentPruningMark = storedPruningMark;
           final long newPruningMark = blockNumber - blocksToRetain;
           if (event.isNewCanonicalHead()
@@ -77,13 +78,13 @@ public class ChainDataPruner implements BlockAddedObserver {
             long currentRetainedBlock = blockNumber - currentPruningMark + 1;
             while (currentRetainedBlock > blocksToRetain) {
               LOG.debug("Pruning chain data with block height of " + currentPruningMark);
-              pruneChainDataAtBlock(tx2, currentPruningMark);
+              pruneChainDataAtBlock(pruningTransaction, currentPruningMark);
               currentPruningMark++;
               currentRetainedBlock = blockNumber - currentPruningMark;
             }
           }
-          prunerStorage.setPruningMark(tx2, currentPruningMark);
-          tx2.commit();
+          prunerStorage.setPruningMark(pruningTransaction, currentPruningMark);
+          pruningTransaction.commit();
         });
   }
 
