@@ -34,15 +34,20 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   private final SnappedKeyValueStorage codeSnap;
   private final SnappedKeyValueStorage storageSnap;
   private final SnappedKeyValueStorage trieBranchSnap;
+  private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
+  private final Long parentWorldStateSubscriberId;
 
   private BonsaiSnapshotWorldState(
       final BonsaiWorldStateArchive archive,
-      final BonsaiSnapshotWorldStateKeyValueStorage snapshotWorldStateStorage) {
+      final BonsaiSnapshotWorldStateKeyValueStorage snapshotWorldStateStorage,
+      final BonsaiWorldStateKeyValueStorage parentWorldStateStorage) {
     super(archive, snapshotWorldStateStorage);
     this.accountSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.accountStorage;
     this.codeSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.codeStorage;
     this.storageSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.storageStorage;
     this.trieBranchSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.trieBranchStorage;
+    this.parentWorldStateStorage = parentWorldStateStorage;
+    parentWorldStateSubscriberId = parentWorldStateStorage.subscribe(this);
   }
 
   public static BonsaiSnapshotWorldState create(
@@ -55,7 +60,8 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
             ((SnappableKeyValueStorage) parentWorldStateStorage.codeStorage).takeSnapshot(),
             ((SnappableKeyValueStorage) parentWorldStateStorage.storageStorage).takeSnapshot(),
             ((SnappableKeyValueStorage) parentWorldStateStorage.trieBranchStorage).takeSnapshot(),
-            parentWorldStateStorage.trieLogStorage));
+            parentWorldStateStorage.trieLogStorage),
+        parentWorldStateStorage);
   }
 
   @Override
@@ -76,7 +82,8 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
             codeSnap.cloneFromSnapshot(),
             storageSnap.cloneFromSnapshot(),
             trieBranchSnap.cloneFromSnapshot(),
-            worldStateStorage.trieLogStorage));
+            worldStateStorage.trieLogStorage),
+        parentWorldStateStorage);
   }
 
   @Override
@@ -85,5 +92,24 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
     codeSnap.close();
     storageSnap.close();
     trieBranchSnap.close();
+    parentWorldStateStorage.unSubscribe(parentWorldStateSubscriberId);
+  }
+
+  @Override
+  public void onClear() {
+    try {
+      close();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void onClearFlatDatabase() {
+    try {
+      close();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

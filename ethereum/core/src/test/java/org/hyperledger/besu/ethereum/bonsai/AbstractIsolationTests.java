@@ -73,6 +73,7 @@ import org.junit.rules.TemporaryFolder;
 
 public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateArchive archive;
+  protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
   final Function<String, KeyPair> asKeyPair =
       key ->
@@ -100,6 +101,7 @@ public abstract class AbstractIsolationTests {
 
   @Rule public final TemporaryFolder tempData = new TemporaryFolder();
 
+
   protected boolean shouldUseSnapshots() {
     // override for layered worldstate
     return true;
@@ -107,11 +109,11 @@ public abstract class AbstractIsolationTests {
 
   @Before
   public void createStorage() {
-    //    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
+    bonsaiWorldStateStorage =(BonsaiWorldStateKeyValueStorage)
+            createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
     archive =
         new BonsaiWorldStateArchive(
-            (BonsaiWorldStateKeyValueStorage)
-                createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI),
+            bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),
             shouldUseSnapshots(),

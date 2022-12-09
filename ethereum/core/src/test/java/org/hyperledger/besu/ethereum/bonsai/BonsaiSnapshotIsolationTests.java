@@ -16,22 +16,36 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-
-import java.util.List;
-import java.util.function.Consumer;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
+import java.util.function.Consumer;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 @RunWith(MockitoJUnitRunner.class)
 public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
+
+  @Test
+  public void ensureTruncateDoesNotCauseSegfault() {
+
+    var preTruncatedWorldState = archive.getMutable(null, genesisState.getBlock().getHash(), false);
+    assertThat(preTruncatedWorldState)
+        .isPresent(); // really just assert that we have not segfaulted after truncating
+    bonsaiWorldStateStorage.clear();
+    var postTruncatedWorldState =
+        archive.getMutable(null, genesisState.getBlock().getHash(), false);
+    assertThat(postTruncatedWorldState).isEmpty();
+    // assert that trying to access pre-worldstate does not segfault after truncating
+    preTruncatedWorldState.get().get(Address.fromHexString(accounts.get(0).getAddress()));
+    assertThat(true).isTrue();
+  }
 
   @Test
   public void testIsolatedFromHead_behindHead() {
