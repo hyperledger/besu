@@ -142,7 +142,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
   private NetworkingConfiguration networkingConfiguration;
-  private Boolean randomPeerPriority;
+  private Boolean randomPeerPriority = true;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -298,7 +298,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
-    checkNotNull(randomPeerPriority, "Missing random peer priority config");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
