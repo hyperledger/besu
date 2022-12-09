@@ -282,6 +282,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater = worldStateStorage.updater();
+    Runnable saveTrieLog = () -> {};
 
     try {
       final Hash newWorldStateRootHash = calculateRootHash(stateUpdater, localUpdater);
@@ -296,9 +297,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                   + " calculated "
                   + newWorldStateRootHash.toHexString());
         }
-        archive
+        saveTrieLog = () -> archive
             .getTrieLogManager()
-            .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
+            .saveTrieLog(archive, localUpdater, worldStateRootHash, blockHeader);
+
         stateUpdater
             .getTrieBranchStorageTransaction()
             .put(WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
@@ -317,6 +319,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (success) {
         stateUpdater.commit();
         updater.reset();
+        saveTrieLog.run();
       } else {
         stateUpdater.rollback();
         updater.reset();

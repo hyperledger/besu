@@ -60,9 +60,13 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
+  public void clear() {
+    // not implemented
+  }
+
+    @Override
   public void clearFlatDatabase() {
-    accountStorage.clear();
-    storageStorage.clear();
+    // not implemented
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
