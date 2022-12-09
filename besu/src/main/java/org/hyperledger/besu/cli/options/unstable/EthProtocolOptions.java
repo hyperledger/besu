@@ -34,6 +34,9 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String LEGACY_ETH_64_FORK_ID_ENABLED =
       "--compatibility-eth64-forkid-enabled";
 
+  private static final String MAX_CAPABILITY = "--Xeth-capability-max";
+  private static final String MIN_CAPABILITY = "--Xeth-capability-min";
+
   @CommandLine.Option(
       hidden = true,
       names = {MAX_MESSAGE_SIZE_FLAG},
@@ -95,6 +98,20 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private Boolean legacyEth64ForkIdEnabled =
       EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {MAX_CAPABILITY},
+      paramLabel = "<INTEGER>",
+      description = "Max protocol version to support")
+  private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {MIN_CAPABILITY},
+      paramLabel = "<INTEGER>",
+      description = "Min protocol version to support")
+  private int minEthCapability = EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY;
+
   private EthProtocolOptions() {}
 
   public static EthProtocolOptions create() {
@@ -110,6 +127,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
     options.maxGetNodeData = PositiveNumber.fromInt(config.getMaxGetNodeData());
     options.maxGetPooledTransactions = PositiveNumber.fromInt(config.getMaxGetPooledTransactions());
     options.legacyEth64ForkIdEnabled = config.isLegacyEth64ForkIdEnabled();
+    options.maxEthCapability = config.getMaxEthCapability();
+    options.minEthCapability = config.getMinEthCapability();
     return options;
   }
 
@@ -123,6 +142,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         .maxGetNodeData(maxGetNodeData)
         .maxGetPooledTransactions(maxGetPooledTransactions)
         .legacyEth64ForkIdEnabled(legacyEth64ForkIdEnabled)
+        .maxEthCapability(maxEthCapability)
+        .minEthCapability(minEthCapability)
         .build();
   }
 
