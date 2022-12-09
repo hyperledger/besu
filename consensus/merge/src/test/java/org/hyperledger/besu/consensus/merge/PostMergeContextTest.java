@@ -207,7 +207,7 @@ public class PostMergeContextTest {
     // simulate a possible syncState null when we still have got a syncState set yet.
     final SyncState syncState = null;
     postMergeContext.setSyncState(syncState);
-    assertThat(postMergeContext.isSyncing()).isTrue();
+    assertThat(postMergeContext.isSyncing()).isFalse();
 
     // after setting a syncState things should progress as expected.
     postMergeContext.setSyncState(mockSyncState);
