@@ -298,6 +298,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
+    checkNotNull(randomPeerPriority, "Missing random peer priority config");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();

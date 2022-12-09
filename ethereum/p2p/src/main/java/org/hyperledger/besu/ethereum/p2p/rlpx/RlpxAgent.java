@@ -98,7 +98,6 @@ public class RlpxAgent {
         "The maximum number of peers this node allows to connect",
         () -> upperBoundConnections);
 
-
     // placeholders for callbacks
     if (getAllActiveConnectionsCallback == null) {
       setGetAllActiveConnectionsCallback(() -> Stream.empty());

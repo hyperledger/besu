@@ -431,7 +431,9 @@ public class EthPeers {
   }
 
   private boolean canExceedPeerLimits(PeerConnection a) {
-    if (rlpxAgent == null) { return true; }
+    if (rlpxAgent == null) {
+      return true;
+    }
     return rlpxAgent.canExceedConnectionLimits(a.getPeer());
   }
 
@@ -525,8 +527,7 @@ public class EthPeers {
     final Bytes id = peer.getId();
     if (!randomPeerPriority) {
       // Disconnect if too many peers
-      if (!canExceedPeerLimits(peer.getConnection())
-          && peerCount() >= peerUpperBound) {
+      if (!canExceedPeerLimits(peer.getConnection()) && peerCount() >= peerUpperBound) {
         LOG.debug(
             "Too many peers. Disconnect incoming connection: {} currentCount {}, max {}",
             peer.getConnection(),
@@ -536,8 +537,7 @@ public class EthPeers {
         return false;
       }
       // Disconnect if too many remotely-initiated connections
-      if (!canExceedPeerLimits(peer.getConnection())
-          && remoteConnectionLimitReached()) {
+      if (!canExceedPeerLimits(peer.getConnection()) && remoteConnectionLimitReached()) {
         LOG.debug(
             "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
             peer.getConnection(),
