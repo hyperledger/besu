@@ -95,7 +95,7 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
 
   @Override
   public synchronized void onClearFlatDatabase() {
-    dropArchive();;
+    dropArchive();
   }
 
   private void dropArchive() {
