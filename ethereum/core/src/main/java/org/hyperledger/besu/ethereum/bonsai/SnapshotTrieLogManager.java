@@ -115,7 +115,7 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
 
     public CachedSnapshotWorldState(
         final BonsaiSnapshotWorldState snapshot, final TrieLogLayer trieLog, final long height) {
-      this.worldStateSubscriberId = snapshot.worldStateStorage.subscribe(this);
+      this.worldStateSubscriberId = snapshot.getWorldStateStorage().subscribe(this);
       this.snapshot = snapshot;
       this.trieLog = trieLog;
       this.height = height;

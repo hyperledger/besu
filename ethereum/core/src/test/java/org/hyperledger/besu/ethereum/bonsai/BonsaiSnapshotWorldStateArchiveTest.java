@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStora
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -29,7 +28,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.AbstractTrieLogManager.CachedWorldState;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiUpdater;
 import org.hyperledger.besu.ethereum.bonsai.SnapshotTrieLogManager.CachedSnapshotWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -127,20 +125,14 @@ public class BonsaiSnapshotWorldStateArchiveTest {
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
     final Map<Bytes32, CachedWorldState<BonsaiSnapshotWorldState>> worldStatesByHash =
-        mock(HashMap.class);
-    when(worldStatesByHash.containsKey(any(Bytes32.class))).thenReturn(true);
-    when(worldStatesByHash.get(eq(blockHeaderChainA.getHash())))
-        .thenReturn(
-            new CachedSnapshotWorldState(
-                mock(BonsaiSnapshotWorldState.class, Answers.RETURNS_MOCKS),
-                mock(TrieLogLayer.class),
-                2));
-    when(worldStatesByHash.get(eq(blockHeaderChainB.getHash())))
-        .thenReturn(
-            new CachedSnapshotWorldState(
-                mock(BonsaiSnapshotWorldState.class, Answers.RETURNS_MOCKS),
-                mock(TrieLogLayer.class),
-                2));
+        new HashMap<>();
+    var mockCachedState =
+        new CachedSnapshotWorldState(
+            mock(BonsaiSnapshotWorldState.class, Answers.RETURNS_MOCKS),
+            mock(TrieLogLayer.class, Answers.RETURNS_MOCKS),
+            2);
+    worldStatesByHash.put(blockHeaderChainA.getHash(), mockCachedState);
+    worldStatesByHash.put(blockHeaderChainB.getHash(), mockCachedState);
     var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
     bonsaiWorldStateArchive =
         spy(
@@ -176,34 +168,5 @@ public class BonsaiSnapshotWorldStateArchiveTest {
         .put(eq(blockHeaderChainA.getHash().toArrayUnsafe()), any());
     verify(keyValueStorageTransaction, never())
         .put(eq(blockHeaderChainB.getHash().toArrayUnsafe()), any());
-  }
-
-  @Test
-  public void ensureWorldStateArchiveDoesNotScrubUnlessFull() {
-    BonsaiUpdater bonsaiUpdater = mock(BonsaiUpdater.class);
-    when(bonsaiUpdater.getTrieLogStorageTransaction())
-        .thenReturn(mock(KeyValueStorageTransaction.class));
-    var worldStateStorage = mock(BonsaiWorldStateKeyValueStorage.class);
-    when(worldStateStorage.updater()).thenReturn(bonsaiUpdater);
-    var snapshotTrieLogManager = new SnapshotTrieLogManager(blockchain, worldStateStorage, 12L);
-    var mockArchive = mock(BonsaiWorldStateArchive.class);
-    BonsaiWorldStateUpdater mockUpdater = mock(BonsaiWorldStateUpdater.class);
-
-    doAnswer(
-            invocation -> {
-              final var mockLayer = new TrieLogLayer();
-              mockLayer.setBlockHash(invocation.getArgument(0));
-              return mockLayer;
-            })
-        .when(mockUpdater)
-        .generateTrieLog(any());
-
-    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
-    final BlockHeader blockHeader1k = blockBuilder.number(1000).buildHeader();
-
-    snapshotTrieLogManager.saveTrieLog(mockArchive, mockUpdater, genesis.getStateRoot(), genesis);
-    snapshotTrieLogManager.saveTrieLog(
-        mockArchive, mockUpdater, blockHeader1k.getStateRoot(), blockHeader1k);
-    assertThat(snapshotTrieLogManager.cachedWorldStatesByHash.size()).isEqualTo(2);
   }
 }
