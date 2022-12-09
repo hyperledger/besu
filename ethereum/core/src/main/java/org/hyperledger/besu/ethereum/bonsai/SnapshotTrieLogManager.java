@@ -133,16 +133,6 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
     }
 
     @Override
-    public synchronized void onClear() {
-      setClosed();
-    }
-
-    @Override
-    public synchronized void onClearFlatDatabase() {
-      setClosed();
-    }
-
-    @Override
     public long getHeight() {
       return height;
     }
