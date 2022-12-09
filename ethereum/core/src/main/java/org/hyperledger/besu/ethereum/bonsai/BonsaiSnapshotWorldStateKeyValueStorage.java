@@ -64,7 +64,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     // not implemented
   }
 
-    @Override
+  @Override
   public void clearFlatDatabase() {
     // not implemented
   }

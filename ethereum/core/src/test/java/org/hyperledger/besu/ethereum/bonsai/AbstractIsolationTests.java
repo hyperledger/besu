@@ -101,7 +101,6 @@ public abstract class AbstractIsolationTests {
 
   @Rule public final TemporaryFolder tempData = new TemporaryFolder();
 
-
   protected boolean shouldUseSnapshots() {
     // override for layered worldstate
     return true;
@@ -109,7 +108,8 @@ public abstract class AbstractIsolationTests {
 
   @Before
   public void createStorage() {
-    bonsaiWorldStateStorage =(BonsaiWorldStateKeyValueStorage)
+    bonsaiWorldStateStorage =
+        (BonsaiWorldStateKeyValueStorage)
             createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
     archive =
         new BonsaiWorldStateArchive(

@@ -16,18 +16,19 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {

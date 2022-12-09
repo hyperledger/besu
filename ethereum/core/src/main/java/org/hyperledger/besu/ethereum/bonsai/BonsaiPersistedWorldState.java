@@ -297,9 +297,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                   + " calculated "
                   + newWorldStateRootHash.toHexString());
         }
-        saveTrieLog = () -> archive
-            .getTrieLogManager()
-            .saveTrieLog(archive, localUpdater, worldStateRootHash, blockHeader);
+        saveTrieLog =
+            () ->
+                archive
+                    .getTrieLogManager()
+                    .saveTrieLog(archive, localUpdater, worldStateRootHash, blockHeader);
 
         stateUpdater
             .getTrieBranchStorageTransaction()
