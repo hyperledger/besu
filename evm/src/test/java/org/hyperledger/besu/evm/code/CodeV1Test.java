@@ -37,7 +37,8 @@ class CodeV1Test {
     String codeHex = "0xEF000101000F006001600055600D5660026000555B00";
     final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex));
 
-    long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(layout.getSections()[1]);
+    long[] jumpDest =
+        OpcodesV1.validateAndCalculateJumpDests(layout.getCodeSections()[0].getCode());
 
     assertThat(jumpDest).containsExactly(0x2000);
   }

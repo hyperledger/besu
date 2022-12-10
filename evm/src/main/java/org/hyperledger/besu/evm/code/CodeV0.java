@@ -80,8 +80,13 @@ public class CodeV0 implements Code {
   }
 
   @Override
-  public Bytes getCodeBytes() {
-    return getContainerBytes();
+  public Bytes getCodeBytes(final int function) {
+
+    if (function == 0) {
+      return getContainerBytes();
+    } else {
+      return null;
+    }
   }
 
   @Override

@@ -27,191 +27,224 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class EOFLayoutTest {
 
-  public static Collection<Object[]> testCasesFromEIP3540() {
+  public static Collection<Object[]> containersWithFormatErrors() {
     return Arrays.asList(
         new Object[][] {
-          {"EF", "No magic", "EOF Container too small"},
-          {"EFFF01010002020004006000AABBCCDD", "Invalid magic", "EOF header byte 1 incorrect"},
-          {"EF00", "No version", "EOF Container too small"},
-          {"EF0000010002020004006000AABBCCDD", "Invalid version", "Unsupported EOF Version 0"},
-          {"EF0002010002020004006000AABBCCDD", "Invalid version", "Unsupported EOF Version 2"},
-          {"EF00FF010002020004006000AABBCCDD", "Invalid version", "Unsupported EOF Version 255"},
-          {"EF0001", "No header", "Improper section headers"},
-          {"EF000100", "No code section", "Missing code (kind=1) section"},
-          {"EF000101", "No code section size", "Improper section headers"},
-          {"EF00010100", "Code section size incomplete", "Improper section headers"},
-          {"EF0001010002", "No section terminator", "Improper section headers"},
-          {"EF000101000200", "No code section contents", "Missing or incomplete section data"},
+          {"EF", "No magic", "EOF Container too small", -1},
+          {"FFFFFF", "Wrong magic", "EOF header byte 0 incorrect", -1},
+          {"EFFF01010002020004006000AABBCCDD", "Invalid magic", "EOF header byte 1 incorrect", -1},
+          {"EF00", "No version", "EOF Container too small", -1},
+          {"EF0000010002020004006000AABBCCDD", "Invalid version", "Unsupported EOF Version 0", 0},
+          {"EF0002010002020004006000AABBCCDD", "Invalid version", "Unsupported EOF Version 2", 2},
           {
-            "EF00010100020060",
-            "Code section contents incomplete",
-            "Missing or incomplete section data"
+            "EF00FF010002020004006000AABBCCDD",
+            "Invalid version",
+            "Unsupported EOF Version 255",
+            255
+          },
+          {"EF0001", "No header", "Improper section headers", 1},
+          {"EF0001 00", "No code section", "Expected kind 1 but read kind 0", 1},
+          {"EF0001 01", "No code section size", "Invalid Types section size", 1},
+          {"EF0001 0100", "Code section size incomplete", "Invalid Types section size", 1},
+          {"EF0001 010004", "No section terminator", "Improper section headers", 1},
+          {"EF0001 010004 00", "No code section contents", "Expected kind 2 but read kind 0", 1},
+          {"EF0001 010004 02", "No code section count", "Invalid Code section count", 1},
+          {"EF0001 010004 0200", "Short code section count", "Invalid Code section count", 1},
+          {
+            "EF0001 010004 020001",
+            "No code section size",
+            "Invalid Code section size for section 0",
+            1
           },
           {
-            "EF0001010002006000DEADBEEF",
-            "Trailing bytes after code section",
-            "Dangling data at end of container"
-          },
-          // {"EF00010100020100020060006000", "Multiple code sections",
-          //     "Duplicate section number 1"},
-          {"EF000101000000", "Empty code section", "Empty section contents"},
-          {"EF000101000002000200AABB", "Empty code section", "Empty section contents"},
-          {
-            "EF000102000401000200AABBCCDD6000",
-            "Data section preceding code section",
-            "Code section cannot follow data section"
+            "EF0001 010004 02000100",
+            "Short code section size",
+            "Invalid Code section size for section 0",
+            1
           },
           {
-            "EF000102000400AABBCCDD",
-            "Data section without code section",
-            "Missing code (kind=1) section"
-          },
-          {"EF000101000202", "No data section size", "Improper section headers"},
-          {"EF00010100020200", "Data section size incomplete", "Improper section headers"},
-          {"EF0001010002020004", "No section terminator", "Improper section headers"},
-          {
-            "EF0001010002020004006000",
-            "No data section contents",
-            "Missing or incomplete section data"
+            "EF0001 010008 0200020001",
+            "No code section size multiple codes",
+            "Invalid Code section size for section 1",
+            1
           },
           {
-            "EF0001010002020004006000AABBCC",
-            "Data section contents incomplete",
-            "Missing or incomplete section data"
+            "EF0001 010008 020002000100",
+            "No code section size multiple codes",
+            "Invalid Code section size for section 1",
+            1
+          },
+          {"EF0001 010004 0200010001 03", "No data section size", "Invalid Data section size", 1},
+          {
+            "EF0001 010004 0200010001 0300",
+            "Short data section size",
+            "Invalid Data section size",
+            1
+          },
+          {"EF0001 010004 0200010001 030000", "No Terminator", "Improper section headers", 1},
+          {"EF0001 010008 0200010002 030000 00", "No type section", "Incomplete type section", 1},
+          {
+            "EF0001 010008 0200010002 030001 030001 00 DA DA",
+            "Duplicate data sections",
+            "Expected kind 0 but read kind 3",
+            1
           },
           {
-            "EF0001010002020004006000AABBCCDDEE",
-            "Trailing bytes after data section",
-            "Dangling data at end of container"
+            "EF0001 010008 0200010002 030000 00 00",
+            "Incomplete type section",
+            "Incomplete type section",
+            1
           },
           {
-            "EF0001010002020004020004006000AABBCCDDAABBCCDD",
-            "Multiple data sections",
-            "Duplicate section number 2"
+            "EF0001 010008 02000200020002 030000 00 00000000FE",
+            "Incomplete type section",
+            "Incomplete type section",
+            1
           },
-          {"EF0001010002020000006000", "Empty data section", "Empty section contents"},
-          // {
-          //   "EF0001010002030004006000AABBCCDD",
-          //   "Unknown section (id = 3)",
-          //   "EOF Section kind 3 not supported"
-          // },
-          {"EF0001010002006000", "Valid", null},
+          {
+            "EF0001 010008 02000200020002 030000 00 0100000000000000",
+            "Incorrect section zero type input",
+            "Code section does not have zero inputs and outputs",
+            1
+          },
+          {
+            "EF0001 010008 02000200020002 030000 00 0001000000000000",
+            "Incorrect section zero type output",
+            "Code section does not have zero inputs and outputs",
+            1
+          },
+          {
+            "EF0001 010008 0200010002 030000 00 00000000 ",
+            "Incomplete code section",
+            "Incomplete code section 0",
+            1
+          },
+          {
+            "EF0001 010008 0200010002 030000 00 00000000 FE",
+            "Incomplete code section",
+            "Incomplete code section 0",
+            1
+          },
+          {
+            "EF0001 010008 02000200020002 030000 00 00000000 00000000 FEFE ",
+            "No code section multiple",
+            "Incomplete code section 1",
+            1
+          },
+          {
+            "EF0001 010008 02000200020002 030000 00 00000000 00000000 FEFE FE",
+            "Incomplete code section multiple",
+            "Incomplete code section 1",
+            1
+          },
+          {
+            "EF0001 010008 0200010001 030003 00 00000000 FE DEADBEEF",
+            "Incomplete data section",
+            "Dangling data after end of all sections",
+            1
+          },
+          {
+            "EF0001 010008 0200010001 030003 00 00000000 FE BEEF",
+            "Incomplete data section",
+            "Incomplete data section",
+            1
+          },
         });
   }
 
-  public static Collection<Object[]> testCasesFromEIP4750() {
+  public static Collection<Object[]> correctContainers() {
+
     return Arrays.asList(
         new Object[][] {
-          {"EF000101000100FE", "implicit type section, no data section", null},
-          {"EF000101000102000100FEDA", "implicit type section, data section", null},
-          {"EF0001030002010001000000FE", "type section, no data section", null},
-          {"EF0001030002010001020001000000FEDA", "type section, data section", null},
           {
-            "EF00010300040100010100010000000000FEFE",
-            "multiple code sections, no data section",
-            null
+            "EF0001 010004 0200010001 030000 00 00000000 FE",
+            "no data section, one code section",
+            null,
+            1
           },
           {
-            "EF00010300040100010100010200010000000000FEFEDA",
-            "multiple code sections, data section",
-            null
+            "EF0001 010004 0200010001 030001 00 00000000 FE DA",
+            "with data section, one code section",
+            null,
+            1
           },
           {
-            "EF0001030008010001010002010002010002000000010000010203FE500030008000",
+            "EF0001 010008 02000200010001 030000 00 00000000 00000000 FE FE",
+            "no data section, multiple code section",
+            null,
+            1
+          },
+          {
+            "EF0001 010008 02000200010001 030001 00 00000000 00000000 FE FE DA",
+            "with data section, multiple code section",
+            null,
+            1
+          },
+          {
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00010000 02030000 FE 5000 3000 8000",
             "non-void input and output types",
-            null
+            null,
+            1
           },
           {
-            "EF0001030800" + "010001".repeat(1024) + "00" + "0000".repeat(1024) + "FE".repeat(1024),
-            "max number of code sections",
-            null
-          },
-          {"ef000101000100fc", "RETF is terminating instruction", null},
-          {"EF000104000100FE", "unknown_section_id", "EOF Section kind 4 not supported"},
-          {
-            "EF000101000101000100FEFE",
-            "mandatory_type_section_missing",
-            "Multiple code sections but not enough type entries"
+            "EF0001 0200010001 030001 00 FE DA",
+            "type section missing",
+            "Expected kind 1 but read kind 2",
+            1
           },
           {
-            "EF00010300020300020100010100010000000000FEFE",
-            "multiple_type_sections",
-            "Duplicate section number 3"
+            "EF0001 010004 030001 00 00000000 DA",
+            "code section missing",
+            "Expected kind 2 but read kind 3",
+            1
           },
           {
-            "EF0001030002010001010001030002000000FEFE0000",
-            "multiple_type_sections",
-            "Duplicate section number 3"
+            "EF0001 010004 0200010001 00 00000000 FE",
+            "data section missing",
+            "Expected kind 3 but read kind 0",
+            1
           },
           {
-            "EF000101000103000200FE0000",
-            "code_section_before_type_section",
-            "Code section cannot precede Type Section"
+            "EF0001 030001 00 DA",
+            "type and code section missing",
+            "Expected kind 1 but read kind 3",
+            1
           },
           {
-            "EF000101000103000201000100FE0000FE",
-            "code_section_before_type_section",
-            "Code section cannot precede Type Section"
+            "EF0001 0200010001 00 FE",
+            "type and data section missing",
+            "Expected kind 1 but read kind 2",
+            1
           },
           {
-            "EF000101000103000202000300FE0000AABBCC",
-            "code_section_before_type_section",
-            "Code section cannot precede Type Section"
+            "EF0001 010004 00 00000000",
+            "code and data sections missing",
+            "Expected kind 2 but read kind 0",
+            1
           },
-          {
-            "EF000101000102000303000200FEAABBCC0000",
-            "code_section_before_type_section",
-            "Code section cannot precede Type Section"
-          },
-          {
-            "EF00010300010100010000FE",
-            "invalid_type_section_size",
-            "Type section cannot be odd length"
-          },
-          {
-            "EF00010300040100010000000000FE",
-            "invalid_type_section_size",
-            "Type data length (4) does not match code size count (1 * 2)"
-          },
-          {
-            "EF00010300040100010100010100010000000000FEFEFE",
-            "invalid_type_section_size",
-            "Type data length (4) does not match code size count (3 * 2)"
-          },
-          {
-            "EF0001030008010001010001010001000000000000000000FEFEFE",
-            "invalid_type_section_size",
-            "Type data length (8) does not match code size count (3 * 2)"
-          },
-          {
-            "EF000103000201000300000160005C",
-            "invalid_first_section_type",
-            "First section input and output must be zero"
-          },
-          {
-            "EF00010300020100020001005000",
-            "invalid_first_section_type",
-            "First section input and output must be zero"
-          },
-          {
-            "EF000103000201000300020360005C",
-            "invalid_first_section_type",
-            "First section input and output must be zero"
-          },
-          {
-            "EF0001030802" + "010001".repeat(1025) + "00" + "0000".repeat(1025) + "FE".repeat(1025),
-            "too_many_code_sections",
-            "Too many code sections"
-          }
+          {"EF0001 00", "all sections missing", "Expected kind 1 but read kind 0", 1},
         });
   }
 
   @ParameterizedTest(name = "{1}")
-  @MethodSource({"testCasesFromEIP3540", "testCasesFromEIP4750"})
-  void test(final String containerString, final String description, final String failureReason) {
-    final Bytes container = Bytes.fromHexString(containerString);
+  @MethodSource({"correctContainers", "containersWithFormatErrors"})
+  void test(
+      final String containerString,
+      final String description,
+      final String failureReason,
+      final int expectedVersion) {
+    final Bytes container = Bytes.fromHexString(containerString.replace(" ", ""));
     final EOFLayout layout = EOFLayout.parseEOF(container);
-    System.out.println(description);
+
+    assertThat(layout.getVersion()).isEqualTo(expectedVersion);
     assertThat(layout.getInvalidReason()).isEqualTo(failureReason);
+    assertThat(layout.getContainer()).isEqualTo(container);
+    if (layout.getInvalidReason() != null) {
+      assertThat(layout.isValid()).isFalse();
+      assertThat(layout.getCodeSections()).isNull();
+    } else {
+      assertThat(layout.isValid()).isTrue();
+      assertThat(layout.getCodeSections()).isNotNull();
+    }
   }
 }

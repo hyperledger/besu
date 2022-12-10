@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.code.CodeSection;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -30,12 +31,12 @@ public interface Code {
   int getSize();
 
   /**
-   * Gets the code bytes. For legacy code it is the whole container. For V1 it is the code section
-   * alone.
+   * Gets the code bytes. For legacy code only function 1 exists at address `0`. For V1/EOF it is
+   * the corresponding function code from the container header.
    *
-   * @return the code bytes
+   * @return the code bytes, or null of there is no code for that function number.
    */
-  Bytes getCodeBytes();
+  Bytes getCodeBytes(int function);
 
   /**
    * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
@@ -66,4 +67,14 @@ public interface Code {
    * @return isValid
    */
   boolean isValid();
+
+  /**
+   * The Code Section Info associated with a function. If the code does not support sections or an
+   * out-of-section code is requested null will be returned.
+   *
+   * @return The code section, or null of there is no associated section
+   */
+  default CodeSection getCodeSection(final int _function) {
+    return null;
+  }
 }

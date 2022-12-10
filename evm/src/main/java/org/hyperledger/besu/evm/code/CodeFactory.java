@@ -65,9 +65,9 @@ public final class CodeFactory {
               codeHash, bytes, "Invalid EOF Layout: " + layout.getInvalidReason());
         }
         final long[] jumpMap =
-            OpcodesV1.validateAndCalculateJumpDests(layout.getSections()[EOFLayout.SECTION_CODE]);
+            OpcodesV1.validateAndCalculateJumpDests(layout.getCodeSections()[0].getCode());
         if (jumpMap != null) {
-          return new CodeV1(codeHash, layout, jumpMap);
+          return new CodeV1(codeHash, layout);
         } else {
           return new CodeInvalid(codeHash, bytes, "Opcode Validation Failed");
         }

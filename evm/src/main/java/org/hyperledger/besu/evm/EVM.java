@@ -107,7 +107,7 @@ public class EVM {
     evmSpecVersion.maybeWarnVersion();
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
-    byte[] code = frame.getCode().getCodeBytes().toArrayUnsafe();
+    byte[] code = frame.getCode().getCodeBytes(0).toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
@@ -309,7 +309,7 @@ public class EVM {
 
   @VisibleForTesting
   public Operation operationAtOffset(final Code code, final int offset) {
-    final Bytes bytecode = code.getCodeBytes();
+    final Bytes bytecode = code.getCodeBytes(0);
     // If the length of the program code is shorter than the required offset, halt execution.
     if (offset >= bytecode.size()) {
       return endOfScriptStop;

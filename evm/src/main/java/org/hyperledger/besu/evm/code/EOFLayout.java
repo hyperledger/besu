@@ -17,17 +17,15 @@
 package org.hyperledger.besu.evm.code;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class EOFLayout {
 
   static final int SECTION_TERMINATOR = 0x00;
-  static final int SECTION_CODE = 0x01;
-  static final int SECTION_DATA = 0x02;
-  static final int SECTION_TYPES = 0x03;
+  static final int SECTION_TYPES = 0x01;
+  static final int SECTION_CODE = 0x02;
+  static final int SECTION_DATA = 0x03;
 
   static final int MAX_SUPPORTED_VERSION = 1;
 
@@ -43,149 +41,116 @@ public class EOFLayout {
     this.invalidReason = null;
   }
 
-  private EOFLayout(final Bytes container, final String invalidReason) {
+  private EOFLayout(final Bytes container, final int version, final String invalidReason) {
     this.container = container;
-    this.version = -1;
+    this.version = version;
     this.codeSections = null;
     this.invalidReason = invalidReason;
   }
 
-  private static EOFLayout invalidLayout(final Bytes container, final String invalidReason) {
-    return new EOFLayout(container, invalidReason);
+  private static EOFLayout invalidLayout(
+      final Bytes container, final int version, final String invalidReason) {
+    return new EOFLayout(container, version, invalidReason);
+  }
+
+  private static String readKind(final ByteArrayInputStream inputStream, final int expectedKind) {
+    int kind = inputStream.read();
+    if (kind == -1) {
+      return "Improper section headers";
+    }
+    if (kind != expectedKind) {
+      return "Expected kind " + expectedKind + " but read kind " + kind;
+    }
+    return null;
   }
 
   public static EOFLayout parseEOF(final Bytes container) {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(container.toArrayUnsafe());
-    List<Integer> codeSectionSizes = new ArrayList<>();
-    int dataSize = 0;
-    int typeSize = 0;
 
     if (inputStream.available() < 3) {
-      return invalidLayout(container, "EOF Container too small");
+      return invalidLayout(container, -1, "EOF Container too small");
     }
     if (inputStream.read() != 0xEF) {
-      return invalidLayout(container, "EOF header byte 0 incorrect");
+      return invalidLayout(container, -1, "EOF header byte 0 incorrect");
     }
     if (inputStream.read() != 0x0) {
-      return invalidLayout(container, "EOF header byte 1 incorrect");
+      return invalidLayout(container, -1, "EOF header byte 1 incorrect");
     }
 
     final int version = inputStream.read();
     if (version > MAX_SUPPORTED_VERSION || version < 1) {
-      return invalidLayout(container, "Unsupported EOF Version " + version);
+      return invalidLayout(container, version, "Unsupported EOF Version " + version);
     }
 
-    // parse section headers
-    SECTION_HEADER_LOOP:
-    while (true) {
-      int kind = inputStream.read();
-      switch (kind) {
-        case -1:
-          return invalidLayout(container, "Improper section headers");
-        case SECTION_TERMINATOR:
-          break SECTION_HEADER_LOOP;
-        case SECTION_CODE:
-          if (dataSize > 0) {
-            return invalidLayout(container, "Code section cannot follow data section");
-          }
-          int codeSectionSize = readUnsignedShort(inputStream);
-          if (codeSectionSize < 0) {
-            return invalidLayout(container, "Improper section headers");
-          } else if (codeSectionSize == 0) {
-            return invalidLayout(container, "Empty section contents");
-          }
-          codeSectionSizes.add(codeSectionSize);
-          break;
-        case SECTION_DATA:
-          if (dataSize != 0) {
-            return invalidLayout(container, "Duplicate section number 2");
-          }
-          dataSize = readUnsignedShort(inputStream);
-          if (dataSize < 0) {
-            return invalidLayout(container, "Improper section headers");
-          } else if (dataSize == 0) {
-            return invalidLayout(container, "Empty section contents");
-          }
-          break;
-        case SECTION_TYPES:
-          if (typeSize != 0) {
-            return invalidLayout(container, "Duplicate section number 3");
-          }
-          if (!codeSectionSizes.isEmpty()) {
-            return invalidLayout(container, "Code section cannot precede Type Section");
-          }
-          typeSize = readUnsignedShort(inputStream);
-          if (typeSize == 0) {
-            return invalidLayout(container, "Type section cannot be zero length");
-          }
-          if (typeSize % 2 == 1) {
-            return invalidLayout(container, "Type section cannot be odd length");
-          }
-          break;
-        default:
-          return invalidLayout(container, "EOF Section kind " + kind + " not supported");
-      }
+    String error = readKind(inputStream, SECTION_TYPES);
+    if (error != null) {
+      return invalidLayout(container, version, error);
+    }
+    int typesLength = readUnsignedShort(inputStream);
+    if (typesLength < 0) {
+      return invalidLayout(container, version, "Invalid Types section size");
     }
 
-    if (codeSectionSizes.isEmpty()) {
-      return invalidLayout(container, "Missing code (kind=1) section");
+    error = readKind(inputStream, SECTION_CODE);
+    if (error != null) {
+      return invalidLayout(container, version, error);
+    }
+    int codeSectionCount = readUnsignedShort(inputStream);
+    if (codeSectionCount < 0) {
+      return invalidLayout(container, version, "Invalid Code section count");
+    }
+    int[] codeSectionSizes = new int[codeSectionCount];
+    for (int i = 0; i < codeSectionCount; i++) {
+      int size = readUnsignedShort(inputStream);
+      if (size <= 0) {
+        return invalidLayout(container, version, "Invalid Code section size for section " + i);
+      }
+      codeSectionSizes[i] = size;
     }
 
-    // parse input/output table
-    int[] inputs;
-    int[] outputs;
-    int codeSectionCount = codeSectionSizes.size();
-    if (typeSize == 0) {
-      if (codeSectionCount > 1) {
-        return invalidLayout(container, "Multiple code sections but not enough type entries");
-      }
-
-      inputs = new int[] {0};
-      outputs = new int[] {0};
-    } else if (typeSize > 2048) {
-      return invalidLayout(container, "Too many code sections");
-    } else {
-      if (codeSectionCount != typeSize / 2) {
-        return new EOFLayout(
-            container,
-            "Type data length ("
-                + typeSize
-                + ") does not match code size count ("
-                + codeSectionSizes.size()
-                + " * 2)");
-      }
-
-      inputs = new int[codeSectionCount];
-      outputs = new int[codeSectionCount];
-      inputs[0] = inputStream.read();
-      outputs[0] = inputStream.read();
-      if (inputs[0] != 0 || outputs[0] != 0) {
-        return invalidLayout(container, "First section input and output must be zero");
-      }
-      for (int i = 1; i < codeSectionCount; i++) {
-        inputs[i] = inputStream.read();
-        outputs[i] = inputStream.read();
-      }
+    error = readKind(inputStream, SECTION_DATA);
+    if (error != null) {
+      return invalidLayout(container, version, error);
+    }
+    int dataSize = readUnsignedShort(inputStream);
+    if (dataSize < 0) {
+      return invalidLayout(container, version, "Invalid Data section size");
     }
 
-    // assemble code sections
+    error = readKind(inputStream, SECTION_TERMINATOR);
+    if (error != null) {
+      return invalidLayout(container, version, error);
+    }
+    int[][] typeData = new int[codeSectionCount][3];
+    for (int i = 0; i < codeSectionCount; i++) {
+      // input stream keeps spitting out -1 if we run out of data, so no exceptions
+      typeData[i][0] = inputStream.read();
+      typeData[i][1] = inputStream.read();
+      typeData[i][2] = readUnsignedShort(inputStream);
+    }
+    if (typeData[codeSectionCount - 1][2] == -1) {
+      return invalidLayout(container, version, "Incomplete type section");
+    }
+    if (typeData[0][0] != 0 || typeData[0][1] != 0) {
+      return invalidLayout(
+          container, version, "Code section does not have zero inputs and outputs");
+    }
     CodeSection[] codeSections = new CodeSection[codeSectionCount];
-    for (int i = 0; i < codeSectionSizes.size(); i++) {
-      int thisSectionSize = codeSectionSizes.get(i);
-      byte[] codeBytes = new byte[thisSectionSize];
-      if (thisSectionSize != inputStream.read(codeBytes, 0, thisSectionSize)) {
-        return invalidLayout(container, "Missing or incomplete section data");
+    for (int i = 0; i < codeSectionCount; i++) {
+      int codeSectionSize = codeSectionSizes[i];
+      byte[] code = new byte[codeSectionSize];
+      if (inputStream.read(code, 0, codeSectionSize) != codeSectionSize) {
+        return invalidLayout(container, version, "Incomplete code section " + i);
       }
-      Bytes code = Bytes.wrap(codeBytes);
-      codeSections[i] = new CodeSection(code, inputs[i], outputs[i]);
+      codeSections[i] =
+          new CodeSection(Bytes.wrap(code), typeData[i][0], typeData[i][1], typeData[i][2]);
     }
 
-    // check remaining container validity
-    if (dataSize != inputStream.skip(dataSize)) {
-      return invalidLayout(container, "Missing or incomplete section data");
+    if (inputStream.skip(dataSize) != dataSize) {
+      return invalidLayout(container, version, "Incomplete data section");
     }
-    if (inputStream.available() > 0) {
-      return invalidLayout(container, "Dangling data at end of container");
+    if (inputStream.read() != -1) {
+      return invalidLayout(container, version, "Dangling data after end of all sections");
     }
 
     return new EOFLayout(container, version, codeSections);
@@ -217,31 +182,5 @@ public class EOFLayout {
 
   public boolean isValid() {
     return invalidReason == null;
-  }
-}
-
-//// java17 convert to record
-
-final class CodeSection {
-  final Bytes code;
-  final int inputs;
-  final int outputs;
-
-  public CodeSection(final Bytes code, final int inputs, final int outputs) {
-    this.code = code;
-    this.inputs = inputs;
-    this.outputs = outputs;
-  }
-
-  public Bytes getCode() {
-    return code;
-  }
-
-  public int getInputs() {
-    return inputs;
-  }
-
-  public int getOutputs() {
-    return outputs;
   }
 }
