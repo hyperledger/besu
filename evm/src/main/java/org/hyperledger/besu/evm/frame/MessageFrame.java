@@ -1086,6 +1086,10 @@ public class MessageFrame {
     this.currentOperation = currentOperation;
   }
 
+  public Multimap<Address, Bytes32> getWarmedUpStorage() {
+    return warmedUpStorage;
+  }
+
   public Optional<MemoryEntry> getMaybeUpdatedMemory() {
     return maybeUpdatedMemory;
   }
