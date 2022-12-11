@@ -505,6 +505,8 @@ public class Element {
   /**
    * fromMontgomery converts the element from Montgomery to regular representation sets and returns
    * z = z * 1
+   *
+   * @return z * 1
    */
   public Element fromMontgomery() {
     UInt256 calc = add(this.value);
