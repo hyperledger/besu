@@ -188,42 +188,42 @@ public class EthCallTest {
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZero() {
+  public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZero() {
     final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.empty(), true);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), true);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
+  public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
     final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), true);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZero() {
+  public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZero() {
     final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.empty(), false);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), false);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
+  public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
     final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), false);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenFeesAreZero() {
+  public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenFeesAreZero() {
     final JsonCallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), true);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenFeesAreZero() {
+  public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenFeesAreZero() {
     final JsonCallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), false);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
-  private void internalAutoSelectIsAllowedExeecdBalance(
+  private void internalAutoSelectIsAllowedExceedingBalance(
       final JsonCallParameter callParameter,
       final Optional<Wei> baseFee,
       final boolean isAllowedExeedingBalance) {
