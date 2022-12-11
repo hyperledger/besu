@@ -71,8 +71,6 @@ public interface Operation {
 
   int getStackItemsProduced();
 
-  int getOpSize();
-
   /**
    * Determines whether this operation has been virtually added to the contract code. For instance
    * if the contract is not ended by a STOP opcode the {@link EVM} adds an explicit end of script

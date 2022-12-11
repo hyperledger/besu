@@ -53,11 +53,6 @@ public class VirtualOperation implements Operation {
   }
 
   @Override
-  public int getOpSize() {
-    return delegate.getOpSize();
-  }
-
-  @Override
   public boolean isVirtualOperation() {
     return true;
   }
