@@ -95,7 +95,7 @@ public class EthCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(null, null, null, null, null, null, null, null, null);
+        new JsonCallParameter(null, null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -181,7 +181,7 @@ public class EthCallTest {
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, BLOCK_NOT_FOUND);
 
-    JsonRpcResponse response = method.response(request);
+    final JsonRpcResponse response = method.response(request);
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verify(blockchainQueries).headBlockNumber();
@@ -189,37 +189,37 @@ public class EthCallTest {
 
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZero() {
-    JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
     internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.empty(), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
-    JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
     internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZero() {
-    JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
+    final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
     internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.empty(), false);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
-    JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
+    final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
     internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenFeesAreZero() {
-    JsonCallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
+    final JsonCallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
     internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenFeesAreZero() {
-    JsonCallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
+    final JsonCallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
     internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
@@ -229,7 +229,7 @@ public class EthCallTest {
       final boolean isAllowedExeedingBalance) {
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
 
-    BlockHeader blockHeader = mock(BlockHeader.class);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(baseFee);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
@@ -238,7 +238,7 @@ public class EthCallTest {
 
     method.response(request);
 
-    TransactionValidationParams transactionValidationParams =
+    final TransactionValidationParams transactionValidationParams =
         ImmutableTransactionValidationParams.builder()
             .from(TransactionValidationParams.transactionSimulator())
             .isAllowExceedingBalance(isAllowedExeedingBalance)
@@ -262,6 +262,7 @@ public class EthCallTest {
         maxPriorityFeesPerGas,
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         null);
   }
 
