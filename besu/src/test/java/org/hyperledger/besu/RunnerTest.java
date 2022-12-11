@@ -96,7 +96,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -352,7 +351,6 @@ public final class RunnerTest {
     return currentBlock;
   }
 
-  @NotNull
   private Request getRequest(final String method, final String baseUrl) {
     return new Request.Builder()
         .post(
