@@ -32,7 +32,7 @@ public class Element {
   static {
     {
       // z0, z1, z2 and z3 represent the 4 limbs of element
-      // `0` in Montgomery form.
+      // `1` in Montgomery form.
       UInt256 z0 = UInt256.valueOf(8589934590L);
       UInt256 z1 = UInt256.valueOf(6378425256633387010L).shiftLeft(64);
       UInt256 z2 = UInt256.valueOf(new BigInteger("11064306276430008309", 10)).shiftLeft(128);
