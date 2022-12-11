@@ -67,12 +67,16 @@ public class JsonRpcResponseUtils {
   /** Hex is base 16 */
   private static final int HEX_RADIX = 16;
 
-  /** @param values hex encoded values. */
+  /**
+   * @param values hex encoded values.
+   */
   public JsonRpcResponse response(final Map<JsonRpcResponseKey, String> values) {
     return response(values, new ArrayList<>());
   }
 
-  /** @param values hex encoded values. */
+  /**
+   * @param values hex encoded values.
+   */
   public JsonRpcResponse response(
       final Map<JsonRpcResponseKey, String> values, final List<TransactionResult> transactions) {
 
