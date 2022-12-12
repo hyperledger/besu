@@ -37,15 +37,8 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
   private final TimestampSchedule timestampSchedule;
+  private final MergeContext mergeContext;
   private ProtocolContext protocolContext;
-
-  public TransitionProtocolSchedule(
-      final ProtocolSchedule preMergeProtocolSchedule,
-      final ProtocolSchedule postMergeProtocolSchedule,
-      final TimestampSchedule timestampSchedule) {
-    this.timestampSchedule = timestampSchedule;
-    transitionUtils = new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule);
-  }
 
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
@@ -53,6 +46,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
       final MergeContext mergeContext,
       final TimestampSchedule timestampSchedule) {
     this.timestampSchedule = timestampSchedule;
+    this.mergeContext = mergeContext;
     transitionUtils =
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
   }
@@ -75,10 +69,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   private ProtocolSpec getByBlockHeaderFromTransitionUtils(
       final ProcessableBlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
-    if (transitionUtils.getMergeContext().getFinalized().isEmpty()) {
+    if (mergeContext.getFinalized().isEmpty()) {
 
       // if head is not post-merge, return pre-merge schedule:
-      if (!transitionUtils.getMergeContext().isPostMerge()) {
+      if (!mergeContext.isPostMerge()) {
         debugLambda(
             LOG,
             "for {} returning a pre-merge schedule because we are not post-merge",
@@ -93,8 +87,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
               .getTotalDifficultyByHash(blockHeader.getParentHash())
               .orElseThrow();
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
-      Difficulty terminalDifficulty =
-          transitionUtils.getMergeContext().getTerminalTotalDifficulty();
+      Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
       debugLambda(
           LOG,
           " block {} ttd is: {}, parent total diff is: {}, this total diff is: {}",
