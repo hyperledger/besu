@@ -72,7 +72,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
   }
 
-  public ProtocolSpec getByBlockHeaderFromTransitionUtils(
+  private ProtocolSpec getByBlockHeaderFromTransitionUtils(
       final ProcessableBlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
     if (transitionUtils.getMergeContext().getFinalized().isEmpty()) {
