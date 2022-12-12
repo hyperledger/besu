@@ -35,11 +35,6 @@ public class TransitionUtils<SwitchingObject> {
   private final SwitchingObject postMergeObject;
 
   public TransitionUtils(
-      final SwitchingObject preMergeObject, final SwitchingObject postMergeObject) {
-    this(preMergeObject, postMergeObject, PostMergeContext.get());
-  }
-
-  public TransitionUtils(
       final SwitchingObject preMergeObject,
       final SwitchingObject postMergeObject,
       final MergeContext mergeContext) {
@@ -101,9 +96,5 @@ public class TransitionUtils<SwitchingObject> {
     // return true for genesis block when merge-at-genesis, otherwise false
     return header.getNumber() == 0L
         && header.getDifficulty().greaterOrEqualThan(configuredTotalTerminalDifficulty);
-  }
-
-  public MergeContext getMergeContext() {
-    return mergeContext;
   }
 }
