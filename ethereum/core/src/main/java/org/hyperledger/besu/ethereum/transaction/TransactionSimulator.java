@@ -309,6 +309,8 @@ public class TransactionSimulator {
               .getChainId()
               .orElse(BigInteger.ONE)); // needed to make some transactions valid
     }
+    callParams.getAccessList().ifPresent(transactionBuilder::accessList);
+
     final Transaction transaction = transactionBuilder.build();
     return Optional.ofNullable(transaction);
   }
