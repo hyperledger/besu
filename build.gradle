@@ -654,12 +654,6 @@ task distDocker {
       }
     }
 
-    def shaTag = "gitSha-${getCheckedOutGitCommitHash(40)}" //full length sha
-    exec {
-      executable "sh"
-      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${shaTag}'"
-    }
-
     // tag the "default" (which is the variant in the zero position)
     exec {
       executable "sh"
@@ -757,16 +751,34 @@ task dockerUpload {
       }
     }
 
-    def shaTag = "gitSha-${getCheckedOutGitCommitHash(40)}" //full length sha
-    exec {
-      executable "sh"
-      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${shaTag}' && docker push '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}'"
-    }
-
     exec {
       def archImage = "${image}-${architecture}"
       def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
       additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImageName}:${tag.trim()}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${architecture}'" }
+      executable "sh"
+      args "-c", cmd
+    }
+  }
+}
+
+task dockerUploadRelease {
+  def architecture = System.getenv('architecture')
+  def image = "${dockerImageName}:${dockerBuildVersion}"
+
+  doLast {
+    for (def variant in dockerVariants) {
+      def variantImage = "${image}-${variant}"
+      exec {
+        def archVariantImage = "${variantImage}-${architecture}"
+        def cmd = "docker pull '${variantImage}' && docker tag '${variantImage}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+
+    exec {
+      def archImage = "${image}-${architecture}"
+      def cmd = "docker pull '${archImage}' && docker tag ${image} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
       executable "sh"
       args "-c", cmd
     }
@@ -801,12 +813,6 @@ task manifestDocker {
         }
       }
 
-      def shaTag = "gitSha-${getCheckedOutGitCommitHash(40)}" //full length sha
-      exec {
-        executable "sh"
-        args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${shaTag}' && docker manifest push '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}'"
-      }
-
       exec {
         def targets = ""
         archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
@@ -814,6 +820,33 @@ task manifestDocker {
         executable "sh"
         args "-c", cmd
       }
+    }
+  }
+}
+
+task manifestDockerRelease {
+  def archs = ["arm64", "amd64"]
+  def baseTag = "${dockerImageName}:latest";
+
+  doLast {
+    for (def variant in dockerVariants) {
+      def variantImage = "${baseTag}-${variant}"
+      def targets = ""
+      archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+
+      exec {
+        def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+
+    exec {
+      def targets = ""
+      archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
+      def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
+      executable "sh"
+      args "-c", cmd
     }
   }
 }
