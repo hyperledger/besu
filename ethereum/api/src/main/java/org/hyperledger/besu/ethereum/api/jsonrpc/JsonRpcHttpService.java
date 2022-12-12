@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthentic
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.AuthenticatedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorVerticle;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TimedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TracedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
@@ -69,6 +70,7 @@ import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.extension.trace.propagation.B3Propagator;
 import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -340,28 +342,33 @@ public class JsonRpcHttpService {
         .handler(HandlerFactory.jsonRpcParser())
         .handler(
             HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods));
-    if (authenticationService.isPresent()) {
-      mainRoute.blockingHandler(
-          HandlerFactory.jsonRpcExecutor(
-              new JsonRpcExecutor(
-                  new AuthenticatedJsonRpcProcessor(
-                      new TimedJsonRpcProcessor(
-                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
-                      authenticationService.get(),
-                      config.getNoAuthRpcApis()),
-                  rpcMethods),
-              tracer),
-          false);
-    } else {
-      mainRoute.blockingHandler(
-          HandlerFactory.jsonRpcExecutor(
-              new JsonRpcExecutor(
-                  new TimedJsonRpcProcessor(
-                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
-                  rpcMethods),
-              tracer),
-          false);
-    }
+
+    final JsonRpcExecutorVerticle jsonRpcExecutorVerticle =
+        authenticationService
+            .map(
+                service ->
+                    new JsonRpcExecutorVerticle(
+                        new JsonRpcExecutor(
+                            new AuthenticatedJsonRpcProcessor(
+                                new TimedJsonRpcProcessor(
+                                    new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
+                                    requestTimer),
+                                service,
+                                config.getNoAuthRpcApis()),
+                            rpcMethods),
+                        tracer))
+            .orElseGet(
+                () ->
+                    new JsonRpcExecutorVerticle(
+                        new JsonRpcExecutor(
+                            new TimedJsonRpcProcessor(
+                                new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
+                                requestTimer),
+                            rpcMethods),
+                        tracer));
+
+    vertx.deployVerticle(jsonRpcExecutorVerticle, new DeploymentOptions().setWorker(true));
+    mainRoute.handler(HandlerFactory.jsonRpcExecutor(vertx));
 
     if (authenticationService.isPresent()) {
       router

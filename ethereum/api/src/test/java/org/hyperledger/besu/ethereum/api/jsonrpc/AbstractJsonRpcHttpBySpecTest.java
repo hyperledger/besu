@@ -92,7 +92,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       }
       try (final Stream<Path> s = Files.walk(dir, 1)) {
         s.map(Path::toFile)
-            .filter(f -> f.getPath().endsWith(".json"))
+            .filter(f -> f.getPath().endsWith("trace_transaction_0x1B.json"))
             .filter(f -> !f.getPath().contains("genesis"))
             .filter(f -> Arrays.stream(exceptions).noneMatch(f.getPath()::contains))
             .map(AbstractJsonRpcHttpBySpecTest::fileToParams)

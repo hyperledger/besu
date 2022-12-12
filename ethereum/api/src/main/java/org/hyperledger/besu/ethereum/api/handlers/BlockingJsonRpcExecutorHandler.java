@@ -47,9 +47,9 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JsonRpcExecutorHandler {
+public class BlockingJsonRpcExecutorHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JsonRpcExecutorHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BlockingJsonRpcExecutorHandler.class);
   private static final String SPAN_CONTEXT = "span_context";
   private static final String APPLICATION_JSON = "application/json";
   private static final ObjectMapper JSON_OBJECT_MAPPER =
@@ -61,7 +61,7 @@ public class JsonRpcExecutorHandler {
           .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
           .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
-  private JsonRpcExecutorHandler() {}
+  private BlockingJsonRpcExecutorHandler() {}
 
   public static Handler<RoutingContext> handler(
       final JsonRpcExecutor jsonRpcExecutor, final Tracer tracer) {

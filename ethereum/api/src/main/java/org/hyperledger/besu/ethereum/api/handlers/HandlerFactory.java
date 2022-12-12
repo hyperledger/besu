@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 
 public class HandlerFactory {
@@ -48,6 +49,10 @@ public class HandlerFactory {
 
   public static Handler<RoutingContext> jsonRpcExecutor(
       final JsonRpcExecutor jsonRpcExecutor, final Tracer tracer) {
-    return JsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer);
+    return BlockingJsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer);
+  }
+
+  public static Handler<RoutingContext> jsonRpcExecutor(final Vertx vertx) {
+    return new NonBlockingJsonRpcExecutorHandler(vertx);
   }
 }
