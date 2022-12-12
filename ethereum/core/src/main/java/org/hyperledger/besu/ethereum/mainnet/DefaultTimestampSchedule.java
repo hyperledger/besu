@@ -17,6 +17,9 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.NavigableSet;
@@ -60,6 +63,24 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
         .sorted(Comparator.comparing(TimedProtocolSpec::getTimestamp))
         .map(spec -> spec.getSpec().getName() + ": " + spec.getTimestamp())
         .collect(Collectors.joining(", ", "[", "]"));
+  }
+
+  @Override
+  public void setTransactionFilter(final TransactionFilter transactionFilter) {
+    protocolSpecs.forEach(
+        spec -> spec.getSpec().getTransactionValidator().setTransactionFilter(transactionFilter));
+  }
+
+  @Override
+  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
+      WorldStateArchive publicWorldStateArchive) {
+    protocolSpecs.forEach(
+        spec -> {
+          final BlockProcessor blockProcessor = spec.getSpec().getBlockProcessor();
+          if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
+            ((PrivacyBlockProcessor) blockProcessor)
+                .setPublicWorldStateArchive(publicWorldStateArchive);
+        });
   }
 
   private static class TimedProtocolSpec {

@@ -138,6 +138,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
+    timestampSchedule.setTransactionFilter(transactionFilter);
     transitionUtils.dispatchConsumerAccordingToMergeState(
         protocolSchedule -> protocolSchedule.setTransactionFilter(transactionFilter));
   }
@@ -145,6 +146,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
       final WorldStateArchive publicWorldStateArchive) {
+    timestampSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(publicWorldStateArchive);
     transitionUtils.dispatchConsumerAccordingToMergeState(
         protocolSchedule ->
             protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
