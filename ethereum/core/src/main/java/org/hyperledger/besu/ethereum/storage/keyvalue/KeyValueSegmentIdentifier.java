@@ -35,7 +35,8 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   BACKWARD_SYNC_BLOCKS(new byte[] {14}),
   BACKWARD_SYNC_CHAIN(new byte[] {15}),
   SNAPSYNC_MISSING_ACCOUNT_RANGE(new byte[] {16}),
-  SNAPSYNC_ACCOUNT_TO_FIX(new byte[] {17});
+  SNAPSYNC_ACCOUNT_TO_FIX(new byte[] {17}),
+  CHAIN_PRUNER_STATE(new byte[] {18});
 
   private final byte[] id;
   private final int[] versionList;
