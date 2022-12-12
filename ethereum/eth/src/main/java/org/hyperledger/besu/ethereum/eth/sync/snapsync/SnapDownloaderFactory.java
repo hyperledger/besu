@@ -40,6 +40,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("unused")
 public class SnapDownloaderFactory extends FastDownloaderFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
