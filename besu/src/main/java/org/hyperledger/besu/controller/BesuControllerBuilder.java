@@ -35,6 +35,9 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
+import org.hyperledger.besu.ethereum.chain.ChainDataPrunerStorage;
+import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -51,6 +54,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
@@ -143,6 +147,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected int maxPeers;
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority = true;
+  protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -271,6 +276,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  public BesuControllerBuilder chainPruningConfiguration(
+      final ChainPrunerConfiguration chainPrunerConfiguration) {
+    this.chainPrunerConfiguration = chainPrunerConfiguration;
+    return this;
+  }
+
   public BesuControllerBuilder networkConfiguration(
       final NetworkingConfiguration networkingConfiguration) {
     this.networkingConfiguration = networkingConfiguration;
@@ -329,6 +340,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createProtocolContext(
             blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
     validateContext(protocolContext);
+
+    if (chainPrunerConfiguration.getChainPruningEnabled()) {
+      protocolContext
+          .safeConsensusContext(MergeContext.class)
+          .ifPresent(
+              mergeContext -> {
+                mergeContext.setIsChainPruningEnabled(true);
+              });
+      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
+      blockchain.observeBlockAdded(chainDataPruner);
+      LOG.info(
+          "Chain data pruning enabled with recent blocks retained to be: "
+              + chainPrunerConfiguration.getChainPruningBlocksRetained()
+              + " and frequency to be: "
+              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
+    }
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());
@@ -669,6 +696,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             storageProvider.createWorldStatePreimageStorage();
         return new DefaultWorldStateArchive(worldStateStorage, preimageStorage);
     }
+  }
+
+  private ChainDataPruner createChainPruner(final BlockchainStorage blockchainStorage) {
+    return new ChainDataPruner(
+        blockchainStorage,
+        new ChainDataPrunerStorage(
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
+        chainPrunerConfiguration.getChainPruningBlocksRetained(),
+        chainPrunerConfiguration.getChainPruningBlocksFrequency(),
+        MonitoredExecutors.newBoundedThreadPool(
+            ChainDataPruner.class.getSimpleName(),
+            1,
+            1,
+            ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
+            metricsSystem));
   }
 
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
