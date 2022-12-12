@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,21 +11,22 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.evmtool;
+package org.hyperledger.besu.ethereum.verkletrie.bandersnatch;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.verkletrie.bandersnatch.fp.Element;
 
-import picocli.CommandLine;
+public class PointAffine {
 
-public final class EvmTool {
+  final Element x;
+  final Element y;
 
-  public static void main(final String... args) {
-    SignatureAlgorithmFactory.setDefaultInstance();
+  public PointAffine(final Element x, final Element y) {
+    this.x = x;
+    this.y = y;
+  }
 
-    final EvmToolCommand evmToolCommand = new EvmToolCommand();
-
-    evmToolCommand.parse(new CommandLine.RunLast(), args);
+  public static PointAffine fromProj(final Point point) {
+    return new PointAffine(point.x.divide(point.z), point.y.divide(point.z));
   }
 }
