@@ -368,26 +368,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     // cleaning the account trie node in this location
     pruneTrieNode(Bytes.EMPTY, location, maybeExclude);
 
-    // cleaning the account flat database by searching for the keys that are in the range
-    accountStorage
-        .getInRange(range.getLeft(), range.getRight())
-        .forEach(
-            (key, value) -> {
-              final boolean shouldExclude =
-                  maybeExclude
-                      .filter(
-                          bytes ->
-                              bytes.commonPrefixLength(CompactEncoding.bytesToPath(key))
-                                  == bytes.size())
-                      .isPresent();
-              if (!shouldExclude) {
-                // clean the storage and code of the deleted account
-                pruneStorageState(key, Bytes.EMPTY, Optional.empty());
-                pruneCodeState(key);
-                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
-                    .accountStorageTransaction.remove(key.toArrayUnsafe());
-              }
-            });
     updater.close();
   }
 
@@ -400,24 +380,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     // cleaning the storage trie node in this location
     pruneTrieNode(accountHash, location, maybeExclude);
 
-    // cleaning the storage flat database by searching for the keys that are in the range
-    storageStorage
-        .getInRange(range.getLeft(), range.getRight())
-        .forEach(
-            (key, value) -> {
-              final boolean shouldExclude =
-                  maybeExclude
-                      .filter(
-                          bytes ->
-                              bytes.commonPrefixLength(
-                                      CompactEncoding.bytesToPath(key).slice(Bytes32.SIZE * 2))
-                                  == bytes.size())
-                      .isPresent();
-              if (!shouldExclude) {
-                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
-                    .storageStorageTransaction.remove(key.toArrayUnsafe());
-              }
-            });
     updater.close();
   }
 
