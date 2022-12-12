@@ -35,7 +35,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public Optional<ProtocolSpec> getByTimestamp(final long timestamp) {
-    for (TimedProtocolSpec protocolSpec : protocolSpecs) {
+    for (final TimedProtocolSpec protocolSpec : protocolSpecs) {
       if (protocolSpec.getTimestamp() <= timestamp) {
         return Optional.of(protocolSpec.getSpec());
       }
