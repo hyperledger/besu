@@ -17,19 +17,13 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.math.BigInteger;
-import java.util.Optional;
+public interface PrivacySupportingProtocolSchedule {
 
-public interface TimestampSchedule
-    extends HeaderBasedProtocolSchedule, PrivacySupportingProtocolSchedule {
-  Optional<ProtocolSpec> getByTimestamp(final long timestamp);
+  void setTransactionFilter(final TransactionFilter transactionFilter);
 
-  Optional<BigInteger> getChainId();
-
-  @Override
-  default ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
-    return getByTimestamp(blockHeader.getTimestamp()).orElse(null);
-  }
+  void setPublicWorldStateArchiveForPrivacyBlockProcessor(
+      final WorldStateArchive publicWorldStateArchive);
 }
