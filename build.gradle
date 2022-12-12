@@ -768,7 +768,6 @@ task dockerUpload {
 }
 
 task manifestDocker {
-  dependsOn distDocker
 
   def image = "${dockerImageName}:${dockerBuildVersion}"
   def archs = ["arm64", "amd64"]
