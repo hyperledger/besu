@@ -757,6 +757,12 @@ task dockerUpload {
       }
     }
 
+    def shaTag = "gitSha-${getCheckedOutGitCommitHash(40)}" //full length sha
+    exec {
+      executable "sh"
+      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${shaTag}' && docker push '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}'"
+    }
+
     exec {
       def archImage = "${image}-${architecture}"
       def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
@@ -793,6 +799,12 @@ task manifestDocker {
           executable "sh"
           args "-c", cmd
         }
+      }
+
+      def shaTag = "gitSha-${getCheckedOutGitCommitHash(40)}" //full length sha
+      exec {
+        executable "sh"
+        args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${shaTag}' && docker manifest push '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}'"
       }
 
       exec {
