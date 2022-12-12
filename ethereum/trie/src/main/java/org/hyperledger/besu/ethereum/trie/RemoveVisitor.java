@@ -39,9 +39,19 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
     if (commonPathLength == extensionPath.size()) {
       final Node<V> newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
       final Node<V> updatedNode = extensionNode.replaceChild(newChild);
-      if (!(updatedNode instanceof ExtensionNode)) {
+      updatedNode.setLocation(extensionNode.getLocation());
+      if (updatedNode instanceof LeafNode) {
         remove(extensionNode.getChild());
+      } else if (updatedNode instanceof BranchNode) {
+        if (updatedNode.getChildren().get(extensionNode.getPath().get(0)) instanceof NullNode) {
+          remove(extensionNode.getChild());
+        }
+      } else if (updatedNode instanceof ExtensionNode) {
+        if (extensionNode.getPath().size() != updatedNode.getPath().size()) {
+          remove(extensionNode.getChild());
+        }
       }
+      return updatedNode;
     }
 
     // path diverges before the end of the extension, so it cannot match
@@ -55,30 +65,54 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
     final byte childIndex = path.get(0);
     if (childIndex == CompactEncoding.LEAF_TERMINATOR) {
       final Node<V> updatedNode = branchNode.removeValue();
-      if (!(updatedNode instanceof BranchNode)) {
-        branchNode
-            .getChildren()
-            .forEach(
-                child -> {
-                  if (!(child instanceof NullNode)) {
-                    remove(child);
-                  }
-                });
+      updatedNode.setLocation(branchNode.getLocation());
+      if (updatedNode instanceof LeafNode) {
+        for (int i = 0; i < BranchNode.RADIX; i++) {
+          if (!(branchNode.getChildren().get(i) instanceof NullNode)) {
+            remove(branchNode.child((byte) i));
+          }
+        }
+      } else if (updatedNode instanceof BranchNode) {
+        for (int i = 0; i < BranchNode.RADIX; i++) {
+          if (!(branchNode.getChildren().get(i) instanceof NullNode)
+              && updatedNode.getChildren().get(i) instanceof NullNode) {
+            remove(branchNode.child((byte) i));
+          }
+        }
+      } else if (updatedNode instanceof ExtensionNode) {
+        for (int i = 0; i < BranchNode.RADIX; i++) {
+          if (!(branchNode.getChildren().get(i) instanceof NullNode)
+              && updatedNode.getPath().get(0) != (byte) i) {
+            remove(branchNode.child((byte) i));
+          }
+        }
       }
       return updatedNode;
     }
 
     final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
     final Node<V> updatedNode = branchNode.replaceChild(childIndex, updatedChild, allowFlatten);
-    if (!(updatedNode instanceof BranchNode)) {
-      branchNode
-          .getChildren()
-          .forEach(
-              child -> {
-                if (!(child instanceof NullNode)) {
-                  remove(child);
-                }
-              });
+    updatedNode.setLocation(branchNode.getLocation());
+    if (updatedNode instanceof LeafNode) {
+      for (int i = 0; i < BranchNode.RADIX; i++) {
+        if (!(branchNode.getChildren().get(i) instanceof NullNode)) {
+          remove(branchNode.child((byte) i));
+        }
+      }
+    } else if (updatedNode instanceof BranchNode) {
+      for (int i = 0; i < BranchNode.RADIX; i++) {
+        if (!(branchNode.getChildren().get(i) instanceof NullNode)
+            && updatedNode.getChildren().get(i) instanceof NullNode) {
+          remove(branchNode.child((byte) i));
+        }
+      }
+    } else if (updatedNode instanceof ExtensionNode) {
+      for (int i = 0; i < BranchNode.RADIX; i++) {
+        if (!(branchNode.getChildren().get(i) instanceof NullNode)
+            && updatedNode.getPath().get(0) != (byte) i) {
+          remove(branchNode.child((byte) i));
+        }
+      }
     }
     return updatedNode;
   }

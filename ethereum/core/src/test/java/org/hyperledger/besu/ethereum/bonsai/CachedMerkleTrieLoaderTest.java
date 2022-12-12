@@ -23,10 +23,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -60,29 +57,6 @@ public class CachedMerkleTrieLoaderTest {
         TrieGenerator.generateTrie(
             inMemoryWorldState, accounts.stream().map(Hash::hash).collect(Collectors.toList()));
     merkleTrieLoader = new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-  }
-
-  @Test
-  public void sh2ouldAddAccountNodesInCacheDuringPreload() {
-
-    List<Hash> accounts =
-        List.of(
-            Hash.fromHexString(
-                "0x0d174f45fb00f7905ce254c0ef491691c955a15fdf10c5665b4493a591627fbe"),
-            Hash.fromHexString(
-                "0x10204f45fb00f7905ce254c0ef491691c955a15fdf10c5665b4493a591627fbe"));
-
-    trie = TrieGenerator.generateTrie(inMemoryWorldState, accounts);
-
-    trie.removePath(
-        CompactEncoding.bytesToPath(accounts.get(1)),
-        new RemoveVisitor<>() {
-          @Override
-          public void remove(final Node<Bytes> node) {
-            super.remove(node);
-            System.out.println("remove " + node.print());
-          }
-        });
   }
 
   @Test

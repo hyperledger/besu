@@ -34,6 +34,9 @@ public interface Node<V> {
     return Optional.empty();
   }
 
+  default void setLocation(final Optional<Bytes> location) {}
+  ;
+
   Optional<V> getValue();
 
   List<Node<V>> getChildren();

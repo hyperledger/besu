@@ -112,27 +112,6 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     }
   }
 
-  public Optional<Pair<byte[], byte[]>> getMoreClosedByPrefix(final Bytes prefix) {
-    final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
-    // System.out.println("seek for p rev snapshot "+prefix);
-    rocksIterator.seekForPrev(prefix.toArrayUnsafe());
-    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
-    try {
-      if (rocksDbKeyIterator.hasNext()) {
-        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
-        final Bytes key = Bytes.wrap(next.getKey());
-        // System.out.println("-> "+prefix+" "+key);
-        if (key.commonPrefixLength(prefix) == key.size()) {
-          return Optional.of(next);
-        }
-      }
-      return Optional.empty();
-    } finally {
-      rocksDbKeyIterator.close();
-      rocksIterator.close();
-    }
-  }
-
   public Optional<Pair<Bytes, Bytes>> getNearestKey(final Bytes key) {
     final RocksIterator rocksIterator = snapTx.getIterator(readOptions, columnFamilyHandle);
     // System.out.println("seek for p rev "+prefix);

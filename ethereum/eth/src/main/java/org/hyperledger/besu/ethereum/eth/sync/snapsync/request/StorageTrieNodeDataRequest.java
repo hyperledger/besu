@@ -53,6 +53,17 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Node<Bytes> node = TrieNodeDecoder.decode(getLocation(), data);
       deletePotentialOldStorageEntries(
           (BonsaiWorldStateKeyValueStorage) worldStateStorage, accountHash, node);
+      node.getChildren()
+          .forEach(
+              bytesNode -> {
+                if (!bytesNode.isReferencedByHash()) {
+                  updater.putAccountStorageTrieNode(
+                      accountHash,
+                      bytesNode.getLocation().orElse(Bytes.EMPTY),
+                      bytesNode.getHash(),
+                      bytesNode.getRlp());
+                }
+              });
     }
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     return 1;

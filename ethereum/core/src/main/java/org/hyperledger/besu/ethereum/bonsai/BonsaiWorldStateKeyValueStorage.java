@@ -24,15 +24,20 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -103,15 +108,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public Optional<Bytes> getAccount(final Hash accountHash) {
     final Bytes accountPath = CompactEncoding.bytesToPath(accountHash);
     Optional<Pair<Bytes, Bytes>> nearestKey = trieBranchStorage.getNearestKey(accountPath);
-    return nearestKey
-        .map(pair -> TrieNodeDecoder.decode(pair.getKey(), pair.getValue()))
-        .filter(
-            leaf ->
-                leaf instanceof LeafNode
-                    && Bytes.concatenate(leaf.getLocation().orElse(Bytes.EMPTY), leaf.getPath())
-                        .equals(accountPath))
-        .flatMap(Node::getValue);
-    /*Optional<Bytes> byte2 = Optional.empty();
+    Optional<Bytes> byte1 =
+        nearestKey
+            .map(pair -> TrieNodeDecoder.decode(pair.getKey(), pair.getValue()))
+            .filter(
+                leaf ->
+                    leaf instanceof LeafNode
+                        && Bytes.concatenate(leaf.getLocation().orElse(Bytes.EMPTY), leaf.getPath())
+                            .equals(accountPath))
+            .flatMap(Node::getValue);
+    Optional<Bytes> byte2 = Optional.empty();
     final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
     ArrayList<String> dd = new ArrayList<>();
     if (worldStateRootHash.isPresent()) {
@@ -151,7 +157,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         dd.forEach(System.out::println);
       }
     }
-    return byte2;*/
+    return byte2;
   }
 
   @Override
@@ -210,6 +216,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
   }
 
+  public KeyValueStorage getTrieBranchStorage() {
+    return trieBranchStorage;
+  }
+
   public Optional<Bytes> getWorldStateRootHash() {
     return trieBranchStorage.get(WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
   }
@@ -222,17 +232,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     final Bytes slotPath = Bytes.concatenate(accountHash, CompactEncoding.bytesToPath(slotHash));
     Optional<Pair<Bytes, Bytes>> moreClosedByPrefix = trieBranchStorage.getNearestKey(slotPath);
 
-    return moreClosedByPrefix
-        .map(pair -> TrieNodeDecoder.decode(Bytes.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
-        .filter(
-            leaf ->
-                leaf instanceof LeafNode
-                    && Bytes.concatenate(leaf.getLocation().orElse(Bytes.EMPTY), leaf.getPath())
-                        .equals(slotPath))
-        .flatMap(Node::getValue)
-        .map(value -> Bytes32.leftPad(RLP.decodeValue(value)));
+    Optional<Bytes> bytes1 =
+        moreClosedByPrefix
+            .map(
+                pair ->
+                    TrieNodeDecoder.decode(Bytes.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
+            .filter(
+                leaf ->
+                    leaf instanceof LeafNode
+                        && Bytes.concatenate(leaf.getLocation().orElse(Bytes.EMPTY), leaf.getPath())
+                            .equals(slotPath))
+            .flatMap(Node::getValue)
+            .map(value -> Bytes32.leftPad(RLP.decodeValue(value)));
 
-    /*Optional<Bytes> bytes2 = Optional.empty();
+    Optional<Bytes> bytes2 = Optional.empty();
 
     Optional<Bytes> account = Optional.empty();
     final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
@@ -306,7 +319,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         }
       }
     }
-    return bytes2;*/
+    return bytes2;
+  }
+
+  public static void main(final String[] args) {
+    System.out.println(
+        CompactEncoding.bytesToPath(
+            Bytes.fromHexString(
+                "0xd2caf3f2d16f035d9915e583d95f19193a5ace128c1b8439d3740ad9ea72bc10")));
   }
 
   @Override

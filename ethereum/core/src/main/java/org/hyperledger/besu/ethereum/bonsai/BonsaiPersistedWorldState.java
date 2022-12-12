@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.util.RangeManager;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -41,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -78,11 +80,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                 archive
                     .getCachedMerkleTrieLoader()
                     .preLoadAccount(worldStateStorage, worldStateRootHash, address);
-              }
-
-              @Override
-              public void accept(final Address address) {
-                archive.getCachedMerkleTrieLoader().preLoadAllAccount(worldStateStorage, address);
               }
             },
             new BonsaiWorldStateUpdater.Consumer<>() {
@@ -294,37 +291,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         continue;
       }
       final Hash addressHash = Hash.hash(address);
-      final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-          new StoredMerklePatriciaTrie<>(
-              (location, key) ->
-                  archive
-                      .getCachedMerkleTrieLoader()
-                      .getAccountStorageTrieNode(worldStateStorage, addressHash, location, key),
-              oldAccount.getStorageRoot(),
-              Function.identity(),
-              Function.identity());
-      Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-      while (!entriesToDelete.isEmpty()) {
-        entriesToDelete
-            .keySet()
-            .forEach(
-                keyHash ->
-                    storageTrie.removePath(
-                        CompactEncoding.bytesToPath(keyHash),
-                        new RemoveVisitor<>() {
-                          @Override
-                          public void remove(final Node<Bytes> node) {
-                            stateUpdater.removeAccountStateTrieNode(
-                                Bytes.concatenate(addressHash, node.getLocation().get()),
-                                node.getHash());
-                          }
-                        }));
-        if (entriesToDelete.size() == 256) {
-          entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-        } else {
-          break;
-        }
-      }
+      final Pair<Bytes, Bytes> range =
+          RangeManager.generateRangeFromLocation(addressHash, Bytes.EMPTY);
+      worldStateStorage
+          .trieBranchStorage
+          .getInRange(range.getLeft(), range.getRight())
+          .forEach((bytes, bytes2) -> stateUpdater.removeAccountStateTrieNode(bytes, null));
     }
   }
 

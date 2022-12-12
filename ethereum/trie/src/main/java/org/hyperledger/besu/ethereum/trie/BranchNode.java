@@ -38,7 +38,7 @@ public class BranchNode<V> implements Node<V> {
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
 
-  private final Optional<Bytes> location;
+  private Optional<Bytes> location;
   private final ArrayList<Node<V>> children;
   private final Optional<V> value;
   private final NodeFactory<V> nodeFactory;
@@ -93,6 +93,11 @@ public class BranchNode<V> implements Node<V> {
   @Override
   public Optional<Bytes> getLocation() {
     return location;
+  }
+
+  @Override
+  public void setLocation(final Optional<Bytes> location) {
+    this.location = location;
   }
 
   @Override

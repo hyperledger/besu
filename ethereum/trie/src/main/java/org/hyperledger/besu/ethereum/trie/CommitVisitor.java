@@ -68,7 +68,7 @@ public class CommitVisitor<V> implements LocationNodeVisitor<V> {
 
   public void maybeStoreNode(final Bytes location, final Node<V> node) {
     final Bytes nodeRLP = node.getRlp();
-    if (nodeRLP.size() >= 32) {
+    if (nodeRLP.size() >= 32 || node instanceof LeafNode) {
       this.nodeUpdater.store(location, node.getHash(), nodeRLP);
     }
   }

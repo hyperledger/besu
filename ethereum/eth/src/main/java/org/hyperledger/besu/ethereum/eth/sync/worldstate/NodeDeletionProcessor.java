@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.trie.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.List;
@@ -76,7 +75,7 @@ public class NodeDeletionProcessor {
     } else if (newNode instanceof BranchNode) {
       final List<Node<Bytes>> children = newNode.getChildren();
       for (int i = 0; i < MAX_CHILDREN; i++) {
-        if (i >= children.size() || children.get(i) instanceof NullNode) {
+        if (i >= children.size() || !children.get(i).isReferencedByHash()) {
           worldStateStorage.pruneAccountState(
               Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
         }
@@ -105,7 +104,7 @@ public class NodeDeletionProcessor {
     } else if (newNode instanceof BranchNode) {
       final List<Node<Bytes>> children = newNode.getChildren();
       for (int i = 0; i < MAX_CHILDREN; i++) {
-        if (i >= children.size() || children.get(i) instanceof NullNode) {
+        if (i >= children.size() || !children.get(i).isReferencedByHash()) {
           worldStateStorage.pruneStorageState(
               accountHash, Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
         }

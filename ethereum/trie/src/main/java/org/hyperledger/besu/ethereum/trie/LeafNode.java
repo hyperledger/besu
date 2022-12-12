@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class LeafNode<V> implements Node<V> {
-  private final Optional<Bytes> location;
+  private Optional<Bytes> location;
   private final Bytes path;
   private final V value;
   private final NodeFactory<V> nodeFactory;
@@ -82,6 +82,11 @@ public class LeafNode<V> implements Node<V> {
   @Override
   public Optional<Bytes> getLocation() {
     return location;
+  }
+
+  @Override
+  public void setLocation(final Optional<Bytes> location) {
+    this.location = location;
   }
 
   @Override
