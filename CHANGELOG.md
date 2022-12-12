@@ -1,4 +1,14 @@
 # Changelog
+## 22.10.4
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
 ## 22.10.3
 
 ### Breaking Changes
@@ -13,8 +23,11 @@
 - Add chain data pruning feature with three experimental CLI options: `--Xchain-pruning-enabled`, `--Xchain-pruning-blocks-retained` and `--Xchain-pruning-frequency` [#4686](https://github.com/hyperledger/besu/pull/4686)
 
 ### Bug Fixes
+- Fix storage key format for eth_getProof so that it follows the EIP-1474 spec [#4564](https://github.com/hyperledger/besu/pull/4564)
 
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.tar.gz / sha256: TBA
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.zip / sha256: TBA
 
 ## 22.10.2
 This is a hotfix release to resolve a race condition that results in segfaults, introduced in 22.10.1 release.
