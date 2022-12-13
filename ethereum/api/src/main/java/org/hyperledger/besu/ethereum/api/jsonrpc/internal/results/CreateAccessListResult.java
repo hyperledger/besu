@@ -1,28 +1,24 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.AccessListEntry;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import com.google.common.collect.Multimap;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class CreateAccessListResult {
-  List<AccessListEntry> list = new ArrayList<>();
+  List<AccessListEntry> accessListList;
   String gasUsed;
 
-  public CreateAccessListResult(final Multimap<Address, Bytes32> map, final long gasUsed) {
-    map.asMap().forEach((k, v) -> list.add(new AccessListEntry(k, new ArrayList<>(v))));
+  public CreateAccessListResult(final List<AccessListEntry> accessListEntries, final long gasUsed) {
+    this.accessListList = accessListEntries;
     this.gasUsed = Quantity.create(gasUsed);
   }
 
   @JsonGetter(value = "accessList")
-  public Collection<AccessListEntry> getList() {
-    return list;
+  public Collection<AccessListEntry> getAccessList() {
+    return accessListList;
   }
 
   @JsonGetter(value = "gasUsed")

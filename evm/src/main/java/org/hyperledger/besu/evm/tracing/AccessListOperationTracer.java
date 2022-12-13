@@ -15,45 +15,32 @@
 package org.hyperledger.besu.evm.tracing;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.operation.SStoreOperation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class CreateAccessListOperationTracer implements OperationTracer {
-
-  private int maxDepth = 0;
-
-  private long sStoreStipendNeeded = 0L;
+public class AccessListOperationTracer extends EstimateGasOperationTracer {
 
   private Multimap<Address, Bytes32> warmedUpStorage;
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
-    if (frame.getCurrentOperation() instanceof SStoreOperation && sStoreStipendNeeded == 0L) {
-      sStoreStipendNeeded =
-          ((SStoreOperation) frame.getCurrentOperation()).getMinimumGasRemaining();
-    }
-    if (maxDepth < frame.getMessageStackDepth()) {
-      maxDepth = frame.getMessageStackDepth();
-    }
+    super.tracePostExecution(frame, operationResult);
     warmedUpStorage = frame.getWarmedUpStorage();
   }
 
   @Override
   public void tracePreExecution(final MessageFrame frame) {}
 
-  public int getMaxDepth() {
-    return maxDepth;
-  }
-
-  public Multimap<Address, Bytes32> getWarmedUpStorage() {
-    return warmedUpStorage;
-  }
-
-  public long getStipendNeeded() {
-    return sStoreStipendNeeded;
+  public List<AccessListEntry> getAccessList() {
+    final ArrayList<AccessListEntry> list = new ArrayList<>();
+    warmedUpStorage.asMap().forEach((k, v) -> list.add(new AccessListEntry(k, new ArrayList<>(v))));
+    return list;
   }
 }
