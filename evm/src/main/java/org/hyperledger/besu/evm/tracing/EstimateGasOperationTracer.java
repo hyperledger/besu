@@ -19,6 +19,7 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.SStoreOperation;
 
 public class EstimateGasOperationTracer implements OperationTracer {
+  private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
 
   private int maxDepth = 0;
 
@@ -41,5 +42,20 @@ public class EstimateGasOperationTracer implements OperationTracer {
 
   public long getStipendNeeded() {
     return sStoreStipendNeeded;
+  }
+
+  /**
+   * Estimate gas by adding minimum gas remaining for some operation and the necessary gas for sub
+   * calls
+   *
+   * @param gasUsedByTransaction The gas Used By Transaction
+   * @return estimate gas
+   */
+  public long calculateEstimateGas(final long gasUsedByTransaction) {
+    // no more than 63/64s of the remaining gas can be passed to the sub calls
+    final double subCallMultiplier = Math.pow(SUB_CALL_REMAINING_GAS_RATIO, getMaxDepth());
+    // and minimum gas remaining is necessary for some operation (additionalStipend)
+    final long gasStipend = getStipendNeeded();
+    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
 }

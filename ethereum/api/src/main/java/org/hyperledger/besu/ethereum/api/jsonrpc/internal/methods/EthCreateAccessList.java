@@ -35,14 +35,14 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.tracing.CreateAccessListOperationTracer;
+import org.hyperledger.besu.evm.AccessListEntry;
+import org.hyperledger.besu.evm.tracing.AccessListOperationTracer;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
 public class EthCreateAccessList implements JsonRpcMethod {
-
-  private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
 
   private final BlockchainQueries blockchainQueries;
   private final TransactionSimulator transactionSimulator;
@@ -63,36 +63,62 @@ public class EthCreateAccessList implements JsonRpcMethod {
     final JsonCallParameter callParams = validateAndGetCallParams(requestContext);
 
     final BlockHeader blockHeader = blockHeader();
-    if (blockHeader == null) {
-      return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
+    final Optional<JsonRpcError> jsonRpcError = validateBlockHeader(blockHeader);
+    if (jsonRpcError.isPresent()) {
+      return errorResponse(requestContext, jsonRpcError.get());
     }
-    if (!blockchainQueries
-        .getWorldStateArchive()
-        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
-      return errorResponse(requestContext, JsonRpcError.WORLD_STATE_UNAVAILABLE);
-    }
+
+    final TransactionValidationParams transactionValidationParams =
+        transactionValidationParams(!callParams.isMaybeStrict().orElse(Boolean.FALSE));
 
     final CallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
 
-    final CreateAccessListOperationTracer operationTracer = new CreateAccessListOperationTracer();
-
-    return transactionSimulator
-        .process(
+    final AccessListOperationTracer accessListOperationTracer = new AccessListOperationTracer();
+    final Optional<TransactionSimulatorResult> maybeResult =
+        transactionSimulator.process(
             modifiedCallParams,
-            ImmutableTransactionValidationParams.builder()
-                .from(TransactionValidationParams.transactionSimulator())
-                .isAllowExceedingBalance(!callParams.isMaybeStrict().orElse(Boolean.FALSE))
-                .build(),
-            operationTracer,
-            blockHeader.getNumber())
-        .map(createAccessListResponse(requestContext, operationTracer))
-        .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
+            transactionValidationParams,
+            accessListOperationTracer,
+            blockHeader.getNumber());
+
+    if (accessListOperationTracer.getAccessList().isEmpty()) {
+      return maybeResult
+          .map(createAccessListResponse(requestContext, accessListOperationTracer))
+          .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
+    } else {
+      final AccessListOperationTracer tracer = new AccessListOperationTracer();
+      final CallParameter callParameter =
+          overrideAccessList(modifiedCallParams, accessListOperationTracer.getAccessList());
+      return transactionSimulator
+          .process(callParameter, transactionValidationParams, tracer, blockHeader.getNumber())
+          .map(createAccessListResponse(requestContext, tracer))
+          .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
+    }
+  }
+
+  private Optional<JsonRpcError> validateBlockHeader(final BlockHeader blockHeader) {
+    if (blockHeader == null) {
+      return Optional.of(JsonRpcError.INTERNAL_ERROR);
+    }
+    if (!blockchainQueries
+        .getWorldStateArchive()
+        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
+      return Optional.of(JsonRpcError.WORLD_STATE_UNAVAILABLE);
+    }
+    return Optional.empty();
   }
 
   private BlockHeader blockHeader() {
     final long headBlockNumber = blockchainQueries.headBlockNumber();
     return blockchainQueries.getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
+  }
+
+  private TransactionValidationParams transactionValidationParams(final boolean strict) {
+    return ImmutableTransactionValidationParams.builder()
+        .from(TransactionValidationParams.transactionSimulator())
+        .isAllowExceedingBalance(strict)
+        .build();
   }
 
   private CallParameter overrideGasLimitAndPrice(
@@ -105,39 +131,50 @@ public class EthCreateAccessList implements JsonRpcMethod {
         callParams.getMaxPriorityFeePerGas(),
         callParams.getMaxFeePerGas(),
         callParams.getValue(),
-        callParams.getPayload());
+        callParams.getPayload(),
+        callParams.getAccessList());
+  }
+
+  private CallParameter overrideAccessList(
+      final CallParameter callParams, final List<AccessListEntry> accessListEntries) {
+    return new CallParameter(
+        callParams.getFrom(),
+        callParams.getTo(),
+        callParams.getGasLimit(),
+        callParams.getGasPrice(),
+        callParams.getMaxPriorityFeePerGas(),
+        callParams.getMaxFeePerGas(),
+        callParams.getValue(),
+        callParams.getPayload(),
+        Optional.ofNullable(accessListEntries));
   }
 
   private Function<TransactionSimulatorResult, JsonRpcResponse> createAccessListResponse(
-      final JsonRpcRequestContext request, final CreateAccessListOperationTracer operationTracer) {
+      final JsonRpcRequestContext request, final AccessListOperationTracer operationTracer) {
     return result ->
         result.isSuccessful()
             ? new JsonRpcSuccessResponse(
                 request.getRequest().getId(),
                 new CreateAccessListResult(
-                    operationTracer.getWarmedUpStorage(),
-                    processEstimateGas(result, operationTracer)))
+                    operationTracer.getAccessList(),
+                    operationTracer.calculateEstimateGas(
+                        result.getResult().getEstimateGasUsedByTransaction())))
             : errorResponse(request, result);
   }
 
-  /**
-   * Estimate gas by adding minimum gas remaining for some operation and the necessary gas for sub
-   * calls
-   *
-   * @param result transaction simulator result
-   * @param operationTracer estimate gas operation tracer
-   * @return estimate gas
-   */
-  private long processEstimateGas(
-      final TransactionSimulatorResult result,
-      final CreateAccessListOperationTracer operationTracer) {
-    // no more than 63/64s of the remaining gas can be passed to the sub calls
-    final double subCallMultiplier =
-        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
-    // and minimum gas remaining is necessary for some operation (additionalStipend)
-    final long gasStipend = operationTracer.getStipendNeeded();
-    final long gasUsedByTransaction = result.getResult().getEstimateGasUsedByTransaction();
-    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
+  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
+    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
+    if (callParams.getGasPrice() != null
+        && (callParams.getMaxFeePerGas().isPresent()
+            || callParams.getMaxPriorityFeePerGas().isPresent())) {
+      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or maxFeePerGas");
+    }
+    return callParams;
+  }
+
+  private JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
+    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
   }
 
   private JsonRpcErrorResponse errorResponse(
@@ -160,20 +197,5 @@ public class EthCreateAccessList implements JsonRpcMethod {
       }
     }
     return errorResponse(request, jsonRpcError);
-  }
-
-  private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
-    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
-  }
-
-  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
-    if (callParams.getGasPrice() != null
-        && (callParams.getMaxFeePerGas().isPresent()
-            || callParams.getMaxPriorityFeePerGas().isPresent())) {
-      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or maxFeePerGas");
-    }
-    return callParams;
   }
 }
