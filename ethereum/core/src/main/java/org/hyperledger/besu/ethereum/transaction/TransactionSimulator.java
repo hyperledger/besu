@@ -144,7 +144,7 @@ public class TransactionSimulator {
       return Optional.empty();
     }
 
-    try (var ws = getWorldState(header)) {
+    try (final var ws = getWorldState(header)) {
 
       WorldUpdater updater = getEffectiveWorldStateUpdater(header, ws);
 
@@ -282,6 +282,9 @@ public class TransactionSimulator {
             .payload(payload)
             .signature(FAKE_SIGNATURE);
 
+    // Set access list if present
+    callParams.getAccessList().ifPresent(transactionBuilder::accessList);
+
     final Wei gasPrice;
     final Wei maxFeePerGas;
     final Wei maxPriorityFeePerGas;
@@ -309,6 +312,7 @@ public class TransactionSimulator {
               .getChainId()
               .orElse(BigInteger.ONE)); // needed to make some transactions valid
     }
+
     final Transaction transaction = transactionBuilder.build();
     return Optional.ofNullable(transaction);
   }
@@ -337,7 +341,7 @@ public class TransactionSimulator {
             .getMutable(header.getStateRoot(), header.getHash(), false)
             .orElseThrow()) {
       return doesAddressExist(worldState, address, header);
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       return Optional.empty();
     }
   }
