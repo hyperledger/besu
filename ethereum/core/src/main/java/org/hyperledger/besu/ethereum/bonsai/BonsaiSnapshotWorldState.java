@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * This class extends BonsaiPersistedWorldstate directly such that it commits/perists directly to
  * the transaction state. A SnapshotMutableWorldState is used to accumulate changes to a
@@ -35,7 +37,7 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   private final SnappedKeyValueStorage storageSnap;
   private final SnappedKeyValueStorage trieBranchSnap;
   private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
-  private final Long parentWorldStateSubscriberId;
+  private final AtomicLong parentWorldStateSubscriberId = new AtomicLong(Long.MAX_VALUE);
 
   private BonsaiSnapshotWorldState(
       final BonsaiWorldStateArchive archive,
@@ -47,21 +49,27 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
     this.storageSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.storageStorage;
     this.trieBranchSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.trieBranchStorage;
     this.parentWorldStateStorage = parentWorldStateStorage;
-    parentWorldStateSubscriberId = parentWorldStateStorage.subscribe(this);
   }
 
   public static BonsaiSnapshotWorldState create(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage) {
     return new BonsaiSnapshotWorldState(
-        archive,
-        new BonsaiSnapshotWorldStateKeyValueStorage(
-            ((SnappableKeyValueStorage) parentWorldStateStorage.accountStorage).takeSnapshot(),
-            ((SnappableKeyValueStorage) parentWorldStateStorage.codeStorage).takeSnapshot(),
-            ((SnappableKeyValueStorage) parentWorldStateStorage.storageStorage).takeSnapshot(),
-            ((SnappableKeyValueStorage) parentWorldStateStorage.trieBranchStorage).takeSnapshot(),
-            parentWorldStateStorage.trieLogStorage),
-        parentWorldStateStorage);
+            archive,
+            new BonsaiSnapshotWorldStateKeyValueStorage(
+                ((SnappableKeyValueStorage) parentWorldStateStorage.accountStorage).takeSnapshot(),
+                ((SnappableKeyValueStorage) parentWorldStateStorage.codeStorage).takeSnapshot(),
+                ((SnappableKeyValueStorage) parentWorldStateStorage.storageStorage).takeSnapshot(),
+                ((SnappableKeyValueStorage) parentWorldStateStorage.trieBranchStorage)
+                    .takeSnapshot(),
+                parentWorldStateStorage.trieLogStorage),
+            parentWorldStateStorage)
+        .subscribeToParent();
+  }
+
+  protected BonsaiSnapshotWorldState subscribeToParent() {
+   parentWorldStateSubscriberId.set(parentWorldStateStorage.subscribe(this));
+    return this;
   }
 
   @Override
@@ -83,7 +91,8 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
             storageSnap.cloneFromSnapshot(),
             trieBranchSnap.cloneFromSnapshot(),
             worldStateStorage.trieLogStorage),
-        parentWorldStateStorage);
+        parentWorldStateStorage)
+            .subscribeToParent();
   }
 
   @Override
@@ -92,7 +101,7 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
     codeSnap.close();
     storageSnap.close();
     trieBranchSnap.close();
-    parentWorldStateStorage.unSubscribe(parentWorldStateSubscriberId);
+    parentWorldStateStorage.unSubscribe(parentWorldStateSubscriberId.get());
   }
 
   @Override

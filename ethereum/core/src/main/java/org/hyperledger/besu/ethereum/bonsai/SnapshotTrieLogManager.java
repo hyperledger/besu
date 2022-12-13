@@ -53,7 +53,7 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
   }
 
   @Override
-  protected synchronized void addCachedLayer(
+  protected void addCachedLayer(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
@@ -101,7 +101,7 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
   private void dropArchive() {
     // drop all cached snapshot worldstates, they are unsafe when the db has been truncated
     LOG.info("Key-value storage truncated, dropping cached worldstates");
-    cachedWorldStatesByHash.keySet().forEach(cachedWorldStatesByHash::remove);
+    cachedWorldStatesByHash.clear();
   }
 
   public static class CachedSnapshotWorldState

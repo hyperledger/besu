@@ -438,12 +438,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   interface BonsaiStorageSubscriber {
     default void onClear() {}
-    ;
 
     default void onClearFlatDatabase() {}
-    ;
 
     default void onClose() {}
-    ;
   }
 }

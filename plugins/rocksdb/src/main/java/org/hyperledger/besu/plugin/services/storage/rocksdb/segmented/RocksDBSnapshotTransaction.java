@@ -161,6 +161,9 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   }
 
   public RocksDBSnapshotTransaction copy() {
+    if (isClosed.get()) {
+      throw new StorageException("Snapshot already closed");
+    }
     try {
       var copyReadOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
       var copySnapTx = db.beginTransaction(writeOptions);
