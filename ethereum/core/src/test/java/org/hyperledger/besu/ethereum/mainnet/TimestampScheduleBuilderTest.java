@@ -31,15 +31,15 @@ import org.junit.Test;
 
 public class TimestampScheduleBuilderTest {
 
-  private final BigInteger chainId = BigInteger.ONE;
-  private final BigInteger defaultChainId = BigInteger.ONE;
-  private final PrivacyParameters privacyParameters = new PrivacyParameters();
-  private final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
-  private final BlockHeader BLOCK_HEADER = new BlockHeaderTestFixture().timestamp(1L).buildHeader();
+  private static final BigInteger chainId = BigInteger.ONE;
+  private static final BigInteger defaultChainId = BigInteger.ONE;
+  private static final PrivacyParameters privacyParameters = new PrivacyParameters();
+  private static final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
+  private static final BlockHeader BLOCK_HEADER =
+      new BlockHeaderTestFixture().timestamp(1L).buildHeader();
   private TimestampScheduleBuilder builder;
   private StubGenesisConfigOptions config;
 
-  //  @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
   private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier = Function.identity();
 
   private final long FIRST_TIMESTAMP_FORK = 1L;

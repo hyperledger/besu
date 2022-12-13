@@ -19,14 +19,11 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
-import java.math.BigInteger;
 import java.util.Optional;
 
 public interface TimestampSchedule
     extends HeaderBasedProtocolSchedule, PrivacySupportingProtocolSchedule {
   Optional<ProtocolSpec> getByTimestamp(final long timestamp);
-
-  Optional<BigInteger> getChainId();
 
   @Override
   default ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {

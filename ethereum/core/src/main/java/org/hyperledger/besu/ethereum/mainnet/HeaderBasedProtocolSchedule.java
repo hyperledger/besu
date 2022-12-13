@@ -19,7 +19,16 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
+import java.math.BigInteger;
+import java.util.Optional;
+
 public interface HeaderBasedProtocolSchedule {
 
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
+
+  Optional<BigInteger> getChainId();
+
+  void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec);
+
+  String listMilestones();
 }
