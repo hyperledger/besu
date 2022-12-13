@@ -65,4 +65,10 @@ public interface MergeContext extends ConsensusContext {
   void putPayloadById(final PayloadIdentifier payloadId, final Block block);
 
   Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
+
+  default void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {}
+
+  default boolean isChainPruningEnabled() {
+    return false;
+  }
 }
