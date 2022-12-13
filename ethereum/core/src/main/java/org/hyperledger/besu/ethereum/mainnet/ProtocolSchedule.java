@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
-import java.math.BigInteger;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface ProtocolSchedule
@@ -26,8 +24,6 @@ public interface ProtocolSchedule
   ProtocolSpec getByBlockNumber(long number);
 
   Stream<Long> streamMilestoneBlocks();
-
-  Optional<BigInteger> getChainId();
 
   @Override
   default ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {

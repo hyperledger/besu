@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
@@ -134,6 +135,20 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public Optional<BigInteger> getChainId() {
     return transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::getChainId);
+  }
+
+  @Override
+  public void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec) {
+    throw new UnsupportedOperationException(
+        "Should not use TransitionProtocolSchedule wrapper class to create milestones");
+  }
+
+  @Override
+  public String listMilestones() {
+    String blockNumberMilestones =
+        transitionUtils.dispatchFunctionAccordingToMergeState(
+            HeaderBasedProtocolSchedule::listMilestones);
+    return blockNumberMilestones + ";" + timestampSchedule.listMilestones();
   }
 
   @Override

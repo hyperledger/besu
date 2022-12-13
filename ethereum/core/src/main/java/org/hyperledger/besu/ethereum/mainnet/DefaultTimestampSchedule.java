@@ -51,14 +51,16 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
     return chainId;
   }
 
-  void putMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
+  @Override
+  public void putMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
     final TimedProtocolSpec scheduledProtocolSpec = new TimedProtocolSpec(timestamp, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
   }
 
-  String listMilestones() {
+  @Override
+  public String listMilestones() {
     return protocolSpecs.stream()
         .sorted(Comparator.comparing(TimedProtocolSpec::getTimestamp))
         .map(spec -> spec.getSpec().getName() + ": " + spec.getTimestamp())
