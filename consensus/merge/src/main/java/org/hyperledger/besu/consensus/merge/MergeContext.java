@@ -67,4 +67,10 @@ public interface MergeContext extends ConsensusContext {
   Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
 
   boolean isCheckpointPostMergeSync();
+
+  default void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {}
+
+  default boolean isChainPruningEnabled() {
+    return false;
+  }
 }

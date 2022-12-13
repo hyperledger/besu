@@ -65,6 +65,10 @@ public class PostMergeContext implements MergeContext {
       new AtomicReference<>(Optional.empty());
   private boolean isCheckpointPostMergeSync;
 
+  // TODO: cleanup - isChainPruningEnabled will not be required after
+  // https://github.com/hyperledger/besu/pull/4703 is merged.
+  private boolean isChainPruningEnabled = false;
+
   @VisibleForTesting
   PostMergeContext() {
     this(Difficulty.ZERO);
@@ -278,5 +282,15 @@ public class PostMergeContext implements MergeContext {
   @Override
   public boolean isCheckpointPostMergeSync() {
     return this.isCheckpointPostMergeSync;
+  }
+
+  @Override
+  public void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {
+    this.isChainPruningEnabled = isChainPruningEnabled;
+  }
+
+  @Override
+  public boolean isChainPruningEnabled() {
+    return isChainPruningEnabled;
   }
 }
