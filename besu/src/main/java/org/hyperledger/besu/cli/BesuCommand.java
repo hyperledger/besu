@@ -2005,6 +2005,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !SyncMode.isFullSync(getDefaultSyncModeIfNotSet(syncMode)),
         singletonList("--fast-sync-min-peers"));
 
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
+        SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet(syncMode)),
+        singletonList("--Xcheckpoint-post-merge-enabled"));
+
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
       logger.warn(
@@ -3344,6 +3350,39 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         .getConfigOptions(genesisConfigOverrides))
             .getTerminalTotalDifficulty()
             .isPresent());
+  }
+
+  private void validatePostMergeCheckpointBlockRequirements() {
+    final GenesisConfigOptions genesisOptions =
+        Optional.ofNullable(genesisConfigOptions)
+            .orElseGet(
+                () ->
+                    GenesisConfigFile.fromConfig(
+                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
+                        .getConfigOptions(genesisConfigOverrides));
+    final SynchronizerConfiguration synchronizerConfiguration =
+        unstableSynchronizerOptions.toDomainObject().build();
+    final Optional<UInt256> terminalTotalDifficulty = genesisOptions.getTerminalTotalDifficulty();
+    final CheckpointConfigOptions checkpointConfigOptions = genesisOptions.getCheckpointOptions();
+    if (synchronizerConfiguration.isCheckpointPostMergeEnabled()) {
+      if (!checkpointConfigOptions.isValid()) {
+        throw new InvalidConfigurationException(
+            "Near head checkpoint sync requires a checkpoint block configured in the genesis file");
+      }
+      terminalTotalDifficulty.ifPresentOrElse(
+          value -> {
+            if (UInt256.fromHexString(
+                    genesisOptions.getCheckpointOptions().getTotalDifficulty().orElse("0x0"))
+                .lessOrEqualThan(value)) {
+              throw new InvalidConfigurationException(
+                  "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
+            }
+          },
+          () -> {
+            throw new InvalidConfigurationException(
+                "Near head checkpoint sync requires TTD in the genesis file");
+          });
+    }
   }
 
   private boolean isMergeEnabled() {

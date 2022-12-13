@@ -205,8 +205,7 @@ public class PostMergeContextTest {
   @Test
   public void syncStateNullShouldNotThrowWhenIsSyncingIsCalled() {
     // simulate a possible syncState null when we still have got a syncState set yet.
-    final SyncState syncState = null;
-    postMergeContext.setSyncState(syncState);
+    postMergeContext.setSyncState(null);
     assertThat(postMergeContext.isSyncing()).isTrue();
 
     // after setting a syncState things should progress as expected.
@@ -226,10 +225,6 @@ public class PostMergeContextTest {
 
     // if we're in sync reached ttd does not matter anymore
     when(mockSyncState.isInSync()).thenReturn(Boolean.TRUE);
-    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.FALSE));
-    assertThat(postMergeContext.isSyncing()).isFalse();
-
-    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.TRUE));
     assertThat(postMergeContext.isSyncing()).isFalse();
   }
 
