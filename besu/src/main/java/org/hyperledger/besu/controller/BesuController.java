@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -212,17 +213,19 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
 
-      if (isCheckpointBlockTotalDifficultyGreaterOrEqualThanTTD(configOptions)) {
-        return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
-      }
-
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
-        // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
-        // series of classes removed after we successfully transition to PoS
-        // https://github.com/hyperledger/besu/issues/2897
-        return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder())
-            .genesisConfigFile(genesisConfig);
+        if (isCheckpointBlockTotalDifficultyGreaterThanTTD(configOptions)
+            || isMergeAtGenesis(configOptions.getTerminalTotalDifficulty())) {
+          return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
+        } else {
+          // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
+          // series of classes removed after we successfully transition to PoS
+          // https://github.com/hyperledger/besu/issues/2897
+          return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder())
+              .genesisConfigFile(genesisConfig);
+        }
+
       } else return builder.genesisConfigFile(genesisConfig);
     }
 
@@ -264,12 +267,15 @@ public class BesuController implements java.io.Closeable {
       return startBlock;
     }
 
-    private boolean isCheckpointBlockTotalDifficultyGreaterOrEqualThanTTD(
+    private boolean isCheckpointBlockTotalDifficultyGreaterThanTTD(
         final GenesisConfigOptions configOptions) {
-      return configOptions.getTerminalTotalDifficulty().isPresent()
-          && configOptions.getCheckpointOptions().isValid()
+      return configOptions.getCheckpointOptions().isValid()
           && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
-              .greaterOrEqualThan(configOptions.getTerminalTotalDifficulty().get()));
+              .greaterThan(configOptions.getTerminalTotalDifficulty().get()));
+    }
+
+    private boolean isMergeAtGenesis(final Optional<UInt256> ttd) {
+      return ttd.get().equals(UInt256.ZERO);
     }
   }
 }
