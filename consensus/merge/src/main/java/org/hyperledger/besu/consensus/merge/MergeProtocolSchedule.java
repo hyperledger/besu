@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
-import org.hyperledger.besu.ethereum.mainnet.TimestampProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -68,7 +67,7 @@ public class MergeProtocolSchedule {
     return new TimestampScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            TimestampProtocolSpecAdapters.create(
+            ProtocolSpecAdapters.create(
                 config.getShanghaiTimestamp().orElse(0),
                 (specBuilder) ->
                     MergeProtocolSchedule.applyMergeSpecificModifications(
