@@ -199,7 +199,11 @@ public class ForkIdsTest {
       when(mockBlockchain.getChainHeadBlockNumber()).thenAnswer(o -> blockNumber.get());
 
       final ForkIdManager forkIdManager =
-          new ForkIdManager(mockBlockchain, genesisConfigFile.getForks(), false);
+          new ForkIdManager(
+              mockBlockchain,
+              genesisConfigFile.getForkBlockNumbers(),
+              genesisConfigFile.getForkTimestamps(),
+              false);
 
       final var actualForkIds =
           Streams.concat(

@@ -104,7 +104,9 @@ public interface GenesisConfigOptions {
 
   Optional<Hash> getTerminalBlockHash();
 
-  List<Long> getForks();
+  List<Long> getForkBlockNumbers();
+
+  List<Long> getForkTimestamps();
 
   /**
    * Block number for the Dao Fork, this value is used to tell node to connect with peer that did
