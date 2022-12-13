@@ -35,7 +35,7 @@ public class TimestampScheduleBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(TimestampScheduleBuilder.class);
   private final GenesisConfigOptions config;
-  private final TimestampProtocolSpecAdapters protocolSpecAdapters;
+  private final ProtocolSpecAdapters protocolSpecAdapters;
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
@@ -46,7 +46,7 @@ public class TimestampScheduleBuilder {
   public TimestampScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
-      final TimestampProtocolSpecAdapters protocolSpecAdapters,
+      final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,

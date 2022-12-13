@@ -54,7 +54,7 @@ public class TimestampScheduleBuilderTest {
         new TimestampScheduleBuilder(
             config,
             defaultChainId,
-            TimestampProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
+            ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             privacyParameters,
             isRevertReasonEnabled,
             quorumCompatibilityMode,
@@ -129,7 +129,7 @@ public class TimestampScheduleBuilderTest {
         new TimestampScheduleBuilder(
             config,
             defaultChainId,
-            TimestampProtocolSpecAdapters.create(2L, modifier),
+            ProtocolSpecAdapters.create(2L, modifier),
             privacyParameters,
             false,
             false,
