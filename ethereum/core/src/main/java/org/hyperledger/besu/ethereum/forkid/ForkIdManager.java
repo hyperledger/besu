@@ -19,12 +19,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.util.EndianUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -34,10 +36,13 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ForkIdManager {
 
   private final Hash genesisHash;
-  private final List<ForkId> forkIds;
+  private final List<ForkId> blockNumbersForkIds;
+  private final List<ForkId> timestampsForkIds;
 
-  private final List<Long> forkBlockNumbers;
-  private final LongSupplier chainHeadSupplier;
+  private final List<Long> blockNumberForks;
+  private final List<Long> timestampForks;
+
+  private final Supplier<BlockHeader> chainHeadSupplier;
   private final long forkNext;
   private final boolean onlyZerosForkBlocks;
   private final long highestKnownFork;
@@ -45,41 +50,73 @@ public class ForkIdManager {
   private final boolean legacyEth64;
 
   public ForkIdManager(
-      final Blockchain blockchain, final List<Long> nonFilteredForks, final boolean legacyEth64) {
+      final Blockchain blockchain,
+      final List<Long> blockNumberForks,
+      final List<Long> timestampForks,
+      final boolean legacyEth64) {
     checkNotNull(blockchain);
-    checkNotNull(nonFilteredForks);
-    this.chainHeadSupplier = blockchain::getChainHeadBlockNumber;
+    checkNotNull(blockNumberForks);
+    this.chainHeadSupplier = blockchain::getChainHeadHeader;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
-    this.forkIds = new ArrayList<>();
+    this.blockNumbersForkIds = new ArrayList<>();
+    this.timestampsForkIds = new ArrayList<>();
     this.legacyEth64 = legacyEth64;
-    this.forkBlockNumbers =
-        nonFilteredForks.stream()
+    this.blockNumberForks =
+        blockNumberForks.stream()
             .filter(fork -> fork > 0L)
             .distinct()
             .sorted()
             .collect(Collectors.toUnmodifiableList());
-    this.onlyZerosForkBlocks = nonFilteredForks.stream().allMatch(value -> 0L == value);
+    this.timestampForks =
+        timestampForks.stream()
+            .filter(fork -> fork > 0L)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toUnmodifiableList());
+    this.onlyZerosForkBlocks =
+        Stream.concat(blockNumberForks.stream(), timestampForks.stream())
+            .allMatch(value -> 0L == value);
     this.forkNext = createForkIds();
+    final long highestKnownBlockFork =
+        !blockNumberForks.isEmpty() ? blockNumberForks.get(blockNumberForks.size() - 1) : 0L;
     this.highestKnownFork =
-        !forkBlockNumbers.isEmpty() ? forkBlockNumbers.get(forkBlockNumbers.size() - 1) : 0L;
+        !timestampForks.isEmpty()
+            ? timestampForks.get(timestampForks.size() - 1)
+            : highestKnownBlockFork;
   }
 
   public ForkId getForkIdForChainHead() {
     if (legacyEth64) {
-      return forkIds.isEmpty() ? null : forkIds.get(forkIds.size() - 1);
+      return blockNumbersForkIds.isEmpty()
+          ? null
+          : blockNumbersForkIds.get(blockNumbersForkIds.size() - 1);
     }
-    final long head = chainHeadSupplier.getAsLong();
-    for (final ForkId forkId : forkIds) {
-      if (head < forkId.getNext()) {
+    final BlockHeader header = chainHeadSupplier.get();
+    for (final ForkId forkId : blockNumbersForkIds) {
+      if (header.getNumber() < forkId.getNext()) {
         return forkId;
       }
     }
-    return forkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : forkIds.get(forkIds.size() - 1);
+    for (final ForkId forkId : timestampsForkIds) {
+      if (header.getTimestamp() < forkId.getNext()) {
+        return forkId;
+      }
+    }
+    final ForkId blockNumberForkId =
+        blockNumbersForkIds.isEmpty()
+            ? new ForkId(genesisHashCrc, 0)
+            : blockNumbersForkIds.get(blockNumbersForkIds.size() - 1);
+    return timestampsForkIds.isEmpty()
+        ? blockNumberForkId
+        : timestampsForkIds.get(timestampsForkIds.size() - 1);
   }
 
   @VisibleForTesting
-  public List<ForkId> getForkIds() {
-    return this.forkIds;
+  public List<ForkId> getAllForkIds() {
+    List<ForkId> forkIds = new ArrayList<>(timestampsForkIds.size() + blockNumbersForkIds.size());
+    forkIds.addAll(blockNumbersForkIds);
+    forkIds.addAll(timestampsForkIds);
+    return forkIds;
   }
 
   public static ForkId readFrom(final RLPInput in) {
@@ -119,7 +156,7 @@ public class ForkIdManager {
     if (!isHashKnown(forkId.getHash())) {
       return false;
     }
-    return chainHeadSupplier.getAsLong() < forkNext
+    return chainHeadSupplier.get().getNumber() < forkNext
         || (isForkKnown(forkId.getNext())
             && isRemoteAwareOfPresent(forkId.getHash(), forkId.getNext()));
   }
@@ -135,16 +172,20 @@ public class ForkIdManager {
   }
 
   private boolean isHashKnown(final Bytes forkHash) {
-    return forkIds.stream().map(ForkId::getHash).anyMatch(hash -> hash.equals(forkHash));
+    return Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
+        .map(ForkId::getHash)
+        .anyMatch(hash -> hash.equals(forkHash));
   }
 
   private boolean isForkKnown(final Long nextFork) {
     return highestKnownFork < nextFork
-        || forkIds.stream().map(ForkId::getNext).anyMatch(fork -> fork.equals(nextFork));
+        || Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
+            .map(ForkId::getNext)
+            .anyMatch(fork -> fork.equals(nextFork));
   }
 
   private boolean isRemoteAwareOfPresent(final Bytes forkHash, final Long nextFork) {
-    for (final ForkId j : forkIds) {
+    for (final ForkId j : getAllForkIds()) {
       if (forkHash.equals(j.getHash())) {
         if (nextFork.equals(j.getNext())) {
           return true;
@@ -162,21 +203,34 @@ public class ForkIdManager {
     final CRC32 crc = new CRC32();
     crc.update(genesisHash.toArray());
     genesisHashCrc = getCurrentCrcHash(crc);
-    final List<Bytes> forkHashes = new ArrayList<>(List.of(genesisHashCrc));
-    forkBlockNumbers.forEach(
+    final List<Bytes> numberForkHashes = new ArrayList<>(List.of(genesisHashCrc));
+    blockNumberForks.forEach(
         fork -> {
           updateCrc(crc, fork);
-          forkHashes.add(getCurrentCrcHash(crc));
+          numberForkHashes.add(getCurrentCrcHash(crc));
+        });
+
+    timestampForks.forEach(
+        fork -> {
+          updateCrc(crc, fork);
+          numberForkHashes.add(getCurrentCrcHash(crc));
         });
 
     // This loop is for all the fork hashes that have an associated "next fork"
-    for (int i = 0; i < forkBlockNumbers.size(); i++) {
-      forkIds.add(new ForkId(forkHashes.get(i), forkBlockNumbers.get(i)));
+    for (int i = 0; i < blockNumberForks.size(); i++) {
+      blockNumbersForkIds.add(new ForkId(numberForkHashes.get(i), blockNumberForks.get(i)));
+    }
+    for (int i = 0; i < timestampForks.size(); i++) {
+      timestampsForkIds.add(
+          new ForkId(numberForkHashes.get(blockNumberForks.size() + i), timestampForks.get(i)));
     }
     long forkNext = 0;
-    if (!forkBlockNumbers.isEmpty()) {
-      forkNext = forkIds.get(forkIds.size() - 1).getNext();
-      forkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
+    if (!timestampForks.isEmpty()) {
+      forkNext = timestampForks.get(timestampForks.size() - 1);
+      timestampsForkIds.add(new ForkId(numberForkHashes.get(numberForkHashes.size() - 1), 0));
+    } else if (!blockNumberForks.isEmpty()) {
+      forkNext = blockNumbersForkIds.get(blockNumbersForkIds.size() - 1).getNext();
+      blockNumbersForkIds.add(new ForkId(numberForkHashes.get(numberForkHashes.size() - 1), 0));
     }
     return forkNext;
   }
