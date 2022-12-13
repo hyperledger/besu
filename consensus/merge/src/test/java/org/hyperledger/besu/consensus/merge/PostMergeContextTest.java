@@ -211,10 +211,20 @@ public class PostMergeContextTest {
     // after setting a syncState things should progress as expected.
     postMergeContext.setSyncState(mockSyncState);
 
+    // Assuming we're not in sync
+    when(mockSyncState.isInSync()).thenReturn(Boolean.FALSE);
+
+    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.empty());
+    assertThat(postMergeContext.isSyncing()).isTrue();
+
     when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.FALSE));
     assertThat(postMergeContext.isSyncing()).isTrue();
 
     when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.TRUE));
+    assertThat(postMergeContext.isSyncing()).isFalse();
+
+    // if we're in sync reached ttd does not matter anymore
+    when(mockSyncState.isInSync()).thenReturn(Boolean.TRUE);
     assertThat(postMergeContext.isSyncing()).isFalse();
   }
 
