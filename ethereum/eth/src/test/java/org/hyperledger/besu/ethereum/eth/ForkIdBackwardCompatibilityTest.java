@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -117,7 +118,8 @@ public class ForkIdBackwardCompatibilityTest {
   public void assertBackwardCompatibilityWorks() {
     LOG.info("Running test case {}", name);
     final ForkIdManager forkIdManager =
-        new ForkIdManager(mockBlockchain(genesisHash, head), forks, legacyEth64);
+        new ForkIdManager(
+            mockBlockchain(genesisHash, head), forks, Collections.emptyList(), legacyEth64);
     final ForkId legacyForkId =
         legacyEth64
             ? new LegacyForkIdManager(mockBlockchain(genesisHash, head), forks).getLatestForkId()

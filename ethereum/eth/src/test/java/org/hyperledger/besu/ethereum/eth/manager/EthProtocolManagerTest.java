@@ -1116,7 +1116,8 @@ public final class EthProtocolManagerTest {
             protocolContext.getWorldStateArchive(),
             transactionPool,
             EthProtocolConfiguration.defaultConfig(),
-            new ForkIdManager(blockchain, Collections.emptyList(), true))) {
+            new ForkIdManager(
+                blockchain, Collections.emptyList(), Collections.emptyList(), true))) {
 
       assertThat(ethManager.getForkIdAsBytesList()).isEmpty();
     }

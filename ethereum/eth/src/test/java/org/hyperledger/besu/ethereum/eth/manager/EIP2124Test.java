@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -687,11 +688,12 @@ public class EIP2124Test {
   public void test() {
     LOG.info("Running test case {}", name);
     final ForkIdManager forkIdManager =
-        new ForkIdManager(mockBlockchain(network.hash, head), network.forks, false);
+        new ForkIdManager(
+            mockBlockchain(network.hash, head), network.forks, Collections.emptyList(), false);
     wantForkId.ifPresent(
         forkId -> assertThat(forkIdManager.getForkIdForChainHead()).isEqualTo(forkId));
     wantForkIds.ifPresent(
-        forkIds -> assertThat(forkIdManager.getForkIds()).containsExactlyElementsOf(forkIds));
+        forkIds -> assertThat(forkIdManager.getAllForkIds()).containsExactlyElementsOf(forkIds));
     wantPeerCheckCase.ifPresent(
         peerCheckCase ->
             assertThat(

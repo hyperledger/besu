@@ -278,7 +278,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             .metricsSystem(new NoOpMetricsSystem())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .blockchain(blockchain)
-            .forks(Collections.emptyList())
+            .blockNumberForks(Collections.emptyList())
             .build();
 
     p2pNetwork.start();
