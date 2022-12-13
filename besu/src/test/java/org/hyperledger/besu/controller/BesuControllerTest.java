@@ -28,10 +28,13 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalLong;
 
+import com.google.common.io.Resources;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -136,5 +139,57 @@ public class BesuControllerTest {
 
     when(genesisConfigOptions.getQbftConfigOptions()).thenReturn(qbftConfigOptions);
     when(qbftConfigOptions.getStartBlock()).thenReturn(startBlock);
+  }
+
+  @Test
+  public void postMergeCheckpointSyncUsesMergeControllerBuilder() throws IOException {
+    final GenesisConfigFile postMergeGenesisFile =
+        GenesisConfigFile.fromConfig(
+            Resources.toString(
+                Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
+                StandardCharsets.UTF_8));
+
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder().fromGenesisConfig(postMergeGenesisFile);
+
+    assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
+  }
+
+  @Test
+  public void mergeAtGenesisUsesMergeControllerBuilder() throws IOException {
+    final GenesisConfigFile mergeAtGenesisFile =
+        GenesisConfigFile.fromConfig(
+            Resources.toString(
+                Resources.getResource("valid_post_merge_merge_at_genesis.json"),
+                StandardCharsets.UTF_8));
+
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder().fromGenesisConfig(mergeAtGenesisFile);
+
+    assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
+  }
+
+  @Test
+  public void postMergeCheckpointSyncWithTotalDifficultyEqualsTTDUsesTransitionControllerBuilder()
+      throws IOException {
+    final GenesisConfigFile mergeAtGenesisFile =
+        GenesisConfigFile.fromConfig(
+            Resources.toString(
+                Resources.getResource(
+                    "invalid_post_merge_checkpoint_total_difficulty_same_as_TTD.json"),
+                StandardCharsets.UTF_8));
+
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder().fromGenesisConfig(mergeAtGenesisFile);
+
+    assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
+  }
+
+  @Test
+  public void preMergeCheckpointSyncUsesTransitionControllerBuilder() {
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder().fromGenesisConfig(genesisConfigFile);
+
+    assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
 }
