@@ -95,7 +95,7 @@ public class EthCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(null, null, null, null, null, null, null, null, null);
+        new JsonCallParameter(null, null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -262,6 +262,7 @@ public class EthCallTest {
         maxPriorityFeesPerGas,
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         null);
   }
 
