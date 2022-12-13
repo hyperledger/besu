@@ -762,31 +762,32 @@ task dockerUpload {
 }
 
 task dockerUploadRelease {
-  def architecture = System.getenv('architecture')
+  def archs = ["arm64", "amd64"]
   def image = "${dockerImageName}:${dockerBuildVersion}"
 
   doLast {
-    for (def variant in dockerVariants) {
-      def variantImage = "${image}-${variant}"
+    for (def architecture in archs) {
+      for (def variant in dockerVariants) {
+
+        def variantImage = "${image}-${variant}"
+        exec {
+          def cmd = "docker pull '${variantImage}' && docker tag '${variantImage}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+          executable "sh"
+          args "-c", cmd
+        }
+      }
+
       exec {
-        def archVariantImage = "${variantImage}-${architecture}"
-        def cmd = "docker pull '${variantImage}' && docker tag '${variantImage}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+        def archImage = "${image}-${architecture}"
+        def cmd = "docker pull '${archImage}' && docker tag ${image} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
         executable "sh"
         args "-c", cmd
       }
-    }
-
-    exec {
-      def archImage = "${image}-${architecture}"
-      def cmd = "docker pull '${archImage}' && docker tag ${image} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
-      executable "sh"
-      args "-c", cmd
     }
   }
 }
 
 task manifestDocker {
-
   def image = "${dockerImageName}:${dockerBuildVersion}"
   def archs = ["arm64", "amd64"]
   def tags = ["${image}"]
