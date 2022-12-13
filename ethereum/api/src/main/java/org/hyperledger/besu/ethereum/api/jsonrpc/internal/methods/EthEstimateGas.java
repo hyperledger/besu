@@ -42,8 +42,8 @@ import java.util.function.Function;
 
 public class EthEstimateGas implements JsonRpcMethod {
 
-  private final BlockchainQueries blockchainQueries;
-  private final TransactionSimulator transactionSimulator;
+  protected final BlockchainQueries blockchainQueries;
+  protected final TransactionSimulator transactionSimulator;
 
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
@@ -88,12 +88,12 @@ public class EthEstimateGas implements JsonRpcMethod {
         .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
   }
 
-  private BlockHeader blockHeader() {
+  protected BlockHeader blockHeader() {
     final long headBlockNumber = blockchainQueries.headBlockNumber();
     return blockchainQueries.getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
   }
 
-  private CallParameter overrideGasLimitAndPrice(
+  protected CallParameter overrideGasLimitAndPrice(
       final JsonCallParameter callParams, final long gasLimit) {
     return new CallParameter(
         callParams.getFrom(),
@@ -119,7 +119,7 @@ public class EthEstimateGas implements JsonRpcMethod {
             : errorResponse(request, result);
   }
 
-  private JsonRpcErrorResponse errorResponse(
+  protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
     final JsonRpcError jsonRpcError;
 
@@ -141,12 +141,12 @@ public class EthEstimateGas implements JsonRpcMethod {
     return errorResponse(request, jsonRpcError);
   }
 
-  private JsonRpcErrorResponse errorResponse(
+  protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
   }
 
-  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
+  protected JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getGasPrice() != null
         && (callParams.getMaxFeePerGas().isPresent()
