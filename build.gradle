@@ -762,8 +762,7 @@ task dockerUpload {
 }
 
 task dockerUploadRelease {
-  def archs = ["arm64"]
-  //def archs = ["arm64", "amd64"]
+  def archs = ["arm64", "amd64"]
   def image = "${dockerImageName}:${dockerBuildVersion}"
 
   doLast {
@@ -789,8 +788,7 @@ task dockerUploadRelease {
 
 task manifestDocker {
   def image = "${dockerImageName}:${dockerBuildVersion}"
-  def archs = ["arm64"]
-  //def archs = ["arm64", "amd64"]
+  def archs = ["arm64", "amd64"]
   def tags = ["${image}"]
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
@@ -827,8 +825,7 @@ task manifestDocker {
 }
 
 task manifestDockerRelease {
-  def archs = ["arm64"]
-  //def archs = ["arm64", "amd64"]
+  def archs = ["arm64", "amd64"]
   def baseTag = "${dockerImageName}:latest";
 
   doLast {
