@@ -771,7 +771,7 @@ task dockerUploadRelease {
       for (def variant in dockerVariants) {
         def variantImage = "${image}-${variant}"
         exec {
-          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
           executable "sh"
           args "-c", cmd
         }
@@ -779,7 +779,7 @@ task dockerUploadRelease {
 
       exec {
         def archImage = "${image}-${architecture}"
-        def cmd = "docker pull '${archImage}' && docker tag ${image} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
+        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
         executable "sh"
         args "-c", cmd
       }
