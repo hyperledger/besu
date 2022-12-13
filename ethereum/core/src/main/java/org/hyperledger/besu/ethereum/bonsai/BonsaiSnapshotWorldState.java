@@ -68,7 +68,7 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   }
 
   protected BonsaiSnapshotWorldState subscribeToParent() {
-   parentWorldStateSubscriberId.set(parentWorldStateStorage.subscribe(this));
+    parentWorldStateSubscriberId.set(parentWorldStateStorage.subscribe(this));
     return this;
   }
 
@@ -84,15 +84,15 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   public MutableWorldState copy() {
     // return a clone-based copy of worldstate storage
     return new BonsaiSnapshotWorldState(
-        archive,
-        new BonsaiSnapshotWorldStateKeyValueStorage(
-            accountSnap.cloneFromSnapshot(),
-            codeSnap.cloneFromSnapshot(),
-            storageSnap.cloneFromSnapshot(),
-            trieBranchSnap.cloneFromSnapshot(),
-            worldStateStorage.trieLogStorage),
-        parentWorldStateStorage)
-            .subscribeToParent();
+            archive,
+            new BonsaiSnapshotWorldStateKeyValueStorage(
+                accountSnap.cloneFromSnapshot(),
+                codeSnap.cloneFromSnapshot(),
+                storageSnap.cloneFromSnapshot(),
+                trieBranchSnap.cloneFromSnapshot(),
+                worldStateStorage.trieLogStorage),
+            parentWorldStateStorage)
+        .subscribeToParent();
   }
 
   @Override
