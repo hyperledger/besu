@@ -73,7 +73,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      WorldStateArchive publicWorldStateArchive) {
+      final WorldStateArchive publicWorldStateArchive) {
     protocolSpecs.forEach(
         spec -> {
           final BlockProcessor blockProcessor = spec.getSpec().getBlockProcessor();
