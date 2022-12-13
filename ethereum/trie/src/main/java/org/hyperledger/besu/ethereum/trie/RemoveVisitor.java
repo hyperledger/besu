@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class RemoveVisitor<V> implements PathNodeVisitor<V> {
@@ -38,6 +40,9 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
 
     if (commonPathLength == extensionPath.size()) {
       final Node<V> newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
+      newChild.setLocation(
+          Optional.of(
+              Bytes.concatenate(extensionNode.getLocation().orElse(Bytes.EMPTY), extensionPath)));
       final Node<V> updatedNode = extensionNode.replaceChild(newChild);
       updatedNode.setLocation(extensionNode.getLocation());
       if (updatedNode instanceof LeafNode) {
@@ -91,6 +96,9 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
     }
 
     final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
+    updatedChild.setLocation(
+        Optional.of(
+            Bytes.concatenate(branchNode.getLocation().orElse(Bytes.EMPTY), Bytes.of(childIndex))));
     final Node<V> updatedNode = branchNode.replaceChild(childIndex, updatedChild, allowFlatten);
     updatedNode.setLocation(branchNode.getLocation());
     if (updatedNode instanceof LeafNode) {

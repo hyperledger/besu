@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.util.RangeManager;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
@@ -241,13 +242,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                 new RemoveVisitor<>() {
                   @Override
                   public void remove(final Node<Bytes> node) {
-                    System.out.println(
-                        "remove "
-                            + updatedAddressHash
-                            + " "
-                            + node.print()
-                            + " "
-                            + node.getLocation());
                     stateUpdater.removeAccountStateTrieNode(
                         Bytes.concatenate(
                             updatedAddressHash, node.getLocation().orElse(Bytes.EMPTY)),
@@ -273,7 +267,20 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     }
   }
 
-  public static void main(final String[] args) {}
+  public static void main(final String[] args) {
+    System.out.println(
+        TrieNodeDecoder.decode(
+                Bytes.EMPTY,
+                Bytes.fromHexString(
+                    "0xf8429f3e71b4f7aaea84bf39caa8480927b5d012feaa2b086f8e067d16fcb67c756da1a020202020202274726169745f74797065223a2022436f6c6c61626f726174696f"))
+            .print());
+    System.out.println(
+        TrieNodeDecoder.decode(
+                Bytes.EMPTY,
+                Bytes.fromHexString(
+                    "0xf8429f2071b4f7aaea84bf39caa8480927b5d012feaa2b086f8e067d16fcb67c756da1a0314c6a517a4d6934324f546b674d53347a4e7934304e4341794c6a63794c5334"))
+            .print());
+  }
 
   private void clearStorage(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
