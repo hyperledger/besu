@@ -896,7 +896,20 @@ public class MessageFrame {
     return false;
   }
 
-  public void mergeWarmedUpFields(final MessageFrame childFrame) {
+  public Bytes getFromWarmedUpStorage(final Address address, final Bytes32 slot) {
+    MessageFrame frame = this;
+    while (frame != null) {
+      if (frame.warmedUpStorage.containsKey(address)
+              && frame.warmedUpStorage.get(address).containsKey(slot)) {
+        return frame.warmedUpStorage.get(address).get(slot);
+      }
+      frame = frame.parentMessageFrame;
+    }
+    return null;
+  }
+
+
+    public void mergeWarmedUpFields(final MessageFrame childFrame) {
     if (childFrame == this) {
       return;
     }

@@ -56,7 +56,7 @@ public class SLoadOperation extends AbstractOperation {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         if (slotIsWarm) {
-          frame.pushStackItem(frame.getWarmedUpStorageKeys().get(address).get(key));
+          frame.pushStackItem(frame.getFromWarmedUpStorage(address, key));
           return warmSuccess;
         } else {
           UInt256 storageValue = frame.warmUpStorage(account, key);
