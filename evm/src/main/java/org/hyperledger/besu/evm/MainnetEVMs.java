@@ -427,6 +427,33 @@ public class MainnetEVMs {
     registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 
+  public static EVM shanghai(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        shanghaiOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.SHANGHAI);
+  }
+
+  public static OperationRegistry shanghaiOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerShanghaiOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  public static void registerShanghaiOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerParisOperations(registry, gasCalculator, chainID);
+    // Register the PUSH0 operation.
+    registry.put(new Push0Operation(gasCalculator));
+  }
+
   public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     return shandong(new LondonGasCalculator(), chainId, evmConfiguration);
   }

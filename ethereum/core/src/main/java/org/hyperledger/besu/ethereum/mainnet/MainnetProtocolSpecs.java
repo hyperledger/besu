@@ -658,6 +658,10 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.shanghai(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
