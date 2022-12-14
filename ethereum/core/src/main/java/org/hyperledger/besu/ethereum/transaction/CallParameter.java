@@ -73,7 +73,7 @@ public class CallParameter {
       final Optional<Wei> maxFeePerGas,
       final Wei value,
       final Bytes payload,
-      final Optional<List<AccessListEntry>> maybeAccessList) {
+      final Optional<List<AccessListEntry>> accessList) {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
@@ -82,7 +82,7 @@ public class CallParameter {
     this.gasPrice = gasPrice;
     this.value = value;
     this.payload = payload;
-    this.accessList = maybeAccessList;
+    this.accessList = accessList;
   }
 
   public Address getFrom() {
