@@ -29,6 +29,16 @@ public abstract class AbstractOperation implements Operation {
   private final int opSize;
   private final GasCalculator gasCalculator;
 
+  /**
+   * Instantiates a new Abstract operation.
+   *
+   * @param opcode the opcode
+   * @param name the name
+   * @param stackItemsConsumed the stack items consumed
+   * @param stackItemsProduced the stack items produced
+   * @param opSize the op size
+   * @param gasCalculator the gas calculator
+   */
   protected AbstractOperation(
       final int opcode,
       final String name,
@@ -44,6 +54,11 @@ public abstract class AbstractOperation implements Operation {
     this.gasCalculator = gasCalculator;
   }
 
+  /**
+   * Gets Gas calculator.
+   *
+   * @return the gas calculator
+   */
   protected GasCalculator gasCalculator() {
     return gasCalculator;
   }
