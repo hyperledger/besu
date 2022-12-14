@@ -23,6 +23,11 @@ public class GoQuorumOptions {
 
   private static Boolean goQuorumCompatibilityMode;
 
+  /**
+   * Sets go quorum compatibility mode.
+   *
+   * @param goQuorumCompatibilityMode the go quorum compatibility mode
+   */
   public static void setGoQuorumCompatibilityMode(final boolean goQuorumCompatibilityMode) {
     if (GoQuorumOptions.goQuorumCompatibilityMode == null) {
       GoQuorumOptions.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
@@ -32,6 +37,11 @@ public class GoQuorumOptions {
     }
   }
 
+  /**
+   * Gets go quorum compatibility mode.
+   *
+   * @return the go quorum compatibility mode
+   */
   public static boolean getGoQuorumCompatibilityMode() {
     if (goQuorumCompatibilityMode == null) {
       // If the quorum mode has never been set, we default it
