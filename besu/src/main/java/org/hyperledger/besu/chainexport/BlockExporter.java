@@ -28,11 +28,18 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Besu Block Export Util. */
+/**
+ * Besu Block Export Util.
+ */
 public abstract class BlockExporter {
   private static final Logger LOG = LoggerFactory.getLogger(BlockExporter.class);
   private final Blockchain blockchain;
 
+  /**
+   * Instantiates a new Block exporter.
+   *
+   * @param blockchain the blockchain
+   */
   protected BlockExporter(final Blockchain blockchain) {
     this.blockchain = blockchain;
   }
@@ -40,10 +47,9 @@ public abstract class BlockExporter {
   /**
    * Export blocks that are stored in Besu's block storage.
    *
-   * @param outputFile the path at which to save the exported block data
+   * @param outputFile      the path at which to save the exported block data
    * @param maybeStartBlock the starting index of the block list to export (inclusive)
-   * @param maybeEndBlock the ending index of the block list to export (exclusive), if not specified
-   *     a single block will be export
+   * @param maybeEndBlock   the ending index of the block list to export (exclusive), if not specified a single block will be export
    * @throws IOException if an I/O error occurs while writing data to disk
    */
   public void exportBlocks(
@@ -90,6 +96,13 @@ public abstract class BlockExporter {
     LOG.info("Export complete at block {}", blockNumber);
   }
 
+  /**
+   * Export block.
+   *
+   * @param outputStream The FileOutputStream where the block will be exported
+   * @param block        The block to export
+   * @throws IOException In case of an error while exporting.
+   */
   protected abstract void exportBlock(final FileOutputStream outputStream, final Block block)
       throws IOException;
 }
