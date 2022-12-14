@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Login to DockerHub
-        run: echo ${{ secrets.DOCKER_PASSWORD_RW }} | docker login -u ${{ secrets.DOCKER_USER_RW }} --password-stdin
+        run: echo '${{ secrets.DOCKER_PASSWORD_RW }}' | docker login -u '${{ secrets.DOCKER_USER_RW }}' --password-stdin
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Docker upload
