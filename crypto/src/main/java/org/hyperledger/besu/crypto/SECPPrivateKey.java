@@ -26,7 +26,13 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class SECPPrivateKey implements java.security.PrivateKey {
 
+  /**
+   * Encoded Bytes
+   */
   private final Bytes32 encoded;
+  /**
+   * Algorithm
+   */
   private final String algorithm;
 
   private SECPPrivateKey(final Bytes32 encoded, final String algorithm) {

@@ -36,7 +36,13 @@ public class SECPPublicKey implements java.security.PublicKey {
    */
   public static final int BYTE_LENGTH = 64;
 
+  /**
+   * Encoded Bytes
+   */
   private final Bytes encoded;
+  /**
+   * Algorithm
+   */
   private final String algorithm;
 
   /**
