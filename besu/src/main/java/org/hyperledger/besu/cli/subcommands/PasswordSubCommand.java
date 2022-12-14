@@ -30,6 +30,9 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
+/**
+ * The Password sub command.
+ */
 @Command(
     name = COMMAND_NAME,
     description = "This command provides password related actions.",
@@ -38,6 +41,9 @@ import picocli.CommandLine.Spec;
     subcommands = {HashSubCommand.class})
 public class PasswordSubCommand implements Runnable {
 
+  /**
+   * The constant COMMAND_NAME.
+   */
   public static final String COMMAND_NAME = "password";
 
   @SuppressWarnings("unused")
@@ -48,8 +54,13 @@ public class PasswordSubCommand implements Runnable {
   @Spec
   private CommandSpec spec;
 
-  final PrintWriter out;
+  private final PrintWriter out;
 
+  /**
+   * Instantiates a new Password sub command.
+   *
+   * @param out The PrintWriter where the usage will be reported.
+   */
   public PasswordSubCommand(final PrintWriter out) {
     this.out = out;
   }
@@ -59,6 +70,9 @@ public class PasswordSubCommand implements Runnable {
     spec.commandLine().usage(out);
   }
 
+  /**
+   * The Hash sub command for password.
+   */
   @Command(
       name = "hash",
       description = "This command generates the hash of a given password.",
