@@ -1413,6 +1413,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
   }
 
+  /**
+   * Parse Besu command line arguments. Visible for testing.
+   * @param resultHandler execution strategy. See PicoCLI. Typical argument is RunLast.
+   * @param parameterExceptionHandler Exception handler for handling parameters
+   * @param executionExceptionHandler Exception handler for business logic
+   * @param in Standard input stream
+   * @param args arguments to Besu command
+   * @return success or failure exit code.
+   */
+  @VisibleForTesting
   public int parse(
       final IExecutionStrategy resultHandler,
       final BesuParameterExceptionHandler parameterExceptionHandler,
@@ -1611,6 +1621,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   // loadKeyPair() is public because it is accessed by subcommands
+
+  /**
+   * Load key pair from private key. Visible to be accessed by subcommands.
+   * @param nodePrivateKeyFile File containing private key
+   * @return KeyPair loaded from private key file
+   */
   public KeyPair loadKeyPair(final File nodePrivateKeyFile) {
     return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile(nodePrivateKeyFile));
   }
@@ -1769,6 +1785,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  /**
+   * Logging in Color enabled or not.
+   * @return Optional true or false representing logging color is enabled. Empty if not set.
+   */
   public static Optional<Boolean> getColorEnabled() {
     return Optional.ofNullable(colorEnabled);
   }
@@ -1859,6 +1879,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  /**
+   * Validates P2P interface IP address/host name. Visible for testing.
+   * @param p2pInterface IP Address/host name
+   */
   protected void validateP2PInterface(final String p2pInterface) {
     final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
     try {
@@ -1923,7 +1947,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public void validateRpcOptionsParams() {
+  private void validateRpcOptionsParams() {
     final Predicate<String> configuredApis =
         apiName ->
             Arrays.stream(RpcApis.values())
@@ -1969,7 +1993,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public void validateChainDataPruningParams() {
+  private void validateChainDataPruningParams() {
     if (unstableChainPruningOptions.getChainDataPruningEnabled()
         && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
             < ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
@@ -2551,6 +2575,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .build();
   }
 
+  /**
+   * Metrics Configuration for Besu
+   * @return instance of MetricsConfiguration.
+   */
   public MetricsConfiguration metricsConfiguration() {
     if (metricsOptionGroup.isMetricsEnabled && metricsOptionGroup.isMetricsPushEnabled) {
       throw new ParameterException(
@@ -3175,6 +3203,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
   }
 
+  /**
+   * Metrics System used by Besu
+   * @return Instance of MetricsSystem
+   */
   public MetricsSystem getMetricsSystem() {
     return metricsSystem.get();
   }
@@ -3203,14 +3235,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Besu CLI Paramaters exception handler used by VertX. Visible for testing.
+   * @return instance of BesuParameterExceptionHandler
+   */
+  @VisibleForTesting
   public BesuParameterExceptionHandler parameterExceptionHandler() {
     return new BesuParameterExceptionHandler(this::getLogLevel);
   }
 
+  /**
+   * Returns BesuExecutionExceptionHandler. Visible as it is used in testing.
+   * @return instance of BesuExecutionExceptionHandler used by Vertx.
+   */
   public BesuExecutionExceptionHandler executionExceptionHandler() {
     return new BesuExecutionExceptionHandler();
   }
 
+  /**
+   * Represents Enode DNS Configuration. Visible for testing.
+   * @return instance of EnodeDnsConfiguration
+   */
+  @VisibleForTesting
   public EnodeDnsConfiguration getEnodeDnsConfiguration() {
     if (enodeDnsConfiguration == null) {
       enodeDnsConfiguration = unstableDnsOptions.toDomainObject();
@@ -3381,6 +3427,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return genesisConfigOptions.getEcCurve();
   }
 
+  /**
+   * Enables Go Quorum Compatibility mode. Visible for testing.
+   */
+  @VisibleForTesting
   protected void enableGoQuorumCompatibilityMode() {
     // this static flag is read by the RLP decoder
     GoQuorumOptions.setGoQuorumCompatibilityMode(true);
@@ -3407,7 +3457,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return engineRPCOptionGroup.overrideEngineRpcEnabled || isMergeEnabled();
   }
 
-  public static List<String> getJDKEnabledCipherSuites() {
+  private static List<String> getJDKEnabledCipherSuites() {
     try {
       final SSLContext context = SSLContext.getInstance("TLS");
       context.init(null, null, null);
@@ -3418,7 +3468,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public static List<String> getJDKEnabledProtocols() {
+  private static List<String> getJDKEnabledProtocols() {
     try {
       final SSLContext context = SSLContext.getInstance("TLS");
       context.init(null, null, null);
