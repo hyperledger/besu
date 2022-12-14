@@ -45,7 +45,8 @@ public class NodeDeletionProcessor {
 
     if (newNode instanceof LeafNode) {
       final Bytes encodedPathToExclude = Bytes.concatenate(location, newNode.getPath());
-      worldStateStorage.pruneAccountState(location, Optional.of(encodedPathToExclude));
+      // cleaning the account trie node in this location
+      worldStateStorage.pruneTrieNode(Bytes.EMPTY, location, Optional.of(encodedPathToExclude));
       // check state of the current account
       newNode
           .getValue()
@@ -57,7 +58,7 @@ public class NodeDeletionProcessor {
                 final Hash accountHash =
                     Hash.wrap(Bytes32.wrap(CompactEncoding.pathToBytes(encodedPathToExclude)));
                 if (account.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-                  worldStateStorage.pruneStorageState(accountHash, Bytes.EMPTY, Optional.empty());
+                  worldStateStorage.pruneTrieNode(accountHash, Bytes.EMPTY, Optional.empty());
                 }
                 // if code is deleted
                 if (account.getCodeHash().equals(Hash.EMPTY)) {
@@ -71,13 +72,13 @@ public class NodeDeletionProcessor {
           .getLocation()
           .ifPresent(
               subLocation ->
-                  worldStateStorage.pruneAccountState(location, Optional.of(subLocation)));
+                  worldStateStorage.pruneTrieNode(Bytes.EMPTY, location, Optional.of(subLocation)));
     } else if (newNode instanceof BranchNode) {
       final List<Node<Bytes>> children = newNode.getChildren();
       for (int i = 0; i < MAX_CHILDREN; i++) {
         if (i >= children.size() || !children.get(i).isReferencedByHash()) {
-          worldStateStorage.pruneAccountState(
-              Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
+          worldStateStorage.pruneTrieNode(
+              Bytes.EMPTY, Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
         }
       }
     }
@@ -92,20 +93,19 @@ public class NodeDeletionProcessor {
 
     if (newNode instanceof LeafNode) {
       final Bytes encodedPathToExclude = Bytes.concatenate(location, newNode.getPath());
-      worldStateStorage.pruneStorageState(accountHash, location, Optional.of(encodedPathToExclude));
+      worldStateStorage.pruneTrieNode(accountHash, location, Optional.of(encodedPathToExclude));
     } else if (newNode instanceof ExtensionNode) {
       ((ExtensionNode<Bytes>) newNode)
           .getChild()
           .getLocation()
           .ifPresent(
               subLocation ->
-                  worldStateStorage.pruneStorageState(
-                      accountHash, location, Optional.of(subLocation)));
+                  worldStateStorage.pruneTrieNode(accountHash, location, Optional.of(subLocation)));
     } else if (newNode instanceof BranchNode) {
       final List<Node<Bytes>> children = newNode.getChildren();
       for (int i = 0; i < MAX_CHILDREN; i++) {
         if (i >= children.size() || !children.get(i).isReferencedByHash()) {
-          worldStateStorage.pruneStorageState(
+          worldStateStorage.pruneTrieNode(
               accountHash, Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
         }
       }

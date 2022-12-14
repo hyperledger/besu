@@ -19,6 +19,8 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -39,17 +41,24 @@ public class LeafNode<V> implements Node<V> {
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
 
+  private String stacktrace;
+
   LeafNode(
-      final Bytes location,
+      final Optional<Bytes> location,
       final Bytes path,
       final V value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
-    this.location = Optional.ofNullable(location);
+    this.location = location;
     this.path = path;
     this.value = value;
     this.nodeFactory = nodeFactory;
     this.valueSerializer = valueSerializer;
+    if (this.location.isEmpty()) {
+      StringWriter sw = new StringWriter();
+      new Exception().printStackTrace(new PrintWriter(sw));
+      stacktrace = sw.toString();
+    }
   }
 
   LeafNode(
@@ -62,11 +71,14 @@ public class LeafNode<V> implements Node<V> {
     this.value = value;
     this.nodeFactory = nodeFactory;
     this.valueSerializer = valueSerializer;
+    StringWriter sw = new StringWriter();
+    new Exception().printStackTrace(new PrintWriter(sw));
+    stacktrace = sw.toString();
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
-    return visitor.visit(this, path);
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes location, final Bytes path) {
+    return visitor.visit(this, location, path);
   }
 
   @Override
@@ -147,12 +159,14 @@ public class LeafNode<V> implements Node<V> {
 
   @Override
   public Node<V> replacePath(final Bytes path) {
-    return nodeFactory.createLeaf(path, value);
+    return nodeFactory.createLeaf(location, path, value);
   }
 
   @Override
   public String print() {
     return "Leaf:"
+        + "\n\tStacktrace "
+        + stacktrace
         + "\n\tRef: "
         + getRlpRef()
         + "\n\tLocation: "

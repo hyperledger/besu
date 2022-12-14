@@ -200,7 +200,7 @@ public class RestoreState implements Runnable {
         final RestoreVisitor<Bytes> accountTrieWriteVisitor =
             new RestoreVisitor<>(t -> t, accountRlp, accountPersistVisitor);
 
-        root = root.accept(accountTrieWriteVisitor, bytesToPath(trieKey));
+        root = root.accept(accountTrieWriteVisitor, Bytes.EMPTY, bytesToPath(trieKey));
 
         final PersistVisitor<Bytes> storagePersistVisitor =
             new PersistVisitor<>(this::updateAccountStorage);
@@ -221,7 +221,8 @@ public class RestoreState implements Runnable {
           final Bytes storageTrieValue = Bytes.wrap(trieInput.readBytes());
           final RestoreVisitor<Bytes> storageTrieWriteVisitor =
               new RestoreVisitor<>(t -> t, storageTrieValue, storagePersistVisitor);
-          storageRoot = storageRoot.accept(storageTrieWriteVisitor, bytesToPath(storageTrieKey));
+          storageRoot =
+              storageRoot.accept(storageTrieWriteVisitor, Bytes.EMPTY, bytesToPath(storageTrieKey));
 
           trieInput.leaveList();
         }

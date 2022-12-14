@@ -21,11 +21,29 @@ import org.apache.tuweni.bytes.Bytes;
 
 public interface NodeFactory<V> {
 
-  Node<V> createExtension(Bytes path, Node<V> child);
+  default Node<V> createExtension(final Bytes path, final Node<V> child) {
+    return createExtension(Optional.empty(), path, child);
+  }
 
-  Node<V> createBranch(byte leftIndex, Node<V> left, byte rightIndex, Node<V> right);
+  default Node<V> createBranch(
+      final byte leftIndex, final Node<V> left, final byte rightIndex, final Node<V> right) {
+    return createBranch(Optional.empty(), leftIndex, left, rightIndex, right);
+  }
 
-  Node<V> createBranch(ArrayList<Node<V>> newChildren, Optional<V> value);
+  default Node<V> createBranch(final ArrayList<Node<V>> newChildren, final Optional<V> value) {
+    return createBranch(Optional.empty(), newChildren, value);
+  }
 
-  Node<V> createLeaf(Bytes path, V value);
+  default Node<V> createLeaf(final Bytes path, final V value) {
+    return createLeaf(Optional.empty(), path, value);
+  }
+
+  Node<V> createExtension(Optional<Bytes> location, Bytes path, Node<V> child);
+
+  Node<V> createBranch(
+      Optional<Bytes> location, byte leftIndex, Node<V> left, byte rightIndex, Node<V> right);
+
+  Node<V> createBranch(Optional<Bytes> location, ArrayList<Node<V>> newChildren, Optional<V> value);
+
+  Node<V> createLeaf(Optional<Bytes> location, Bytes path, V value);
 }

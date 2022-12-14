@@ -22,7 +22,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public interface Node<V> {
 
-  Node<V> accept(PathNodeVisitor<V> visitor, Bytes path);
+  Node<V> accept(PathNodeVisitor<V> visitor, final Bytes location, Bytes path);
 
   void accept(NodeVisitor<V> visitor);
 

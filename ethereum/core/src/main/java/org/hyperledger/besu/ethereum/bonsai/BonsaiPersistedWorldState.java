@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.util.RangeManager;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
@@ -39,6 +38,8 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -147,9 +148,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateRootHash,
             Function.identity(),
             Function.identity());
-
-    // for manicured tries and composting, collect branches here (not implemented)
-
     addTheAccounts(stateUpdater, worldStateUpdater, accountTrie);
 
     // TODO write to a cache and then generate a layer update from that and the
@@ -172,7 +170,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       if (updatedAccount == null) {
         final Hash addressHash = Hash.hash(accountKey);
-        // stateUpdater.removeAccountInfoState(addressHash);
         accountTrie.removePath(
             CompactEncoding.bytesToPath(addressHash),
             new RemoveVisitor<>() {
@@ -185,7 +182,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       } else {
         final Hash addressHash = updatedAccount.getAddressHash();
         final Bytes accountValue = updatedAccount.serializeAccount();
-        // stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
         accountTrie.put(addressHash, accountValue);
       }
     }
@@ -230,7 +226,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                 Function.identity(),
                 Function.identity());
 
-        // for manicured tries and composting, collect branches here (not implemented)
+        final Set<Bytes> prunedLocation = new TreeSet<>();
 
         for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
             storageAccountUpdate.getValue().entrySet()) {
@@ -242,17 +238,21 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                 new RemoveVisitor<>() {
                   @Override
                   public void remove(final Node<Bytes> node) {
-                    stateUpdater.removeAccountStateTrieNode(
-                        Bytes.concatenate(
-                            updatedAddressHash, node.getLocation().orElse(Bytes.EMPTY)),
-                        node.getHash());
+                    System.out.println(node.print());
+                    prunedLocation.add(node.getLocation().orElseThrow());
                   }
                 });
           } else {
-            // stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorage);
             storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
           }
         }
+
+        prunedLocation.forEach(
+            location -> {
+              System.out.println("remove -> " + updatedAddressHash + " " + location);
+              stateUpdater.removeAccountStateTrieNode(
+                  Bytes.concatenate(updatedAddressHash, location), null);
+            });
 
         final BonsaiAccount accountUpdated = accountValue.getUpdated();
         if (accountUpdated != null) {
@@ -265,21 +265,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       }
       // for manicured tries and composting, trim and compost here
     }
-  }
-
-  public static void main(final String[] args) {
-    System.out.println(
-        TrieNodeDecoder.decode(
-                Bytes.EMPTY,
-                Bytes.fromHexString(
-                    "0xf8429f3e71b4f7aaea84bf39caa8480927b5d012feaa2b086f8e067d16fcb67c756da1a020202020202274726169745f74797065223a2022436f6c6c61626f726174696f"))
-            .print());
-    System.out.println(
-        TrieNodeDecoder.decode(
-                Bytes.EMPTY,
-                Bytes.fromHexString(
-                    "0xf8429f2071b4f7aaea84bf39caa8480927b5d012feaa2b086f8e067d16fcb67c756da1a0314c6a517a4d6934324f546b674d53347a4e7934304e4341794c6a63794c5334"))
-            .print());
   }
 
   private void clearStorage(

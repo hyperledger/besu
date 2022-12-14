@@ -59,9 +59,9 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes location, final Bytes path) {
     final Node<V> node = load();
-    return node.accept(visitor, path);
+    return node.accept(visitor, location, path);
   }
 
   @Override

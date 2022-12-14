@@ -29,26 +29,27 @@ class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+  public Node<V> visit(
+      final ExtensionNode<V> extensionNode, final Bytes location, final Bytes path) {
     maybeTrackNode(extensionNode);
-    return super.visit(extensionNode, path);
+    return super.visit(extensionNode, location, path);
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+  public Node<V> visit(final BranchNode<V> branchNode, final Bytes location, final Bytes path) {
     maybeTrackNode(branchNode);
-    return super.visit(branchNode, path);
+    return super.visit(branchNode, location, path);
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+  public Node<V> visit(final LeafNode<V> leafNode, final Bytes location, final Bytes path) {
     maybeTrackNode(leafNode);
-    return super.visit(leafNode, path);
+    return super.visit(leafNode, location, path);
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
-    return super.visit(nullNode, path);
+  public Node<V> visit(final NullNode<V> nullNode, final Bytes location, final Bytes path) {
+    return super.visit(nullNode, location, path);
   }
 
   public List<Node<V>> getProof() {

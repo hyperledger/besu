@@ -32,14 +32,19 @@ public class DefaultNodeFactory<V> implements NodeFactory<V> {
   }
 
   @Override
-  public Node<V> createExtension(final Bytes path, final Node<V> child) {
-    return new ExtensionNode<>(path, child, this);
+  public Node<V> createExtension(
+      final Optional<Bytes> location, final Bytes path, final Node<V> child) {
+    return new ExtensionNode<>(location, path, child, this);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public Node<V> createBranch(
-      final byte leftIndex, final Node<V> left, final byte rightIndex, final Node<V> right) {
+      final Optional<Bytes> location,
+      final byte leftIndex,
+      final Node<V> left,
+      final byte rightIndex,
+      final Node<V> right) {
     assert (leftIndex <= BranchNode.RADIX);
     assert (rightIndex <= BranchNode.RADIX);
     assert (leftIndex != rightIndex);
@@ -48,24 +53,25 @@ public class DefaultNodeFactory<V> implements NodeFactory<V> {
         new ArrayList<>(Collections.nCopies(BranchNode.RADIX, (Node<V>) NULL_NODE));
     if (leftIndex == BranchNode.RADIX) {
       children.set(rightIndex, right);
-      return createBranch(children, left.getValue());
+      return createBranch(location, children, left.getValue());
     } else if (rightIndex == BranchNode.RADIX) {
       children.set(leftIndex, left);
-      return createBranch(children, right.getValue());
+      return createBranch(location, children, right.getValue());
     } else {
       children.set(leftIndex, left);
       children.set(rightIndex, right);
-      return createBranch(children, Optional.empty());
+      return createBranch(location, children, Optional.empty());
     }
   }
 
   @Override
-  public Node<V> createBranch(final ArrayList<Node<V>> children, final Optional<V> value) {
-    return new BranchNode<>(children, value, this, valueSerializer);
+  public Node<V> createBranch(
+      final Optional<Bytes> location, final ArrayList<Node<V>> children, final Optional<V> value) {
+    return new BranchNode<>(location, children, value, this, valueSerializer);
   }
 
   @Override
-  public Node<V> createLeaf(final Bytes path, final V value) {
-    return new LeafNode<>(path, value, this, valueSerializer);
+  public Node<V> createLeaf(final Optional<Bytes> location, final Bytes path, final V value) {
+    return new LeafNode<>(location, path, value, this, valueSerializer);
   }
 }

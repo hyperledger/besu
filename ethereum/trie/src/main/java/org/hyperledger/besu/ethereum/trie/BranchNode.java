@@ -49,13 +49,13 @@ public class BranchNode<V> implements Node<V> {
   private boolean needHeal = false;
 
   BranchNode(
-      final Bytes location,
+      final Optional<Bytes> location,
       final ArrayList<Node<V>> children,
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
     assert (children.size() == RADIX);
-    this.location = Optional.ofNullable(location);
+    this.location = location;
     this.children = children;
     this.value = value;
     this.nodeFactory = nodeFactory;
@@ -76,8 +76,8 @@ public class BranchNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
-    return visitor.visit(this, path);
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes location, final Bytes path) {
+    return visitor.visit(this, location, path);
   }
 
   @Override
@@ -167,7 +167,7 @@ public class BranchNode<V> implements Node<V> {
 
   @Override
   public Node<V> replacePath(final Bytes newPath) {
-    return nodeFactory.createExtension(newPath, this);
+    return nodeFactory.createExtension(location, newPath, this);
   }
 
   public Node<V> replaceChild(final byte index, final Node<V> updatedChild) {
@@ -181,24 +181,25 @@ public class BranchNode<V> implements Node<V> {
 
     if (updatedChild == NULL_NODE) {
       if (value.isPresent() && !hasChildren()) {
-        return nodeFactory.createLeaf(Bytes.of(index), value.get());
+        return nodeFactory.createLeaf(location, Bytes.of(index), value.get());
       } else if (value.isEmpty() && allowFlatten) {
-        final Optional<Node<V>> flattened = maybeFlatten(newChildren);
+        final Optional<Node<V>> flattened = maybeFlatten(location, newChildren);
         if (flattened.isPresent()) {
           return flattened.get();
         }
       }
     }
 
-    return nodeFactory.createBranch(newChildren, value);
+    return nodeFactory.createBranch(location, newChildren, value);
   }
 
   public Node<V> replaceValue(final V value) {
-    return nodeFactory.createBranch(children, Optional.of(value));
+    return nodeFactory.createBranch(location, children, Optional.of(value));
   }
 
   public Node<V> removeValue() {
-    return maybeFlatten(children).orElse(nodeFactory.createBranch(children, Optional.empty()));
+    return maybeFlatten(location, children)
+        .orElse(nodeFactory.createBranch(location, children, Optional.empty()));
   }
 
   private boolean hasChildren() {
@@ -210,7 +211,8 @@ public class BranchNode<V> implements Node<V> {
     return false;
   }
 
-  private static <V> Optional<Node<V>> maybeFlatten(final ArrayList<Node<V>> children) {
+  private static <V> Optional<Node<V>> maybeFlatten(
+      final Optional<Bytes> location, final ArrayList<Node<V>> children) {
     final int onlyChildIndex = findOnlyChild(children);
     if (onlyChildIndex >= 0) {
       // replace the path of the only child and return it
@@ -219,7 +221,12 @@ public class BranchNode<V> implements Node<V> {
       final MutableBytes completePath = MutableBytes.create(1 + onlyChildPath.size());
       completePath.set(0, (byte) onlyChildIndex);
       onlyChildPath.copyTo(completePath, 1);
-      return Optional.of(onlyChild.replacePath(completePath));
+      return Optional.of(onlyChild.replacePath(completePath))
+          .map(
+              vNode -> {
+                vNode.setLocation(location);
+                return vNode;
+              });
     }
     return Optional.empty();
   }

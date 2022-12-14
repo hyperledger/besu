@@ -18,11 +18,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 interface PathNodeVisitor<V> {
 
-  Node<V> visit(ExtensionNode<V> extensionNode, Bytes path);
+  Node<V> visit(ExtensionNode<V> extensionNode, Bytes location, Bytes path);
 
-  Node<V> visit(BranchNode<V> branchNode, Bytes path);
+  Node<V> visit(BranchNode<V> branchNode, Bytes location, Bytes path);
 
-  Node<V> visit(LeafNode<V> leafNode, Bytes path);
+  Node<V> visit(LeafNode<V> leafNode, Bytes location, Bytes path);
 
-  Node<V> visit(NullNode<V> nullNode, Bytes path);
+  Node<V> visit(NullNode<V> nullNode, Bytes location, Bytes path);
 }

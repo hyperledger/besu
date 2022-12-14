@@ -68,9 +68,8 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   @Override
   public Optional<FastSyncState> selectNewPivotBlock() {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
-    if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidFinalizedBlockHash()) {
-      return Optional.of(
-          selectLastFinalizedBlockAsPivot(maybeForkchoice.get().getFinalizedBlockHash()));
+    if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidSafeBlockHash()) {
+      return Optional.of(selectLastSafeBlockAsPivot(maybeForkchoice.get().getSafeBlockHash()));
     }
     LOG.debug("No finalized block hash announced yet");
     return Optional.empty();
@@ -82,9 +81,9 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
     return CompletableFuture.completedFuture(null);
   }
 
-  private FastSyncState selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
-    LOG.debug("Returning finalized block hash {} as pivot", finalizedHash);
-    return new FastSyncState(finalizedHash);
+  private FastSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
+    LOG.debug("Returning safe block hash {} as pivot", safeHash);
+    return new FastSyncState(safeHash);
   }
 
   @Override

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.util.RangeManager.generateRangeFromLocation;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -322,13 +321,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return bytes2;
   }
 
-  public static void main(final String[] args) {
-    System.out.println(
-        CompactEncoding.bytesToPath(
-            Bytes.fromHexString(
-                "0xd2caf3f2d16f035d9915e583d95f19193a5ace128c1b8439d3740ad9ea72bc10")));
-  }
-
   @Override
   public Optional<Bytes> getNodeData(final Bytes location, final Bytes32 hash) {
     return Optional.empty();
@@ -359,37 +351,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     storageStorage.clear();
   }
 
-  public void pruneAccountState(final Bytes location, final Optional<Bytes> maybeExclude) {
-    final Pair<Bytes, Bytes> range = generateRangeFromLocation(Bytes.EMPTY, location);
-
-    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
-        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
-
-    // cleaning the account trie node in this location
-    pruneTrieNode(Bytes.EMPTY, location, maybeExclude);
-
-    updater.close();
-  }
-
-  public void pruneStorageState(
-      final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
-    final Pair<Bytes, Bytes> range = generateRangeFromLocation(accountHash, location);
-    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
-        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
-
-    // cleaning the storage trie node in this location
-    pruneTrieNode(accountHash, location, maybeExclude);
-
-    updater.close();
-  }
-
   public void pruneCodeState(final Bytes accountHash) {
     final KeyValueStorageTransaction transaction = codeStorage.startTransaction();
     transaction.remove(accountHash.toArrayUnsafe());
     transaction.commit();
   }
 
-  private void pruneTrieNode(
+  public void pruneTrieNode(
       final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
     final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
         new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
@@ -586,7 +554,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     @Override
     public synchronized void removeStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash) {
-      trieBranchStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
+      storageStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
     }
 
     @Override

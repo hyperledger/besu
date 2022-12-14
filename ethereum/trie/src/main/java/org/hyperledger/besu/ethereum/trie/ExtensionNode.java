@@ -40,14 +40,14 @@ public class ExtensionNode<V> implements Node<V> {
   private boolean needHeal = false;
 
   ExtensionNode(
-      final Bytes location,
+      final Optional<Bytes> location,
       final Bytes path,
       final Node<V> child,
       final NodeFactory<V> nodeFactory) {
     assert (path.size() > 0);
     assert (path.get(path.size() - 1) != CompactEncoding.LEAF_TERMINATOR)
         : "Extension path ends in a leaf terminator";
-    this.location = Optional.ofNullable(location);
+    this.location = location;
     this.path = path;
     this.child = child;
     this.nodeFactory = nodeFactory;
@@ -64,8 +64,8 @@ public class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
-    return visitor.visit(this, path);
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes location, final Bytes path) {
+    return visitor.visit(this, location, path);
   }
 
   @Override
@@ -156,9 +156,10 @@ public class ExtensionNode<V> implements Node<V> {
   @Override
   public Node<V> replacePath(final Bytes path) {
     if (path.size() == 0) {
+      child.setLocation(location);
       return child;
     }
-    return nodeFactory.createExtension(path, child);
+    return nodeFactory.createExtension(location, path, child);
   }
 
   @Override

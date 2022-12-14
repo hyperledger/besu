@@ -55,6 +55,31 @@ public class TrieGenerator {
 
     MerklePatriciaTrie<Bytes, Bytes> trie = generateTrie(recreatedWorldStateStorage, accounts);
 
+    final StoredMerklePatriciaTrie<Bytes, Bytes> tri2 =
+        new StoredMerklePatriciaTrie<>(
+            (location, key) -> recreatedWorldStateStorage.getAccountStateTrieNode(location, key),
+            trie.getRootHash(),
+            Function.identity(),
+            Function.identity());
+    tri2.removePath(
+        CompactEncoding.bytesToPath(accounts.get(0)),
+        new RemoveVisitor<>() {
+          @Override
+          public void remove(final Node<Bytes> node) {
+            System.out.println(node.print());
+            System.out.println(node.getLocation().get());
+          }
+        });
+    tri2.removePath(
+        CompactEncoding.bytesToPath(accounts.get(1)),
+        new RemoveVisitor<>() {
+          @Override
+          public void remove(final Node<Bytes> node) {
+            System.out.println(node.print());
+            System.out.println(node.getLocation().orElseThrow());
+          }
+        });
+
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, key) ->
@@ -67,7 +92,6 @@ public class TrieGenerator {
     Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
     while (!entriesToDelete.isEmpty()) {
       entriesToDelete.keySet().stream()
-          .collect(toShuffledList())
           .forEach(
               keyHash -> {
                 storageTrie.removePath(
@@ -75,11 +99,11 @@ public class TrieGenerator {
                     new RemoveVisitor<>() {
                       @Override
                       public void remove(final Node<Bytes> node) {
-                        System.out.println(node.print());
-                        System.out.println(node.getLocation().get());
+                        // System.out.println(node.print());
+                        // System.out.println(node.getLocation().get());
                       }
                     });
-                System.out.println("remove " + keyHash);
+                // System.out.println("remove " + keyHash);
               });
       if (entriesToDelete.size() == 256) {
         entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);

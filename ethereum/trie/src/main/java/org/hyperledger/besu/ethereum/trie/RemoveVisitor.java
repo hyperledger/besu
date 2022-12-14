@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import java.util.Optional;
-
 import org.apache.tuweni.bytes.Bytes;
 
 public class RemoveVisitor<V> implements PathNodeVisitor<V> {
@@ -32,19 +30,20 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+  public Node<V> visit(
+      final ExtensionNode<V> extensionNode, final Bytes location, final Bytes path) {
     final Bytes extensionPath = extensionNode.getPath();
     final int commonPathLength = extensionPath.commonPrefixLength(path);
     assert commonPathLength < path.size()
         : "Visiting path doesn't end with a non-matching terminator";
 
     if (commonPathLength == extensionPath.size()) {
-      final Node<V> newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
-      newChild.setLocation(
-          Optional.of(
-              Bytes.concatenate(extensionNode.getLocation().orElse(Bytes.EMPTY), extensionPath)));
+      final Node<V> newChild =
+          extensionNode
+              .getChild()
+              .accept(
+                  this, Bytes.concatenate(location, extensionPath), path.slice(commonPathLength));
       final Node<V> updatedNode = extensionNode.replaceChild(newChild);
-      updatedNode.setLocation(extensionNode.getLocation());
       if (updatedNode instanceof LeafNode) {
         remove(extensionNode.getChild());
       } else if (updatedNode instanceof BranchNode) {
@@ -65,12 +64,11 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+  public Node<V> visit(final BranchNode<V> branchNode, final Bytes location, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
     final byte childIndex = path.get(0);
     if (childIndex == CompactEncoding.LEAF_TERMINATOR) {
       final Node<V> updatedNode = branchNode.removeValue();
-      updatedNode.setLocation(branchNode.getLocation());
       if (updatedNode instanceof LeafNode) {
         for (int i = 0; i < BranchNode.RADIX; i++) {
           if (!(branchNode.getChildren().get(i) instanceof NullNode)) {
@@ -95,12 +93,11 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
       return updatedNode;
     }
 
-    final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
-    updatedChild.setLocation(
-        Optional.of(
-            Bytes.concatenate(branchNode.getLocation().orElse(Bytes.EMPTY), Bytes.of(childIndex))));
+    final Node<V> updatedChild =
+        branchNode
+            .child(childIndex)
+            .accept(this, Bytes.concatenate(location, Bytes.of(childIndex)), path.slice(1));
     final Node<V> updatedNode = branchNode.replaceChild(childIndex, updatedChild, allowFlatten);
-    updatedNode.setLocation(branchNode.getLocation());
     if (updatedNode instanceof LeafNode) {
       for (int i = 0; i < BranchNode.RADIX; i++) {
         if (!(branchNode.getChildren().get(i) instanceof NullNode)) {
@@ -126,7 +123,7 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+  public Node<V> visit(final LeafNode<V> leafNode, final Bytes location, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
     if (commonPathLength == leafPath.size()) {
@@ -137,7 +134,7 @@ public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+  public Node<V> visit(final NullNode<V> nullNode, final Bytes location, final Bytes path) {
     return NULL_NODE_RESULT;
   }
 

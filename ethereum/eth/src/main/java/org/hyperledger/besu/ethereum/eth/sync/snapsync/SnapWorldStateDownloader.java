@@ -148,6 +148,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);
 
+      // snapContext.clear();
+
       final List<AccountRangeDataRequest> persistedTasks = snapContext.getPersistedTasks();
       final HashSet<Bytes> inconsistentAccounts = snapContext.getInconsistentAccounts();
 

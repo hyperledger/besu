@@ -34,7 +34,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> node, final Bytes searchPath) {
+  public Node<V> visit(final ExtensionNode<V> node, final Bytes location, final Bytes searchPath) {
     Bytes remainingPath = searchPath;
     if (state == State.SEARCHING) {
       final Bytes extensionPath = node.getPath();
@@ -43,7 +43,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     }
 
     paths.push(node.getPath());
-    node.getChild().accept(this, remainingPath);
+    node.getChild().accept(this, Bytes.concatenate(location, node.getHash()), remainingPath);
     if (unload) {
       node.getChild().unload();
     }
@@ -52,7 +52,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> node, final Bytes searchPath) {
+  public Node<V> visit(final BranchNode<V> node, final Bytes location, final Bytes searchPath) {
     byte iterateFrom = 0;
     Bytes remainingPath = searchPath;
     if (state == State.SEARCHING) {
@@ -66,7 +66,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     for (byte i = iterateFrom; i < BranchNode.RADIX && state.continueIterating(); i++) {
       paths.push(Bytes.of(i));
       final Node<V> child = node.child(i);
-      child.accept(this, remainingPath);
+      child.accept(this, Bytes.concatenate(location, Bytes.of(i)), remainingPath);
       if (unload) {
         child.unload();
       }
@@ -77,7 +77,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> node, final Bytes path) {
+  public Node<V> visit(final LeafNode<V> node, final Bytes location, final Bytes path) {
     paths.push(node.getPath());
     state = State.CONTINUE;
     state = leafHandler.onLeaf(keyHash(), node);
@@ -86,7 +86,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> node, final Bytes path) {
+  public Node<V> visit(final NullNode<V> node, final Bytes location, final Bytes path) {
     state = State.CONTINUE;
     return node;
   }

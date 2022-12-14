@@ -20,7 +20,8 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
   private final Node<V> NULL_NODE_RESULT = NullNode.instance();
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+  public Node<V> visit(
+      final ExtensionNode<V> extensionNode, final Bytes location, final Bytes path) {
     final Bytes extensionPath = extensionNode.getPath();
     final int commonPathLength = extensionPath.commonPrefixLength(path);
     assert commonPathLength < path.size()
@@ -31,11 +32,13 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
       return NULL_NODE_RESULT;
     }
 
-    return extensionNode.getChild().accept(this, path.slice(commonPathLength));
+    return extensionNode
+        .getChild()
+        .accept(this, Bytes.concatenate(location, extensionPath), path.slice(commonPathLength));
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+  public Node<V> visit(final BranchNode<V> branchNode, final Bytes location, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
 
     final byte childIndex = path.get(0);
@@ -43,11 +46,13 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
       return branchNode;
     }
 
-    return branchNode.child(childIndex).accept(this, path.slice(1));
+    return branchNode
+        .child(childIndex)
+        .accept(this, Bytes.concatenate(location, Bytes.of(childIndex)), path.slice(1));
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+  public Node<V> visit(final LeafNode<V> leafNode, final Bytes location, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
     if (leafPath.commonPrefixLength(path) != leafPath.size()) {
       return NULL_NODE_RESULT;
@@ -56,7 +61,7 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+  public Node<V> visit(final NullNode<V> nullNode, final Bytes location, final Bytes path) {
     return NULL_NODE_RESULT;
   }
 }

@@ -37,7 +37,8 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+  public Node<V> visit(
+      final ExtensionNode<V> extensionNode, final Bytes location, final Bytes path) {
     final Bytes extensionPath = extensionNode.getPath();
 
     final int commonPathLength = extensionPath.commonPrefixLength(path);
@@ -45,7 +46,11 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
         : "Visiting path doesn't end with a non-matching terminator";
 
     if (commonPathLength == extensionPath.size()) {
-      final Node<V> newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
+      final Node<V> newChild =
+          extensionNode
+              .getChild()
+              .accept(
+                  this, Bytes.concatenate(location, extensionPath), path.slice(commonPathLength));
       return extensionNode.replaceChild(newChild);
     }
 
@@ -69,7 +74,7 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+  public Node<V> visit(final BranchNode<V> branchNode, final Bytes location, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
     BranchNode<V> workingNode = branchNode;
 
@@ -82,7 +87,10 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
       workingNode = persistNode(workingNode, i);
     }
 
-    final Node<V> updatedChild = workingNode.child(childIndex).accept(this, path.slice(1));
+    final Node<V> updatedChild =
+        workingNode
+            .child(childIndex)
+            .accept(this, Bytes.concatenate(location, Bytes.of(childIndex)), path.slice(1));
     return workingNode.replaceChild(childIndex, updatedChild);
   }
 
@@ -99,7 +107,7 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+  public Node<V> visit(final LeafNode<V> leafNode, final Bytes location, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
 
@@ -130,7 +138,7 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+  public Node<V> visit(final NullNode<V> nullNode, final Bytes location, final Bytes path) {
     return nodeFactory.createLeaf(path, value);
   }
 
@@ -170,7 +178,8 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
     }
 
     @Override
-    public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
+    public Node<V> accept(
+        final PathNodeVisitor<V> visitor, final Bytes location, final Bytes path) {
       // do nothing
       return this;
     }

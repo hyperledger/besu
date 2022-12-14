@@ -47,14 +47,19 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   @Override
-  public Node<V> createExtension(final Bytes path, final Node<V> child) {
-    return handleNewNode(new ExtensionNode<>(path, child, this));
+  public Node<V> createExtension(
+      final Optional<Bytes> location, final Bytes path, final Node<V> child) {
+    return handleNewNode(new ExtensionNode<>(location, path, child, this));
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public Node<V> createBranch(
-      final byte leftIndex, final Node<V> left, final byte rightIndex, final Node<V> right) {
+      final Optional<Bytes> location,
+      final byte leftIndex,
+      final Node<V> left,
+      final byte rightIndex,
+      final Node<V> right) {
     assert (leftIndex <= BranchNode.RADIX);
     assert (rightIndex <= BranchNode.RADIX);
     assert (leftIndex != rightIndex);
@@ -64,25 +69,26 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
 
     if (leftIndex == BranchNode.RADIX) {
       children.set(rightIndex, right);
-      return createBranch(children, left.getValue());
+      return createBranch(location, children, left.getValue());
     } else if (rightIndex == BranchNode.RADIX) {
       children.set(leftIndex, left);
-      return createBranch(children, right.getValue());
+      return createBranch(location, children, right.getValue());
     } else {
       children.set(leftIndex, left);
       children.set(rightIndex, right);
-      return createBranch(children, Optional.empty());
+      return createBranch(location, children, Optional.empty());
     }
   }
 
   @Override
-  public Node<V> createBranch(final ArrayList<Node<V>> children, final Optional<V> value) {
-    return handleNewNode(new BranchNode<>(children, value, this, valueSerializer));
+  public Node<V> createBranch(
+      final Optional<Bytes> location, final ArrayList<Node<V>> children, final Optional<V> value) {
+    return handleNewNode(new BranchNode<>(location, children, value, this, valueSerializer));
   }
 
   @Override
-  public Node<V> createLeaf(final Bytes path, final V value) {
-    return handleNewNode(new LeafNode<>(path, value, this, valueSerializer));
+  public Node<V> createLeaf(final Optional<Bytes> location, final Bytes path, final V value) {
+    return handleNewNode(new LeafNode<>(location, path, value, this, valueSerializer));
   }
 
   private Node<V> handleNewNode(final Node<V> node) {
@@ -167,13 +173,13 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     if (childRlp.nextIsList()) {
       final Node<V> childNode =
           decode(location == null ? null : Bytes.concatenate(location, path), childRlp, errMessage);
-      return new ExtensionNode<>(location, path, childNode, this);
+      return new ExtensionNode<>(Optional.ofNullable(location), path, childNode, this);
     } else {
       final Bytes32 childHash = childRlp.readBytes32();
       final StoredNode<V> childNode =
           new StoredNode<>(
               this, location == null ? null : Bytes.concatenate(location, path), childHash);
-      return new ExtensionNode<>(location, path, childNode, this);
+      return new ExtensionNode<>(Optional.ofNullable(location), path, childNode, this);
     }
   }
 
@@ -210,7 +216,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
       value = Optional.of(decodeValue(nodeRLPs, errMessage));
     }
 
-    return new BranchNode<>(location, children, value, this, valueSerializer);
+    return new BranchNode<>(Optional.ofNullable(location), children, value, this, valueSerializer);
   }
 
   protected LeafNode<V> decodeLeaf(
@@ -222,7 +228,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
       throw new MerkleTrieException(errMessage.get() + ": leaf has null value");
     }
     final V value = decodeValue(valueRlp, errMessage);
-    return new LeafNode<>(location, path, value, this, valueSerializer);
+    return new LeafNode<>(Optional.ofNullable(location), path, value, this, valueSerializer);
   }
 
   @SuppressWarnings("unchecked")

@@ -33,8 +33,8 @@ public class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
-    return visitor.visit(this, path);
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes location, final Bytes path) {
+    return visitor.visit(this, location, path);
   }
 
   @Override

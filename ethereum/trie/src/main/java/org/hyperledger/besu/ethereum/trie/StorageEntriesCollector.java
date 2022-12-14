@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
@@ -31,11 +32,11 @@ public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
   }
 
   public static <V> Map<Bytes32, V> collectEntries(
-      final Node<V> root, final Bytes32 startKeyHash, final int limit) {
+      final Node<V> root, final Bytes location, final Bytes32 startKeyHash, final int limit) {
     final StorageEntriesCollector<V> entriesCollector =
         new StorageEntriesCollector<>(startKeyHash, limit);
     final TrieIterator<V> visitor = new TrieIterator<>(entriesCollector, false);
-    root.accept(visitor, CompactEncoding.bytesToPath(startKeyHash));
+    root.accept(visitor, location, CompactEncoding.bytesToPath(startKeyHash));
     return entriesCollector.getValues();
   }
 

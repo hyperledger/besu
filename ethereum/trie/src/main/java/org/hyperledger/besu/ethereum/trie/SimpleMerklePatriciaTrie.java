@@ -56,20 +56,20 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public Optional<V> get(final K key) {
     checkNotNull(key);
-    return root.accept(getVisitor, bytesToPath(key)).getValue();
+    return root.accept(getVisitor, Bytes.EMPTY, bytesToPath(key)).getValue();
   }
 
   @Override
   public Optional<V> getPath(final K path) {
     checkNotNull(path);
-    return root.accept(getVisitor, path).getValue();
+    return root.accept(getVisitor, Bytes.EMPTY, path).getValue();
   }
 
   @Override
   public Proof<V> getValueWithProof(final K key) {
     checkNotNull(key);
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
-    final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
+    final Optional<V> value = root.accept(proofVisitor, Bytes.EMPTY, bytesToPath(key)).getValue();
     final List<Bytes> proof =
         proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
     return new Proof<>(value, proof);
@@ -79,25 +79,25 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   public void put(final K key, final V value) {
     checkNotNull(key);
     checkNotNull(value);
-    this.root = root.accept(new PutVisitor<>(nodeFactory, value), bytesToPath(key));
+    this.root = root.accept(new PutVisitor<>(nodeFactory, value), Bytes.EMPTY, bytesToPath(key));
   }
 
   @Override
   public void put(final K key, final PutVisitor<V> putVisitor) {
     checkNotNull(key);
-    this.root = root.accept(putVisitor, bytesToPath(key));
+    this.root = root.accept(putVisitor, Bytes.EMPTY, bytesToPath(key));
   }
 
   @Override
   public void remove(final K key) {
     checkNotNull(key);
-    this.root = root.accept(removeVisitor, bytesToPath(key));
+    this.root = root.accept(removeVisitor, Bytes.EMPTY, bytesToPath(key));
   }
 
   @Override
   public void removePath(final K path, final RemoveVisitor<V> removeVisitor) {
     checkNotNull(path);
-    this.root = root.accept(removeVisitor, path);
+    this.root = root.accept(removeVisitor, Bytes.EMPTY, path);
   }
 
   @Override
@@ -122,7 +122,7 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
 
   @Override
   public Map<Bytes32, V> entriesFrom(final Bytes32 startKeyHash, final int limit) {
-    return StorageEntriesCollector.collectEntries(root, startKeyHash, limit);
+    return StorageEntriesCollector.collectEntries(root, Bytes.EMPTY, startKeyHash, limit);
   }
 
   @Override
@@ -155,6 +155,6 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public void visitLeafs(final TrieIterator.LeafHandler<V> handler) {
     final TrieIterator<V> visitor = new TrieIterator<>(handler, true);
-    root.accept(visitor, CompactEncoding.bytesToPath(Bytes32.ZERO));
+    root.accept(visitor, Bytes.EMPTY, CompactEncoding.bytesToPath(Bytes32.ZERO));
   }
 }
