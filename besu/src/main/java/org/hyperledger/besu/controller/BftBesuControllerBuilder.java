@@ -27,8 +27,18 @@ import com.google.common.base.Suppliers;
  */
 public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
 
+  /**
+   * Bft extra data codec supplier.
+   *
+   * @return the supplier of type BftExtraDataCodec.
+   */
   protected abstract Supplier<BftExtraDataCodec> bftExtraDataCodec();
 
+  /**
+   * Bft block interface supplier.
+   *
+   * @return the supplier of type BftBlockInterface.
+   */
   protected Supplier<BftBlockInterface> bftBlockInterface() {
     return Suppliers.memoize(() -> new BftBlockInterface(bftExtraDataCodec().get()));
   }
