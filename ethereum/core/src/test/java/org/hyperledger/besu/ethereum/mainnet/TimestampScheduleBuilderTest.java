@@ -63,8 +63,8 @@ public class TimestampScheduleBuilderTest {
 
   @Test
   public void createTimestampScheduleInOrder() {
-    config.shanghaiTimestamp(FIRST_TIMESTAMP_FORK);
-    config.cancunTimestamp(3);
+    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
+    config.cancunTime(3);
     final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
 
     assertThat(timestampSchedule.getChainId()).contains(chainId);
@@ -89,8 +89,8 @@ public class TimestampScheduleBuilderTest {
 
   @Test
   public void createTimestampScheduleOverlappingUsesLatestFork() {
-    config.shanghaiTimestamp(0);
-    config.cancunTimestamp(0);
+    config.shanghaiTime(0);
+    config.cancunTime(0);
     final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
 
     assertThat(timestampSchedule.getChainId()).contains(chainId);
@@ -106,8 +106,8 @@ public class TimestampScheduleBuilderTest {
 
   @Test
   public void createTimestampScheduleOutOfOrderThrows() {
-    config.shanghaiTimestamp(3);
-    config.cancunTimestamp(2);
+    config.shanghaiTime(3);
+    config.cancunTime(2);
     assertThatThrownBy(() -> builder.createTimestampSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
@@ -116,7 +116,7 @@ public class TimestampScheduleBuilderTest {
 
   @Test
   public void getByBlockHeader_whenSpecFound() {
-    config.shanghaiTimestamp(FIRST_TIMESTAMP_FORK);
+    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
     final TimestampSchedule schedule = builder.createTimestampSchedule();
 
     assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNotNull();
@@ -124,7 +124,7 @@ public class TimestampScheduleBuilderTest {
 
   @Test
   public void getByBlockHeader_whenSpecNotFoundReturnsNull() {
-    config.shanghaiTimestamp(2L);
+    config.shanghaiTime(2L);
     builder =
         new TimestampScheduleBuilder(
             config,

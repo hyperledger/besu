@@ -44,8 +44,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
-  private OptionalLong shanghaiTimestamp = OptionalLong.empty();
-  private OptionalLong cancunTimestamp = OptionalLong.empty();
+  private OptionalLong shanghaiTime = OptionalLong.empty();
+  private OptionalLong cancunTime = OptionalLong.empty();
   private OptionalLong shandongBlockNumber = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
@@ -220,13 +220,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getShanghaiTimestamp() {
-    return shanghaiTimestamp;
+  public OptionalLong getShanghaiTime() {
+    return shanghaiTime;
   }
 
   @Override
-  public OptionalLong getCancunTimestamp() {
-    return cancunTimestamp;
+  public OptionalLong getCancunTime() {
+    return cancunTime;
   }
 
   @Override
@@ -354,8 +354,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
-    getShanghaiTimestamp().ifPresent(l -> builder.put("shanghaiTimestamp", l));
-    getCancunTimestamp().ifPresent(l -> builder.put("cancunTimestamp", l));
+    getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
+    getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
@@ -500,13 +500,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions shanghaiTimestamp(final long timestamp) {
-    shanghaiTimestamp = OptionalLong.of(timestamp);
+  public StubGenesisConfigOptions shanghaiTime(final long timestamp) {
+    shanghaiTime = OptionalLong.of(timestamp);
     return this;
   }
 
-  public StubGenesisConfigOptions cancunTimestamp(final long timestamp) {
-    cancunTimestamp = OptionalLong.of(timestamp);
+  public StubGenesisConfigOptions cancunTime(final long timestamp) {
+    cancunTime = OptionalLong.of(timestamp);
     return this;
   }
 

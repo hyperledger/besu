@@ -54,9 +54,8 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
   @Override
   protected void validateForkOrdering() {
     long lastForkTimestamp = 0;
-    lastForkTimestamp =
-        validateForkOrder("Shanghai", config.getShanghaiTimestamp(), lastForkTimestamp);
-    lastForkTimestamp = validateForkOrder("Cancun", config.getCancunTimestamp(), lastForkTimestamp);
+    lastForkTimestamp = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkTimestamp);
+    lastForkTimestamp = validateForkOrder("Cancun", config.getCancunTime(), lastForkTimestamp);
     assert (lastForkTimestamp >= 0);
   }
 
@@ -73,8 +72,8 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
         // on defaulting to a MergeProtocolSchedule in
         // TransitionProtocolSchedule.getByBlockHeader if the given timestamp is before the
         // first entry in TimestampSchedule
-        create(config.getShanghaiTimestamp(), specFactory.shanghaiDefinition(config)),
-        create(config.getCancunTimestamp(), specFactory.cancunDefinition(config)));
+        create(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
+        create(config.getCancunTime(), specFactory.cancunDefinition(config)));
   }
 
   @Override

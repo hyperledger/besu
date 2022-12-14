@@ -90,9 +90,9 @@ public interface GenesisConfigOptions {
 
   OptionalLong getMergeNetSplitBlockNumber();
 
-  OptionalLong getShanghaiTimestamp();
+  OptionalLong getShanghaiTime();
 
-  OptionalLong getCancunTimestamp();
+  OptionalLong getCancunTime();
 
   OptionalLong getShandongBlockNumber();
 

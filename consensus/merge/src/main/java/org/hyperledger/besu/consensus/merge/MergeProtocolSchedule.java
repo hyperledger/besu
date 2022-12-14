@@ -68,7 +68,7 @@ public class MergeProtocolSchedule {
             config,
             DEFAULT_CHAIN_ID,
             ProtocolSpecAdapters.create(
-                config.getShanghaiTimestamp().orElse(0),
+                config.getShanghaiTime().orElse(0),
                 (specBuilder) ->
                     MergeProtocolSchedule.applyMergeSpecificModifications(
                         specBuilder, config.getChainId())),
