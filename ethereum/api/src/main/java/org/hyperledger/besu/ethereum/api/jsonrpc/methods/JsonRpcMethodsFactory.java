@@ -106,7 +106,7 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
                   miningCoordinator,
-                  MergeProtocolSchedule.createTimeStamp(
+                  MergeProtocolSchedule.createTimestamp(
                       genesisConfigOptions, privacyParameters, false),
                   protocolContext,
                   ethPeers,

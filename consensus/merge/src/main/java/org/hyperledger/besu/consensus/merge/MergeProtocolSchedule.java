@@ -97,5 +97,4 @@ public class MergeProtocolSchedule {
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
-
 }
