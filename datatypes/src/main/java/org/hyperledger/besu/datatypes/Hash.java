@@ -23,9 +23,14 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes32;
 
-/** A 32-bytes hash value as used in Ethereum blocks, that is the result of the KEC algorithm. */
+/**
+ * A 32-bytes hash value as used in Ethereum blocks, that is the result of the KEC algorithm.
+ */
 public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plugin.data.Hash {
 
+  /**
+   * The constant ZERO.
+   */
   public static final Hash ZERO = new Hash(Bytes32.ZERO);
 
   /**
@@ -50,10 +55,22 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
     super(bytes);
   }
 
+  /**
+   * Convert value to keccak256 hash.
+   *
+   * @param value the value
+   * @return the hash
+   */
   public static Hash hash(final Bytes value) {
     return new Hash(keccak256(value));
   }
 
+  /**
+   * Wrap bytes to hash.
+   *
+   * @param bytes the bytes
+   * @return the hash
+   */
   public static Hash wrap(final Bytes32 bytes) {
     if (bytes instanceof Hash) {
       return (Hash) bytes;
@@ -64,22 +81,32 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
   /**
    * Parse an hexadecimal string representing a hash value.
    *
-   * @param str An hexadecimal string (with or without the leading '0x') representing a valid hash
-   *     value.
+   * @param str An hexadecimal string (with or without the leading '0x') representing a valid hash     value.
    * @return The parsed hash.
-   * @throws NullPointerException if the provided string is {@code null}.
-   * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid
-   *     representation of a hash (not 32 bytes).
+   * @throws NullPointerException     if the provided string is {@code null}.
+   * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid     representation of a hash (not 32 bytes).
    */
   @JsonCreator
   public static Hash fromHexString(final String str) {
     return new Hash(Bytes32.fromHexStringStrict(str));
   }
 
+  /**
+   * From hex string lenient hash.
+   *
+   * @param str the str
+   * @return the hash
+   */
   public static Hash fromHexStringLenient(final String str) {
     return new Hash(Bytes32.fromHexStringLenient(str));
   }
 
+  /**
+   * From plugin hash.
+   *
+   * @param blockHash the block hash
+   * @return the hash
+   */
   public static Hash fromPlugin(final org.hyperledger.besu.plugin.data.Hash blockHash) {
     return blockHash instanceof Hash ? (Hash) blockHash : wrap(blockHash);
   }
