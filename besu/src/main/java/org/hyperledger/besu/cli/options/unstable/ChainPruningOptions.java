@@ -24,21 +24,15 @@ import java.util.List;
 
 import picocli.CommandLine;
 
-/**
- * The Chain pruning CLI options.
- */
+/** The Chain pruning CLI options. */
 public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration> {
   private static final String CHAIN_PRUNING_ENABLED_FLAG = "--Xchain-pruning-enabled";
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_FLAG =
       "--Xchain-pruning-blocks-retained";
   private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
-  /**
-   * The constant DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED.
-   */
+  /** The constant DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED. */
   public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 7200;
-  /**
-   * The constant DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY.
-   */
+  /** The constant DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY. */
   public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
 
   @CommandLine.Option(

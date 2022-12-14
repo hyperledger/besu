@@ -23,9 +23,7 @@ import java.util.Map;
 import com.google.common.annotations.VisibleForTesting;
 import picocli.CommandLine;
 
-/**
- * The Metric category converter for CLI options.
- */
+/** The Metric category converter for CLI options. */
 public class MetricCategoryConverter implements CommandLine.ITypeConverter<MetricCategory> {
 
   private final Map<String, MetricCategory> metricCategories = new HashMap<>();
@@ -42,7 +40,7 @@ public class MetricCategoryConverter implements CommandLine.ITypeConverter<Metri
   /**
    * Add Metrics categories.
    *
-   * @param <T>          the type parameter
+   * @param <T> the type parameter
    * @param categoryEnum the category enum
    */
   public <T extends Enum<T> & MetricCategory> void addCategories(final Class<T> categoryEnum) {

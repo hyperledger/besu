@@ -25,15 +25,11 @@ import org.bouncycastle.util.Pack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The type Blake2bf message digest.
- */
+/** The type Blake2bf message digest. */
 public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable {
   private static final Logger LOG = LoggerFactory.getLogger(Blake2bfMessageDigest.class);
 
-  /**
-   * Instantiates a new Blake2bf message digest.
-   */
+  /** Instantiates a new Blake2bf message digest. */
   public Blake2bfMessageDigest() {
     super(new Blake2bfDigest());
   }
@@ -48,9 +44,7 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
    * <p>Optimized for 64-bit platforms
    */
   public static class Blake2bfDigest implements Digest {
-    /**
-     * The constant MESSAGE_LENGTH_BYTES.
-     */
+    /** The constant MESSAGE_LENGTH_BYTES. */
     public static final int MESSAGE_LENGTH_BYTES = 213;
 
     private static final long[] IV = {
@@ -100,9 +94,7 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
       }
     }
 
-    /**
-     * Instantiates a new Blake2bf digest.
-     */
+    /** Instantiates a new Blake2bf digest. */
     Blake2bfDigest() {
       if (!useNative) {
         LOG.info("Native blake2bf not available");
@@ -120,9 +112,7 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
       v = new long[16];
     }
 
-    /**
-     * Disable native.
-     */
+    /** Disable native. */
     public static void disableNative() {
       useNative = false;
     }

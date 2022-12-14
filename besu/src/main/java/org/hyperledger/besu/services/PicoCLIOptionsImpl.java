@@ -22,9 +22,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-/**
- * The Pico cli options service implementation to specify plugins.
- */
+/** The Pico cli options service implementation to specify plugins. */
 public class PicoCLIOptionsImpl implements PicoCLIOptions {
 
   private static final Logger LOG = LoggerFactory.getLogger(PicoCLIOptionsImpl.class);

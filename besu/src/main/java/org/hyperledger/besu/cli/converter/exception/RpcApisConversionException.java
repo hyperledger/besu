@@ -16,9 +16,7 @@ package org.hyperledger.besu.cli.converter.exception;
 
 import static java.lang.String.format;
 
-/**
- * The custom Rpc Apis conversion exception.
- */
+/** The custom Rpc Apis conversion exception. */
 public final class RpcApisConversionException extends Exception {
 
   /**

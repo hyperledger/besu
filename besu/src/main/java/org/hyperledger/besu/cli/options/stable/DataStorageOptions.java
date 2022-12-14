@@ -29,9 +29,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine.Option;
 
-/**
- * The Data storage CLI options.
- */
+/** The Data storage CLI options. */
 public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> {
 
   private static final String DATA_STORAGE_FORMAT = "--data-storage-format";

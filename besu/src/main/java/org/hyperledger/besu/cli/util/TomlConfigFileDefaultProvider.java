@@ -36,9 +36,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
-/**
- * The Toml config file default value provider used by PicoCli.
- */
+/** The Toml config file default value provider used by PicoCli. */
 public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
 
   private final CommandLine commandLine;
@@ -49,7 +47,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
    * Instantiates a new Toml config file default value provider.
    *
    * @param commandLine the command line
-   * @param configFile  the config file
+   * @param configFile the config file
    */
   public TomlConfigFileDefaultProvider(final CommandLine commandLine, final File configFile) {
     this.commandLine = commandLine;
@@ -149,9 +147,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
           commandLine, String.format("Unable to read TOML configuration file %s", configFile));
   }
 
-  /**
-   * Load configuration from file.
-   */
+  /** Load configuration from file. */
   public void loadConfigurationFromFile() {
 
     if (result == null) {

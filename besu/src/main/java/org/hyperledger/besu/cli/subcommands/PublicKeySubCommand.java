@@ -47,9 +47,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
-/**
- * Node's public key related sub-command
- */
+/** Node's public key related sub-command */
 @Command(
     name = COMMAND_NAME,
     description = "This command provides node public key related actions.",
@@ -59,9 +57,7 @@ import picocli.CommandLine.Spec;
 public class PublicKeySubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(PublicKeySubCommand.class);
 
-  /**
-   * The constant COMMAND_NAME.
-   */
+  /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "public-key";
 
   @SuppressWarnings("unused")
@@ -150,18 +146,14 @@ public class PublicKeySubCommand implements Runnable {
 
   private static class KeyPairSubcommand {
 
-    /**
-     * The Parent command.
-     */
+    /** The Parent command. */
     @SuppressWarnings("unused")
     @ParentCommand
     protected PublicKeySubCommand parentCommand; // Picocli injects reference to parent command
 
     @Mixin private final NodePrivateKeyFileOption nodePrivateKeyFileOption = null;
 
-    /**
-     * The Ec curve.
-     */
+    /** The Ec curve. */
     @Option(
         names = "--ec-curve",
         paramLabel = "<NAME>",
@@ -178,7 +170,7 @@ public class PublicKeySubCommand implements Runnable {
     /**
      * Run.
      *
-     * @param exportFile     the export file
+     * @param exportFile the export file
      * @param outputFunction the output function
      */
     protected final void run(
@@ -217,7 +209,7 @@ public class PublicKeySubCommand implements Runnable {
     /**
      * Configure ec curve.
      *
-     * @param ecCurve     the ec curve
+     * @param ecCurve the ec curve
      * @param commandLine the command line
      */
     protected static void configureEcCurve(final String ecCurve, final CommandLine commandLine) {

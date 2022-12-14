@@ -31,9 +31,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-/**
- * The Json util class.
- */
+/** The Json util class. */
 public class JsonUtil {
 
   /**
@@ -84,7 +82,7 @@ public class JsonUtil {
    * will be returned as "5".
    *
    * @param node The {@code ObjectNode} from which the value will be extracted.
-   * @param key  The key corresponding to the value to extract.
+   * @param key The key corresponding to the value to extract.
    * @return The value at the given key as a string if it exists.
    */
   public static Optional<String> getValueAsString(final ObjectNode node, final String key) {
@@ -95,8 +93,8 @@ public class JsonUtil {
    * Get the string representation of the value at {@code key}. For example, a numeric value like 5
    * will be returned as "5".
    *
-   * @param node         The {@code ObjectNode} from which the value will be extracted.
-   * @param key          The key corresponding to the value to extract.
+   * @param node The {@code ObjectNode} from which the value will be extracted.
+   * @param key The key corresponding to the value to extract.
    * @param defaultValue The value to return if no value is found at {@code key}.
    * @return The value at the given key as a string if it exists, otherwise {@code defaultValue}
    */
@@ -109,7 +107,7 @@ public class JsonUtil {
    * Checks whether an {@code ObjectNode} contains the given key.
    *
    * @param node The {@code ObjectNode} to inspect.
-   * @param key  The key to check.
+   * @param key The key to check.
    * @return Returns true if the given key is set.
    */
   public static boolean hasKey(final ObjectNode node, final String key) {
@@ -121,7 +119,7 @@ public class JsonUtil {
    * non-textual values in string form.
    *
    * @param node The {@code ObjectNode} from which the value will be extracted.
-   * @param key  The key corresponding to the value to extract.
+   * @param key The key corresponding to the value to extract.
    * @return The textual value at {@code key} if it exists.
    */
   public static Optional<String> getString(final ObjectNode node, final String key) {
@@ -134,8 +132,8 @@ public class JsonUtil {
    * Returns textual (string) value at {@code key}. See {@link #getValueAsString} for retrieving
    * non-textual values in string form.
    *
-   * @param node         The {@code ObjectNode} from which the value will be extracted.
-   * @param key          The key corresponding to the value to extract.
+   * @param node The {@code ObjectNode} from which the value will be extracted.
+   * @param key The key corresponding to the value to extract.
    * @param defaultValue The value to return if no value is found at {@code key}.
    * @return The textual value at {@code key} if it exists, otherwise {@code defaultValue}
    */
@@ -148,7 +146,7 @@ public class JsonUtil {
    * Gets int.
    *
    * @param node the node
-   * @param key  the key
+   * @param key the key
    * @return the int
    */
   public static OptionalInt getInt(final ObjectNode node, final String key) {
@@ -163,8 +161,8 @@ public class JsonUtil {
   /**
    * Gets int.
    *
-   * @param node         the node
-   * @param key          the key
+   * @param node the node
+   * @param key the key
    * @param defaultValue the default value
    * @return the int
    */
@@ -176,7 +174,7 @@ public class JsonUtil {
    * Gets positive int.
    *
    * @param node the node
-   * @param key  the key
+   * @param key the key
    * @return the positive int
    */
   public static OptionalInt getPositiveInt(final ObjectNode node, final String key) {
@@ -188,8 +186,8 @@ public class JsonUtil {
   /**
    * Gets positive int.
    *
-   * @param node         the node
-   * @param key          the key
+   * @param node the node
+   * @param key the key
    * @param defaultValue the default value
    * @return the positive int
    */
@@ -212,7 +210,7 @@ public class JsonUtil {
    * Gets long.
    *
    * @param json the json
-   * @param key  the key
+   * @param key the key
    * @return the long
    */
   public static OptionalLong getLong(final ObjectNode json, final String key) {
@@ -227,8 +225,8 @@ public class JsonUtil {
   /**
    * Gets long.
    *
-   * @param json         the json
-   * @param key          the key
+   * @param json the json
+   * @param key the key
    * @param defaultValue the default value
    * @return the long
    */
@@ -240,7 +238,7 @@ public class JsonUtil {
    * Gets boolean.
    *
    * @param node the node
-   * @param key  the key
+   * @param key the key
    * @return the boolean
    */
   public static Optional<Boolean> getBoolean(final ObjectNode node, final String key) {
@@ -252,8 +250,8 @@ public class JsonUtil {
   /**
    * Gets boolean.
    *
-   * @param node         the node
-   * @param key          the key
+   * @param node the node
+   * @param key the key
    * @param defaultValue the default value
    * @return the boolean
    */
@@ -305,7 +303,7 @@ public class JsonUtil {
   /**
    * Object node from string object node.
    *
-   * @param jsonData      the json data
+   * @param jsonData the json data
    * @param allowComments true to allow comments
    * @return the object node
    */
@@ -337,7 +335,7 @@ public class JsonUtil {
   /**
    * Gets json.
    *
-   * @param objectNode  the object node
+   * @param objectNode the object node
    * @param prettyPrint true for pretty print
    * @return the json
    * @throws JsonProcessingException the json processing exception
@@ -364,7 +362,7 @@ public class JsonUtil {
   /**
    * Gets object node.
    *
-   * @param json     the json
+   * @param json the json
    * @param fieldKey the field key
    * @return the object node
    */
@@ -375,9 +373,9 @@ public class JsonUtil {
   /**
    * Gets object node.
    *
-   * @param json     the json
+   * @param json the json
    * @param fieldKey the field key
-   * @param strict   true for strict mode
+   * @param strict true for strict mode
    * @return the object node
    */
   public static Optional<ObjectNode> getObjectNode(
@@ -401,7 +399,7 @@ public class JsonUtil {
   /**
    * Gets array node.
    *
-   * @param json     the json
+   * @param json the json
    * @param fieldKey the field key
    * @return the array node
    */
@@ -412,9 +410,9 @@ public class JsonUtil {
   /**
    * Gets array node.
    *
-   * @param json     the json
+   * @param json the json
    * @param fieldKey the field key
-   * @param strict   true for strict mode
+   * @param strict true for strict mode
    * @return the array node
    */
   public static Optional<ArrayNode> getArrayNode(

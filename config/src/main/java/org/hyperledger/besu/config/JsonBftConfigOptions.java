@@ -24,14 +24,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * The Json Bft config options.
- */
+/** The Json Bft config options. */
 public class JsonBftConfigOptions implements BftConfigOptions {
 
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final JsonBftConfigOptions DEFAULT =
       new JsonBftConfigOptions(JsonUtil.createEmptyObjectNode());
 
@@ -46,9 +42,7 @@ public class JsonBftConfigOptions implements BftConfigOptions {
   private static final int DEFAULT_FUTURE_MESSAGES_LIMIT = 1000;
   private static final int DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE = 10;
 
-  /**
-   * The Bft config root.
-   */
+  /** The Bft config root. */
   protected final ObjectNode bftConfigRoot;
 
   /**

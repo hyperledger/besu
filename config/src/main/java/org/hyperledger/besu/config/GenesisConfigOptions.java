@@ -26,9 +26,7 @@ import java.util.OptionalLong;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * The interface Genesis config options.
- */
+/** The interface Genesis config options. */
 public interface GenesisConfigOptions {
 
   /**
@@ -299,7 +297,8 @@ public interface GenesisConfigOptions {
    * Whistle) Note, this fork happens after Homestead (Mainnet definition) and before DieHard fork
    *
    * @return block number to activate ECIP-1015 code
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1015">https://ecips.ethereumclassic.org/ECIPs/ecip-1015</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1015">https://ecips.ethereumclassic.org/ECIPs/ecip-1015</a>
    */
   OptionalLong getEcip1015BlockNumber();
 
@@ -309,8 +308,11 @@ public interface GenesisConfigOptions {
    * tangerine whistle) and before Gotham fork ECIP-1010: Delay Difficulty Bomb Explosion
    *
    * @return block number to activate Classic DieHard fork
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1010">https://ecips.ethereumclassic.org/ECIPs/ecip-1010</a>     EIP-160: EXP cost increase
-   * @see <a href="https://eips.ethereum.org/EIPS/eip-160">https://eips.ethereum.org/EIPS/eip-160</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1010">https://ecips.ethereumclassic.org/ECIPs/ecip-1010</a>
+   *     EIP-160: EXP cost increase
+   * @see <a
+   *     href="https://eips.ethereum.org/EIPS/eip-160">https://eips.ethereum.org/EIPS/eip-160</a>
    */
   OptionalLong getDieHardBlockNumber();
 
@@ -319,8 +321,12 @@ public interface GenesisConfigOptions {
    * specification for ECIP-1017 and ECIP-1039 both regarding Monetary Policy (rewards).
    *
    * @return block to activate Classic Gotham fork
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>     ECIP-1017: Monetary Policy and Final Modification to the Ethereum Classic Emission Schedule
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1039">https://ecips.ethereumclassic.org/ECIPs/ecip-1039</a>     ECIP-1039: Monetary policy rounding specification
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>
+   *     ECIP-1017: Monetary Policy and Final Modification to the Ethereum Classic Emission Schedule
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1039">https://ecips.ethereumclassic.org/ECIPs/ecip-1039</a>
+   *     ECIP-1039: Monetary policy rounding specification
    */
   OptionalLong getGothamBlockNumber();
 
@@ -328,7 +334,9 @@ public interface GenesisConfigOptions {
    * Block number to remove difficulty bomb, to meet specification for ECIP-1041.
    *
    * @return block number to remove difficulty bomb on classic network
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1041">https://ecips.ethereumclassic.org/ECIPs/ecip-1041</a>     ECIP-1041: Remove Difficulty Bomb
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1041">https://ecips.ethereumclassic.org/ECIPs/ecip-1041</a>
+   *     ECIP-1041: Remove Difficulty Bomb
    */
   OptionalLong getDefuseDifficultyBombBlockNumber();
 
@@ -339,8 +347,10 @@ public interface GenesisConfigOptions {
    * upgrades for the Ethereum Classic network.
    *
    * @return block number for Atlantis fork on Classic network
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
    */
   OptionalLong getAtlantisBlockNumber();
 
@@ -350,7 +360,8 @@ public interface GenesisConfigOptions {
    * hard-fork code-named Agharta to enable maximum compatibility across these networks.
    *
    * @return block number for Agharta fork on Classic network
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1056">https://ecips.ethereumclassic.org/ECIPs/ecip-1056</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1056">https://ecips.ethereumclassic.org/ECIPs/ecip-1056</a>
    */
   OptionalLong getAghartaBlockNumber();
 
@@ -360,7 +371,8 @@ public interface GenesisConfigOptions {
    * Phoenix to enable maximum compatibility across these networks.
    *
    * @return block number of Phoenix fork on Classic networks
-   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1088">https://ecips.ethereumclassic.org/ECIPs/ecip-1088</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1088">https://ecips.ethereumclassic.org/ECIPs/ecip-1088</a>
    */
   OptionalLong getPhoenixBlockNumber();
 
@@ -369,7 +381,8 @@ public interface GenesisConfigOptions {
    * Ethash epoch, with the impact being a reduced DAG size.
    *
    * @return block number of ECIP-1099 fork on Classic networks
-   * @see <a     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
    */
   OptionalLong getThanosBlockNumber();
 
@@ -377,7 +390,8 @@ public interface GenesisConfigOptions {
    * Block number to activate Magneto on Classic networks.
    *
    * @return block number of Magneto fork on Classic networks
-   * @see <a     href="https://github.com/ethereumclassic/ECIPs/issues/424">https://github.com/ethereumclassic/ECIPs/issues/424</a>
+   * @see <a
+   *     href="https://github.com/ethereumclassic/ECIPs/issues/424">https://github.com/ethereumclassic/ECIPs/issues/424</a>
    */
   OptionalLong getMagnetoBlockNumber();
 
@@ -385,7 +399,8 @@ public interface GenesisConfigOptions {
    * Block number to activate Mystique on Classic networks.
    *
    * @return block number of Mystique fork on Classic networks
-   * @see <a     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1104">https://ecips.ethereumclassic.org/ECIPs/ecip-1104</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1104">https://ecips.ethereumclassic.org/ECIPs/ecip-1104</a>
    */
   OptionalLong getMystiqueBlockNumber();
 
@@ -394,7 +409,8 @@ public interface GenesisConfigOptions {
    * keccak-256.
    *
    * @return block number of ECIP-1049 fork on Classic networks
-   * @see <a     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1049">https://ecips.ethereumclassic.org/ECIPs/ecip-1049</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1049">https://ecips.ethereumclassic.org/ECIPs/ecip-1049</a>
    */
   OptionalLong getEcip1049BlockNumber();
 
@@ -426,7 +442,8 @@ public interface GenesisConfigOptions {
    * not set.
    *
    * @return number of rounds pre Era
-   * @see <a     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>
    */
   OptionalLong getEcip1017EraRounds();
 

@@ -21,9 +21,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
-/**
- * The Ipc CLI options.
- */
+/** The Ipc CLI options. */
 public class IpcOptions {
   private static final String DEFAULT_IPC_FILE = "besu.ipc";
 

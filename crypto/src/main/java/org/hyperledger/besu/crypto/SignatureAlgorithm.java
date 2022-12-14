@@ -22,19 +22,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.math.ec.ECPoint;
 
-/**
- * The interface Signature algorithm.
- */
+/** The interface Signature algorithm. */
 public interface SignatureAlgorithm {
-  /**
-   * The constant ALGORITHM.
-   */
-// needs to be known at compile time otherwise triggers InsecureCryptoUsage error
+  /** The constant ALGORITHM. */
+  // needs to be known at compile time otherwise triggers InsecureCryptoUsage error
   String ALGORITHM = "ECDSA";
 
-  /**
-   * Disable native.
-   */
+  /** Disable native. */
   void disableNative();
 
   /**
@@ -48,7 +42,7 @@ public interface SignatureAlgorithm {
    * Sign secp signature.
    *
    * @param dataHash the data hash
-   * @param keyPair  the key pair
+   * @param keyPair the key pair
    * @return the secp signature
    */
   SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair);
@@ -56,9 +50,9 @@ public interface SignatureAlgorithm {
   /**
    * Verify given data.
    *
-   * @param data      the data
+   * @param data the data
    * @param signature the signature
-   * @param pub       the pub
+   * @param pub the pub
    * @return the boolean
    */
   boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub);
@@ -66,9 +60,9 @@ public interface SignatureAlgorithm {
   /**
    * Verify given data.
    *
-   * @param data         the data
-   * @param signature    the signature
-   * @param pub          the pub
+   * @param data the data
+   * @param signature the signature
+   * @param pub the pub
    * @param preprocessor the preprocessor
    * @return the boolean
    */
@@ -81,10 +75,10 @@ public interface SignatureAlgorithm {
   /**
    * Normalise secp signature.
    *
-   * @param nativeR   the native r
-   * @param nativeS   the native s
+   * @param nativeR the native r
+   * @param nativeS the native s
    * @param publicKey the public key
-   * @param dataHash  the data hash
+   * @param dataHash the data hash
    * @return the secp signature
    */
   SECPSignature normaliseSignature(
@@ -96,7 +90,7 @@ public interface SignatureAlgorithm {
   /**
    * Calculate ecdh key agreement as bytes32.
    *
-   * @param privKey     the private key
+   * @param privKey the private key
    * @param theirPubKey the public key
    * @return the bytes 32
    */
@@ -166,7 +160,7 @@ public interface SignatureAlgorithm {
   /**
    * Recover public key from signature optional.
    *
-   * @param dataHash  the data hash
+   * @param dataHash the data hash
    * @param signature the signature
    * @return the optional public key
    */
@@ -207,8 +201,8 @@ public interface SignatureAlgorithm {
   /**
    * Create secp signature.
    *
-   * @param r     the r
-   * @param s     the s
+   * @param r the r
+   * @param s the s
    * @param recId the rec id
    * @return the secp signature
    */

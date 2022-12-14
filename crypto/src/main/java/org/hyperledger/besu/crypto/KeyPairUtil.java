@@ -32,9 +32,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The Key pair util.
- */
+/** The Key pair util. */
 public class KeyPairUtil {
   private static final Logger LOG = LoggerFactory.getLogger(KeyPairUtil.class);
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -116,7 +114,7 @@ public class KeyPairUtil {
   /**
    * Store key file.
    *
-   * @param keyPair       the key pair
+   * @param keyPair the key pair
    * @param homeDirectory the home directory
    */
   public static void storeKeyFile(final KeyPair keyPair, final Path homeDirectory) {
@@ -169,7 +167,7 @@ public class KeyPairUtil {
    * Store key pair.
    *
    * @param keyPair the key pair
-   * @param file    the file
+   * @param file the file
    * @throws IOException the io exception
    */
   static void storeKeyPair(final KeyPair keyPair, final File file) throws IOException {

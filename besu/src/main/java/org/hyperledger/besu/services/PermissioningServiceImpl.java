@@ -23,9 +23,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-/**
- * The Permissioning service implementation.
- */
+/** The Permissioning service implementation. */
 public class PermissioningServiceImpl implements PermissioningService {
 
   private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =

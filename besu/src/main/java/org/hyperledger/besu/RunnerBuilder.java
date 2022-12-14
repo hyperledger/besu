@@ -147,9 +147,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The builder for Runner class.
- */
+/** The builder for Runner class. */
 public class RunnerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(RunnerBuilder.class);

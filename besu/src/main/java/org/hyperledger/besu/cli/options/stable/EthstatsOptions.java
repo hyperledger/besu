@@ -22,9 +22,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
-/**
- * The Ethstats CLI options.
- */
+/** The Ethstats CLI options. */
 public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
 
   private static final String ETHSTATS = "--ethstats";

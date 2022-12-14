@@ -21,18 +21,12 @@ import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * The Secp private key.
- */
+/** The Secp private key. */
 public class SECPPrivateKey implements java.security.PrivateKey {
 
-  /**
-   * Encoded Bytes
-   */
+  /** Encoded Bytes */
   private final Bytes32 encoded;
-  /**
-   * Algorithm
-   */
+  /** Algorithm */
   private final String algorithm;
 
   private SECPPrivateKey(final Bytes32 encoded, final String algorithm) {
@@ -45,7 +39,7 @@ public class SECPPrivateKey implements java.security.PrivateKey {
   /**
    * Create secp private key.
    *
-   * @param key       the key
+   * @param key the key
    * @param algorithm the algorithm
    * @return the secp private key
    */
@@ -57,7 +51,7 @@ public class SECPPrivateKey implements java.security.PrivateKey {
   /**
    * Create secp private key.
    *
-   * @param key       the key
+   * @param key the key
    * @param algorithm the algorithm
    * @return the secp private key
    */

@@ -20,9 +20,7 @@ package org.hyperledger.besu.crypto.altbn128;
  */
 public class Fq12 extends AbstractFqp<Fq12> {
 
-  /**
-   * The constant DEGREE.
-   */
+  /** The constant DEGREE. */
   public static final int DEGREE = 12;
 
   /**
@@ -62,16 +60,16 @@ public class Fq12 extends AbstractFqp<Fq12> {
   /**
    * Create fq 12.
    *
-   * @param c0  the c 0
-   * @param c1  the c 1
-   * @param c2  the c 2
-   * @param c3  the c 3
-   * @param c4  the c 4
-   * @param c5  the c 5
-   * @param c6  the c 6
-   * @param c7  the c 7
-   * @param c8  the c 8
-   * @param c9  the c 9
+   * @param c0 the c 0
+   * @param c1 the c 1
+   * @param c2 the c 2
+   * @param c3 the c 3
+   * @param c4 the c 4
+   * @param c5 the c 5
+   * @param c6 the c 6
+   * @param c7 the c 7
+   * @param c8 the c 8
+   * @param c9 the c 9
    * @param c10 the c 10
    * @param c11 the c 11
    * @return the fq 12

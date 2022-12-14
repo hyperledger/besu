@@ -25,9 +25,7 @@ import java.math.BigInteger;
 @SuppressWarnings("rawtypes")
 public interface FieldElement<T extends FieldElement> {
 
-  /**
-   * The constant FIELD_MODULUS.
-   */
+  /** The constant FIELD_MODULUS. */
   BigInteger FIELD_MODULUS =
       new BigInteger(
           "21888242871839275222246405745257275088696311157297823662689037894645226208583");

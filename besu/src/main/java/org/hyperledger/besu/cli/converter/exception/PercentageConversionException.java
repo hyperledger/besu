@@ -16,9 +16,7 @@ package org.hyperledger.besu.cli.converter.exception;
 
 import static java.lang.String.format;
 
-/**
- * The custom Percentage conversion exception.
- */
+/** The custom Percentage conversion exception. */
 public final class PercentageConversionException extends Exception {
 
   /**

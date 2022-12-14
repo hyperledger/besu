@@ -69,9 +69,7 @@ import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
-/**
- * Blocks related sub-command
- */
+/** Blocks related sub-command */
 @Command(
     name = COMMAND_NAME,
     description = "This command provides blocks related actions.",
@@ -82,9 +80,7 @@ public class BlocksSubCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(BlocksSubCommand.class);
 
-  /**
-   * The constant COMMAND_NAME.
-   */
+  /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "blocks";
 
   @SuppressWarnings("unused")
@@ -104,10 +100,10 @@ public class BlocksSubCommand implements Runnable {
   /**
    * Instantiates a new Blocks sub command.
    *
-   * @param rlpBlockImporter         the RLP block importer
+   * @param rlpBlockImporter the RLP block importer
    * @param jsonBlockImporterFactory the Json block importer factory
-   * @param rlpBlockExporterFactory  the RLP block exporter factory
-   * @param out                      Instance of PrintWriter where command usage will be written.
+   * @param rlpBlockExporterFactory the RLP block exporter factory
+   * @param out Instance of PrintWriter where command usage will be written.
    */
   public BlocksSubCommand(
       final Supplier<RlpBlockImporter> rlpBlockImporter,

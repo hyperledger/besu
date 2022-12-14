@@ -30,15 +30,11 @@ public abstract class AbstractFieldPoint<U extends AbstractFieldPoint> implement
 
   private static final BigInteger TWO = BigInteger.valueOf(2);
 
-  /**
-   * The X.
-   */
+  /** The X. */
   @SuppressWarnings("rawtypes")
   protected final FieldElement x;
 
-  /**
-   * The Y.
-   */
+  /** The Y. */
   @SuppressWarnings("rawtypes")
   protected final FieldElement y;
 

@@ -27,9 +27,7 @@ import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine;
 
-/**
- * The Synchronizer Cli options.
- */
+/** The Synchronizer Cli options. */
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {
   private static final String BLOCK_PROPAGATION_RANGE_FLAG =
       "--Xsynchronizer-block-propagation-range";

@@ -21,32 +21,20 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-/**
- * The Qbft fork.
- */
+/** The Qbft fork. */
 public class QbftFork extends BftFork {
 
-  /**
-   * The enum Validator selection mode.
-   */
+  /** The enum Validator selection mode. */
   public enum VALIDATOR_SELECTION_MODE {
-    /**
-     * Blockheader validator selection mode.
-     */
+    /** Blockheader validator selection mode. */
     BLOCKHEADER,
-    /**
-     * Contract validator selection mode.
-     */
+    /** Contract validator selection mode. */
     CONTRACT
   }
 
-  /**
-   * The constant VALIDATOR_SELECTION_MODE_KEY.
-   */
+  /** The constant VALIDATOR_SELECTION_MODE_KEY. */
   public static final String VALIDATOR_SELECTION_MODE_KEY = "validatorselectionmode";
-  /**
-   * The constant VALIDATOR_CONTRACT_ADDRESS_KEY.
-   */
+  /** The constant VALIDATOR_CONTRACT_ADDRESS_KEY. */
   public static final String VALIDATOR_CONTRACT_ADDRESS_KEY = "validatorcontractaddress";
 
   /**

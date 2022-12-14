@@ -20,9 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * The Chain data.
- */
+/** The Chain data. */
 @JsonIgnoreProperties("comment")
 public class ChainData {
 

@@ -23,9 +23,7 @@ import java.io.IOException;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * The Rlp block exporter.
- */
+/** The Rlp block exporter. */
 public class RlpBlockExporter extends BlockExporter {
 
   /**

@@ -24,27 +24,17 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
-/**
- * The Command line utils.
- */
+/** The Command line utils. */
 public class CommandLineUtils {
-  /**
-   * The constant DEPENDENCY_WARNING_MSG.
-   */
+  /** The constant DEPENDENCY_WARNING_MSG. */
   public static final String DEPENDENCY_WARNING_MSG =
       "{} has been ignored because {} was not defined on the command line.";
-  /**
-   * The constant MULTI_DEPENDENCY_WARNING_MSG.
-   */
+  /** The constant MULTI_DEPENDENCY_WARNING_MSG. */
   public static final String MULTI_DEPENDENCY_WARNING_MSG =
       "{} ignored because none of {} was defined.";
-  /**
-   * The constant DEPRECATION_WARNING_MSG.
-   */
+  /** The constant DEPRECATION_WARNING_MSG. */
   public static final String DEPRECATION_WARNING_MSG = "{} has been deprecated, use {} instead.";
-  /**
-   * The constant DEPRECATED_AND_USELESS_WARNING_MSG.
-   */
+  /** The constant DEPRECATED_AND_USELESS_WARNING_MSG. */
   public static final String DEPRECATED_AND_USELESS_WARNING_MSG =
       "{} has been deprecated and is now useless, remove it.";
 
@@ -55,11 +45,15 @@ public class CommandLineUtils {
    * <p>Note that in future version of PicoCLI some options dependency mechanism may be implemented
    * that could replace this. See https://github.com/remkop/picocli/issues/295
    *
-   * @param logger                the logger instance used to log the warning
-   * @param commandLine           the command line containing the options we want to check
-   * @param mainOptionName        the name of the main option to test dependency against. Only used for display.
-   * @param isMainOptionCondition the condition to test the options dependencies, if true will test if not won't
-   * @param dependentOptionsNames a list of option names that can't be used if condition is met. Example: if --miner-coinbase is in the list and condition is that --miner-enabled should not be false, we log a warning.
+   * @param logger the logger instance used to log the warning
+   * @param commandLine the command line containing the options we want to check
+   * @param mainOptionName the name of the main option to test dependency against. Only used for
+   *     display.
+   * @param isMainOptionCondition the condition to test the options dependencies, if true will test
+   *     if not won't
+   * @param dependentOptionsNames a list of option names that can't be used if condition is met.
+   *     Example: if --miner-coinbase is in the list and condition is that --miner-enabled should
+   *     not be false, we log a warning.
    */
   public static void checkOptionDependencies(
       final Logger logger,
@@ -84,11 +78,14 @@ public class CommandLineUtils {
    * <p>Note that in future version of PicoCLI some options dependency mechanism may be implemented
    * that could replace this. See https://github.com/remkop/picocli/issues/295
    *
-   * @param logger                the logger instance used to log the warning
-   * @param commandLine           the command line containing the options we want to check display.
-   * @param stringToLog           the string that is going to be logged.
-   * @param isMainOptionCondition the conditions to test dependent options against. If all     conditions are true, dependent options will be checked.
-   * @param dependentOptionsNames a list of option names that can't be used if condition is met.     Example: if --min-gas-price is in the list and condition is that --miner-enabled should not     be false, we log a warning.
+   * @param logger the logger instance used to log the warning
+   * @param commandLine the command line containing the options we want to check display.
+   * @param stringToLog the string that is going to be logged.
+   * @param isMainOptionCondition the conditions to test dependent options against. If all
+   *     conditions are true, dependent options will be checked.
+   * @param dependentOptionsNames a list of option names that can't be used if condition is met.
+   *     Example: if --min-gas-price is in the list and condition is that --miner-enabled should not
+   *     be false, we log a warning.
    */
   public static void checkMultiOptionDependencies(
       final Logger logger,
@@ -108,9 +105,9 @@ public class CommandLineUtils {
   /**
    * Fail if option doesnt meet requirement.
    *
-   * @param commandLine           the command line
-   * @param errorMessage          the error message
-   * @param requirement           the requirement
+   * @param commandLine the command line
+   * @param errorMessage the error message
+   * @param requirement the requirement
    * @param dependentOptionsNames the dependent options names
    */
   public static void failIfOptionDoesntMeetRequirement(

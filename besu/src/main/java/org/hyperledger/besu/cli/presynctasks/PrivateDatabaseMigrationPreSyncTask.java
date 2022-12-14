@@ -19,9 +19,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateStorageMigrationService;
 import org.hyperledger.besu.util.PrivateStorageMigrationBuilder;
 
-/**
- * The Private database migration pre sync task.
- */
+/** The Private database migration pre sync task. */
 public class PrivateDatabaseMigrationPreSyncTask implements PreSynchronizationTask {
 
   private final PrivacyParameters privacyParameters;
@@ -30,7 +28,7 @@ public class PrivateDatabaseMigrationPreSyncTask implements PreSynchronizationTa
   /**
    * Instantiates a new Private database migration pre sync task.
    *
-   * @param privacyParameters          the privacy parameters
+   * @param privacyParameters the privacy parameters
    * @param migratePrivateDatabaseFlag the migrate private database flag
    */
   public PrivateDatabaseMigrationPreSyncTask(

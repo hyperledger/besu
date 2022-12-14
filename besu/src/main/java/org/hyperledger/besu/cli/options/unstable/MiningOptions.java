@@ -22,9 +22,7 @@ import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE
 
 import picocli.CommandLine;
 
-/**
- * The Mining CLI options.
- */
+/** The Mining CLI options. */
 public class MiningOptions {
 
   @CommandLine.Option(

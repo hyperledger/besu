@@ -42,9 +42,7 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
-/**
- * The RLP sub command.
- */
+/** The RLP sub command. */
 @Command(
     name = RLPSubCommand.COMMAND_NAME,
     description = "This command provides RLP data related actions.",
@@ -53,9 +51,7 @@ import picocli.CommandLine.Spec;
     subcommands = {EncodeSubCommand.class})
 public class RLPSubCommand implements Runnable {
 
-  /**
-   * The constant COMMAND_NAME.
-   */
+  /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "rlp";
 
   private final PrintWriter out;
@@ -73,7 +69,7 @@ public class RLPSubCommand implements Runnable {
    * Instantiates a new Rlp sub command.
    *
    * @param out the PrintWriter where the output of subcommand will be reported
-   * @param in  the InputStream which will be used to read the input for this subcommand.
+   * @param in the InputStream which will be used to read the input for this subcommand.
    */
   public RLPSubCommand(final PrintWriter out, final InputStream in) {
     this.out = out;

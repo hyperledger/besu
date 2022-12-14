@@ -26,14 +26,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * The Secp signature.
- */
+/** The Secp signature. */
 public class SECPSignature {
 
-  /**
-   * The constant BYTES_REQUIRED.
-   */
+  /** The constant BYTES_REQUIRED. */
   public static final int BYTES_REQUIRED = 65;
   /**
    * The recovery id to reconstruct the public key used to create the signature.
@@ -53,8 +49,8 @@ public class SECPSignature {
   /**
    * Instantiates a new SECPSignature.
    *
-   * @param r     the r
-   * @param s     the s
+   * @param r the r
+   * @param s the s
    * @param recId the rec id
    */
   SECPSignature(final BigInteger r, final BigInteger s, final byte recId) {
@@ -66,13 +62,14 @@ public class SECPSignature {
   /**
    * Creates a new signature object given its parameters.
    *
-   * @param r          the 'r' part of the signature.
-   * @param s          the 's' part of the signature.
-   * @param recId      the recovery id part of the signature.
+   * @param r the 'r' part of the signature.
+   * @param s the 's' part of the signature.
+   * @param recId the recovery id part of the signature.
    * @param curveOrder The order (n) of the used curve
    * @return the created {@link SECPSignature} object.
-   * @throws NullPointerException     if {@code r} or {@code s} are {@code null}.
-   * @throws IllegalArgumentException if any argument is invalid (for instance, {@code v} is neither     27 or 28).
+   * @throws NullPointerException if {@code r} or {@code s} are {@code null}.
+   * @throws IllegalArgumentException if any argument is invalid (for instance, {@code v} is neither
+   *     27 or 28).
    */
   public static SECPSignature create(
       final BigInteger r, final BigInteger s, final byte recId, final BigInteger curveOrder) {
@@ -103,7 +100,7 @@ public class SECPSignature {
   /**
    * Decode secp signature.
    *
-   * @param bytes      the bytes
+   * @param bytes the bytes
    * @param curveOrder the curve order
    * @return the secp signature
    */

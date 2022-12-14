@@ -27,35 +27,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * The Bft fork.
- */
+/** The Bft fork. */
 public class BftFork {
 
-  /**
-   * The constant FORK_BLOCK_KEY.
-   */
+  /** The constant FORK_BLOCK_KEY. */
   public static final String FORK_BLOCK_KEY = "block";
-  /**
-   * The constant VALIDATORS_KEY.
-   */
+  /** The constant VALIDATORS_KEY. */
   public static final String VALIDATORS_KEY = "validators";
-  /**
-   * The constant BLOCK_PERIOD_SECONDS_KEY.
-   */
+  /** The constant BLOCK_PERIOD_SECONDS_KEY. */
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
-  /**
-   * The constant BLOCK_REWARD_KEY.
-   */
+  /** The constant BLOCK_REWARD_KEY. */
   public static final String BLOCK_REWARD_KEY = "blockreward";
-  /**
-   * The constant MINING_BENEFICIARY_KEY.
-   */
+  /** The constant MINING_BENEFICIARY_KEY. */
   public static final String MINING_BENEFICIARY_KEY = "miningbeneficiary";
 
-  /**
-   * The Fork config root.
-   */
+  /** The Fork config root. */
   protected final ObjectNode forkConfigRoot;
 
   /**

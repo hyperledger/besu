@@ -20,9 +20,7 @@ import java.io.File;
 
 import picocli.CommandLine;
 
-/**
- * The Node private key file Cli option.
- */
+/** The Node private key file Cli option. */
 public class NodePrivateKeyFileOption {
 
   /**

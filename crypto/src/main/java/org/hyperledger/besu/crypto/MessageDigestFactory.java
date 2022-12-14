@@ -20,9 +20,7 @@ import java.security.Security;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-/**
- * The Message digest factory.
- */
+/** The Message digest factory. */
 public class MessageDigestFactory {
 
   static {

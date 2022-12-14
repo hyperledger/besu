@@ -21,9 +21,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
-/**
- * The Logging level CLI option.
- */
+/** The Logging level CLI option. */
 public class LoggingLevelOption {
 
   /**
@@ -37,10 +35,9 @@ public class LoggingLevelOption {
 
   private static final Set<String> ACCEPTED_VALUES =
       Set.of("OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
-  /**
-   * The Picocli CommandSpec. Visible for testing. Injected by Picocli framework at runtime.
-   */
+  /** The Picocli CommandSpec. Visible for testing. Injected by Picocli framework at runtime. */
   @Spec CommandSpec spec;
+
   private Level logLevel;
 
   /**

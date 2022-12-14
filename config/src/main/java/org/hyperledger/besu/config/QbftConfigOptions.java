@@ -17,9 +17,7 @@ package org.hyperledger.besu.config;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-/**
- * The interface Qbft config options.
- */
+/** The interface Qbft config options. */
 public interface QbftConfigOptions extends BftConfigOptions {
 
   /**

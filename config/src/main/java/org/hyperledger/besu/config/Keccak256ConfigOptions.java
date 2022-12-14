@@ -20,14 +20,10 @@ import java.util.OptionalLong;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
-/**
- * The Keccak256 config options.
- */
+/** The Keccak256 config options. */
 public class Keccak256ConfigOptions {
 
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final Keccak256ConfigOptions DEFAULT =
       new Keccak256ConfigOptions(JsonUtil.createEmptyObjectNode());
 

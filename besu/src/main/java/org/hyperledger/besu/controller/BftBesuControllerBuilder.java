@@ -22,9 +22,7 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-/**
- * Base class for BFT based Besu Controller Builders.
- */
+/** Base class for BFT based Besu Controller Builders. */
 public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
 
   /**

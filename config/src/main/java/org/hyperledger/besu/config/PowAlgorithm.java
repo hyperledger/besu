@@ -14,21 +14,13 @@
  */
 package org.hyperledger.besu.config;
 
-/**
- * An enumeration of supported Proof-of-work algorithms.
- */
+/** An enumeration of supported Proof-of-work algorithms. */
 public enum PowAlgorithm {
-  /**
-   * Unsupported pow algorithm.
-   */
+  /** Unsupported pow algorithm. */
   UNSUPPORTED,
-  /**
-   * Ethash pow algorithm.
-   */
+  /** Ethash pow algorithm. */
   ETHASH,
-  /**
-   * Keccak 256 pow algorithm.
-   */
+  /** Keccak 256 pow algorithm. */
   KECCAK256;
 
   /**

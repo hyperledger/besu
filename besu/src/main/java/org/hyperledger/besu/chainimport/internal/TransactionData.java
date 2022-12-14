@@ -33,9 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * The Transaction data.
- */
+/** The Transaction data. */
 @JsonIgnoreProperties("comment")
 public class TransactionData {
 
@@ -52,11 +50,11 @@ public class TransactionData {
   /**
    * Instantiates a new Transaction data.
    *
-   * @param gasLimit  the gas limit
-   * @param gasPrice  the gas price
-   * @param data      the data
-   * @param value     the value
-   * @param to        the to
+   * @param gasLimit the gas limit
+   * @param gasPrice the gas price
+   * @param data the data
+   * @param value the value
+   * @param to the to
    * @param secretKey the secret key
    */
   @JsonCreator
@@ -97,9 +95,7 @@ public class TransactionData {
         .signAndBuild(keyPair);
   }
 
-  /**
-   * The interface Nonce provider.
-   */
+  /** The interface Nonce provider. */
   @FunctionalInterface
   public interface NonceProvider {
     /**

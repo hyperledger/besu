@@ -17,8 +17,8 @@ package org.hyperledger.besu.crypto;
 import java.security.SecureRandom;
 
 /**
- * The Secure random provider. Errorprone checks are in place to enforce only this class is used wherever SecureRandom
- * instance is required.
+ * The Secure random provider. Errorprone checks are in place to enforce only this class is used
+ * wherever SecureRandom instance is required.
  */
 public class SecureRandomProvider {
   private static final SecureRandom publicSecureRandom = secureRandom();

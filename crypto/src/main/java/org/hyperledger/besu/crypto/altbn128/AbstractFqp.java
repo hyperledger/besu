@@ -30,25 +30,19 @@ import com.google.common.base.MoreObjects;
 public abstract class AbstractFqp<T extends AbstractFqp> implements FieldElement<T> {
   private static final BigInteger BIGINT_2 = BigInteger.valueOf(2);
 
-  /**
-   * The Degree.
-   */
+  /** The Degree. */
   protected final int degree;
-  /**
-   * The Modulus coefficients.
-   */
+  /** The Modulus coefficients. */
   protected final Fq[] modulusCoefficients;
-  /**
-   * The Coefficients.
-   */
+  /** The Coefficients. */
   protected final Fq[] coefficients;
 
   /**
    * Instantiates a new Abstract fqp.
    *
-   * @param degree              the degree
+   * @param degree the degree
    * @param modulusCoefficients the modulus coefficients
-   * @param coefficients        the coefficients
+   * @param coefficients the coefficients
    */
   protected AbstractFqp(final int degree, final Fq[] modulusCoefficients, final Fq[] coefficients) {
     if (degree != coefficients.length) {

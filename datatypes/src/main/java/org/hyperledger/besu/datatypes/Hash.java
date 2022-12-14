@@ -23,14 +23,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes32;
 
-/**
- * A 32-bytes hash value as used in Ethereum blocks, that is the result of the KEC algorithm.
- */
+/** A 32-bytes hash value as used in Ethereum blocks, that is the result of the KEC algorithm. */
 public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plugin.data.Hash {
 
-  /**
-   * The constant ZERO.
-   */
+  /** The constant ZERO. */
   public static final Hash ZERO = new Hash(Bytes32.ZERO);
 
   /**
@@ -81,10 +77,12 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
   /**
    * Parse an hexadecimal string representing a hash value.
    *
-   * @param str An hexadecimal string (with or without the leading '0x') representing a valid hash     value.
+   * @param str An hexadecimal string (with or without the leading '0x') representing a valid hash
+   *     value.
    * @return The parsed hash.
-   * @throws NullPointerException     if the provided string is {@code null}.
-   * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid     representation of a hash (not 32 bytes).
+   * @throws NullPointerException if the provided string is {@code null}.
+   * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid
+   *     representation of a hash (not 32 bytes).
    */
   @JsonCreator
   public static Hash fromHexString(final String str) {

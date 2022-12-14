@@ -250,9 +250,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
-/**
- * Represents the main Besu CLI command that runs the Besu Ethereum client full node.
- */
+/** Represents the main Besu CLI command that runs the Besu Ethereum client full node. */
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
     description = "This command runs the Besu Ethereum client full node.",
@@ -1320,13 +1318,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
-  /**
-   * Sets GoQuorum compatibility mode.
-   */
+  /** Sets GoQuorum compatibility mode. */
   protected Boolean isGoQuorumCompatibilityMode = false;
 
   /**
    * Besu command constructor.
+   *
    * @param logger Logger instance
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
@@ -1364,6 +1361,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Overloaded Besu command constructor visible for testing.
+   *
    * @param logger Logger instance
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
@@ -1415,6 +1413,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Parse Besu command line arguments. Visible for testing.
+   *
    * @param resultHandler execution strategy. See PicoCLI. Typical argument is RunLast.
    * @param parameterExceptionHandler Exception handler for handling parameters
    * @param executionExceptionHandler Exception handler for business logic
@@ -1624,6 +1623,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Load key pair from private key. Visible to be accessed by subcommands.
+   *
    * @param nodePrivateKeyFile File containing private key
    * @return KeyPair loaded from private key file
    */
@@ -1770,6 +1770,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Configure logging framework for Besu
+   *
    * @param announce sets to true to print the logging level on standard output
    */
   public void configureLogging(final boolean announce) {
@@ -1787,6 +1788,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Logging in Color enabled or not.
+   *
    * @return Optional true or false representing logging color is enabled. Empty if not set.
    */
   public static Optional<Boolean> getColorEnabled() {
@@ -1881,6 +1883,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Validates P2P interface IP address/host name. Visible for testing.
+   *
    * @param p2pInterface IP Address/host name
    */
   protected void validateP2PInterface(final String p2pInterface) {
@@ -2209,6 +2212,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Builds BesuController
+   *
    * @return instance of BesuController
    */
   public BesuController buildController() {
@@ -2221,6 +2225,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Builds BesuControllerBuilder which can be used to build BesuController
+   *
    * @return instance of BesuControllerBuilder
    */
   public BesuControllerBuilder getControllerBuilder() {
@@ -2577,6 +2582,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Metrics Configuration for Besu
+   *
    * @return instance of MetricsConfiguration.
    */
   public MetricsConfiguration metricsConfiguration() {
@@ -2860,7 +2866,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return privacyParameters;
   }
 
-   private WorldStateArchive createPrivateWorldStateArchive(final StorageProvider storageProvider) {
+  private WorldStateArchive createPrivateWorldStateArchive(final StorageProvider storageProvider) {
     final WorldStateStorage privateWorldStateStorage =
         storageProvider.createPrivateWorldStateStorage();
     final WorldStatePreimageStorage preimageStorage =
@@ -3020,6 +3026,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Builds Vertx instance from VertxOptions. Visible for testing.
+   *
    * @param vertxOptions Instance of VertxOptions
    * @return Instance of Vertx.
    */
@@ -3152,6 +3159,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Returns data directory used by Besu. Visible as it is accessed by other subcommands.
+   *
    * @return Path representing data directory.
    */
   public Path dataDir() {
@@ -3205,6 +3213,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Metrics System used by Besu
+   *
    * @return Instance of MetricsSystem
    */
   public MetricsSystem getMetricsSystem() {
@@ -3237,6 +3246,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Besu CLI Paramaters exception handler used by VertX. Visible for testing.
+   *
    * @return instance of BesuParameterExceptionHandler
    */
   @VisibleForTesting
@@ -3246,6 +3256,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Returns BesuExecutionExceptionHandler. Visible as it is used in testing.
+   *
    * @return instance of BesuExecutionExceptionHandler used by Vertx.
    */
   public BesuExecutionExceptionHandler executionExceptionHandler() {
@@ -3254,6 +3265,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /**
    * Represents Enode DNS Configuration. Visible for testing.
+   *
    * @return instance of EnodeDnsConfiguration
    */
   @VisibleForTesting
@@ -3427,9 +3439,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return genesisConfigOptions.getEcCurve();
   }
 
-  /**
-   * Enables Go Quorum Compatibility mode. Visible for testing.
-   */
+  /** Enables Go Quorum Compatibility mode. Visible for testing. */
   @VisibleForTesting
   protected void enableGoQuorumCompatibilityMode() {
     // this static flag is read by the RLP decoder

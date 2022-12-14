@@ -22,9 +22,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * The Option parser.
- */
+/** The Option parser. */
 public class OptionParser {
 
   /**

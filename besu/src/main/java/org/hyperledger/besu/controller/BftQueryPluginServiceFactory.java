@@ -25,9 +25,7 @@ import org.hyperledger.besu.plugin.services.query.BftQueryService;
 import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-/**
- * Bft query plugin service factory which is a concrete implementation of PluginServiceFactory.
- */
+/** Bft query plugin service factory which is a concrete implementation of PluginServiceFactory. */
 public class BftQueryPluginServiceFactory implements PluginServiceFactory {
 
   private final Blockchain blockchain;
@@ -39,10 +37,10 @@ public class BftQueryPluginServiceFactory implements PluginServiceFactory {
   /**
    * Instantiates a new Bft query plugin service factory.
    *
-   * @param blockchain             the blockchain
-   * @param bftExtraDataCodec      the bft extra data codec
-   * @param validatorProvider      the validator provider
-   * @param nodeKey                the node key
+   * @param blockchain the blockchain
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param validatorProvider the validator provider
+   * @param nodeKey the node key
    * @param consensusMechanismName the consensus mechanism name
    */
   public BftQueryPluginServiceFactory(

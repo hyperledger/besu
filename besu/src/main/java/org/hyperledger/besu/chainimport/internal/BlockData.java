@@ -48,10 +48,10 @@ public class BlockData {
   /**
    * Constructor for BlockData
    *
-   * @param number       Block number in hex format.
-   * @param parentHash   Parent hash in hex format.
-   * @param coinbase     Coinbase Address in hex format.
-   * @param extraData    Extra data in hex format.
+   * @param number Block number in hex format.
+   * @param parentHash Parent hash in hex format.
+   * @param coinbase Coinbase Address in hex format.
+   * @param extraData Extra data in hex format.
    * @param transactions list of TransactionData.
    */
   @JsonCreator

@@ -20,9 +20,7 @@ package org.hyperledger.besu.crypto.altbn128;
  */
 public class AltBn128Point extends AbstractFieldPoint<AltBn128Point> {
 
-  /**
-   * The B.
-   */
+  /** The B. */
   static final Fq B = Fq.create(3);
 
   /**
@@ -34,9 +32,7 @@ public class AltBn128Point extends AbstractFieldPoint<AltBn128Point> {
     return new AltBn128Point(Fq.create(1), Fq.create(2));
   }
 
-  /**
-   * The Infinity.
-   */
+  /** The Infinity. */
   static final AltBn128Point INFINITY = new AltBn128Point(Fq.zero(), Fq.zero());
 
   /**

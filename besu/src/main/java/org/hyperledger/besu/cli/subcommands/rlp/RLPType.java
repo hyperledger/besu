@@ -14,18 +14,12 @@
  */
 package org.hyperledger.besu.cli.subcommands.rlp;
 
-/**
- * Type of the RLP data to encode/decode
- */
+/** Type of the RLP data to encode/decode */
 public enum RLPType {
-  /**
-   * The Ibft extra data.
-   */
-// Enum is used to enable the listing of the possible values in PicoCLI.
+  /** The Ibft extra data. */
+  // Enum is used to enable the listing of the possible values in PicoCLI.
   IBFT_EXTRA_DATA(new IbftExtraDataCLIAdapter()),
-  /**
-   * The Qbft extra data.
-   */
+  /** The Qbft extra data. */
   QBFT_EXTRA_DATA(new QbftExtraDataCLIAdapter());
 
   private final JSONToRLP adapter;

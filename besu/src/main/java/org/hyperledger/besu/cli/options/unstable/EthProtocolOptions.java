@@ -24,9 +24,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
-/**
- * The Eth protocol CLI options.
- */
+/** The Eth protocol CLI options. */
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
   private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
   private static final String MAX_GET_HEADERS_FLAG = "--Xewp-max-get-headers";

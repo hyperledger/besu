@@ -45,9 +45,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Tool for importing blocks with transactions from human-readable json.
- */
+/** Tool for importing blocks with transactions from human-readable json. */
 public class JsonBlockImporter {
   private static final Logger LOG = LoggerFactory.getLogger(JsonBlockImporter.class);
 

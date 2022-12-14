@@ -21,15 +21,12 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-/**
- * The Discovery options.
- */
+/** The Discovery options. */
 public class DiscoveryOptions {
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final DiscoveryOptions DEFAULT =
       new DiscoveryOptions(JsonUtil.createEmptyObjectNode());
+
   private static final String ENODES_KEY = "bootnodes";
   private static final String DNS_KEY = "dns";
 

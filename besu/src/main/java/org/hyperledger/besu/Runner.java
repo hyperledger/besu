@@ -51,9 +51,7 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The Runner controls various Besu services lifecycle.
- */
+/** The Runner controls various Besu services lifecycle. */
 public class Runner implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(Runner.class);
@@ -83,22 +81,22 @@ public class Runner implements AutoCloseable {
   /**
    * Instantiates a new Runner.
    *
-   * @param vertx                     the vertx
-   * @param networkRunner             the network runner
-   * @param natService                the nat service
-   * @param jsonRpc                   the json rpc
-   * @param engineJsonRpc             the engine json rpc
-   * @param graphQLHttp               the graph ql http
-   * @param webSocketRpc              the web socket rpc
-   * @param ipcJsonRpc                the ipc json rpc
-   * @param stratumServer             the stratum server
-   * @param metrics                   the metrics
-   * @param ethStatsService           the eth stats service
-   * @param besuController            the besu controller
-   * @param dataDir                   the data dir
-   * @param pidPath                   the pid path
+   * @param vertx the vertx
+   * @param networkRunner the network runner
+   * @param natService the nat service
+   * @param jsonRpc the json rpc
+   * @param engineJsonRpc the engine json rpc
+   * @param graphQLHttp the graph ql http
+   * @param webSocketRpc the web socket rpc
+   * @param ipcJsonRpc the ipc json rpc
+   * @param stratumServer the stratum server
+   * @param metrics the metrics
+   * @param ethStatsService the eth stats service
+   * @param besuController the besu controller
+   * @param dataDir the data dir
+   * @param pidPath the pid path
    * @param transactionLogBloomCacher the transaction log bloom cacher
-   * @param blockchain                the blockchain
+   * @param blockchain the blockchain
    */
   Runner(
       final Vertx vertx,
@@ -138,9 +136,7 @@ public class Runner implements AutoCloseable {
         new TransactionPoolEvictionService(vertx, besuController.getTransactionPool());
   }
 
-  /**
-   * Start external services.
-   */
+  /** Start external services. */
   public void startExternalServices() {
     LOG.info("Starting external services ... ");
     metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
@@ -158,9 +154,7 @@ public class Runner implements AutoCloseable {
     ethStatsService.ifPresent(EthStatsService::start);
   }
 
-  /**
-   * Start ethereum main loop.
-   */
+  /** Start ethereum main loop. */
   public void startEthereumMainLoop() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
@@ -183,9 +177,7 @@ public class Runner implements AutoCloseable {
     }
   }
 
-  /**
-   * Stop services.
-   */
+  /** Stop services. */
   public void stop() {
     transactionPoolEvictionService.stop();
     jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
@@ -216,9 +208,7 @@ public class Runner implements AutoCloseable {
     shutdown.countDown();
   }
 
-  /**
-   * Await stop.
-   */
+  /** Await stop. */
   public void awaitStop() {
     try {
       shutdown.await();

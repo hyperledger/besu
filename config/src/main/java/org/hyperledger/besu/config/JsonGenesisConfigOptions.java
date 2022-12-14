@@ -34,9 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * The Json genesis config options.
- */
+/** The Json genesis config options. */
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
@@ -68,7 +66,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   /**
    * From json object with overrides json genesis config options.
    *
-   * @param configRoot      the config root
+   * @param configRoot the config root
    * @param configOverrides the config overrides
    * @return the json genesis config options
    */
@@ -92,8 +90,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   /**
    * Instantiates a new Json genesis config options.
    *
-   * @param maybeConfig       the optional config
-   * @param configOverrides   the config overrides map
+   * @param maybeConfig the optional config
+   * @param configOverrides the config overrides map
    * @param transitionsConfig the transitions configuration
    */
   JsonGenesisConfigOptions(

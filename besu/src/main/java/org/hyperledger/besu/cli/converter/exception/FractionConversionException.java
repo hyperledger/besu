@@ -16,9 +16,7 @@ package org.hyperledger.besu.cli.converter.exception;
 
 import static java.lang.String.format;
 
-/**
- * The custom Fraction conversion exception.
- */
+/** The custom Fraction conversion exception. */
 public final class FractionConversionException extends Exception {
 
   /**

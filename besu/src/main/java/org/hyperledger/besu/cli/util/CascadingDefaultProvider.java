@@ -22,8 +22,8 @@ import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
 
 /**
- * The custom default value provider for Besu CLI options which uses multiple default value providers such as
- * environment variables or TOML file.
+ * The custom default value provider for Besu CLI options which uses multiple default value
+ * providers such as environment variables or TOML file.
  */
 public class CascadingDefaultProvider implements IDefaultValueProvider {
 

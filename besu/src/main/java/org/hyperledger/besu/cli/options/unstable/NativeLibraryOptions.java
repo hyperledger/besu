@@ -16,9 +16,7 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import picocli.CommandLine;
 
-/**
- * The Native library CLI options.
- */
+/** The Native library CLI options. */
 public class NativeLibraryOptions {
 
   @CommandLine.Option(

@@ -28,9 +28,7 @@ import java.util.OptionalLong;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * The Stub genesis config options.
- */
+/** The Stub genesis config options. */
 public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   private OptionalLong homesteadBlockNumber = OptionalLong.empty();

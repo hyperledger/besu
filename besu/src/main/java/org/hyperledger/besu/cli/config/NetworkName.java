@@ -19,61 +19,33 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * The enum Network name.
- */
+/** The enum Network name. */
 public enum NetworkName {
-  /**
-   * Mainnet network name.
-   */
+  /** Mainnet network name. */
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
-  /**
-   * Rinkeby network name.
-   */
+  /** Rinkeby network name. */
   RINKEBY("/rinkeby.json", BigInteger.valueOf(4)),
-  /**
-   * Ropsten network name.
-   */
+  /** Ropsten network name. */
   ROPSTEN("/ropsten.json", BigInteger.valueOf(3)),
-  /**
-   * Sepolia network name.
-   */
+  /** Sepolia network name. */
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
-  /**
-   * Goerli network name.
-   */
+  /** Goerli network name. */
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
-  /**
-   * Shandong network name.
-   */
+  /** Shandong network name. */
   SHANDONG("/shandong.json", BigInteger.valueOf(1337903)),
-  /**
-   * Kiln network name.
-   */
+  /** Kiln network name. */
   KILN("/kiln.json", BigInteger.valueOf(1337802), false),
-  /**
-   * Dev network name.
-   */
+  /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
-  /**
-   * Classic network name.
-   */
+  /** Classic network name. */
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
-  /**
-   * Kotti network name.
-   */
+  /** Kotti network name. */
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
-  /**
-   * Mordor network name.
-   */
+  /** Mordor network name. */
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
-  /**
-   * Ecip 1049 dev network name.
-   */
+  /** Ecip 1049 dev network name. */
   ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021)),
-  /**
-   * Astor network name.
-   */
+  /** Astor network name. */
   ASTOR("/astor.json", BigInteger.valueOf(212));
 
   private final String genesisFile;

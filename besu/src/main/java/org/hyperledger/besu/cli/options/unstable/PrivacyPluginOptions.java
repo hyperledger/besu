@@ -16,9 +16,7 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import static picocli.CommandLine.Option;
 
-/**
- * The Privacy plugin Cli options.
- */
+/** The Privacy plugin Cli options. */
 public class PrivacyPluginOptions {
 
   /**

@@ -14,16 +14,10 @@
  */
 package org.hyperledger.besu.cli.subcommands.blocks;
 
-/**
- * The enum Block import format.
- */
+/** The enum Block import format. */
 public enum BlockImportFormat {
-  /**
-   * RLP block import format.
-   */
+  /** RLP block import format. */
   RLP,
-  /**
-   * Json block import format.
-   */
+  /** Json block import format. */
   JSON
 }

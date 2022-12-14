@@ -21,22 +21,14 @@ import java.util.OptionalLong;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
-/**
- * The Json QBFT config options.
- */
+/** The Json QBFT config options. */
 public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftConfigOptions {
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final JsonQbftConfigOptions DEFAULT =
       new JsonQbftConfigOptions(JsonUtil.createEmptyObjectNode());
-  /**
-   * The constant VALIDATOR_CONTRACT_ADDRESS.
-   */
+  /** The constant VALIDATOR_CONTRACT_ADDRESS. */
   public static final String VALIDATOR_CONTRACT_ADDRESS = "validatorcontractaddress";
-  /**
-   * The constant START_BLOCK.
-   */
+  /** The constant START_BLOCK. */
   public static final String START_BLOCK = "startblock";
 
   /**

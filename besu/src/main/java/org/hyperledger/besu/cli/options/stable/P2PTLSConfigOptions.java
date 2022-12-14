@@ -30,9 +30,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
-/**
- * The P2P TLS Config Cli Options.
- */
+/** The P2P TLS Config Cli Options. */
 public class P2PTLSConfigOptions {
   @Option(
       names = {"--Xp2p-tls-enabled"},
@@ -140,7 +138,7 @@ public class P2PTLSConfigOptions {
   /**
    * Check P2P Tls options dependencies.
    *
-   * @param logger      the logger
+   * @param logger the logger
    * @param commandLine the command line
    */
   public void checkP2PTLSOptionsDependencies(final Logger logger, final CommandLine commandLine) {

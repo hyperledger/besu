@@ -22,9 +22,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.util.BigIntegers;
 
-/**
- * The Ec point util class.
- */
+/** The Ec point util class. */
 public class ECPointUtil {
   /**
    * From bouncy castle ec point to ECPoint.

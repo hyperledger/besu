@@ -21,9 +21,7 @@ import org.apache.logging.log4j.Level;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
-/**
- * The custom parameter exception handler for Besu PicoCLI.
- */
+/** The custom parameter exception handler for Besu PicoCLI. */
 public class BesuParameterExceptionHandler implements CommandLine.IParameterExceptionHandler {
 
   private final Supplier<Level> levelSupplier;

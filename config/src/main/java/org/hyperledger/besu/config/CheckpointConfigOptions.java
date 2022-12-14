@@ -21,14 +21,10 @@ import java.util.OptionalLong;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
-/**
- * The Checkpoint config options.
- */
+/** The Checkpoint config options. */
 public class CheckpointConfigOptions {
 
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final CheckpointConfigOptions DEFAULT =
       new CheckpointConfigOptions(JsonUtil.createEmptyObjectNode());
 

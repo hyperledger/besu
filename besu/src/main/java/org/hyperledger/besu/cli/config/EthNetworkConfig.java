@@ -30,9 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * The Eth network config.
- */
+/** The Eth network config. */
 public class EthNetworkConfig {
 
   private final String genesisConfig;
@@ -43,9 +41,9 @@ public class EthNetworkConfig {
   /**
    * Instantiates a new Eth network config.
    *
-   * @param genesisConfig   the genesis config
-   * @param networkId       the network id
-   * @param bootNodes       the boot nodes
+   * @param genesisConfig the genesis config
+   * @param networkId the network id
+   * @param bootNodes the boot nodes
    * @param dnsDiscoveryUrl the dns discovery url
    */
   public EthNetworkConfig(
@@ -175,9 +173,7 @@ public class EthNetworkConfig {
     return jsonConfig(network.getGenesisFile());
   }
 
-  /**
-   * The type Builder.
-   */
+  /** The type Builder. */
   public static class Builder {
 
     private String dnsDiscoveryUrl;

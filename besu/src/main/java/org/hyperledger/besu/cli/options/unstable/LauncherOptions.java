@@ -17,9 +17,7 @@ package org.hyperledger.besu.cli.options.unstable;
 import net.consensys.quorum.mainnet.launcher.options.Options;
 import picocli.CommandLine;
 
-/**
- * The Launcher CLI options.
- */
+/** The Launcher CLI options. */
 public class LauncherOptions implements Options {
 
   private static final String LAUNCHER_OPTION_NAME = "--Xlauncher";

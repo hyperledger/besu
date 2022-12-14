@@ -45,49 +45,29 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The Besu plugin context implementation.
- */
+/** The Besu plugin context implementation. */
 public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(BesuPluginContextImpl.class);
 
   private enum Lifecycle {
-    /**
-     * Uninitialized lifecycle.
-     */
+    /** Uninitialized lifecycle. */
     UNINITIALIZED,
-    /**
-     * Registering lifecycle.
-     */
+    /** Registering lifecycle. */
     REGISTERING,
-    /**
-     * Registered lifecycle.
-     */
+    /** Registered lifecycle. */
     REGISTERED,
-    /**
-     * Before external services started lifecycle.
-     */
+    /** Before external services started lifecycle. */
     BEFORE_EXTERNAL_SERVICES_STARTED,
-    /**
-     * Before external services finished lifecycle.
-     */
+    /** Before external services finished lifecycle. */
     BEFORE_EXTERNAL_SERVICES_FINISHED,
-    /**
-     * Before main loop started lifecycle.
-     */
+    /** Before main loop started lifecycle. */
     BEFORE_MAIN_LOOP_STARTED,
-    /**
-     * Before main loop finished lifecycle.
-     */
+    /** Before main loop finished lifecycle. */
     BEFORE_MAIN_LOOP_FINISHED,
-    /**
-     * Stopping lifecycle.
-     */
+    /** Stopping lifecycle. */
     STOPPING,
-    /**
-     * Stopped lifecycle.
-     */
+    /** Stopped lifecycle. */
     STOPPED
   }
 
@@ -99,9 +79,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   /**
    * Add service.
    *
-   * @param <T>         the type parameter
+   * @param <T> the type parameter
    * @param serviceType the service type
-   * @param service     the service
+   * @param service the service
    */
   public <T extends BesuService> void addService(final Class<T> serviceType, final T service) {
     checkArgument(serviceType.isInterface(), "Services must be Java interfaces.");
@@ -170,9 +150,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     pluginVersions.add(pluginVersion);
   }
 
-  /**
-   * Before external services.
-   */
+  /** Before external services. */
   public void beforeExternalServices() {
     checkState(
         state == Lifecycle.REGISTERED,
@@ -203,9 +181,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     state = Lifecycle.BEFORE_EXTERNAL_SERVICES_FINISHED;
   }
 
-  /**
-   * Start plugins.
-   */
+  /** Start plugins. */
   public void startPlugins() {
     checkState(
         state == Lifecycle.BEFORE_EXTERNAL_SERVICES_FINISHED,
@@ -235,9 +211,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     state = Lifecycle.BEFORE_MAIN_LOOP_FINISHED;
   }
 
-  /**
-   * Stop plugins.
-   */
+  /** Stop plugins. */
   public void stopPlugins() {
     checkState(
         state == Lifecycle.BEFORE_MAIN_LOOP_FINISHED,

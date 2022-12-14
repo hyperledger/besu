@@ -23,9 +23,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
-/**
- * The Dns CLI options.
- */
+/** The Dns CLI options. */
 public class DnsOptions implements CLIOptions<EnodeDnsConfiguration> {
 
   private final String DNS_ENABLED = "--Xdns-enabled";

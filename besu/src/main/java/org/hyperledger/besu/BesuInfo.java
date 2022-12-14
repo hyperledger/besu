@@ -19,7 +19,8 @@ import org.hyperledger.besu.util.platform.PlatformDetector;
 import java.util.Optional;
 
 /**
- * Represent Besu information such as version, OS etc. Used with --version option and during Besu start.
+ * Represent Besu information such as version, OS etc. Used with --version option and during Besu
+ * start.
  */
 public final class BesuInfo {
   private static final String CLIENT = "besu";
@@ -31,6 +32,7 @@ public final class BesuInfo {
 
   /**
    * Generate Besu version
+   *
    * @return Besu version in format such as besu/v22.10.3/linux-aarch_64/openjdk-java-11
    */
   public static String version() {
@@ -39,6 +41,7 @@ public final class BesuInfo {
 
   /**
    * Generate node name including identity.
+   *
    * @param maybeIdentity optional node identity to include in the version string.
    * @return Version with optional identity if provided.
    */

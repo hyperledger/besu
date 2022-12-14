@@ -19,14 +19,10 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
-/**
- * The Clique config options.
- */
+/** The Clique config options. */
 public class CliqueConfigOptions {
 
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final CliqueConfigOptions DEFAULT =
       new CliqueConfigOptions(JsonUtil.createEmptyObjectNode());
 

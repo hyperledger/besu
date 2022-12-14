@@ -19,14 +19,10 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
-/**
- * The Ibft legacy config options.
- */
+/** The Ibft legacy config options. */
 public class IbftLegacyConfigOptions {
 
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final IbftLegacyConfigOptions DEFAULT =
       new IbftLegacyConfigOptions(JsonUtil.createEmptyObjectNode());
 

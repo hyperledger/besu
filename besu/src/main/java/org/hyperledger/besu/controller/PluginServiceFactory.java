@@ -16,9 +16,7 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-/**
- * The interface Plugin service factory.
- */
+/** The interface Plugin service factory. */
 public interface PluginServiceFactory {
 
   /**

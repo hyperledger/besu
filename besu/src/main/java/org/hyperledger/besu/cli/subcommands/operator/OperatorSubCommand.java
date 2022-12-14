@@ -26,9 +26,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
-/**
- * Operator related sub-command
- */
+/** Operator related sub-command */
 @Command(
     name = COMMAND_NAME,
     description = "Operator related actions such as generating configuration and caches.",
@@ -42,19 +40,13 @@ import picocli.CommandLine.Spec;
     })
 public class OperatorSubCommand implements Runnable {
 
-  /**
-   * The constant COMMAND_NAME.
-   */
+  /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "operator";
-  /**
-   * The constant GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME.
-   */
+  /** The constant GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME. */
   public static final String GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME =
       "generate-blockchain-config";
 
-  /**
-   * The Parent command.
-   */
+  /** The Parent command. */
   @SuppressWarnings("unused")
   @ParentCommand
   BesuCommand parentCommand; // Picocli injects reference to parent command

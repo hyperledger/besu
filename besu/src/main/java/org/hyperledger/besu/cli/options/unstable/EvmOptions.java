@@ -23,14 +23,10 @@ import java.util.List;
 
 import picocli.CommandLine;
 
-/**
- * The Evm CLI options.
- */
+/** The Evm CLI options. */
 public class EvmOptions implements CLIOptions<EvmConfiguration> {
 
-  /**
-   * The constant JUMPDEST_CACHE_WEIGHT.
-   */
+  /** The constant JUMPDEST_CACHE_WEIGHT. */
   public static final String JUMPDEST_CACHE_WEIGHT = "--Xevm-jumpdest-cache-weight-kb";
 
   /**

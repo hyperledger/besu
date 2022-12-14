@@ -18,9 +18,7 @@ import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 
 import picocli.CommandLine;
 
-/**
- * The Rpc Cli options.
- */
+/** The Rpc Cli options. */
 public class RPCOptions {
 
   @CommandLine.Option(

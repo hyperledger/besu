@@ -19,9 +19,7 @@ import org.hyperledger.besu.util.number.Fraction;
 
 import picocli.CommandLine;
 
-/**
- * The Fraction converter to convert floats in CLI.
- */
+/** The Fraction converter to convert floats in CLI. */
 public class FractionConverter implements CommandLine.ITypeConverter<Float> {
 
   @Override

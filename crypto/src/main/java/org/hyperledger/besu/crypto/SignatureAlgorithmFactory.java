@@ -18,9 +18,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The Signature algorithm factory.
- */
+/** The Signature algorithm factory. */
 public class SignatureAlgorithmFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(SignatureAlgorithmFactory.class);
@@ -29,9 +27,7 @@ public class SignatureAlgorithmFactory {
 
   private SignatureAlgorithmFactory() {}
 
-  /**
-   * Sets default instance.
-   */
+  /** Sets default instance. */
   public static void setDefaultInstance() {
     instance = SignatureAlgorithmType.createDefault().getInstance();
   }
@@ -81,9 +77,7 @@ public class SignatureAlgorithmFactory {
     return instance != null;
   }
 
-  /**
-   * Reset instance.
-   */
+  /** Reset instance. */
   @VisibleForTesting
   public static void resetInstance() {
     instance = null;

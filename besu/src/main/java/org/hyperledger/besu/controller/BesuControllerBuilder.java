@@ -107,118 +107,68 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The Besu controller builder that builds Besu Controller.
- */
+/** The Besu controller builder that builds Besu Controller. */
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   private GenesisConfigFile genesisConfig;
   private Map<String, String> genesisConfigOverrides = Collections.emptyMap();
 
-  /**
-   * The Config options supplier.
-   */
+  /** The Config options supplier. */
   protected Supplier<GenesisConfigOptions> configOptionsSupplier =
       () ->
           Optional.ofNullable(genesisConfig)
               .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
               .orElseGet(genesisConfig::getConfigOptions);
 
-  /**
-   * The Sync config.
-   */
+  /** The Sync config. */
   protected SynchronizerConfiguration syncConfig;
-  /**
-   * The Ethereum wire protocol configuration.
-   */
+  /** The Ethereum wire protocol configuration. */
   protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
-  /**
-   * The Transaction pool configuration.
-   */
+  /** The Transaction pool configuration. */
   protected TransactionPoolConfiguration transactionPoolConfiguration;
-  /**
-   * The Network id.
-   */
+  /** The Network id. */
   protected BigInteger networkId;
-  /**
-   * The Mining parameters.
-   */
+  /** The Mining parameters. */
   protected MiningParameters miningParameters;
-  /**
-   * The Metrics system.
-   */
+  /** The Metrics system. */
   protected ObservableMetricsSystem metricsSystem;
-  /**
-   * The Privacy parameters.
-   */
+  /** The Privacy parameters. */
   protected PrivacyParameters privacyParameters;
-  /**
-   * The Pki block creation configuration.
-   */
+  /** The Pki block creation configuration. */
   protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
       Optional.empty();
-  /**
-   * The Data directory.
-   */
+  /** The Data directory. */
   protected Path dataDirectory;
-  /**
-   * The Clock.
-   */
+  /** The Clock. */
   protected Clock clock;
-  /**
-   * The Node key.
-   */
+  /** The Node key. */
   protected NodeKey nodeKey;
-  /**
-   * The Is revert reason enabled.
-   */
+  /** The Is revert reason enabled. */
   protected boolean isRevertReasonEnabled;
-  /**
-   * The Gas limit calculator.
-   */
+  /** The Gas limit calculator. */
   GasLimitCalculator gasLimitCalculator;
-  /**
-   * The Storage provider.
-   */
+  /** The Storage provider. */
   protected StorageProvider storageProvider;
-  /**
-   * The Is pruning enabled.
-   */
+  /** The Is pruning enabled. */
   protected boolean isPruningEnabled;
-  /**
-   * The Pruner configuration.
-   */
+  /** The Pruner configuration. */
   protected PrunerConfiguration prunerConfiguration;
-  /**
-   * The Required blocks.
-   */
+  /** The Required blocks. */
   protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
-  /**
-   * The Reorg logging threshold.
-   */
+  /** The Reorg logging threshold. */
   protected long reorgLoggingThreshold;
-  /**
-   * The Data storage configuration.
-   */
+  /** The Data storage configuration. */
   protected DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
-  /**
-   * The Message permissioning providers.
-   */
+  /** The Message permissioning providers. */
   protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
-  /**
-   * The Evm configuration.
-   */
+  /** The Evm configuration. */
   protected EvmConfiguration evmConfiguration;
-  /**
-   * The Max peers.
-   */
+  /** The Max peers. */
   protected int maxPeers;
-  /**
-   * The Chain pruner configuration.
-   */
+  /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
   /**
@@ -728,12 +678,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create synchronizer synchronizer.
    *
-   * @param protocolSchedule   the protocol schedule
-   * @param worldStateStorage  the world state storage
-   * @param protocolContext    the protocol context
-   * @param maybePruner        the maybe pruner
-   * @param ethContext         the eth context
-   * @param syncState          the sync state
+   * @param protocolSchedule the protocol schedule
+   * @param worldStateStorage the world state storage
+   * @param protocolContext the protocol context
+   * @param maybePruner the maybe pruner
+   * @param ethContext the eth context
+   * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
    * @param pivotBlockSelector the pivot block selector
    * @return the synchronizer
@@ -821,9 +771,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         .orElse(SyncTerminationCondition.never());
   }
 
-  /**
-   * Prep for build.
-   */
+  /** Prep for build. */
   protected void prepForBuild() {}
 
   /**
@@ -840,7 +788,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create sub protocol configuration sub protocol configuration.
    *
-   * @param ethProtocolManager       the eth protocol manager
+   * @param ethProtocolManager the eth protocol manager
    * @param maybeSnapProtocolManager the maybe snap protocol manager
    * @return the sub protocol configuration
    */
@@ -859,11 +807,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create mining coordinator mining coordinator.
    *
-   * @param protocolSchedule   the protocol schedule
-   * @param protocolContext    the protocol context
-   * @param transactionPool    the transaction pool
-   * @param miningParameters   the mining parameters
-   * @param syncState          the sync state
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param transactionPool the transaction pool
+   * @param miningParameters the mining parameters
+   * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
    * @return the mining coordinator
    */
@@ -892,9 +840,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create consensus context consensus context.
    *
-   * @param blockchain        the blockchain
+   * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
-   * @param protocolSchedule  the protocol schedule
+   * @param protocolSchedule the protocol schedule
    * @return the consensus context
    */
   protected abstract ConsensusContext createConsensusContext(
@@ -914,16 +862,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create eth protocol manager eth protocol manager.
    *
-   * @param protocolContext                   the protocol context
-   * @param synchronizerConfiguration         the synchronizer configuration
-   * @param transactionPool                   the transaction pool
+   * @param protocolContext the protocol context
+   * @param synchronizerConfiguration the synchronizer configuration
+   * @param transactionPool the transaction pool
    * @param ethereumWireProtocolConfiguration the ethereum wire protocol configuration
-   * @param ethPeers                          the eth peers
-   * @param ethContext                        the eth context
-   * @param ethMessages                       the eth messages
-   * @param scheduler                         the scheduler
-   * @param peerValidators                    the peer validators
-   * @param mergePeerFilter                   the merge peer filter
+   * @param ethPeers the eth peers
+   * @param ethContext the eth context
+   * @param ethMessages the eth messages
+   * @param scheduler the scheduler
+   * @param peerValidators the peer validators
+   * @param mergePeerFilter the merge peer filter
    * @return the eth protocol manager
    */
   protected EthProtocolManager createEthProtocolManager(
@@ -956,9 +904,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create protocol context protocol context.
    *
-   * @param blockchain              the blockchain
-   * @param worldStateArchive       the world state archive
-   * @param protocolSchedule        the protocol schedule
+   * @param blockchain the blockchain
+   * @param worldStateArchive the world state archive
+   * @param protocolSchedule the protocol schedule
    * @param consensusContextFactory the consensus context factory
    * @return the protocol context
    */
@@ -1063,7 +1011,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Create additional plugin services plugin service factory.
    *
-   * @param blockchain      the blockchain
+   * @param blockchain the blockchain
    * @param protocolContext the protocol context
    * @return the plugin service factory
    */

@@ -23,9 +23,7 @@ import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-/**
- * The Clique query plugin service factory.
- */
+/** The Clique query plugin service factory. */
 public class CliqueQueryPluginServiceFactory implements PluginServiceFactory {
 
   private final Blockchain blockchain;
@@ -35,7 +33,7 @@ public class CliqueQueryPluginServiceFactory implements PluginServiceFactory {
    * Instantiates a new Clique query plugin service factory.
    *
    * @param blockchain the blockchain
-   * @param nodeKey    the node key
+   * @param nodeKey the node key
    */
   public CliqueQueryPluginServiceFactory(final Blockchain blockchain, final NodeKey nodeKey) {
     this.blockchain = blockchain;

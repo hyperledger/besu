@@ -19,9 +19,7 @@ import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-/**
- * The Node key.
- */
+/** The Node key. */
 public class NodeKey {
 
   private final SecurityModule securityModule;

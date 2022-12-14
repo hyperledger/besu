@@ -19,9 +19,7 @@ import org.hyperledger.besu.util.log.FramedLogMessage;
 
 import java.util.List;
 
-/**
- * The Network deprecation message.
- */
+/** The Network deprecation message. */
 public class NetworkDeprecationMessage {
 
   /**

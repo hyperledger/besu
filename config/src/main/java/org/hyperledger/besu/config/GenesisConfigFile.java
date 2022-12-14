@@ -32,21 +32,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
 
-/**
- * The Genesis config file.
- */
+/** The Genesis config file. */
 public class GenesisConfigFile {
 
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 
-  /**
-   * The constant BASEFEE_AT_GENESIS_DEFAULT_VALUE.
-   */
+  /** The constant BASEFEE_AT_GENESIS_DEFAULT_VALUE. */
   public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
+
   private final ObjectNode configRoot;
 
   private GenesisConfigFile(final ObjectNode config) {

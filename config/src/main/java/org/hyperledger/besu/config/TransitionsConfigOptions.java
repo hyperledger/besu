@@ -26,14 +26,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 
-/**
- * The Transitions config options.
- */
+/** The Transitions config options. */
 public class TransitionsConfigOptions {
 
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final TransitionsConfigOptions DEFAULT =
       new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
 

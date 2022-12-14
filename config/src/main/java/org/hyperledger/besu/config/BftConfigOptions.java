@@ -20,9 +20,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * The interface Bft config options.
- */
+/** The interface Bft config options. */
 public interface BftConfigOptions {
 
   /**

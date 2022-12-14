@@ -20,14 +20,10 @@ import java.util.OptionalLong;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
-/**
- * The Ethash config options.
- */
+/** The Ethash config options. */
 public class EthashConfigOptions {
 
-  /**
-   * The constant DEFAULT.
-   */
+  /** The constant DEFAULT. */
   public static final EthashConfigOptions DEFAULT =
       new EthashConfigOptions(JsonUtil.createEmptyObjectNode());
 

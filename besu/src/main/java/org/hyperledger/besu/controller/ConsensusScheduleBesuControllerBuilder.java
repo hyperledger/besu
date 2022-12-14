@@ -105,7 +105,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   /**
    * Instantiates a new Consensus schedule besu controller builder. Visible for testing.
    *
-   * @param besuControllerBuilderSchedule   the besu controller builder schedule
+   * @param besuControllerBuilderSchedule the besu controller builder schedule
    * @param combinedProtocolScheduleFactory the combined protocol schedule factory
    */
   @VisibleForTesting

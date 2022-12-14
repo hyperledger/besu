@@ -26,9 +26,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateMigrationB
 import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateStorageMigration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-/**
- * The Private storage migration builder.
- */
+/** The Private storage migration builder. */
 public class PrivateStorageMigrationBuilder {
 
   private final BesuController besuController;
@@ -37,7 +35,7 @@ public class PrivateStorageMigrationBuilder {
   /**
    * Instantiates a new Private storage migration builder.
    *
-   * @param besuController    the besu controller
+   * @param besuController the besu controller
    * @param privacyParameters the privacy parameters
    */
   public PrivateStorageMigrationBuilder(

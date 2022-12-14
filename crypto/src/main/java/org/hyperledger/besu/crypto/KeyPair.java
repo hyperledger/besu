@@ -25,9 +25,7 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 
-/**
- * The Key pair class.
- */
+/** The Key pair class. */
 public class KeyPair {
 
   private final SECPPrivateKey privateKey;
@@ -37,7 +35,7 @@ public class KeyPair {
    * Instantiates a new Key pair.
    *
    * @param privateKey the private key
-   * @param publicKey  the public key
+   * @param publicKey the public key
    */
   public KeyPair(final SECPPrivateKey privateKey, final SECPPublicKey publicKey) {
     checkNotNull(privateKey);
@@ -50,8 +48,8 @@ public class KeyPair {
    * Create key pair.
    *
    * @param privateKey the private key
-   * @param curve      the curve
-   * @param algorithm  the algorithm
+   * @param curve the curve
+   * @param algorithm the algorithm
    * @return the key pair
    */
   public static KeyPair create(
@@ -63,7 +61,7 @@ public class KeyPair {
    * Generate key pair.
    *
    * @param keyPairGenerator the key pair generator
-   * @param algorithm        the algorithm
+   * @param algorithm the algorithm
    * @return the key pair
    */
   public static KeyPair generate(final KeyPairGenerator keyPairGenerator, final String algorithm) {

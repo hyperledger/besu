@@ -20,9 +20,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-/**
- * The Genesis allocation configuration.
- */
+/** The Genesis allocation configuration. */
 public class GenesisAllocation {
   private final String address;
   private final ObjectNode data;
@@ -31,7 +29,7 @@ public class GenesisAllocation {
    * Instantiates a new Genesis allocation.
    *
    * @param address the address
-   * @param data    the data
+   * @param data the data
    */
   GenesisAllocation(final String address, final ObjectNode data) {
     this.address = address;

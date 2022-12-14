@@ -23,24 +23,16 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.BaseUInt256Value;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * A particular quantity of Wei, the Ethereum currency.
- */
+/** A particular quantity of Wei, the Ethereum currency. */
 public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
-  /**
-   * The constant ZERO.
-   */
+  /** The constant ZERO. */
   public static final Wei ZERO = of(0);
 
-  /**
-   * The constant ONE.
-   */
+  /** The constant ONE. */
   public static final Wei ONE = of(1);
 
-  /**
-   * The constant MAX_WEI.
-   */
+  /** The constant MAX_WEI. */
   public static final Wei MAX_WEI = of(UInt256.MAX_VALUE);
 
   /**
@@ -177,66 +169,36 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
     return String.format("%1." + preferredUnit.decimals + "f %s", res, preferredUnit);
   }
 
-  /**
-   * The enum Unit.
-   */
+  /** The enum Unit. */
   enum Unit {
-    /**
-     * Wei unit.
-     */
+    /** Wei unit. */
     Wei(0, 0),
-    /**
-     * K wei unit.
-     */
+    /** K wei unit. */
     KWei(3),
-    /**
-     * M wei unit.
-     */
+    /** M wei unit. */
     MWei(6),
-    /**
-     * G wei unit.
-     */
+    /** G wei unit. */
     GWei(9),
-    /**
-     * Szabo unit.
-     */
+    /** Szabo unit. */
     Szabo(12),
-    /**
-     * Finney unit.
-     */
+    /** Finney unit. */
     Finney(15),
-    /**
-     * Ether unit.
-     */
+    /** Ether unit. */
     Ether(18),
-    /**
-     * K ether unit.
-     */
+    /** K ether unit. */
     KEther(21),
-    /**
-     * M ether unit.
-     */
+    /** M ether unit. */
     MEther(24),
-    /**
-     * G ether unit.
-     */
+    /** G ether unit. */
     GEther(27),
-    /**
-     * T ether unit.
-     */
+    /** T ether unit. */
     TEther(30);
 
-    /**
-     * The Pow.
-     */
+    /** The Pow. */
     final int pow;
-    /**
-     * The Divisor.
-     */
+    /** The Divisor. */
     final double divisor;
-    /**
-     * The Decimals.
-     */
+    /** The Decimals. */
     final int decimals;
 
     Unit(final int pow) {

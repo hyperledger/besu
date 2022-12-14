@@ -25,9 +25,7 @@ import java.util.Optional;
 
 import picocli.CommandLine;
 
-/**
- * The Networking Cli options.
- */
+/** The Networking Cli options. */
 public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   private final String INITIATE_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-initiate-connections-frequency";
@@ -36,9 +34,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   private final String DNS_DISCOVERY_SERVER_OVERRIDE_FLAG = "--Xp2p-dns-discovery-server";
   private final String DISCOVERY_PROTOCOL_V5_ENABLED = "--Xv5-discovery-enabled";
   private final String P2P_PEER_LOWER_BOUND_FLAG = "--Xp2p-peer-lower-bound";
-  /**
-   * The constant FILTER_ON_ENR_FORK_ID.
-   */
+  /** The constant FILTER_ON_ENR_FORK_ID. */
   public static final String FILTER_ON_ENR_FORK_ID = "--Xfilter-on-enr-fork-id";
 
   @CommandLine.Option(

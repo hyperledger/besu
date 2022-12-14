@@ -18,9 +18,7 @@ import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_B
 
 import picocli.CommandLine;
 
-/**
- * The Nat Cli options.
- */
+/** The Nat Cli options. */
 public class NatOptions {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.

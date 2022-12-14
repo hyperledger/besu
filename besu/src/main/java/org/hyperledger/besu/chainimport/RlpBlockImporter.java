@@ -49,9 +49,7 @@ import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Tool for importing rlp-encoded block data from files.
- */
+/** Tool for importing rlp-encoded block data from files. */
 public class RlpBlockImporter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(RlpBlockImporter.class);
 
@@ -70,8 +68,8 @@ public class RlpBlockImporter implements Closeable {
    * Imports blocks that are stored as concatenated RLP sections in the given file into Besu's block
    * storage.
    *
-   * @param blocks            Path to the file containing the blocks
-   * @param besuController    the BesuController that defines blockchain behavior
+   * @param blocks Path to the file containing the blocks
+   * @param besuController the BesuController that defines blockchain behavior
    * @param skipPowValidation Skip proof of work validation (correct mix hash and difficulty)
    * @return the import result
    * @throws IOException On Failure
@@ -85,11 +83,11 @@ public class RlpBlockImporter implements Closeable {
   /**
    * Import blockchain.
    *
-   * @param blocks            the blocks
-   * @param besuController    the besu controller
+   * @param blocks the blocks
+   * @param besuController the besu controller
    * @param skipPowValidation the skip pow validation
-   * @param startBlock        the start block
-   * @param endBlock          the end block
+   * @param startBlock the start block
+   * @param endBlock the end block
    * @return the rlp block importer - import result
    * @throws IOException the io exception
    */
@@ -292,25 +290,19 @@ public class RlpBlockImporter implements Closeable {
     }
   }
 
-  /**
-   * The Import result.
-   */
+  /** The Import result. */
   public static final class ImportResult {
 
-    /**
-     * The difficulty.
-     */
+    /** The difficulty. */
     public final Difficulty td;
 
-    /**
-     * The Count.
-     */
+    /** The Count. */
     final int count;
 
     /**
      * Instantiates a new Import result.
      *
-     * @param td    the td
+     * @param td the td
      * @param count the count
      */
     ImportResult(final Difficulty td, final int count) {

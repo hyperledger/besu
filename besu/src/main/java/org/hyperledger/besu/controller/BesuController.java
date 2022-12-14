@@ -44,20 +44,15 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The Besu controller.
- */
+/** The Besu controller. */
 public class BesuController implements java.io.Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BesuController.class);
 
-  /**
-   * The constant DATABASE_PATH.
-   */
+  /** The constant DATABASE_PATH. */
   public static final String DATABASE_PATH = "database";
-  /**
-   * The constant CACHE_PATH.
-   */
+  /** The constant CACHE_PATH. */
   public static final String CACHE_PATH = "caches";
+
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthProtocolManager ethProtocolManager;
@@ -78,21 +73,21 @@ public class BesuController implements java.io.Closeable {
   /**
    * Instantiates a new Besu controller.
    *
-   * @param protocolSchedule                the protocol schedule
-   * @param protocolContext                 the protocol context
-   * @param ethProtocolManager              the eth protocol manager
-   * @param genesisConfigOptions            the genesis config options
-   * @param subProtocolConfiguration        the sub protocol configuration
-   * @param synchronizer                    the synchronizer
-   * @param syncState                       the sync state
-   * @param transactionPool                 the transaction pool
-   * @param miningCoordinator               the mining coordinator
-   * @param privacyParameters               the privacy parameters
-   * @param miningParameters                the mining parameters
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param ethProtocolManager the eth protocol manager
+   * @param genesisConfigOptions the genesis config options
+   * @param subProtocolConfiguration the sub protocol configuration
+   * @param synchronizer the synchronizer
+   * @param syncState the sync state
+   * @param transactionPool the transaction pool
+   * @param miningCoordinator the mining coordinator
+   * @param privacyParameters the privacy parameters
+   * @param miningParameters the mining parameters
    * @param additionalJsonRpcMethodsFactory the additional json rpc methods factory
-   * @param nodeKey                         the node key
-   * @param closeables                      the closeables
-   * @param additionalPluginServices        the additional plugin services
+   * @param nodeKey the node key
+   * @param closeables the closeables
+   * @param additionalPluginServices the additional plugin services
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -268,9 +263,7 @@ public class BesuController implements java.io.Closeable {
     return additionalPluginServices;
   }
 
-  /**
-   * The type Builder.
-   */
+  /** The type Builder. */
   public static class Builder {
 
     /**
@@ -286,7 +279,7 @@ public class BesuController implements java.io.Closeable {
     /**
      * From eth network config besu controller builder.
      *
-     * @param ethNetworkConfig       the eth network config
+     * @param ethNetworkConfig the eth network config
      * @param genesisConfigOverrides the genesis config overrides
      * @return the besu controller builder
      */
@@ -311,7 +304,7 @@ public class BesuController implements java.io.Closeable {
     /**
      * From genesis config besu controller builder.
      *
-     * @param genesisConfig          the genesis config
+     * @param genesisConfig the genesis config
      * @param genesisConfigOverrides the genesis config overrides
      * @return the besu controller builder
      */

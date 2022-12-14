@@ -36,9 +36,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-/**
- * Subcommand to run a Retesteth compatible server for reference tests.
- */
+/** Subcommand to run a Retesteth compatible server for reference tests. */
 @Command(
     name = COMMAND_NAME,
     description = "Run a Retesteth compatible server for reference tests.",
@@ -49,9 +47,7 @@ public class RetestethSubCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(RetestethSubCommand.class);
 
-  /**
-   * The constant COMMAND_NAME.
-   */
+  /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "retesteth";
 
   /**

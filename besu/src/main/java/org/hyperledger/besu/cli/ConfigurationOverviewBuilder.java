@@ -26,9 +26,7 @@ import oshi.PlatformEnum;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
-/**
- * The Configuration overview builder.
- */
+/** The Configuration overview builder. */
 public class ConfigurationOverviewBuilder {
   private String network;
   private String dataStorage;
