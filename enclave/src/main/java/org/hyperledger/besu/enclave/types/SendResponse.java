@@ -18,15 +18,26 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The Send response. */
 @JsonPropertyOrder({"key"})
 public class SendResponse {
   private final String key;
 
+  /**
+   * Instantiates a new Send response.
+   *
+   * @param key the key
+   */
   @JsonCreator
   public SendResponse(@JsonProperty("key") final String key) {
     this.key = key;
   }
 
+  /**
+   * Gets key.
+   *
+   * @return the key
+   */
   public String getKey() {
     return key;
   }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.enclave;
 
 /** The Enclave client custom exception. */
 public class EnclaveClientException extends RuntimeException {
+  /** Status Code */
   private int statusCode;
 
   /**

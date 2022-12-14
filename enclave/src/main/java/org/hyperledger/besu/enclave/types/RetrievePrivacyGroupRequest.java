@@ -17,14 +17,25 @@ package org.hyperledger.besu.enclave.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The Retrieve privacy group request. */
 public class RetrievePrivacyGroupRequest {
   private final String privacyGroupId;
 
+  /**
+   * Instantiates a new Retrieve privacy group request.
+   *
+   * @param privacyGroupId the privacy group id
+   */
   @JsonCreator
   public RetrievePrivacyGroupRequest(@JsonProperty("privacyGroupId") final String privacyGroupId) {
     this.privacyGroupId = privacyGroupId;
   }
 
+  /**
+   * Privacy group id.
+   *
+   * @return the string
+   */
   @JsonProperty("privacyGroupId")
   public String privacyGroupId() {
     return privacyGroupId;
