@@ -45,13 +45,20 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Tool for importing blocks with transactions from human-readable json. */
+/**
+ * Tool for importing blocks with transactions from human-readable json.
+ */
 public class JsonBlockImporter {
   private static final Logger LOG = LoggerFactory.getLogger(JsonBlockImporter.class);
 
   private final ObjectMapper mapper;
   private final BesuController controller;
 
+  /**
+   * Instantiates a new Json block importer.
+   *
+   * @param controller the controller
+   */
   public JsonBlockImporter(final BesuController controller) {
     this.controller = controller;
     mapper = new ObjectMapper();
@@ -61,6 +68,12 @@ public class JsonBlockImporter {
     mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
   }
 
+  /**
+   * Import chain.
+   *
+   * @param chainJson the chain json
+   * @throws IOException the io exception
+   */
   public void importChain(final String chainJson) throws IOException {
     warnIfDatabaseIsNotEmpty();
 

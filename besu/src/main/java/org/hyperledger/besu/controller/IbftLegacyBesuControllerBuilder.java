@@ -52,6 +52,9 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The Ibft legacy besu controller builder.
+ */
 public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(IbftLegacyBesuControllerBuilder.class);
