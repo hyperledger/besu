@@ -279,13 +279,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getShanghaiTimestamp() {
-    return getOptionalLong("shanghaitimestamp");
+  public OptionalLong getShanghaiTime() {
+    return getOptionalLong("shanghaitime");
   }
 
   @Override
-  public OptionalLong getCancunTimestamp() {
-    return getOptionalLong("cancuntimestamp");
+  public OptionalLong getCancunTime() {
+    return getOptionalLong("cancuntime");
   }
 
   @Override
@@ -443,8 +443,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
-    getShanghaiTimestamp().ifPresent(l -> builder.put("shanghaiTimestamp", l));
-    getCancunTimestamp().ifPresent(l -> builder.put("cancunTimestamp", l));
+    getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
+    getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));

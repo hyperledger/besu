@@ -198,17 +198,15 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldGetShanghaiTimestamp() {
-    final GenesisConfigOptions config =
-        fromConfigOptions(singletonMap("shanghaiTimestamp", 1670470141));
-    assertThat(config.getShanghaiTimestamp()).hasValue(1670470141);
+  public void shouldGetShanghaiTime() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("shanghaiTime", 1670470141));
+    assertThat(config.getShanghaiTime()).hasValue(1670470141);
   }
 
   @Test
-  public void shouldGetCancunTimestamp() {
-    final GenesisConfigOptions config =
-        fromConfigOptions(singletonMap("cancunTimestamp", 1670470142));
-    assertThat(config.getCancunTimestamp()).hasValue(1670470142);
+  public void shouldGetCancunTime() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("cancunTime", 1670470142));
+    assertThat(config.getCancunTime()).hasValue(1670470142);
   }
 
   @Test
