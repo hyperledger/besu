@@ -250,6 +250,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
+/**
+ * Represents the main Besu CLI command that runs the Besu Ethereum client full node.
+ */
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
     description = "This command runs the Besu Ethereum client full node.",
@@ -1317,8 +1320,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
+  /**
+   * Sets GoQuorum compatibility mode.
+   */
   protected Boolean isGoQuorumCompatibilityMode = false;
 
+  /**
+   * Besu command constructor.
+   * @param logger Logger instance
+   * @param rlpBlockImporter RlpBlockImporter supplier
+   * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
+   * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
+   * @param runnerBuilder instance of RunnerBuilder
+   * @param controllerBuilderFactory instance of BesuController.Builder
+   * @param besuPluginContext instance of BesuPluginContextImpl
+   * @param environment Environment variables map
+   */
   public BesuCommand(
       final Logger logger,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
@@ -1345,6 +1362,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new RpcEndpointServiceImpl());
   }
 
+  /**
+   * Overloaded Besu command constructor visible for testing.
+   * @param logger Logger instance
+   * @param rlpBlockImporter RlpBlockImporter supplier
+   * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
+   * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
+   * @param runnerBuilder instance of RunnerBuilder
+   * @param controllerBuilderFactory instance of BesuController.Builder
+   * @param besuPluginContext instance of BesuPluginContextImpl
+   * @param environment Environment variables map
+   * @param storageService instance of StorageServiceImpl
+   * @param securityModuleService instance of SecurityModuleServiceImpl
+   * @param permissioningService instance of PermissioningServiceImpl
+   * @param privacyPluginService instance of PrivacyPluginServiceImpl
+   * @param pkiBlockCreationConfigProvider instance of PkiBlockCreationConfigurationProvider
+   * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
+   */
   @VisibleForTesting
   protected BesuCommand(
       final Logger logger,
@@ -1718,6 +1752,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .labels(() -> 1, BesuInfo.version());
   }
 
+  /**
+   * Configure logging framework for Besu
+   * @param announce sets to true to print the logging level on standard output
+   */
   public void configureLogging(final boolean announce) {
     // To change the configuration if color was enabled/disabled
     Log4j2ConfiguratorUtil.reconfigure();
@@ -2145,6 +2183,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuController = buildController();
   }
 
+  /**
+   * Builds BesuController
+   * @return instance of BesuController
+   */
   public BesuController buildController() {
     try {
       return getControllerBuilder().build();
@@ -2153,6 +2195,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  /**
+   * Builds BesuControllerBuilder which can be used to build BesuController
+   * @return instance of BesuControllerBuilder
+   */
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
@@ -2786,7 +2832,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return privacyParameters;
   }
 
-  public WorldStateArchive createPrivateWorldStateArchive(final StorageProvider storageProvider) {
+   private WorldStateArchive createPrivateWorldStateArchive(final StorageProvider storageProvider) {
     final WorldStateStorage privateWorldStateStorage =
         storageProvider.createPrivateWorldStateStorage();
     final WorldStatePreimageStorage preimageStorage =
@@ -2944,6 +2990,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return runner;
   }
 
+  /**
+   * Builds Vertx instance from VertxOptions. Visible for testing.
+   * @param vertxOptions Instance of VertxOptions
+   * @return Instance of Vertx.
+   */
+  @VisibleForTesting
   protected Vertx createVertx(final VertxOptions vertxOptions) {
     return Vertx.vertx(vertxOptions);
   }
@@ -3070,7 +3122,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  // dataDir() is public because it is accessed by subcommands
+  /**
+   * Returns data directory used by Besu. Visible as it is accessed by other subcommands.
+   * @return Path representing data directory.
+   */
   public Path dataDir() {
     return dataPath.toAbsolutePath();
   }
