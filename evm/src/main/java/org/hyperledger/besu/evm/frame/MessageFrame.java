@@ -14,13 +14,17 @@
  */
 package org.hyperledger.besu.evm.frame;
 
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.Collections.emptySet;
-
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
@@ -37,15 +41,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptySet;
 
 /**
  * A container object for all the states associated with a message.
@@ -213,7 +214,7 @@ public class MessageFrame {
   private final Set<Address> selfDestructs;
   private final Map<Address, Wei> refunds;
   private final Set<Address> warmedUpAddresses;
-  private final Multimap<Address, Bytes32> warmedUpStorage;
+  private final Map<Address, Map<Bytes32, Bytes32>> warmedUpStorage;
 
   // Execution Environment fields.
   private final Address recipient;
@@ -307,20 +308,23 @@ public class MessageFrame {
     this.warmedUpAddresses = new HashSet<>(accessListWarmAddresses);
     this.warmedUpAddresses.add(sender);
     this.warmedUpAddresses.add(contract);
-    this.warmedUpStorage = HashMultimap.create(accessListWarmStorage);
+    this.warmedUpStorage = initWithAccessedList(accessListWarmStorage);
+  }
 
-    // the warmed up addresses will always be a superset of the address keys in the warmed up
-    // storage, so we can do both warm-ups in one pass
-    accessListWarmAddresses.forEach(
-        address ->
-            Optional.ofNullable(worldUpdater.get(address))
-                .ifPresent(
-                    account ->
-                        warmedUpStorage
-                            .get(address)
-                            .forEach(
-                                storageKeyBytes ->
-                                    account.getStorageValue(UInt256.fromBytes(storageKeyBytes)))));
+  // TO BE REVIEWED
+  private Map<Address, Map<Bytes32, Bytes32>> initWithAccessedList(
+      final Multimap<Address, Bytes32> accessListWarmStorage) {
+    Map<Address, Map<Bytes32, Bytes32>> warmList = new ConcurrentHashMap<>();
+    if (!accessListWarmStorage.isEmpty()) {
+      for (Address address : accessListWarmStorage.keySet()) {
+        Map<Bytes32, Bytes32> keyValuesMap = new ConcurrentHashMap<>();
+        for (Bytes32 key : accessListWarmStorage.get(address)) {
+          keyValuesMap.put(key, worldUpdater.get(address).getStorageValue(UInt256.fromBytes(key)));
+        }
+        warmList.put(address, keyValuesMap);
+      }
+    }
+    return warmList;
   }
 
   /**
@@ -857,22 +861,34 @@ public class MessageFrame {
   /**
    * "Warms up" the storage slot as per EIP-2929
    *
+   * @param account the account for whose storage is being warmed up
+   * @param slot the slot being warmed up
+   * @return true if the storage slot was already warmed up
+   */
+  public UInt256 warmUpStorage(final Account account, final Bytes32 slot) {
+    Address address = account.getAddress();
+    UInt256 storageValue = account.getStorageValue(UInt256.fromBytes(slot));
+    Map<Bytes32, Bytes32> accountKeyValues = getWarmedUpStorageKeys().get(address);
+    if (accountKeyValues == null) {
+      accountKeyValues = new ConcurrentHashMap<>();
+      getWarmedUpStorageKeys().put(address, accountKeyValues);
+    }
+    accountKeyValues.put(slot, storageValue);
+    return storageValue;
+  }
+
+  /**
+   * Checks if storage slot is "Warm up", EIP-2929
+   *
    * @param address the address whose storage is being warmed up
    * @param slot the slot being warmed up
    * @return true if the storage slot was already warmed up
    */
-  public boolean warmUpStorage(final Address address, final Bytes32 slot) {
-    if (warmedUpStorage.put(address, slot)) {
-      return parentMessageFrame != null && parentMessageFrame.isWarm(address, slot);
-    } else {
-      return true;
-    }
-  }
-
-  private boolean isWarm(final Address address, final Bytes32 slot) {
+  public boolean isWarm(final Address address, final Bytes32 slot) {
     MessageFrame frame = this;
     while (frame != null) {
-      if (frame.warmedUpStorage.containsEntry(address, slot)) {
+      if (frame.warmedUpStorage.containsKey(address)
+          && frame.warmedUpStorage.get(address).containsKey(slot)) {
         return true;
       }
       frame = frame.parentMessageFrame;
@@ -1296,5 +1312,9 @@ public class MessageFrame {
           accessListWarmAddresses,
           accessListWarmStorage);
     }
+  }
+
+  public Map<Address, Map<Bytes32, Bytes32>> getWarmedUpStorageKeys() {
+    return warmedUpStorage;
   }
 }
