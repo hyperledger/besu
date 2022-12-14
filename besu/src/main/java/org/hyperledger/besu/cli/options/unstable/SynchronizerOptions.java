@@ -27,6 +27,9 @@ import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine;
 
+/**
+ * The Synchronizer Cli options.
+ */
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {
   private static final String BLOCK_PROPAGATION_RANGE_FLAG =
       "--Xsynchronizer-block-propagation-range";
@@ -72,6 +75,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
 
+  /**
+   * Parse block propagation range.
+   *
+   * @param arg the range such as -10..30
+   */
   @CommandLine.Option(
       names = BLOCK_PROPAGATION_RANGE_FLAG,
       hidden = true,
@@ -274,10 +282,21 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private SynchronizerOptions() {}
 
+  /**
+   * Create synchronizer options.
+   *
+   * @return the synchronizer options
+   */
   public static SynchronizerOptions create() {
     return new SynchronizerOptions();
   }
 
+  /**
+   * Create synchronizer options from Synchronizer Configuration.
+   *
+   * @param config the Synchronizer Configuration
+   * @return the synchronizer options
+   */
   public static SynchronizerOptions fromConfig(final SynchronizerConfiguration config) {
     final SynchronizerOptions options = new SynchronizerOptions();
     options.blockPropagationRange = config.getBlockPropagationRange();
