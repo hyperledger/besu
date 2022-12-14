@@ -22,10 +22,15 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/** Various utilities for providing hashes (digests) of arbitrary data. */
+/**
+ * Various utilities for providing hashes (digests) of arbitrary data.
+ */
 public abstract class Hash {
   private Hash() {}
 
+  /**
+   * The constant KECCAK256_ALG.
+   */
   public static final String KECCAK256_ALG = "KECCAK-256";
   private static final String SHA256_ALG = "SHA-256";
   private static final String RIPEMD160_ALG = "RIPEMD160";

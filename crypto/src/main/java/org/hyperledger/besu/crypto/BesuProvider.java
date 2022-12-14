@@ -18,13 +18,22 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.Provider;
 
+/**
+ * The Besu Security provider.
+ */
 public final class BesuProvider extends Provider {
 
   private static final String info = "Besu Security Provider v1.0";
 
-  public static final String PROVIDER_NAME = "Besu";
+    /**
+     * The constant PROVIDER_NAME.
+     */
+    public static final String PROVIDER_NAME = "Besu";
 
-  @SuppressWarnings({"unchecked", "removal"})
+    /**
+     * Instantiates a new Besu provider.
+     */
+    @SuppressWarnings({"unchecked", "removal"})
   public BesuProvider() {
     super(PROVIDER_NAME, "1.0", info);
     AccessController.doPrivileged(
