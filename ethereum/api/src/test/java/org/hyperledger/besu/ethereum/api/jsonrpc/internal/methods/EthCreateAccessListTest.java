@@ -57,7 +57,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class EthCreateAccessListTest {
 
   private final String METHOD = "eth_createAccessList";
-  private EthEstimateGas method;
+  private EthCreateAccessList method;
 
   @Mock private BlockHeader blockHeader;
   @Mock private Blockchain blockchain;
@@ -86,7 +86,7 @@ public class EthCreateAccessListTest {
   @Test
   public void shouldReturnGasEstimateWhenTransientLegacyTransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
+        ethCreateAccessListRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultGasEstimate(1L, true, false);
 
     final JsonRpcResponse expectedResponse =
@@ -101,7 +101,7 @@ public class EthCreateAccessListTest {
   public void shouldUseGasPriceParameterWhenIsPresent() {
     final Wei gasPrice = Wei.of(1000);
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(gasPrice));
+        ethCreateAccessListRequest(defaultLegacyTransactionCallParameter(gasPrice));
     mockTransientProcessorResultGasEstimate(1L, true, false, gasPrice);
 
     final JsonRpcResponse expectedResponse =
@@ -115,7 +115,7 @@ public class EthCreateAccessListTest {
   @Test
   public void shouldReturnGasEstimateErrorWhenGasPricePresentForEip1559Transaction() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(eip1559TransactionCallParameter(Optional.of(Wei.of(10))));
+        ethCreateAccessListRequest(eip1559TransactionCallParameter(Optional.of(Wei.of(10))));
     mockTransientProcessorResultGasEstimate(1L, false, false);
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
@@ -125,7 +125,7 @@ public class EthCreateAccessListTest {
   @Test
   public void
       shouldReturnGasEstimateWhenTransientEip1559TransactionProcessorReturnsResultSuccess() {
-    final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
+    final JsonRpcRequestContext request = ethCreateAccessListRequest(eip1559TransactionCallParameter());
     mockTransientProcessorResultGasEstimate(1L, true, false);
 
     final JsonRpcResponse expectedResponse =
@@ -139,7 +139,7 @@ public class EthCreateAccessListTest {
   public void shouldReturnErrorWhenWorldStateIsNotAvailable() {
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(false);
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
+        ethCreateAccessListRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
@@ -153,7 +153,7 @@ public class EthCreateAccessListTest {
   @Test
   public void shouldReturnErrorWhenTransactionReverted() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
+        ethCreateAccessListRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultGasEstimate(1L, false, true);
 
     final JsonRpcResponse expectedResponse =
@@ -266,7 +266,7 @@ public class EthCreateAccessListTest {
         Optional.empty());
   }
 
-  private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {
+  private JsonRpcRequestContext ethCreateAccessListRequest(final CallParameter callParameter) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", METHOD, new Object[] {callParameter}));
   }
