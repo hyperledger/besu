@@ -26,80 +26,263 @@ import java.util.OptionalLong;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * The interface Genesis config options.
+ */
 public interface GenesisConfigOptions {
 
+  /**
+   * Is eth hash boolean.
+   *
+   * @return the boolean
+   */
   boolean isEthHash();
 
+  /**
+   * Is keccak 256 boolean.
+   *
+   * @return the boolean
+   */
   boolean isKeccak256();
 
+  /**
+   * Is ibft legacy boolean.
+   *
+   * @return the boolean
+   */
   boolean isIbftLegacy();
 
+  /**
+   * Is ibft 2 boolean.
+   *
+   * @return the boolean
+   */
   boolean isIbft2();
 
+  /**
+   * Is qbft boolean.
+   *
+   * @return the boolean
+   */
   boolean isQbft();
 
+  /**
+   * Is clique boolean.
+   *
+   * @return the boolean
+   */
   boolean isClique();
 
+  /**
+   * Is consensus migration boolean.
+   *
+   * @return the boolean
+   */
   default boolean isConsensusMigration() {
     return (isIbft2() || isIbftLegacy()) && isQbft();
   }
 
+  /**
+   * Gets consensus engine.
+   *
+   * @return the consensus engine
+   */
   String getConsensusEngine();
 
+  /**
+   * Gets ibft legacy config options.
+   *
+   * @return the ibft legacy config options
+   */
   IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
+  /**
+   * Gets checkpoint options.
+   *
+   * @return the checkpoint options
+   */
   CheckpointConfigOptions getCheckpointOptions();
 
+  /**
+   * Gets clique config options.
+   *
+   * @return the clique config options
+   */
   CliqueConfigOptions getCliqueConfigOptions();
 
+  /**
+   * Gets bft config options.
+   *
+   * @return the bft config options
+   */
   BftConfigOptions getBftConfigOptions();
 
+  /**
+   * Gets qbft config options.
+   *
+   * @return the qbft config options
+   */
   QbftConfigOptions getQbftConfigOptions();
 
+  /**
+   * Gets discovery options.
+   *
+   * @return the discovery options
+   */
   DiscoveryOptions getDiscoveryOptions();
 
+  /**
+   * Gets ethash config options.
+   *
+   * @return the ethash config options
+   */
   EthashConfigOptions getEthashConfigOptions();
 
+  /**
+   * Gets keccak 256 config options.
+   *
+   * @return the keccak 256 config options
+   */
   Keccak256ConfigOptions getKeccak256ConfigOptions();
 
+  /**
+   * Gets homestead block number.
+   *
+   * @return the homestead block number
+   */
   OptionalLong getHomesteadBlockNumber();
 
+  /**
+   * Gets dao fork block.
+   *
+   * @return the dao fork block
+   */
   OptionalLong getDaoForkBlock();
 
+  /**
+   * Gets tangerine whistle block number.
+   *
+   * @return the tangerine whistle block number
+   */
   OptionalLong getTangerineWhistleBlockNumber();
 
+  /**
+   * Gets spurious dragon block number.
+   *
+   * @return the spurious dragon block number
+   */
   OptionalLong getSpuriousDragonBlockNumber();
 
+  /**
+   * Gets byzantium block number.
+   *
+   * @return the byzantium block number
+   */
   OptionalLong getByzantiumBlockNumber();
 
+  /**
+   * Gets constantinople block number.
+   *
+   * @return the constantinople block number
+   */
   OptionalLong getConstantinopleBlockNumber();
 
+  /**
+   * Gets petersburg block number.
+   *
+   * @return the petersburg block number
+   */
   OptionalLong getPetersburgBlockNumber();
 
+  /**
+   * Gets istanbul block number.
+   *
+   * @return the istanbul block number
+   */
   OptionalLong getIstanbulBlockNumber();
 
+  /**
+   * Gets muir glacier block number.
+   *
+   * @return the muir glacier block number
+   */
   OptionalLong getMuirGlacierBlockNumber();
 
+  /**
+   * Gets berlin block number.
+   *
+   * @return the berlin block number
+   */
   OptionalLong getBerlinBlockNumber();
 
+  /**
+   * Gets london block number.
+   *
+   * @return the london block number
+   */
   OptionalLong getLondonBlockNumber();
 
+  /**
+   * Gets arrow glacier block number.
+   *
+   * @return the arrow glacier block number
+   */
   OptionalLong getArrowGlacierBlockNumber();
 
+  /**
+   * Gets gray glacier block number.
+   *
+   * @return the gray glacier block number
+   */
   OptionalLong getGrayGlacierBlockNumber();
 
+  /**
+   * Gets merge net split block number.
+   *
+   * @return the merge net split block number
+   */
   OptionalLong getMergeNetSplitBlockNumber();
 
+  /**
+   * Gets shandong block number.
+   *
+   * @return the shandong block number
+   */
   OptionalLong getShandongBlockNumber();
 
+  /**
+   * Gets base fee per gas.
+   *
+   * @return the base fee per gas
+   */
   Optional<Wei> getBaseFeePerGas();
 
+  /**
+   * Gets terminal total difficulty.
+   *
+   * @return the terminal total difficulty
+   */
   Optional<UInt256> getTerminalTotalDifficulty();
 
+  /**
+   * Gets terminal block number.
+   *
+   * @return the terminal block number
+   */
   OptionalLong getTerminalBlockNumber();
 
+  /**
+   * Gets terminal block hash.
+   *
+   * @return the terminal block hash
+   */
   Optional<Hash> getTerminalBlockHash();
 
+  /**
+   * Gets forks.
+   *
+   * @return the forks
+   */
   List<Long> getForks();
 
   /**
@@ -115,9 +298,8 @@ public interface GenesisConfigOptions {
    * IO-heavy operations to mitigate transaction spam attacks In reference to EIP-150 (ETH Tangerine
    * Whistle) Note, this fork happens after Homestead (Mainnet definition) and before DieHard fork
    *
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1015">https://ecips.ethereumclassic.org/ECIPs/ecip-1015</a>
    * @return block number to activate ECIP-1015 code
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1015">https://ecips.ethereumclassic.org/ECIPs/ecip-1015</a>
    */
   OptionalLong getEcip1015BlockNumber();
 
@@ -126,12 +308,9 @@ public interface GenesisConfigOptions {
    * specification for ECIP-1010 and EIP-160 Note, this fork happens after ECIP-1015 (classic
    * tangerine whistle) and before Gotham fork ECIP-1010: Delay Difficulty Bomb Explosion
    *
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1010">https://ecips.ethereumclassic.org/ECIPs/ecip-1010</a>
-   *     EIP-160: EXP cost increase
-   * @see <a
-   *     href="https://eips.ethereum.org/EIPS/eip-160">https://eips.ethereum.org/EIPS/eip-160</a>
    * @return block number to activate Classic DieHard fork
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1010">https://ecips.ethereumclassic.org/ECIPs/ecip-1010</a>     EIP-160: EXP cost increase
+   * @see <a href="https://eips.ethereum.org/EIPS/eip-160">https://eips.ethereum.org/EIPS/eip-160</a>
    */
   OptionalLong getDieHardBlockNumber();
 
@@ -139,23 +318,17 @@ public interface GenesisConfigOptions {
    * Block number for Gotham fork on Classic network, the Gotham form includes changes to meet
    * specification for ECIP-1017 and ECIP-1039 both regarding Monetary Policy (rewards).
    *
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>
-   *     ECIP-1017: Monetary Policy and Final Modification to the Ethereum Classic Emission Schedule
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1039">https://ecips.ethereumclassic.org/ECIPs/ecip-1039</a>
-   *     ECIP-1039: Monetary policy rounding specification
    * @return block to activate Classic Gotham fork
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>     ECIP-1017: Monetary Policy and Final Modification to the Ethereum Classic Emission Schedule
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1039">https://ecips.ethereumclassic.org/ECIPs/ecip-1039</a>     ECIP-1039: Monetary policy rounding specification
    */
   OptionalLong getGothamBlockNumber();
 
   /**
    * Block number to remove difficulty bomb, to meet specification for ECIP-1041.
    *
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1041">https://ecips.ethereumclassic.org/ECIPs/ecip-1041</a>
-   *     ECIP-1041: Remove Difficulty Bomb
    * @return block number to remove difficulty bomb on classic network
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1041">https://ecips.ethereumclassic.org/ECIPs/ecip-1041</a>     ECIP-1041: Remove Difficulty Bomb
    */
   OptionalLong getDefuseDifficultyBombBlockNumber();
 
@@ -165,11 +338,9 @@ public interface GenesisConfigOptions {
    * Enable the outstanding Ethereum Foundation Spurious Dragon and Byzantium network protocol
    * upgrades for the Ethereum Classic network.
    *
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
    * @return block number for Atlantis fork on Classic network
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
    */
   OptionalLong getAtlantisBlockNumber();
 
@@ -178,11 +349,8 @@ public interface GenesisConfigOptions {
    * Constaninople and Petersburg network protocol upgrades on the Ethereum Classic network in a
    * hard-fork code-named Agharta to enable maximum compatibility across these networks.
    *
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1056">https://ecips.ethereumclassic.org/ECIPs/ecip-1056</a>
    * @return block number for Agharta fork on Classic network
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1056">https://ecips.ethereumclassic.org/ECIPs/ecip-1056</a>
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1056">https://ecips.ethereumclassic.org/ECIPs/ecip-1056</a>
    */
   OptionalLong getAghartaBlockNumber();
 
@@ -192,8 +360,7 @@ public interface GenesisConfigOptions {
    * Phoenix to enable maximum compatibility across these networks.
    *
    * @return block number of Phoenix fork on Classic networks
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1088">https://ecips.ethereumclassic.org/ECIPs/ecip-1088</a>
+   * @see <a href="https://ecips.ethereumclassic.org/ECIPs/ecip-1088">https://ecips.ethereumclassic.org/ECIPs/ecip-1088</a>
    */
   OptionalLong getPhoenixBlockNumber();
 
@@ -202,8 +369,7 @@ public interface GenesisConfigOptions {
    * Ethash epoch, with the impact being a reduced DAG size.
    *
    * @return block number of ECIP-1099 fork on Classic networks
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
+   * @see <a     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
    */
   OptionalLong getThanosBlockNumber();
 
@@ -211,8 +377,7 @@ public interface GenesisConfigOptions {
    * Block number to activate Magneto on Classic networks.
    *
    * @return block number of Magneto fork on Classic networks
-   * @see <a
-   *     href="https://github.com/ethereumclassic/ECIPs/issues/424">https://github.com/ethereumclassic/ECIPs/issues/424</a>
+   * @see <a     href="https://github.com/ethereumclassic/ECIPs/issues/424">https://github.com/ethereumclassic/ECIPs/issues/424</a>
    */
   OptionalLong getMagnetoBlockNumber();
 
@@ -220,8 +385,7 @@ public interface GenesisConfigOptions {
    * Block number to activate Mystique on Classic networks.
    *
    * @return block number of Mystique fork on Classic networks
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1104">https://ecips.ethereumclassic.org/ECIPs/ecip-1104</a>
+   * @see <a     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1104">https://ecips.ethereumclassic.org/ECIPs/ecip-1104</a>
    */
   OptionalLong getMystiqueBlockNumber();
 
@@ -230,15 +394,29 @@ public interface GenesisConfigOptions {
    * keccak-256.
    *
    * @return block number of ECIP-1049 fork on Classic networks
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1049">https://ecips.ethereumclassic.org/ECIPs/ecip-1049</a>
+   * @see <a     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1049">https://ecips.ethereumclassic.org/ECIPs/ecip-1049</a>
    */
   OptionalLong getEcip1049BlockNumber();
 
+  /**
+   * Gets chain id.
+   *
+   * @return the chain id
+   */
   Optional<BigInteger> getChainId();
 
+  /**
+   * Gets contract size limit.
+   *
+   * @return the contract size limit
+   */
   OptionalInt getContractSizeLimit();
 
+  /**
+   * Gets evm stack size.
+   *
+   * @return the evm stack size
+   */
   OptionalInt getEvmStackSize();
 
   /**
@@ -248,13 +426,22 @@ public interface GenesisConfigOptions {
    * not set.
    *
    * @return number of rounds pre Era
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>
+   * @see <a     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>
    */
   OptionalLong getEcip1017EraRounds();
 
+  /**
+   * As map map.
+   *
+   * @return the map
+   */
   Map<String, Object> asMap();
 
+  /**
+   * Gets transitions.
+   *
+   * @return the transitions
+   */
   TransitionsConfigOptions getTransitions();
 
   /**
