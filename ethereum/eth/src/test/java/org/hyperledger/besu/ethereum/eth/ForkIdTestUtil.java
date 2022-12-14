@@ -41,9 +41,12 @@ public class ForkIdTestUtil {
     final Blockchain mockchain = mock(Blockchain.class);
     final BlockHeader mockHeader = mock(BlockHeader.class);
     final Block block = new Block(mockHeader, null);
+    final BlockHeader mockChainHeadHeader = mock(BlockHeader.class);
     when(mockchain.getGenesisBlock()).thenReturn(block);
     when(mockchain.getChainHeadBlockNumber()).thenReturn(chainHeightSupplier.getAsLong());
     when(mockHeader.getHash()).thenReturn(Hash.fromHexString(genesisHash));
+    when(mockchain.getChainHeadHeader()).thenReturn(mockChainHeadHeader);
+    when(mockChainHeadHeader.getNumber()).thenReturn(chainHeightSupplier.getAsLong());
     return mockchain;
   }
 
