@@ -524,6 +524,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(metricsSystem != null, "MetricsSystem must be set.");
       checkState(storageProvider != null, "StorageProvider must be set.");
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
+      checkState(blockNumberForks != null, "BlockNumberForks must be set.");
+      checkState(timestampForks != null, "TimestampForks must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
