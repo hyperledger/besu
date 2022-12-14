@@ -173,7 +173,7 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void getByBlockNumber_delegatesToMergeScheduleWhenBlockNotFound() {
+  public void getByBlockNumber_delegatesToPreMergeScheduleWhenBlockNotFound() {
     when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.empty());
     when(mergeContext.isPostMerge()).thenReturn(false);
 
@@ -183,7 +183,17 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void getByBlockNumber_delegatesToMergeScheduleWhenTimestampScheduleDoesNotExist() {
+  public void getByBlockNumber_delegatesToPostMergeScheduleWhenBlockNotFound() {
+    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.empty());
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPostMergeProtocolScheduleReturned();
+  }
+
+  @Test
+  public void getByBlockNumber_delegatesToPostMergeScheduleWhenTimestampScheduleDoesNotExist() {
     final Block block = new Block(blockHeader, BlockBody.empty());
     when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.of(block));
     when(mergeContext.isPostMerge()).thenReturn(true);
