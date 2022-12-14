@@ -171,7 +171,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+            trie.entriesFrom(
+                root -> StorageEntriesCollector.collectEntries(root, Bytes.EMPTY, Hash.ZERO, 1));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
@@ -195,7 +196,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+            trie.entriesFrom(
+                root -> StorageEntriesCollector.collectEntries(root, Bytes.EMPTY, Hash.ZERO, 1));
 
     final StateTrieAccountValue stateTrieAccountValue =
         StateTrieAccountValue.readFrom(RLP.input(accounts.firstEntry().getValue()));
@@ -211,7 +213,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final TreeMap<Bytes32, Bytes> slots =
         (TreeMap<Bytes32, Bytes>)
             storageTrie.entriesFrom(
-                root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+                root -> StorageEntriesCollector.collectEntries(root, Bytes.EMPTY, Hash.ZERO, 1));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();

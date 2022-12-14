@@ -113,7 +113,7 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
 
     // Check if the current leaf node should be replaced
     if (commonPathLength == leafPath.size() && commonPathLength == path.size()) {
-      return nodeFactory.createLeaf(leafPath, value);
+      return nodeFactory.createLeaf(Optional.of(location), leafPath, value);
     }
 
     assert commonPathLength < leafPath.size() && commonPathLength < path.size()
@@ -126,12 +126,25 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
 
     final byte updatedLeafIndex = leafPath.get(commonPathLength);
 
+    final Bytes newExtensionPath = leafPath.slice(0, commonPathLength);
+
+    final Optional<Bytes> currentLocation = Optional.of(location);
+    final Optional<Bytes> newBranchLocation =
+        Optional.of(Bytes.concatenate(location, newExtensionPath));
+    final Optional<Bytes> newLeafLocation =
+        Optional.of(Bytes.concatenate(location, newExtensionPath, Bytes.of(newLeafIndex)));
+    final Optional<Bytes> updatedLeafLocation =
+        Optional.of(Bytes.concatenate(location, newExtensionPath, Bytes.of(updatedLeafIndex)));
+
     final Node<V> updatedLeaf = leafNode.replacePath(leafPath.slice(commonPathLength + 1));
-    final Node<V> leaf = nodeFactory.createLeaf(newLeafPath, value);
+    updatedLeaf.setLocation(updatedLeafLocation);
+    final Node<V> leaf = nodeFactory.createLeaf(newLeafLocation, newLeafPath, value);
     final Node<V> branch =
-        nodeFactory.createBranch(updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
-    if (commonPathLength > 0) {
-      return nodeFactory.createExtension(leafPath.slice(0, commonPathLength), branch);
+        nodeFactory.createBranch(
+            newBranchLocation, updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
+    if (!newExtensionPath.isEmpty()) {
+      return nodeFactory.createExtension(
+          currentLocation, leafPath.slice(0, commonPathLength), branch);
     } else {
       return branch;
     }

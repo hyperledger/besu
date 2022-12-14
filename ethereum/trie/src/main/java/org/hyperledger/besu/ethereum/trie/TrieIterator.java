@@ -43,7 +43,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     }
 
     paths.push(node.getPath());
-    node.getChild().accept(this, Bytes.concatenate(location, node.getHash()), remainingPath);
+    node.getChild().accept(this, Bytes.concatenate(location, node.getPath()), remainingPath);
     if (unload) {
       node.getChild().unload();
     }

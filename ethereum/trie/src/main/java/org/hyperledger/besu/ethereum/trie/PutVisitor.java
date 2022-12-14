@@ -68,7 +68,7 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
         nodeFactory.createBranch(
             newBranchLocation, leafIndex, leaf, extensionIndex, updatedExtension);
 
-    if (newExtensionPath.isEmpty()) {
+    if (!newExtensionPath.isEmpty()) {
       return nodeFactory.createExtension(
           currentLocation, extensionPath.slice(0, commonPathLength), branch);
     } else {
@@ -128,7 +128,7 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     final Node<V> branch =
         nodeFactory.createBranch(
             newBranchLocation, updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
-    if (newExtensionPath.isEmpty()) {
+    if (!newExtensionPath.isEmpty()) {
       return nodeFactory.createExtension(currentLocation, newExtensionPath, branch);
     } else {
       return branch;

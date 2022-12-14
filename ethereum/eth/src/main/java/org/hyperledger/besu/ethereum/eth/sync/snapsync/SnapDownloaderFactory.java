@@ -15,14 +15,12 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -74,7 +72,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
     ensureDirectoryExists(fastSyncDataDirectory.toFile());
 
-    final FastSyncState fastSyncState =
+    /*final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
@@ -82,7 +80,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       LOG.info(
           "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
-    }
+    }*/
     worldStateStorage.clear();
 
     final SnapSyncState snapSyncState =
