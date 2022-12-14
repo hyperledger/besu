@@ -14,12 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.execution;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_ARRAY;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_OBJECT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 
 import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,12 +43,18 @@ public class JsonRpcExecutorVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
-    vertx.eventBus().consumer("ethereum.api.json.rpc.executor", this::handleJsonRpcExecutor);
+    vertx
+        .eventBus()
+        .consumer(RPC_EXECUTE_OBJECT.getAddress(), this::handleJsonRpcExecutorObjectRequest);
+    vertx
+        .eventBus()
+        .consumer(RPC_EXECUTE_ARRAY.getAddress(), this::handleJsonRpcExecutorArrayRequest);
   }
 
-  private void handleJsonRpcExecutor(final Message<JsonRpcExecutorRequest> executorRequestMessage) {
-    final JsonRpcExecutorRequest request = executorRequestMessage.body();
-    LOG.info("Received executorRequest {}", request);
+  private void handleJsonRpcExecutorObjectRequest(
+      final Message<JsonRpcExecutorObjectRequest> requestMessage) {
+    final JsonRpcExecutorObjectRequest request = requestMessage.body();
+    LOG.trace("Received executorRequest {}", request);
 
     final JsonRpcResponse jsonRpcResponse =
         jsonRpcExecutor.execute(
@@ -49,9 +62,41 @@ public class JsonRpcExecutorVerticle extends AbstractVerticle {
             tracer,
             request.getSpanContext(),
             request.getAlive(),
-            request.getJsonRpcRequest(),
+            request.getJsonObject(),
             req -> req.mapTo(JsonRpcRequest.class));
 
-    executorRequestMessage.reply(jsonRpcResponse);
+    requestMessage.reply(jsonRpcResponse);
+  }
+
+  private void handleJsonRpcExecutorArrayRequest(
+      final Message<JsonRpcExecutorArrayRequest> requestMessage) {
+    final JsonRpcExecutorArrayRequest request = requestMessage.body();
+    final JsonArray jsonArray = request.getJsonArray();
+
+    JsonRpcResponse[] jsonRpcBatchResponses = new JsonRpcResponse[jsonArray.size()];
+    try {
+      for (int i = 0; i < jsonArray.size(); i++) {
+        final JsonObject jsonRequest;
+        try {
+          jsonRequest = jsonArray.getJsonObject(i);
+        } catch (ClassCastException e) {
+          jsonRpcBatchResponses[i] = new JsonRpcErrorResponse(null, INVALID_REQUEST);
+          continue;
+        }
+        jsonRpcBatchResponses[i] =
+            jsonRpcExecutor.execute(
+                request.getOptionalUser(),
+                tracer,
+                request.getSpanContext(),
+                request.getAlive(),
+                jsonRequest,
+                req -> req.mapTo(JsonRpcRequest.class));
+      }
+    } catch (RuntimeException e) {
+      requestMessage.fail(-1, e.getMessage());
+      return;
+    }
+
+    requestMessage.reply(jsonRpcBatchResponses);
   }
 }

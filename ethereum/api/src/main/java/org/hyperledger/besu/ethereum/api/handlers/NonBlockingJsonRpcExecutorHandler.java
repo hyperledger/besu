@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.handlers;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_ARRAY;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_OBJECT;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonResponseStreamer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
-import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorBatchRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorArrayRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorObjectRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorVerticle;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResponse;
@@ -30,6 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauth
 import org.hyperledger.besu.util.vertx.GenericMessageCodec;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -38,10 +42,12 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.opentelemetry.context.Context;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
@@ -65,29 +71,42 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
 
   private final Vertx vertx;
 
-  public NonBlockingJsonRpcExecutorHandler(final Vertx vertx) {
+  public NonBlockingJsonRpcExecutorHandler(
+      final Vertx vertx, final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles) {
     this.vertx = vertx;
 
-    vertx
-        .eventBus()
-        .registerDefaultCodec(
-            JsonRpcExecutorRequest.class,
-            new GenericMessageCodec<>(JsonRpcExecutorRequest.class, LOG))
-        .registerDefaultCodec(
-            JsonRpcExecutorBatchRequest.class,
-            new GenericMessageCodec<>(JsonRpcExecutorBatchRequest.class, LOG));
-    vertx
-        .eventBus()
-        .registerDefaultCodec(
-            JsonRpcSuccessResponse.class,
-            new GenericMessageCodec<>(JsonRpcSuccessResponse.class, LOG))
-        .registerDefaultCodec(
-            JsonRpcErrorResponse.class, new GenericMessageCodec<>(JsonRpcErrorResponse.class, LOG))
-        .registerDefaultCodec(
-            JsonRpcNoResponse.class, new GenericMessageCodec<>(JsonRpcNoResponse.class, LOG))
-        .registerDefaultCodec(
-            JsonRpcUnauthorizedResponse.class,
-            new GenericMessageCodec<>(JsonRpcUnauthorizedResponse.class, LOG));
+    try {
+      vertx
+          .eventBus()
+          .registerDefaultCodec(
+              JsonRpcExecutorObjectRequest.class,
+              new GenericMessageCodec<>(JsonRpcExecutorObjectRequest.class, LOG))
+          .registerDefaultCodec(
+              JsonRpcExecutorArrayRequest.class,
+              new GenericMessageCodec<>(JsonRpcExecutorArrayRequest.class, LOG));
+      vertx
+          .eventBus()
+          .registerDefaultCodec(
+              JsonRpcSuccessResponse.class,
+              new GenericMessageCodec<>(JsonRpcSuccessResponse.class, LOG))
+          .registerDefaultCodec(
+              JsonRpcErrorResponse.class,
+              new GenericMessageCodec<>(JsonRpcErrorResponse.class, LOG))
+          .registerDefaultCodec(
+              JsonRpcNoResponse.class, new GenericMessageCodec<>(JsonRpcNoResponse.class, LOG))
+          .registerDefaultCodec(
+              JsonRpcUnauthorizedResponse.class,
+              new GenericMessageCodec<>(JsonRpcUnauthorizedResponse.class, LOG))
+          .registerDefaultCodec(
+              JsonRpcResponse[].class, new GenericMessageCodec<>(JsonRpcResponse[].class, LOG));
+    } catch (final IllegalStateException ignored) {
+      // can be ignored
+      // is thrown when registerDefaultCodec is called more than once, which can happen during tests
+    }
+
+    jsonRpcExecutorVerticles.forEach(
+        jsonRpcExecutorVerticle ->
+            vertx.deployVerticle(jsonRpcExecutorVerticle, new DeploymentOptions().setWorker(true)));
   }
 
   @Override
@@ -108,16 +127,13 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
         return;
       }
 
-      if (isRequestBodyAnObject) {
-        processRequestBodyAsObject(ctx, response, user, spanContext);
-        //        return;
+      if (isRequestBodyAnArray) {
+        processRequestBodyAsArray(ctx, response, user, spanContext);
+        return;
       }
 
-      //      processRequestBodyAsArray(ctx, response, user, spanContext);
-    } catch (final IOException ex) {
-      final String method = getRpcMethodName(ctx);
-      LOG.error("{} - Error streaming JSON-RPC response", method, ex);
-    } catch (final RuntimeException e) {
+      processRequestBodyAsObject(ctx, response, user, spanContext);
+    } catch (final IOException | RuntimeException e) {
       LOG.error("RPC call failed: {}", e.getMessage());
       handleJsonRpcError(ctx, null, JsonRpcError.INTERNAL_ERROR);
     }
@@ -135,106 +151,109 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
     vertx
         .eventBus()
         .request(
-            "ethereum.api.json.rpc.executor",
-            new JsonRpcExecutorRequest(
+            RPC_EXECUTE_OBJECT.getAddress(),
+            new JsonRpcExecutorObjectRequest(
                 user, spanContext, () -> !ctx.response().closed(), jsonRequest))
         .onSuccess(
             msg -> {
               try {
-                handleRequestBodyAsObjectResult(ctx, response, (JsonRpcResponse) msg.body());
+                handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) msg.body());
               } catch (IOException e) {
-                throw new RuntimeException(e);
+                LOG.error(
+                    "Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
+                handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
               }
             })
         .onFailure(
             e -> {
-              LOG.error(
-                  "Error while processing {}: {}", jsonRequest.getString("method"), e.getMessage());
-              throw new RuntimeException(e);
+              LOG.error("Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
+              handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
             });
   }
 
-  private void handleRequestBodyAsObjectResult(
+  private void handleRpcExecutorObjectResponse(
       final RoutingContext ctx,
       final HttpServerResponse response,
       final JsonRpcResponse jsonRpcResponse)
       throws IOException {
     response.setStatusCode(status(jsonRpcResponse).code());
     if (jsonRpcResponse.getType() == JsonRpcResponseType.NONE) {
-      response.end();
-    } else {
-      try (final JsonResponseStreamer streamer =
-          new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
-        // underlying output stream lifecycle is managed by the json object writer
-        lazyTraceLogger(() -> JSON_OBJECT_MAPPER.writeValueAsString(jsonRpcResponse));
-        JSON_OBJECT_WRITER.writeValue(streamer, jsonRpcResponse);
-      }
+      handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INVALID_REQUEST);
+      return;
+    }
+
+    try (final JsonResponseStreamer streamer =
+        new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
+      // underlying output stream lifecycle is managed by the json object writer
+      lazyTraceLogger(() -> JSON_OBJECT_MAPPER.writeValueAsString(jsonRpcResponse));
+      JSON_OBJECT_WRITER.writeValue(streamer, jsonRpcResponse);
     }
   }
 
-  //    private void processRequestBodyAsArray(
-  //        final RoutingContext ctx,
-  //        final HttpServerResponse response,
-  //        final Optional<User> user,
-  //        final Context spanContext)
-  //        throws IOException {
-  //      final JsonArray batchJsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name());
-  //      lazyTraceLogger(batchJsonRequest::toString);
-  //      List<JsonRpcResponse> jsonRpcBatchResponses = new ArrayList<>(batchJsonRequest.size());
-  //      try {
-  //        for (int i = 0; i < batchJsonRequest.size(); i++) {
-  //          final JsonObject jsonRequest;
-  //          try {
-  //            jsonRequest = batchJsonRequest.getJsonObject(i);
-  //          } catch (ClassCastException e) {
-  //            jsonRpcBatchResponses.add(new JsonRpcErrorResponse(null, INVALID_REQUEST));
-  //            continue;
-  //          }
-  //          vertx
-  //              .eventBus()
-  //              .request(
-  //                  "ethereum.api.json.rpc.executor",
-  //                  new JsonRpcExecutorBatchRequest(
-  //                      i, user, spanContext, () -> !ctx.response().closed(), jsonRequest))
-  //              .onSuccess(
-  //                  msg -> handleRequestBodyAsArrayResult(jsonRpcBatchResponses, (JsonRpcResponse)
-  // msg.body())
-  //              )
-  //              .onFailure(e -> {
-  //                LOG.error(
-  //                    "Error while processing {}: {}", jsonRequest.getString("method"),
-  // e.getMessage());
-  //                throw new RuntimeException(e);
-  //              });
-  //
-  //        }
-  //      } catch (RuntimeException e) {
-  //        response.setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end();
-  //        return;
-  //      }
-  //      final JsonRpcResponse[] completed =
-  //          jsonRpcBatchResponses.stream()
-  //              .filter(jsonRpcResponse -> jsonRpcResponse.getType() != JsonRpcResponseType.NONE)
-  //              .toArray(JsonRpcResponse[]::new);
-  //      try (final JsonResponseStreamer streamer =
-  //               new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
-  //        // underlying output stream lifecycle is managed by the json object writer
-  //        lazyTraceLogger(() -> JSON_OBJECT_MAPPER.writeValueAsString(completed));
-  //        JSON_OBJECT_WRITER.writeValue(streamer, completed);
-  //      }
-  //    }
-  //
-  //  private void handleRequestBodyAsArrayResult(final List<JsonRpcResponse> jsonRpcBatchResponses,
-  // final JsonRpcResponse jsonRpcResponse) {
-  //  }
+  private void processRequestBodyAsArray(
+      final RoutingContext ctx,
+      final HttpServerResponse response,
+      final Optional<User> user,
+      final Context spanContext)
+      throws IOException {
+    final JsonArray jsonArray = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name());
+    lazyTraceLogger(jsonArray::toString);
 
-  private String getRpcMethodName(final RoutingContext ctx) {
-    if (ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name())) {
-      final JsonObject jsonObject = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
-      return jsonObject.getString("method");
-    } else {
+    vertx
+        .eventBus()
+        .request(
+            RPC_EXECUTE_ARRAY.getAddress(),
+            new JsonRpcExecutorArrayRequest(
+                user, spanContext, () -> !ctx.response().closed(), jsonArray))
+        .onSuccess(
+            msg -> {
+              try {
+                handleRpcExecutorArrayResponse(ctx, response, (JsonRpcResponse[]) msg.body());
+              } catch (IOException e) {
+                LOG.error(
+                    "Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
+                handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
+              }
+            })
+        .onFailure(
+            e -> {
+              LOG.error("Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
+              handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
+            });
+  }
+
+  private void handleRpcExecutorArrayResponse(
+      final RoutingContext ctx,
+      final HttpServerResponse response,
+      final JsonRpcResponse[] jsonResponseArray)
+      throws IOException {
+    final JsonRpcResponse[] completed =
+        Arrays.stream(jsonResponseArray)
+            .filter(jsonRpcResponse -> jsonRpcResponse.getType() != JsonRpcResponseType.NONE)
+            .toArray(JsonRpcResponse[]::new);
+    try (final JsonResponseStreamer streamer =
+        new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
+      // underlying output stream lifecycle is managed by the json object writer
+      lazyTraceLogger(() -> JSON_OBJECT_MAPPER.writeValueAsString(completed));
+      JSON_OBJECT_WRITER.writeValue(streamer, completed);
+    }
+  }
+
+  private String getRequestMethodName(final RoutingContext ctx) {
+    return getRequestField(ctx, "method");
+  }
+
+  private String getRequestId(final RoutingContext ctx) {
+    return getRequestField(ctx, "id");
+  }
+
+  private String getRequestField(final RoutingContext ctx, final String fieldName) {
+    if (!ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name())) {
       return "";
     }
+
+    final JsonObject jsonObject = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
+    return jsonObject.getString(fieldName);
   }
 
   private void handleJsonRpcError(

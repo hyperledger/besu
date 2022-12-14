@@ -48,6 +48,8 @@ import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -70,7 +72,6 @@ import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.extension.trace.propagation.B3Propagator;
 import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -134,7 +135,7 @@ public class JsonRpcHttpService {
   private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
-  @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
+  @VisibleForTesting public final Optional<AuthenticationService> maybeAuthenticationService;
 
   private HttpServer httpServer;
   private final HealthService livenessService;
@@ -202,7 +203,7 @@ public class JsonRpcHttpService {
     this.vertx = vertx;
     this.natService = natService;
     this.rpcMethods = methods;
-    this.authenticationService = authenticationService;
+    this.maybeAuthenticationService = authenticationService;
     this.livenessService = livenessService;
     this.readinessService = readinessService;
     this.maxActiveConnections = config.getMaxActiveConnections();
@@ -334,48 +335,24 @@ public class JsonRpcHttpService {
         .method(HttpMethod.GET)
         .handler(readinessService::handleRequest);
     Route mainRoute = router.route("/").method(HttpMethod.POST).produces(APPLICATION_JSON);
-    if (authenticationService.isPresent()) {
+    if (maybeAuthenticationService.isPresent()) {
       mainRoute.handler(
-          HandlerFactory.authentication(authenticationService.get(), config.getNoAuthRpcApis()));
+          HandlerFactory.authentication(
+              maybeAuthenticationService.get(), config.getNoAuthRpcApis()));
     }
     mainRoute
         .handler(HandlerFactory.jsonRpcParser())
         .handler(
             HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods));
 
-    final JsonRpcExecutorVerticle jsonRpcExecutorVerticle =
-        authenticationService
-            .map(
-                service ->
-                    new JsonRpcExecutorVerticle(
-                        new JsonRpcExecutor(
-                            new AuthenticatedJsonRpcProcessor(
-                                new TimedJsonRpcProcessor(
-                                    new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
-                                    requestTimer),
-                                service,
-                                config.getNoAuthRpcApis()),
-                            rpcMethods),
-                        tracer))
-            .orElseGet(
-                () ->
-                    new JsonRpcExecutorVerticle(
-                        new JsonRpcExecutor(
-                            new TimedJsonRpcProcessor(
-                                new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
-                                requestTimer),
-                            rpcMethods),
-                        tracer));
+    mainRoute.handler(HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(4)));
 
-    vertx.deployVerticle(jsonRpcExecutorVerticle, new DeploymentOptions().setWorker(true));
-    mainRoute.handler(HandlerFactory.jsonRpcExecutor(vertx));
-
-    if (authenticationService.isPresent()) {
+    if (maybeAuthenticationService.isPresent()) {
       router
           .route("/login")
           .method(HttpMethod.POST)
           .produces(APPLICATION_JSON)
-          .handler(authenticationService.get()::handleLogin);
+          .handler(maybeAuthenticationService.get()::handleLogin);
     } else {
       router
           .route("/login")
@@ -384,6 +361,37 @@ public class JsonRpcHttpService {
           .handler(DefaultAuthenticationService::handleDisabledLogin);
     }
     return router;
+  }
+
+  private List<JsonRpcExecutorVerticle> createJsonRpcExecutorVerticle(final int noOfInstances) {
+    final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles = new ArrayList<>(noOfInstances);
+
+    for (int i = 0; i < noOfInstances; i++) {
+      jsonRpcExecutorVerticles.add(
+          maybeAuthenticationService
+              .map(
+                  service ->
+                      new JsonRpcExecutorVerticle(
+                          new JsonRpcExecutor(
+                              new AuthenticatedJsonRpcProcessor(
+                                  new TimedJsonRpcProcessor(
+                                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
+                                      requestTimer),
+                                  service,
+                                  config.getNoAuthRpcApis()),
+                              rpcMethods),
+                          tracer))
+              .orElseGet(
+                  () ->
+                      new JsonRpcExecutorVerticle(
+                          new JsonRpcExecutor(
+                              new TimedJsonRpcProcessor(
+                                  new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
+                                  requestTimer),
+                              rpcMethods),
+                          tracer)));
+    }
+    return jsonRpcExecutorVerticles;
   }
 
   private void createSpan(final RoutingContext routingContext) {

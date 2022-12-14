@@ -18,29 +18,22 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import io.opentelemetry.context.Context;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 
-public class JsonRpcExecutorRequest {
-  private final Optional<User> optionalUser;
-  private final Context spanContext;
-  private final Supplier<Boolean> alive;
+public class JsonRpcExecutorObjectRequest extends JsonRpcExecutorRequest {
+  private final JsonObject jsonObject;
 
-  protected JsonRpcExecutorRequest(
-      final Optional<User> optionalUser, final Context spanContext, final Supplier<Boolean> alive) {
-    this.optionalUser = optionalUser;
-    this.spanContext = spanContext;
-    this.alive = alive;
+  public JsonRpcExecutorObjectRequest(
+      final Optional<User> optionalUser,
+      final Context spanContext,
+      final Supplier<Boolean> alive,
+      final JsonObject jsonObject) {
+    super(optionalUser, spanContext, alive);
+    this.jsonObject = jsonObject;
   }
 
-  public Optional<User> getOptionalUser() {
-    return optionalUser;
-  }
-
-  public Context getSpanContext() {
-    return spanContext;
-  }
-
-  public Supplier<Boolean> getAlive() {
-    return alive;
+  public JsonObject getJsonObject() {
+    return jsonObject;
   }
 }

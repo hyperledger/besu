@@ -18,24 +18,23 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import io.opentelemetry.context.Context;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.auth.User;
 
-public class JsonRpcExecutorBatchRequest extends JsonRpcExecutorRequest {
-  private final long index;
+public class JsonRpcExecutorArrayRequest extends JsonRpcExecutorRequest {
 
-  public JsonRpcExecutorBatchRequest(
-      final long index,
+  private final JsonArray jsonArray;
+
+  public JsonRpcExecutorArrayRequest(
       final Optional<User> optionalUser,
       final Context spanContext,
       final Supplier<Boolean> alive,
-      final JsonObject jsonRpcRequest) {
-    super(optionalUser, spanContext, alive, jsonRpcRequest);
-
-    this.index = index;
+      final JsonArray jsonArray) {
+    super(optionalUser, spanContext, alive);
+    this.jsonArray = jsonArray;
   }
 
-  public long getIndex() {
-    return index;
+  public JsonArray getJsonArray() {
+    return jsonArray;
   }
 }

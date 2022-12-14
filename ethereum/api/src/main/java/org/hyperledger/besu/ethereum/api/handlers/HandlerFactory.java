@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.api.handlers;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorVerticle;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -52,7 +54,8 @@ public class HandlerFactory {
     return BlockingJsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer);
   }
 
-  public static Handler<RoutingContext> jsonRpcExecutor(final Vertx vertx) {
-    return new NonBlockingJsonRpcExecutorHandler(vertx);
+  public static Handler<RoutingContext> jsonRpcExecutor(
+      final Vertx vertx, final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles) {
+    return new NonBlockingJsonRpcExecutorHandler(vertx, jsonRpcExecutorVerticles);
   }
 }

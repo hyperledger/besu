@@ -156,7 +156,7 @@ public class JsonRpcHttpServiceLoginTest {
                     vertx,
                     Optional.empty()));
     service = createJsonRpcHttpService();
-    jwtAuth = service.authenticationService.get().getJwtAuthProvider();
+    jwtAuth = service.maybeAuthenticationService.get().getJwtAuthProvider();
     service.start().join();
 
     // Build an OkHttp client.
@@ -402,34 +402,34 @@ public class JsonRpcHttpServiceLoginTest {
             // single eth/blockNumber method permitted
             Assertions.assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), ethBlockNumber, Collections.emptyList()))
                 .isTrue();
             // eth/accounts NOT permitted
             assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), ethAccounts, Collections.emptyList()))
                 .isFalse();
             // allowed by web3/*
             assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), web3ClientVersion, Collections.emptyList()))
                 .isTrue();
             assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), web3Sha3, Collections.emptyList()))
                 .isTrue();
             // NO net permissions
             assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), netVersion, Collections.emptyList()))
                 .isFalse();
@@ -472,34 +472,34 @@ public class JsonRpcHttpServiceLoginTest {
             // single eth/blockNumber method permitted
             Assertions.assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), ethBlockNumber, Collections.emptyList()))
                 .isTrue();
             // eth/accounts IS permitted
             assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), ethAccounts, Collections.emptyList()))
                 .isTrue();
             // allowed by *:*
             assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), web3ClientVersion, Collections.emptyList()))
                 .isTrue();
             assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), web3Sha3, Collections.emptyList()))
                 .isTrue();
             // YES net permissions
             assertThat(
                     service
-                        .authenticationService
+                        .maybeAuthenticationService
                         .get()
                         .isPermitted(Optional.of(user), netVersion, Collections.emptyList()))
                 .isTrue();
@@ -513,7 +513,7 @@ public class JsonRpcHttpServiceLoginTest {
 
     assertThat(
             service
-                .authenticationService
+                .maybeAuthenticationService
                 .get()
                 .isPermitted(Optional.empty(), ethAccounts, Collections.emptyList()))
         .isFalse();
