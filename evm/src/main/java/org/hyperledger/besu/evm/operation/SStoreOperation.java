@@ -78,6 +78,7 @@ public class SStoreOperation extends AbstractOperation {
 
     account.setStorageValue(key, value);
     frame.storageWasUpdated(key, value);
+    frame.updateWarmUpStorage(address, key, value);
     return new OperationResult(cost, null);
   }
 }

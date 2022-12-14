@@ -908,8 +908,20 @@ public class MessageFrame {
     return null;
   }
 
+  public void updateWarmUpStorage(final Address address, final UInt256 slot, final UInt256 value) {
+    MessageFrame frame = this;
+    while (frame != null) {
+      if (frame.warmedUpStorage.containsKey(address)
+              && frame.warmedUpStorage.get(address).containsKey(slot)) {
+        frame.warmedUpStorage.get(address).put(slot, value);
+        return;
+      }
+    }
+  }
 
-    public void mergeWarmedUpFields(final MessageFrame childFrame) {
+
+
+  public void mergeWarmedUpFields(final MessageFrame childFrame) {
     if (childFrame == this) {
       return;
     }
