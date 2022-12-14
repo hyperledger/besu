@@ -18,5 +18,9 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 public interface PluginServiceFactory {
 
+  /**
+   * Appends concrete plugin service in provided Besu Plugin Context.
+   * @param besuContext An instance of BesuPluginContextImpl.
+   */
   void appendPluginServices(BesuPluginContextImpl besuContext);
 }
