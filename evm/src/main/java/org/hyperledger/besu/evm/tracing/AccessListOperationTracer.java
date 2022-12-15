@@ -39,11 +39,13 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
   public void tracePreExecution(final MessageFrame frame) {}
 
   public List<AccessListEntry> getAccessList() {
-    final ArrayList<AccessListEntry> list = new ArrayList<>();
+    final List<AccessListEntry> list = new ArrayList<>();
     if (warmedUpStorage != null) {
       warmedUpStorage
           .asMap()
-          .forEach((k, v) -> list.add(new AccessListEntry(k, new ArrayList<>(v))));
+          .forEach(
+              (address, storageKeys) ->
+                  list.add(new AccessListEntry(address, storageKeys.stream().toList())));
     }
     return list;
   }
