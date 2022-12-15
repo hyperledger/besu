@@ -26,12 +26,36 @@ import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
+/** The Bft forks schedule factory. */
 public class BftForksScheduleFactory {
 
+  /**
+   * The interface Bft spec creator.
+   *
+   * @param <T> the type parameter
+   * @param <U> the type parameter
+   */
   public interface BftSpecCreator<T extends BftConfigOptions, U extends BftFork> {
+    /**
+     * Create type of BftConfigOptions.
+     *
+     * @param lastSpec the last spec
+     * @param fork the fork
+     * @return the type of BftConfigOptions
+     */
     T create(ForkSpec<T> lastSpec, U fork);
   }
 
+  /**
+   * Create forks schedule.
+   *
+   * @param <T> the type parameter BftConfigOptions
+   * @param <U> the type parameter BftFork
+   * @param initial the initial
+   * @param forks the forks
+   * @param specCreator the spec creator
+   * @return the forks schedule
+   */
   public static <T extends BftConfigOptions, U extends BftFork> ForksSchedule<T> create(
       final T initial, final List<U> forks, final BftSpecCreator<T, U> specCreator) {
     checkArgument(
