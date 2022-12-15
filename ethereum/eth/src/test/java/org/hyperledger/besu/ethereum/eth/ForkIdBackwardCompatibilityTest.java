@@ -119,10 +119,10 @@ public class ForkIdBackwardCompatibilityTest {
     LOG.info("Running test case {}", name);
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain(genesisHash, head), forks, Collections.emptyList(), legacyEth64);
+            mockBlockchain(genesisHash, head, 0), forks, Collections.emptyList(), legacyEth64);
     final ForkId legacyForkId =
         legacyEth64
-            ? new LegacyForkIdManager(mockBlockchain(genesisHash, head), forks).getLatestForkId()
+            ? new LegacyForkIdManager(mockBlockchain(genesisHash, head, 0), forks).getLatestForkId()
             : null;
     assertThat(forkIdManager.getForkIdForChainHead())
         .isEqualTo(legacyEth64 ? legacyForkId : wantForkId);
