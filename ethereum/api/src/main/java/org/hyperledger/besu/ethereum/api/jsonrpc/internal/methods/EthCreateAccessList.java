@@ -118,9 +118,7 @@ public class EthCreateAccessList extends EthEstimateGas {
             ? new JsonRpcSuccessResponse(
                 request.getRequest().getId(),
                 new CreateAccessListResult(
-                    operationTracer.getAccessList(),
-                    operationTracer.calculateEstimateGas(
-                        result.getResult().getEstimateGasUsedByTransaction())))
+                    operationTracer.getAccessList(), processEstimateGas(result, operationTracer)))
             : errorResponse(request, result);
   }
 

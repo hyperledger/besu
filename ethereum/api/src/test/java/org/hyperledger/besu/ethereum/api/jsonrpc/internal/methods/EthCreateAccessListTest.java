@@ -190,7 +190,7 @@ public class EthCreateAccessListTest {
     // expect a list with the mocked access list
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(expectedAccessList, 1L));
-    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList, 1L);
+    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList);
 
     // Set TransactionSimulator.process response
     mockTransactionSimulatorResult(true, false, 1L);
@@ -230,7 +230,7 @@ public class EthCreateAccessListTest {
     // expect a list with the mocked access list
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(expectedAccessList, 1L));
-    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList, 1L);
+    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList);
 
     // Set TransactionSimulator.process response
     mockTransactionSimulatorResult(true, false, 1L);
@@ -254,7 +254,7 @@ public class EthCreateAccessListTest {
     // expect a list with the mocked access list
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(expectedAccessList, 1L));
-    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList, 1L);
+    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList);
 
     // Set TransactionSimulator.process response
     mockTransactionSimulatorResult(true, false, 1L);
@@ -274,10 +274,9 @@ public class EthCreateAccessListTest {
   }
 
   private AccessListOperationTracer createMockTracer(
-      final List<AccessListEntry> accessListEntries, final long gasUsed) {
+      final List<AccessListEntry> accessListEntries) {
     final AccessListOperationTracer tracer = mock(AccessListOperationTracer.class);
     when(tracer.getAccessList()).thenReturn(accessListEntries);
-    when(tracer.calculateEstimateGas(anyLong())).thenReturn(gasUsed);
     return tracer;
   }
 
