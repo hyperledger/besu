@@ -51,13 +51,14 @@ public class LayeredTrieLogManager extends AbstractTrieLogManager<BonsaiLayeredW
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
-      final BonsaiWorldStateArchive worldStateArchive) {
+      final BonsaiWorldStateArchive worldStateArchive,
+      final BonsaiPersistedWorldState forWorldState) {
 
     final BonsaiLayeredWorldState bonsaiLayeredWorldState =
         new BonsaiLayeredWorldState(
             blockchain,
             worldStateArchive,
-            Optional.of((BonsaiPersistedWorldState) worldStateArchive.getMutable()),
+            Optional.of(forWorldState),
             blockHeader.getNumber(),
             worldStateRootHash,
             trieLog);

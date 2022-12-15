@@ -31,6 +31,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +57,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   protected Hash worldStateRootHash;
   protected Hash worldStateBlockHash;
 
+  protected final Subscribers<BonsaiWorldStateSubscriber> subscribers = Subscribers.create();
+
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
@@ -70,17 +73,21 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         new BonsaiWorldStateUpdater(
             this,
             (addr, value) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .preLoadAccount(worldStateStorage, worldStateRootHash, addr),
+                archive.getCachedMerkleTrieLoader().preLoadAccount(this, worldStateRootHash, addr),
             (addr, value) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .preLoadStorageSlot(worldStateStorage, addr, value));
+                archive.getCachedMerkleTrieLoader().preLoadStorageSlot(this, addr, value));
   }
 
   public BonsaiWorldStateArchive getArchive() {
     return archive;
+  }
+
+  public synchronized long subscribe(final BonsaiWorldStateSubscriber sub) {
+    return subscribers.subscribe(sub);
+  }
+
+  public synchronized void unSubscribe(final long id) {
+    subscribers.unsubscribe(id);
   }
 
   @Override
@@ -301,7 +308,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             () ->
                 archive
                     .getTrieLogManager()
-                    .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
+                    .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader, this);
 
         stateUpdater
             .getTrieBranchStorageTransaction()
@@ -441,5 +448,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             Function.identity(),
             Function.identity());
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+  }
+
+  interface BonsaiWorldStateSubscriber {
+
+    default void onCloseWorldState() {}
   }
 }

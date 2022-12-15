@@ -146,7 +146,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     final Hash newWorldStateRootHash = rootHash(localUpdater);
     archive
         .getTrieLogManager()
-        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
+        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader, this);
     worldStateRootHash = newWorldStateRootHash;
     worldStateBlockHash = blockHeader.getBlockHash();
     isPersisted = true;

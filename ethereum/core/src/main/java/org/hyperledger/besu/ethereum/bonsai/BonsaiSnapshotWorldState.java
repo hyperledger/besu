@@ -37,13 +37,15 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   private final SnappedKeyValueStorage storageSnap;
   private final SnappedKeyValueStorage trieBranchSnap;
   private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
-  private final AtomicLong parentWorldStateSubscriberId = new AtomicLong(Long.MAX_VALUE);
+  private final BonsaiSnapshotWorldStateKeyValueStorage snapshotWorldStateStorage;
+  private final AtomicLong parentStorageSubscriberId = new AtomicLong(Long.MAX_VALUE);
 
   private BonsaiSnapshotWorldState(
       final BonsaiWorldStateArchive archive,
       final BonsaiSnapshotWorldStateKeyValueStorage snapshotWorldStateStorage,
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage) {
     super(archive, snapshotWorldStateStorage);
+    this.snapshotWorldStateStorage = snapshotWorldStateStorage;
     this.accountSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.accountStorage;
     this.codeSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.codeStorage;
     this.storageSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.storageStorage;
@@ -65,11 +67,6 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
                 parentWorldStateStorage.trieLogStorage),
             parentWorldStateStorage)
         .subscribeToParent();
-  }
-
-  protected BonsaiSnapshotWorldState subscribeToParent() {
-    parentWorldStateSubscriberId.set(parentWorldStateStorage.subscribe(this));
-    return this;
   }
 
   @Override
@@ -95,28 +92,45 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
         .subscribeToParent();
   }
 
-  @Override
-  public void close() throws Exception {
-    accountSnap.close();
-    codeSnap.close();
-    storageSnap.close();
-    trieBranchSnap.close();
-    parentWorldStateStorage.unSubscribe(parentWorldStateSubscriberId.get());
+  private void doClose() throws Exception {
+    subscribers.forEach(BonsaiWorldStateSubscriber::onCloseWorldState);
+    snapshotWorldStateStorage.close();
+    parentWorldStateStorage.unSubscribe(parentStorageSubscriberId.get());
   }
 
   @Override
-  public void onClear() {
+  public void close() throws Exception {
+    // only actually close if we have no subscribers left
+    if (subscribers.getSubscriberCount() < 1) {
+      doClose();
+    }
+  }
+
+  @Override
+  public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
+    return snapshotWorldStateStorage;
+  }
+
+  protected BonsaiSnapshotWorldState subscribeToParent() {
+    parentStorageSubscriberId.set(parentWorldStateStorage.subscribe(this));
+    return this;
+  }
+
+  @Override
+  public void onClearStorage() {
     try {
-      close();
+      // force close due to truncation
+      doClose();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   @Override
-  public void onClearFlatDatabase() {
+  public void onClearFlatDatabaseStorage() {
     try {
-      close();
+      // force close due to truncation
+      doClose();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

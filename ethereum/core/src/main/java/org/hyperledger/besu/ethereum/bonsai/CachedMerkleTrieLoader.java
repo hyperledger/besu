@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState.BonsaiWorldStateSubscriber;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
@@ -36,7 +36,7 @@ import io.prometheus.client.guava.cache.CacheMetricsCollector;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
+public class CachedMerkleTrieLoader implements BonsaiWorldStateSubscriber {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
@@ -56,24 +56,24 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
   }
 
   public void preLoadAccount(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiPersistedWorldState worldState,
       final Hash worldStateRootHash,
       final Address account) {
-    CompletableFuture.runAsync(
-        () -> cacheAccountNodes(worldStateStorage, worldStateRootHash, account));
+    CompletableFuture.runAsync(() -> cacheAccountNodes(worldState, worldStateRootHash, account));
   }
 
   @VisibleForTesting
   public void cacheAccountNodes(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiPersistedWorldState worldState,
       final Hash worldStateRootHash,
       final Address account) {
-    final long worldStateSubscriberId = worldStateStorage.subscribe(this);
+    final long worldStateSubscriberId = worldState.subscribe(this);
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               (location, hash) -> {
-                Optional<Bytes> node = getAccountStateTrieNode(worldStateStorage, location, hash);
+                Optional<Bytes> node =
+                    getAccountStateTrieNode(worldState.getWorldStateStorage(), location, hash);
                 node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
                 return node;
               },
@@ -84,25 +84,22 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
     } finally {
-      worldStateStorage.unSubscribe(worldStateSubscriberId);
+      worldState.unSubscribe(worldStateSubscriberId);
     }
   }
 
   public void preLoadStorageSlot(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final Address account,
-      final Hash slotHash) {
-    CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateStorage, account, slotHash));
+      final BonsaiPersistedWorldState worldState, final Address account, final Hash slotHash) {
+    CompletableFuture.runAsync(() -> cacheStorageNodes(worldState, account, slotHash));
   }
 
   @VisibleForTesting
   public void cacheStorageNodes(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final Address account,
-      final Hash slotHash) {
+      final BonsaiPersistedWorldState worldState, final Address account, final Hash slotHash) {
     final Hash accountHash = Hash.hash(account);
-    final long worldStateSubscriberId = worldStateStorage.subscribe(this);
+    final long worldStateSubscriberId = worldState.subscribe(this);
     try {
+      final var worldStateStorage = worldState.getWorldStateStorage();
       worldStateStorage
           .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
           .ifPresent(
@@ -126,7 +123,7 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
                 }
               });
     } finally {
-      worldStateStorage.unSubscribe(worldStateSubscriberId);
+      worldState.unSubscribe(worldStateSubscriberId);
     }
   }
 

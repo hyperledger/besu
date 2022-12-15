@@ -222,7 +222,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public void clear() {
-    subscribers.forEach(BonsaiStorageSubscriber::onClear);
+    subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);
     accountStorage.clear();
     codeStorage.clear();
     storageStorage.clear();
@@ -232,7 +232,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public void clearFlatDatabase() {
-    subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabase);
+    subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
     accountStorage.clear();
     storageStorage.clear();
   }
@@ -437,10 +437,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   interface BonsaiStorageSubscriber {
-    default void onClear() {}
+    default void onClearStorage() {}
 
-    default void onClearFlatDatabase() {}
+    default void onClearFlatDatabaseStorage() {}
 
-    default void onClose() {}
+    default void onCloseStorage() {}
   }
 }

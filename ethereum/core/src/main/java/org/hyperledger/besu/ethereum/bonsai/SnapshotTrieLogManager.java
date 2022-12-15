@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState.BonsaiWorldStateSubscriber;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -57,7 +59,8 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
-      final BonsaiWorldStateArchive worldStateArchive) {
+      final BonsaiWorldStateArchive worldStateArchive,
+      final BonsaiPersistedWorldState worldState) {
 
     debugLambda(
         LOG,
@@ -65,12 +68,18 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
         blockHeader::toLogString,
         worldStateRootHash::toShortHexString);
 
-    BonsaiSnapshotWorldState snapshot =
-        BonsaiSnapshotWorldState.create(worldStateArchive, worldStateStorage);
+    // TODO: add a generic param so we don't have to cast:
+    BonsaiSnapshotWorldState snapshotWorldState;
+    if (worldState instanceof BonsaiSnapshotWorldState) {
+      snapshotWorldState = (BonsaiSnapshotWorldState) worldState;
+    } else {
+      snapshotWorldState = BonsaiSnapshotWorldState.create(worldStateArchive, worldStateStorage);
+    }
+    snapshotWorldState.getWorldStateStorage().subscribe(this);
 
     cachedWorldStatesByHash.put(
         blockHeader.getHash(),
-        new CachedSnapshotWorldState(snapshot, trieLog, blockHeader.getNumber()));
+        CachedSnapshotWorldState.create(snapshotWorldState, trieLog, blockHeader.getNumber()));
   }
 
   @Override
@@ -89,12 +98,12 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
   }
 
   @Override
-  public synchronized void onClear() {
+  public synchronized void onClearStorage() {
     dropArchive();
   }
 
   @Override
-  public synchronized void onClearFlatDatabase() {
+  public synchronized void onClearFlatDatabaseStorage() {
     dropArchive();
   }
 
@@ -105,31 +114,37 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
   }
 
   public static class CachedSnapshotWorldState
-      implements CachedWorldState<BonsaiSnapshotWorldState> {
+      implements CachedWorldState<BonsaiSnapshotWorldState>, BonsaiWorldStateSubscriber {
 
     final BonsaiSnapshotWorldState snapshot;
-    final Long worldStateSubscriberId;
     final TrieLogLayer trieLog;
     final long height;
+    final AtomicLong snapshotSubscriberId = new AtomicLong();
     final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-    public CachedSnapshotWorldState(
+    private CachedSnapshotWorldState(
         final BonsaiSnapshotWorldState snapshot, final TrieLogLayer trieLog, final long height) {
-      this.worldStateSubscriberId = snapshot.getWorldStateStorage().subscribe(this);
       this.snapshot = snapshot;
       this.trieLog = trieLog;
       this.height = height;
     }
 
-    private void setClosed() {
-      if (!isClosed.compareAndExchange(false, true)) {
-        snapshot.worldStateStorage.unSubscribe(worldStateSubscriberId);
-      }
+    public static CachedSnapshotWorldState create(
+        final BonsaiSnapshotWorldState snapshot, final TrieLogLayer trieLog, final long height) {
+      return new CachedSnapshotWorldState(snapshot, trieLog, height)
+              .subscribeToSnapshot();
+    }
+
+    private CachedSnapshotWorldState subscribeToSnapshot() {
+      snapshotSubscriberId.set(snapshot.subscribe(this));
+      return this;
     }
 
     @Override
-    public synchronized void onClose() {
-      setClosed();
+    public synchronized void onCloseWorldState() {
+      if (!isClosed.compareAndExchange(false, true)) {
+        snapshot.unSubscribe(snapshotSubscriberId.get());
+      }
     }
 
     @Override
