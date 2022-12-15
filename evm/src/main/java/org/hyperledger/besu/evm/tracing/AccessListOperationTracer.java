@@ -14,14 +14,16 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import com.google.common.collect.Multimap;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.google.common.collect.Multimap;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class AccessListOperationTracer extends EstimateGasOperationTracer {
 
