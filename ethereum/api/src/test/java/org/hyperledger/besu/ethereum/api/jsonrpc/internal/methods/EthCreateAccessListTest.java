@@ -125,7 +125,8 @@ public class EthCreateAccessListTest {
   @Test
   public void
       shouldReturnGasEstimateWhenTransientEip1559TransactionProcessorReturnsResultSuccess() {
-    final JsonRpcRequestContext request = ethCreateAccessListRequest(eip1559TransactionCallParameter());
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(eip1559TransactionCallParameter());
     mockTransientProcessorResultGasEstimate(1L, true, false);
 
     final JsonRpcResponse expectedResponse =

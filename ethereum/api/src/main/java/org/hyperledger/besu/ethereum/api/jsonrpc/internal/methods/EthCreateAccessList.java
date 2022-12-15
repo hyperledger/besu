@@ -50,50 +50,49 @@ public class EthCreateAccessList extends EthEstimateGas {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final JsonCallParameter callParams = validateAndGetCallParams(requestContext);
-
+    final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
     final BlockHeader blockHeader = blockHeader();
     final Optional<JsonRpcError> jsonRpcError = validateBlockHeader(blockHeader);
     if (jsonRpcError.isPresent()) {
       return errorResponse(requestContext, jsonRpcError.get());
     }
     final TransactionValidationParams transactionValidationParams =
-        transactionValidationParams(!callParams.isMaybeStrict().orElse(Boolean.FALSE));
-    final CallParameter modifiedCallParams =
-        overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
+        transactionValidationParams(!jsonCallParameter.isMaybeStrict().orElse(Boolean.FALSE));
+
+    final CallParameter callParams =
+        overrideGasLimitAndPrice(jsonCallParameter, blockHeader.getGasLimit());
 
     final AccessListOperationTracer accessListOperationTracer = new AccessListOperationTracer();
     final Optional<TransactionSimulatorResult> maybeResult =
         transactionSimulator.process(
-            modifiedCallParams,
+            callParams,
             transactionValidationParams,
             accessListOperationTracer,
             blockHeader.getNumber());
 
-    // verify if provided accessList == calculated accessList
-    if (mustCalculateUsingCalculatedAccessList(modifiedCallParams, accessListOperationTracer)) {
-      // process gas with new accessList parameter
+    if (compareAccessList(callParams, accessListOperationTracer)) {
+      // if tracer.accessList == params.accessList, calculate gas and return
+      return maybeResult
+          .map(createResponse(requestContext, accessListOperationTracer))
+          .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
+    } else {
+      // if tracer.accessList != param.accessList, simulate transaction with new accessList
       final AccessListOperationTracer estimateGasWithAccessListTracer =
           new AccessListOperationTracer();
-      final CallParameter callParameter =
-          overrideAccessList(modifiedCallParams, accessListOperationTracer.getAccessList());
+      final CallParameter callParameterWithAccessList =
+          overrideAccessList(callParams, accessListOperationTracer.getAccessList());
       return transactionSimulator
           .process(
-              callParameter,
+              callParameterWithAccessList,
               transactionValidationParams,
               estimateGasWithAccessListTracer,
               blockHeader.getNumber())
-          .map(createAccessListResponse(requestContext, estimateGasWithAccessListTracer))
-          .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
-    } else {
-      // Do not need to reprocess, calculate gas using maybeResult
-      return maybeResult
-          .map(createAccessListResponse(requestContext, accessListOperationTracer))
+          .map(createResponse(requestContext, estimateGasWithAccessListTracer))
           .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
     }
   }
 
-  private boolean mustCalculateUsingCalculatedAccessList(
+  private boolean compareAccessList(
       final CallParameter parameters, final AccessListOperationTracer tracer) {
     return Objects.equals(parameters.getAccessList(), Optional.of(tracer.getAccessList()));
   }
@@ -110,10 +109,11 @@ public class EthCreateAccessList extends EthEstimateGas {
     return Optional.empty();
   }
 
-  private TransactionValidationParams transactionValidationParams(final boolean strict) {
+  private TransactionValidationParams transactionValidationParams(
+      final boolean isAllowExceedingBalance) {
     return ImmutableTransactionValidationParams.builder()
         .from(TransactionValidationParams.transactionSimulator())
-        .isAllowExceedingBalance(strict)
+        .isAllowExceedingBalance(isAllowExceedingBalance)
         .build();
   }
 
@@ -131,7 +131,7 @@ public class EthCreateAccessList extends EthEstimateGas {
         Optional.ofNullable(accessListEntries));
   }
 
-  private Function<TransactionSimulatorResult, JsonRpcResponse> createAccessListResponse(
+  private Function<TransactionSimulatorResult, JsonRpcResponse> createResponse(
       final JsonRpcRequestContext request, final AccessListOperationTracer operationTracer) {
     return result ->
         result.isSuccessful()
