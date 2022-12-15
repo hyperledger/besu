@@ -28,10 +28,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Ibft propose validator vote. */
 public class IbftProposeValidatorVote implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(IbftProposeValidatorVote.class);
   private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Ibft propose validator vote.
+   *
+   * @param validatorProvider the validator provider
+   */
   public IbftProposeValidatorVote(final ValidatorProvider validatorProvider) {
     this.validatorProvider = validatorProvider;
   }

@@ -35,10 +35,16 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 
 import java.util.Map;
 
+/** The Ibft json rpc methods. */
 public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final ProtocolContext context;
 
+  /**
+   * Instantiates a new Ibft json rpc methods.
+   *
+   * @param context the context
+   */
   public IbftJsonRpcMethods(final ProtocolContext context) {
     this.context = context;
   }
