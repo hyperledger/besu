@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
@@ -56,45 +57,17 @@ public class EthCreateAccessList extends EthEstimateGas {
     if (jsonRpcError.isPresent()) {
       return errorResponse(requestContext, jsonRpcError.get());
     }
-    final TransactionValidationParams transactionValidationParams =
-        transactionValidationParams(!jsonCallParameter.isMaybeStrict().orElse(Boolean.FALSE));
-
-    final CallParameter callParams =
-        overrideGasLimitAndPrice(jsonCallParameter, blockHeader.getGasLimit());
-
-    final AccessListOperationTracer accessListOperationTracer = new AccessListOperationTracer();
-    final Optional<TransactionSimulatorResult> maybeResult =
-        transactionSimulator.process(
-            callParams,
-            transactionValidationParams,
-            accessListOperationTracer,
-            blockHeader.getNumber());
-
-    if (compareAccessList(callParams, accessListOperationTracer)) {
-      // if tracer.accessList == params.accessList, calculate gas and return
-      return maybeResult
-          .map(createResponse(requestContext, accessListOperationTracer))
-          .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
-    } else {
-      // if tracer.accessList != param.accessList, simulate transaction with new accessList
-      final AccessListOperationTracer estimateGasWithAccessListTracer =
-          new AccessListOperationTracer();
-      final CallParameter callParameterWithAccessList =
-          overrideAccessList(callParams, accessListOperationTracer.getAccessList());
-      return transactionSimulator
-          .process(
-              callParameterWithAccessList,
-              transactionValidationParams,
-              estimateGasWithAccessListTracer,
-              blockHeader.getNumber())
-          .map(createResponse(requestContext, estimateGasWithAccessListTracer))
-          .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
+    final AccessListSimulatorResult maybeResult =
+        maybeProcessTransaction(jsonCallParameter, blockHeader);
+    // if the call accessList is same than the simulation result, calculate gas and return
+    if (isAccessListResultValid(jsonCallParameter, maybeResult.getTracer())) {
+      return createResponse(requestContext, maybeResult);
+    } else { // process transaction with the simulation accessList result
+      final AccessListSimulatorResult result =
+          processTransactionWithAccessList(
+              jsonCallParameter, blockHeader, maybeResult.getTracer().getAccessList());
+      return createResponse(requestContext, result);
     }
-  }
-
-  private boolean compareAccessList(
-      final CallParameter parameters, final AccessListOperationTracer tracer) {
-    return Objects.equals(parameters.getAccessList(), Optional.of(tracer.getAccessList()));
   }
 
   private Optional<JsonRpcError> validateBlockHeader(final BlockHeader blockHeader) {
@@ -109,6 +82,14 @@ public class EthCreateAccessList extends EthEstimateGas {
     return Optional.empty();
   }
 
+  private JsonRpcResponse createResponse(
+      final JsonRpcRequestContext requestContext, final AccessListSimulatorResult result) {
+    return result
+        .getResult()
+        .map(createResponse(requestContext, result.getTracer()))
+        .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
+  }
+
   private TransactionValidationParams transactionValidationParams(
       final boolean isAllowExceedingBalance) {
     return ImmutableTransactionValidationParams.builder()
@@ -117,18 +98,17 @@ public class EthCreateAccessList extends EthEstimateGas {
         .build();
   }
 
-  private CallParameter overrideAccessList(
-      final CallParameter callParams, final List<AccessListEntry> accessListEntries) {
-    return new CallParameter(
-        callParams.getFrom(),
-        callParams.getTo(),
-        callParams.getGasLimit(),
-        callParams.getGasPrice(),
-        callParams.getMaxPriorityFeePerGas(),
-        callParams.getMaxFeePerGas(),
-        callParams.getValue(),
-        callParams.getPayload(),
-        Optional.ofNullable(accessListEntries));
+  private boolean isAccessListResultValid(
+      final JsonCallParameter parameters, final AccessListOperationTracer tracer) {
+    if (tracer.getAccessList().isEmpty()) {
+      return true; // did not access any storage
+    } else {
+      if (parameters.getAccessList().isEmpty()) {
+        return false;
+      }
+      return parameters.getAccessList().get().isEmpty()
+          || Objects.equals(tracer.getAccessList(), parameters.getAccessList().get());
+    }
   }
 
   private Function<TransactionSimulatorResult, JsonRpcResponse> createResponse(
@@ -142,5 +122,72 @@ public class EthCreateAccessList extends EthEstimateGas {
                     operationTracer.calculateEstimateGas(
                         result.getResult().getEstimateGasUsedByTransaction())))
             : errorResponse(request, result);
+  }
+
+  private AccessListSimulatorResult maybeProcessTransaction(
+      final JsonCallParameter jsonCallParameter, final BlockHeader blockHeader) {
+    final TransactionValidationParams transactionValidationParams =
+        transactionValidationParams(!jsonCallParameter.isMaybeStrict().orElse(Boolean.FALSE));
+
+    final CallParameter callParams =
+        overrideGasLimitAndPrice(jsonCallParameter, blockHeader.getGasLimit());
+
+    final AccessListOperationTracer tracer = AccessListOperationTracer.create();
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(
+            callParams, transactionValidationParams, tracer, blockHeader.getNumber());
+    return new AccessListSimulatorResult(result, tracer);
+  }
+
+  private AccessListSimulatorResult processTransactionWithAccessList(
+      final JsonCallParameter jsonCallParameter,
+      final BlockHeader blockHeader,
+      final List<AccessListEntry> accessList) {
+    final TransactionValidationParams transactionValidationParams =
+        transactionValidationParams(!jsonCallParameter.isMaybeStrict().orElse(Boolean.FALSE));
+
+    final AccessListOperationTracer tracer = AccessListOperationTracer.create();
+    final CallParameter callParameter =
+        overrideAccessList(jsonCallParameter, blockHeader.getGasLimit(), accessList);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(
+            callParameter, transactionValidationParams, tracer, blockHeader.getNumber());
+    return new AccessListSimulatorResult(result, tracer);
+  }
+
+  protected CallParameter overrideAccessList(
+      final JsonCallParameter callParams,
+      final long gasLimit,
+      final List<AccessListEntry> accessListEntries) {
+    return new CallParameter(
+        callParams.getFrom(),
+        callParams.getTo(),
+        gasLimit,
+        Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
+        callParams.getMaxPriorityFeePerGas(),
+        callParams.getMaxFeePerGas(),
+        callParams.getValue(),
+        callParams.getPayload(),
+        Optional.ofNullable(accessListEntries));
+  }
+
+  private static class AccessListSimulatorResult {
+    final Optional<TransactionSimulatorResult> result;
+    final AccessListOperationTracer tracer;
+
+    public AccessListSimulatorResult(
+        final Optional<TransactionSimulatorResult> result, final AccessListOperationTracer tracer) {
+      this.result = result;
+      this.tracer = tracer;
+    }
+
+    public Optional<TransactionSimulatorResult> getResult() {
+      return result;
+    }
+
+    public AccessListOperationTracer getTracer() {
+      return tracer;
+    }
   }
 }

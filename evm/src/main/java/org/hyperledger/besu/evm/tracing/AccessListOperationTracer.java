@@ -47,4 +47,8 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
     }
     return list;
   }
+
+  public static AccessListOperationTracer create() {
+    return new AccessListOperationTracer();
+  }
 }
