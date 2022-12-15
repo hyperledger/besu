@@ -261,9 +261,11 @@ allprojects {
   }
 
   javadoc {
-    options.addStringOption('Xdoclint:all', '-quiet')
-    options.addStringOption('Xmaxerrs','65535')
-    options.addStringOption('Xmaxwarns','65535')
+    options.addBooleanOption('Xdoclint:all', true)
+    // disable xdoclint for generated contracts package in private-contracts module
+    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated', true)
+    options.addStringOption('Xmaxerrs','300')
+    options.addStringOption('Xmaxwarns','300')
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
