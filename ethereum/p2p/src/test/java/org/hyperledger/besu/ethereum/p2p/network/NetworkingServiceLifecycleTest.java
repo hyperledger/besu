@@ -83,6 +83,7 @@ public class NetworkingServiceLifecycleTest {
     when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
     builder.blockchain(blockchainMock);
     builder.blockNumberForks(Collections.emptyList());
+    builder.timestampForks(Collections.emptyList());
     return builder;
   }
 
