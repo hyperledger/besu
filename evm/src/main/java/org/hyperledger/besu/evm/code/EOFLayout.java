@@ -24,12 +24,17 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The EOF layout. */
 public class EOFLayout {
 
+  /** The Section code. */
   static final int SECTION_CODE = 0x01;
+  /** The Section data. */
   static final int SECTION_DATA = 0x02;
 
+  /** The Max supported section. */
   static final int MAX_SUPPORTED_SECTION = SECTION_DATA;
+  /** The Max supported version. */
   static final int MAX_SUPPORTED_VERSION = 1;
 
   private final Bytes container;
@@ -51,6 +56,12 @@ public class EOFLayout {
     this.invalidReason = invalidReason;
   }
 
+  /**
+   * Parse EOF.
+   *
+   * @param container the container
+   * @return the eof layout
+   */
   public static EOFLayout parseEOF(final Bytes container) {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(container.toArrayUnsafe());
     if (inputStream.available() < 3) {
@@ -115,27 +126,53 @@ public class EOFLayout {
     return new EOFLayout(container, version, sections);
   }
 
+  /**
+   * Gets container.
+   *
+   * @return the container
+   */
   public Bytes getContainer() {
     return container;
   }
 
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
   public int getVersion() {
     return version;
   }
 
+  /**
+   * Get sections.
+   *
+   * @return the bytes [ ]
+   */
   public Bytes[] getSections() {
     return sections;
   }
 
+  /**
+   * Gets invalid reason.
+   *
+   * @return the invalid reason
+   */
   public String getInvalidReason() {
     return invalidReason;
   }
 
+  /**
+   * Is valid.
+   *
+   * @return the boolean
+   */
   public boolean isValid() {
     return invalidReason == null;
   }
 }
 
+/** The Eof section info. */
 // TODO should be a record
 final class EOFSectionInfo {
   private final int kind;
@@ -146,6 +183,12 @@ final class EOFSectionInfo {
     this.size = size;
   }
 
+  /**
+   * Gets section info.
+   *
+   * @param in the in
+   * @return the section info
+   */
   static EOFSectionInfo getSectionInfo(final InputStream in) {
     try {
       final int kind = in.read();
@@ -163,10 +206,20 @@ final class EOFSectionInfo {
     }
   }
 
+  /**
+   * Kind.
+   *
+   * @return the int
+   */
   public int kind() {
     return kind;
   }
 
+  /**
+   * Size.
+   *
+   * @return the int
+   */
   public int size() {
     return size;
   }

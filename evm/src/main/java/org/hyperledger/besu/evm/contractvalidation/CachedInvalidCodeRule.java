@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
+/** The Cached invalid code rule. */
 public class CachedInvalidCodeRule implements ContractValidationRule {
 
   @Override
@@ -32,6 +33,11 @@ public class CachedInvalidCodeRule implements ContractValidationRule {
     }
   }
 
+  /**
+   * Instantiate contract validation rule.
+   *
+   * @return the contract validation rule
+   */
   public static ContractValidationRule of() {
     return new CachedInvalidCodeRule();
   }
