@@ -20,26 +20,82 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The interface Enode url. */
 public interface EnodeURL {
+  /**
+   * Enode to uri without discovery port.
+   *
+   * @return the uri
+   */
   URI toURIWithoutDiscoveryPort();
 
+  /**
+   * Gets node id.
+   *
+   * @return the node id
+   */
   Bytes getNodeId();
 
+  /**
+   * Gets ip.
+   *
+   * @return the ip
+   */
   InetAddress getIp();
 
+  /**
+   * Gets listening port.
+   *
+   * @return the listening port
+   */
   Optional<Integer> getListeningPort();
 
+  /**
+   * Gets listening port or zero.
+   *
+   * @return the listening port or zero
+   */
   int getListeningPortOrZero();
 
+  /**
+   * Enode To URI .
+   *
+   * @return the uri
+   */
   URI toURI();
 
+  /**
+   * Gets discovery port.
+   *
+   * @return the discovery port
+   */
   Optional<Integer> getDiscoveryPort();
 
+  /**
+   * Is listening.
+   *
+   * @return the boolean
+   */
   boolean isListening();
 
+  /**
+   * Is running discovery.
+   *
+   * @return the boolean
+   */
   boolean isRunningDiscovery();
 
+  /**
+   * Gets ip as string.
+   *
+   * @return the ip as string
+   */
   String getIpAsString();
 
+  /**
+   * Gets discovery port or zero.
+   *
+   * @return the discovery port or zero
+   */
   int getDiscoveryPortOrZero();
 }
