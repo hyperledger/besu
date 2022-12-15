@@ -263,7 +263,7 @@ allprojects {
   javadoc {
     options.addBooleanOption('Xdoclint:all', true)
     // disable xdoclint for generated contracts package in private-contracts module and acceptance test dsl in acceptance-tests module.
-    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,-org.hyperledger.besu.tests.acceptance.*', true)
+    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,-org.hyperledger.besu.tests.acceptance.*,-org.hyperledger.besu.tests.web3j.generated', true)
     options.addStringOption('Xmaxerrs','300')
     options.addStringOption('Xmaxwarns','300')
     options.addStringOption('Xwerror', '-html5')
