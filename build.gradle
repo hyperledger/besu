@@ -262,6 +262,8 @@ allprojects {
 
   javadoc {
     options.addStringOption('Xdoclint:all', '-quiet')
+    options.addStringOption('Xmaxerrs','65535')
+    options.addStringOption('Xmaxwarns','65535')
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
