@@ -32,16 +32,30 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Transition protocol schedule. */
 public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule>
     implements ProtocolSchedule {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
 
+  /**
+   * Instantiates a new Transition protocol schedule.
+   *
+   * @param preMergeProtocolSchedule the pre merge protocol schedule
+   * @param postMergeProtocolSchedule the post merge protocol schedule
+   */
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule) {
     super(preMergeProtocolSchedule, postMergeProtocolSchedule);
   }
 
+  /**
+   * Instantiates a new Transition protocol schedule.
+   *
+   * @param preMergeProtocolSchedule the pre merge protocol schedule
+   * @param postMergeProtocolSchedule the post merge protocol schedule
+   * @param mergeContext the merge context
+   */
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
@@ -49,14 +63,31 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
     super(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
   }
 
+  /**
+   * Gets pre merge schedule.
+   *
+   * @return the pre merge schedule
+   */
   public ProtocolSchedule getPreMergeSchedule() {
     return getPreMergeObject();
   }
 
+  /**
+   * Gets post merge schedule.
+   *
+   * @return the post merge schedule
+   */
   public ProtocolSchedule getPostMergeSchedule() {
     return getPostMergeObject();
   }
 
+  /**
+   * Gets by block header.
+   *
+   * @param protocolContext the protocol context
+   * @param blockHeader the block header
+   * @return the by block header
+   */
   public ProtocolSpec getByBlockHeader(
       final ProtocolContext protocolContext, final BlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
