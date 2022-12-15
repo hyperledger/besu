@@ -5,7 +5,7 @@
 
 ### Additions and Improvements
 - Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
-- Add implementation for eth_createAccessList RPC method [#4816] (https://github.com/hyperledger/besu/pull/4816)
+- Add implementation for eth_createAccessList RPC method [#4816](https://github.com/hyperledger/besu/pull/4816)
 
 ### Bug Fixes
 
