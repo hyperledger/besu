@@ -279,6 +279,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .blockchain(blockchain)
             .blockNumberForks(Collections.emptyList())
+            .timestampForks(Collections.emptyList())
             .build();
 
     p2pNetwork.start();

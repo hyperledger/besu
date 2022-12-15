@@ -322,6 +322,7 @@ public class P2PNetworkTest {
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
+        .timestampForks(Collections.emptyList())
         .blockchain(blockchainMock);
   }
 }
