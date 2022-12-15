@@ -16,8 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -34,23 +37,27 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessLi
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.AccessListEntry;
+import org.hyperledger.besu.evm.tracing.AccessListOperationTracer;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -83,11 +90,16 @@ public class EthCreateAccessListTest {
     assertThat(method.getName()).isEqualTo(METHOD);
   }
 
+  private JsonRpcRequestContext ethCreateAccessListRequest(final CallParameter callParameter) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest("2.0", METHOD, new Object[] {callParameter}));
+  }
+
   @Test
   public void shouldReturnGasEstimateWhenTransientLegacyTransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request =
-        ethCreateAccessListRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
-    mockTransientProcessorResultGasEstimate(1L, true, false);
+        ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO));
+    mockTransactionSimulatorResult(true, false, 1L);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 1L));
@@ -101,8 +113,8 @@ public class EthCreateAccessListTest {
   public void shouldUseGasPriceParameterWhenIsPresent() {
     final Wei gasPrice = Wei.of(1000);
     final JsonRpcRequestContext request =
-        ethCreateAccessListRequest(defaultLegacyTransactionCallParameter(gasPrice));
-    mockTransientProcessorResultGasEstimate(1L, true, false, gasPrice);
+        ethCreateAccessListRequest(legacyTransactionCallParameter(gasPrice));
+    mockTransactionSimulatorResult(true, false, 1L);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 1L));
@@ -116,32 +128,19 @@ public class EthCreateAccessListTest {
   public void shouldReturnGasEstimateErrorWhenGasPricePresentForEip1559Transaction() {
     final JsonRpcRequestContext request =
         ethCreateAccessListRequest(eip1559TransactionCallParameter(Optional.of(Wei.of(10))));
-    mockTransientProcessorResultGasEstimate(1L, false, false);
+    mockTransactionSimulatorResult(false, false, 1L);
+
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("gasPrice cannot be used with baseFee or maxFeePerGas");
   }
 
   @Test
-  public void
-      shouldReturnGasEstimateWhenTransientEip1559TransactionProcessorReturnsResultSuccess() {
-    final JsonRpcRequestContext request =
-        ethCreateAccessListRequest(eip1559TransactionCallParameter());
-    mockTransientProcessorResultGasEstimate(1L, true, false);
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 1L));
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
-  }
-
-  @Test
   public void shouldReturnErrorWhenWorldStateIsNotAvailable() {
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(false);
     final JsonRpcRequestContext request =
-        ethCreateAccessListRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
-    mockTransientProcessorResultGasEstimate(1L, false, false);
+        ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO));
+    mockTransactionSimulatorResult(false, false, 1L);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
@@ -154,8 +153,8 @@ public class EthCreateAccessListTest {
   @Test
   public void shouldReturnErrorWhenTransactionReverted() {
     final JsonRpcRequestContext request =
-        ethCreateAccessListRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
-    mockTransientProcessorResultGasEstimate(1L, false, true);
+        ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO));
+    mockTransactionSimulatorResult(false, true, 1L);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
@@ -165,36 +164,127 @@ public class EthCreateAccessListTest {
         .isEqualTo(expectedResponse);
   }
 
-  private void mockTransientProcessorResultGasEstimate(
-      final long estimateGas, final boolean isSuccessful, final boolean isReverted) {
-    mockTransientProcessorResultGasEstimate(estimateGas, isSuccessful, isReverted, Wei.ZERO);
+  @Test
+  public void shouldReturnEmptyAccessListIfNoParameterAndWithoutAccessedStorage() {
+    final List<AccessListEntry> expectedAccessList = new ArrayList<>();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, new CreateAccessListResult(expectedAccessList, 1L));
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(eip1559TransactionCallParameter());
+    mockTransactionSimulatorResult(true, false, 1L);
+
+    Assertions.assertThat(method.response(request))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
+    verify(transactionSimulator, times(1)).process(any(), any(), any(), anyLong());
   }
 
-  private void mockTransientProcessorResultGasEstimate(
-      final long estimateGas,
-      final boolean isSuccessful,
-      final boolean isReverted,
-      final Wei gasPrice) {
-    getMockTransactionSimulatorResult(isSuccessful, isReverted, estimateGas, gasPrice);
+  @Test
+  public void shouldReturnAccessListIfNoParameterAndWithAccessedStorage() {
+    // Create a 1559 call without access lists
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(eip1559TransactionCallParameter());
+    // Create a list with one access list entry
+    final List<AccessListEntry> expectedAccessList = createAccessList();
+
+    // expect a list with the mocked access list
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, new CreateAccessListResult(expectedAccessList, 1L));
+    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList, 1L);
+
+    // Set TransactionSimulator.process response
+    mockTransactionSimulatorResult(true, false, 1L);
+    Assertions.assertThat(responseWithMockTracer(request, tracer))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
+    verify(transactionSimulator, times(2)).process(any(), any(), any(), anyLong());
   }
 
-  private TransactionSimulatorResult getMockTransactionSimulatorResult(
-      final boolean isSuccessful,
-      final boolean isReverted,
-      final long estimateGas,
-      final Wei gasPrice) {
+  @Test
+  public void shouldReturnEmptyAccessListIfNoAccessedStorage() {
+    // Create a list with one enter
+    final List<AccessListEntry> accessListParam = createAccessList();
+    // expect empty list
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 1L));
+    // create a request using the accessListParam
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(eip1559TransactionCallParameter(accessListParam));
+
+    // Set TransactionSimulator.process response
+    mockTransactionSimulatorResult(true, false, 1L);
+    Assertions.assertThat(method.response(request))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
+    verify(transactionSimulator, times(1)).process(any(), any(), any(), anyLong());
+  }
+
+  @Test
+  public void shouldReturnAccessListIfParameterAndSameAccessedStorage() {
+    // Create a list with one access list entry
+    final List<AccessListEntry> expectedAccessList = createAccessList();
+    // Create a 1559 call with the expected access lists
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(eip1559TransactionCallParameter(expectedAccessList));
+
+    // expect a list with the mocked access list
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, new CreateAccessListResult(expectedAccessList, 1L));
+    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList, 1L);
+
+    // Set TransactionSimulator.process response
+    mockTransactionSimulatorResult(true, false, 1L);
+    Assertions.assertThat(responseWithMockTracer(request, tracer))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
+    verify(transactionSimulator, times(1)).process(any(), any(), any(), anyLong());
+  }
+
+  @Test
+  public void shouldReturnAccessListIfWithParameterAndDifferentAccessedStorage() {
+    // Create a list with one access list entry
+    final List<AccessListEntry> accessListParam = createAccessList();
+    // Create a 1559 call with the accessListParam
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(eip1559TransactionCallParameter(accessListParam));
+
+    // Create a list with one access list entry
+    final List<AccessListEntry> expectedAccessList = createAccessList();
+
+    // expect a list with the mocked access list
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, new CreateAccessListResult(expectedAccessList, 1L));
+    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList, 1L);
+
+    // Set TransactionSimulator.process response
+    mockTransactionSimulatorResult(true, false, 1L);
+    Assertions.assertThat(responseWithMockTracer(request, tracer))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
+    verify(transactionSimulator, times(2)).process(any(), any(), any(), anyLong());
+  }
+
+  private JsonRpcResponse responseWithMockTracer(
+      final JsonRpcRequestContext request, final AccessListOperationTracer tracer) {
+    try (final MockedStatic<AccessListOperationTracer> tracerMockedStatic =
+        Mockito.mockStatic(AccessListOperationTracer.class)) {
+      tracerMockedStatic.when(AccessListOperationTracer::create).thenReturn(tracer);
+      return method.response(request);
+    }
+  }
+
+  private AccessListOperationTracer createMockTracer(
+      final List<AccessListEntry> accessListEntries, final long gasUsed) {
+    final AccessListOperationTracer tracer = mock(AccessListOperationTracer.class);
+    when(tracer.getAccessList()).thenReturn(accessListEntries);
+    when(tracer.calculateEstimateGas(anyLong())).thenReturn(gasUsed);
+    return tracer;
+  }
+
+  private void mockTransactionSimulatorResult(
+      final boolean isSuccessful, final boolean isReverted, final long estimateGas) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
-    when(transactionSimulator.process(
-            eq(modifiedLegacyTransactionCallParameter(gasPrice)),
-            any(TransactionValidationParams.class),
-            any(OperationTracer.class),
-            eq(1L)))
-        .thenReturn(Optional.of(mockTxSimResult));
-    when(transactionSimulator.process(
-            eq(modifiedEip1559TransactionCallParameter()),
-            any(TransactionValidationParams.class),
-            any(OperationTracer.class),
-            eq(1L)))
+    when(transactionSimulator.process(any(), any(), any(), anyLong()))
         .thenReturn(Optional.of(mockTxSimResult));
     final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
@@ -202,11 +292,6 @@ public class EthCreateAccessListTest {
         .thenReturn(isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
     when(mockTxSimResult.getResult()).thenReturn(mockResult);
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
-    return mockTxSimResult;
-  }
-
-  private JsonCallParameter defaultLegacyTransactionCallParameter(final Wei gasPrice) {
-    return legacyTransactionCallParameter(gasPrice);
   }
 
   private JsonCallParameter legacyTransactionCallParameter(final Wei gasPrice) {
@@ -223,24 +308,21 @@ public class EthCreateAccessListTest {
         null);
   }
 
-  private CallParameter modifiedLegacyTransactionCallParameter(final Wei gasPrice) {
-    return new CallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        Long.MAX_VALUE,
-        gasPrice,
-        Optional.empty(),
-        Optional.empty(),
-        Wei.ZERO,
-        Bytes.EMPTY,
-        Optional.empty());
-  }
-
   private CallParameter eip1559TransactionCallParameter() {
-    return eip1559TransactionCallParameter(Optional.empty());
+    return eip1559TransactionCallParameter(Optional.empty(), null);
   }
 
-  private JsonCallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
+  private CallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
+    return eip1559TransactionCallParameter(gasPrice, null);
+  }
+
+  private CallParameter eip1559TransactionCallParameter(
+      final List<AccessListEntry> accessListEntries) {
+    return eip1559TransactionCallParameter(Optional.empty(), accessListEntries);
+  }
+
+  private JsonCallParameter eip1559TransactionCallParameter(
+      final Optional<Wei> gasPrice, final List<AccessListEntry> accessListEntries) {
     return new JsonCallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
@@ -251,24 +333,11 @@ public class EthCreateAccessListTest {
         Wei.ZERO,
         Bytes.EMPTY,
         false,
-        null);
+        accessListEntries);
   }
 
-  private CallParameter modifiedEip1559TransactionCallParameter() {
-    return new CallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        Long.MAX_VALUE,
-        Wei.ZERO,
-        Optional.of(Wei.fromHexString("0x10")),
-        Optional.of(Wei.fromHexString("0x10")),
-        Wei.ZERO,
-        Bytes.EMPTY,
-        Optional.empty());
-  }
-
-  private JsonRpcRequestContext ethCreateAccessListRequest(final CallParameter callParameter) {
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", METHOD, new Object[] {callParameter}));
+  private List<AccessListEntry> createAccessList() {
+    return List.of(
+        new AccessListEntry(Address.wrap(Bytes.random(Address.SIZE)), List.of(Bytes32.random())));
   }
 }
