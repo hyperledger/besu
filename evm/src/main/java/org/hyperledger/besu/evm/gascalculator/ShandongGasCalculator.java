@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Shandong gas calculator. */
 public class ShandongGasCalculator extends LondonGasCalculator {
 
   private static final long INIT_CODE_COST = 2L;
