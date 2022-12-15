@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.primitives.Longs.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.mockBlockchain;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,6 +55,7 @@ public class EIP2124Test {
             "Mainnet // Unsynced",
             Network.MAINNET,
             0L,
+            0L,
             ForkIdTestUtil.wantForkId("0xfc64ec04", 1150000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -63,6 +64,7 @@ public class EIP2124Test {
             "Mainnet // First Homestead block",
             Network.MAINNET,
             1150000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x97c2c34c", 1920000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -71,6 +73,7 @@ public class EIP2124Test {
             "Mainnet // Last Homestead block",
             Network.MAINNET,
             1919999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x97c2c34c", 1920000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -79,6 +82,7 @@ public class EIP2124Test {
             "Mainnet // First DAO block",
             Network.MAINNET,
             1920000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x91d1f948", 2463000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -87,6 +91,7 @@ public class EIP2124Test {
             "Mainnet // Last DAO block",
             Network.MAINNET,
             2462999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x91d1f948", 2463000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -95,6 +100,7 @@ public class EIP2124Test {
             "Mainnet // First Tangerine block",
             Network.MAINNET,
             2463000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x7a64da13", 2675000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -103,6 +109,7 @@ public class EIP2124Test {
             "Mainnet // Last Tangerine block",
             Network.MAINNET,
             2674999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x7a64da13", 2675000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -111,6 +118,7 @@ public class EIP2124Test {
             "Mainnet // First Spurious block",
             Network.MAINNET,
             2675000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x3edd5b10", 4370000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -119,6 +127,7 @@ public class EIP2124Test {
             "Mainnet // Last Spurious block",
             Network.MAINNET,
             4369999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x3edd5b10", 4370000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -127,6 +136,7 @@ public class EIP2124Test {
             "Mainnet // First Byzantium block",
             Network.MAINNET,
             4370000L,
+            0L,
             ForkIdTestUtil.wantForkId("0xa00bc324", 7280000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -135,6 +145,7 @@ public class EIP2124Test {
             "Mainnet // Last Byzantium block",
             Network.MAINNET,
             7279999L,
+            0L,
             ForkIdTestUtil.wantForkId("0xa00bc324", 7280000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -143,6 +154,7 @@ public class EIP2124Test {
             "Mainnet // First and last Constantinople, first Petersburg block",
             Network.MAINNET,
             7280000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x668db0af", 9069000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -151,6 +163,7 @@ public class EIP2124Test {
             "Mainnet // Last Petersburg block",
             Network.MAINNET,
             9068999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x668db0af", 9069000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -159,6 +172,7 @@ public class EIP2124Test {
             "Mainnet // First Istanbul block",
             Network.MAINNET,
             9069000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x879d6e30", 9200000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -167,6 +181,7 @@ public class EIP2124Test {
             "Mainnet // Last Istanbul block",
             Network.MAINNET,
             9199999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x879d6e30", 9200000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -175,6 +190,7 @@ public class EIP2124Test {
             "Mainnet // First Muir Glacier block",
             Network.MAINNET,
             9200000L,
+            0L,
             ForkIdTestUtil.wantForkId("0xe029e991", 12244000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -183,6 +199,7 @@ public class EIP2124Test {
             "Mainnet // Last Muir Glacier block",
             Network.MAINNET,
             12243999L,
+            0L,
             ForkIdTestUtil.wantForkId("0xe029e991", 12244000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -191,6 +208,7 @@ public class EIP2124Test {
             "Mainnet // First Berlin block",
             Network.MAINNET,
             12244000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x0eb440f6", 12965000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -199,6 +217,7 @@ public class EIP2124Test {
             "Mainnet // Last Berlin block",
             Network.MAINNET,
             12964999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x0eb440f6", 12965000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -207,6 +226,7 @@ public class EIP2124Test {
             "Mainnet // First London block",
             Network.MAINNET,
             12965000L,
+            0L,
             ForkIdTestUtil.wantForkId("0xb715077d", 13773000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -215,6 +235,7 @@ public class EIP2124Test {
             "Mainnet // Last London block",
             Network.MAINNET,
             13772999L,
+            0L,
             ForkIdTestUtil.wantForkId("0xb715077d", 13773000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -223,6 +244,7 @@ public class EIP2124Test {
             "Mainnet // First Arrow Glacier block",
             Network.MAINNET,
             13773000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x20c327fc", 15050000L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -231,6 +253,7 @@ public class EIP2124Test {
             "Mainnet // First Gray Glacier block",
             Network.MAINNET,
             15050000L,
+            0L,
             ForkIdTestUtil.wantForkId("0xf0afd0e3", 0L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -239,6 +262,7 @@ public class EIP2124Test {
             "Mainnet // Future Gray Glacier block",
             Network.MAINNET,
             20000000L,
+            0L,
             ForkIdTestUtil.wantForkId("0xf0afd0e3", 0L),
             Optional.of(ForkIds.MAINNET),
             empty()
@@ -248,6 +272,7 @@ public class EIP2124Test {
             "Ropsten // Unsynced, last Frontier, Homestead and first Tangerine block",
             Network.ROPSTEN,
             0L,
+            0L,
             ForkIdTestUtil.wantForkId("0x30c7ddbc", 10L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -256,6 +281,7 @@ public class EIP2124Test {
             "Ropsten // Last Tangerine block",
             Network.ROPSTEN,
             9L,
+            0L,
             ForkIdTestUtil.wantForkId("0x30c7ddbc", 10L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -264,6 +290,7 @@ public class EIP2124Test {
             "Ropsten // First Spurious block",
             Network.ROPSTEN,
             10L,
+            0L,
             ForkIdTestUtil.wantForkId("0x63760190", 1700000L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -272,6 +299,7 @@ public class EIP2124Test {
             "Ropsten // Last Spurious block",
             Network.ROPSTEN,
             1699999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x63760190", 1700000L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -280,6 +308,7 @@ public class EIP2124Test {
             "Ropsten // First Byzantium block",
             Network.ROPSTEN,
             1700000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x3ea159c7", 4230000L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -288,6 +317,7 @@ public class EIP2124Test {
             "Ropsten // First Byzantium block",
             Network.ROPSTEN,
             4229999L,
+            0L,
             ForkIdTestUtil.wantForkId("0x3ea159c7", 4230000L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -296,6 +326,7 @@ public class EIP2124Test {
             "Ropsten // First Constantinople block",
             Network.ROPSTEN,
             4230000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x97b544f3", 4939394L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -304,6 +335,7 @@ public class EIP2124Test {
             "Ropsten // Last Constantinople block",
             Network.ROPSTEN,
             4939393L,
+            0L,
             ForkIdTestUtil.wantForkId("0x97b544f3", 4939394L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -312,6 +344,7 @@ public class EIP2124Test {
             "Ropsten // First Petersburg block",
             Network.ROPSTEN,
             4939394L,
+            0L,
             ForkIdTestUtil.wantForkId("0xd6e2149b", 6485846L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -320,6 +353,7 @@ public class EIP2124Test {
             "Ropsten // Last Petersburg block",
             Network.ROPSTEN,
             6485845L,
+            0L,
             ForkIdTestUtil.wantForkId("0xd6e2149b", 6485846L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -328,6 +362,7 @@ public class EIP2124Test {
             "Ropsten // First Istanbul block",
             Network.ROPSTEN,
             6485846L,
+            0L,
             ForkIdTestUtil.wantForkId("0x4bc66396", 7117117L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -336,6 +371,7 @@ public class EIP2124Test {
             "Ropsten // Last Istanbul block",
             Network.ROPSTEN,
             7117116L,
+            0L,
             ForkIdTestUtil.wantForkId("0x4bc66396", 7117117L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -344,6 +380,7 @@ public class EIP2124Test {
             "Ropsten // First Muir Glacier block",
             Network.ROPSTEN,
             7117117L,
+            0L,
             ForkIdTestUtil.wantForkId("0x6727ef90", 0L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -352,6 +389,7 @@ public class EIP2124Test {
             "Ropsten // Future",
             Network.ROPSTEN,
             7500000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x6727ef90", 0L),
             Optional.of(ForkIds.ROPSTEN),
             empty()
@@ -361,6 +399,7 @@ public class EIP2124Test {
             "Sepolia // mergenetsplit block",
             Network.SEPOLIA,
             0L,
+            0L,
             ForkIdTestUtil.wantForkId("0xfe3366e7", 1735371L),
             Optional.of(ForkIds.SEPOLIA),
             empty()
@@ -369,6 +408,7 @@ public class EIP2124Test {
             "Sepolia // Future",
             Network.SEPOLIA,
             1735371L,
+            0L,
             ForkIdTestUtil.wantForkId("0xb96cbd13", 0L),
             Optional.of(ForkIds.SEPOLIA),
             empty()
@@ -378,6 +418,7 @@ public class EIP2124Test {
             "Rinkeby // Unsynced, last Frontier block",
             Network.RINKEBY,
             0L,
+            0L,
             ForkIdTestUtil.wantForkId("0x3b8e0691", 1L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -386,6 +427,7 @@ public class EIP2124Test {
             "Rinkeby // First and last Homestead block",
             Network.RINKEBY,
             1L,
+            0L,
             ForkIdTestUtil.wantForkId("0x60949295", 2L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -394,6 +436,7 @@ public class EIP2124Test {
             "Rinkeby // First and last Tangerine block",
             Network.RINKEBY,
             2L,
+            0L,
             ForkIdTestUtil.wantForkId("0x8bde40dd", 3L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -402,6 +445,7 @@ public class EIP2124Test {
             "Rinkeby // First Spurious block",
             Network.RINKEBY,
             3L,
+            0L,
             ForkIdTestUtil.wantForkId("0xcb3a64bb", 1035301L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -410,6 +454,7 @@ public class EIP2124Test {
             "Rinkeby // Last Spurious block",
             Network.RINKEBY,
             1035300L,
+            0L,
             ForkIdTestUtil.wantForkId("0xcb3a64bb", 1035301L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -418,6 +463,7 @@ public class EIP2124Test {
             "Rinkeby // First Byzantium block",
             Network.RINKEBY,
             1035301L,
+            0L,
             ForkIdTestUtil.wantForkId("0x8d748b57", 3660663L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -426,6 +472,7 @@ public class EIP2124Test {
             "Rinkeby // Last Byzantium block",
             Network.RINKEBY,
             3660662L,
+            0L,
             ForkIdTestUtil.wantForkId("0x8d748b57", 3660663L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -434,6 +481,7 @@ public class EIP2124Test {
             "Rinkeby // First Constantinople block",
             Network.RINKEBY,
             3660663L,
+            0L,
             ForkIdTestUtil.wantForkId("0xe49cab14", 4321234L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -442,6 +490,7 @@ public class EIP2124Test {
             "Rinkeby // Last Constantinople block",
             Network.RINKEBY,
             4321233L,
+            0L,
             ForkIdTestUtil.wantForkId("0xe49cab14", 4321234L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -450,6 +499,7 @@ public class EIP2124Test {
             "Rinkeby // First Petersburg block",
             Network.RINKEBY,
             4321234L,
+            0L,
             ForkIdTestUtil.wantForkId("0xafec6b27", 5435345L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -458,6 +508,7 @@ public class EIP2124Test {
             "Rinkeby // Last Petersburg block",
             Network.RINKEBY,
             5435344L,
+            0L,
             ForkIdTestUtil.wantForkId("0xafec6b27", 5435345L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -466,6 +517,7 @@ public class EIP2124Test {
             "Rinkeby // First Istanbul block",
             Network.RINKEBY,
             5435345L,
+            0L,
             ForkIdTestUtil.wantForkId("0xcbdb8838", 0L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -474,6 +526,7 @@ public class EIP2124Test {
             "Rinkeby // Future Istanbul block",
             Network.RINKEBY,
             6000000L,
+            0L,
             ForkIdTestUtil.wantForkId("0xcbdb8838", 0L),
             Optional.of(ForkIds.RINKEBY),
             empty()
@@ -483,6 +536,7 @@ public class EIP2124Test {
             "Goerli  // Unsynced, last Frontier, Homestead, Tangerine, Spurious, Byzantium, Constantinople and first Petersburg block",
             Network.GOERLI,
             0L,
+            0L,
             ForkIdTestUtil.wantForkId("0xa3f5ab08", 1561651L),
             Optional.of(ForkIds.GOERLI),
             empty()
@@ -491,6 +545,7 @@ public class EIP2124Test {
             "Goerli // Last Petersburg block",
             Network.GOERLI,
             1561650L,
+            0L,
             ForkIdTestUtil.wantForkId("0xa3f5ab08", 1561651L),
             Optional.of(ForkIds.GOERLI),
             empty()
@@ -499,6 +554,7 @@ public class EIP2124Test {
             "Goerli // First Istanbul block",
             Network.GOERLI,
             1561651L,
+            0L,
             ForkIdTestUtil.wantForkId("0xc25efa5c", 0L),
             Optional.of(ForkIds.GOERLI),
             empty()
@@ -507,6 +563,7 @@ public class EIP2124Test {
             "Goerli // Future Istanbul block",
             Network.GOERLI,
             2000000L,
+            0L,
             ForkIdTestUtil.wantForkId("0xc25efa5c", 0L),
             Optional.of(ForkIds.GOERLI),
             empty()
@@ -516,6 +573,7 @@ public class EIP2124Test {
             "Shandong // Unsynced",
             Network.SHANDONG,
             0L,
+            0L,
             ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
             empty(),
             empty()
@@ -524,6 +582,7 @@ public class EIP2124Test {
             "Shandong // First block",
             Network.SHANDONG,
             1L,
+            0L,
             ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
             empty(),
             empty()
@@ -532,6 +591,7 @@ public class EIP2124Test {
             "Shandong // Future block",
             Network.SHANDONG,
             1000000L,
+            0L,
             ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
             empty(),
             empty()
@@ -541,6 +601,7 @@ public class EIP2124Test {
             "Private // Unsynced",
             Network.PRIVATE,
             0L,
+            0L,
             ForkIdTestUtil.wantForkId("0x190a55ad", 0L),
             empty(),
             empty()
@@ -549,6 +610,7 @@ public class EIP2124Test {
             "Private // First block",
             Network.PRIVATE,
             1L,
+            0L,
             ForkIdTestUtil.wantForkId("0x190a55ad", 0L),
             empty(),
             empty()
@@ -557,6 +619,7 @@ public class EIP2124Test {
             "Private // Future block",
             Network.PRIVATE,
             1000000L,
+            0L,
             ForkIdTestUtil.wantForkId("0x190a55ad", 0L),
             empty(),
             empty()
@@ -566,6 +629,7 @@ public class EIP2124Test {
             "check1PetersburgWithRemoteAnnouncingTheSame",
             Network.MAINNET,
             7987396L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0x668db0af", 0L, true)
@@ -574,6 +638,7 @@ public class EIP2124Test {
             "check2PetersburgWithRemoteAnnouncingTheSameAndNextFork",
             Network.MAINNET,
             7987396L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0x668db0af", Long.MAX_VALUE, true)
@@ -582,6 +647,7 @@ public class EIP2124Test {
             "check3ByzantiumAwareOfPetersburgRemoteUnawareOfPetersburg",
             Network.MAINNET,
             7279999L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0xa00bc324", 0L, true)
@@ -590,6 +656,7 @@ public class EIP2124Test {
             "check4ByzantiumAwareOfPetersburgRemoteAwareOfPetersburg",
             Network.MAINNET,
             7987396L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0xa00bc324", 7280000L, true)
@@ -598,6 +665,7 @@ public class EIP2124Test {
             "check5ByzantiumAwareOfPetersburgRemoteAnnouncingUnknownFork",
             Network.MAINNET,
             7279999L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0xa00bc324", Long.MAX_VALUE, true)
@@ -606,6 +674,7 @@ public class EIP2124Test {
             "check6PetersburgWithRemoteAnnouncingByzantiumAwareOfPetersburg",
             Network.MAINNET,
             7987396L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0x668db0af", 7280000L, true)
@@ -614,6 +683,7 @@ public class EIP2124Test {
             "check7PetersburgWithRemoteAnnouncingSpuriousAwareOfByzantiumRemoteMayNeedUpdate",
             Network.MAINNET,
             7987396L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0x3edd5b10", 4370000L, true)
@@ -622,6 +692,7 @@ public class EIP2124Test {
             "check8ByzantiumWithRemoteAnnouncingPetersburgLocalOutOfSync",
             Network.MAINNET,
             727999L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0x668db0af", 0L, true)
@@ -630,6 +701,7 @@ public class EIP2124Test {
             "check9SpuriousWithRemoteAnnouncingByzantiumRemoteUnawareOfPetersburg",
             Network.MAINNET,
             4369999L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0xa00bc324", 0L, true)
@@ -638,8 +710,10 @@ public class EIP2124Test {
             "check10PetersburgWithRemoteAnnouncingByzantiumRemoteUnawareOfAdditionalForks",
             Network.network(
                 GenesisHash.MAINNET,
-                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L)),
+                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L),
+                emptyList()),
             7987396L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0xa00bc324", 0L, false)
@@ -648,8 +722,10 @@ public class EIP2124Test {
             "check11PetersburgWithRemoteAnnouncingPetersburgAndFutureForkLocalNeedsUpdate",
             Network.network(
                 GenesisHash.MAINNET,
-                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L)),
+                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L),
+                emptyList()),
             7987396L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0x5cddc0e1", 0L, false)
@@ -658,8 +734,10 @@ public class EIP2124Test {
             "check12ByzantiumWithRemoteAnnouncingPetersburgAndFutureForkLocalNeedsUpdate",
             ForkIdTestUtil.Network.network(
                 GenesisHash.MAINNET,
-                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L)),
+                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L),
+                emptyList()),
             7279999L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0x5cddc0e1", 0L, false)
@@ -668,18 +746,274 @@ public class EIP2124Test {
             "check13ByzantiumWithRemoteAnnouncingRinkebyPetersburg",
             Network.network(
                 GenesisHash.MAINNET,
-                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L)),
+                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L),
+                emptyList()),
             7987396L,
+            0L,
             empty(),
             empty(),
             wantPeerCheck("0xafec6b27", 0L, false)
-          }
+          },
+          // Withdrawals test cases
+          {
+            "Withdrawals // Unsynced",
+            Network.WITHDRAWALS,
+            0L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xfc64ec04", 1150000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Frontier block",
+            Network.WITHDRAWALS,
+            1149999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xfc64ec04", 1150000),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Homestead block",
+            Network.WITHDRAWALS,
+            1150000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x97c2c34c", 1920000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Homestead block",
+            Network.WITHDRAWALS,
+            1919999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x97c2c34c", 1920000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First DAO block",
+            Network.WITHDRAWALS,
+            1920000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x91d1f948", 2463000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last DAO block",
+            Network.WITHDRAWALS,
+            2462999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x91d1f948", 2463000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Tangerine block",
+            Network.WITHDRAWALS,
+            2463000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x7a64da13", 2675000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Tangerine block",
+            Network.WITHDRAWALS,
+            2674999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x7a64da13", 2675000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Spurious block",
+            Network.WITHDRAWALS,
+            2675000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x3edd5b10", 4370000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Spurious block",
+            Network.WITHDRAWALS,
+            4369999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x3edd5b10", 4370000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Byzantium block",
+            Network.WITHDRAWALS,
+            4370000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xa00bc324", 7280000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Byzantium block",
+            Network.WITHDRAWALS,
+            7279999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xa00bc324", 7280000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First and last Constantinople, first Petersburg block",
+            Network.WITHDRAWALS,
+            7280000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x668db0af", 9069000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Petersburg block",
+            Network.WITHDRAWALS,
+            9068999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x668db0af", 9069000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Istanbul block",
+            Network.WITHDRAWALS,
+            9069000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x879d6e30", 9200000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Istanbul block",
+            Network.WITHDRAWALS,
+            9199999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x879d6e30", 9200000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Muir Glacier block",
+            Network.WITHDRAWALS,
+            9200000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xe029e991", 12244000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Muir Glacier block",
+            Network.WITHDRAWALS,
+            12243999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xe029e991", 12244000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Berlin block",
+            Network.WITHDRAWALS,
+            12244000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x0eb440f6", 12965000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Berlin block",
+            Network.WITHDRAWALS,
+            12964999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x0eb440f6", 12965000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First London block",
+            Network.WITHDRAWALS,
+            12965000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xb715077d", 13773000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last London block",
+            Network.WITHDRAWALS,
+            13772999L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xb715077d", 13773000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Arrow Glacier block",
+            Network.WITHDRAWALS,
+            13773000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x20c327fc", 15050000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Gray Glacier block",
+            Network.WITHDRAWALS,
+            15050000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0xf0afd0e3", 18000000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Merge Start block",
+            Network.WITHDRAWALS,
+            18000000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Merge Start block",
+            Network.WITHDRAWALS,
+            20000000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // First Shanghai block",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000000L,
+            ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Withdrawals // Last Shanghai block",
+            Network.WITHDRAWALS,
+            20100000L,
+            2669000000L,
+            ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
+            Optional.of(ForkIds.WITHDRAWALS),
+            empty()
+          },
         });
   }
 
   private final String name;
   private final Network network;
   private final long head;
+  private final long time;
   private final Optional<ForkId> wantForkId;
   private final Optional<List<ForkId>> wantForkIds;
   private final Optional<PeerCheckCase> wantPeerCheckCase;
@@ -689,7 +1023,10 @@ public class EIP2124Test {
     LOG.info("Running test case {}", name);
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain(network.hash, head), network.forks, Collections.emptyList(), false);
+            mockBlockchain(network.hash, head, time),
+            network.blockForks,
+            network.timestampForks,
+            false);
     wantForkId.ifPresent(
         forkId -> assertThat(forkIdManager.getForkIdForChainHead()).isEqualTo(forkId));
     wantForkIds.ifPresent(
@@ -708,12 +1045,14 @@ public class EIP2124Test {
       final String name,
       final ForkIdTestUtil.Network network,
       final long head,
+      final long time,
       final Optional<ForkId> wantForkId,
       final Optional<List<ForkId>> wantForkIds,
       final Optional<PeerCheckCase> wantPeerCheckCase) {
     this.name = name;
     this.network = network;
     this.head = head;
+    this.time = time;
     this.wantForkId = wantForkId;
     this.wantForkIds = wantForkIds;
     this.wantPeerCheckCase = wantPeerCheckCase;

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
+import static java.util.Collections.emptyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,12 +33,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class ForkIdTestUtil {
 
-  public static Blockchain mockBlockchain(final String genesisHash, final long chainHeight) {
-    return mockBlockchain(genesisHash, () -> chainHeight);
+  public static Blockchain mockBlockchain(
+      final String genesisHash, final long chainHeight, final long timestamp) {
+    return mockBlockchain(genesisHash, () -> chainHeight, timestamp);
   }
 
   public static Blockchain mockBlockchain(
-      final String genesisHash, final LongSupplier chainHeightSupplier) {
+      final String genesisHash, final LongSupplier chainHeightSupplier, final long timestamp) {
     final Blockchain mockchain = mock(Blockchain.class);
     final BlockHeader mockHeader = mock(BlockHeader.class);
     final Block block = new Block(mockHeader, null);
@@ -47,6 +49,7 @@ public class ForkIdTestUtil {
     when(mockHeader.getHash()).thenReturn(Hash.fromHexString(genesisHash));
     when(mockchain.getChainHeadHeader()).thenReturn(mockChainHeadHeader);
     when(mockChainHeadHeader.getNumber()).thenReturn(chainHeightSupplier.getAsLong());
+    when(mockChainHeadHeader.getTimestamp()).thenReturn(timestamp);
     return mockchain;
   }
 
@@ -82,6 +85,13 @@ public class ForkIdTestUtil {
     public static final List<Long> SHANDONG =
         Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
     public static final List<Long> PRIVATE = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+
+    public static final List<Long> WITHDRAWALS_BLOCKS =
+        Arrays.asList(
+            1920000L, 1150000L, 2463000L, 2675000L, 2675000L, 4370000L, 7280000L, 7280000L,
+            9069000L, 9200000L, 12244000L, 12965000L, 13773000L, 15050000L, 18000000L);
+
+    public static final List<Long> WITHDRAWALS_TIMESTAMPS = Arrays.asList(1668000000L);
   }
 
   public static class ForkIds {
@@ -128,26 +138,55 @@ public class ForkIdTestUtil {
         Arrays.asList(
             new ForkId(Bytes.fromHexString("0xa3f5ab08"), 1561651L),
             new ForkId(Bytes.fromHexString("0xc25efa5c"), 0L));
+
+    public static final List<ForkId> WITHDRAWALS =
+        Arrays.asList(
+            new ForkId(
+                Bytes.fromHexString("0xfc64ec04"), 1150000L), // Unsynced / last Frontier block
+            new ForkId(Bytes.fromHexString("0x97c2c34c"), 1920000L), // First Homestead block
+            new ForkId(Bytes.fromHexString("0x91d1f948"), 2463000L), // First DAO block
+            new ForkId(Bytes.fromHexString("0x7a64da13"), 2675000L), // First Tangerine block
+            new ForkId(Bytes.fromHexString("0x3edd5b10"), 4370000L), // First Spurious block
+            new ForkId(Bytes.fromHexString("0xa00bc324"), 7280000L), // First Byzantium block
+            new ForkId(Bytes.fromHexString("0x668db0af"), 9069000L), // First Petersburg block
+            new ForkId(Bytes.fromHexString("0x879d6e30"), 9200000L), // First Istanbul block
+            new ForkId(Bytes.fromHexString("0xe029e991"), 12244000L), // First Muir Glacier block
+            new ForkId(Bytes.fromHexString("0x0eb440f6"), 12965000L), // First Berlin block
+            new ForkId(Bytes.fromHexString("0xb715077d"), 13773000L), // First London block
+            new ForkId(Bytes.fromHexString("0x20c327fc"), 15050000L), // First Arrow Glacier block
+            new ForkId(Bytes.fromHexString("0xf0afd0e3"), 18000000L), // First Arrow Glacier block
+            new ForkId(Bytes.fromHexString("0x4fb8a872"), 1668000000L), // First Merge Start block
+            new ForkId(Bytes.fromHexString("0xc1fdf181"), 0L) // First Shanghai block
+            );
   }
 
   public static class Network {
-    public static final Network MAINNET = network(GenesisHash.MAINNET, Forks.MAINNET);
-    public static final Network ROPSTEN = network(GenesisHash.ROPSTEN, Forks.ROPSTEN);
-    public static final Network SEPOLIA = network(GenesisHash.SEPOLIA, Forks.SEPOLIA);
-    public static final Network RINKEBY = network(GenesisHash.RINKEBY, Forks.RINKEBY);
-    public static final Network GOERLI = network(GenesisHash.GOERLI, Forks.GOERLI);
-    public static final Network SHANDONG = network(GenesisHash.SHANDONG, Forks.SHANDONG);
-    public static final Network PRIVATE = network(GenesisHash.PRIVATE, Forks.PRIVATE);
-    public final String hash;
-    public final List<Long> forks;
+    public static final Network MAINNET = network(GenesisHash.MAINNET, Forks.MAINNET, emptyList());
+    public static final Network ROPSTEN = network(GenesisHash.ROPSTEN, Forks.ROPSTEN, emptyList());
+    public static final Network SEPOLIA = network(GenesisHash.SEPOLIA, Forks.SEPOLIA, emptyList());
+    public static final Network RINKEBY = network(GenesisHash.RINKEBY, Forks.RINKEBY, emptyList());
+    public static final Network GOERLI = network(GenesisHash.GOERLI, Forks.GOERLI, emptyList());
+    public static final Network SHANDONG =
+        network(GenesisHash.SHANDONG, Forks.SHANDONG, emptyList());
+    public static final Network PRIVATE = network(GenesisHash.PRIVATE, Forks.PRIVATE, emptyList());
 
-    public Network(final String hash, final List<Long> forks) {
+    public static final Network WITHDRAWALS =
+        network(GenesisHash.MAINNET, Forks.WITHDRAWALS_BLOCKS, Forks.WITHDRAWALS_TIMESTAMPS);
+
+    public final String hash;
+    public final List<Long> blockForks;
+    public final List<Long> timestampForks;
+
+    public Network(
+        final String hash, final List<Long> blockForks, final List<Long> timestampForks) {
       this.hash = hash;
-      this.forks = forks;
+      this.blockForks = blockForks;
+      this.timestampForks = timestampForks;
     }
 
-    public static Network network(final String hash, final List<Long> forks) {
-      return new Network(hash, forks);
+    public static Network network(
+        final String hash, final List<Long> blockForks, final List<Long> timestampForks) {
+      return new Network(hash, blockForks, timestampForks);
     }
   }
 
