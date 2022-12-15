@@ -25,6 +25,9 @@ import java.util.Map;
  * @param <V> the type parameter
  */
 public class SizeLimitedMap<K, V> extends LinkedHashMap<K, V> {
+  /**
+   * Maximum size of map
+   */
   private final int maxEntries;
 
   /**
