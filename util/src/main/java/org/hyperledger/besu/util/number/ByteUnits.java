@@ -15,7 +15,9 @@
 
 package org.hyperledger.besu.util.number;
 
+/** The Byte units. */
 public class ByteUnits {
+  /** The constant MEGABYTE. */
   public static final int MEGABYTE = 1 << 20;
 
   private ByteUnits() {}

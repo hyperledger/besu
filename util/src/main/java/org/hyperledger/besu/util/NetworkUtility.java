@@ -29,8 +29,11 @@ import com.google.common.base.Suppliers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Network utility. */
 public class NetworkUtility {
+  /** The constant INADDR_ANY. */
   public static final String INADDR_ANY = "0.0.0.0";
+  /** The constant INADDR6_ANY. */
   public static final String INADDR6_ANY = "0:0:0:0:0:0:0:0";
 
   private static final Logger LOG = LoggerFactory.getLogger(NetworkUtility.class);
@@ -75,6 +78,13 @@ public class NetworkUtility {
     return port > 0 && port < 65536;
   }
 
+  /**
+   * Url for socket address.
+   *
+   * @param scheme the scheme
+   * @param address the address
+   * @return the url
+   */
   public static String urlForSocketAddress(final String scheme, final InetSocketAddress address) {
     String hostName = address.getHostName();
     if (isUnspecifiedAddress(hostName)) {
@@ -86,6 +96,14 @@ public class NetworkUtility {
     return scheme + "://" + hostName + ":" + address.getPort();
   }
 
+  /**
+   * Is network interface available.
+   *
+   * @param ipAddress the ip address
+   * @return the boolean
+   * @throws SocketException the socket exception
+   * @throws UnknownHostException the unknown host exception
+   */
   public static boolean isNetworkInterfaceAvailable(final String ipAddress)
       throws SocketException, UnknownHostException {
     if (isUnspecifiedAddress(ipAddress)) {
@@ -94,10 +112,22 @@ public class NetworkUtility {
     return NetworkInterface.getByInetAddress(InetAddress.getByName(ipAddress)) != null;
   }
 
+  /**
+   * Is unspecified address.
+   *
+   * @param ipAddress the ip address
+   * @return the boolean
+   */
   public static boolean isUnspecifiedAddress(final String ipAddress) {
     return INADDR_ANY.equals(ipAddress) || INADDR6_ANY.equals(ipAddress);
   }
 
+  /**
+   * Check port.
+   *
+   * @param port the port
+   * @param portTypeName the port type name
+   */
   public static void checkPort(final int port, final String portTypeName) {
     if (!isValidPort(port)) {
       throw new IllegalPortException(
@@ -106,6 +136,12 @@ public class NetworkUtility {
     }
   }
 
+  /**
+   * Is port available for tcp.
+   *
+   * @param port the port
+   * @return the boolean
+   */
   public static boolean isPortAvailableForTcp(final int port) {
     try (final ServerSocket serverSocket = new ServerSocket()) {
       serverSocket.setReuseAddress(true);
@@ -128,6 +164,12 @@ public class NetworkUtility {
     return false;
   }
 
+  /**
+   * Is port available.
+   *
+   * @param port the port
+   * @return the boolean
+   */
   public static boolean isPortAvailable(final int port) {
     return isPortAvailableForTcp(port) && isPortAvailableForUdp(port);
   }
