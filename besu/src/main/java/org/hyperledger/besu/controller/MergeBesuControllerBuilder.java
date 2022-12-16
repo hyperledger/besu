@@ -248,6 +248,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     return retval;
   }
 
+  /**
+   * Create timestamp protocol schedule.
+   *
+   * @return the timestamp schedule
+   */
   public TimestampSchedule createTimestampProtocolSchedule() {
     return MergeProtocolSchedule.createTimestamp(
         configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled);
