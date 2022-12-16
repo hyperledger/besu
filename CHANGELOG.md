@@ -3,10 +3,9 @@
 
 ### Additions and Improvements
 - Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
+- Add timestamp fork support, including shanghaiTime and cancunTime forks [#4743](https://github.com/hyperledger/besu/pull/4743)
 
 ### Breaking Changes
-
-### Additions and Improvements
 
 ### Bug Fixes
 
