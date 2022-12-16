@@ -97,7 +97,7 @@ public class TransitionUtils<SwitchingObject> {
   }
 
   /**
-   * Is terminal proof of work block.
+   * Is terminal proof of work block boolean.
    *
    * @param header the header
    * @param context the context

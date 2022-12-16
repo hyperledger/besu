@@ -76,6 +76,14 @@ public class MergeProtocolSchedule {
         .createProtocolSchedule();
   }
 
+  /**
+   * Create timestamp schedule.
+   *
+   * @param config the config
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @return the timestamp schedule
+   */
   public static TimestampSchedule createTimestamp(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
