@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -43,7 +43,7 @@ public class PrivateStateRehydration {
 
   private final PrivateStateStorage privateStateStorage;
   private final Blockchain blockchain;
-  private final ProtocolSchedule protocolSchedule;
+  private final HeaderBasedProtocolSchedule protocolSchedule;
   private final WorldStateArchive publicWorldStateArchive;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateRootResolver privateStateRootResolver;
@@ -52,7 +52,7 @@ public class PrivateStateRehydration {
   public PrivateStateRehydration(
       final PrivateStateStorage privateStateStorage,
       final Blockchain blockchain,
-      final ProtocolSchedule protocolSchedule,
+      final HeaderBasedProtocolSchedule protocolSchedule,
       final WorldStateArchive publicWorldStateArchive,
       final WorldStateArchive privateWorldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
@@ -140,7 +140,7 @@ public class PrivateStateRehydration {
               .map(Transaction::getHash)
               .collect(Collectors.toList()));
 
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
       final PrivateGroupRehydrationBlockProcessor privateGroupRehydrationBlockProcessor =
           new PrivateGroupRehydrationBlockProcessor(
               protocolSpec.getTransactionProcessor(),
