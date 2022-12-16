@@ -19,6 +19,7 @@ import static com.google.common.collect.Streams.stream;
 import static org.apache.tuweni.net.tls.VertxTrustOptions.allowlistClients;
 
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
+import org.hyperledger.besu.ethereum.api.handlers.NonBlockingJsonRpcExecutorHandler;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
@@ -140,6 +141,8 @@ public class JsonRpcHttpService {
   private HttpServer httpServer;
   private final HealthService livenessService;
   private final HealthService readinessService;
+
+  private NonBlockingJsonRpcExecutorHandler nonBlockingJsonRpcExecutorHandler;
 
   /**
    * Construct a JsonRpcHttpService handler
@@ -345,7 +348,10 @@ public class JsonRpcHttpService {
         .handler(
             HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods));
 
-    mainRoute.handler(HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(4)));
+    nonBlockingJsonRpcExecutorHandler =
+        (NonBlockingJsonRpcExecutorHandler)
+            HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(4));
+    mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
 
     if (maybeAuthenticationService.isPresent()) {
       router
@@ -548,6 +554,10 @@ public class JsonRpcHttpService {
   public CompletableFuture<?> stop() {
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
+    }
+
+    if (nonBlockingJsonRpcExecutorHandler != null) {
+      nonBlockingJsonRpcExecutorHandler.stop();
     }
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();

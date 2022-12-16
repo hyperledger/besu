@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauth
 import org.hyperledger.besu.util.vertx.GenericMessageCodec;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -69,6 +70,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
           .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
           .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
+  private final List<String> verticleDeploymentIds = new ArrayList<>();
   private final Vertx vertx;
 
   public NonBlockingJsonRpcExecutorHandler(
@@ -106,7 +108,14 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
 
     jsonRpcExecutorVerticles.forEach(
         jsonRpcExecutorVerticle ->
-            vertx.deployVerticle(jsonRpcExecutorVerticle, new DeploymentOptions().setWorker(true)));
+            vertx.deployVerticle(
+                jsonRpcExecutorVerticle,
+                new DeploymentOptions().setWorker(true),
+                deploymentResult -> {
+                  if (deploymentResult.succeeded()) {
+                    verticleDeploymentIds.add(deploymentResult.result());
+                  }
+                }));
   }
 
   @Override
@@ -137,6 +146,10 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
       LOG.error("RPC call failed: {}", e.getMessage());
       handleJsonRpcError(ctx, null, JsonRpcError.INTERNAL_ERROR);
     }
+  }
+
+  public void stop() {
+    verticleDeploymentIds.forEach(deploymentId -> vertx.undeploy(deploymentId));
   }
 
   private void processRequestBodyAsObject(
