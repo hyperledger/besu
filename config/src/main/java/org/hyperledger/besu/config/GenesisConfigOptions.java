@@ -90,6 +90,10 @@ public interface GenesisConfigOptions {
 
   OptionalLong getMergeNetSplitBlockNumber();
 
+  OptionalLong getShanghaiTime();
+
+  OptionalLong getCancunTime();
+
   OptionalLong getShandongBlockNumber();
 
   Optional<Wei> getBaseFeePerGas();
