@@ -585,18 +585,30 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
+  /**
+   * Shanghai time stub genesis config options.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions shanghaiTime(final long timestamp) {
     shanghaiTime = OptionalLong.of(timestamp);
     return this;
   }
 
+  /**
+   * Cancun time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions cancunTime(final long timestamp) {
     cancunTime = OptionalLong.of(timestamp);
     return this;
   }
 
   /**
-   * Shandong block stub genesis config options.
+   * Shandong block.
    *
    * @param blockNumber the block number
    * @return the stub genesis config options

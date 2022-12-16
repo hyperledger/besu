@@ -241,8 +241,18 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getMergeNetSplitBlockNumber();
 
+  /**
+   * Gets shanghai time.
+   *
+   * @return the shanghai time
+   */
   OptionalLong getShanghaiTime();
 
+  /**
+   * Gets cancun time.
+   *
+   * @return the cancun time
+   */
   OptionalLong getCancunTime();
 
   /**
