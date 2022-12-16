@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -106,6 +107,8 @@ public class Transaction
 
   // Caches the hash used to uniquely identify the transaction.
   protected volatile Hash hash;
+  // Caches the size in bytes of the encoded transaction.
+  protected volatile int size = -1;
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -610,9 +613,30 @@ public class Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      hash = Hash.hash(TransactionEncoder.encodeOpaqueBytes(this));
+      memoizeHashAndSize();
     }
     return hash;
+  }
+
+  /**
+   * Returns the size in bytes of the encoded transaction.
+   *
+   * @return the size in bytes of the encoded transaction.
+   */
+  public int getSize() {
+    if (size == -1) {
+      memoizeHashAndSize();
+    }
+    return size;
+  }
+
+  private void memoizeHashAndSize() {
+    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
+    hash = Hash.hash(bytes);
+
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
+    size = rlpOutput.encodedSize();
   }
 
   /**
@@ -924,14 +948,6 @@ public class Transaction
       return Optional.of(Address.contractAddress(getSender(), getNonce()));
     }
     return Optional.empty();
-  }
-
-  private Bytes toRlp() {
-    return RLP.encode(this::writeTo);
-  }
-
-  public int calculateSize() {
-    return toRlp().size();
   }
 
   public static class Builder {

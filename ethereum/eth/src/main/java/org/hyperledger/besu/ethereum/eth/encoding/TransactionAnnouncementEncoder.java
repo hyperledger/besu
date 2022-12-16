@@ -81,7 +81,7 @@ public class TransactionAnnouncementEncoder {
     transactions.forEach(
         transaction -> {
           types.add(transaction.getType());
-          sizes.add(transaction.calculateSize());
+          sizes.add(transaction.getSize());
           hashes.add(transaction.getHash());
         });
 
