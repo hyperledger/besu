@@ -43,8 +43,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RunWith(Parameterized.class)
-public class EIP2124Test {
-  private static final Logger LOG = LoggerFactory.getLogger(EIP2124Test.class);
+public class ForkIdTest {
+  private static final Logger LOG = LoggerFactory.getLogger(ForkIdTest.class);
 
   @Parameters(name = "{index}: {0}")
   public static Collection<Object[]> data() {
@@ -1041,7 +1041,7 @@ public class EIP2124Test {
                 .isEqualTo(peerCheckCase.want));
   }
 
-  public EIP2124Test(
+  public ForkIdTest(
       final String name,
       final ForkIdTestUtil.Network network,
       final long head,
