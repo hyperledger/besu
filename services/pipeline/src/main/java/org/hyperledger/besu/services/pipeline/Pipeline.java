@@ -35,6 +35,11 @@ import io.opentelemetry.api.trace.Tracer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The Pipeline.
+ *
+ * @param <I> the type parameter
+ */
 public class Pipeline<I> {
   private static final Logger LOG = LoggerFactory.getLogger(Pipeline.class);
   private final Pipe<I> inputPipe;
@@ -58,6 +63,16 @@ public class Pipeline<I> {
   private final boolean tracingEnabled;
   private volatile List<Future<?>> futures;
 
+  /**
+   * Instantiates a new Pipeline.
+   *
+   * @param inputPipe the input pipe
+   * @param name the name
+   * @param tracingEnabled the tracing enabled
+   * @param stages the stages
+   * @param pipes the pipes
+   * @param completerStage the completer stage
+   */
   Pipeline(
       final Pipe<I> inputPipe,
       final String name,
