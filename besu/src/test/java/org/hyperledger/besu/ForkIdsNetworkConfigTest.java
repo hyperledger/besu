@@ -47,7 +47,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Enclosed.class)
-public class ForkIdsTest {
+public class ForkIdsNetworkConfigTest {
 
   public static class NotParameterized {
     @Test
