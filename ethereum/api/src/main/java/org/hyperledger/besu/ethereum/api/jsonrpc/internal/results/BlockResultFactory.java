@@ -95,6 +95,11 @@ public class BlockResultFactory {
     return new EngineGetPayloadResult(block.getHeader(), txs);
   }
 
+  public EngineGetPayloadResultV2 enginePayloadTransactionCompleteV2(final Block block) {
+    final EngineGetPayloadResult payload = enginePayloadTransactionComplete(block);
+    return new EngineGetPayloadResultV2(payload, Quantity.create(0));
+  }
+
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
     return transactionHash(blockWithMetadata, false);
   }

@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   private final MergeMiningCoordinator mergeMiningCoordinator;
-  private final BlockResultFactory blockResultFactory;
+  protected final BlockResultFactory blockResultFactory;
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayload.class);
 
   public EngineGetPayload(
@@ -66,21 +66,24 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
     mergeMiningCoordinator.finalizeProposalById(payloadId);
     final Optional<Block> block = mergeContext.get().retrieveBlockById(payloadId);
     if (block.isPresent()) {
-      var proposal = block.get();
-      var proposalHeader = proposal.getHeader();
+      final var proposal = block.get();
+      final var proposalHeader = proposal.getHeader();
       infoLambda(
           LOG,
           "Fetch block proposal by identifier: {}, hash: {}, number: {}, coinbase: {}, transaction count: {}",
-          () -> payloadId.toHexString(),
-          () -> proposalHeader.getHash(),
-          () -> proposalHeader.getNumber(),
-          () -> proposalHeader.getCoinbase(),
+          payloadId::toHexString,
+          proposalHeader::getHash,
+          proposalHeader::getNumber,
+          proposalHeader::getCoinbase,
           () -> proposal.getBody().getTransactions().size());
       debugLambda(LOG, "assembledBlock {}", () -> block.map(Block::toString).get());
-      return new JsonRpcSuccessResponse(
-          request.getRequest().getId(),
-          blockResultFactory.enginePayloadTransactionComplete(block.get()));
+      return createResponse(request, block.get());
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_PAYLOAD);
+  }
+
+  protected JsonRpcResponse createResponse(final JsonRpcRequestContext request, final Block block) {
+    return new JsonRpcSuccessResponse(
+        request.getRequest().getId(), blockResultFactory.enginePayloadTransactionComplete(block));
   }
 }
