@@ -191,7 +191,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
       throws IOException {
     response.setStatusCode(status(jsonRpcResponse).code());
     if (jsonRpcResponse.getType() == JsonRpcResponseType.NONE) {
-      handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INVALID_REQUEST);
+      response.end();
       return;
     }
 
