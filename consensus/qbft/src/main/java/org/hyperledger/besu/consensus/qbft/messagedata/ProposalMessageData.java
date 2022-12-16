@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Proposal message data. */
 public class ProposalMessageData extends AbstractBftMessageData {
 
   private static final int MESSAGE_CODE = QbftV1.PROPOSAL;
@@ -29,15 +30,33 @@ public class ProposalMessageData extends AbstractBftMessageData {
     super(data);
   }
 
+  /**
+   * Create proposal message data from message data.
+   *
+   * @param messageData the message data
+   * @return the proposal message data
+   */
   public static ProposalMessageData fromMessageData(final MessageData messageData) {
     return fromMessageData(
         messageData, MESSAGE_CODE, ProposalMessageData.class, ProposalMessageData::new);
   }
 
+  /**
+   * Decode.
+   *
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the proposal
+   */
   public Proposal decode(final BftExtraDataCodec bftExtraDataCodec) {
     return Proposal.decode(data, bftExtraDataCodec);
   }
 
+  /**
+   * Create proposal message data.
+   *
+   * @param proposal the proposal
+   * @return the proposal message data
+   */
   public static ProposalMessageData create(final Proposal proposal) {
     return new ProposalMessageData(proposal.encode());
   }

@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Clique block hashing. */
 public class CliqueBlockHashing {
   /**
    * Constructs a hash of the block header, suitable for use when creating the proposer seal. The

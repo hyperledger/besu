@@ -23,6 +23,7 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The CodeV1. */
 public class CodeV1 implements Code {
   private final Hash codeHash;
   private final Bytes container;
@@ -30,6 +31,13 @@ public class CodeV1 implements Code {
 
   private final long[] validJumpDestinations;
 
+  /**
+   * Instantiates a new CodeV1.
+   *
+   * @param codeHash the code hash
+   * @param layout the layout
+   * @param validJumpDestinations the valid jump destinations
+   */
   CodeV1(final Hash codeHash, final EOFLayout layout, final long[] validJumpDestinations) {
     this.codeHash = codeHash;
     this.container = layout.getContainer();

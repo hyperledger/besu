@@ -22,10 +22,19 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 
 import java.util.Optional;
 
+/** The Qbft context. */
 public class QbftContext extends BftContext {
 
   private final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration;
 
+  /**
+   * Instantiates a new Qbft context.
+   *
+   * @param validatorProvider the validator provider
+   * @param epochManager the epoch manager
+   * @param blockInterface the block interface
+   * @param pkiBlockCreationConfiguration the pki block creation configuration
+   */
   public QbftContext(
       final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
@@ -35,6 +44,11 @@ public class QbftContext extends BftContext {
     this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
   }
 
+  /**
+   * Gets pki block creation configuration.
+   *
+   * @return the pki block creation configuration
+   */
   public Optional<PkiBlockCreationConfiguration> getPkiBlockCreationConfiguration() {
     return pkiBlockCreationConfiguration;
   }

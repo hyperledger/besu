@@ -18,11 +18,19 @@ import org.hyperledger.besu.datatypes.Address;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Payload attributes. */
 public class PayloadAttributes {
   private final Long timestamp;
   private final Bytes32 prevRandao;
   private final Address suggestedFeeRecipient;
 
+  /**
+   * Instantiates a new Payload attributes.
+   *
+   * @param timestamp the timestamp
+   * @param prevRandao the prev randao
+   * @param suggestedFeeRecipient the suggested fee recipient
+   */
   public PayloadAttributes(
       final Long timestamp, final Bytes32 prevRandao, final Address suggestedFeeRecipient) {
     this.timestamp = timestamp;
@@ -30,14 +38,29 @@ public class PayloadAttributes {
     this.suggestedFeeRecipient = suggestedFeeRecipient;
   }
 
+  /**
+   * Gets timestamp.
+   *
+   * @return the timestamp
+   */
   public Long getTimestamp() {
     return timestamp;
   }
 
+  /**
+   * Gets prev randao.
+   *
+   * @return the prev randao
+   */
   public Bytes32 getPrevRandao() {
     return prevRandao;
   }
 
+  /**
+   * Gets suggested fee recipient.
+   *
+   * @return the suggested fee recipient
+   */
   public Address getSuggestedFeeRecipient() {
     return suggestedFeeRecipient;
   }

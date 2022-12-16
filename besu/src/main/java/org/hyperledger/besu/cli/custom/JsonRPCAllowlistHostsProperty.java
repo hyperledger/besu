@@ -25,10 +25,12 @@ import javax.annotation.Nonnull;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
+/** The Json Rpc allowlist hosts list for CLI option. */
 public class JsonRPCAllowlistHostsProperty extends AbstractList<String> {
 
   private final List<String> hostnamesAllowlist = new ArrayList<>();
 
+  /** Instantiates a new Json rpc allowlist hosts property. */
   public JsonRPCAllowlistHostsProperty() {}
 
   @Override

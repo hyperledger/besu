@@ -33,11 +33,19 @@ import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Message call processor. */
 public class MessageCallProcessor extends AbstractMessageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(MessageCallProcessor.class);
 
   private final PrecompileContractRegistry precompiles;
 
+  /**
+   * Instantiates a new Message call processor.
+   *
+   * @param evm the evm
+   * @param precompiles the precompiles
+   * @param forceCommitAddresses the force commit addresses
+   */
   public MessageCallProcessor(
       final EVM evm,
       final PrecompileContractRegistry precompiles,
@@ -46,6 +54,12 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
     this.precompiles = precompiles;
   }
 
+  /**
+   * Instantiates a new Message call processor.
+   *
+   * @param evm the evm
+   * @param precompiles the precompiles
+   */
   public MessageCallProcessor(final EVM evm, final PrecompileContractRegistry precompiles) {
     super(evm, ImmutableSet.of());
     this.precompiles = precompiles;

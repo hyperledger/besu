@@ -19,6 +19,7 @@ import static java.lang.Float.parseFloat;
 
 import java.util.Objects;
 
+/** The Fraction. */
 public class Fraction {
 
   private final float value;
@@ -27,14 +28,31 @@ public class Fraction {
     this.value = value;
   }
 
+  /**
+   * From percentage to fraction.
+   *
+   * @param percentage the percentage
+   * @return the fraction
+   */
   public static Fraction fromPercentage(final int percentage) {
     return fromFloat((float) percentage / 100.0f);
   }
 
+  /**
+   * From percentage to fraction.
+   *
+   * @param percentage the percentage
+   * @return the fraction
+   */
   public static Fraction fromPercentage(final Percentage percentage) {
     return fromFloat(percentage.getValueAsFloat() / 100.0f);
   }
 
+  /**
+   * To percentage.
+   *
+   * @return the percentage
+   */
   public Percentage toPercentage() {
     return Percentage.fromInt((int) (value * 100.0f));
   }
@@ -52,11 +70,22 @@ public class Fraction {
     return fromFloat(parseFloat(str));
   }
 
+  /**
+   * From float to fraction.
+   *
+   * @param val the val
+   * @return the fraction
+   */
   public static Fraction fromFloat(final float val) {
     checkArgument(val > 0.0f && val <= 1.0f);
     return new Fraction(val);
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public float getValue() {
     return value;
   }

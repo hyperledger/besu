@@ -168,6 +168,11 @@ public interface GasCalculator {
       Account recipient,
       Address contract);
 
+  /**
+   * Gets additional call stipend.
+   *
+   * @return the additional call stipend
+   */
   long getAdditionalCallStipend();
 
   /**
@@ -411,6 +416,12 @@ public interface GasCalculator {
     return false;
   }
 
+  /**
+   * Mod exp gas cost.
+   *
+   * @param input the input
+   * @return the long
+   */
   default long modExpGasCost(final Bytes input) {
     return 0L;
   }

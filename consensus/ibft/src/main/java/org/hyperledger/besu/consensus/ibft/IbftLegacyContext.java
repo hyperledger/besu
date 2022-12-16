@@ -27,6 +27,13 @@ public class IbftLegacyContext implements PoaContext {
   private final EpochManager epochManager;
   private final BlockInterface blockInterface;
 
+  /**
+   * Instantiates a new Ibft legacy context.
+   *
+   * @param validatorProvider the validator provider
+   * @param epochManager the epoch manager
+   * @param blockInterface the block interface
+   */
   public IbftLegacyContext(
       final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
@@ -36,10 +43,20 @@ public class IbftLegacyContext implements PoaContext {
     this.blockInterface = blockInterface;
   }
 
+  /**
+   * Gets validator provider.
+   *
+   * @return the validator provider
+   */
   public ValidatorProvider getValidatorProvider() {
     return validatorProvider;
   }
 
+  /**
+   * Gets epoch manager.
+   *
+   * @return the epoch manager
+   */
   public EpochManager getEpochManager() {
     return epochManager;
   }

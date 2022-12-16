@@ -31,15 +31,31 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.math.BigInteger;
 import java.util.Optional;
 
+/** The Merge protocol schedule. */
 public class MergeProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(1);
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
     return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
@@ -60,6 +76,14 @@ public class MergeProtocolSchedule {
         .createProtocolSchedule();
   }
 
+  /**
+   * Create timestamp schedule.
+   *
+   * @param config the config
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @return the timestamp schedule
+   */
   public static TimestampSchedule createTimestamp(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,

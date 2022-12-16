@@ -24,16 +24,29 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/** The Prepare payload. */
 public class PreparePayload extends QbftPayload {
   private static final int TYPE = QbftV1.PREPARE;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
 
+  /**
+   * Instantiates a new Prepare payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   */
   public PreparePayload(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     this.roundIdentifier = roundIdentifier;
     this.digest = digest;
   }
 
+  /**
+   * Read from rlp input and return prepare payload.
+   *
+   * @param rlpInput the rlp input
+   * @return the prepare payload
+   */
   public static PreparePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
@@ -55,6 +68,11 @@ public class PreparePayload extends QbftPayload {
     return TYPE;
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return digest;
   }

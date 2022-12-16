@@ -36,6 +36,21 @@ import java.util.Optional;
 /** This allows for interoperability with Quorum, but shouldn't be used otherwise. */
 public class Istanbul99ProtocolManager extends EthProtocolManager {
 
+  /**
+   * Instantiates a new Istanbul99 protocol manager.
+   *
+   * @param blockchain the blockchain
+   * @param networkId the network id
+   * @param worldStateArchive the world state archive
+   * @param transactionPool the transaction pool
+   * @param ethereumWireProtocolConfiguration the ethereum wire protocol configuration
+   * @param ethPeers the eth peers
+   * @param ethMessages the eth messages
+   * @param ethContext the eth context
+   * @param peerValidators the peer validators
+   * @param synchronizerConfiguration the synchronizer configuration
+   * @param scheduler the scheduler
+   */
   public Istanbul99ProtocolManager(
       final Blockchain blockchain,
       final BigInteger networkId,

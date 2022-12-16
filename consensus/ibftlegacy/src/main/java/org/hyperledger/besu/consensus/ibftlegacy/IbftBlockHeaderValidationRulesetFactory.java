@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Ibft block header validation ruleset factory. */
 public class IbftBlockHeaderValidationRulesetFactory {
 
   /**

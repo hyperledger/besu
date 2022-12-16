@@ -36,6 +36,11 @@ public class QbftValidatorsValidationRule implements AttachedBlockHeaderValidati
   private final BftValidatorsValidationRule bftValidatorsValidationRule =
       new BftValidatorsValidationRule();
 
+  /**
+   * Instantiates a new Qbft validators validation rule.
+   *
+   * @param extraDataValidatorsAndVoteMustBeEmpty the extra data validators and vote must be empty
+   */
   public QbftValidatorsValidationRule(final boolean extraDataValidatorsAndVoteMustBeEmpty) {
     this.extraDataValidatorsAndVoteMustBeEmpty = extraDataValidatorsAndVoteMustBeEmpty;
   }

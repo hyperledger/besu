@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Transition protocol schedule. */
 public class TransitionProtocolSchedule implements ProtocolSchedule {
   private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
@@ -41,6 +42,14 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   private final MergeContext mergeContext;
   private ProtocolContext protocolContext;
 
+  /**
+   * Instantiates a new Transition protocol schedule.
+   *
+   * @param preMergeProtocolSchedule the pre merge protocol schedule
+   * @param postMergeProtocolSchedule the post merge protocol schedule
+   * @param mergeContext the merge context
+   * @param timestampSchedule the timestamp schedule
+   */
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
@@ -52,14 +61,30 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
   }
 
+  /**
+   * Gets pre merge schedule.
+   *
+   * @return the pre merge schedule
+   */
   public ProtocolSchedule getPreMergeSchedule() {
     return transitionUtils.getPreMergeObject();
   }
 
+  /**
+   * Gets post merge schedule.
+   *
+   * @return the post merge schedule
+   */
   public ProtocolSchedule getPostMergeSchedule() {
     return transitionUtils.getPostMergeObject();
   }
 
+  /**
+   * Gets by block header.
+   *
+   * @param blockHeader the block header
+   * @return the by block header
+   */
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
@@ -112,6 +137,12 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
   }
 
+  /**
+   * Gets by block number.
+   *
+   * @param number the number
+   * @return the by block number
+   */
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
 
@@ -126,23 +157,44 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
                     protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
   }
 
+  /**
+   * Stream milestone blocks stream.
+   *
+   * @return the stream
+   */
   @Override
   public Stream<Long> streamMilestoneBlocks() {
     return transitionUtils.dispatchFunctionAccordingToMergeState(
         ProtocolSchedule::streamMilestoneBlocks);
   }
 
+  /**
+   * Gets chain id.
+   *
+   * @return the chain id
+   */
   @Override
   public Optional<BigInteger> getChainId() {
     return transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::getChainId);
   }
 
+  /**
+   * Put milestone.
+   *
+   * @param blockOrTimestamp the block or timestamp
+   * @param protocolSpec the protocol spec
+   */
   @Override
   public void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec) {
     throw new UnsupportedOperationException(
         "Should not use TransitionProtocolSchedule wrapper class to create milestones");
   }
 
+  /**
+   * List milestones.
+   *
+   * @return the string
+   */
   @Override
   public String listMilestones() {
     String blockNumberMilestones =
@@ -151,6 +203,11 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     return blockNumberMilestones + ";" + timestampSchedule.listMilestones();
   }
 
+  /**
+   * Sets transaction filter.
+   *
+   * @param transactionFilter the transaction filter
+   */
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     timestampSchedule.setTransactionFilter(transactionFilter);
@@ -158,6 +215,11 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         protocolSchedule -> protocolSchedule.setTransactionFilter(transactionFilter));
   }
 
+  /**
+   * Sets public world state archive for privacy block processor.
+   *
+   * @param publicWorldStateArchive the public world state archive
+   */
   @Override
   public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
       final WorldStateArchive publicWorldStateArchive) {
@@ -168,6 +230,11 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
                 publicWorldStateArchive));
   }
 
+  /**
+   * Sets protocol context.
+   *
+   * @param protocolContext the protocol context
+   */
   public void setProtocolContext(final ProtocolContext protocolContext) {
     this.protocolContext = protocolContext;
   }

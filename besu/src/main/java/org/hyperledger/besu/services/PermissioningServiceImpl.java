@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
+/** The Permissioning service implementation. */
 public class PermissioningServiceImpl implements PermissioningService {
 
   private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =
@@ -34,6 +35,11 @@ public class PermissioningServiceImpl implements PermissioningService {
     connectionPermissioningProviders.add(provider);
   }
 
+  /**
+   * Gets connection permissioning providers.
+   *
+   * @return the connection permissioning providers
+   */
   public List<NodeConnectionPermissioningProvider> getConnectionPermissioningProviders() {
     return connectionPermissioningProviders;
   }
@@ -47,6 +53,11 @@ public class PermissioningServiceImpl implements PermissioningService {
     messagePermissioningProviders.add(provider);
   }
 
+  /**
+   * Gets message permissioning providers.
+   *
+   * @return the message permissioning providers
+   */
   public List<NodeMessagePermissioningProvider> getMessagePermissioningProviders() {
     return messagePermissioningProviders;
   }

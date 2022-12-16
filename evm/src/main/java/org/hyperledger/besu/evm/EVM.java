@@ -60,11 +60,14 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Evm. */
 public class EVM {
   private static final Logger LOG = LoggerFactory.getLogger(EVM.class);
 
+  /** The constant OVERFLOW_RESPONSE. */
   protected static final OperationResult OVERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+  /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
@@ -77,6 +80,14 @@ public class EVM {
   // Optimized operation flags
   private final boolean enableShanghai;
 
+  /**
+   * Instantiates a new Evm.
+   *
+   * @param operations the operations
+   * @param gasCalculator the gas calculator
+   * @param evmConfiguration the evm configuration
+   * @param evmSpecVersion the evm spec version
+   */
   public EVM(
       final OperationRegistry operations,
       final GasCalculator gasCalculator,
@@ -91,14 +102,30 @@ public class EVM {
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
   }
 
+  /**
+   * Gets gas calculator.
+   *
+   * @return the gas calculator
+   */
   public GasCalculator getGasCalculator() {
     return gasCalculator;
   }
 
+  /**
+   * Gets max eof version.
+   *
+   * @return the max eof version
+   */
   public int getMaxEOFVersion() {
     return evmSpecVersion.maxEofVersion;
   }
 
+  /**
+   * Run to halt.
+   *
+   * @param frame the frame
+   * @param tracing the tracing
+   */
   // Note to maintainers: lots of Java idioms and OO principals are being set aside in the
   // name of performance. This is one of the hottest sections of code.
   //
@@ -307,6 +334,13 @@ public class EVM {
     }
   }
 
+  /**
+   * Operation at offset. Visible for testing.
+   *
+   * @param code the code
+   * @param offset the offset
+   * @return the operation
+   */
   @VisibleForTesting
   public Operation operationAtOffset(final Code code, final int offset) {
     final Bytes bytecode = code.getCodeBytes();
@@ -320,6 +354,13 @@ public class EVM {
     return Objects.requireNonNullElseGet(operation, () -> new InvalidOperation(opcode, null));
   }
 
+  /**
+   * Gets code.
+   *
+   * @param codeHash the code hash
+   * @param codeBytes the code bytes
+   * @return the code
+   */
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {
     Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {

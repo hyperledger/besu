@@ -25,19 +25,41 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import java.util.Collection;
 import java.util.Comparator;
 
+/** The Clique helpers. */
 public class CliqueHelpers {
 
+  /**
+   * Gets proposer of block.
+   *
+   * @param header the header
+   * @return the proposer of block address
+   */
   public static Address getProposerOfBlock(final BlockHeader header) {
     final CliqueExtraData extraData = CliqueExtraData.decode(header);
     return extraData.getProposerAddress();
   }
 
+  /**
+   * Gets proposer for block after.
+   *
+   * @param parent the parent
+   * @param validatorProvider the validator provider
+   * @return the proposer for block after
+   */
   static Address getProposerForBlockAfter(
       final BlockHeader parent, final ValidatorProvider validatorProvider) {
     final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(validatorProvider);
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 
+  /**
+   * Is signer.
+   *
+   * @param candidate the candidate
+   * @param protocolContext the protocol context
+   * @param parent the parent
+   * @return the boolean
+   */
   static boolean isSigner(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
     final Collection<Address> validators =
@@ -48,6 +70,14 @@ public class CliqueHelpers {
     return validators.contains(candidate);
   }
 
+  /**
+   * Address is allowed to produce next block.
+   *
+   * @param candidate the candidate
+   * @param protocolContext the protocol context
+   * @param parent the parent
+   * @return the boolean
+   */
   public static boolean addressIsAllowedToProduceNextBlock(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
     final ValidatorProvider validatorProvider =
@@ -93,6 +123,12 @@ public class CliqueHelpers {
     return signerLimit - 1;
   }
 
+  /**
+   * Install clique block choice rule.
+   *
+   * @param blockchain the blockchain
+   * @param cliqueContext the clique context
+   */
   public static void installCliqueBlockChoiceRule(
       final Blockchain blockchain, final CliqueContext cliqueContext) {
     blockchain.setBlockChoiceRule(

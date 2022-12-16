@@ -19,8 +19,15 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
+/** The interface Contract validation rule. */
 @FunctionalInterface
 public interface ContractValidationRule {
 
+  /**
+   * Validate.
+   *
+   * @param frame the frame
+   * @return the optional halt reason
+   */
   Optional<ExceptionalHaltReason> validate(MessageFrame frame);
 }

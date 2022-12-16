@@ -19,10 +19,12 @@ import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The BLS12MapFp2ToG2 precompiled contract. */
 public class BLS12MapFp2ToG2PrecompiledContract extends AbstractBLS12PrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 128;
 
+  /** Instantiates a new BLS12MapFp2ToG2 precompiled contract. */
   public BLS12MapFp2ToG2PrecompiledContract() {
     super(
         "BLS12_MAP_FIELD_TO_CURVE",

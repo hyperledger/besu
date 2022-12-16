@@ -23,8 +23,14 @@ import javax.annotation.Nonnull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The RIPEMD160 precompiled contract. */
 public class RIPEMD160PrecompiledContract extends AbstractPrecompiledContract {
 
+  /**
+   * Instantiates a new Ripemd 160 precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public RIPEMD160PrecompiledContract(final GasCalculator gasCalculator) {
     super("RIPEMD160", gasCalculator);
   }

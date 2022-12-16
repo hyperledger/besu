@@ -18,12 +18,20 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+/** The Future round proposal message validator. */
 public class FutureRoundProposalMessageValidator {
 
   private final MessageValidatorFactory messageValidatorFactory;
   private final long chainHeight;
   private final BlockHeader parentHeader;
 
+  /**
+   * Instantiates a new Future round proposal message validator.
+   *
+   * @param messageValidatorFactory the message validator factory
+   * @param chainHeight the chain height
+   * @param parentHeader the parent header
+   */
   public FutureRoundProposalMessageValidator(
       final MessageValidatorFactory messageValidatorFactory,
       final long chainHeight,
@@ -33,6 +41,12 @@ public class FutureRoundProposalMessageValidator {
     this.parentHeader = parentHeader;
   }
 
+  /**
+   * Validate proposal message.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateProposalMessage(final Proposal msg) {
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(chainHeight, msg.getRoundIdentifier().getRoundNumber());

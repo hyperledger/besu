@@ -18,14 +18,23 @@ package org.hyperledger.besu.evm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The enum Evm spec version. */
 public enum EvmSpecVersion {
+  /** Frontier evm spec version. */
   FRONTIER(0, true),
+  /** Homestead evm spec version. */
   HOMESTEAD(0, true),
+  /** Byzantium evm spec version. */
   BYZANTIUM(0, true),
+  /** Constantinople evm spec version. */
   CONSTANTINOPLE(0, true),
+  /** Istanbul evm spec version. */
   ISTANBUL(0, true),
+  /** London evm spec version. */
   LONDON(0, true),
+  /** Paris evm spec version. */
   PARIS(0, true),
+  /** Shanghai evm spec version. */
   SHANGHAI(1, false),
 
   /** Transient fork, will be removed */
@@ -33,9 +42,12 @@ public enum EvmSpecVersion {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
+  /** The Spec finalized. */
   final boolean specFinalized;
+  /** The Max eof version. */
   final int maxEofVersion;
 
+  /** The Version warned. */
   boolean versionWarned = false;
 
   EvmSpecVersion(final int maxEofVersion, final boolean specFinalized) {
@@ -43,10 +55,16 @@ public enum EvmSpecVersion {
     this.specFinalized = specFinalized;
   }
 
+  /**
+   * Gets max eof version.
+   *
+   * @return the max eof version
+   */
   public int getMaxEofVersion() {
     return maxEofVersion;
   }
 
+  /** Maybe warn version. */
   @SuppressWarnings("AlreadyChecked") // false positive
   public void maybeWarnVersion() {
     if (versionWarned) {

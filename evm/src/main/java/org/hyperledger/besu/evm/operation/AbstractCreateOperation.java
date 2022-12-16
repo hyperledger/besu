@@ -31,11 +31,23 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Abstract create operation. */
 public abstract class AbstractCreateOperation extends AbstractOperation {
 
+  /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  /**
+   * Instantiates a new Abstract create operation.
+   *
+   * @param opcode the opcode
+   * @param name the name
+   * @param stackItemsConsumed the stack items consumed
+   * @param stackItemsProduced the stack items produced
+   * @param opSize the op size
+   * @param gasCalculator the gas calculator
+   */
   protected AbstractCreateOperation(
       final int opcode,
       final String name,
@@ -90,8 +102,20 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     return new OperationResult(cost, null);
   }
 
+  /**
+   * Cost operation.
+   *
+   * @param frame the frame
+   * @return the long
+   */
   protected abstract long cost(final MessageFrame frame);
 
+  /**
+   * Target contract address.
+   *
+   * @param frame the frame
+   * @return the address
+   */
   protected abstract Address targetContractAddress(MessageFrame frame);
 
   private void fail(final MessageFrame frame) {

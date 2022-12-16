@@ -20,21 +20,38 @@ import java.util.OptionalLong;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
+/** The Keccak256 config options. */
 public class Keccak256ConfigOptions {
 
+  /** The constant DEFAULT. */
   public static final Keccak256ConfigOptions DEFAULT =
       new Keccak256ConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private final ObjectNode keccak256ConfigRoot;
 
+  /**
+   * Instantiates a new Keccak256 config options.
+   *
+   * @param keccak256ConfigRoot the keccak 256 config root
+   */
   Keccak256ConfigOptions(final ObjectNode keccak256ConfigRoot) {
     this.keccak256ConfigRoot = keccak256ConfigRoot;
   }
 
+  /**
+   * Gets fixed difficulty.
+   *
+   * @return the fixed difficulty
+   */
   public OptionalLong getFixedDifficulty() {
     return JsonUtil.getLong(keccak256ConfigRoot, "fixeddifficulty");
   }
 
+  /**
+   * As map.
+   *
+   * @return the map
+   */
   Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getFixedDifficulty().ifPresent(l -> builder.put("fixeddifficulty", l));

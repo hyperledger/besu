@@ -36,6 +36,7 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The SECP256K1 implementation. */
 /*
  * Adapted from the BitcoinJ ECKey (Apache 2 License) implementation:
  * https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/org/bitcoinj/core/ECKey.java
@@ -50,8 +51,10 @@ public class SECP256K1 extends AbstractSECP256 {
 
   private boolean useNative;
 
+  /** The constant CURVE_NAME. */
   public static final String CURVE_NAME = "secp256k1";
 
+  /** Instantiates a new SECP256K1. */
   public SECP256K1() {
     super(CURVE_NAME, SecP256K1Curve.q);
 

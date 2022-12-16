@@ -16,11 +16,19 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 
 import org.hyperledger.besu.datatypes.Hash;
 
+/** The Ibft helpers utility class. */
 public class IbftHelpers {
 
+  /** The constant EXPECTED_MIX_HASH. */
   public static final Hash EXPECTED_MIX_HASH =
       Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365");
 
+  /**
+   * Calculate required validator quorum.
+   *
+   * @param validatorCount the validator count
+   * @return the int
+   */
   public static int calculateRequiredValidatorQuorum(final int validatorCount) {
     final int F = (validatorCount - 1) / 3;
     return (2 * F) + 1;

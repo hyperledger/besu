@@ -24,8 +24,10 @@ import org.hyperledger.besu.evm.operation.PushOperation;
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The CodeV0. */
 public class CodeV0 implements Code {
 
+  /** The constant EMPTY_CODE. */
   public static final CodeV0 EMPTY_CODE = new CodeV0(Bytes.EMPTY, Hash.EMPTY);
 
   /** The bytes representing the code. */
@@ -118,6 +120,11 @@ public class CodeV0 implements Code {
     return true;
   }
 
+  /**
+   * Calculate jump destination.
+   *
+   * @return the long [ ]
+   */
   long[] calculateJumpDests() {
     final int size = getSize();
     final long[] bitmap = new long[(size >> 6) + 1];

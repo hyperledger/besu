@@ -26,7 +26,7 @@ import java.util.Optional;
 
 /**
  * A mutable {@link BftConfigOptions} that is used for building config for transitions in the {@link
- * ForksSchedule}.
+ * ForksSchedule}*.
  */
 public class MutableBftConfigOptions implements BftConfigOptions {
   private long epochLength;
@@ -40,6 +40,11 @@ public class MutableBftConfigOptions implements BftConfigOptions {
   private Optional<Address> miningBeneficiary;
   private BigInteger blockRewardWei;
 
+  /**
+   * Instantiates a new Mutable bft config options.
+   *
+   * @param bftConfigOptions the bft config options
+   */
   public MutableBftConfigOptions(final BftConfigOptions bftConfigOptions) {
     this.epochLength = bftConfigOptions.getEpochLength();
     this.blockPeriodSeconds = bftConfigOptions.getBlockPeriodSeconds();
@@ -108,43 +113,93 @@ public class MutableBftConfigOptions implements BftConfigOptions {
     return Map.of();
   }
 
+  /**
+   * Sets epoch length.
+   *
+   * @param epochLength the epoch length
+   */
   public void setEpochLength(final long epochLength) {
     this.epochLength = epochLength;
   }
 
+  /**
+   * Sets block period seconds.
+   *
+   * @param blockPeriodSeconds the block period seconds
+   */
   public void setBlockPeriodSeconds(final int blockPeriodSeconds) {
     this.blockPeriodSeconds = blockPeriodSeconds;
   }
 
+  /**
+   * Sets request timeout seconds.
+   *
+   * @param requestTimeoutSeconds the request timeout seconds
+   */
   public void setRequestTimeoutSeconds(final int requestTimeoutSeconds) {
     this.requestTimeoutSeconds = requestTimeoutSeconds;
   }
 
+  /**
+   * Sets gossiped history limit.
+   *
+   * @param gossipedHistoryLimit the gossiped history limit
+   */
   public void setGossipedHistoryLimit(final int gossipedHistoryLimit) {
     this.gossipedHistoryLimit = gossipedHistoryLimit;
   }
 
+  /**
+   * Sets message queue limit.
+   *
+   * @param messageQueueLimit the message queue limit
+   */
   public void setMessageQueueLimit(final int messageQueueLimit) {
     this.messageQueueLimit = messageQueueLimit;
   }
 
+  /**
+   * Sets duplicate message limit.
+   *
+   * @param duplicateMessageLimit the duplicate message limit
+   */
   public void setDuplicateMessageLimit(final int duplicateMessageLimit) {
     this.duplicateMessageLimit = duplicateMessageLimit;
   }
 
+  /**
+   * Sets future messages limit.
+   *
+   * @param futureMessagesLimit the future messages limit
+   */
   public void setFutureMessagesLimit(final int futureMessagesLimit) {
     this.futureMessagesLimit = futureMessagesLimit;
   }
 
+  /**
+   * Sets future message max distance.
+   *
+   * @param futureMessageMaxDistance the future message max distance
+   */
   public void setFutureMessageMaxDistance(final int futureMessageMaxDistance) {
     this.futureMessageMaxDistance = futureMessageMaxDistance;
   }
 
+  /**
+   * Sets mining beneficiary.
+   *
+   * @param miningBeneficiary the mining beneficiary
+   */
   public void setMiningBeneficiary(final Optional<Address> miningBeneficiary) {
     checkNotNull(miningBeneficiary);
     this.miningBeneficiary = miningBeneficiary;
   }
 
+  /**
+   * Sets block reward wei.
+   *
+   * @param blockRewardWei the block reward wei
+   */
   public void setBlockRewardWei(final BigInteger blockRewardWei) {
     this.blockRewardWei = blockRewardWei;
   }

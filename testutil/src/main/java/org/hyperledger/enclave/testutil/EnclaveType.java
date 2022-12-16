@@ -18,11 +18,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** The enum Enclave type. */
 public enum EnclaveType {
+  /** Orion enclave type. */
   ORION,
+  /** Tessera enclave type. */
   TESSERA,
+  /** Noop enclave type. */
   NOOP;
 
+  /**
+   * Values for tests list.
+   *
+   * @return the list
+   */
   public static List<EnclaveType> valuesForTests() {
     return Arrays.stream(values())
         .filter(enclaveType -> enclaveType != NOOP)

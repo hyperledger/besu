@@ -24,20 +24,42 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Commit payload message. */
 public class Commit extends BftMessage<CommitPayload> {
 
+  /**
+   * Instantiates a new Commit.
+   *
+   * @param payload the payload
+   */
   public Commit(final SignedData<CommitPayload> payload) {
     super(payload);
   }
 
+  /**
+   * Gets commit seal.
+   *
+   * @return the commit seal
+   */
   public SECPSignature getCommitSeal() {
     return getPayload().getCommitSeal();
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return getPayload().getDigest();
   }
 
+  /**
+   * Decode.
+   *
+   * @param data the data
+   * @return the commit
+   */
   public static Commit decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
 

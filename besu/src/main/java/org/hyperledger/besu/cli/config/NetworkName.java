@@ -19,19 +19,33 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
+/** The enum Network name. */
 public enum NetworkName {
+  /** Mainnet network name. */
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
+  /** Rinkeby network name. */
   RINKEBY("/rinkeby.json", BigInteger.valueOf(4)),
+  /** Ropsten network name. */
   ROPSTEN("/ropsten.json", BigInteger.valueOf(3)),
+  /** Sepolia network name. */
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
+  /** Goerli network name. */
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
+  /** Shandong network name. */
   SHANDONG("/shandong.json", BigInteger.valueOf(1337903)),
+  /** Kiln network name. */
   KILN("/kiln.json", BigInteger.valueOf(1337802), false),
+  /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
+  /** Classic network name. */
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
+  /** Kotti network name. */
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
+  /** Mordor network name. */
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
+  /** Ecip 1049 dev network name. */
   ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021)),
+  /** Astor network name. */
   ASTOR("/astor.json", BigInteger.valueOf(212));
 
   private final String genesisFile;
@@ -64,26 +78,56 @@ public enum NetworkName {
     }
   }
 
+  /**
+   * Gets genesis file.
+   *
+   * @return the genesis file
+   */
   public String getGenesisFile() {
     return genesisFile;
   }
 
+  /**
+   * Gets network id.
+   *
+   * @return the network id
+   */
   public BigInteger getNetworkId() {
     return networkId;
   }
 
+  /**
+   * Can fast sync boolean.
+   *
+   * @return the boolean
+   */
   public boolean canFastSync() {
     return canFastSync;
   }
 
+  /**
+   * Normalize string.
+   *
+   * @return the string
+   */
   public String normalize() {
     return StringUtils.capitalize(name().toLowerCase());
   }
 
+  /**
+   * Is deprecated boolean.
+   *
+   * @return the boolean
+   */
   public boolean isDeprecated() {
     return deprecationDate != null;
   }
 
+  /**
+   * Gets deprecation date.
+   *
+   * @return the deprecation date
+   */
   public Optional<String> getDeprecationDate() {
     return Optional.ofNullable(deprecationDate);
   }

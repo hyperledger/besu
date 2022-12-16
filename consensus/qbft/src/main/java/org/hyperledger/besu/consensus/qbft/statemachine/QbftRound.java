@@ -53,20 +53,40 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Qbft round. */
 public class QbftRound {
 
   private static final Logger LOG = LoggerFactory.getLogger(QbftRound.class);
 
   private final Subscribers<MinedBlockObserver> observers;
+  /** The Round state. */
   protected final RoundState roundState;
+  /** The Block creator. */
   protected final BlockCreator blockCreator;
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+
   private final BlockImporter blockImporter;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
+  /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Qbft round.
+   *
+   * @param roundState the round state
+   * @param blockCreator the block creator
+   * @param protocolContext the protocol context
+   * @param blockImporter the block importer
+   * @param observers the observers
+   * @param nodeKey the node key
+   * @param messageFactory the message factory
+   * @param transmitter the transmitter
+   * @param roundTimer the round timer
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public QbftRound(
       final RoundState roundState,
       final BlockCreator blockCreator,
@@ -91,10 +111,20 @@ public class QbftRound {
     roundTimer.startTimer(getRoundIdentifier());
   }
 
+  /**
+   * Gets round identifier.
+   *
+   * @return the round identifier
+   */
   public ConsensusRoundIdentifier getRoundIdentifier() {
     return roundState.getRoundIdentifier();
   }
 
+  /**
+   * Create and send proposal message.
+   *
+   * @param headerTimeStampSeconds the header time stamp seconds
+   */
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
@@ -103,6 +133,12 @@ public class QbftRound {
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
+  /**
+   * Start round with.
+   *
+   * @param roundChangeArtifacts the round change artifacts
+   * @param headerTimestamp the header timestamp
+   */
   public void startRoundWith(
       final RoundChangeArtifacts roundChangeArtifacts, final long headerTimestamp) {
     final Optional<PreparedCertificate> bestPreparedCertificate =
@@ -124,6 +160,13 @@ public class QbftRound {
         bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
   }
 
+  /**
+   * Update state with proposal and transmit.
+   *
+   * @param block the block
+   * @param roundChanges the round changes
+   * @param prepares the prepares
+   */
   protected void updateStateWithProposalAndTransmit(
       final Block block,
       final List<SignedData<RoundChangePayload>> roundChanges,
@@ -145,6 +188,11 @@ public class QbftRound {
     sendPrepare(block);
   }
 
+  /**
+   * Handle proposal message.
+   *
+   * @param msg the msg
+   */
   public void handleProposalMessage(final Proposal msg) {
     LOG.debug(
         "Received a proposal message. round={}. author={}",
@@ -169,6 +217,11 @@ public class QbftRound {
     }
   }
 
+  /**
+   * Handle prepare message.
+   *
+   * @param msg the msg
+   */
   public void handlePrepareMessage(final Prepare msg) {
     LOG.debug(
         "Received a prepare message. round={}. author={}",
@@ -177,6 +230,11 @@ public class QbftRound {
     peerIsPrepared(msg);
   }
 
+  /**
+   * Handle commit message.
+   *
+   * @param msg the msg
+   */
   public void handleCommitMessage(final Commit msg) {
     LOG.debug(
         "Received a commit message. round={}. author={}",
@@ -185,6 +243,11 @@ public class QbftRound {
     peerIsCommitted(msg);
   }
 
+  /**
+   * Construct prepared certificate.
+   *
+   * @return the optional PreparedCertificate
+   */
   public Optional<PreparedCertificate> constructPreparedCertificate() {
     return roundState.constructPreparedCertificate();
   }
