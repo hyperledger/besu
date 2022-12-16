@@ -63,6 +63,7 @@ import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The RocksDb columnar key value storage. */
 public class RocksDBColumnarKeyValueStorage
     implements SegmentedKeyValueStorage<RocksDbSegmentIdentifier> {
 
@@ -87,6 +88,15 @@ public class RocksDBColumnarKeyValueStorage
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
 
+  /**
+   * Instantiates a new RocksDb columnar key value storage.
+   *
+   * @param configuration the configuration
+   * @param segments the segments
+   * @param metricsSystem the metrics system
+   * @param rocksDBMetricsFactory the RocksDb metrics factory
+   * @throws StorageException the storage exception
+   */
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,
@@ -212,6 +222,13 @@ public class RocksDBColumnarKeyValueStorage
     }
   }
 
+  /**
+   * Take snapshot RocksDb columnar key value snapshot.
+   *
+   * @param segment the segment
+   * @return the RocksDb columnar key value snapshot
+   * @throws StorageException the storage exception
+   */
   public RocksDBColumnarKeyValueSnapshot takeSnapshot(final RocksDbSegmentIdentifier segment)
       throws StorageException {
     throwIfClosed();
@@ -307,6 +324,12 @@ public class RocksDBColumnarKeyValueStorage
     private final org.rocksdb.Transaction innerTx;
     private final WriteOptions options;
 
+    /**
+     * Instantiates a new RocksDb transaction.
+     *
+     * @param innerTx the inner tx
+     * @param options the write options
+     */
     RocksDbTransaction(final org.rocksdb.Transaction innerTx, final WriteOptions options) {
       this.innerTx = innerTx;
       this.options = options;

@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
+/** The Rocks db metrics. */
 public class RocksDBMetrics {
 
   private final OperationTimer readLatency;
@@ -25,6 +26,15 @@ public class RocksDBMetrics {
   private final OperationTimer commitLatency;
   private final Counter rollbackCount;
 
+  /**
+   * Instantiates a new RocksDb metrics.
+   *
+   * @param readLatency the read latency
+   * @param removeLatency the remove latency
+   * @param writeLatency the write latency
+   * @param commitLatency the commit latency
+   * @param rollbackCount the rollback count
+   */
   public RocksDBMetrics(
       final OperationTimer readLatency,
       final OperationTimer removeLatency,
@@ -38,22 +48,47 @@ public class RocksDBMetrics {
     this.rollbackCount = rollbackCount;
   }
 
+  /**
+   * Gets read latency.
+   *
+   * @return the read latency
+   */
   public OperationTimer getReadLatency() {
     return readLatency;
   }
 
+  /**
+   * Gets remove latency.
+   *
+   * @return the remove latency
+   */
   public OperationTimer getRemoveLatency() {
     return removeLatency;
   }
 
+  /**
+   * Gets write latency.
+   *
+   * @return the write latency
+   */
   public OperationTimer getWriteLatency() {
     return writeLatency;
   }
 
+  /**
+   * Gets commit latency.
+   *
+   * @return the commit latency
+   */
   public OperationTimer getCommitLatency() {
     return commitLatency;
   }
 
+  /**
+   * Gets rollback count.
+   *
+   * @return the rollback count
+   */
   public Counter getRollbackCount() {
     return rollbackCount;
   }
