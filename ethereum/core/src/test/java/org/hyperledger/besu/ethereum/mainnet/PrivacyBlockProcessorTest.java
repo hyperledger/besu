@@ -154,7 +154,7 @@ public class PrivacyBlockProcessorTest {
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(firstBlock));
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(firstBlock.getHeader()));
     final ProtocolSpec protocolSpec = mockProtocolSpec();
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(publicWorldStateArchive.getMutable(any(), any()))
         .thenReturn(Optional.of(mutableWorldState));
     final MutableWorldState mockPrivateStateArchive = mockPrivateStateArchive();

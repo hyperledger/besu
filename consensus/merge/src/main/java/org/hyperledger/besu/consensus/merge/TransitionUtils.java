@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.merge;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  *
  * @param <SwitchingObject> the type parameter
  */
-public abstract class TransitionUtils<SwitchingObject> {
+public class TransitionUtils<SwitchingObject> {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionUtils.class);
 
   /** The Merge context. */
@@ -40,17 +40,6 @@ public abstract class TransitionUtils<SwitchingObject> {
 
   private final SwitchingObject preMergeObject;
   private final SwitchingObject postMergeObject;
-
-  /**
-   * Instantiates a new Transition utils.
-   *
-   * @param preMergeObject the pre merge object
-   * @param postMergeObject the post merge object
-   */
-  public TransitionUtils(
-      final SwitchingObject preMergeObject, final SwitchingObject postMergeObject) {
-    this(preMergeObject, postMergeObject, PostMergeContext.get());
-  }
 
   /**
    * Instantiates a new Transition utils.
@@ -115,7 +104,7 @@ public abstract class TransitionUtils<SwitchingObject> {
    * @return the boolean
    */
   public static boolean isTerminalProofOfWorkBlock(
-      final BlockHeader header, final ProtocolContext context) {
+      final ProcessableBlockHeader header, final ProtocolContext context) {
 
     Difficulty headerDifficulty =
         Optional.ofNullable(header.getDifficulty()).orElse(Difficulty.ZERO);

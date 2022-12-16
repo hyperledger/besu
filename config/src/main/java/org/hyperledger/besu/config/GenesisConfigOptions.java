@@ -241,6 +241,10 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getMergeNetSplitBlockNumber();
 
+  OptionalLong getShanghaiTime();
+
+  OptionalLong getCancunTime();
+
   /**
    * Gets shandong block number.
    *
