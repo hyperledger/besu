@@ -37,9 +37,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   private static final int MAX_OMMERS = 2;
 
   private static final int MAX_GENERATION = 6;
-  protected final ProtocolSchedule protocolSchedule;
+  protected final HeaderBasedProtocolSchedule protocolSchedule;
 
-  public MainnetBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
+  public MainnetBlockBodyValidator(final HeaderBasedProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -223,7 +223,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final BlockHeader current,
       final BlockHeader ommer,
       final HeaderValidationMode ommerValidationMode) {
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(ommer.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(ommer);
     if (!protocolSpec
         .getOmmerHeaderValidator()
         .validateHeader(ommer, context, ommerValidationMode)) {

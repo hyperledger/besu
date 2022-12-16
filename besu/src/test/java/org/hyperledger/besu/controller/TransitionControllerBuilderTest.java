@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -66,6 +67,7 @@ public class TransitionControllerBuilderTest {
 
   @Mock ProtocolSchedule preMergeProtocolSchedule;
   @Mock ProtocolSchedule postMergeProtocolSchedule;
+  @Mock TimestampSchedule timestampSchedule;
   @Mock ProtocolContext protocolContext;
   @Mock MutableBlockchain mockBlockchain;
   @Mock TransactionPool transactionPool;
@@ -86,7 +88,11 @@ public class TransitionControllerBuilderTest {
     transitionProtocolSchedule =
         spy(
             new TransitionProtocolSchedule(
-                preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
+                preMergeProtocolSchedule,
+                postMergeProtocolSchedule,
+                mergeContext,
+                timestampSchedule));
+    transitionProtocolSchedule.setProtocolContext(protocolContext);
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
     postMergeBuilder.storageProvider(storageProvider);
     when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
@@ -126,7 +132,7 @@ public class TransitionControllerBuilderTest {
     when(mergeContext.isPostMerge()).thenReturn(Boolean.FALSE);
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
     when(preMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(preMergeProtocolSpec);
-    assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
+    assertThat(transitionProtocolSchedule.getByBlockHeader(mockBlock))
         .isEqualTo(preMergeProtocolSpec);
   }
 
@@ -136,7 +142,7 @@ public class TransitionControllerBuilderTest {
     var postMergeProtocolSpec = mock(ProtocolSpec.class);
     when(mergeContext.getFinalized()).thenReturn(Optional.of(mockBlock));
     when(postMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(postMergeProtocolSpec);
-    assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
+    assertThat(transitionProtocolSchedule.getByBlockHeader(mockBlock))
         .isEqualTo(postMergeProtocolSpec);
   }
 
@@ -159,7 +165,7 @@ public class TransitionControllerBuilderTest {
         .thenReturn(Optional.of(Difficulty.of(1335L)));
 
     when(preMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(preMergeProtocolSpec);
-    assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
+    assertThat(transitionProtocolSchedule.getByBlockHeader(mockBlock))
         .isEqualTo(preMergeProtocolSpec);
   }
 
@@ -182,7 +188,7 @@ public class TransitionControllerBuilderTest {
         .thenReturn(Optional.of(Difficulty.of(1337L)));
 
     when(postMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(postMergeProtocolSpec);
-    assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
+    assertThat(transitionProtocolSchedule.getByBlockHeader(mockBlock))
         .isEqualTo(postMergeProtocolSpec);
   }
 
