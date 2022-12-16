@@ -37,11 +37,23 @@ public class RoundChangePayloadValidator {
   private final Collection<Address> validators;
   private final long chainHeight;
 
+  /**
+   * Instantiates a new Round change payload validator.
+   *
+   * @param validators the validators
+   * @param chainHeight the chain height
+   */
   public RoundChangePayloadValidator(final Collection<Address> validators, final long chainHeight) {
     this.validators = validators;
     this.chainHeight = chainHeight;
   }
 
+  /**
+   * Validate.
+   *
+   * @param signedPayload the signed payload
+   * @return the boolean
+   */
   public boolean validate(final SignedData<RoundChangePayload> signedPayload) {
 
     if (!validators.contains(signedPayload.getAuthor())) {

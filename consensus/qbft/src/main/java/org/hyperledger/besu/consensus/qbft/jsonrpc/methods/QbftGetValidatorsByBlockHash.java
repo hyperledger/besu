@@ -31,12 +31,19 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Qbft get validators by block hash. */
 public class QbftGetValidatorsByBlockHash implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(QbftGetValidatorsByBlockHash.class);
 
   private final Blockchain blockchain;
   private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Qbft get validators by block hash.
+   *
+   * @param blockchain the blockchain
+   * @param validatorProvider the validator provider
+   */
   public QbftGetValidatorsByBlockHash(
       final Blockchain blockchain, final ValidatorProvider validatorProvider) {
     this.blockchain = blockchain;
