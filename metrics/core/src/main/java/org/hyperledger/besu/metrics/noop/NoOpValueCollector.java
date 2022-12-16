@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 
+/** The NoOp value collector. */
 public class NoOpValueCollector implements LabelledGauge {
   private final List<String> labelValuesCreated = new ArrayList<>();
 
