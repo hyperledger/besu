@@ -332,6 +332,7 @@ public class BlockHeader extends SealableBlockHeader
         blockHeaderFunctions);
   }
 
+  @Override
   public String toLogString() {
     return getNumber() + " (" + getHash() + ")";
   }

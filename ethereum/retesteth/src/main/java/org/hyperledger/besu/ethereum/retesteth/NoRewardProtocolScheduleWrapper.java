@@ -93,6 +93,16 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
+  public void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec) {
+    delegate.putMilestone(blockOrTimestamp, protocolSpec);
+  }
+
+  @Override
+  public String listMilestones() {
+    return delegate.listMilestones();
+  }
+
+  @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     delegate.setTransactionFilter(transactionFilter);
   }

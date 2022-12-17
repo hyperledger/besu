@@ -654,12 +654,6 @@ task distDocker {
       }
     }
 
-    def shaTag = "gitSha-${getCheckedOutGitCommitHash(40)}" //full length sha
-    exec {
-      executable "sh"
-      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${shaTag}'"
-    }
-
     // tag the "default" (which is the variant in the zero position)
     exec {
       executable "sh"
@@ -767,9 +761,32 @@ task dockerUpload {
   }
 }
 
-task manifestDocker {
-  dependsOn distDocker
+task dockerUploadRelease {
+  def archs = ["arm64", "amd64"]
+  def image = "${dockerImageName}:${dockerBuildVersion}"
 
+  doLast {
+    for (def architecture in archs) {
+      for (def variant in dockerVariants) {
+        def variantImage = "${image}-${variant}"
+        exec {
+          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+          executable "sh"
+          args "-c", cmd
+        }
+      }
+
+      exec {
+        def archImage = "${image}-${architecture}"
+        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+  }
+}
+
+task manifestDocker {
   def image = "${dockerImageName}:${dockerBuildVersion}"
   def archs = ["arm64", "amd64"]
   def tags = ["${image}"]
@@ -803,6 +820,33 @@ task manifestDocker {
         executable "sh"
         args "-c", cmd
       }
+    }
+  }
+}
+
+task manifestDockerRelease {
+  def archs = ["arm64", "amd64"]
+  def baseTag = "${dockerImageName}:latest";
+
+  doLast {
+    for (def variant in dockerVariants) {
+      def variantImage = "${baseTag}-${variant}"
+      def targets = ""
+      archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+
+      exec {
+        def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+
+    exec {
+      def targets = ""
+      archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
+      def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
+      executable "sh"
+      args "-c", cmd
     }
   }
 }
