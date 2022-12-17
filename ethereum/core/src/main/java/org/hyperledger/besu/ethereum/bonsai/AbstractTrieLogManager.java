@@ -118,6 +118,7 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
           .forEach(
               layer -> {
                 cachedWorldStatesByHash.remove(layer.getTrieLog().getBlockHash());
+                layer.dispose();
                 Optional.ofNullable(layer.getMutableWorldState())
                     .ifPresent(
                         ws -> {
@@ -169,13 +170,5 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
     } else {
       return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
-  }
-
-  interface CachedWorldState<Z extends MutableWorldState> {
-    long getHeight();
-
-    TrieLogLayer getTrieLog();
-
-    Z getMutableWorldState();
   }
 }

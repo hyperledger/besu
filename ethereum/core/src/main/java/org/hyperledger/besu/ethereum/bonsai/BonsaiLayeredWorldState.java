@@ -261,14 +261,18 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   @MustBeClosed
   public MutableWorldState copy() {
     // return an in-memory worldstate that is based on a persisted snapshot for this blockhash.
-    return archive
-        .getMutableSnapshot(this.blockHash())
-        .map(BonsaiSnapshotWorldState.class::cast)
-        .map(snapshot -> new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage()))
-        .orElseThrow(
-            () ->
-                new StorageException(
-                    "Unable to copy Layered Worldstate for " + blockHash().toHexString()));
+    try (BonsaiSnapshotWorldState snapshot =
+        archive
+            .getMutableSnapshot(this.blockHash())
+            .map(BonsaiSnapshotWorldState.class::cast)
+            .orElseThrow(
+                () ->
+                    new StorageException(
+                        "Unable to copy Layered Worldstate for " + blockHash().toHexString()))) {
+      return new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage());
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   @Override

@@ -95,6 +95,11 @@ public class LayeredTrieLogManager extends AbstractTrieLogManager<BonsaiLayeredW
     }
 
     @Override
+    public void dispose() {
+      // no-op
+    }
+
+    @Override
     public long getHeight() {
       return layeredWorldState.getHeight();
     }

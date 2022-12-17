@@ -115,7 +115,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
-    this.useSnapshots = useSnapshots;
+    // TODO: https://github.com/hyperledger/besu/issues/4641
+    // useSnapshots is disabled for now
+    this.useSnapshots = false;
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }

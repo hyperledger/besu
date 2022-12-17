@@ -16,13 +16,10 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class extends BonsaiPersistedWorldstate directly such that it commits/perists directly to
@@ -30,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * non-persisting mutable world state rather than writing worldstate changes directly.
  */
 public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
-    implements SnapshotMutableWorldState, BonsaiStorageSubscriber {
+    implements SnapshotMutableWorldState {
 
   private final SnappedKeyValueStorage accountSnap;
   private final SnappedKeyValueStorage codeSnap;
@@ -38,7 +35,6 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   private final SnappedKeyValueStorage trieBranchSnap;
   private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
   private final BonsaiSnapshotWorldStateKeyValueStorage snapshotWorldStateStorage;
-  private final AtomicLong parentStorageSubscriberId = new AtomicLong(Long.MAX_VALUE);
 
   private BonsaiSnapshotWorldState(
       final BonsaiWorldStateArchive archive,
@@ -66,7 +62,7 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
                     .takeSnapshot(),
                 parentWorldStateStorage.trieLogStorage),
             parentWorldStateStorage)
-        .subscribeToParent();
+        .subscribeToParentStorage();
   }
 
   @Override
@@ -89,21 +85,12 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
                 trieBranchSnap.cloneFromSnapshot(),
                 worldStateStorage.trieLogStorage),
             parentWorldStateStorage)
-        .subscribeToParent();
-  }
-
-  private void doClose() throws Exception {
-    subscribers.forEach(BonsaiWorldStateSubscriber::onCloseWorldState);
-    snapshotWorldStateStorage.close();
-    parentWorldStateStorage.unSubscribe(parentStorageSubscriberId.get());
+        .subscribeToParentStorage();
   }
 
   @Override
   public void close() throws Exception {
-    // only actually close if we have no subscribers left
-    if (subscribers.getSubscriberCount() < 1) {
-      doClose();
-    }
+    snapshotWorldStateStorage.close();
   }
 
   @Override
@@ -111,28 +98,8 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
     return snapshotWorldStateStorage;
   }
 
-  protected BonsaiSnapshotWorldState subscribeToParent() {
-    parentStorageSubscriberId.set(parentWorldStateStorage.subscribe(this));
+  protected BonsaiSnapshotWorldState subscribeToParentStorage() {
+    snapshotWorldStateStorage.subscribeToParentStorage(parentWorldStateStorage);
     return this;
-  }
-
-  @Override
-  public void onClearStorage() {
-    try {
-      // force close due to truncation
-      doClose();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public void onClearFlatDatabaseStorage() {
-    try {
-      // force close due to truncation
-      doClose();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 }

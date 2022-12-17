@@ -38,8 +38,9 @@ public interface TrieLogManager {
 
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
 
-  interface CachedWorldState<Z extends MutableWorldState>
-      extends BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
+  interface CachedWorldState<Z extends MutableWorldState> {
+    void dispose();
+
     long getHeight();
 
     TrieLogLayer getTrieLog();

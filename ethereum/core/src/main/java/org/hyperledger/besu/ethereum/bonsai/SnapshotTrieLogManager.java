@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState.BonsaiWorldStateSubscriber;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -28,7 +27,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -75,11 +73,10 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
     } else {
       snapshotWorldState = BonsaiSnapshotWorldState.create(worldStateArchive, worldStateStorage);
     }
-    snapshotWorldState.getWorldStateStorage().subscribe(this);
 
     cachedWorldStatesByHash.put(
         blockHeader.getHash(),
-        CachedSnapshotWorldState.create(snapshotWorldState, trieLog, blockHeader.getNumber()));
+        new CachedSnapshotWorldState(snapshotWorldState, trieLog, blockHeader.getNumber()));
   }
 
   @Override
@@ -114,37 +111,25 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
   }
 
   public static class CachedSnapshotWorldState
-      implements CachedWorldState<BonsaiSnapshotWorldState>, BonsaiWorldStateSubscriber {
+      implements CachedWorldState<BonsaiSnapshotWorldState>, BonsaiStorageSubscriber {
 
     final BonsaiSnapshotWorldState snapshot;
+    final Long snapshotSubscriberId;
     final TrieLogLayer trieLog;
     final long height;
-    final AtomicLong snapshotSubscriberId = new AtomicLong();
     final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-    private CachedSnapshotWorldState(
+    public CachedSnapshotWorldState(
         final BonsaiSnapshotWorldState snapshot, final TrieLogLayer trieLog, final long height) {
+      this.snapshotSubscriberId = snapshot.getWorldStateStorage().subscribe(this);
       this.snapshot = snapshot;
       this.trieLog = trieLog;
       this.height = height;
     }
 
-    public static CachedSnapshotWorldState create(
-        final BonsaiSnapshotWorldState snapshot, final TrieLogLayer trieLog, final long height) {
-      return new CachedSnapshotWorldState(snapshot, trieLog, height)
-              .subscribeToSnapshot();
-    }
-
-    private CachedSnapshotWorldState subscribeToSnapshot() {
-      snapshotSubscriberId.set(snapshot.subscribe(this));
-      return this;
-    }
-
     @Override
-    public synchronized void onCloseWorldState() {
-      if (!isClosed.compareAndExchange(false, true)) {
-        snapshot.unSubscribe(snapshotSubscriberId.get());
-      }
+    public void dispose() {
+      snapshot.worldStateStorage.unSubscribe(snapshotSubscriberId);
     }
 
     @Override

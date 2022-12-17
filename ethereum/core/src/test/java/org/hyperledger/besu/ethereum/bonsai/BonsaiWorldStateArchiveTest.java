@@ -28,8 +28,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.AbstractTrieLogManager.CachedWorldState;
 import org.hyperledger.besu.ethereum.bonsai.LayeredTrieLogManager.LayeredWorldStateCache;
+import org.hyperledger.besu.ethereum.bonsai.TrieLogManager.CachedWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;

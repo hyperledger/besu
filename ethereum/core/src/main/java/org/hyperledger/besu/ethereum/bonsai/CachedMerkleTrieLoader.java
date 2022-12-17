@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState.BonsaiWorldStateSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
@@ -36,7 +36,7 @@ import io.prometheus.client.guava.cache.CacheMetricsCollector;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class CachedMerkleTrieLoader implements BonsaiWorldStateSubscriber {
+public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
@@ -56,24 +56,24 @@ public class CachedMerkleTrieLoader implements BonsaiWorldStateSubscriber {
   }
 
   public void preLoadAccount(
-      final BonsaiPersistedWorldState worldState,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Hash worldStateRootHash,
       final Address account) {
-    CompletableFuture.runAsync(() -> cacheAccountNodes(worldState, worldStateRootHash, account));
+    CompletableFuture.runAsync(
+        () -> cacheAccountNodes(worldStateStorage, worldStateRootHash, account));
   }
 
   @VisibleForTesting
   public void cacheAccountNodes(
-      final BonsaiPersistedWorldState worldState,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Hash worldStateRootHash,
       final Address account) {
-    final long worldStateSubscriberId = worldState.subscribe(this);
+    final long storageSubscriberId = worldStateStorage.subscribe(this);
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               (location, hash) -> {
-                Optional<Bytes> node =
-                    getAccountStateTrieNode(worldState.getWorldStateStorage(), location, hash);
+                Optional<Bytes> node = getAccountStateTrieNode(worldStateStorage, location, hash);
                 node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
                 return node;
               },
@@ -84,22 +84,25 @@ public class CachedMerkleTrieLoader implements BonsaiWorldStateSubscriber {
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
     } finally {
-      worldState.unSubscribe(worldStateSubscriberId);
+      worldStateStorage.unSubscribe(storageSubscriberId);
     }
   }
 
   public void preLoadStorageSlot(
-      final BonsaiPersistedWorldState worldState, final Address account, final Hash slotHash) {
-    CompletableFuture.runAsync(() -> cacheStorageNodes(worldState, account, slotHash));
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final Address account,
+      final Hash slotHash) {
+    CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateStorage, account, slotHash));
   }
 
   @VisibleForTesting
   public void cacheStorageNodes(
-      final BonsaiPersistedWorldState worldState, final Address account, final Hash slotHash) {
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final Address account,
+      final Hash slotHash) {
     final Hash accountHash = Hash.hash(account);
-    final long worldStateSubscriberId = worldState.subscribe(this);
+    final long storageSubscriberId = worldStateStorage.subscribe(this);
     try {
-      final var worldStateStorage = worldState.getWorldStateStorage();
       worldStateStorage
           .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
           .ifPresent(
@@ -123,7 +126,7 @@ public class CachedMerkleTrieLoader implements BonsaiWorldStateSubscriber {
                 }
               });
     } finally {
-      worldState.unSubscribe(worldStateSubscriberId);
+      worldStateStorage.unSubscribe(storageSubscriberId);
     }
   }
 
