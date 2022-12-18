@@ -317,19 +317,23 @@ public class MessageFrame {
     Map<Address, Map<Bytes32, Optional<Bytes32>>> warmList = new ConcurrentHashMap<>();
     Set<Address> addresses = accessListWarmStorage.keySet();
     for (Address address : addresses) {
-      Optional.ofNullable(worldUpdater.get(address)).ifPresentOrElse(account -> {
-        Map<Bytes32, Optional<Bytes32>> keyValuesMap = new ConcurrentHashMap<>();
-        for (Bytes32 key : accessListWarmStorage.get(address)) {
-          keyValuesMap.put(key, Optional.ofNullable(account.getStorageValue(UInt256.fromBytes(key))));
-        }
-        warmList.put(address, keyValuesMap);
-      }, () -> {
-        Map<Bytes32, Optional<Bytes32>> keyValuesMap2 = new ConcurrentHashMap<>();
-        for (Bytes32 key : accessListWarmStorage.get(address)) {
-          keyValuesMap2.put(key, Optional.empty());
-        }
-        warmList.put(address, keyValuesMap2);
-      });
+      Optional.ofNullable(worldUpdater.get(address))
+          .ifPresentOrElse(
+              account -> {
+                Map<Bytes32, Optional<Bytes32>> keyValuesMap = new ConcurrentHashMap<>();
+                for (Bytes32 key : accessListWarmStorage.get(address)) {
+                  keyValuesMap.put(
+                      key, Optional.ofNullable(account.getStorageValue(UInt256.fromBytes(key))));
+                }
+                warmList.put(address, keyValuesMap);
+              },
+              () -> {
+                Map<Bytes32, Optional<Bytes32>> keyValuesMap2 = new ConcurrentHashMap<>();
+                for (Bytes32 key : accessListWarmStorage.get(address)) {
+                  keyValuesMap2.put(key, Optional.empty());
+                }
+                warmList.put(address, keyValuesMap2);
+              });
     }
 
     return warmList;
@@ -918,16 +922,14 @@ public class MessageFrame {
 
   public void updateWarmUpStorage(final Address address, final UInt256 slot, final UInt256 value) {
     Map<Bytes32, Optional<Bytes32>> addressWarmedStorage = warmedUpStorage.get(address);
-    if (addressWarmedStorage != null ) {
-        addressWarmedStorage.put(slot, Optional.ofNullable(value));
-      } else {
-        addressWarmedStorage = new ConcurrentHashMap<>();
-        addressWarmedStorage.put(slot, Optional.ofNullable(value));
-        warmedUpStorage.put(address, addressWarmedStorage);
+    if (addressWarmedStorage != null) {
+      addressWarmedStorage.put(slot, Optional.ofNullable(value));
+    } else {
+      addressWarmedStorage = new ConcurrentHashMap<>();
+      addressWarmedStorage.put(slot, Optional.ofNullable(value));
+      warmedUpStorage.put(address, addressWarmedStorage);
     }
   }
-
-
 
   public void mergeWarmedUpFields(final MessageFrame childFrame) {
     if (childFrame == this) {
