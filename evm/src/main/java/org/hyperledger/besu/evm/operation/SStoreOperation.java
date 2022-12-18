@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SStoreOperation extends AbstractOperation {
@@ -46,7 +47,7 @@ public class SStoreOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 
     final UInt256 key = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 newValue = UInt256.fromBytes(frame.popStackItem());
 
     final MutableAccount account =
         frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getMutable();
@@ -56,8 +57,14 @@ public class SStoreOperation extends AbstractOperation {
 
     final Address address = account.getAddress();
     final boolean slotIsWarm = frame.warmUpStorage(address, key);
+    final UInt256 currentValue = account.getStorageValue(key);
+    UInt256 originalValue = UInt256.fromBytes(Bytes32.EMPTY);
+    if (!currentValue.equals(newValue)) {
+      originalValue = account.getOriginalStorageValue(key);
+    }
+
     final long cost =
-        gasCalculator().calculateStorageCost(account, key, value)
+        gasCalculator().calculateStorageCost(account, key, newValue, currentValue, originalValue)
             + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
 
     final long remainingGas = frame.getRemainingGas();
@@ -70,10 +77,12 @@ public class SStoreOperation extends AbstractOperation {
     }
 
     // Increment the refund counter.
-    frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
+    frame.incrementGasRefund(
+        gasCalculator()
+            .calculateStorageRefundAmount(account, key, newValue, currentValue, originalValue));
 
-    account.setStorageValue(key, value);
-    frame.storageWasUpdated(key, value);
+    account.setStorageValue(key, newValue);
+    frame.storageWasUpdated(key, newValue);
     return new OperationResult(cost, null);
   }
 }

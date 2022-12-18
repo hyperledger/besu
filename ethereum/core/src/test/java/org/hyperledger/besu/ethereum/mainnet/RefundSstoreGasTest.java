@@ -132,14 +132,17 @@ public class RefundSstoreGasTest {
 
   @Test
   public void shouldChargeCorrectGas() {
-    Assertions.assertThat(gasCalculator.calculateStorageCost(account, UInt256.ZERO, newValue))
+    Assertions.assertThat(
+            gasCalculator.calculateStorageCost(
+                account, UInt256.ZERO, newValue, currentValue, originalValue))
         .isEqualTo(expectedGasCost);
   }
 
   @Test
   public void shouldRefundCorrectGas() {
     Assertions.assertThat(
-            gasCalculator.calculateStorageRefundAmount(account, UInt256.ZERO, newValue))
+            gasCalculator.calculateStorageRefundAmount(
+                account, UInt256.ZERO, newValue, currentValue, originalValue))
         .isEqualTo(expectedGasRefund);
   }
 }

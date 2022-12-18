@@ -353,7 +353,8 @@ public interface GasCalculator {
    * @param newValue the new value to be stored
    * @return the gas cost for the SSTORE operation
    */
-  long calculateStorageCost(Account account, UInt256 key, UInt256 newValue);
+  long calculateStorageCost(
+      Account account, UInt256 key, UInt256 newValue, UInt256 currentValue, UInt256 originalValue);
 
   /**
    * Returns the refund amount for an SSTORE operation.
@@ -361,9 +362,12 @@ public interface GasCalculator {
    * @param account the account that storage will be changed in
    * @param key the key the new value is to be stored under
    * @param newValue the new value to be stored
+   * @param currentValue the current value of the key
+   * @param originalValue the orignal value of the key when newValue is different from currentValue
    * @return the gas refund for the SSTORE operation
    */
-  long calculateStorageRefundAmount(Account account, UInt256 key, UInt256 newValue);
+  long calculateStorageRefundAmount(
+      Account account, UInt256 key, UInt256 newValue, UInt256 currentValue, UInt256 originalValue);
 
   /**
    * Returns the refund amount for deleting an account in a {@link SelfDestructOperation}.

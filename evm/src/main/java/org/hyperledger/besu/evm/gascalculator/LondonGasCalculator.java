@@ -40,12 +40,14 @@ public class LondonGasCalculator extends BerlinGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-3529
   public long calculateStorageRefundAmount(
-      final Account account, final UInt256 key, final UInt256 newValue) {
-    final UInt256 currentValue = account.getStorageValue(key);
+      final Account account,
+      final UInt256 key,
+      final UInt256 newValue,
+      final UInt256 currentValue,
+      final UInt256 originalValue) {
     if (currentValue.equals(newValue)) {
       return 0L;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
       if (originalValue.equals(currentValue)) {
         if (originalValue.isZero()) {
           return 0L;

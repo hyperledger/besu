@@ -163,13 +163,15 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final Account account,
+      final UInt256 key,
+      final UInt256 newValue,
+      final UInt256 currentValue,
+      final UInt256 originalValue) {
 
-    final UInt256 currentValue = account.getStorageValue(key);
     if (currentValue.equals(newValue)) {
       return SLOAD_GAS;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
       if (originalValue.equals(currentValue)) {
         return originalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
       } else {
@@ -182,13 +184,15 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageRefundAmount(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final Account account,
+      final UInt256 key,
+      final UInt256 newValue,
+      final UInt256 currentValue,
+      final UInt256 originalValue) {
 
-    final UInt256 currentValue = account.getStorageValue(key);
     if (currentValue.equals(newValue)) {
       return 0L;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
       if (originalValue.equals(currentValue)) {
         if (originalValue.isZero()) {
           return 0L;
