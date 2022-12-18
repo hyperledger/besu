@@ -57,7 +57,6 @@ public class SStoreOperation extends AbstractOperation {
     final Address address = account.getAddress();
     final boolean slotIsWarm = frame.isWarm(address, key);
     if (!slotIsWarm) {
-      // This is used to avoid getting the value again from disk during gas calculation
       frame.warmUpStorage(account, key);
     }
     final long cost =
