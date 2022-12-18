@@ -351,6 +351,8 @@ public interface GasCalculator {
    * @param account the account that storage will be changed in
    * @param key the key the new value is to be stored under
    * @param newValue the new value to be stored
+   * @param currentValue the current value of the key
+   * @param originalValue the orignal value of the key when newValue is different from currentValue
    * @return the gas cost for the SSTORE operation
    */
   long calculateStorageCost(
