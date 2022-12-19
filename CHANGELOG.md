@@ -1,4 +1,10 @@
 # Changelog
+## 23.1
+
+### Breaking Changes
+- GoQuorum-compatible privacy is deprecated and will be removed in 23.4
+- IBFT 1.0 is deprecated and will be removed in 23.4
+
 ## 22.10.4
 
 ### Additions and Improvements
