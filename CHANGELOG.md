@@ -1,9 +1,12 @@
 # Changelog
 ## 22.10.4
 
-### Breaking Changes
-
 ### Additions and Improvements
+- Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
+- Add timestamp fork support, including shanghaiTime and cancunTime forks [#4743](https://github.com/hyperledger/besu/pull/4743)
+- Optimization:  Memoize transaction size and hash at the same time [#4812](https://github.com/hyperledger/besu/pull/4812)
+
+### Breaking Changes
 
 ### Bug Fixes
 
@@ -26,8 +29,8 @@
 - Fix storage key format for eth_getProof so that it follows the EIP-1474 spec [#4564](https://github.com/hyperledger/besu/pull/4564)
 
 ### Download Links
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.tar.gz / sha256: TBA
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.zip / sha256: TBA
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.tar.gz / sha256: 7213f9445a84a196e94ae1877c6fdb1e51d37bfb19615da02ef5121d4f40e38c
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.zip / sha256: 0bf6bc98e01b0c1045f1b7d841a390c575bc5203c2a4e543d922fbc1ea0d3d5d
 
 ## 22.10.2
 This is a hotfix release to resolve a race condition that results in segfaults, introduced in 22.10.1 release.

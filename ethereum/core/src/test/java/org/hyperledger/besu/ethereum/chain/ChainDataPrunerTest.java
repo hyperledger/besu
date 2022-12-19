@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.chain.ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -26,11 +25,10 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.awaitility.Awaitility;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 public class ChainDataPrunerTest {
@@ -47,13 +45,7 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             512,
             0,
-            new ThreadPoolExecutor(
-                1,
-                1,
-                60L,
-                TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(MAX_PRUNING_THREAD_QUEUE_SIZE),
-                new ThreadPoolExecutor.DiscardPolicy()));
+            new BlockingExecutor());
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -71,10 +63,7 @@ public class ChainDataPrunerTest {
                 assertThat(blockchain.getBlockHeader(1)).isPresent();
               } else {
                 // Prune number - 512 only
-                Awaitility.await()
-                    .pollInterval(1, TimeUnit.MILLISECONDS)
-                    .atMost(50, TimeUnit.MILLISECONDS)
-                    .until(() -> blockchain.getBlockHeader(number - 512).isEmpty());
+                assertThat(blockchain.getBlockHeader(number - 512)).isEmpty();
                 assertThat(blockchain.getBlockHeader(number - 511)).isPresent();
               }
             });
@@ -92,13 +81,7 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             512,
             0,
-            new ThreadPoolExecutor(
-                1,
-                1,
-                60L,
-                TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(MAX_PRUNING_THREAD_QUEUE_SIZE),
-                new ThreadPoolExecutor.DiscardPolicy()));
+            new BlockingExecutor());
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -122,19 +105,41 @@ public class ChainDataPrunerTest {
       Block blk = canonicalChain.get(i);
       blockchain.appendBlock(blk, gen.receipts(blk));
       // Prune block on canonical chain and fork for i - 512 only
-      Awaitility.await()
-          .pollInterval(1, TimeUnit.MILLISECONDS)
-          .atMost(50, TimeUnit.MILLISECONDS)
-          .until(
-              () -> blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash()).isEmpty());
+      assertThat(blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash())).isEmpty();
       assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 511).getHash())).isPresent();
-      Awaitility.await()
-          .pollInterval(1, TimeUnit.MILLISECONDS)
-          .atMost(50, TimeUnit.MILLISECONDS)
-          .until(
-              () -> blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash()).isEmpty());
-
+      assertThat(blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash())).isEmpty();
       assertThat(blockchain.getBlockByHash(forkChain.get(i - 511).getHash())).isPresent();
+    }
+  }
+
+  protected static class BlockingExecutor extends AbstractExecutorService {
+    @Override
+    public void shutdown() {}
+
+    @NotNull
+    @Override
+    public List<Runnable> shutdownNow() {
+      return List.of();
+    }
+
+    @Override
+    public boolean isShutdown() {
+      return true;
+    }
+
+    @Override
+    public boolean isTerminated() {
+      return true;
+    }
+
+    @Override
+    public boolean awaitTermination(final long timeout, final @NotNull TimeUnit unit) {
+      return true;
+    }
+
+    @Override
+    public void execute(final @NotNull Runnable command) {
+      command.run();
     }
   }
 }

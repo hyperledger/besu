@@ -105,7 +105,8 @@ public class EthEstimateGas implements JsonRpcMethod {
         callParams.getMaxPriorityFeePerGas(),
         callParams.getMaxFeePerGas(),
         callParams.getValue(),
-        callParams.getPayload());
+        callParams.getPayload(),
+        callParams.getAccessList());
   }
 
   private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
