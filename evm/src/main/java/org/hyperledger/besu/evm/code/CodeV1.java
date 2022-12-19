@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.evm.code;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 
@@ -57,12 +59,19 @@ public class CodeV1 implements Code {
   }
 
   @Override
-  public Bytes getCodeBytes(final int function) {
-    if (function > codeSectionInfos.length) {
+  public Bytes getCodeBytes(final int section) {
+    if (section >= codeSectionInfos.length) {
       return null;
     } else {
-      return codeSectionInfos[function].code;
+      return codeSectionInfos[section].code;
     }
+  }
+
+  @Override
+  public CodeSection getCodeSection(final int section) {
+    checkArgument(section >= 0, "Section number is positive");
+    checkArgument(section < codeSectionInfos.length, "Section index is valid");
+    return codeSectionInfos[section];
   }
 
   @Override

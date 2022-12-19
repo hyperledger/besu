@@ -31,7 +31,9 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason CODE_TOO_LARGE = DefaultExceptionalHaltReason.CODE_TOO_LARGE;
   ExceptionalHaltReason INVALID_CODE = DefaultExceptionalHaltReason.INVALID_CODE;
   ExceptionalHaltReason PRECOMPILE_ERROR = DefaultExceptionalHaltReason.PRECOMPILE_ERROR;
-  ExceptionalHaltReason INVALID_CODE_FORMAT = DefaultExceptionalHaltReason.INVALID_CODE_FORMAT;
+  ExceptionalHaltReason CODE_SECTION_MISSING = DefaultExceptionalHaltReason.CODE_SECTION_MISSING;
+  ExceptionalHaltReason MISMATCHED_CODE_SECTION_OUTPUTS =
+      DefaultExceptionalHaltReason.MISMATCHED_CODE_SECTION_OUTPUTS;
 
   String name();
 
@@ -50,7 +52,9 @@ public interface ExceptionalHaltReason {
     CODE_TOO_LARGE("Code is too large"),
     INVALID_CODE("Code is invalid"),
     PRECOMPILE_ERROR("Precompile error"),
-    INVALID_CODE_FORMAT("Code violates EOF validation rules");
+    CODE_SECTION_MISSING("No code section at requested index"),
+    MISMATCHED_CODE_SECTION_OUTPUTS("Jumped into a code section with unequal declared outputs"),
+    INSUFFICIENT_CODE_SECTION_RETURN_DATA("The stack for a return ");
 
     final String description;
 

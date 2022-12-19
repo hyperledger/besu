@@ -123,6 +123,11 @@ public class CodeV0 implements Code {
     return true;
   }
 
+  @Override
+  public CodeSection getCodeSection(final int section) {
+    return null;
+  }
+
   long[] calculateJumpDests() {
     final int size = getSize();
     final long[] bitmap = new long[(size >> 6) + 1];

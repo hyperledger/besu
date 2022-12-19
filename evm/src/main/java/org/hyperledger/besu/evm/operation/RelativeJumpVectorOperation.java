@@ -33,7 +33,7 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
 
   @Override
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes code = frame.getCode().getCodeBytes();
+    final Bytes code = frame.getCode().getCodeBytes(frame.getSection());
     final int offsetCase = frame.popStackItem().toInt();
     final int vectorSize = getVectorSize(code, frame.getPC() + 1);
     return new OperationResult(

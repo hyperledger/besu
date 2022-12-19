@@ -71,4 +71,9 @@ public class CodeInvalid implements Code {
   public boolean isValid() {
     return false;
   }
+
+  @Override
+  public CodeSection getCodeSection(final int section) {
+    return null;
+  }
 }

@@ -41,7 +41,7 @@ public class RelativeJumpOperation extends AbstractFixedCostOperation {
 
   @Override
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes code = frame.getCode().getCodeBytes();
+    final Bytes code = frame.getCode().getCodeBytes(frame.getSection());
     final int pcPostInstruction = frame.getPC() + 1;
     return new OperationResult(gasCost, null, 2 + getRelativeOffset(code, pcPostInstruction) + 1);
   }

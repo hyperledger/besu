@@ -25,8 +25,6 @@ public final class CodeFactory {
 
   public static final byte EOF_LEAD_BYTE = -17; // 0xEF in signed byte form
 
-  public static final int MAX_KNOWN_CODE_VERSION = 1;
-
   private CodeFactory() {
     // factory class, no instantiations.
   }
@@ -64,12 +62,11 @@ public final class CodeFactory {
           return new CodeInvalid(
               codeHash, bytes, "Invalid EOF Layout: " + layout.getInvalidReason());
         }
-        final long[] jumpMap =
-            OpcodesV1.validateAndCalculateJumpDests(layout.getCodeSections()[0].getCode());
-        if (jumpMap != null) {
+        final String validationError = OpcodesV1.validateCode(layout);
+        if (validationError == null) {
           return new CodeV1(codeHash, layout);
         } else {
-          return new CodeInvalid(codeHash, bytes, "Opcode Validation Failed");
+          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + validationError);
         }
       } else {
         return new CodeV0(bytes, codeHash);

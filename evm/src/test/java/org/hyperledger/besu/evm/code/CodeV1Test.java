@@ -33,36 +33,36 @@ class CodeV1Test {
   public static final String ZERO_HEX = String.format("%02x", 0);
 
   @Test
-  void calculatesJumpDestMap() {
-    String codeHex = "0xEF000101000F006001600055600D5660026000555B00";
-    final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex));
+  void validCode() {
+    String codeHex =
+        "0xEF0001 010010 020003 000A 0002 0008 030000 00 00000000 02010001 01000002 60016002b00001b20002 01b1 60005360106000f3";
+    final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
 
-    long[] jumpDest =
-        OpcodesV1.validateAndCalculateJumpDests(layout.getCodeSections()[0].getCode());
+    String validationError = OpcodesV1.validateCode(layout);
 
-    assertThat(jumpDest).containsExactly(0x2000);
+    assertThat(validationError).isNull();
   }
 
   @ParameterizedTest
   @ValueSource(
       strings = {"3000", "5000", "5c000000", "60005d000000", "60005e01000000", "fe00", "0000"})
   void testValidOpcodes(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNotNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isNull();
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"00", "f3", "fd", "fe"})
   void testValidCodeTerminator(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNotNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isNull();
   }
 
   @ParameterizedTest
   @MethodSource("testPushValidImmediateArguments")
   void testPushValidImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNotNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isNull();
   }
 
   private static Stream<Arguments> testPushValidImmediateArguments() {
@@ -75,8 +75,8 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("testRjumpValidImmediateArguments")
   void testRjumpValidImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNotNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isNull();
   }
 
   private static Stream<Arguments> testRjumpValidImmediateArguments() {
@@ -96,8 +96,8 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("testRjumpiValidImmediateArguments")
   void testRjumpiValidImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNotNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isNull();
   }
 
   private static Stream<Arguments> testRjumpiValidImmediateArguments() {
@@ -118,8 +118,8 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("rjumptableValidImmediateArguments")
   void testRjumptableValidImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNotNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isNull();
   }
 
   private static Stream<Arguments> rjumptableValidImmediateArguments() {
@@ -138,8 +138,8 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("invalidCodeArguments")
   void testInvalidCode(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).startsWith("Invalid Instruction 0x");
   }
 
   private static Stream<Arguments> invalidCodeArguments() {
@@ -150,7 +150,7 @@ class CodeV1Test {
             IntStream.rangeClosed(0x49, 0x4f),
             // IntStream.of(0x5f), // PUSH0
             IntStream.rangeClosed(0xa5, 0xaf),
-            IntStream.rangeClosed(0xb0, 0xbf),
+            IntStream.rangeClosed(0xb3, 0xbf),
             IntStream.rangeClosed(0xc0, 0xcf),
             IntStream.rangeClosed(0xd0, 0xdf),
             IntStream.rangeClosed(0xe0, 0xef),
@@ -163,8 +163,8 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("pushTruncatedImmediateArguments")
   void testPushTruncatedImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isEqualTo("No terminating instruction");
   }
 
   private static Stream<Arguments> pushTruncatedImmediateArguments() {
@@ -176,17 +176,17 @@ class CodeV1Test {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"5c", "5c00", "5c0000"})
+  @ValueSource(strings = {"5c", "5c00"})
   void testRjumpTruncatedImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isEqualTo("Truncated relative jump offset");
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"60015d", "60015d00", "60015d0000"})
+  @ValueSource(strings = {"60015d", "60015d00"})
   void testRjumpiTruncatedImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isEqualTo("Truncated relative jump offset");
   }
 
   @ParameterizedTest
@@ -200,23 +200,25 @@ class CodeV1Test {
         "60015e030000000100"
       })
   void testRjumpvTruncatedImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isEqualTo("Truncated jump table");
   }
 
   @ParameterizedTest
   @ValueSource(
       strings = {
+        "5c0000",
         "5c000100",
         "5cfffc00",
+        "60015d0000",
         "60015d000100",
         "60015dfffa00",
         "60015e01000100",
         "60015e01fff900"
       })
   void testRjumpsOutOfBounds(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isEqualTo("Relative jump destination out of bounds");
   }
 
   @ParameterizedTest
@@ -267,8 +269,9 @@ class CodeV1Test {
         "60015e0100055e020000fff400"
       })
   void testRjumpsIntoImmediate(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError)
+        .isEqualTo("Relative jump destinations targets invalid immediate data");
   }
 
   private static Stream<Arguments> rjumpsIntoImmediateExtraArguments() {
@@ -308,15 +311,36 @@ class CodeV1Test {
   @ParameterizedTest
   @ValueSource(strings = {"60015e0000"})
   void testRjumpvEmptyTable(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isEqualTo("Empty jump table");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"b0", "b000", "b2", "b200"})
+  void testJumpCallFTruncated(final String code) {
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isEqualTo("Truncated CALLF/JUMPF");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"b00004", "b003ff", "b0ffff", "b20004", "b203ff", "20ffff"})
+  void testJumpCallFWrongSection(final String code) {
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 3);
+    assertThat(validationError).startsWith("CALLF/JUMPF to non-existent section -");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"b00001", "b00002", "b00000", "b20001", "b20002", "b20000"})
+  void testJumpCallFValid(final String code) {
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 3);
+    assertThat(validationError).isNull();
   }
 
   @ParameterizedTest
   @MethodSource("immediateContainsOpcodeArguments")
   void testImmediateContainsOpcode(final String code) {
-    final long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(Bytes.fromHexString(code));
-    assertThat(jumpDest).isNotNull();
+    final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isNull();
   }
 
   private static Stream<Arguments> immediateContainsOpcodeArguments() {

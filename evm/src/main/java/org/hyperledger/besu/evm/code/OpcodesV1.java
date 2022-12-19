@@ -16,12 +16,16 @@
 
 package org.hyperledger.besu.evm.code;
 
+import org.hyperledger.besu.evm.operation.CallFOperation;
+import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 
 import java.util.BitSet;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -211,9 +215,9 @@ class OpcodesV1 {
     INVALID, // 0xad
     INVALID, // 0xae
     INVALID, // 0xaf
-    INVALID, // 0xb0
-    INVALID, // 0xb1
-    INVALID, // 0xb2
+    VALID, // 0xb0 - CALLF
+    VALID_AND_TERMINAL, // 0xb1 - RETF
+    VALID_AND_TERMINAL, // 0xb2 - JUMPF
     INVALID, // 0xb3
     INVALID, // 0xb4
     INVALID, // 0xb5
@@ -297,9 +301,23 @@ class OpcodesV1 {
     // static utility class
   }
 
-  static long[] validateAndCalculateJumpDests(final Bytes code) {
+  static String validateCode(final EOFLayout eofLayout) {
+    int sectionCount = eofLayout.getCodeSections().length;
+    return Stream.of(eofLayout.getCodeSections())
+        .map(cs -> validateCode(cs.code, sectionCount))
+        .filter(Objects::nonNull)
+        .findAny()
+        .orElse(null);
+  }
+
+  /**
+   * validates the code section
+   *
+   * @param code the code section code
+   * @return null if valid, otherwise a string containing an error reason.
+   */
+  static String validateCode(final Bytes code, final int sectionCount) {
     final int size = code.size();
-    final BitSet bitmap = new BitSet(size);
     final BitSet rjumpdests = new BitSet(size);
     final BitSet immediates = new BitSet(size);
     final byte[] rawCode = code.toArrayUnsafe();
@@ -310,10 +328,7 @@ class OpcodesV1 {
       attribute = opcodeAttributes[operationNum];
       if ((attribute & INVALID) == INVALID) {
         // undefined instruction
-        return null;
-      }
-      if ((attribute & JUMPDEST) == JUMPDEST) {
-        bitmap.set(pos);
+        return "Invalid Instruction 0x" + Integer.toHexString(operationNum);
       }
       pos += 1;
       int pcPostInstruction = pos;
@@ -323,53 +338,54 @@ class OpcodesV1 {
       } else if (operationNum == RelativeJumpOperation.OPCODE
           || operationNum == RelativeJumpIfOperation.OPCODE) {
         if (pos + 2 > size) {
-          // truncated relative jump offset
-          return null;
+          return "Truncated relative jump offset";
         }
         pcPostInstruction += 2;
         final int offset = RelativeJumpOperation.getRelativeOffset(code, pos);
         final int rjumpdest = pcPostInstruction + offset;
         if (rjumpdest < 0 || rjumpdest >= size) {
-          // relative jump destination out of bounds
-          return null;
+          return "Relative jump destination out of bounds";
         }
         rjumpdests.set(rjumpdest);
       } else if (operationNum == RelativeJumpVectorOperation.OPCODE) {
         if (pos + 1 > size) {
-          // truncated jump table
-          return null;
+          return "Truncated jump table";
         }
         final int jumpTableSize = RelativeJumpVectorOperation.getVectorSize(code, pos);
         if (jumpTableSize == 0) {
-          // empty jump table
-          return null;
+          return "Empty jump table";
         }
         pcPostInstruction += 1 + 2 * jumpTableSize;
         if (pcPostInstruction > size) {
-          // truncated jump table
-          return null;
+          return "Truncated jump table";
         }
         for (int offsetPos = pos + 1; offsetPos < pcPostInstruction; offsetPos += 2) {
           final int offset = RelativeJumpOperation.getRelativeOffset(code, offsetPos);
           final int rjumpdest = pcPostInstruction + offset;
           if (rjumpdest < 0 || rjumpdest >= size) {
-            // relative jump destination out of bounds
-            return null;
+            return "Relative jump destination out of bounds";
           }
           rjumpdests.set(rjumpdest);
         }
+      } else if (operationNum == CallFOperation.OPCODE || operationNum == JumpFOperation.OPCODE) {
+        if (pos + 2 > size) {
+          return "Truncated CALLF/JUMPF";
+        }
+        int section = (rawCode[pos] & 0xff) << 8 | (rawCode[pos + 1] & 0xff);
+        if (section >= sectionCount) {
+          return "CALLF/JUMPF to non-existent section - " + Integer.toHexString(section);
+        }
+        pcPostInstruction += 2;
       }
       immediates.set(pos, pcPostInstruction);
       pos = pcPostInstruction;
     }
     if ((attribute & TERMINAL) != TERMINAL) {
-      // no terminating instruction
-      return null;
+      return "No terminating instruction";
     }
     if (rjumpdests.intersects(immediates)) {
-      // Ensure relative jump destinations don't target immediates
-      return null;
+      return "Relative jump destinations targets invalid immediate data";
     }
-    return bitmap.toLongArray();
+    return null;
   }
 }
