@@ -55,19 +55,11 @@ public class SLoadOperation extends AbstractOperation {
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
-        if (slotIsWarm) {
-          if (!frame.getFromWarmedUpStorage(address, key).isPresent()) {
-            UInt256 storageValue = frame.warmUpStorage(account, key);
-            frame.pushStackItem(storageValue);
-          } else {
-            frame.pushStackItem(frame.getFromWarmedUpStorage(address, key).get());
-          }
-          return warmSuccess;
-        } else {
-          UInt256 storageValue = frame.warmUpStorage(account, key);
-          frame.pushStackItem(storageValue);
-          return coldSuccess;
-        }
+        frame
+            .getFromWarmedUpStorage(address, key)
+            .ifPresentOrElse(
+                frame::pushStackItem, () -> frame.pushStackItem(frame.warmUpStorage(account, key)));
+        return slotIsWarm ? warmSuccess : coldSuccess;
       }
     } catch (final UnderflowException ufe) {
       return new OperationResult(warmCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);

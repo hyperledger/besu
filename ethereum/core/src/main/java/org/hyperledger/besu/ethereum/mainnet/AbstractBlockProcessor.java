@@ -131,6 +131,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final TransactionReceipt transactionReceipt =
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
+      LOG.info(
+          "Gas used for transaction " + transaction.getHash() + " : " + currentGasUsed + " Wei");
       receipts.add(transactionReceipt);
     }
 

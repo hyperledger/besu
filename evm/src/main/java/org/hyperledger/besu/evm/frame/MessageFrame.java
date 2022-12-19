@@ -318,23 +318,13 @@ public class MessageFrame {
     Map<Address, Map<Bytes32, Optional<Bytes32>>> warmList = new ConcurrentHashMap<>();
     Set<Address> addresses = accessListWarmStorage.keySet();
     for (Address address : addresses) {
-      Optional.ofNullable(worldUpdater.get(address))
-          .ifPresentOrElse(
-              account -> {
-                Map<Bytes32, Optional<Bytes32>> keyValuesMap = new ConcurrentHashMap<>();
-                for (Bytes32 key : accessListWarmStorage.get(address)) {
-                  keyValuesMap.put(
-                      key, Optional.ofNullable(account.getStorageValue(UInt256.fromBytes(key))));
-                }
-                warmList.put(address, keyValuesMap);
-              },
-              () -> {
-                Map<Bytes32, Optional<Bytes32>> keyValuesMap2 = new ConcurrentHashMap<>();
-                for (Bytes32 key : accessListWarmStorage.get(address)) {
-                  keyValuesMap2.put(key, Optional.empty());
-                }
-                warmList.put(address, keyValuesMap2);
-              });
+      final Optional<Account> maybeAccount = Optional.ofNullable(worldUpdater.get(address));
+      Map<Bytes32, Optional<Bytes32>> keyValuesMap = new ConcurrentHashMap<>();
+      for (Bytes32 key : accessListWarmStorage.get(address)) {
+        keyValuesMap.put(
+            key, maybeAccount.map(account -> account.getStorageValue(UInt256.fromBytes(key))));
+      }
+      warmList.put(address, keyValuesMap);
     }
 
     return warmList;
@@ -881,10 +871,10 @@ public class MessageFrame {
   public UInt256 warmUpStorage(final Account account, final Bytes32 slot) {
     Address address = account.getAddress();
     UInt256 storageValue = account.getStorageValue(UInt256.fromBytes(slot));
-    Map<Bytes32, Optional<Bytes32>> accountKeyValues = getWarmedUpStorageKeys().get(address);
+    Map<Bytes32, Optional<Bytes32>> accountKeyValues = warmedUpStorage.get(address);
     if (accountKeyValues == null) {
       accountKeyValues = new ConcurrentHashMap<>();
-      getWarmedUpStorageKeys().put(address, accountKeyValues);
+      warmedUpStorage.put(address, accountKeyValues);
     }
     accountKeyValues.put(slot, Optional.ofNullable(storageValue));
     return storageValue;
@@ -901,9 +891,18 @@ public class MessageFrame {
     MessageFrame frame = this;
     while (frame != null) {
       Map<Bytes32, Optional<Bytes32>> addressWarmedStorage = frame.warmedUpStorage.get(address);
-      if (addressWarmedStorage != null && addressWarmedStorage.containsKey(slot)) {
-        return true;
+      if (addressWarmedStorage != null) {
+        Optional<Bytes32> slotValue = addressWarmedStorage.get(slot);
+        // We should not here replace "slotValue != null" by "slotValue.isPresent()"
+        if (slotValue != null) {
+          // update current frame
+          this.warmedUpStorage
+              .computeIfAbsent(address, __ -> new ConcurrentHashMap<>())
+              .put(slot, slotValue);
+          return true;
+        }
       }
+
       frame = frame.parentMessageFrame;
     }
     return false;
@@ -1348,9 +1347,5 @@ public class MessageFrame {
           accessListWarmAddresses,
           accessListWarmStorage);
     }
-  }
-
-  public Map<Address, Map<Bytes32, Optional<Bytes32>>> getWarmedUpStorageKeys() {
-    return warmedUpStorage;
   }
 }
