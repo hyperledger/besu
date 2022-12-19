@@ -16,12 +16,20 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
+@SuppressWarnings("unused")
 public class CommitVisitor<V> implements LocationNodeVisitor<V> {
 
   private final NodeUpdater nodeUpdater;
 
+  private final boolean saveNotReferencedByHashLeaf;
+
   public CommitVisitor(final NodeUpdater nodeUpdater) {
+    this(nodeUpdater, false);
+  }
+
+  public CommitVisitor(final NodeUpdater nodeUpdater, final boolean saveNotReferencedByHashLeaf) {
     this.nodeUpdater = nodeUpdater;
+    this.saveNotReferencedByHashLeaf = saveNotReferencedByHashLeaf;
   }
 
   @Override

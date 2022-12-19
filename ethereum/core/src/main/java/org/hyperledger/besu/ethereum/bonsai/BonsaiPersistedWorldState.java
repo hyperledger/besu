@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
@@ -163,6 +164,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater,
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie) {
+
+    final Set<Bytes> prunedLocation = new TreeSet<>();
+
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Bytes accountKey = accountUpdate.getKey();
@@ -174,9 +178,20 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             CompactEncoding.bytesToPath(addressHash),
             new RemoveVisitor<>() {
               @Override
-              public void remove(final Node<Bytes> node) {
-                stateUpdater.removeAccountStateTrieNode(
-                    node.getLocation().orElse(Bytes.EMPTY), node.getHash());
+              public void remove(
+                  final Node<Bytes> node, final Node<Bytes> updatedNode, final Node<Bytes> child) {
+                System.out.println("*$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+                System.out.println(
+                    "remove -> account "
+                        + node.getLocation()
+                        + " \n"
+                        + node.getRlp()
+                        + " \n"
+                        + updatedNode.getRlp()
+                        + " \n"
+                        + child.getRlp());
+                System.out.println("*$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+                prunedLocation.add(node.getLocation().orElseThrow());
               }
             });
       } else {
@@ -185,6 +200,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         accountTrie.put(addressHash, accountValue);
       }
     }
+
+    prunedLocation.forEach(
+        location -> {
+          System.out.println("remove account -> " + location);
+          stateUpdater.removeAccountStateTrieNode(location, null);
+        });
   }
 
   private static void updateCode(
@@ -237,9 +258,28 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                 CompactEncoding.bytesToPath(keyHash),
                 new RemoveVisitor<>() {
                   @Override
-                  public void remove(final Node<Bytes> node) {
-                    System.out.println(node.print());
-                    prunedLocation.add(node.getLocation().orElseThrow());
+                  public void remove(
+                      final Node<Bytes> node,
+                      final Node<Bytes> updatedNode,
+                      final Node<Bytes> child) {
+                    System.out.println("*$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+                    System.out.println(
+                        "remove -> "
+                            + updatedAddressHash
+                            + " "
+                            + node.getLocation()
+                            + " \n"
+                            + node.getRlp()
+                            + " \n"
+                            + updatedNode.getRlp()
+                            + " \n"
+                            + child.getRlp()
+                            + " "
+                            + child.getLocation()
+                            + " "
+                            + child.getPos());
+                    System.out.println("*$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+                    prunedLocation.add(child.getLocation().orElseThrow());
                   }
                 });
           } else {
@@ -249,7 +289,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
         prunedLocation.forEach(
             location -> {
-              System.out.println("remove -> " + updatedAddressHash + " " + location);
               stateUpdater.removeAccountStateTrieNode(
                   Bytes.concatenate(updatedAddressHash, location), null);
             });
@@ -435,9 +474,14 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
-    return worldStateStorage
-        .getStorageValueBySlotHash(Hash.hash(address), slotHash)
-        .map(UInt256::fromBytes);
+    try {
+      return worldStateStorage
+          .getStorageValueBySlotHash(Hash.hash(address), slotHash)
+          .map(UInt256::fromBytes);
+    } catch (MerkleTrieException e) {
+      System.out.println("read " + address + " " + slotHash);
+      throw e;
+    }
   }
 
   @Override

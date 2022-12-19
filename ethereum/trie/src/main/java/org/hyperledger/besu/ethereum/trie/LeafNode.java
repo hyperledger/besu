@@ -43,6 +43,8 @@ public class LeafNode<V> implements Node<V> {
 
   private String stacktrace;
 
+  int pos;
+
   LeafNode(
       final Optional<Bytes> location,
       final Bytes path,
@@ -171,10 +173,22 @@ public class LeafNode<V> implements Node<V> {
         + getRlpRef()
         + "\n\tLocation: "
         + getLocation()
+        + "\n\tPos: "
+        + pos
         + "\n\tPath: "
         + CompactEncoding.encode(path)
         + "\n\tValue: "
         + getValue().map(Object::toString).orElse("empty");
+  }
+
+  @Override
+  public void setPos(final int pos) {
+    this.pos = pos;
+  }
+
+  @Override
+  public int getPos() {
+    return pos;
   }
 
   @Override

@@ -48,6 +48,8 @@ public class BranchNode<V> implements Node<V> {
   private boolean dirty = false;
   private boolean needHeal = false;
 
+  int pos;
+
   BranchNode(
       final Optional<Bytes> location,
       final ArrayList<Node<V>> children,
@@ -260,8 +262,20 @@ public class BranchNode<V> implements Node<V> {
     }
     builder.append("\n\tLocation: ");
     builder.append(getLocation());
+    builder.append("\n\tPos: ");
+    builder.append(pos);
     builder.append("\n\tValue: ").append(getValue().map(Object::toString).orElse("empty"));
     return builder.toString();
+  }
+
+  @Override
+  public void setPos(final int pos) {
+    this.pos = pos;
+  }
+
+  @Override
+  public int getPos() {
+    return pos;
   }
 
   @Override

@@ -63,6 +63,8 @@ public interface Node<V> {
   /** Marks the node as needing to be persisted */
   void markDirty();
 
+  default void setPos(final int pos) {}
+
   /**
    * Is this node not persisted and needs to be?
    *
@@ -86,4 +88,8 @@ public interface Node<V> {
    * Marking a node as need heal means that one of its children is not yet present in the storage
    */
   void markHealNeeded();
+
+  default int getPos() {
+    return 0;
+  }
 }

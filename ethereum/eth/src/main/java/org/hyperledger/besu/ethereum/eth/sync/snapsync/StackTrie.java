@@ -118,7 +118,7 @@ public class StackTrie {
       }
       trie.commit(
           nodeUpdater,
-          (new CommitVisitor<>(nodeUpdater) {
+          (new CommitVisitor<>(nodeUpdater, true) {
             @Override
             public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
               if (!node.isHealNeeded()) {

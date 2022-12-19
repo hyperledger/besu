@@ -43,7 +43,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   private final StoredNodeFactory<V> nodeFactory;
 
   private Node<V> root;
-  private Bytes rootLocation;
+  private final Bytes rootLocation;
 
   /**
    * Create a trie.
@@ -109,6 +109,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
    */
   public StoredMerklePatriciaTrie(final StoredNodeFactory<V> nodeFactory, final Bytes32 rootHash) {
     this.nodeFactory = nodeFactory;
+    this.rootLocation = Bytes.EMPTY;
     this.root =
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
             ? NullNode.instance()

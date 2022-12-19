@@ -39,6 +39,8 @@ public class ExtensionNode<V> implements Node<V> {
   private boolean dirty = false;
   private boolean needHeal = false;
 
+  int pos;
+
   ExtensionNode(
       final Optional<Bytes> location,
       final Bytes path,
@@ -150,7 +152,9 @@ public class ExtensionNode<V> implements Node<V> {
 
   public Node<V> replaceChild(final Node<V> updatedChild) {
     // collapse this extension - if the child is a branch, it will create a new extension
-    return updatedChild.replacePath(Bytes.concatenate(path, updatedChild.getPath()));
+    final Node<V> vNode = updatedChild.replacePath(Bytes.concatenate(path, updatedChild.getPath()));
+    vNode.setLocation(location);
+    return vNode;
   }
 
   @Override
@@ -172,11 +176,23 @@ public class ExtensionNode<V> implements Node<V> {
         .append(getRlpRef())
         .append("\n\tLocation: ")
         .append(getLocation())
+        .append("\n\tPos: ")
+        .append(pos)
         .append("\n\tPath: ")
         .append(CompactEncoding.encode(path))
         .append("\n\t")
         .append(childRep);
     return builder.toString();
+  }
+
+  @Override
+  public void setPos(final int pos) {
+    this.pos = pos;
+  }
+
+  @Override
+  public int getPos() {
+    return pos;
   }
 
   @Override

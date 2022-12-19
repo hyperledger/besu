@@ -17,10 +17,12 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 import static org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest.MAX_CHILDREN;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
@@ -111,6 +113,12 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
 
   public boolean isExpired(final SnapSyncState snapSyncState) {
     return false;
+  }
+
+  protected DataStorageFormat getSyncMode(final WorldStateStorage worldStateStorage) {
+    return (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage)
+        ? DataStorageFormat.BONSAI
+        : DataStorageFormat.FOREST;
   }
 
   public abstract Stream<SnapDataRequest> getChildRequests(
