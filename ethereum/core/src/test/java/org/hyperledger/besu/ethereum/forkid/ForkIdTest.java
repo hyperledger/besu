@@ -12,22 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+package org.hyperledger.besu.ethereum.forkid;
 
 import static com.google.common.primitives.Longs.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.mockBlockchain;
-import static org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.wantPeerCheck;
+import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.mockBlockchain;
+import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.wantPeerCheck;
 
-import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil;
-import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.ForkIds;
-import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.GenesisHash;
-import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.Network;
-import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.PeerCheckCase;
-import org.hyperledger.besu.ethereum.forkid.ForkId;
-import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.ForkIds;
+import org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.GenesisHash;
+import org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.Network;
+import org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.PeerCheckCase;
 
 import java.util.Arrays;
 import java.util.Collection;
