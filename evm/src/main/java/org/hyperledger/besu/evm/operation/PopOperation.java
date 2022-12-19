@@ -23,7 +23,7 @@ public class PopOperation extends AbstractFixedCostOperation {
   static final OperationResult popSuccess = new OperationResult(2, null);
 
   public PopOperation(final GasCalculator gasCalculator) {
-    super(0x50, "POP", 1, 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x50, "POP", 1, 0, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

@@ -17,6 +17,11 @@
 package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.evm.operation.PushOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
+
+import java.util.BitSet;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -122,9 +127,9 @@ class OpcodesV1 {
     VALID, // 0x59 - MSIZE
     VALID, // 0x5a - GAS
     VALID_AND_JUMPDEST, // 0x5b - JUMPDEST
-    INVALID, // 0X5c
-    INVALID, // 0X5d
-    INVALID, // 0X5e
+    VALID, // 0X5c - RJUMP
+    VALID, // 0X5d - RJUMPI
+    VALID, // 0X5e - RJUMPV
     VALID, // 0X5f - PUSH0
     VALID, // 0x60 - PUSH1
     VALID, // 0x61 - PUSH2
@@ -294,34 +299,77 @@ class OpcodesV1 {
 
   static long[] validateAndCalculateJumpDests(final Bytes code) {
     final int size = code.size();
-    final long[] bitmap = new long[(size >> 6) + 1];
+    final BitSet bitmap = new BitSet(size);
+    final BitSet rjumpdests = new BitSet(size);
+    final BitSet immediates = new BitSet(size);
     final byte[] rawCode = code.toArrayUnsafe();
-    final int length = rawCode.length;
     int attribute = INVALID;
-    for (int i = 0; i < length; ) {
-      long thisEntry = 0L;
-      final int entryPos = i >> 6;
-      final int max = Math.min(64, length - (entryPos << 6));
-      int j = i & 0x3f;
-      for (; j < max; i++, j++) {
-        final int operationNum = rawCode[i] & 0xff;
-        attribute = opcodeAttributes[operationNum];
-        if ((attribute & INVALID) == INVALID) {
+    int pos = 0;
+    while (pos < size) {
+      final int operationNum = rawCode[pos] & 0xff;
+      attribute = opcodeAttributes[operationNum];
+      if ((attribute & INVALID) == INVALID) {
+        // undefined instruction
+        return null;
+      }
+      if ((attribute & JUMPDEST) == JUMPDEST) {
+        bitmap.set(pos);
+      }
+      pos += 1;
+      int pcPostInstruction = pos;
+      if (operationNum > PushOperation.PUSH_BASE && operationNum <= PushOperation.PUSH_MAX) {
+        final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
+        pcPostInstruction += multiByteDataLen;
+      } else if (operationNum == RelativeJumpOperation.OPCODE
+          || operationNum == RelativeJumpIfOperation.OPCODE) {
+        if (pos + 2 > size) {
+          // truncated relative jump offset
           return null;
-        } else if ((attribute & JUMPDEST) == JUMPDEST) {
-          thisEntry |= 1L << j;
-        } else if (operationNum > PushOperation.PUSH_BASE
-            && operationNum <= PushOperation.PUSH_MAX) {
-          final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
-          j += multiByteDataLen;
-          i += multiByteDataLen;
+        }
+        pcPostInstruction += 2;
+        final int offset = RelativeJumpOperation.getRelativeOffset(code, pos);
+        final int rjumpdest = pcPostInstruction + offset;
+        if (rjumpdest < 0 || rjumpdest >= size) {
+          // relative jump destination out of bounds
+          return null;
+        }
+        rjumpdests.set(rjumpdest);
+      } else if (operationNum == RelativeJumpVectorOperation.OPCODE) {
+        if (pos + 1 > size) {
+          // truncated jump table
+          return null;
+        }
+        final int jumpTableSize = RelativeJumpVectorOperation.getVectorSize(code, pos);
+        if (jumpTableSize == 0) {
+          // empty jump table
+          return null;
+        }
+        pcPostInstruction += 1 + 2 * jumpTableSize;
+        if (pcPostInstruction > size) {
+          // truncated jump table
+          return null;
+        }
+        for (int offsetPos = pos + 1; offsetPos < pcPostInstruction; offsetPos += 2) {
+          final int offset = RelativeJumpOperation.getRelativeOffset(code, offsetPos);
+          final int rjumpdest = pcPostInstruction + offset;
+          if (rjumpdest < 0 || rjumpdest >= size) {
+            // relative jump destination out of bounds
+            return null;
+          }
+          rjumpdests.set(rjumpdest);
         }
       }
-      bitmap[entryPos] = thisEntry;
+      immediates.set(pos, pcPostInstruction);
+      pos = pcPostInstruction;
     }
     if ((attribute & TERMINAL) != TERMINAL) {
+      // no terminating instruction
       return null;
     }
-    return bitmap;
+    if (rjumpdests.intersects(immediates)) {
+      // Ensure relative jump destinations don't target immediates
+      return null;
+    }
+    return bitmap.toLongArray();
   }
 }
