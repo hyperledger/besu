@@ -687,41 +687,6 @@ task testDocker {
   }
 }
 
-task acceptanceTestsQuorum {
-  /**
-   * Tags Description
-   *
-   * Basic tests for private and public tx: basic
-   * Start a Besu/EthSigner/Tessera network with IBFT2: networks/typical-besu::ibft2
-   *
-   * Filter only for spam tests supported by Besu: (spam && raw)
-   * Not available features in Besu: privacy-enhancements-disabled, extension, mps
-   * Not available RPC methods in Besu: async, storage-root, personal-api-signed
-   *
-   * Ignored for now (privacy-polishing): eth-api-signed, nosupport
-   *
-   * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
-   */
-  def tags = "(basic && !nosupport && !mps && !(spam && !raw) && !eth-api-signed && !privacy-enhancements-disabled && !async && !extension && !storage-root && !personal-api-signed) || networks/typical-besu::ibft2"
-
-  doLast {
-    exec {
-      def variant = "openjdk-latest"
-      def variantDirectory = "${buildDir}/quorum-at/${variant}"
-      def dataDirectory = "${variantDirectory}/data"
-      def reportsDirectory = "${variantDirectory}/reports"
-      new File(dataDirectory).mkdirs()
-      new File(reportsDirectory).mkdirs()
-
-      def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
-      def dockerEnv = "--env LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG --env TF_VAR_besu_docker_image='{name=\"${image}-${variant}\",local=true}'"
-      def dockerVolumes = "-v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory}"
-      executable "sh"
-      args "-c", "docker run ${dockerEnv} --rm --network host ${dockerVolumes} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"${tags}\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
-    }
-  }
-}
-
 task dockerUpload {
   dependsOn distDocker
   def architecture = System.getenv('architecture')
