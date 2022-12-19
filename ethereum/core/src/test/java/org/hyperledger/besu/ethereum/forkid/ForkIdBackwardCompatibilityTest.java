@@ -12,14 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth;
+package org.hyperledger.besu.ethereum.forkid;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.GenesisHash;
-import static org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.mockBlockchain;
-
-import org.hyperledger.besu.ethereum.forkid.ForkId;
-import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.GenesisHash;
+import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.mockBlockchain;
 
 import java.util.Arrays;
 import java.util.Collection;
