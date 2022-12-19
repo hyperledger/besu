@@ -323,14 +323,14 @@ class CodeV1Test {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"b00004", "b003ff", "b0ffff", "b20004", "b203ff", "20ffff"})
+  @ValueSource(strings = {"b00004", "b003ff", "b0ffff", "b20004", "b203ff", "b2ffff"})
   void testJumpCallFWrongSection(final String code) {
     final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 3);
     assertThat(validationError).startsWith("CALLF/JUMPF to non-existent section -");
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"b00001", "b00002", "b00000", "b20001", "b20002", "b20000"})
+  @ValueSource(strings = {"b0000100", "b0000200", "b0000000", "b20001", "b20002", "b20000"})
   void testJumpCallFValid(final String code) {
     final String validationError = OpcodesV1.validateCode(Bytes.fromHexString(code), 3);
     assertThat(validationError).isNull();
