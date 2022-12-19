@@ -84,6 +84,9 @@ import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
@@ -456,5 +459,8 @@ public class MainnetEVMs {
     registerParisOperations(registry, gasCalculator, chainID);
     // Register the PUSH0 operation.
     registry.put(new Push0Operation(gasCalculator));
+    registry.put(new RelativeJumpOperation(gasCalculator));
+    registry.put(new RelativeJumpIfOperation(gasCalculator));
+    registry.put(new RelativeJumpVectorOperation(gasCalculator));
   }
 }

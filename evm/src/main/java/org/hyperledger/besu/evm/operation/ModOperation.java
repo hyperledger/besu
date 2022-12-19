@@ -29,7 +29,7 @@ public class ModOperation extends AbstractFixedCostOperation {
   private static final OperationResult modSuccess = new OperationResult(5, null);
 
   public ModOperation(final GasCalculator gasCalculator) {
-    super(0x06, "MOD", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x06, "MOD", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
