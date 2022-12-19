@@ -346,11 +346,10 @@ public class EthPeerTest {
     when(trueProvider.isMessagePermitted(any(), anyInt())).thenReturn(true);
     when(falseProvider.isMessagePermitted(any(), anyInt())).thenReturn(false);
 
+    // use failOnSend callback
     final EthPeer peer =
         createPeer(Collections.emptyList(), List.of(falseProvider, trueProvider), getFailOnSend());
     peer.send(PingMessage.get());
-
-    //    verify(peer.getConnection(), times(0)).sendForProtocol(any(), eq(PingMessage.get()));
   }
 
   @Test
@@ -530,8 +529,7 @@ public class EthPeerTest {
     final Set<Capability> caps =
         new HashSet<>(Collections.singletonList(Capability.create("foo", 63)));
 
-    final PeerConnection peerConnection = new MockPeerConnection(caps, onSend);
-    return peerConnection;
+    return new MockPeerConnection(caps, onSend);
   }
 
   @FunctionalInterface
