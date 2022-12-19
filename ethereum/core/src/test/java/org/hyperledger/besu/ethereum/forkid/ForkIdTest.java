@@ -751,6 +751,8 @@ public class ForkIdTest {
             empty(),
             wantPeerCheck("0xafec6b27", 0L, false)
           },
+
+          // Fork ID test cases with block number and timestamp based forks
           // Withdrawals test cases
           {
             "Withdrawals // Unsynced",
