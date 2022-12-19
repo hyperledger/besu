@@ -28,7 +28,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class Keccak256Operation extends AbstractOperation {
 
   public Keccak256Operation(final GasCalculator gasCalculator) {
-    super(0x20, "KECCAK256", 2, 1, 1, gasCalculator);
+    super(0x20, "KECCAK256", 2, 1, gasCalculator);
   }
 
   @Override

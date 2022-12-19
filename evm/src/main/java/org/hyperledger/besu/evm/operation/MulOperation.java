@@ -27,7 +27,7 @@ public class MulOperation extends AbstractFixedCostOperation {
   static final OperationResult mulSuccess = new OperationResult(5, null);
 
   public MulOperation(final GasCalculator gasCalculator) {
-    super(0x02, "MUL", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x02, "MUL", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

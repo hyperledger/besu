@@ -25,7 +25,7 @@ public class EqOperation extends AbstractFixedCostOperation {
   static final OperationResult eqSuccess = new OperationResult(3, null);
 
   public EqOperation(final GasCalculator gasCalculator) {
-    super(0x14, "EQ", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x14, "EQ", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

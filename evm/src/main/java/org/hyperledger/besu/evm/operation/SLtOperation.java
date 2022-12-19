@@ -28,7 +28,7 @@ public class SLtOperation extends AbstractFixedCostOperation {
   static final OperationResult sltSuccess = new OperationResult(3, null);
 
   public SLtOperation(final GasCalculator gasCalculator) {
-    super(0x12, "SLT", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x12, "SLT", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
