@@ -28,6 +28,7 @@ import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecom
 
 import java.math.BigInteger;
 
+import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -166,14 +167,16 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final Account account,
       final UInt256 key,
       final UInt256 newValue,
-      final UInt256 currentValue,
-      final UInt256 originalValue) {
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
-    if (currentValue.equals(newValue)) {
+    UInt256 localCurrentValue = currentValue.get();
+    if (localCurrentValue.equals(newValue)) {
       return SLOAD_GAS;
     } else {
-      if (originalValue.equals(currentValue)) {
-        return originalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
+      UInt256 localOriginalValue = originalValue.get();
+      if (localOriginalValue.equals(localCurrentValue)) {
+        return localOriginalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
       } else {
         return SLOAD_GAS;
       }
@@ -187,14 +190,16 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final Account account,
       final UInt256 key,
       final UInt256 newValue,
-      final UInt256 currentValue,
-      final UInt256 originalValue) {
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
-    if (currentValue.equals(newValue)) {
+    UInt256 localCurrentValue = currentValue.get();
+    if (localCurrentValue.equals(newValue)) {
       return 0L;
     } else {
-      if (originalValue.equals(currentValue)) {
-        if (originalValue.isZero()) {
+      UInt256 localOriginalValue = originalValue.get();
+      if (localOriginalValue.equals(localCurrentValue)) {
+        if (localOriginalValue.isZero()) {
           return 0L;
         } else if (newValue.isZero()) {
           return SSTORE_CLEARS_SCHEDULE;
@@ -203,18 +208,18 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
         }
       } else {
         long refund = 0L;
-        if (!originalValue.isZero()) {
-          if (currentValue.isZero()) {
+        if (!localOriginalValue.isZero()) {
+          if (localCurrentValue.isZero()) {
             refund = NEGATIVE_SSTORE_CLEARS_SCHEDULE;
           } else if (newValue.isZero()) {
             refund = SSTORE_CLEARS_SCHEDULE;
           }
         }
 
-        if (originalValue.equals(newValue)) {
+        if (localOriginalValue.equals(newValue)) {
           refund =
               refund
-                  + (originalValue.isZero()
+                  + (localOriginalValue.isZero()
                       ? SSTORE_SET_GAS_LESS_SLOAD_GAS
                       : SSTORE_RESET_GAS_LESS_SLOAD_GAS);
         }

@@ -21,7 +21,8 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes32;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SStoreOperation extends AbstractOperation {
@@ -57,14 +58,15 @@ public class SStoreOperation extends AbstractOperation {
 
     final Address address = account.getAddress();
     final boolean slotIsWarm = frame.warmUpStorage(address, key);
-    final UInt256 currentValue = account.getStorageValue(key);
-    UInt256 originalValue = UInt256.fromBytes(Bytes32.EMPTY);
-    if (!currentValue.equals(newValue)) {
-      originalValue = account.getOriginalStorageValue(key);
-    }
+    final Supplier<UInt256> currentValueSupplier =
+        Suppliers.memoize(() -> account.getStorageValue(key));
+    final Supplier<UInt256> originalValueSupplier =
+        Suppliers.memoize(() -> account.getOriginalStorageValue(key));
 
     final long cost =
-        gasCalculator().calculateStorageCost(account, key, newValue, currentValue, originalValue)
+        gasCalculator()
+                .calculateStorageCost(
+                    account, key, newValue, currentValueSupplier, originalValueSupplier)
             + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
 
     final long remainingGas = frame.getRemainingGas();
@@ -79,7 +81,8 @@ public class SStoreOperation extends AbstractOperation {
     // Increment the refund counter.
     frame.incrementGasRefund(
         gasCalculator()
-            .calculateStorageRefundAmount(account, key, newValue, currentValue, originalValue));
+            .calculateStorageRefundAmount(
+                account, key, newValue, currentValueSupplier, originalValueSupplier));
 
     account.setStorageValue(key, newValue);
     frame.storageWasUpdated(key, newValue);
