@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import static org.hyperledger.besu.ethereum.eth.sync.SyncMode.isCheckpointSync;
+
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -35,8 +36,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.util.InvalidConfigurationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -46,7 +45,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hyperledger.besu.ethereum.eth.sync.SyncMode.isCheckpointSync;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BesuController implements java.io.Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BesuController.class);
@@ -174,7 +175,6 @@ public class BesuController implements java.io.Closeable {
   }
 
   public static class Builder {
-
 
     public BesuControllerBuilder fromEthNetworkConfig(
         final EthNetworkConfig ethNetworkConfig,

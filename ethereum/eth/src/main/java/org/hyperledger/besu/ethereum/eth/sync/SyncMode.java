@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.EnumSet;
+
+import org.apache.commons.lang3.StringUtils;
 
 public enum SyncMode {
   // Fully validate all blocks as they sync
