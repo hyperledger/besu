@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
@@ -612,7 +613,7 @@ public class CodeV1 implements Code {
           return "Truncated relative jump offset";
         }
         pcPostInstruction += 2;
-        final int offset = RelativeJumpOperation.getRelativeOffset(code, pos);
+        final int offset = Words.readBigEndianI16(pos, rawCode);
         final int rjumpdest = pcPostInstruction + offset;
         if (rjumpdest < 0 || rjumpdest >= size) {
           return "Relative jump destination out of bounds";
@@ -631,7 +632,7 @@ public class CodeV1 implements Code {
           return "Truncated jump table";
         }
         for (int offsetPos = pos + 1; offsetPos < pcPostInstruction; offsetPos += 2) {
-          final int offset = RelativeJumpOperation.getRelativeOffset(code, offsetPos);
+          final int offset = Words.readBigEndianI16(offsetPos, rawCode);
           final int rjumpdest = pcPostInstruction + offset;
           if (rjumpdest < 0 || rjumpdest >= size) {
             return "Relative jump destination out of bounds";
