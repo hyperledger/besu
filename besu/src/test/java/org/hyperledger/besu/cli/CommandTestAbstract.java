@@ -200,7 +200,7 @@ public abstract class CommandTestAbstract {
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
         .when(mockControllerBuilderFactory)
-        .fromEthNetworkConfig(any(), any());
+        .fromEthNetworkConfig(any(), any(), any());
     when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethProtocolConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionPoolConfiguration(any()))
