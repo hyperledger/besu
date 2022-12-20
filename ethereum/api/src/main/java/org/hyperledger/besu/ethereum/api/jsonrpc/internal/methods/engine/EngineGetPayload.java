@@ -14,33 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
-
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.Block;
 
-import java.util.Optional;
-
 import io.vertx.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
-
-  private final MergeMiningCoordinator mergeMiningCoordinator;
-  protected final BlockResultFactory blockResultFactory;
-  private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayload.class);
+public class EngineGetPayload extends AbstractEngineGetPayload {
 
   public EngineGetPayload(
       final Vertx vertx,
@@ -48,9 +33,7 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.mergeMiningCoordinator = mergeMiningCoordinator;
-    this.blockResultFactory = blockResultFactory;
+    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
   }
 
   @Override
@@ -59,29 +42,6 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
-    engineCallListener.executionEngineCalled();
-
-    final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
-    mergeMiningCoordinator.finalizeProposalById(payloadId);
-    final Optional<Block> block = mergeContext.get().retrieveBlockById(payloadId);
-    if (block.isPresent()) {
-      final var proposal = block.get();
-      final var proposalHeader = proposal.getHeader();
-      infoLambda(
-          LOG,
-          "Fetch block proposal by identifier: {}, hash: {}, number: {}, coinbase: {}, transaction count: {}",
-          payloadId::toHexString,
-          proposalHeader::getHash,
-          proposalHeader::getNumber,
-          proposalHeader::getCoinbase,
-          () -> proposal.getBody().getTransactions().size());
-      debugLambda(LOG, "assembledBlock {}", () -> block.map(Block::toString).get());
-      return createResponse(request, block.get());
-    }
-    return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_PAYLOAD);
-  }
-
   protected JsonRpcResponse createResponse(final JsonRpcRequestContext request, final Block block) {
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(), blockResultFactory.enginePayloadTransactionComplete(block));

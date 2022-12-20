@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import io.vertx.core.Vertx;
 
-public class EngineGetPayloadV2 extends EngineGetPayload {
+public class EngineGetPayloadV2 extends AbstractEngineGetPayload {
 
   public EngineGetPayloadV2(
       final Vertx vertx,
