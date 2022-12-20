@@ -198,34 +198,34 @@ public class ForkIdManager {
     final CRC32 crc = new CRC32();
     crc.update(genesisHash.toArray());
     genesisHashCrc = getCurrentCrcHash(crc);
-    final List<Bytes> numberForkHashes = new ArrayList<>(List.of(genesisHashCrc));
+    final List<Bytes> forkHashes = new ArrayList<>(List.of(genesisHashCrc));
     blockNumberForks.forEach(
         fork -> {
           updateCrc(crc, fork);
-          numberForkHashes.add(getCurrentCrcHash(crc));
+          forkHashes.add(getCurrentCrcHash(crc));
         });
 
     timestampForks.forEach(
         fork -> {
           updateCrc(crc, fork);
-          numberForkHashes.add(getCurrentCrcHash(crc));
+          forkHashes.add(getCurrentCrcHash(crc));
         });
 
     // This loop is for all the fork hashes that have an associated "next fork"
     for (int i = 0; i < blockNumberForks.size(); i++) {
-      blockNumbersForkIds.add(new ForkId(numberForkHashes.get(i), blockNumberForks.get(i)));
+      blockNumbersForkIds.add(new ForkId(forkHashes.get(i), blockNumberForks.get(i)));
     }
     for (int i = 0; i < timestampForks.size(); i++) {
       timestampsForkIds.add(
-          new ForkId(numberForkHashes.get(blockNumberForks.size() + i), timestampForks.get(i)));
+          new ForkId(forkHashes.get(blockNumberForks.size() + i), timestampForks.get(i)));
     }
     long forkNext = 0;
     if (!timestampForks.isEmpty()) {
       forkNext = timestampForks.get(timestampForks.size() - 1);
-      timestampsForkIds.add(new ForkId(numberForkHashes.get(numberForkHashes.size() - 1), 0));
+      timestampsForkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     } else if (!blockNumberForks.isEmpty()) {
       forkNext = blockNumbersForkIds.get(blockNumbersForkIds.size() - 1).getNext();
-      blockNumbersForkIds.add(new ForkId(numberForkHashes.get(numberForkHashes.size() - 1), 0));
+      blockNumbersForkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }
     return forkNext;
   }
