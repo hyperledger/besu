@@ -57,6 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -135,7 +136,7 @@ public abstract class AbstractIsolationTests {
                           4 /*BACKGROUND_THREAD_COUNT*/,
                           8388608 /*CACHE_CAPACITY*/,
                           false),
-                  KeyValueSegmentIdentifier.getValues(),
+                  Arrays.asList(KeyValueSegmentIdentifier.values()),
                   2,
                   RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
           .withCommonConfiguration(
