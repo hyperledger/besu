@@ -150,7 +150,12 @@ public class ForkIdManager {
     if (!isHashKnown(forkId.getHash())) {
       return false;
     }
-    return chainHeadSupplier.get().getNumber() < forkNext
+
+    final BlockHeader header = chainHeadSupplier.get();
+    final long forkValue =
+        blockNumberForks.contains(forkNext) ? header.getNumber() : header.getTimestamp();
+
+    return forkValue < forkNext
         || (isForkKnown(forkId.getNext())
             && isRemoteAwareOfPresent(forkId.getHash(), forkId.getNext()));
   }
