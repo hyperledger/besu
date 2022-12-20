@@ -112,12 +112,14 @@ public class RocksDBColumnarKeyValueStorage
       final List<byte[]> existingColumnFamilies =
           RocksDB.listColumnFamilies(new Options(), configuration.getDatabaseDir().toString());
       ignorableSegments.forEach(
-          ignore -> {
-            trimmedSegments.remove(ignore);
+          ignorableSegment -> {
+            trimmedSegments.remove(ignorableSegment);
             existingColumnFamilies.forEach(
                 existed -> {
-                  if (Arrays.equals(existed, ignore.getId())) {
-                    trimmedSegments.add(ignore);
+                  if (Arrays.equals(existed, ignorableSegment.getId())) {
+                    // Add back the segment because column family can not be ignored if it exists
+                    // currently.
+                    trimmedSegments.add(ignorableSegment);
                   }
                 });
           });
