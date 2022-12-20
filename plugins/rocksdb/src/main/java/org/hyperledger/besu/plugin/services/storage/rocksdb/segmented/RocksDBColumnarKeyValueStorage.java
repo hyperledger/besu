@@ -281,23 +281,24 @@ public class RocksDBColumnarKeyValueStorage
       final Bytes endKeyHash) {
     final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
     rocksIterator.seek(startKeyHash.toArrayUnsafe());
-    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
     try {
       final TreeMap<Bytes, Bytes> res = new TreeMap<>();
-      while (rocksDbKeyIterator.hasNext()) {
-        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+      while (rocksIterator.isValid()) {
+        final Pair<byte[], byte[]> next = Pair.of(rocksIterator.key(), rocksIterator.value());
         final Bytes key = Bytes.wrap(next.getKey());
         if (key.compareTo(startKeyHash) >= 0) {
           if (key.compareTo(endKeyHash) <= 0) {
             res.put(key, Bytes.of(next.getValue()));
+            rocksIterator.next();
           } else {
             return res;
           }
+        } else {
+          return res;
         }
       }
       return res;
     } finally {
-      rocksDbKeyIterator.close();
       rocksIterator.close();
     }
   }
@@ -306,20 +307,19 @@ public class RocksDBColumnarKeyValueStorage
   public List<Bytes> getByPrefix(final RocksDbSegmentIdentifier segmentHandle, final Bytes prefix) {
     final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
     rocksIterator.seek(prefix.toArrayUnsafe());
-    final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
     try {
       final List<Bytes> res = new ArrayList<>();
-      while (rocksDbKeyIterator.hasNext()) {
-        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
+      while (rocksIterator.isValid()) {
+        final Bytes key = Bytes.wrap(rocksIterator.key());
         if (key.commonPrefixLength(prefix) == prefix.size()) {
           res.add(key);
+          rocksIterator.next();
         } else {
           return res;
         }
       }
       return res;
     } finally {
-      rocksDbKeyIterator.close();
       rocksIterator.close();
     }
   }
