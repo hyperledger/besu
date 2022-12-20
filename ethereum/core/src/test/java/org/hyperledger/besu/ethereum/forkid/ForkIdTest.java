@@ -751,6 +751,142 @@ public class ForkIdTest {
             empty(),
             wantPeerCheck("0xafec6b27", 0L, false)
           },
+          // Timestamp based peer check cases adapted from EIP-6122 test cases
+          {
+            "withdrawalsCheck1ShanghaiWithRemoteAnnouncingTheSame",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xc1fdf181", 0L, true)
+          },
+          {
+            "withdrawalsCheck2ShanghaiWithRemoteAnnouncingSameAndNextFork",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xc1fdf181", Long.MAX_VALUE, true)
+          },
+          {
+            "withdrawalsCheck3ByzantiumWithRemoteAnnouncingByzantiumNotAwareOfPetersburg",
+            Network.WITHDRAWALS,
+            7279999L,
+            1667999999L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xa00bc324", 0L, true)
+          },
+          {
+            "withdrawalsCheck4ByzantiumWithRemoteAnnouncingByzantiumAwareOfPetersburg",
+            Network.WITHDRAWALS,
+            7279999L,
+            1667999999L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xa00bc324", 7280000L, true)
+          },
+          {
+            "withdrawalsCheck5ByzantiumWithRemoteAnnouncingByzantiumAwareOfUnknownFork",
+            Network.WITHDRAWALS,
+            7279999L,
+            1667999999L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xa00bc324", Long.MAX_VALUE, true)
+          },
+          {
+            "withdrawalsCheck6ExactlyShanghaiWithRemoteAnnouncingByzantiumAwareOfPetersburgRemoteOutOfSync",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000000L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xa00bc324", 7280000L, true)
+          },
+          {
+            "withdrawalsCheck7ShanghaiWithRemoteAnnouncingByzantiumAwareOfPetersburgRemoteOutOfSync",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xa00bc324", 7280000L, true)
+          },
+          {
+            "withdrawalsCheck8ShanghaiWithRemoteAnnouncingSpuriousAwareOfByzantium",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0x3edd5b10", 4370000, true)
+          },
+          {
+            "withdrawalsCheck9ByzantiumWithRemoteAnnouncingPetersburgLocalOutOfSync",
+            Network.WITHDRAWALS,
+            7279999L,
+            1667999999L,
+            empty(),
+            empty(),
+            wantPeerCheck("0x668db0af", 4370000, true)
+          },
+          {
+            "withdrawalsCheck10SpuriousWithRemoteAnnouncingByzantiumNotAwareOfPetersburgLocalOutOfSync",
+            Network.WITHDRAWALS,
+            4369999L,
+            1667999999L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xa00bc324", 0L, true)
+          },
+          {
+            "withdrawalsCheck11ShanghaiWithRemoteAnnouncingByzantiumUnawareOfAdditionalForksRemoteNeedsUpdate",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xa00bc324", 0L, false)
+          },
+          {
+            "withdrawalsCheck12ShanghaiAndNotAwareOfAdditionalForksWithRemoteAnnouncingPetersburgAndUnknownFork",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0x5cddc0e1", 0L, false)
+          },
+          {
+            "withdrawalsCheck13ShanghaiWithRemoteAnnouncingRinkebyPetersburg",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xafec6b27", 0L, false)
+          },
+          {
+            "withdrawalsCheck14ShanghaiWithRemoteAnnouncingUnknownFork",
+            Network.WITHDRAWALS,
+            88888888L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xf0afd0e3", 88888888L, false)
+          },
+          {
+            "withdrawalsCheck15ShanghaiWithRemoteInByzantiumAnnouncingUnknownFork",
+            Network.WITHDRAWALS,
+            88888888L,
+            1668000001L,
+            empty(),
+            empty(),
+            wantPeerCheck("0xa00bc324", 7279999L, false)
+          },
 
           // Fork ID test cases with block number and timestamp based forks
           // Withdrawals test cases
@@ -976,7 +1112,7 @@ public class ForkIdTest {
             18000000L,
             0L,
             ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
-            Optional.of(ForkIds.WITHDRAWALS),
+            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
             empty()
           },
           {
@@ -985,7 +1121,7 @@ public class ForkIdTest {
             20000000L,
             0L,
             ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
-            Optional.of(ForkIds.WITHDRAWALS),
+            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
             empty()
           },
           {
@@ -994,7 +1130,7 @@ public class ForkIdTest {
             20000000L,
             1668000000L,
             ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
-            Optional.of(ForkIds.WITHDRAWALS),
+            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
             empty()
           },
           {
@@ -1003,7 +1139,7 @@ public class ForkIdTest {
             20100000L,
             2669000000L,
             ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
-            Optional.of(ForkIds.WITHDRAWALS),
+            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
             empty()
           },
         });
