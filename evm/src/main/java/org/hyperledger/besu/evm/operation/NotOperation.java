@@ -25,7 +25,7 @@ public class NotOperation extends AbstractFixedCostOperation {
   static final OperationResult notSuccess = new OperationResult(3, null);
 
   public NotOperation(final GasCalculator gasCalculator) {
-    super(0x19, "NOT", 1, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x19, "NOT", 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

@@ -28,7 +28,7 @@ public class ShrOperation extends AbstractFixedCostOperation {
   static final OperationResult shrSuccess = new OperationResult(3, null);
 
   public ShrOperation(final GasCalculator gasCalculator) {
-    super(0x1c, "SHR", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1c, "SHR", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

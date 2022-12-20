@@ -49,10 +49,16 @@ public class TransactionEncoder {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    encodeForWire(transactionType, encodeOpaqueBytes(transaction), rlpOutput);
+  }
+
+  public static void encodeForWire(
+      final TransactionType transactionType, final Bytes opaqueBytes, final RLPOutput rlpOutput) {
+    checkNotNull(transactionType, "Transaction type was not specified.");
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      encodeFrontier(transaction, rlpOutput);
+      rlpOutput.writeRaw(opaqueBytes);
     } else {
-      rlpOutput.writeBytes(encodeOpaqueBytes(transaction));
+      rlpOutput.writeBytes(opaqueBytes);
     }
   }
 
