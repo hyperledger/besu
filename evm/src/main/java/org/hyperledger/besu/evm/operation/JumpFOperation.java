@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -35,7 +37,7 @@ public class JumpFOperation extends AbstractOperation {
 
   public static OperationResult staticOperation(
       final MessageFrame frame, final byte[] code, final int pc) {
-    int section = (code[pc + 1] & 0xff) << 8 | (code[pc + 2] & 0xff);
+    int section = readBigEndianU16(pc + 1, code);
     var exception = frame.jumpFunction(section);
     if (exception == null) {
       return jumpfSuccess;

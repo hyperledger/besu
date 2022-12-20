@@ -16,6 +16,9 @@
 
 package org.hyperledger.besu.evm.code;
 
+import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
+
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
@@ -341,7 +344,7 @@ class OpcodesV1 {
           return "Truncated relative jump offset";
         }
         pcPostInstruction += 2;
-        final int offset = RelativeJumpOperation.getRelativeOffset(code, pos);
+        final int offset = readBigEndianI16(pos, rawCode);
         final int rjumpdest = pcPostInstruction + offset;
         if (rjumpdest < 0 || rjumpdest >= size) {
           return "Relative jump destination out of bounds";
@@ -360,7 +363,7 @@ class OpcodesV1 {
           return "Truncated jump table";
         }
         for (int offsetPos = pos + 1; offsetPos < pcPostInstruction; offsetPos += 2) {
-          final int offset = RelativeJumpOperation.getRelativeOffset(code, offsetPos);
+          final int offset = readBigEndianI16(offsetPos, rawCode);
           final int rjumpdest = pcPostInstruction + offset;
           if (rjumpdest < 0 || rjumpdest >= size) {
             return "Relative jump destination out of bounds";
@@ -371,7 +374,7 @@ class OpcodesV1 {
         if (pos + 2 > size) {
           return "Truncated CALLF/JUMPF";
         }
-        int section = (rawCode[pos] & 0xff) << 8 | (rawCode[pos + 1] & 0xff);
+        int section = Words.readBigEndianU16(pos, rawCode);
         if (section >= sectionCount) {
           return "CALLF/JUMPF to non-existent section - " + Integer.toHexString(section);
         }

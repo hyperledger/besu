@@ -15,7 +15,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.operation.RelativeJumpOperation.getRelativeOffset;
+import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -43,7 +43,7 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
             + 2 * vectorSize
             + ((offsetCase >= vectorSize)
                 ? 0
-                : getRelativeOffset(code, frame.getPC() + 1 + offsetCase * 2))
+                : readBigEndianI16(frame.getPC() + 1 + offsetCase * 2, code.toArrayUnsafe()))
             + 1);
   }
 
