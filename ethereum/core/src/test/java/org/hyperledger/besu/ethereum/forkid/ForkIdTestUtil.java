@@ -27,7 +27,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.LongSupplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
 
 public class ForkIdTestUtil {
@@ -86,11 +89,9 @@ public class ForkIdTestUtil {
     public static final List<Long> PRIVATE = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
 
     public static final List<Long> WITHDRAWALS_BLOCKS =
-        Arrays.asList(
-            1920000L, 1150000L, 2463000L, 2675000L, 2675000L, 4370000L, 7280000L, 7280000L,
-            9069000L, 9200000L, 12244000L, 12965000L, 13773000L, 15050000L, 18000000L);
+        Streams.concat(MAINNET.stream(), Stream.of(18000000L)).collect(Collectors.toList());
 
-    public static final List<Long> WITHDRAWALS_TIMESTAMPS = Arrays.asList(1668000000L);
+    public static final List<Long> WITHDRAWALS_TIMESTAMPS = List.of(1668000000L);
   }
 
   public static class ForkIds {

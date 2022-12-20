@@ -264,6 +264,44 @@ public class ForkIdTest {
             Optional.of(ForkIds.MAINNET),
             empty()
           },
+          // Fork ID test cases with block number and timestamp based forks
+          // Withdrawals test cases
+          {
+            "Mainnet Withdrawals // First Merge Start block",
+            Network.WITHDRAWALS,
+            18000000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
+            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Mainnet Withdrawals // Last Merge Start block",
+            Network.WITHDRAWALS,
+            20000000L,
+            0L,
+            ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
+            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Mainnet Withdrawals // First Shanghai block",
+            Network.WITHDRAWALS,
+            20000000L,
+            1668000000L,
+            ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
+            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
+            empty()
+          },
+          {
+            "Mainnet Withdrawals // Last Shanghai block",
+            Network.WITHDRAWALS,
+            20100000L,
+            2669000000L,
+            ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
+            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
+            empty()
+          },
           // Ropsten test cases
           {
             "Ropsten // Unsynced, last Frontier, Homestead and first Tangerine block",
@@ -886,262 +924,7 @@ public class ForkIdTest {
             empty(),
             empty(),
             wantPeerCheck("0xa00bc324", 7279999L, false)
-          },
-
-          // Fork ID test cases with block number and timestamp based forks
-          // Withdrawals test cases
-          {
-            "Withdrawals // Unsynced",
-            Network.WITHDRAWALS,
-            0L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xfc64ec04", 1150000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Frontier block",
-            Network.WITHDRAWALS,
-            1149999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xfc64ec04", 1150000),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Homestead block",
-            Network.WITHDRAWALS,
-            1150000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x97c2c34c", 1920000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Homestead block",
-            Network.WITHDRAWALS,
-            1919999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x97c2c34c", 1920000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First DAO block",
-            Network.WITHDRAWALS,
-            1920000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x91d1f948", 2463000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last DAO block",
-            Network.WITHDRAWALS,
-            2462999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x91d1f948", 2463000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Tangerine block",
-            Network.WITHDRAWALS,
-            2463000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x7a64da13", 2675000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Tangerine block",
-            Network.WITHDRAWALS,
-            2674999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x7a64da13", 2675000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Spurious block",
-            Network.WITHDRAWALS,
-            2675000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x3edd5b10", 4370000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Spurious block",
-            Network.WITHDRAWALS,
-            4369999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x3edd5b10", 4370000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Byzantium block",
-            Network.WITHDRAWALS,
-            4370000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xa00bc324", 7280000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Byzantium block",
-            Network.WITHDRAWALS,
-            7279999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xa00bc324", 7280000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First and last Constantinople, first Petersburg block",
-            Network.WITHDRAWALS,
-            7280000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x668db0af", 9069000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Petersburg block",
-            Network.WITHDRAWALS,
-            9068999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x668db0af", 9069000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Istanbul block",
-            Network.WITHDRAWALS,
-            9069000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x879d6e30", 9200000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Istanbul block",
-            Network.WITHDRAWALS,
-            9199999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x879d6e30", 9200000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Muir Glacier block",
-            Network.WITHDRAWALS,
-            9200000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xe029e991", 12244000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Muir Glacier block",
-            Network.WITHDRAWALS,
-            12243999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xe029e991", 12244000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Berlin block",
-            Network.WITHDRAWALS,
-            12244000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x0eb440f6", 12965000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Berlin block",
-            Network.WITHDRAWALS,
-            12964999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x0eb440f6", 12965000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First London block",
-            Network.WITHDRAWALS,
-            12965000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xb715077d", 13773000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last London block",
-            Network.WITHDRAWALS,
-            13772999L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xb715077d", 13773000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Arrow Glacier block",
-            Network.WITHDRAWALS,
-            13773000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x20c327fc", 15050000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Gray Glacier block",
-            Network.WITHDRAWALS,
-            15050000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xf0afd0e3", 18000000L),
-            Optional.of(ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Merge Start block",
-            Network.WITHDRAWALS,
-            18000000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
-            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Merge Start block",
-            Network.WITHDRAWALS,
-            20000000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
-            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // First Shanghai block",
-            Network.WITHDRAWALS,
-            20000000L,
-            1668000000L,
-            ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
-            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
-            empty()
-          },
-          {
-            "Withdrawals // Last Shanghai block",
-            Network.WITHDRAWALS,
-            20100000L,
-            2669000000L,
-            ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
-            Optional.of(ForkIdTestUtil.ForkIds.WITHDRAWALS),
-            empty()
-          },
+          }
         });
   }
 
