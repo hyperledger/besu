@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultWithdraws;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -95,8 +95,9 @@ public class EngineGetPayloadTestV2 {
         .map(JsonRpcSuccessResponse.class::cast)
         .ifPresent(
             r -> {
-              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
-              final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
+              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultWithdraws.class);
+              final EngineGetPayloadResultWithdraws res =
+                  (EngineGetPayloadResultWithdraws) r.getResult();
               assertThat(res.getExecutionPayload().getHash())
                   .isEqualTo(mockHeader.getHash().toString());
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));

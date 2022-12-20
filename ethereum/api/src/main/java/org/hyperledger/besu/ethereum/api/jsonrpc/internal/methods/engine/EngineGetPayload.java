@@ -44,6 +44,7 @@ public class EngineGetPayload extends AbstractEngineGetPayload {
   @Override
   protected JsonRpcResponse createResponse(final JsonRpcRequestContext request, final Block block) {
     return new JsonRpcSuccessResponse(
-        request.getRequest().getId(), blockResultFactory.enginePayloadTransactionComplete(block));
+        request.getRequest().getId(),
+        blockResultFactory.createEnginePayloadTransactionComplete(block, false));
   }
 }

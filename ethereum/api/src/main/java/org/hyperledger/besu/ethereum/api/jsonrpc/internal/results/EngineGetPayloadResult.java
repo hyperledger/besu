@@ -39,7 +39,7 @@ import org.apache.tuweni.bytes.Bytes32;
   "blockHash",
   "transactions"
 })
-public class EngineGetPayloadResult {
+public class EngineGetPayloadResult extends AbstractEngineGetPayloadResult {
   protected final String blockHash;
   private final String parentHash;
   private final String feeRecipient;
