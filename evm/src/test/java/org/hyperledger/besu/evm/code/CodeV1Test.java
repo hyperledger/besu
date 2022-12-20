@@ -16,9 +16,8 @@
 
 package org.hyperledger.besu.evm.code;
 
-import static org.hyperledger.besu.evm.code.CodeV1.validateCode;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.code.CodeV1.validateCode;
 
 import java.util.ArrayList;
 import java.util.List;
