@@ -937,10 +937,11 @@ public class MessageFrame {
 
     warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
 
-    childFrame.warmedUpStorage
-            .forEach((address, storage) ->
-                    warmedUpStorage.computeIfAbsent(address, __ -> new ConcurrentHashMap<>())
-                            .putAll(storage));
+    childFrame.warmedUpStorage.forEach(
+        (address, storage) ->
+            warmedUpStorage
+                .computeIfAbsent(address, __ -> new ConcurrentHashMap<>())
+                .putAll(storage));
   }
 
   /**
