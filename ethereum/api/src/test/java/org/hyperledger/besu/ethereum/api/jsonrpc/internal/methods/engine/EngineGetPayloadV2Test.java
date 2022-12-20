@@ -52,7 +52,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EngineGetPayloadTestV2 {
+public class EngineGetPayloadV2Test {
 
   private EngineGetPayloadV2 method;
   private static final Vertx vertx = Vertx.vertx();
