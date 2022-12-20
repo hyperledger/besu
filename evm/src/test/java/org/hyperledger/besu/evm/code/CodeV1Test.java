@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.evm.code;
 
+import static org.hyperledger.besu.evm.code.CodeV1.validateCode;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
@@ -44,7 +46,7 @@ class CodeV1Test {
         "0xEF0001 010010 020003 000A 0002 0008 030000 00 00000000 02010001 01000002 60016002b00001b20002 01b1 60005360106000f3";
     final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
 
-    String validationError = CodeV1.validateCode(layout);
+    String validationError = validateCode(layout);
 
     assertThat(validationError).isNull();
   }
@@ -53,21 +55,21 @@ class CodeV1Test {
   @ValueSource(
       strings = {"3000", "5000", "5c000000", "60005d000000", "60005e01000000", "fe00", "0000"})
   void testValidOpcodes(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isNull();
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"00", "f3", "fd", "fe"})
   void testValidCodeTerminator(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isNull();
   }
 
   @ParameterizedTest
   @MethodSource("testPushValidImmediateArguments")
   void testPushValidImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isNull();
   }
 
@@ -81,7 +83,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("testRjumpValidImmediateArguments")
   void testRjumpValidImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isNull();
   }
 
@@ -102,7 +104,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("testRjumpiValidImmediateArguments")
   void testRjumpiValidImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isNull();
   }
 
@@ -124,7 +126,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("rjumptableValidImmediateArguments")
   void testRjumptableValidImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isNull();
   }
 
@@ -144,7 +146,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("invalidCodeArguments")
   void testInvalidCode(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).startsWith("Invalid Instruction 0x");
   }
 
@@ -169,7 +171,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("pushTruncatedImmediateArguments")
   void testPushTruncatedImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isEqualTo("No terminating instruction");
   }
 
@@ -184,14 +186,14 @@ class CodeV1Test {
   @ParameterizedTest
   @ValueSource(strings = {"5c", "5c00"})
   void testRjumpTruncatedImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isEqualTo("Truncated relative jump offset");
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"60015d", "60015d00"})
   void testRjumpiTruncatedImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isEqualTo("Truncated relative jump offset");
   }
 
@@ -206,7 +208,7 @@ class CodeV1Test {
         "60015e030000000100"
       })
   void testRjumpvTruncatedImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isEqualTo("Truncated jump table");
   }
 
@@ -223,7 +225,7 @@ class CodeV1Test {
         "60015e01fff900"
       })
   void testRjumpsOutOfBounds(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isEqualTo("Relative jump destination out of bounds");
   }
 
@@ -275,7 +277,7 @@ class CodeV1Test {
         "60015e0100055e020000fff400"
       })
   void testRjumpsIntoImmediate(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError)
         .isEqualTo("Relative jump destinations targets invalid immediate data");
   }
@@ -317,35 +319,35 @@ class CodeV1Test {
   @ParameterizedTest
   @ValueSource(strings = {"60015e0000"})
   void testRjumpvEmptyTable(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isEqualTo("Empty jump table");
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"b0", "b000", "b2", "b200"})
   void testJumpCallFTruncated(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isEqualTo("Truncated CALLF/JUMPF");
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"b00004", "b003ff", "b0ffff", "b20004", "b203ff", "b2ffff"})
   void testJumpCallFWrongSection(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 3);
+    final String validationError = validateCode(Bytes.fromHexString(code), 3);
     assertThat(validationError).startsWith("CALLF/JUMPF to non-existent section -");
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"b0000100", "b0000200", "b0000000", "b20001", "b20002", "b20000"})
   void testJumpCallFValid(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 3);
+    final String validationError = validateCode(Bytes.fromHexString(code), 3);
     assertThat(validationError).isNull();
   }
 
   @ParameterizedTest
   @MethodSource("immediateContainsOpcodeArguments")
   void testImmediateContainsOpcode(final String code) {
-    final String validationError = CodeV1.validateCode(Bytes.fromHexString(code), 1);
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isNull();
   }
 
