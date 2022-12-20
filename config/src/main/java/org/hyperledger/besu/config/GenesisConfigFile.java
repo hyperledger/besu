@@ -204,6 +204,6 @@ public class GenesisConfigFile {
   }
 
   public List<Long> getForkTimestamps() {
-    return getConfigOptions().getForkTimestamps();
+    return getConfigOptions().getForkBlockTimestamps();
   }
 }

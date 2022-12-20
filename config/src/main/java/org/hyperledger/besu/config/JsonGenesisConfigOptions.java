@@ -592,7 +592,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public List<Long> getForkTimestamps() {
+  public List<Long> getForkBlockTimestamps() {
     Stream<OptionalLong> forkBlockTimestamps = Stream.of(getShanghaiTime(), getCancunTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 

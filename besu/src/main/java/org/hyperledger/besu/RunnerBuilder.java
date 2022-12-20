@@ -499,7 +499,7 @@ public class RunnerBuilder {
                 .p2pTLSConfiguration(p2pTLSConfiguration)
                 .blockchain(context.getBlockchain())
                 .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-                .timestampForks(besuController.getGenesisConfigOptions().getForkTimestamps())
+                .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
                 .build();
 
     final NetworkRunner networkRunner =
