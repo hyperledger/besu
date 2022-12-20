@@ -11,31 +11,31 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
 
-public class BaseFeeOperation extends AbstractFixedCostOperation {
+public class RelativeJumpIfOperation extends RelativeJumpOperation {
 
-  public BaseFeeOperation(final GasCalculator gasCalculator) {
-    super(0x48, "BASEFEE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+  public static final int OPCODE = 0x5d;
+
+  public RelativeJumpIfOperation(final GasCalculator gasCalculator) {
+    super(OPCODE, "RJUMPI", 0, 0, gasCalculator, 4L);
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
-    final Optional<Wei> maybeBaseFee = frame.getBlockValues().getBaseFee();
-    if (maybeBaseFee.isEmpty()) {
-      return new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_OPERATION);
+  protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    final Bytes condition = frame.popStackItem();
+    // If condition is zero (false), no jump is will be performed. Therefore, skip the rest.
+    if (!condition.isZero()) {
+      return super.executeFixedCostOperation(frame, evm);
     }
-    frame.pushStackItem(maybeBaseFee.orElseThrow());
-    return successResponse;
+    return new OperationResult(gasCost, null, 2 + 1);
   }
 }

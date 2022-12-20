@@ -31,7 +31,7 @@ public class ReturnDataCopyOperation extends AbstractOperation {
       new OperationResult(0L, ExceptionalHaltReason.OUT_OF_BOUNDS);
 
   public ReturnDataCopyOperation(final GasCalculator gasCalculator) {
-    super(0x3E, "RETURNDATACOPY", 3, 0, 1, gasCalculator);
+    super(0x3E, "RETURNDATACOPY", 3, 0, gasCalculator);
   }
 
   @Override
