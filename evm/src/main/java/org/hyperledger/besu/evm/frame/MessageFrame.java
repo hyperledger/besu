@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.evm.frame;
 
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.Collections.emptySet;
-
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -42,12 +45,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptySet;
 
 /**
  * A container object for all the states associated with a message.
@@ -937,7 +936,11 @@ public class MessageFrame {
     }
 
     warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
-    warmedUpStorage.putAll(childFrame.warmedUpStorage);
+
+    childFrame.warmedUpStorage
+            .forEach((address, storage) ->
+                    warmedUpStorage.computeIfAbsent(address, __ -> new ConcurrentHashMap<>())
+                            .putAll(storage));
   }
 
   /**
