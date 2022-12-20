@@ -374,38 +374,37 @@ class CodeV1Test {
         .map(Arguments::arguments);
   }
 
-
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource({
-          "stackEmpty",
-          "stackEmptyAtExit",
-          "stackImmediateBytes",
-          "stackUnderflow",
-          "stackRJumpForward",
-          "stackRJumpBackward",
-          "stackRJumpI",
-          "stackCallF",
-          "stackRetF",
-          "stackUnreachable"
+    "stackEmpty",
+    "stackEmptyAtExit",
+    "stackImmediateBytes",
+    "stackUnderflow",
+    "stackRJumpForward",
+    "stackRJumpBackward",
+    "stackRJumpI",
+    "stackCallF",
+    "stackRetF",
+    "stackUnreachable"
   })
   void validateStackAnalysis(
-          final String ignoredName,
-          final String expectedError,
-          final int sectionToTest,
-          final List<List<Object>> rawCodeSections) {
+      final String ignoredName,
+      final String expectedError,
+      final int sectionToTest,
+      final List<List<Object>> rawCodeSections) {
 
     List<CodeSection> codeSectionList = new ArrayList<>(rawCodeSections.size());
     for (var rawCodeSection : rawCodeSections) {
       codeSectionList.add(
-              new CodeSection(
-                      Bytes.fromHexString(((String) rawCodeSection.get(0)).replace(" ", "")),
-                      (Integer) rawCodeSection.get(1),
-                      (Integer) rawCodeSection.get(2),
-                      (Integer) rawCodeSection.get(3)));
+          new CodeSection(
+              Bytes.fromHexString(((String) rawCodeSection.get(0)).replace(" ", "")),
+              (Integer) rawCodeSection.get(1),
+              (Integer) rawCodeSection.get(2),
+              (Integer) rawCodeSection.get(3)));
     }
 
     assertThat(CodeV1.validateStack(sectionToTest, codeSectionList.toArray(new CodeSection[0])))
-            .isEqualTo(expectedError);
+        .isEqualTo(expectedError);
   }
 
   /**
@@ -421,333 +420,333 @@ class CodeV1Test {
 
   static Stream<Arguments> stackEmptyAtExit() {
     return Stream.of(
-            // this depends on requiring stacks to be "clean" returns
-            Arguments.of("Stack Empty at Exit", null, 0, List.of(List.of("43 50 00", 0, 0, 1))),
-            Arguments.of(
-                    "Stack empty with input",
-                    null,
-                    1,
-                    List.of(List.of("5000", 0, 0, 0), List.of("50 00", 1, 0, 1))),
-            // this depends on requiring stacks to be "clean" returns
-            Arguments.of(
-                    "Stack not empty at output",
-                    null,
-                    1,
-                    List.of(List.of("00", 0, 0, 0), List.of("00", 1, 0, 1))));
+        // this depends on requiring stacks to be "clean" returns
+        Arguments.of("Stack Empty at Exit", null, 0, List.of(List.of("43 50 00", 0, 0, 1))),
+        Arguments.of(
+            "Stack empty with input",
+            null,
+            1,
+            List.of(List.of("5000", 0, 0, 0), List.of("50 00", 1, 0, 1))),
+        // this depends on requiring stacks to be "clean" returns
+        Arguments.of(
+            "Stack not empty at output",
+            null,
+            1,
+            List.of(List.of("00", 0, 0, 0), List.of("00", 1, 0, 1))));
   }
 
   static Stream<Arguments> stackImmediateBytes() {
     return Stream.of(
-            Arguments.of(
-                    "Immediate Bytes - simple push", null, 0, List.of(List.of("6001 50 00", 0, 0, 1))));
+        Arguments.of(
+            "Immediate Bytes - simple push", null, 0, List.of(List.of("6001 50 00", 0, 0, 1))));
   }
 
   static Stream<Arguments> stackUnderflow() {
     return Stream.of(
-            Arguments.of(
-                    "Stack underflow",
-                    "Operation 0x50 requires stack of 1 but only has 0 items",
-                    0,
-                    List.of(List.of("50 00", 0, 0, 1))));
+        Arguments.of(
+            "Stack underflow",
+            "Operation 0x50 requires stack of 1 but only has 0 items",
+            0,
+            List.of(List.of("50 00", 0, 0, 1))));
   }
 
   static Stream<Arguments> stackRJumpForward() {
     return Stream.of(
-            Arguments.of("RJUMP 0", null, 0, List.of(List.of("5C0000 00", 0, 0, 0))),
-            Arguments.of("RJUMP 1 w/ dead code", null, 0, List.of(List.of("5C0001 43 00", 0, 0, 0))),
-            Arguments.of("RJUMP 2 w/ dead code", null, 0, List.of(List.of("5C0002 43 50 00", 0, 0, 0))),
-            Arguments.of(
-                    "RJUMP 3 and -10",
-                    null,
-                    0,
-                    List.of(List.of("5C0003 01 50 00 6001 6001 5Cfff6 00", 0, 0, 2))));
+        Arguments.of("RJUMP 0", null, 0, List.of(List.of("5C0000 00", 0, 0, 0))),
+        Arguments.of("RJUMP 1 w/ dead code", null, 0, List.of(List.of("5C0001 43 00", 0, 0, 0))),
+        Arguments.of("RJUMP 2 w/ dead code", null, 0, List.of(List.of("5C0002 43 50 00", 0, 0, 0))),
+        Arguments.of(
+            "RJUMP 3 and -10",
+            null,
+            0,
+            List.of(List.of("5C0003 01 50 00 6001 6001 5Cfff6 00", 0, 0, 2))));
   }
 
   static Stream<Arguments> stackRJumpBackward() {
     return Stream.of(
-            Arguments.of("RJUMP -3", null, 0, List.of(List.of("5Cfffd 00", 0, 0, 0))),
-            Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B 5Cfffc 00", 0, 0, 0))),
-            Arguments.of(
-                    "RJUMP -4 unmatched stack",
-                    "Jump into code stack height (0) does not match previous value (1)",
-                    0,
-                    List.of(List.of("43 5Cfffc 50 00", 0, 0, 0))),
-            Arguments.of(
-                    "RJUMP -4 unmatched stack",
-                    "Jump into code stack height (1) does not match previous value (0)",
-                    0,
-                    List.of(List.of("43 50 5Cfffc 00", 0, 0, 0))),
-            Arguments.of(
-                    "RJUMP -3 matched stack", null, 0, List.of(List.of("43 50 5Cfffd 00", 0, 0, 1))),
-            Arguments.of(
-                    "RJUMP -4 matched stack", null, 0, List.of(List.of("43 50 5B 5Cfffc 00", 0, 0, 1))),
-            Arguments.of(
-                    "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 5Cfffb 50 00", 0, 0, 1))),
-            Arguments.of(
-                    "RJUMP -4 unmatched stack",
-                    "Jump into code stack height (0) does not match previous value (1)",
-                    0,
-                    List.of(List.of("43 50 43 5Cfffc 50 00", 0, 0, 0))));
+        Arguments.of("RJUMP -3", null, 0, List.of(List.of("5Cfffd 00", 0, 0, 0))),
+        Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B 5Cfffc 00", 0, 0, 0))),
+        Arguments.of(
+            "RJUMP -4 unmatched stack",
+            "Jump into code stack height (0) does not match previous value (1)",
+            0,
+            List.of(List.of("43 5Cfffc 50 00", 0, 0, 0))),
+        Arguments.of(
+            "RJUMP -4 unmatched stack",
+            "Jump into code stack height (1) does not match previous value (0)",
+            0,
+            List.of(List.of("43 50 5Cfffc 00", 0, 0, 0))),
+        Arguments.of(
+            "RJUMP -3 matched stack", null, 0, List.of(List.of("43 50 5Cfffd 00", 0, 0, 1))),
+        Arguments.of(
+            "RJUMP -4 matched stack", null, 0, List.of(List.of("43 50 5B 5Cfffc 00", 0, 0, 1))),
+        Arguments.of(
+            "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 5Cfffb 50 00", 0, 0, 1))),
+        Arguments.of(
+            "RJUMP -4 unmatched stack",
+            "Jump into code stack height (0) does not match previous value (1)",
+            0,
+            List.of(List.of("43 50 43 5Cfffc 50 00", 0, 0, 0))));
   }
 
   static Stream<Arguments> stackRJumpI() {
     return Stream.of(
-            Arguments.of(
-                    "RJUMPI Each branch ending with STOP",
-                    null,
-                    0,
-                    List.of(List.of("60ff 6001 5D0002 50 00 50 00", 0, 0, 2))),
-            Arguments.of(
-                    "RJUMPI One branch ending with RJUMP",
-                    null,
-                    0,
-                    List.of(List.of("60ff 6001 5D0004 50 5C0001 50 00", 0, 0, 2))),
-            Arguments.of(
-                    "RJUMPI Fallthrough",
-                    null,
-                    0,
-                    List.of(List.of("60ff 6001 5D0004 80 80 50 50 50 00", 0, 0, 3))),
-            Arguments.of(
-                    "RJUMPI Offset 0", null, 0, List.of(List.of("60ff 6001 5D0000 50 00", 0, 0, 2))),
-            Arguments.of(
-                    "Simple loop (RJUMPI offset = -5)",
-                    null,
-                    0,
-                    List.of(List.of("6001 60ff 81 02 80 5Dfffa 50 50 00", 0, 0, 3))),
-            Arguments.of(
-                    "RJUMPI One branch increasing max stack more stack than another",
-                    null,
-                    0,
-                    List.of(List.of("6001 5D0007 30 30 30 50 50 50 00 30 50 00", 0, 0, 3))),
-            Arguments.of(
-                    "RJUMPI One branch increasing max stack more stack than another II",
-                    null,
-                    0,
-                    List.of(List.of("6001 5D0003 30 50 00 30 30 30 50 50 50 00", 0, 0, 3))),
-            Arguments.of(
-                    "RJUMPI Missing stack argument",
-                    "Operation 0x5D requires stack of 1 but only has 0 items",
-                    0,
-                    List.of(List.of("5D0000 00", 0, 0, 0))),
-            Arguments.of(
-                    "Stack underflow one branch",
-                    "Operation 0x02 requires stack of 2 but only has 1 items",
-                    0,
-                    List.of(List.of("60ff 6001 5D0002 50 00 02 50 00", 0, 0, 0))),
-            Arguments.of(
-                    "Stack underflow another branch",
-                    "Operation 0x02 requires stack of 2 but only has 1 items",
-                    0,
-                    List.of(List.of("60ff 6001 5D0002 02 00 19 50 00", 0, 0, 0))),
-            // this depends on requiring stacks to be "clean" returns
-            Arguments.of(
-                    "RJUMPI Stack not empty in the end of one branch",
-                    null,
-                    0,
-                    List.of(List.of("60ff 6001 5D0002 50 00 19 00", 0, 0, 2))),
-            // this depends on requiring stacks to be "clean" returns
-            Arguments.of(
-                    "RJUMPI Stack not empty in the end of one branch II",
-                    null,
-                    0,
-                    List.of(List.of("60ff 6001 5D0002 19 00 50 00", 0, 0, 2))));
+        Arguments.of(
+            "RJUMPI Each branch ending with STOP",
+            null,
+            0,
+            List.of(List.of("60ff 6001 5D0002 50 00 50 00", 0, 0, 2))),
+        Arguments.of(
+            "RJUMPI One branch ending with RJUMP",
+            null,
+            0,
+            List.of(List.of("60ff 6001 5D0004 50 5C0001 50 00", 0, 0, 2))),
+        Arguments.of(
+            "RJUMPI Fallthrough",
+            null,
+            0,
+            List.of(List.of("60ff 6001 5D0004 80 80 50 50 50 00", 0, 0, 3))),
+        Arguments.of(
+            "RJUMPI Offset 0", null, 0, List.of(List.of("60ff 6001 5D0000 50 00", 0, 0, 2))),
+        Arguments.of(
+            "Simple loop (RJUMPI offset = -5)",
+            null,
+            0,
+            List.of(List.of("6001 60ff 81 02 80 5Dfffa 50 50 00", 0, 0, 3))),
+        Arguments.of(
+            "RJUMPI One branch increasing max stack more stack than another",
+            null,
+            0,
+            List.of(List.of("6001 5D0007 30 30 30 50 50 50 00 30 50 00", 0, 0, 3))),
+        Arguments.of(
+            "RJUMPI One branch increasing max stack more stack than another II",
+            null,
+            0,
+            List.of(List.of("6001 5D0003 30 50 00 30 30 30 50 50 50 00", 0, 0, 3))),
+        Arguments.of(
+            "RJUMPI Missing stack argument",
+            "Operation 0x5D requires stack of 1 but only has 0 items",
+            0,
+            List.of(List.of("5D0000 00", 0, 0, 0))),
+        Arguments.of(
+            "Stack underflow one branch",
+            "Operation 0x02 requires stack of 2 but only has 1 items",
+            0,
+            List.of(List.of("60ff 6001 5D0002 50 00 02 50 00", 0, 0, 0))),
+        Arguments.of(
+            "Stack underflow another branch",
+            "Operation 0x02 requires stack of 2 but only has 1 items",
+            0,
+            List.of(List.of("60ff 6001 5D0002 02 00 19 50 00", 0, 0, 0))),
+        // this depends on requiring stacks to be "clean" returns
+        Arguments.of(
+            "RJUMPI Stack not empty in the end of one branch",
+            null,
+            0,
+            List.of(List.of("60ff 6001 5D0002 50 00 19 00", 0, 0, 2))),
+        // this depends on requiring stacks to be "clean" returns
+        Arguments.of(
+            "RJUMPI Stack not empty in the end of one branch II",
+            null,
+            0,
+            List.of(List.of("60ff 6001 5D0002 19 00 50 00", 0, 0, 2))));
   }
 
   static Stream<Arguments> stackCallF() {
     return Stream.of(
-            Arguments.of(
-                    "0 input 0 output",
-                    null,
-                    0,
-                    List.of(List.of("B00001 00", 0, 0, 0), List.of("", 0, 0, 0))),
-            Arguments.of(
-                    "0 inputs, 0 output 3 sections",
-                    null,
-                    0,
-                    List.of(List.of("B00002 00", 0, 0, 0), List.of("", 1, 1, 1), List.of("", 0, 0, 0))),
-            Arguments.of(
-                    "more than 0 inputs",
-                    null,
-                    0,
-                    List.of(List.of("30 B00001 00", 0, 0, 1), List.of("", 1, 0, 1))),
-            Arguments.of(
-                    "forwarding an argument",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("B00002 00", 1, 0, 1), List.of("", 1, 0, 1))),
-            Arguments.of(
-                    "more than 1 inputs",
-                    null,
-                    0,
-                    List.of(List.of("30 80 B00001 00", 0, 0, 2), List.of("", 2, 0, 2))),
-            Arguments.of(
-                    "more than 0 outputs",
-                    null,
-                    0,
-                    List.of(List.of("B00001 50 00", 0, 0, 1), List.of("", 0, 1, 1))),
-            Arguments.of(
-                    "more than 0 outputs 3 sections",
-                    null,
-                    0,
-                    List.of(List.of("B00002 50 00", 0, 0, 1), List.of("", 0, 0, 0), List.of("", 0, 1, 2))),
-            Arguments.of(
-                    "more than 1 outputs",
-                    null,
-                    0,
-                    List.of(List.of("B00001 50 50 00", 0, 0, 2), List.of("", 0, 2, 2))),
-            Arguments.of(
-                    "more than 0 inputs, more than 0 outputs",
-                    null,
-                    0,
-                    List.of(
-                            List.of("30 30 B00001 50 50 50 00", 0, 0, 3),
-                            List.of("30 30 B00001 50 50 50 00", 2, 3, 3))),
-            Arguments.of("recursion", null, 0, List.of(List.of("B00000 00", 0, 0, 0))),
-            Arguments.of(
-                    "recursion 2 inputs",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("B00000 00", 2, 0, 2))),
-            Arguments.of(
-                    "recursion 2 inputs 2 outputs",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("B00000 50 50 00", 2, 2, 2))),
-            Arguments.of(
-                    "recursion 2 inputs 1 output",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("30 30 B00001 50 50 50 00", 2, 1, 4))),
-            Arguments.of(
-                    "multiple CALLFs with different types",
-                    null,
-                    1,
-                    List.of(
-                            List.of("", 0, 0, 0),
-                            List.of("44 B00002 80 80 B00003 44 80 B00004 50 50 00", 0, 0, 3),
-                            List.of("", 1, 1, 3),
-                            List.of("", 3, 0, 3),
-                            List.of("", 2, 2, 2))),
-            Arguments.of(
-                    "underflow",
-                    "Operation 0xB0 requires stack of 1 but only has 0 items",
-                    0,
-                    List.of(List.of("B00001 00", 0, 0, 0), List.of("", 1, 0, 0))),
-            Arguments.of(
-                    "underflow 2",
-                    "Operation 0xB0 requires stack of 2 but only has 1 items",
-                    0,
-                    List.of(List.of("30 B00001 00", 0, 0, 0), List.of("", 2, 0, 2))),
-            Arguments.of(
-                    "underflow 3",
-                    "Operation 0xB0 requires stack of 1 but only has 0 items",
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("50 B00001 00", 1, 0, 1))),
-            Arguments.of(
-                    "underflow 4",
-                    "Operation 0xB0 requires stack of 3 but only has 2 items",
-                    0,
-                    List.of(
-                            List.of("44 B00001 80 B00002 00", 0, 0, 0),
-                            List.of("", 1, 1, 1),
-                            List.of("", 3, 0, 3))));
+        Arguments.of(
+            "0 input 0 output",
+            null,
+            0,
+            List.of(List.of("B00001 00", 0, 0, 0), List.of("", 0, 0, 0))),
+        Arguments.of(
+            "0 inputs, 0 output 3 sections",
+            null,
+            0,
+            List.of(List.of("B00002 00", 0, 0, 0), List.of("", 1, 1, 1), List.of("", 0, 0, 0))),
+        Arguments.of(
+            "more than 0 inputs",
+            null,
+            0,
+            List.of(List.of("30 B00001 00", 0, 0, 1), List.of("", 1, 0, 1))),
+        Arguments.of(
+            "forwarding an argument",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("B00002 00", 1, 0, 1), List.of("", 1, 0, 1))),
+        Arguments.of(
+            "more than 1 inputs",
+            null,
+            0,
+            List.of(List.of("30 80 B00001 00", 0, 0, 2), List.of("", 2, 0, 2))),
+        Arguments.of(
+            "more than 0 outputs",
+            null,
+            0,
+            List.of(List.of("B00001 50 00", 0, 0, 1), List.of("", 0, 1, 1))),
+        Arguments.of(
+            "more than 0 outputs 3 sections",
+            null,
+            0,
+            List.of(List.of("B00002 50 00", 0, 0, 1), List.of("", 0, 0, 0), List.of("", 0, 1, 2))),
+        Arguments.of(
+            "more than 1 outputs",
+            null,
+            0,
+            List.of(List.of("B00001 50 50 00", 0, 0, 2), List.of("", 0, 2, 2))),
+        Arguments.of(
+            "more than 0 inputs, more than 0 outputs",
+            null,
+            0,
+            List.of(
+                List.of("30 30 B00001 50 50 50 00", 0, 0, 3),
+                List.of("30 30 B00001 50 50 50 00", 2, 3, 3))),
+        Arguments.of("recursion", null, 0, List.of(List.of("B00000 00", 0, 0, 0))),
+        Arguments.of(
+            "recursion 2 inputs",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("B00000 00", 2, 0, 2))),
+        Arguments.of(
+            "recursion 2 inputs 2 outputs",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("B00000 50 50 00", 2, 2, 2))),
+        Arguments.of(
+            "recursion 2 inputs 1 output",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("30 30 B00001 50 50 50 00", 2, 1, 4))),
+        Arguments.of(
+            "multiple CALLFs with different types",
+            null,
+            1,
+            List.of(
+                List.of("", 0, 0, 0),
+                List.of("44 B00002 80 80 B00003 44 80 B00004 50 50 00", 0, 0, 3),
+                List.of("", 1, 1, 3),
+                List.of("", 3, 0, 3),
+                List.of("", 2, 2, 2))),
+        Arguments.of(
+            "underflow",
+            "Operation 0xB0 requires stack of 1 but only has 0 items",
+            0,
+            List.of(List.of("B00001 00", 0, 0, 0), List.of("", 1, 0, 0))),
+        Arguments.of(
+            "underflow 2",
+            "Operation 0xB0 requires stack of 2 but only has 1 items",
+            0,
+            List.of(List.of("30 B00001 00", 0, 0, 0), List.of("", 2, 0, 2))),
+        Arguments.of(
+            "underflow 3",
+            "Operation 0xB0 requires stack of 1 but only has 0 items",
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("50 B00001 00", 1, 0, 1))),
+        Arguments.of(
+            "underflow 4",
+            "Operation 0xB0 requires stack of 3 but only has 2 items",
+            0,
+            List.of(
+                List.of("44 B00001 80 B00002 00", 0, 0, 0),
+                List.of("", 1, 1, 1),
+                List.of("", 3, 0, 3))));
   }
 
   static Stream<Arguments> stackRetF() {
     return Stream.of(
-            Arguments.of(
-                    "0 outputs at section 0",
-                    null,
-                    0,
-                    List.of(List.of("B1", 0, 0, 0), List.of("", 0, 0, 0))),
-            Arguments.of(
-                    "0 outputs at section 1",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("B1", 0, 0, 0))),
-            Arguments.of(
-                    "0 outputs at section 2",
-                    null,
-                    2,
-                    List.of(List.of("", 0, 0, 0), List.of("", 1, 1, 1), List.of("B1", 0, 0, 0))),
-            Arguments.of(
-                    "more than 0 outputs section 0",
-                    null,
-                    0,
-                    List.of(List.of("44 B1", 0, 0, 1), List.of("", 0, 1, 1))),
-            Arguments.of(
-                    "more than 0 outputs section 0",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("44 B1", 0, 1, 1))),
-            Arguments.of(
-                    "more than 1 outputs section 1",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("44 80 B1", 0, 2, 2))),
-            Arguments.of(
-                    "Forwarding return values",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("B1", 1, 1, 1))),
-            Arguments.of(
-                    "Forwarding of return values 2",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("B00002 B1", 0, 1, 1), List.of("", 0, 1, 1))),
-            Arguments.of(
-                    "Multiple RETFs",
-                    null,
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("5D0003 44 80 B1 30 80 B1", 1, 2, 2))),
-            Arguments.of(
-                    "underflow 1",
-                    "Calculated max stack height (0) does not match reported stack height (1)",
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("B1", 0, 1, 1))),
-            Arguments.of(
-                    "underflow 2",
-                    "Calculated max stack height (1) does not match reported stack height (2)",
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("44 B1", 0, 2, 2))),
-            Arguments.of(
-                    "underflow 3",
-                    "Calculated max stack height (2) does not match reported stack height (0)",
-                    1,
-                    List.of(List.of("", 0, 0, 0), List.of("5D0003 44 80 B1 30 B1", 1, 2, 0))));
+        Arguments.of(
+            "0 outputs at section 0",
+            null,
+            0,
+            List.of(List.of("B1", 0, 0, 0), List.of("", 0, 0, 0))),
+        Arguments.of(
+            "0 outputs at section 1",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("B1", 0, 0, 0))),
+        Arguments.of(
+            "0 outputs at section 2",
+            null,
+            2,
+            List.of(List.of("", 0, 0, 0), List.of("", 1, 1, 1), List.of("B1", 0, 0, 0))),
+        Arguments.of(
+            "more than 0 outputs section 0",
+            null,
+            0,
+            List.of(List.of("44 B1", 0, 0, 1), List.of("", 0, 1, 1))),
+        Arguments.of(
+            "more than 0 outputs section 0",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("44 B1", 0, 1, 1))),
+        Arguments.of(
+            "more than 1 outputs section 1",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("44 80 B1", 0, 2, 2))),
+        Arguments.of(
+            "Forwarding return values",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("B1", 1, 1, 1))),
+        Arguments.of(
+            "Forwarding of return values 2",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("B00002 B1", 0, 1, 1), List.of("", 0, 1, 1))),
+        Arguments.of(
+            "Multiple RETFs",
+            null,
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("5D0003 44 80 B1 30 80 B1", 1, 2, 2))),
+        Arguments.of(
+            "underflow 1",
+            "Calculated max stack height (0) does not match reported stack height (1)",
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("B1", 0, 1, 1))),
+        Arguments.of(
+            "underflow 2",
+            "Calculated max stack height (1) does not match reported stack height (2)",
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("44 B1", 0, 2, 2))),
+        Arguments.of(
+            "underflow 3",
+            "Calculated max stack height (2) does not match reported stack height (0)",
+            1,
+            List.of(List.of("", 0, 0, 0), List.of("5D0003 44 80 B1 30 B1", 1, 2, 0))));
   }
 
   static Stream<Arguments> stackUnreachable() {
     return Stream.of(
-            Arguments.of(
-                    "Max stack not changed by unreachable code",
-                    null,
-                    0,
-                    List.of(List.of("30 50 00 30 30 30 50 50 50 00", 0, 0, 1))),
-            Arguments.of(
-                    "Max stack not changed by unreachable code RETf",
-                    null,
-                    0,
-                    List.of(List.of("30 50 B1 30 30 30 50 50 50 00", 0, 0, 1))),
-            Arguments.of(
-                    "Max stack not changed by unreachable code RJUMP",
-                    null,
-                    0,
-                    List.of(List.of("30 50 5C0006 30 30 30 50 50 50 00", 0, 0, 1))),
-            Arguments.of(
-                    "Stack underflow in unreachable code",
-                    null,
-                    0,
-                    List.of(List.of("30 50 00 50 00", 0, 0, 1))),
-            Arguments.of(
-                    "Stack underflow in unreachable code RETF",
-                    null,
-                    0,
-                    List.of(List.of("30 50 B1 50 00", 0, 0, 1))),
-            Arguments.of(
-                    "Stack underflow in unreachable code RJUMP",
-                    null,
-                    0,
-                    List.of(List.of("30 50 5C0001 50 00", 0, 0, 1))));
+        Arguments.of(
+            "Max stack not changed by unreachable code",
+            null,
+            0,
+            List.of(List.of("30 50 00 30 30 30 50 50 50 00", 0, 0, 1))),
+        Arguments.of(
+            "Max stack not changed by unreachable code RETf",
+            null,
+            0,
+            List.of(List.of("30 50 B1 30 30 30 50 50 50 00", 0, 0, 1))),
+        Arguments.of(
+            "Max stack not changed by unreachable code RJUMP",
+            null,
+            0,
+            List.of(List.of("30 50 5C0006 30 30 30 50 50 50 00", 0, 0, 1))),
+        Arguments.of(
+            "Stack underflow in unreachable code",
+            null,
+            0,
+            List.of(List.of("30 50 00 50 00", 0, 0, 1))),
+        Arguments.of(
+            "Stack underflow in unreachable code RETF",
+            null,
+            0,
+            List.of(List.of("30 50 B1 50 00", 0, 0, 1))),
+        Arguments.of(
+            "Stack underflow in unreachable code RJUMP",
+            null,
+            0,
+            List.of(List.of("30 50 5C0001 50 00", 0, 0, 1))));
   }
 }
