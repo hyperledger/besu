@@ -14,17 +14,18 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import com.google.common.collect.Range;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.List;
+
+import com.google.common.collect.Range;
+import org.apache.tuweni.units.bigints.UInt256;
+import picocli.CommandLine;
 
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {
   private static final String BLOCK_PROPAGATION_RANGE_FLAG =
