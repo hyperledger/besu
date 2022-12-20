@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.vertx.core.Vertx;
+import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
+
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -54,11 +54,6 @@ import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import picocli.CommandLine;
-import picocli.CommandLine.Model.CommandSpec;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -71,7 +66,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.vertx.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
 
 public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
@@ -150,7 +151,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final SynchronizerConfiguration synchronizerConfiguration =
         new SynchronizerConfiguration.Builder().build();
     final BesuControllerBuilder builder =
-        new BesuController.Builder().fromEthNetworkConfig(
+        new BesuController.Builder()
+            .fromEthNetworkConfig(
                 ethNetworkConfig, Collections.emptyMap(), synchronizerConfiguration.getSyncMode());
 
     final KeyValueStorageProvider storageProvider =
