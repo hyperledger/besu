@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.transaction;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.evm.AccessListEntry;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -42,6 +44,8 @@ public class CallParameter {
 
   private final Bytes payload;
 
+  private final Optional<List<AccessListEntry>> accessList;
+
   public CallParameter(
       final Address from,
       final Address to,
@@ -52,6 +56,7 @@ public class CallParameter {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
+    this.accessList = Optional.empty();
     this.maxPriorityFeePerGas = Optional.empty();
     this.maxFeePerGas = Optional.empty();
     this.gasPrice = gasPrice;
@@ -67,7 +72,8 @@ public class CallParameter {
       final Optional<Wei> maxPriorityFeePerGas,
       final Optional<Wei> maxFeePerGas,
       final Wei value,
-      final Bytes payload) {
+      final Bytes payload,
+      final Optional<List<AccessListEntry>> accessList) {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
@@ -76,6 +82,7 @@ public class CallParameter {
     this.gasPrice = gasPrice;
     this.value = value;
     this.payload = payload;
+    this.accessList = accessList;
   }
 
   public Address getFrom() {
@@ -108,6 +115,10 @@ public class CallParameter {
 
   public Bytes getPayload() {
     return payload;
+  }
+
+  public Optional<List<AccessListEntry>> getAccessList() {
+    return accessList;
   }
 
   @Override
@@ -144,6 +155,7 @@ public class CallParameter {
         Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
         tx.getMaxFeePerGas(),
         Wei.fromQuantity(tx.getValue()),
-        tx.getPayload());
+        tx.getPayload(),
+        tx.getAccessList());
   }
 }

@@ -31,16 +31,17 @@ public class ProtocolSpecAdapters {
   }
 
   public static ProtocolSpecAdapters create(
-      final long block, final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+      final long blockNumberOrTimestamp,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> entries = new HashMap<>();
-    entries.put(block, modifier);
+    entries.put(blockNumberOrTimestamp, modifier);
     return new ProtocolSpecAdapters(entries);
   }
 
   public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifierForBlock(
-      final long blockNumber) {
+      final long blockNumberOrTimestamp) {
     final NavigableSet<Long> epochs = new TreeSet<>(modifiers.keySet());
-    final Long modifier = epochs.floor(blockNumber);
+    final Long modifier = epochs.floor(blockNumberOrTimestamp);
 
     if (modifier == null) {
       return Function.identity();

@@ -5434,7 +5434,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void portInUseReportsError() throws IOException {
     final ServerSocket serverSocket = new ServerSocket(8545);
 
-    parseCommand("--rpc-http-enabled");
+    parseCommandWithPortCheck("--rpc-http-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))

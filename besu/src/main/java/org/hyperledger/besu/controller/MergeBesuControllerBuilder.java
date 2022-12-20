@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -240,5 +241,10 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     BesuController controller = super.build();
     PostMergeContext.get().setSyncState(controller.getSyncState());
     return controller;
+  }
+
+  public TimestampSchedule createTimestampProtocolSchedule() {
+    return MergeProtocolSchedule.createTimestamp(
+        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled);
   }
 }
