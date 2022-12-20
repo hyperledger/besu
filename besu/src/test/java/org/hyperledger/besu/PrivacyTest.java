@@ -53,7 +53,6 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 import io.vertx.core.Vertx;
 import org.junit.After;
@@ -137,7 +136,7 @@ public class PrivacyTest {
                             DEFAULT_BACKGROUND_THREAD_COUNT,
                             DEFAULT_CACHE_CAPACITY,
                             DEFAULT_IS_HIGH_SPEC),
-                    Arrays.asList(KeyValueSegmentIdentifier.values()),
+                    KeyValueSegmentIdentifier.getValues(),
                     RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
         .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
         .withMetricsSystem(new NoOpMetricsSystem())

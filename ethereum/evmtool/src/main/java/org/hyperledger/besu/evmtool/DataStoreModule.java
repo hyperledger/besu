@@ -29,7 +29,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LimitedInMemoryKeyValueStorage;
 
-import java.util.List;
 import java.util.function.Supplier;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -50,7 +49,7 @@ public class DataStoreModule {
           () ->
               new RocksDBKeyValueStorageFactory(
                   RocksDBCLIOptions.create()::toDomainObject,
-                  List.of(KeyValueSegmentIdentifier.values()),
+                  KeyValueSegmentIdentifier.getValues(),
                   RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS));
 
   @Provides

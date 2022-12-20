@@ -30,7 +30,7 @@ public class StorageServiceImpl implements StorageService {
   private final Map<String, KeyValueStorageFactory> factories;
 
   public StorageServiceImpl() {
-    this.segments = List.of(KeyValueSegmentIdentifier.values());
+    this.segments = KeyValueSegmentIdentifier.getValues();
     this.factories = new ConcurrentHashMap<>();
   }
 
