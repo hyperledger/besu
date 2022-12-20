@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -57,7 +58,7 @@ public class ConsensusBlockResult extends BlockResult {
       final Difficulty totalDifficulty,
       final int size,
       final boolean includeCoinbase) {
-    super(header, null, ommers, totalDifficulty, size, includeCoinbase);
+    super(header, null, ommers, totalDifficulty, size, includeCoinbase, Optional.empty());
     this.opaqueTransactions = transactions;
   }
 
