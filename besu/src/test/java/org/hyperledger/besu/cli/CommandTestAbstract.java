@@ -477,6 +477,11 @@ public abstract class CommandTestAbstract {
       isGoQuorumCompatibilityMode = true;
     }
 
+    @Override
+    protected void checkIfRequiredPortsAreAvailable() {
+      // For testing, don't check for port conflicts
+    }
+
     public CommandSpec getSpec() {
       return spec;
     }
