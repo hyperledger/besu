@@ -168,7 +168,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final ProtocolSpec newProtocolSpec =
-          protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
+          protocolSchedule.getByBlockHeader(processableBlockHeader);
 
       if (rewardCoinbase
           && !rewardBeneficiary(

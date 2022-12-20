@@ -16,7 +16,19 @@
 
 package org.hyperledger.besu.evm.code;
 
+import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
+
+import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.operation.CallFOperation;
+import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
+
+import java.util.BitSet;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -122,10 +134,10 @@ class OpcodesV1 {
     VALID, // 0x59 - MSIZE
     VALID, // 0x5a - GAS
     VALID_AND_JUMPDEST, // 0x5b - JUMPDEST
-    INVALID, // 0X5c
-    INVALID, // 0X5d
-    INVALID, // 0X5e
-    INVALID, // 0X5f - ?PUSH0?
+    VALID, // 0X5c - RJUMP
+    VALID, // 0X5d - RJUMPI
+    VALID, // 0X5e - RJUMPV
+    VALID, // 0X5f - PUSH0
     VALID, // 0x60 - PUSH1
     VALID, // 0x61 - PUSH2
     VALID, // 0x62 - PUSH3
@@ -206,9 +218,9 @@ class OpcodesV1 {
     INVALID, // 0xad
     INVALID, // 0xae
     INVALID, // 0xaf
-    INVALID, // 0xb0
-    INVALID, // 0xb1
-    INVALID, // 0xb2
+    VALID, // 0xb0 - CALLF
+    VALID_AND_TERMINAL, // 0xb1 - RETF
+    VALID_AND_TERMINAL, // 0xb2 - JUMPF
     INVALID, // 0xb3
     INVALID, // 0xb4
     INVALID, // 0xb5
@@ -292,36 +304,91 @@ class OpcodesV1 {
     // static utility class
   }
 
-  static long[] validateAndCalculateJumpDests(final Bytes code) {
+  static String validateCode(final EOFLayout eofLayout) {
+    int sectionCount = eofLayout.getCodeSections().length;
+    return Stream.of(eofLayout.getCodeSections())
+        .map(cs -> validateCode(cs.code, sectionCount))
+        .filter(Objects::nonNull)
+        .findAny()
+        .orElse(null);
+  }
+
+  /**
+   * validates the code section
+   *
+   * @param code the code section code
+   * @return null if valid, otherwise a string containing an error reason.
+   */
+  static String validateCode(final Bytes code, final int sectionCount) {
     final int size = code.size();
-    final long[] bitmap = new long[(size >> 6) + 1];
+    final BitSet rjumpdests = new BitSet(size);
+    final BitSet immediates = new BitSet(size);
     final byte[] rawCode = code.toArrayUnsafe();
-    final int length = rawCode.length;
     int attribute = INVALID;
-    for (int i = 0; i < length; ) {
-      long thisEntry = 0L;
-      final int entryPos = i >> 6;
-      final int max = Math.min(64, length - (entryPos << 6));
-      int j = i & 0x3f;
-      for (; j < max; i++, j++) {
-        final int operationNum = rawCode[i] & 0xff;
-        attribute = opcodeAttributes[operationNum];
-        if ((attribute & INVALID) == INVALID) {
-          return null;
-        } else if ((attribute & JUMPDEST) == JUMPDEST) {
-          thisEntry |= 1L << j;
-        } else if (operationNum > PushOperation.PUSH_BASE
-            && operationNum <= PushOperation.PUSH_MAX) {
-          final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
-          j += multiByteDataLen;
-          i += multiByteDataLen;
-        }
+    int pos = 0;
+    while (pos < size) {
+      final int operationNum = rawCode[pos] & 0xff;
+      attribute = opcodeAttributes[operationNum];
+      if ((attribute & INVALID) == INVALID) {
+        // undefined instruction
+        return "Invalid Instruction 0x" + Integer.toHexString(operationNum);
       }
-      bitmap[entryPos] = thisEntry;
+      pos += 1;
+      int pcPostInstruction = pos;
+      if (operationNum > PushOperation.PUSH_BASE && operationNum <= PushOperation.PUSH_MAX) {
+        final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
+        pcPostInstruction += multiByteDataLen;
+      } else if (operationNum == RelativeJumpOperation.OPCODE
+          || operationNum == RelativeJumpIfOperation.OPCODE) {
+        if (pos + 2 > size) {
+          return "Truncated relative jump offset";
+        }
+        pcPostInstruction += 2;
+        final int offset = readBigEndianI16(pos, rawCode);
+        final int rjumpdest = pcPostInstruction + offset;
+        if (rjumpdest < 0 || rjumpdest >= size) {
+          return "Relative jump destination out of bounds";
+        }
+        rjumpdests.set(rjumpdest);
+      } else if (operationNum == RelativeJumpVectorOperation.OPCODE) {
+        if (pos + 1 > size) {
+          return "Truncated jump table";
+        }
+        final int jumpTableSize = RelativeJumpVectorOperation.getVectorSize(code, pos);
+        if (jumpTableSize == 0) {
+          return "Empty jump table";
+        }
+        pcPostInstruction += 1 + 2 * jumpTableSize;
+        if (pcPostInstruction > size) {
+          return "Truncated jump table";
+        }
+        for (int offsetPos = pos + 1; offsetPos < pcPostInstruction; offsetPos += 2) {
+          final int offset = readBigEndianI16(offsetPos, rawCode);
+          final int rjumpdest = pcPostInstruction + offset;
+          if (rjumpdest < 0 || rjumpdest >= size) {
+            return "Relative jump destination out of bounds";
+          }
+          rjumpdests.set(rjumpdest);
+        }
+      } else if (operationNum == CallFOperation.OPCODE || operationNum == JumpFOperation.OPCODE) {
+        if (pos + 2 > size) {
+          return "Truncated CALLF/JUMPF";
+        }
+        int section = Words.readBigEndianU16(pos, rawCode);
+        if (section >= sectionCount) {
+          return "CALLF/JUMPF to non-existent section - " + Integer.toHexString(section);
+        }
+        pcPostInstruction += 2;
+      }
+      immediates.set(pos, pcPostInstruction);
+      pos = pcPostInstruction;
     }
     if ((attribute & TERMINAL) != TERMINAL) {
-      return null;
+      return "No terminating instruction";
     }
-    return bitmap;
+    if (rjumpdests.intersects(immediates)) {
+      return "Relative jump destinations targets invalid immediate data";
+    }
+    return null;
   }
 }

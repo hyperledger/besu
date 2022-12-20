@@ -29,6 +29,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import kotlin.Pair;
@@ -180,25 +181,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         storageStorage
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
-    /*if (response.isEmpty()) {
-      // after a snapsync/fastsync we only have the trie branches.
-      final Optional<Bytes> account = getAccount(accountHash);
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (account.isPresent() && worldStateRootHash.isPresent()) {
-        final StateTrieAccountValue accountValue =
-            StateTrieAccountValue.readFrom(
-                org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
-        response =
-            new StoredMerklePatriciaTrie<>(
-                    new StoredNodeFactory<>(
-                        (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-                        Function.identity(),
-                        Function.identity()),
-                    accountValue.getStorageRoot())
-                .get(slotHash)
-                .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-      }
-    }*/
     return response;
   }
 
@@ -357,9 +339,24 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
   }
 
+  public void safeExecute(final Consumer<KeyValueStorage> toExec) throws Exception {
+    final long id = subscribe();
+    toExec.accept((KeyValueStorage) this);
+    unSubscribe(id);
+  }
+
+  public long subscribe() {
+    // No op because close() is not implemented for BonsaiWorldStateKeyValueStorage
+    return 0;
+  }
+
+  public void unSubscribe(final long id) {
+    // No op because close() is not implemented for BonsaiWorldStateKeyValueStorage
+  }
+
   @Override
   public void close() throws Exception {
-    // no-op
+    // No need to close because BonsaiWorldStateKeyValueStorage is persistent
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {

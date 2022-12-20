@@ -100,6 +100,7 @@ dependencyManagement {
     dependency 'io.prometheus:simpleclient_common:0.9.0'
     dependency 'io.prometheus:simpleclient_hotspot:0.9.0'
     dependency 'io.prometheus:simpleclient_pushgateway:0.9.0'
+    dependency 'io.prometheus:simpleclient_guava:0.16.0'
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
@@ -129,17 +130,17 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-jul:2.17.2'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
 
-    dependency 'org.apache.tuweni:tuweni-bytes:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-config:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-concurrent:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-crypto:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-devp2p:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-dns-discovery:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-io:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-net:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-rlp:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-toml:2.3.0'
-    dependency 'org.apache.tuweni:tuweni-units:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-bytes:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-config:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-concurrent:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-crypto:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-devp2p:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-dns-discovery:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-io:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-net:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-rlp:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-toml:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-units:2.3.1'
 
     dependency 'org.assertj:assertj-core:3.23.1'
 
@@ -152,10 +153,14 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
-    dependency 'org.hyperledger.besu:bls12-381:0.6.1'
-    dependency 'org.hyperledger.besu:secp256k1:0.6.1'
-    dependency 'org.hyperledger.besu:secp256r1:0.6.1'
-    dependency 'org.hyperledger.besu:blake2bf:0.6.1'
+    dependencySet(group: 'org.hyperledger.besu', version: '0.7.1') {
+      entry 'arithmetic'
+      entry 'ipa-multipoint'
+      entry 'bls12-381'
+      entry 'secp256k1'
+      entry 'secp256r1'
+      entry 'blake2bf'
+    }
 
     dependency 'org.immutables:value-annotations:2.9.0'
     dependency 'org.immutables:value:2.9.0'

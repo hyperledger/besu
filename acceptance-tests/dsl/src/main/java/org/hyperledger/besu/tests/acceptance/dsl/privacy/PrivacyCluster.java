@@ -69,7 +69,7 @@ public class PrivacyCluster {
 
     final Optional<PrivacyNode> bootNode = selectAndStartBootnode(nodes);
 
-    nodes.stream()
+    nodes.parallelStream()
         .filter(node -> bootNode.map(boot -> boot != node).orElse(true))
         .forEach(this::startNode);
   }

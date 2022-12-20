@@ -17,12 +17,14 @@ package org.hyperledger.besu.consensus.merge;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -32,33 +34,41 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule>
-    implements ProtocolSchedule {
+public class TransitionProtocolSchedule implements ProtocolSchedule {
+  private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
-
-  public TransitionProtocolSchedule(
-      final ProtocolSchedule preMergeProtocolSchedule,
-      final ProtocolSchedule postMergeProtocolSchedule) {
-    super(preMergeProtocolSchedule, postMergeProtocolSchedule);
-  }
+  private final TimestampSchedule timestampSchedule;
+  private final MergeContext mergeContext;
+  private ProtocolContext protocolContext;
 
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
-      final MergeContext mergeContext) {
-    super(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
+      final MergeContext mergeContext,
+      final TimestampSchedule timestampSchedule) {
+    this.timestampSchedule = timestampSchedule;
+    this.mergeContext = mergeContext;
+    transitionUtils =
+        new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
   }
 
   public ProtocolSchedule getPreMergeSchedule() {
-    return getPreMergeObject();
+    return transitionUtils.getPreMergeObject();
   }
 
   public ProtocolSchedule getPostMergeSchedule() {
-    return getPostMergeObject();
+    return transitionUtils.getPostMergeObject();
   }
 
-  public ProtocolSpec getByBlockHeader(
-      final ProtocolContext protocolContext, final BlockHeader blockHeader) {
+  @Override
+  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    return this.timestampSchedule
+        .getByTimestamp(blockHeader.getTimestamp())
+        .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
+  }
+
+  private ProtocolSpec getByBlockHeaderFromTransitionUtils(
+      final ProcessableBlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
     if (mergeContext.getFinalized().isEmpty()) {
 
@@ -72,9 +82,11 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
       }
 
       // otherwise check to see if this block represents a re-org TTD block:
-      MutableBlockchain blockchain = protocolContext.getBlockchain();
       Difficulty parentDifficulty =
-          blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()).orElseThrow();
+          protocolContext
+              .getBlockchain()
+              .getTotalDifficultyByHash(blockHeader.getParentHash())
+              .orElseThrow();
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
       Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
       debugLambda(
@@ -102,32 +114,61 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
 
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
-    return dispatchFunctionAccordingToMergeState(
-        protocolSchedule -> protocolSchedule.getByBlockNumber(number));
+
+    return Optional.ofNullable(protocolContext)
+        .map(ProtocolContext::getBlockchain)
+        .flatMap(blockchain -> blockchain.getBlockByNumber(number))
+        .map(Block::getHeader)
+        .map(timestampSchedule::getByBlockHeader)
+        .orElseGet(
+            () ->
+                transitionUtils.dispatchFunctionAccordingToMergeState(
+                    protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
   }
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
-    return dispatchFunctionAccordingToMergeState(ProtocolSchedule::streamMilestoneBlocks);
+    return transitionUtils.dispatchFunctionAccordingToMergeState(
+        ProtocolSchedule::streamMilestoneBlocks);
   }
 
   @Override
   public Optional<BigInteger> getChainId() {
-    return dispatchFunctionAccordingToMergeState(ProtocolSchedule::getChainId);
+    return transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::getChainId);
+  }
+
+  @Override
+  public void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec) {
+    throw new UnsupportedOperationException(
+        "Should not use TransitionProtocolSchedule wrapper class to create milestones");
+  }
+
+  @Override
+  public String listMilestones() {
+    String blockNumberMilestones =
+        transitionUtils.dispatchFunctionAccordingToMergeState(
+            HeaderBasedProtocolSchedule::listMilestones);
+    return blockNumberMilestones + ";" + timestampSchedule.listMilestones();
   }
 
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
-    dispatchConsumerAccordingToMergeState(
+    timestampSchedule.setTransactionFilter(transactionFilter);
+    transitionUtils.dispatchConsumerAccordingToMergeState(
         protocolSchedule -> protocolSchedule.setTransactionFilter(transactionFilter));
   }
 
   @Override
   public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
       final WorldStateArchive publicWorldStateArchive) {
-    dispatchConsumerAccordingToMergeState(
+    timestampSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(publicWorldStateArchive);
+    transitionUtils.dispatchConsumerAccordingToMergeState(
         protocolSchedule ->
             protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
                 publicWorldStateArchive));
+  }
+
+  public void setProtocolContext(final ProtocolContext protocolContext) {
+    this.protocolContext = protocolContext;
   }
 }
