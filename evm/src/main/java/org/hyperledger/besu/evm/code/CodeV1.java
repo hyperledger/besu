@@ -17,10 +17,11 @@
 package org.hyperledger.besu.evm.code;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
+import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
@@ -613,7 +614,7 @@ public class CodeV1 implements Code {
           return "Truncated relative jump offset";
         }
         pcPostInstruction += 2;
-        final int offset = Words.readBigEndianI16(pos, rawCode);
+        final int offset = readBigEndianI16(pos, rawCode);
         final int rjumpdest = pcPostInstruction + offset;
         if (rjumpdest < 0 || rjumpdest >= size) {
           return "Relative jump destination out of bounds";
@@ -632,7 +633,7 @@ public class CodeV1 implements Code {
           return "Truncated jump table";
         }
         for (int offsetPos = pos + 1; offsetPos < pcPostInstruction; offsetPos += 2) {
-          final int offset = Words.readBigEndianI16(offsetPos, rawCode);
+          final int offset = readBigEndianI16(offsetPos, rawCode);
           final int rjumpdest = pcPostInstruction + offset;
           if (rjumpdest < 0 || rjumpdest >= size) {
             return "Relative jump destination out of bounds";
@@ -643,7 +644,7 @@ public class CodeV1 implements Code {
         if (pos + 2 > size) {
           return "Truncated CALLF/JUMPF";
         }
-        int section = (rawCode[pos] & 0xff) << 8 | (rawCode[pos + 1] & 0xff);
+        int section = readBigEndianU16(pos, rawCode);
         if (section >= sectionCount) {
           return "CALLF/JUMPF to non-existent section - " + Integer.toHexString(section);
         }
@@ -726,7 +727,7 @@ public class CodeV1 implements Code {
           return String.format("Invalid opcode 0x%02X", thisOp);
         }
         if (thisOp == CallFOperation.OPCODE || thisOp == JumpFOperation.OPCODE) {
-          int section = ((code[currentPC + 1] & 0xff) << 8) | (code[currentPC + 2] & 0xff);
+          int section = readBigEndianU16(currentPC + 1, code);
           stackInputs = codeSections[section].getInputs();
           stackOutputs = codeSections[section].getOutputs();
         } else {
@@ -749,13 +750,13 @@ public class CodeV1 implements Code {
 
         if (thisOp == RelativeJumpOperation.OPCODE || thisOp == RelativeJumpIfOperation.OPCODE) {
           // no `& 0xff` on high byte because this is one case we want sign extension
-          int rvalue = signedShortAt(code, currentPC);
+          int rvalue = readBigEndianI16(currentPC + 1, code);
           workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
           maxWork++;
         } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
           int tableEnd = code[currentPC + 1] * 2 + currentPC + 2;
           for (int i = currentPC + 2; i < tableEnd; i += 2) {
-            int rvalue = signedShortAt(code, i);
+            int rvalue = readBigEndianI16(i + 1, code);
             workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
             maxWork++;
           }
@@ -777,10 +778,6 @@ public class CodeV1 implements Code {
           maxStackHeight, codeSections[codeSectionToValidate].maxStackHeight);
     }
     return null;
-  }
-
-  private static int signedShortAt(final byte[] code, final int currentPC) {
-    return (code[currentPC + 1] << 8) | (code[currentPC + 2] & 0xff);
   }
 
   @Override
