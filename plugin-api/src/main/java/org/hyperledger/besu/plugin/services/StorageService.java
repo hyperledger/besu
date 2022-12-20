@@ -40,6 +40,14 @@ public interface StorageService extends BesuService {
   List<SegmentIdentifier> getAllSegmentIdentifiers();
 
   /**
+   * Retrieves the identifiers for the isolation segments that can be ignored during database
+   * initialisation.
+   *
+   * @return full set of possible segments that can be ignored from the storage service.
+   */
+  List<SegmentIdentifier> getIgnorableSegmentIdentifiers();
+
+  /**
    * Retrieves a registered factory corresponding to the supplied factory name
    *
    * @param name The name of the factory to retrieve

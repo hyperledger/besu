@@ -19,6 +19,7 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,10 +28,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class StorageServiceImpl implements StorageService {
 
   private final List<SegmentIdentifier> segments;
+  private final List<SegmentIdentifier> ignorableSegments;
   private final Map<String, KeyValueStorageFactory> factories;
 
   public StorageServiceImpl() {
     this.segments = List.of(KeyValueSegmentIdentifier.values());
+    this.ignorableSegments = new ArrayList<>();
     this.factories = new ConcurrentHashMap<>();
   }
 
@@ -42,6 +45,15 @@ public class StorageServiceImpl implements StorageService {
   @Override
   public List<SegmentIdentifier> getAllSegmentIdentifiers() {
     return segments;
+  }
+
+  public void addIgnorableSegmentIdentifier(final SegmentIdentifier ignorable) {
+    ignorableSegments.add(ignorable);
+  }
+
+  @Override
+  public List<SegmentIdentifier> getIgnorableSegmentIdentifiers() {
+    return ignorableSegments;
   }
 
   @Override
