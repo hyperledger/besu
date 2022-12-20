@@ -45,6 +45,6 @@ public class RelativeJumpOperation extends AbstractFixedCostOperation {
     final Bytes code = frame.getCode().getCodeBytes(frame.getSection());
     final int pcPostInstruction = frame.getPC() + 1;
     return new OperationResult(
-        gasCost, null, 2 + Words.readBigEndianI16(pcPostInstruction, code.toArrayUnsafe()));
+        gasCost, null, 2 + Words.readBigEndianI16(pcPostInstruction, code.toArrayUnsafe()) + 1);
   }
 }
