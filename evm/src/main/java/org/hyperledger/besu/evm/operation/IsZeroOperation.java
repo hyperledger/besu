@@ -25,7 +25,7 @@ public class IsZeroOperation extends AbstractFixedCostOperation {
   static final OperationResult isZeroSuccess = new OperationResult(3, null);
 
   public IsZeroOperation(final GasCalculator gasCalculator) {
-    super(0x15, "ISZERO", 1, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x15, "ISZERO", 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

@@ -33,7 +33,7 @@ public class LogOperation extends AbstractOperation {
   private final int numTopics;
 
   public LogOperation(final int numTopics, final GasCalculator gasCalculator) {
-    super(0xA0 + numTopics, "LOG" + numTopics, numTopics + 2, 0, 1, gasCalculator);
+    super(0xA0 + numTopics, "LOG" + numTopics, numTopics + 2, 0, gasCalculator);
     this.numTopics = numTopics;
   }
 

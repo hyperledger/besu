@@ -26,7 +26,7 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
   private static final OperationResult signExtendSuccess = new OperationResult(5, null);
 
   public SignExtendOperation(final GasCalculator gasCalculator) {
-    super(0x0B, "SIGNEXTEND", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x0B, "SIGNEXTEND", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

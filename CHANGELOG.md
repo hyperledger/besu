@@ -1,9 +1,16 @@
 # Changelog
+## 23.1
+
+### Breaking Changes
+- GoQuorum-compatible privacy is deprecated and will be removed in 23.4
+- IBFT 1.0 is deprecated and will be removed in 23.4
+
 ## 22.10.4
 
 ### Additions and Improvements
 - Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
 - Add timestamp fork support, including shanghaiTime and cancunTime forks [#4743](https://github.com/hyperledger/besu/pull/4743)
+- Optimization:  Memoize transaction size and hash at the same time [#4812](https://github.com/hyperledger/besu/pull/4812)
 
 ### Breaking Changes
 
@@ -35,7 +42,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3
 This is a hotfix release to resolve a race condition that results in segfaults, introduced in 22.10.1 release.
 
 ### Bug Fixes
-- bugfix for async operations on Snashot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
+- bugfix for async operations on Snapshot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
 
 ### Download Links
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.tar.gz  / sha256: cdb36141e3cba6379d35016e0a2de2edba579d4786124b5f7257b1e4a68867a2

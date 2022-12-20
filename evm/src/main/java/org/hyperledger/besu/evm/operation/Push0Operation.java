@@ -27,7 +27,7 @@ public class Push0Operation extends AbstractFixedCostOperation {
   static final OperationResult push0Success = new OperationResult(2, null);
 
   public Push0Operation(final GasCalculator gasCalculator) {
-    super(PUSH_BASE, "PUSH0", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(PUSH_BASE, "PUSH0", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
