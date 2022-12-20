@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
+import static org.hyperledger.besu.ethereum.eth.sync.SyncMode.isCheckpointSync;
+
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -28,10 +30,12 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -40,7 +44,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -173,24 +176,26 @@ public class BesuController implements java.io.Closeable {
 
   public static class Builder {
 
-    public BesuControllerBuilder fromEthNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
-      return fromEthNetworkConfig(ethNetworkConfig, Collections.emptyMap());
-    }
-
     public BesuControllerBuilder fromEthNetworkConfig(
-        final EthNetworkConfig ethNetworkConfig, final Map<String, String> genesisConfigOverrides) {
+        final EthNetworkConfig ethNetworkConfig,
+        final Map<String, String> genesisConfigOverrides,
+        final SyncMode syncMode) {
       return fromGenesisConfig(
               GenesisConfigFile.fromConfig(ethNetworkConfig.getGenesisConfig()),
-              genesisConfigOverrides)
+              genesisConfigOverrides,
+              syncMode)
           .networkId(ethNetworkConfig.getNetworkId());
     }
 
-    public BesuControllerBuilder fromGenesisConfig(final GenesisConfigFile genesisConfig) {
-      return fromGenesisConfig(genesisConfig, Collections.emptyMap());
+    public BesuControllerBuilder fromGenesisConfig(
+        final GenesisConfigFile genesisConfig, final SyncMode syncMode) {
+      return fromGenesisConfig(genesisConfig, Collections.emptyMap(), syncMode);
     }
 
     BesuControllerBuilder fromGenesisConfig(
-        final GenesisConfigFile genesisConfig, final Map<String, String> genesisConfigOverrides) {
+        final GenesisConfigFile genesisConfig,
+        final Map<String, String> genesisConfigOverrides,
+        final SyncMode syncMode) {
       final GenesisConfigOptions configOptions =
           genesisConfig.getConfigOptions(genesisConfigOverrides);
       final BesuControllerBuilder builder;
@@ -215,8 +220,8 @@ public class BesuController implements java.io.Closeable {
 
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
-        if (isCheckpointBlockTotalDifficultyGreaterThanTTD(configOptions)
-            || isMergeAtGenesis(configOptions.getTerminalTotalDifficulty())) {
+        // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block
+        if (isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions)) {
           return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
         } else {
           // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
@@ -267,15 +272,18 @@ public class BesuController implements java.io.Closeable {
       return startBlock;
     }
 
-    private boolean isCheckpointBlockTotalDifficultyGreaterThanTTD(
-        final GenesisConfigOptions configOptions) {
+    private boolean isCheckpointPoSBlock(final GenesisConfigOptions configOptions) {
+      UInt256 terminalTotalDifficulty = configOptions.getTerminalTotalDifficulty().get();
+      // this is currently a limitation that besu has in its codebase
+      if (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
+              .equals(UInt256.ZERO)
+          && terminalTotalDifficulty.equals(UInt256.ZERO)) {
+        throw new InvalidConfigurationException(
+            "Post Merge checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+      }
       return configOptions.getCheckpointOptions().isValid()
           && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
-              .greaterThan(configOptions.getTerminalTotalDifficulty().get()));
-    }
-
-    private boolean isMergeAtGenesis(final Optional<UInt256> ttd) {
-      return ttd.get().equals(UInt256.ZERO);
+              .greaterThan(terminalTotalDifficulty));
     }
   }
 }
