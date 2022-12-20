@@ -60,7 +60,7 @@ public class CodeV1 implements Code {
 
   @Override
   public Bytes getCodeBytes(final int section) {
-    if (section >= codeSectionInfos.length) {
+    if (section >= codeSectionInfos.length || section < 0) {
       return null;
     } else {
       return codeSectionInfos[section].code;

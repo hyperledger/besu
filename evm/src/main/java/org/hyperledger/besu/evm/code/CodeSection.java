@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.evm.code;
 
+import java.util.Objects;
+
 import org.apache.tuweni.bytes.Bytes;
 
 //// java17 convert to record
@@ -47,5 +49,21 @@ public final class CodeSection {
 
   public int getMaxStackHeight() {
     return maxStackHeight;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CodeSection that = (CodeSection) o;
+    return inputs == that.inputs
+        && outputs == that.outputs
+        && maxStackHeight == that.maxStackHeight
+        && code.equals(that.code);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(code, inputs, outputs, maxStackHeight);
   }
 }
