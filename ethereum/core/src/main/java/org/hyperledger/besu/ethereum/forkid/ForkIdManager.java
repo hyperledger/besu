@@ -38,6 +38,7 @@ public class ForkIdManager {
   private final Hash genesisHash;
   private final List<ForkId> blockNumbersForkIds;
   private final List<ForkId> timestampsForkIds;
+  private final List<ForkId> allForkIds;
 
   private final List<Long> blockNumberForks;
   private final List<Long> timestampForks;
@@ -73,16 +74,16 @@ public class ForkIdManager {
             .distinct()
             .sorted()
             .collect(Collectors.toUnmodifiableList());
-    this.onlyZerosForkBlocks =
+    final List<Long> allForkNumbers =
         Stream.concat(blockNumberForks.stream(), timestampForks.stream())
-            .allMatch(value -> 0L == value);
+            .collect(Collectors.toList());
+    this.onlyZerosForkBlocks = allForkNumbers.stream().allMatch(value -> 0L == value);
     this.forkNext = createForkIds();
-    final long highestKnownBlockFork =
-        !blockNumberForks.isEmpty() ? blockNumberForks.get(blockNumberForks.size() - 1) : 0L;
+    this.allForkIds =
+        Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
+            .collect(Collectors.toList());
     this.highestKnownFork =
-        !timestampForks.isEmpty()
-            ? timestampForks.get(timestampForks.size() - 1)
-            : highestKnownBlockFork;
+        !allForkNumbers.isEmpty() ? allForkNumbers.get(allForkNumbers.size() - 1) : 0L;
   }
 
   public ForkId getForkIdForChainHead() {
@@ -102,21 +103,14 @@ public class ForkIdManager {
         return forkId;
       }
     }
-    final ForkId blockNumberForkId =
-        blockNumbersForkIds.isEmpty()
-            ? new ForkId(genesisHashCrc, 0)
-            : blockNumbersForkIds.get(blockNumbersForkIds.size() - 1);
-    return timestampsForkIds.isEmpty()
-        ? blockNumberForkId
-        : timestampsForkIds.get(timestampsForkIds.size() - 1);
+    return allForkIds.isEmpty()
+        ? new ForkId(genesisHashCrc, 0)
+        : allForkIds.get(allForkIds.size() - 1);
   }
 
   @VisibleForTesting
   public List<ForkId> getAllForkIds() {
-    List<ForkId> forkIds = new ArrayList<>(timestampsForkIds.size() + blockNumbersForkIds.size());
-    forkIds.addAll(blockNumbersForkIds);
-    forkIds.addAll(timestampsForkIds);
-    return forkIds;
+    return allForkIds;
   }
 
   public static ForkId readFrom(final RLPInput in) {
@@ -172,16 +166,12 @@ public class ForkIdManager {
   }
 
   private boolean isHashKnown(final Bytes forkHash) {
-    return Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
-        .map(ForkId::getHash)
-        .anyMatch(hash -> hash.equals(forkHash));
+    return allForkIds.stream().map(ForkId::getHash).anyMatch(hash -> hash.equals(forkHash));
   }
 
   private boolean isForkKnown(final Long nextFork) {
     return highestKnownFork < nextFork
-        || Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
-            .map(ForkId::getNext)
-            .anyMatch(fork -> fork.equals(nextFork));
+        || allForkIds.stream().map(ForkId::getNext).anyMatch(fork -> fork.equals(nextFork));
   }
 
   private boolean isRemoteAwareOfPresent(final Bytes forkHash, final Long nextFork) {
