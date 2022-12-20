@@ -29,7 +29,7 @@ public class MulModOperation extends AbstractFixedCostOperation {
   private static final OperationResult mulModSuccess = new OperationResult(8, null);
 
   public MulModOperation(final GasCalculator gasCalculator) {
-    super(0x09, "MULMOD", 3, 1, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(0x09, "MULMOD", 3, 1, gasCalculator, gasCalculator.getMidTierGasCost());
   }
 
   @Override

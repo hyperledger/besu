@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.internal.Words;
 public class SelfDestructOperation extends AbstractOperation {
 
   public SelfDestructOperation(final GasCalculator gasCalculator) {
-    super(0xFF, "SELFDESTRUCT", 1, 0, 1, gasCalculator);
+    super(0xFF, "SELFDESTRUCT", 1, 0, gasCalculator);
   }
 
   @Override

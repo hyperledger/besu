@@ -3182,7 +3182,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
-  private void checkIfRequiredPortsAreAvailable() {
+  protected void checkIfRequiredPortsAreAvailable() {
     final List<Integer> unavailablePorts = new ArrayList<>();
     getEffectivePorts().stream()
         .filter(Objects::nonNull)
