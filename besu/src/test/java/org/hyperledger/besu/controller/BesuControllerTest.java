@@ -28,7 +28,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
-import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -160,24 +159,6 @@ public class BesuControllerTest {
             .fromGenesisConfig(postMergeGenesisFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
-  }
-
-  @Test
-  public void mergeAtGenesisCheckpointThrowsInvalidConfigurationError() throws IOException {
-    final GenesisConfigFile mergeAtGenesisFile =
-        GenesisConfigFile.fromConfig(
-            Resources.toString(
-                Resources.getResource("invalid_post_merge_merge_at_genesis.json"),
-                StandardCharsets.UTF_8));
-
-    assertThatThrownBy(
-            () ->
-                new BesuController.Builder()
-                    .fromGenesisConfig(
-                        mergeAtGenesisFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT))
-        .isInstanceOf(InvalidConfigurationException.class)
-        .hasMessage(
-            "Post Merge checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
   }
 
   @Test

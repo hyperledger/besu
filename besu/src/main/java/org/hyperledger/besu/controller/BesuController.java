@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
-import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -273,14 +272,8 @@ public class BesuController implements java.io.Closeable {
     }
 
     private boolean isCheckpointPoSBlock(final GenesisConfigOptions configOptions) {
-      UInt256 terminalTotalDifficulty = configOptions.getTerminalTotalDifficulty().get();
-      // this is currently a limitation that besu has in its codebase
-      if (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
-              .equals(UInt256.ZERO)
-          && terminalTotalDifficulty.equals(UInt256.ZERO)) {
-        throw new InvalidConfigurationException(
-            "Post Merge checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
-      }
+      final UInt256 terminalTotalDifficulty = configOptions.getTerminalTotalDifficulty().get();
+
       return configOptions.getCheckpointOptions().isValid()
           && (UInt256.fromHexString(configOptions.getCheckpointOptions().getTotalDifficulty().get())
               .greaterThan(terminalTotalDifficulty));

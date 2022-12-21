@@ -5536,4 +5536,25 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
+
+  @Test
+  public void checkpointMergeAtGenesisWithGenesisBlockDifficultyZeroFails() throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("invalid_post_merge_merge_at_genesis.json"),
+            StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
+
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "X_CHECKPOINT",
+        "--Xcheckpoint-post-merge-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Post Merge checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+  }
 }
