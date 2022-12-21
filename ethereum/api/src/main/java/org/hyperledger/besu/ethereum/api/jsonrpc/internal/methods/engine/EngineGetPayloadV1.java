@@ -25,9 +25,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import io.vertx.core.Vertx;
 
-public class EngineGetPayload extends AbstractEngineGetPayload {
+public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
 
-  public EngineGetPayload(
+  public EngineGetPayloadV1(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
@@ -44,7 +44,6 @@ public class EngineGetPayload extends AbstractEngineGetPayload {
   @Override
   protected JsonRpcResponse createResponse(final JsonRpcRequestContext request, final Block block) {
     return new JsonRpcSuccessResponse(
-        request.getRequest().getId(),
-        blockResultFactory.createEnginePayloadTransactionComplete(block, false));
+        request.getRequest().getId(), blockResultFactory.payloadTransactionCompleteV1(block));
   }
 }

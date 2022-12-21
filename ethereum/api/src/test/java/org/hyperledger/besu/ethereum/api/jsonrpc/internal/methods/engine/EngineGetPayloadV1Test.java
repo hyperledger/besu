@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV1;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -51,9 +51,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EngineGetPayloadTest {
+public class EngineGetPayloadV1Test {
 
-  private EngineGetPayload method;
+  private EngineGetPayloadV1 method;
   private static final Vertx vertx = Vertx.vertx();
   private static final BlockResultFactory factory = new BlockResultFactory();
   private static final PayloadIdentifier mockPid =
@@ -76,7 +76,7 @@ public class EngineGetPayloadTest {
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlock));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
-        new EngineGetPayload(
+        new EngineGetPayloadV1(
             vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
   }
 
@@ -88,14 +88,14 @@ public class EngineGetPayloadTest {
 
   @Test
   public void shouldReturnBlockForKnownPayloadId() {
-    var resp = resp(mockPid);
+    final var resp = resp(mockPid);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
     Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
         .ifPresent(
             r -> {
-              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResult.class);
-              EngineGetPayloadResult res = (EngineGetPayloadResult) r.getResult();
+              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV1.class);
+              final EngineGetPayloadResultV1 res = (EngineGetPayloadResultV1) r.getResult();
               assertThat(res.getHash()).isEqualTo(mockHeader.getHash().toString());
               assertThat(res.getPrevRandao())
                   .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
@@ -105,7 +105,7 @@ public class EngineGetPayloadTest {
 
   @Test
   public void shouldFailForUnknownPayloadId() {
-    var resp =
+    final var resp =
         resp(
             PayloadIdentifier.forPayloadParams(
                 Hash.ZERO, 0L, Bytes32.random(), Address.fromHexString("0x42")));

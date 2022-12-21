@@ -85,26 +85,17 @@ public class BlockResultFactory {
         block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
   }
 
-  public AbstractEngineGetPayloadResult createEnginePayloadTransactionComplete(
-      final Block block, final boolean includeWithdraws) {
-
-    return includeWithdraws
-        ? enginePayloadTransactionCompleteWithdraws(block)
-        : enginePayloadTransactionComplete(block);
-  }
-
-  private EngineGetPayloadResult enginePayloadTransactionComplete(final Block block) {
+  public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
             .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    return new EngineGetPayloadResult(block.getHeader(), txs);
+    return new EngineGetPayloadResultV1(block.getHeader(), txs);
   }
 
-  private EngineGetPayloadResultWithdraws enginePayloadTransactionCompleteWithdraws(
-      final Block block) {
+  public EngineGetPayloadResultV2 payloadTransactionCompleteV2(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
             .map(TransactionEncoder::encodeOpaqueBytes)
@@ -112,7 +103,7 @@ public class BlockResultFactory {
             .collect(Collectors.toList());
 
     final long blockValue = calculateBlockValue(txs);
-    return new EngineGetPayloadResultWithdraws(block.getHeader(), txs, Quantity.create(blockValue));
+    return new EngineGetPayloadResultV2(block.getHeader(), txs, Quantity.create(blockValue));
   }
 
   private long calculateBlockValue(final List<String> ignored) {

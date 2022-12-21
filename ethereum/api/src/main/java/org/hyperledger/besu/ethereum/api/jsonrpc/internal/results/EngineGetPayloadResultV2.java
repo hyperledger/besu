@@ -27,11 +27,11 @@ import org.apache.tuweni.bytes.Bytes32;
   "executionPayload",
   "blockValue",
 })
-public class EngineGetPayloadResultWithdraws extends AbstractEngineGetPayloadResult {
+public class EngineGetPayloadResultV2 {
   protected final PayloadResult executionPayload;
   private final String blockValue;
 
-  public EngineGetPayloadResultWithdraws(
+  public EngineGetPayloadResultV2(
       final BlockHeader header, final List<String> transactions, final String blockValue) {
     this.executionPayload = new PayloadResult(header, transactions);
     this.blockValue = blockValue;
