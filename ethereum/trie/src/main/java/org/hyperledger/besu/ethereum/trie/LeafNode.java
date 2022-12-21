@@ -19,8 +19,6 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Collections;

@@ -62,14 +62,14 @@ public class TrieIteratorTest {
   @Test
   public void shouldCallLeafHandlerWhenRootNodeIsALeaf() {
     final Node<String> leaf = nodeFactory.createLeaf(bytesToPath(KEY_HASH1), "Leaf");
-    leaf.accept(iterator, PATH1);
+    leaf.accept(iterator, Bytes.EMPTY, PATH1);
 
     verify(leafHandler).onLeaf(KEY_HASH1, leaf);
   }
 
   @Test
   public void shouldNotNotifyLeafHandlerOfNullNodes() {
-    NullNode.<String>instance().accept(iterator, PATH1);
+    NullNode.<String>instance().accept(iterator, Bytes.EMPTY, PATH1);
 
     verifyNoInteractions(leafHandler);
   }
@@ -78,7 +78,7 @@ public class TrieIteratorTest {
   public void shouldConcatenatePathAndVisitChildOfExtensionNode() {
     final Node<String> leaf = nodeFactory.createLeaf(PATH1.slice(10), "Leaf");
     final Node<String> extension = nodeFactory.createExtension(PATH1.slice(0, 10), leaf);
-    extension.accept(iterator, PATH1);
+    extension.accept(iterator, Bytes.EMPTY, PATH1);
     verify(leafHandler).onLeaf(KEY_HASH1, leaf);
   }
 
@@ -88,9 +88,9 @@ public class TrieIteratorTest {
     when(leafHandler.onLeaf(any(Bytes32.class), any(Node.class))).thenReturn(State.CONTINUE);
     final Node<String> root =
         NullNode.<String>instance()
-            .accept(new PutVisitor<>(nodeFactory, "Leaf 1"), PATH1)
-            .accept(new PutVisitor<>(nodeFactory, "Leaf 2"), PATH2);
-    root.accept(iterator, PATH1);
+            .accept(new PutVisitor<>(nodeFactory, "Leaf 1"), Bytes.EMPTY, PATH1)
+            .accept(new PutVisitor<>(nodeFactory, "Leaf 2"), Bytes.EMPTY, PATH2);
+    root.accept(iterator, Bytes.EMPTY, PATH1);
 
     final InOrder inOrder = inOrder(leafHandler);
     inOrder.verify(leafHandler).onLeaf(eq(KEY_HASH1), any(Node.class));
@@ -104,9 +104,9 @@ public class TrieIteratorTest {
     when(leafHandler.onLeaf(any(Bytes32.class), any(Node.class))).thenReturn(State.STOP);
     final Node<String> root =
         NullNode.<String>instance()
-            .accept(new PutVisitor<>(nodeFactory, "Leaf 1"), PATH1)
-            .accept(new PutVisitor<>(nodeFactory, "Leaf 2"), PATH2);
-    root.accept(iterator, PATH1);
+            .accept(new PutVisitor<>(nodeFactory, "Leaf 1"), Bytes.EMPTY, PATH1)
+            .accept(new PutVisitor<>(nodeFactory, "Leaf 2"), Bytes.EMPTY, PATH2);
+    root.accept(iterator, Bytes.EMPTY, PATH1);
 
     verify(leafHandler).onLeaf(eq(KEY_HASH1), any(Node.class));
     verifyNoMoreInteractions(leafHandler);
@@ -126,7 +126,7 @@ public class TrieIteratorTest {
     for (int i = 0; i < totalNodes; i++) {
       final Bytes32 keyHash =
           Hash.keccak256(UInt256.valueOf(Math.abs(random.nextInt(Integer.MAX_VALUE))));
-      root = root.accept(new PutVisitor<>(nodeFactory, "Value"), bytesToPath(keyHash));
+      root = root.accept(new PutVisitor<>(nodeFactory, "Value"), Bytes.EMPTY, bytesToPath(keyHash));
       expectedKeyHashes.add(keyHash);
       if (i == startNodeNumber) {
         startAtHash = keyHash;
@@ -139,7 +139,7 @@ public class TrieIteratorTest {
         stopAtHash.compareTo(startAtHash) >= 0 ? stopAtHash : startAtHash;
     when(leafHandler.onLeaf(any(Bytes32.class), any(Node.class))).thenReturn(State.CONTINUE);
     when(leafHandler.onLeaf(eq(actualStopAtHash), any(Node.class))).thenReturn(State.STOP);
-    root.accept(iterator, bytesToPath(startAtHash));
+    root.accept(iterator, Bytes.EMPTY, bytesToPath(startAtHash));
     final InOrder inOrder = inOrder(leafHandler);
     expectedKeyHashes
         .subSet(startAtHash, true, actualStopAtHash, true)
