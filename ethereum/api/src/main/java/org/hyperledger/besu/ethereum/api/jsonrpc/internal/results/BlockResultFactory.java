@@ -85,14 +85,29 @@ public class BlockResultFactory {
         block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
   }
 
-  public EngineGetPayloadResult enginePayloadTransactionComplete(final Block block) {
+  public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
             .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    return new EngineGetPayloadResult(block.getHeader(), txs);
+    return new EngineGetPayloadResultV1(block.getHeader(), txs);
+  }
+
+  public EngineGetPayloadResultV2 payloadTransactionCompleteV2(final Block block) {
+    final List<String> txs =
+        block.getBody().getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+
+    final long blockValue = calculateBlockValue(txs);
+    return new EngineGetPayloadResultV2(block.getHeader(), txs, Quantity.create(blockValue));
+  }
+
+  private long calculateBlockValue(final List<String> ignored) {
+    return 0L;
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
