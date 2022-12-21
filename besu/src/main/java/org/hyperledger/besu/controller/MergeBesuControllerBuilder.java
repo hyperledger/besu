@@ -185,7 +185,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO))
-            .setIsNearHeadCheckpointSync(syncConfig.isCheckpointPostMergeEnabled());
+            .setIsCheckpointPostMergeSync(syncConfig.isCheckpointPostMergeEnabled());
 
     blockchain
         .getFinalized()
@@ -238,7 +238,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   public BesuController build() {
-    BesuController controller = super.build();
+    final BesuController controller = super.build();
     PostMergeContext.get().setSyncState(controller.getSyncState());
     return controller;
   }
