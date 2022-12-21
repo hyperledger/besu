@@ -71,7 +71,8 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
     if (worldState instanceof BonsaiSnapshotWorldState) {
       snapshotWorldState = (BonsaiSnapshotWorldState) worldState;
     } else {
-      snapshotWorldState = BonsaiSnapshotWorldState.create(worldStateArchive, worldStateStorage);
+      snapshotWorldState =
+          BonsaiSnapshotWorldState.create(worldStateArchive, rootWorldStateStorage);
     }
 
     cachedWorldStatesByHash.put(

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,7 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
 
   protected final Blockchain blockchain;
-  protected final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  protected final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
 
   protected final Map<Bytes32, CachedWorldState<T>> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
@@ -49,7 +50,7 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
       final long maxLayersToLoad,
       final Map<Bytes32, CachedWorldState<T>> cachedWorldStatesByHash) {
     this.blockchain = blockchain;
-    this.worldStateStorage = worldStateStorage;
+    this.rootWorldStateStorage = worldStateStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.maxLayersToLoad = maxLayersToLoad;
   }
@@ -64,7 +65,7 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
     // do not overwrite a trielog layer that already exists in the database.
     // if it's only in memory we need to save it
     // for example, in case of reorg we don't replace a trielog layer
-    if (worldStateStorage.getTrieLog(forBlockHeader.getHash()).isEmpty()) {
+    if (rootWorldStateStorage.getTrieLog(forBlockHeader.getHash()).isEmpty()) {
       final BonsaiUpdater stateUpdater = forWorldState.getWorldStateStorage().updater();
       boolean success = false;
       try {
@@ -94,7 +95,8 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
       final BonsaiWorldStateArchive worldStateArchive,
       final BonsaiPersistedWorldState forWorldState);
 
-  private TrieLogLayer prepareTrieLog(
+  @VisibleForTesting
+  TrieLogLayer prepareTrieLog(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final BonsaiWorldStateUpdater localUpdater,
@@ -168,7 +170,7 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.of(cachedWorldStatesByHash.get(blockHash).getTrieLog());
     } else {
-      return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
+      return rootWorldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
   }
 }
