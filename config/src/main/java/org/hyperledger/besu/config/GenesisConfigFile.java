@@ -199,7 +199,11 @@ public class GenesisConfigFile {
     }
   }
 
-  public List<Long> getForks() {
-    return getConfigOptions().getForks();
+  public List<Long> getForkBlockNumbers() {
+    return getConfigOptions().getForkBlockNumbers();
+  }
+
+  public List<Long> getForkTimestamps() {
+    return getConfigOptions().getForkBlockTimestamps();
   }
 }

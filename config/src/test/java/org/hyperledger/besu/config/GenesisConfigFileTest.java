@@ -252,7 +252,7 @@ public class GenesisConfigFileTest {
     GenesisConfigFile mergeNetSplitGenesis =
         GenesisConfigFile.fromConfig(
             "{\"config\":{\"mergeNetsplitBlock\":11},\"baseFeePerGas\":\"0xa\"}");
-    assertThat(mergeNetSplitGenesis.getForks()).hasSize(1);
+    assertThat(mergeNetSplitGenesis.getForkBlockNumbers()).hasSize(1);
     assertThat(mergeNetSplitGenesis.getConfigOptions().getMergeNetSplitBlockNumber()).isPresent();
     assertThat(mergeNetSplitGenesis.getConfigOptions().getMergeNetSplitBlockNumber().getAsLong())
         .isEqualTo(11L);
@@ -260,7 +260,7 @@ public class GenesisConfigFileTest {
     // assert empty if not present:
     GenesisConfigFile londonGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
-    assertThat(londonGenesis.getForks()).hasSize(1);
+    assertThat(londonGenesis.getForkBlockNumbers()).hasSize(1);
     assertThat(londonGenesis.getConfigOptions().getMergeNetSplitBlockNumber()).isEmpty();
   }
 
@@ -355,7 +355,7 @@ public class GenesisConfigFileTest {
     override.put("chainId", bigBlockString);
     override.put("contractSizeLimit", bigBlockString);
 
-    assertThat(config.getForks()).isNotEmpty();
+    assertThat(config.getForkBlockNumbers()).isNotEmpty();
     assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).hasValue(bigBlock);
     assertThat(config.getConfigOptions(override).getChainId())
         .hasValue(BigInteger.valueOf(bigBlock));
@@ -370,7 +370,7 @@ public class GenesisConfigFileTest {
     override.put("chainId", null);
     override.put("contractSizeLimit", null);
 
-    assertThat(config.getForks()).isNotEmpty();
+    assertThat(config.getForkBlockNumbers()).isNotEmpty();
     assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).isNotPresent();
     assertThat(config.getConfigOptions(override).getChainId()).isNotPresent();
     assertThat(config.getConfigOptions(override).getContractSizeLimit()).isNotPresent();
@@ -454,7 +454,7 @@ public class GenesisConfigFileTest {
 
     final GenesisConfigFile config = fromConfig(configNode);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L, 2222222L);
+    assertThat(config.getForkBlockNumbers()).containsExactly(1L, 2L, 3L, 1035301L, 2222222L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
   }
 
@@ -474,7 +474,7 @@ public class GenesisConfigFileTest {
                         StandardCharsets.UTF_8)));
     final GenesisConfigFile config = fromConfig(configNode);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
+    assertThat(config.getForkBlockNumbers()).containsExactly(1L, 2L, 3L, 1035301L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(61));
   }
 
@@ -522,10 +522,12 @@ public class GenesisConfigFileTest {
     final GenesisConfigFile configFileMultipleUnexpectedForks =
         fromConfig(configMultipleUnexpectedForks);
 
-    assertThat(configFileNoUnexpectedForks.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
-    assertThat(configFileNoUnexpectedForks.getForks()).isEqualTo(configFileClassicFork.getForks());
-    assertThat(configFileNoUnexpectedForks.getForks())
-        .isEqualTo(configFileMultipleUnexpectedForks.getForks());
+    assertThat(configFileNoUnexpectedForks.getForkBlockNumbers())
+        .containsExactly(1L, 2L, 3L, 1035301L);
+    assertThat(configFileNoUnexpectedForks.getForkBlockNumbers())
+        .isEqualTo(configFileClassicFork.getForkBlockNumbers());
+    assertThat(configFileNoUnexpectedForks.getForkBlockNumbers())
+        .isEqualTo(configFileMultipleUnexpectedForks.getForkBlockNumbers());
     assertThat(configFileNoUnexpectedForks.getConfigOptions().getChainId())
         .hasValue(BigInteger.valueOf(61));
   }
