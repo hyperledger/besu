@@ -647,6 +647,9 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
 
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    final BaseFeeMarket baseFeeMarket = getBaseFeeMarket(genesisConfigOptions);
+
     return parisDefinition(
             chainId,
             configContractSizeLimit,
@@ -655,9 +658,34 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    baseFeeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
         .withdrawalsProcessorBuilder(WithdrawalsProcessor.AllowedWithdrawalsProcessor::new)
         .withdrawalsValidatorBuilder(WithdrawalsValidator.AllowedWithdrawals::new)
         .name("Shanghai");
+  }
+
+  private static BaseFeeMarket getBaseFeeMarket(final GenesisConfigOptions genesisConfigOptions) {
+    // TODO SLD bug here? need to default to a later fork e.g. if london isn't specified but
+    // grayGlacier is.
+    final long londonForkBlockNumber =
+        genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
+    return genesisConfigOptions.isZeroBaseFee()
+        ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+        : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
   }
 
   static ProtocolSpecBuilder cancunDefinition(
