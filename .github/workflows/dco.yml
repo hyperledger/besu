@@ -9,7 +9,6 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - uses: actions/checkout@v2
         - name: Set up Python 3.x
