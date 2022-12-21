@@ -260,12 +260,12 @@ public class BackwardSyncContext {
     return protocolContext;
   }
 
-  public BlockValidator getBlockValidator(final long blockNumber) {
-    return protocolSchedule.getByBlockNumber(blockNumber).getBlockValidator();
+  public BlockValidator getBlockValidator(final BlockHeader blockHeader) {
+    return protocolSchedule.getByBlockHeader(blockHeader).getBlockValidator();
   }
 
   public BlockValidator getBlockValidatorForBlock(final Block block) {
-    return getBlockValidator(block.getHeader().getNumber());
+    return getBlockValidator(block.getHeader());
   }
 
   public boolean isReady() {
