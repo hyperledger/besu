@@ -14,11 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
+import static org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDeletionProcessor.deletePotentialOldStorageEntries;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -46,6 +51,20 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
+    if (getSyncMode(worldStateStorage) == BONSAI) {
+      deletePotentialOldStorageEntries(
+          (BonsaiWorldStateKeyValueStorage) worldStateStorage, accountHash, getLocation(), data);
+      final Node<Bytes> node = TrieNodeDecoder.decode(getLocation(), data);
+      node.getValue()
+          .ifPresent(
+              value -> {
+                ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                    .putStorageValueBySlotHash(
+                        accountHash,
+                        getSlotHash(node.getLocation().orElseThrow(), node.getPath()),
+                        Bytes32.leftPad(RLP.decodeValue(value)));
+              });
+    }
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     return 1;
   }
@@ -67,12 +86,6 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Bytes location,
       final Bytes path,
       final Bytes value) {
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putStorageValueBySlotHash(
-              accountHash, getSlotHash(location, path), Bytes32.leftPad(RLP.decodeValue(value)))
-          .commit();
-    }
     return Stream.empty();
   }
 
