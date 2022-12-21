@@ -144,6 +144,13 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   public void persist(final BlockHeader blockHeader) {
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
     final Hash newWorldStateRootHash = rootHash(localUpdater);
+    if (!newWorldStateRootHash.equals(blockHeader.getStateRoot())) {
+      throw new RuntimeException(
+          "World State Root does not match expected value, header "
+              + blockHeader.getStateRoot().toHexString()
+              + " calculated "
+              + newWorldStateRootHash.toHexString());
+    }
     archive
         .getTrieLogManager()
         .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
