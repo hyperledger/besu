@@ -62,6 +62,8 @@ public class Block {
     out.writeList(body.getTransactions(), Transaction::writeTo);
     out.writeList(body.getOmmers(), BlockHeader::writeTo);
 
+    body.getWithdrawals().ifPresent(withdrawals -> out.writeList(withdrawals, Withdrawal::writeTo));
+
     out.endList();
   }
 
