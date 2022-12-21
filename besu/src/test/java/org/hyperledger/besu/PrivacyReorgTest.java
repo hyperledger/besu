@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -188,7 +189,7 @@ public class PrivacyReorgTest {
 
     besuController =
         new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.development())
+            .fromGenesisConfig(GenesisConfigFile.development(), SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
