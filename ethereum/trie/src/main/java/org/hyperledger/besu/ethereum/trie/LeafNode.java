@@ -41,8 +41,6 @@ public class LeafNode<V> implements Node<V> {
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
 
-  private String stacktrace;
-
   int pos;
 
   LeafNode(
@@ -56,11 +54,6 @@ public class LeafNode<V> implements Node<V> {
     this.value = value;
     this.nodeFactory = nodeFactory;
     this.valueSerializer = valueSerializer;
-    if (this.location.isEmpty()) {
-      StringWriter sw = new StringWriter();
-      new Exception().printStackTrace(new PrintWriter(sw));
-      stacktrace = sw.toString();
-    }
   }
 
   LeafNode(
@@ -73,9 +66,6 @@ public class LeafNode<V> implements Node<V> {
     this.value = value;
     this.nodeFactory = nodeFactory;
     this.valueSerializer = valueSerializer;
-    StringWriter sw = new StringWriter();
-    new Exception().printStackTrace(new PrintWriter(sw));
-    stacktrace = sw.toString();
   }
 
   @Override
@@ -167,8 +157,6 @@ public class LeafNode<V> implements Node<V> {
   @Override
   public String print() {
     return "Leaf:"
-        + "\n\tStacktrace "
-        + stacktrace
         + "\n\tRef: "
         + getRlpRef()
         + "\n\tLocation: "

@@ -116,7 +116,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                         && Bytes.concatenate(leaf.getLocation().orElse(Bytes.EMPTY), leaf.getPath())
                             .equals(accountPath))
             .flatMap(Node::getValue);
-    Optional<Bytes> byte2 = Optional.empty();
+    return byte1;
+    /*Optional<Bytes> byte2 = Optional.empty();
     final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
     ArrayList<String> dd = new ArrayList<>();
     if (worldStateRootHash.isPresent()) {
@@ -147,6 +148,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             "account "
                 + accountHash
                 + " "
+                    + nearestKey
+                    .map(pair -> Bytes.wrap(pair.getKey()) + "/" + Bytes.wrap(pair.getValue()))
+                    .orElse("")
                 + " "
                 + byte1
                 + " "
@@ -156,7 +160,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         dd.forEach(System.out::println);
       }
     }
-    return byte2;
+    return byte2;*/
   }
 
   @Override
@@ -244,7 +248,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             .flatMap(Node::getValue)
             .map(value -> Bytes32.leftPad(RLP.decodeValue(value)));
 
-    Optional<Bytes> bytes2 = Optional.empty();
+    return bytes1;
+
+    /*Optional<Bytes> bytes2 = Optional.empty();
 
     Optional<Bytes> account = Optional.empty();
     final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
@@ -318,7 +324,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         }
       }
     }
-    return bytes2;
+    return bytes2;*/
   }
 
   @Override

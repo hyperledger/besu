@@ -28,6 +28,8 @@ class StoredNode<V> implements Node<V> {
   private final Bytes32 hash;
   private Node<V> loaded;
 
+  private int pos;
+
   StoredNode(final StoredNodeFactory<V> nodeFactory, final Bytes location, final Bytes32 hash) {
     this.nodeFactory = nodeFactory;
     this.location = location;
@@ -145,6 +147,16 @@ class StoredNode<V> implements Node<V> {
   @Override
   public void unload() {
     loaded = null;
+  }
+
+  @Override
+  public int getPos() {
+    return pos;
+  }
+
+  @Override
+  public void setPos(final int pos) {
+    this.pos = pos;
   }
 
   @Override
