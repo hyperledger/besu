@@ -1,7 +1,5 @@
 name: dco
 on:
-  push:
-    branches: [ main, release*, test-dco* ]
   pull_request:
   workflow_dispatch:
 
