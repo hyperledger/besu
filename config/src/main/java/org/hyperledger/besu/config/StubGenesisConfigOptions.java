@@ -426,7 +426,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public List<Long> getForks() {
+  public List<Long> getForkBlockNumbers() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<Long> getForkBlockTimestamps() {
     return Collections.emptyList();
   }
 
