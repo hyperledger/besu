@@ -1,19 +1,24 @@
-name: dco
+name: DCO
 on:
   pull_request:
-  workflow_dispatch:
-
+  push:
+    branches:
+      - main
+      - release*
+      - test-dco*
 jobs:
-  dco:
+  check:
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
-      - name: Get PR Commits
-        id: 'get-pr-commits'
-        uses: tim-actions/get-pr-commits@v1.2.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: DCO Check
-        uses: tim-actions/dco@v1.1.0
-        with:
-          commits: ${{ steps.get-pr-commits.outputs.commits }}
+      - uses: actions/checkout@v2
+        - name: Set up Python 3.x
+          uses: actions/setup-python@v1
+          with:
+            python-version: '3.x'
+        - name: Check DCO
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            pip3 install -U dco-check
+            dco-check
