@@ -57,17 +57,24 @@ public final class CodeFactory {
         if (version != 1) {
           return new CodeInvalid(codeHash, bytes, "Unsupported EOF Version: " + version);
         }
+
         final EOFLayout layout = EOFLayout.parseEOF(bytes);
         if (!layout.isValid()) {
           return new CodeInvalid(
               codeHash, bytes, "Invalid EOF Layout: " + layout.getInvalidReason());
         }
-        final String validationError = OpcodesV1.validateCode(layout);
-        if (validationError == null) {
-          return new CodeV1(codeHash, layout);
-        } else {
-          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + validationError);
+
+        final String codeValidationError = CodeV1.validateCode(layout);
+        if (codeValidationError != null) {
+          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + codeValidationError);
         }
+
+        final String stackValidationError = CodeV1.validateStack(layout);
+        if (stackValidationError != null) {
+          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + codeValidationError);
+        }
+
+        return new CodeV1(codeHash, layout);
       } else {
         return new CodeV0(bytes, codeHash);
       }
