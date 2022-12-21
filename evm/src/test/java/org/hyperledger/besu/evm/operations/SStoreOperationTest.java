@@ -12,26 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.INSUFFICIENT_GAS;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.SStoreOperation;
+import org.hyperledger.besu.evm.testutils.FakeBlockValues;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
+import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Arrays;
@@ -91,17 +88,14 @@ public class SStoreOperationTest {
 
   private MessageFrame createMessageFrame(
       final Address address, final long initialGas, final long remainingGas) {
-    final Blockchain blockchain = mock(Blockchain.class);
-
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    final WorldUpdater worldStateUpdater = worldStateArchive.getMutable().updater();
-    final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
+    final ToyWorld toyWorld = new ToyWorld();
+    final WorldUpdater worldStateUpdater = toyWorld.updater();
+    final BlockValues blockHeader = new FakeBlockValues(1337);
     final MessageFrame frame =
-        new MessageFrameTestFixture()
+        new TestMessageFrameBuilder()
             .address(address)
             .worldUpdater(worldStateUpdater)
-            .blockHeader(blockHeader)
-            .blockchain(blockchain)
+            .blockValues(blockHeader)
             .initialGas(initialGas)
             .build();
     worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));

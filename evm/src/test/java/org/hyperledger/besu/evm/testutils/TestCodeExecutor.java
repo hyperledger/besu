@@ -12,26 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.evm.testutils;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Consumer;
@@ -40,58 +36,40 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TestCodeExecutor {
 
-  private final ExecutionContextTestFixture fixture;
-  private final BlockHeader blockHeader = new BlockHeaderTestFixture().number(13).buildHeader();
-  private static final Address SENDER_ADDRESS = AddressHelpers.ofValue(244259721);
+  private final BlockValues blockValues = new FakeBlockValues(13);
+  private static final Address SENDER_ADDRESS = Address.fromHexString("0xe8f1b89");
+  private final EVM evm;
 
-  public TestCodeExecutor(final ProtocolSchedule protocolSchedule) {
-    fixture = ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
+  public TestCodeExecutor(final EVM evm) {
+    this.evm = evm;
   }
 
   public MessageFrame executeCode(
       final String codeHexString,
       final long gasLimit,
       final Consumer<MutableAccount> accountSetup) {
-    final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
-    final WorldUpdater worldUpdater =
-        createInitialWorldState(accountSetup, fixture.getStateArchive());
+    final WorldUpdater worldUpdater = createInitialWorldState(accountSetup);
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
-    final EVM evm = protocolSpec.getEvm();
     final MessageCallProcessor messageCallProcessor =
         new MessageCallProcessor(evm, new PrecompileContractRegistry());
     final Bytes codeBytes = Bytes.fromHexString(codeHexString);
     final Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
 
-    final Transaction transaction =
-        Transaction.builder()
-            .type(TransactionType.FRONTIER)
-            .value(Wei.ZERO)
-            .sender(SENDER_ADDRESS)
-            .signature(
-                SignatureAlgorithmFactory.getInstance()
-                    .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1))
-            .gasLimit(gasLimit)
-            .to(SENDER_ADDRESS)
-            .payload(Bytes.EMPTY)
-            .gasPrice(Wei.ZERO)
-            .nonce(0)
-            .build();
     final MessageFrame initialFrame =
-        new MessageFrameTestFixture()
+        new TestMessageFrameBuilder()
             .messageFrameStack(messageFrameStack)
-            .blockchain(fixture.getBlockchain())
             .worldUpdater(worldUpdater)
             .initialGas(gasLimit)
             .address(SENDER_ADDRESS)
             .originator(SENDER_ADDRESS)
             .contract(SENDER_ADDRESS)
-            .gasPrice(transaction.getGasPrice().get())
-            .inputData(transaction.getPayload())
+            .gasPrice(Wei.ZERO)
+            .inputData(Bytes.EMPTY)
             .sender(SENDER_ADDRESS)
-            .value(transaction.getValue())
+            .value(Wei.ZERO)
             .code(code)
-            .blockHeader(blockHeader)
+            .blockValues(blockValues)
             .depth(0)
             .build();
     messageFrameStack.addFirst(initialFrame);
@@ -102,16 +80,14 @@ public class TestCodeExecutor {
     return initialFrame;
   }
 
-  private WorldUpdater createInitialWorldState(
-      final Consumer<MutableAccount> accountSetup, final WorldStateArchive stateArchive) {
-    final MutableWorldState initialWorldState = stateArchive.getMutable();
+  private WorldUpdater createInitialWorldState(final Consumer<MutableAccount> accountSetup) {
+    ToyWorld toyWorld = new ToyWorld();
 
-    final WorldUpdater worldState = initialWorldState.updater();
+    final WorldUpdater worldState = toyWorld.updater();
     final MutableAccount senderAccount =
         worldState.getOrCreate(TestCodeExecutor.SENDER_ADDRESS).getMutable();
     accountSetup.accept(senderAccount);
     worldState.commit();
-    initialWorldState.persist(null);
-    return stateArchive.getMutable(initialWorldState.rootHash(), null).get().updater();
+    return toyWorld.updater();
   }
 }

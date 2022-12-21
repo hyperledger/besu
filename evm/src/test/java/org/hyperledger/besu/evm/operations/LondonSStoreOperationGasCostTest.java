@@ -12,32 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.core.TestCodeExecutor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.testutils.TestCodeExecutor;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class LondonSStoreOperationGasCostTest {
 
-  private static ProtocolSchedule protocolSchedule;
-
-  @Parameters(name = "Code: {0}, Original: {1}")
   public static Object[][] scenarios() {
     // Tests specified in EIP-3539.
     return new Object[][] {
@@ -63,27 +54,18 @@ public class LondonSStoreOperationGasCostTest {
 
   private TestCodeExecutor codeExecutor;
 
-  @Parameter public String code;
-
-  @Parameter(value = 1)
-  public int originalValue;
-
-  @Parameter(value = 2)
-  public int expectedGasUsed;
-
-  @Parameter(value = 3)
-  public int expectedGasRefund;
-
-  @Before
+  @BeforeEach
   public void setUp() {
-    protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(
-            new StubGenesisConfigOptions().londonBlock(0), EvmConfiguration.DEFAULT);
-    codeExecutor = new TestCodeExecutor(protocolSchedule);
+    codeExecutor = new TestCodeExecutor(MainnetEVMs.london(EvmConfiguration.DEFAULT));
   }
 
-  @Test
-  public void shouldCalculateGasAccordingToEip3529() {
+  @ParameterizedTest
+  @MethodSource("scenarios")
+  void shouldCalculateGasAccordingToEip3529(
+      final String code,
+      final int originalValue,
+      final int expectedGasUsed,
+      final int expectedGasRefund) {
     final long gasLimit = 1_000_000;
     final MessageFrame frame =
         codeExecutor.executeCode(
