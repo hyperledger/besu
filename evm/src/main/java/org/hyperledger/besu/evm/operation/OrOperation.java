@@ -25,7 +25,7 @@ public class OrOperation extends AbstractFixedCostOperation {
   static final OperationResult orSuccess = new OperationResult(3, null);
 
   public OrOperation(final GasCalculator gasCalculator) {
-    super(0x17, "OR", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x17, "OR", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

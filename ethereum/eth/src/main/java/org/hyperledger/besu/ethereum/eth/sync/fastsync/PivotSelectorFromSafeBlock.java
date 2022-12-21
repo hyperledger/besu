@@ -35,9 +35,9 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
+public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromFinalizedBlock.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromSafeBlock.class);
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
@@ -48,7 +48,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
 
   private volatile Optional<BlockHeader> maybeCachedHeadBlockHeader = Optional.empty();
 
-  public PivotSelectorFromFinalizedBlock(
+  public PivotSelectorFromSafeBlock(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,

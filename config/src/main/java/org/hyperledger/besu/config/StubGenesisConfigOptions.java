@@ -44,6 +44,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
+  private OptionalLong shanghaiTime = OptionalLong.empty();
+  private OptionalLong cancunTime = OptionalLong.empty();
   private OptionalLong shandongBlockNumber = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
@@ -218,6 +220,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getShanghaiTime() {
+    return shanghaiTime;
+  }
+
+  @Override
+  public OptionalLong getCancunTime() {
+    return cancunTime;
+  }
+
+  @Override
   public OptionalLong getShandongBlockNumber() {
     return shandongBlockNumber;
   }
@@ -342,6 +354,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
+    getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
+    getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
@@ -412,7 +426,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public List<Long> getForks() {
+  public List<Long> getForkBlockNumbers() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<Long> getForkBlockTimestamps() {
     return Collections.emptyList();
   }
 
@@ -483,6 +502,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions mergeNetSplitBlock(final long blockNumber) {
     mergeNetSplitBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions shanghaiTime(final long timestamp) {
+    shanghaiTime = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  public StubGenesisConfigOptions cancunTime(final long timestamp) {
+    cancunTime = OptionalLong.of(timestamp);
     return this;
   }
 

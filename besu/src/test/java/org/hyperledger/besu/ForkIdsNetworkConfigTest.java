@@ -26,10 +26,10 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -47,7 +47,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Enclosed.class)
-public class ForkIdsTest {
+public class ForkIdsNetworkConfigTest {
 
   public static class NotParameterized {
     @Test
@@ -192,19 +192,23 @@ public class ForkIdsTest {
           MainnetProtocolSchedule.fromConfig(configOptions, EvmConfiguration.DEFAULT);
       final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
       final Blockchain mockBlockchain = mock(Blockchain.class);
+      final BlockHeader mockBlockHeader = mock(BlockHeader.class);
 
       when(mockBlockchain.getGenesisBlock()).thenReturn(genesisState.getBlock());
 
       final AtomicLong blockNumber = new AtomicLong();
-      when(mockBlockchain.getChainHeadBlockNumber()).thenAnswer(o -> blockNumber.get());
+      when(mockBlockchain.getChainHeadHeader()).thenReturn(mockBlockHeader);
+      when(mockBlockHeader.getNumber()).thenAnswer(o -> blockNumber.get());
 
       final ForkIdManager forkIdManager =
-          new ForkIdManager(mockBlockchain, genesisConfigFile.getForks(), false);
+          new ForkIdManager(
+              mockBlockchain,
+              genesisConfigFile.getForkBlockNumbers(),
+              genesisConfigFile.getForkTimestamps(),
+              false);
 
       final var actualForkIds =
-          Streams.concat(
-                  ((MutableProtocolSchedule) schedule).streamMilestoneBlocks(),
-                  Stream.of(Long.MAX_VALUE))
+          Streams.concat(schedule.streamMilestoneBlocks(), Stream.of(Long.MAX_VALUE))
               .map(
                   block -> {
                     blockNumber.set(block);

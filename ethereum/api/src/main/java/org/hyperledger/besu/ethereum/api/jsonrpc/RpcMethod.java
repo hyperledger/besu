@@ -47,6 +47,7 @@ public enum RpcMethod {
   DEBUG_GET_BAD_BLOCKS("debug_getBadBlocks"),
 
   ENGINE_GET_PAYLOAD("engine_getPayloadV1"),
+  ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
   ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
   ENGINE_NEW_PAYLOAD("engine_newPayloadV1"),
   ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdatedV1"),

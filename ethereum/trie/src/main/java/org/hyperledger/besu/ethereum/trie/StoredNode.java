@@ -36,7 +36,9 @@ class StoredNode<V> implements Node<V> {
     this.hash = hash;
   }
 
-  /** @return True if the node needs to be persisted. */
+  /**
+   * @return True if the node needs to be persisted.
+   */
   @Override
   public boolean isDirty() {
     return false;

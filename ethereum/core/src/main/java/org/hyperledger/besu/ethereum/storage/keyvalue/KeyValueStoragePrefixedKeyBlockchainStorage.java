@@ -204,8 +204,28 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     @Override
+    public void removeBlockHeader(final Hash blockHash) {
+      remove(BLOCK_HEADER_PREFIX, blockHash);
+    }
+
+    @Override
+    public void removeBlockBody(final Hash blockHash) {
+      remove(BLOCK_BODY_PREFIX, blockHash);
+    }
+
+    @Override
+    public void removeTransactionReceipts(final Hash blockHash) {
+      remove(TRANSACTION_RECEIPTS_PREFIX, blockHash);
+    }
+
+    @Override
     public void removeTransactionLocation(final Hash transactionHash) {
       remove(TRANSACTION_LOCATION_PREFIX, transactionHash);
+    }
+
+    @Override
+    public void removeTotalDifficulty(final Hash blockHash) {
+      remove(TOTAL_DIFFICULTY_PREFIX, blockHash);
     }
 
     @Override

@@ -279,6 +279,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getShanghaiTime() {
+    return getOptionalLong("shanghaitime");
+  }
+
+  @Override
+  public OptionalLong getCancunTime() {
+    return getOptionalLong("cancuntime");
+  }
+
+  @Override
   public OptionalLong getShandongBlockNumber() {
     return getOptionalLong("shandongblock");
   }
@@ -433,6 +443,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
+    getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
+    getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
@@ -540,7 +552,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public List<Long> getForks() {
+  public List<Long> getForkBlockNumbers() {
     Stream<OptionalLong> forkBlockNumbers =
         Stream.of(
             getHomesteadBlockNumber(),
@@ -572,6 +584,19 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers
+        .filter(OptionalLong::isPresent)
+        .map(OptionalLong::getAsLong)
+        .distinct()
+        .sorted()
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<Long> getForkBlockTimestamps() {
+    Stream<OptionalLong> forkBlockTimestamps = Stream.of(getShanghaiTime(), getCancunTime());
+    // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
+
+    return forkBlockTimestamps
         .filter(OptionalLong::isPresent)
         .map(OptionalLong::getAsLong)
         .distinct()

@@ -155,6 +155,7 @@ dependencyManagement {
 
     dependencySet(group: 'org.hyperledger.besu', version: '0.7.1') {
       entry 'arithmetic'
+      entry 'ipa-multipoint'
       entry 'bls12-381'
       entry 'secp256k1'
       entry 'secp256r1'

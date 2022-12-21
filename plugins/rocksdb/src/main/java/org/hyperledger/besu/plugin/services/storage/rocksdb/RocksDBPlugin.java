@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,12 +38,17 @@ public class RocksDBPlugin implements BesuPlugin {
   private static final String NAME = "rocksdb";
 
   private final RocksDBCLIOptions options;
+  private final List<SegmentIdentifier> ignorableSegments = new ArrayList<>();
   private BesuContext context;
   private RocksDBKeyValueStorageFactory factory;
   private RocksDBKeyValuePrivacyStorageFactory privacyFactory;
 
   public RocksDBPlugin() {
     this.options = RocksDBCLIOptions.create();
+  }
+
+  public void addIgnorableSegmentIdentifier(final SegmentIdentifier ignorable) {
+    ignorableSegments.add(ignorable);
   }
 
   @Override
@@ -106,7 +112,10 @@ public class RocksDBPlugin implements BesuPlugin {
         Suppliers.memoize(options::toDomainObject);
     factory =
         new RocksDBKeyValueStorageFactory(
-            configuration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+            configuration,
+            segments,
+            ignorableSegments,
+            RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     privacyFactory = new RocksDBKeyValuePrivacyStorageFactory(factory);
 
     service.registerKeyValueStorage(factory);

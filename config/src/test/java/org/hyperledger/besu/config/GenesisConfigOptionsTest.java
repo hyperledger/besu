@@ -198,6 +198,18 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetShanghaiTime() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("shanghaiTime", 1670470141));
+    assertThat(config.getShanghaiTime()).hasValue(1670470141);
+  }
+
+  @Test
+  public void shouldGetCancunTime() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("cancunTime", 1670470142));
+    assertThat(config.getCancunTime()).hasValue(1670470142);
+  }
+
+  @Test
   public void shouldGetShandongBlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("shandongBlock", 1337));
     assertThat(config.getShandongBlockNumber()).hasValue(1337);
