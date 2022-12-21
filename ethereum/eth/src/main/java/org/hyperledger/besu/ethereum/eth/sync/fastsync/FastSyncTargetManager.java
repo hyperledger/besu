@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER;
+import static org.hyperledger.besu.ethereum.util.LogUtil.throttledLog;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -32,8 +33,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -49,10 +48,10 @@ public class FastSyncTargetManager extends SyncTargetManager {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final FastSyncState fastSyncState;
-  private final AtomicBoolean shouldLogDebug = new AtomicBoolean(true);
-  private final AtomicBoolean shouldLogInfo = new AtomicBoolean(true);
-  private final int logDebugRepeatDelay = 15000;
-  private final int logInfoRepeatDelay = 120000;
+  private final AtomicBoolean logDebug = new AtomicBoolean(true);
+  private final AtomicBoolean logInfo = new AtomicBoolean(true);
+  private final int logDebugRepeatDelay = 15;
+  private final int logInfoRepeatDelay = 120;
 
   public FastSyncTargetManager(
       final SynchronizerConfiguration config,
@@ -77,20 +76,20 @@ public class FastSyncTargetManager extends SyncTargetManager {
     final EthPeers ethPeers = ethContext.getEthPeers();
     final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeerWithHeightEstimate();
     if (maybeBestPeer.isEmpty()) {
-      if (shouldLogDebug.compareAndSet(true, false)) {
-        LOG.debug(
-                "Unable to find sync target. Currently checking {} peers for usefulness. Pivot block: {}",
-                ethContext.getEthPeers().peerCount(),
-                pivotBlockHeader.getNumber());
-        startLogDelay(shouldLogDebug, logDebugRepeatDelay);
-      }
-
-      if (shouldLogInfo.compareAndSet(true, false)) {
-        LOG.info(
-                "Unable to find sync target. Currently checking {} peers for usefulness.",
-                ethContext.getEthPeers().peerCount());
-        startLogDelay(shouldLogInfo, logInfoRepeatDelay);
-      }
+      throttledLog(
+          LOG::debug,
+          String.format(
+              "Unable to find sync target. Currently checking %d peers for usefulness. Pivot block: %d",
+              ethContext.getEthPeers().peerCount(), pivotBlockHeader.getNumber()),
+          logDebug,
+          logDebugRepeatDelay);
+      throttledLog(
+          LOG::info,
+          String.format(
+              "Unable to find sync target. Currently checking %d peers for usefulness.",
+              ethContext.getEthPeers().peerCount()),
+          logInfo,
+          logInfoRepeatDelay);
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
@@ -171,17 +170,5 @@ public class FastSyncTargetManager extends SyncTargetManager {
     return !protocolContext.getBlockchain().getChainHeadHash().equals(pivotBlockHeader.getHash())
         || !worldStateStorage.isWorldStateAvailable(
             pivotBlockHeader.getStateRoot(), pivotBlockHeader.getBlockHash());
-  }
-
-  private void startLogDelay(final AtomicBoolean shouldLog, final int logRepeatDelay) {
-    new Timer()
-        .schedule(
-            new TimerTask() {
-              @Override
-              public void run() {
-                shouldLog.set(true);
-              }
-            },
-            logRepeatDelay);
   }
 }
