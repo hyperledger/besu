@@ -32,7 +32,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
-public class RelativeJumpOperationTest {
+class RelativeJumpOperationTest {
 
   @ParameterizedTest
   @ValueSource(ints = {1, 0, 9, -4, -5})
@@ -43,7 +43,7 @@ public class RelativeJumpOperationTest {
     final int rjumpOperationIndex = 3;
     final Bytes code = Bytes.fromHexString("00".repeat(3) + "5c" + twosComplementJump);
 
-    when(messageFrame.getCode().getCodeBytes()).thenReturn(code);
+    when(messageFrame.getCode().getCodeBytes(messageFrame.getSection())).thenReturn(code);
     when(messageFrame.getRemainingGas()).thenReturn(3L);
     when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
 
@@ -61,7 +61,7 @@ public class RelativeJumpOperationTest {
     final int rjumpOperationIndex = 3;
     final Bytes code = Bytes.fromHexString("00".repeat(rjumpOperationIndex) + "5d0004");
 
-    when(messageFrame.getCode().getCodeBytes()).thenReturn(code);
+    when(messageFrame.getCode().getCodeBytes(messageFrame.getSection())).thenReturn(code);
     when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
     when(messageFrame.getRemainingGas()).thenReturn(5L);
     when(messageFrame.popStackItem()).thenReturn(Bytes.EMPTY);
@@ -84,7 +84,7 @@ public class RelativeJumpOperationTest {
             "00".repeat(rjumpOperationIndex)
                 + String.format("5e%02x%04x", jumpVectorSize, jumpLength));
 
-    when(messageFrame.getCode().getCodeBytes()).thenReturn(code);
+    when(messageFrame.getCode().getCodeBytes(messageFrame.getSection())).thenReturn(code);
     when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
     when(messageFrame.getRemainingGas()).thenReturn(5L);
     when(messageFrame.popStackItem()).thenReturn(Bytes.of(jumpVectorSize));
