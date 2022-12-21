@@ -108,7 +108,7 @@ public class PrivacyTest {
             .setFlexiblePrivacyGroupsEnabled(flexibleEnabled)
             .build();
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FAST)
+        .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FULL)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
