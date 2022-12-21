@@ -284,7 +284,7 @@ public class PostMergeContext implements MergeContext {
     return isChainPruningEnabled;
   }
 
-  public PostMergeContext setIsCheckpointPostMergeSync(final boolean isCheckpointPostMergeSync) {
+  public PostMergeContext setCheckpointPostMergeSync(final boolean isCheckpointPostMergeSync) {
     this.isCheckpointPostMergeSync = isCheckpointPostMergeSync;
     return this;
   }
