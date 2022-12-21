@@ -268,7 +268,7 @@ public class ForkIdTest {
           // Withdrawals test cases
           {
             "Mainnet Withdrawals // First Merge Start block",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             18000000L,
             0L,
             ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
@@ -277,7 +277,7 @@ public class ForkIdTest {
           },
           {
             "Mainnet Withdrawals // Last Merge Start block",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             0L,
             ForkIdTestUtil.wantForkId("0x4fb8a872", 1668000000L),
@@ -286,7 +286,7 @@ public class ForkIdTest {
           },
           {
             "Mainnet Withdrawals // First Shanghai block",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000000L,
             ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
@@ -295,7 +295,7 @@ public class ForkIdTest {
           },
           {
             "Mainnet Withdrawals // Last Shanghai block",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20100000L,
             2669000000L,
             ForkIdTestUtil.wantForkId("0xc1fdf181", 0L),
@@ -792,7 +792,7 @@ public class ForkIdTest {
           // Timestamp based peer check cases adapted from EIP-6122 test cases
           {
             "withdrawalsCheck1ShanghaiWithRemoteAnnouncingTheSame",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000001L,
             empty(),
@@ -801,7 +801,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck2ShanghaiWithRemoteAnnouncingSameAndNextFork",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000001L,
             empty(),
@@ -810,7 +810,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck3ByzantiumWithRemoteAnnouncingByzantiumNotAwareOfPetersburg",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             7279999L,
             1667999999L,
             empty(),
@@ -819,7 +819,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck4ByzantiumWithRemoteAnnouncingByzantiumAwareOfPetersburg",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             7279999L,
             1667999999L,
             empty(),
@@ -828,7 +828,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck5ByzantiumWithRemoteAnnouncingByzantiumAwareOfUnknownFork",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             7279999L,
             1667999999L,
             empty(),
@@ -837,7 +837,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck6ExactlyShanghaiWithRemoteAnnouncingByzantiumAwareOfPetersburgRemoteOutOfSync",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000000L,
             empty(),
@@ -846,7 +846,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck7ShanghaiWithRemoteAnnouncingByzantiumAwareOfPetersburgRemoteOutOfSync",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000001L,
             empty(),
@@ -855,7 +855,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck8ShanghaiWithRemoteAnnouncingSpuriousAwareOfByzantium",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000001L,
             empty(),
@@ -864,7 +864,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck9ByzantiumWithRemoteAnnouncingPetersburgLocalOutOfSync",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             7279999L,
             1667999999L,
             empty(),
@@ -873,7 +873,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck10SpuriousWithRemoteAnnouncingByzantiumNotAwareOfPetersburgLocalOutOfSync",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             4369999L,
             1667999999L,
             empty(),
@@ -882,7 +882,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck11ShanghaiWithRemoteAnnouncingByzantiumUnawareOfAdditionalForksRemoteNeedsUpdate",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000001L,
             empty(),
@@ -891,7 +891,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck12ShanghaiAndNotAwareOfAdditionalForksWithRemoteAnnouncingPetersburgAndUnknownFork",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000001L,
             empty(),
@@ -900,7 +900,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck13ShanghaiWithRemoteAnnouncingRinkebyPetersburg",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             20000000L,
             1668000001L,
             empty(),
@@ -909,7 +909,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck14ShanghaiWithRemoteAnnouncingUnknownFork",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             88888888L,
             1668000001L,
             empty(),
@@ -918,7 +918,7 @@ public class ForkIdTest {
           },
           {
             "withdrawalsCheck15ShanghaiWithRemoteInByzantiumAnnouncingUnknownFork",
-            Network.WITHDRAWALS,
+            Network.MAINNET_WITH_SHANGHAI,
             88888888L,
             1668000001L,
             empty(),
