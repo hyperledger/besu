@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -84,7 +85,7 @@ public class EthGetFilterChangesIntegrationTest {
   private TransactionPool transactionPool;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  private BaseFeePendingTransactionsSorter transactions;
+  private PendingTransactionsSorter transactions;
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();

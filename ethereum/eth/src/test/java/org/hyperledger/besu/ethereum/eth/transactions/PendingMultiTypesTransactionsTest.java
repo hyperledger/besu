@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -23,11 +23,13 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
@@ -36,6 +38,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -60,15 +63,27 @@ public class PendingMultiTypesTransactionsTest {
   private final BlockHeader blockHeader = mock(BlockHeader.class);
 
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
-  private final BaseFeePendingTransactionsSorter transactions =
-      new BaseFeePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder()
-              .txPoolMaxSize(MAX_TRANSACTIONS)
-              .txPoolLimitByAccountPercentage(MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE)
-              .build(),
+  private final TransactionPoolConfiguration transactionPoolConfiguration =
+      ImmutableTransactionPoolConfiguration.builder()
+          .txPoolMaxSize(MAX_TRANSACTIONS)
+          .txPoolLimitByAccountPercentage(MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE)
+          .build();
+
+  protected final TransactionPoolReplacementHandler transactionReplacementHandler =
+      new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
+
+  protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+      transactionReplacementTester =
+          (t1, t2) -> transactionReplacementHandler.shouldReplace(t1, t2, getBlockHeader());
+
+  private final BaseFeePrioritizedTransactions transactions =
+      new BaseFeePrioritizedTransactions(
+          transactionPoolConfiguration,
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          () -> mockBlockHeader(Wei.of(7L)));
+          () -> mockBlockHeader(Wei.of(7L)),
+          transactionReplacementTester,
+          FeeMarket.london(0L));
 
   @Test
   public void shouldReturnExclusivelyLocal1559TransactionsWhenAppropriate() {
@@ -101,7 +116,10 @@ public class PendingMultiTypesTransactionsTest {
     transactions.addLocalTransaction(localTransaction3, Optional.empty());
     transactions.addLocalTransaction(localTransaction4, Optional.empty());
 
-    transactions.updateBaseFee(Wei.of(300L));
+    final Block newBlock = mock(Block.class);
+    final BlockHeader newBlockHeader = mockBlockHeader(Wei.of(300L));
+    when(newBlock.getHeader()).thenReturn(newBlockHeader);
+    transactions.manageBlockAdded(newBlock, List.of(), FeeMarket.london(0));
 
     transactions.addLocalTransaction(localTransaction5, Optional.empty());
     assertThat(transactions.size()).isEqualTo(5);
@@ -185,15 +203,15 @@ public class PendingMultiTypesTransactionsTest {
 
   @Test
   public void shouldChangePriorityWhenBaseFeeIncrease() {
-    final Transaction localTransaction0 = create1559Transaction(1, 200, 18, KEYS1);
-    final Transaction localTransaction1 = create1559Transaction(1, 100, 20, KEYS2);
-    final Transaction localTransaction2 = create1559Transaction(2, 100, 19, KEYS2);
+    final Transaction localTransaction0 = create1559Transaction(0, 200, 18, KEYS1);
+    final Transaction localTransaction1 = create1559Transaction(0, 100, 20, KEYS2);
+    final Transaction localTransaction2 = create1559Transaction(1, 100, 19, KEYS2);
 
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
     transactions.addLocalTransaction(localTransaction1, Optional.empty());
     transactions.addLocalTransaction(localTransaction2, Optional.empty());
 
-    final List<Transaction> iterationOrder = new ArrayList<>();
+    final List<Transaction> iterationOrder = new ArrayList<>(3);
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
@@ -203,7 +221,10 @@ public class PendingMultiTypesTransactionsTest {
     assertThat(iterationOrder)
         .containsExactly(localTransaction1, localTransaction2, localTransaction0);
 
-    transactions.updateBaseFee(Wei.of(110L));
+    final Block newBlock = mock(Block.class);
+    final BlockHeader newBlockHeader = mockBlockHeader(Wei.of(100L));
+    when(newBlock.getHeader()).thenReturn(newBlockHeader);
+    transactions.manageBlockAdded(newBlock, List.of(), FeeMarket.london(0));
 
     final List<Transaction> iterationOrderAfterBaseIncreased = new ArrayList<>();
     transactions.selectTransactions(
@@ -218,11 +239,14 @@ public class PendingMultiTypesTransactionsTest {
 
   @Test
   public void shouldChangePriorityWhenBaseFeeDecrease() {
-    final Transaction localTransaction0 = create1559Transaction(1, 200, 18, KEYS1);
-    final Transaction localTransaction1 = create1559Transaction(1, 100, 20, KEYS2);
-    final Transaction localTransaction2 = create1559Transaction(2, 100, 19, KEYS2);
+    final Transaction localTransaction0 = create1559Transaction(0, 200, 18, KEYS1);
+    final Transaction localTransaction1 = create1559Transaction(0, 100, 20, KEYS2);
+    final Transaction localTransaction2 = create1559Transaction(1, 100, 19, KEYS2);
 
-    transactions.updateBaseFee(Wei.of(110L));
+    final Block newBlock1 = mock(Block.class);
+    final BlockHeader newBlockHeader1 = mockBlockHeader(Wei.of(110L));
+    when(newBlock1.getHeader()).thenReturn(newBlockHeader1);
+    transactions.manageBlockAdded(newBlock1, List.of(), FeeMarket.london(0));
 
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
     transactions.addLocalTransaction(localTransaction1, Optional.empty());
@@ -238,7 +262,10 @@ public class PendingMultiTypesTransactionsTest {
     assertThat(iterationOrder)
         .containsExactly(localTransaction0, localTransaction1, localTransaction2);
 
-    transactions.updateBaseFee(Wei.of(50L));
+    final Block newBlock2 = mock(Block.class);
+    final BlockHeader newBlockHeader2 = mockBlockHeader(Wei.of(50L));
+    when(newBlock2.getHeader()).thenReturn(newBlockHeader2);
+    transactions.manageBlockAdded(newBlock2, List.of(), FeeMarket.london(0));
 
     final List<Transaction> iterationOrderAfterBaseIncreased = new ArrayList<>();
     transactions.selectTransactions(
@@ -253,17 +280,17 @@ public class PendingMultiTypesTransactionsTest {
 
   @Test
   public void shouldCorrectlyPrioritizeMultipleTransactionTypesBasedOnNonce() {
-    final Transaction localTransaction0 = create1559Transaction(1, 200, 18, KEYS1);
-    final Transaction localTransaction1 = create1559Transaction(1, 100, 20, KEYS2);
-    final Transaction localTransaction2 = create1559Transaction(2, 100, 19, KEYS2);
-    final Transaction localTransaction3 = createLegacyTransaction(0, 20, KEYS1);
+    final Transaction localTransaction0 = create1559Transaction(0, 200, 18, KEYS1);
+    final Transaction localTransaction1 = create1559Transaction(0, 100, 20, KEYS2);
+    final Transaction localTransaction2 = create1559Transaction(1, 100, 19, KEYS2);
+    final Transaction localTransaction3 = createLegacyTransaction(1, 20, KEYS1);
 
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
     transactions.addLocalTransaction(localTransaction1, Optional.empty());
     transactions.addLocalTransaction(localTransaction2, Optional.empty());
     transactions.addLocalTransaction(localTransaction3, Optional.empty());
 
-    final List<Transaction> iterationOrder = new ArrayList<>();
+    final List<Transaction> iterationOrder = new ArrayList<>(4);
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
@@ -272,7 +299,7 @@ public class PendingMultiTypesTransactionsTest {
 
     assertThat(iterationOrder)
         .containsExactly(
-            localTransaction1, localTransaction2, localTransaction3, localTransaction0);
+            localTransaction1, localTransaction2, localTransaction0, localTransaction3);
   }
 
   @Test
@@ -377,6 +404,10 @@ public class PendingMultiTypesTransactionsTest {
 
   private BlockHeader mockBlockHeader(final Wei baseFee) {
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(baseFee));
+    return blockHeader;
+  }
+
+  private BlockHeader getBlockHeader() {
     return blockHeader;
   }
 }

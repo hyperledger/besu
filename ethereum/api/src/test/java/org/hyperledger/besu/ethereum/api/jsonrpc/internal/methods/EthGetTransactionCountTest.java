@@ -27,9 +27,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,15 +50,14 @@ class EthGetTransactionCountTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {mock(GasPricePendingTransactionsSorter.class)},
-          {mock(BaseFeePendingTransactionsSorter.class)}
+          {mock(GasPricePrioritizedTransactions.class)},
+          {mock(BaseFeePrioritizedTransactions.class)}
         });
   }
 
   @ParameterizedTest
   @MethodSource("data")
-  void shouldUsePendingTransactionsWhenToldTo(
-      final AbstractPendingTransactionsSorter pendingTransactions) {
+  void shouldUsePendingTransactionsWhenToldTo(final PendingTransactionsSorter pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -75,7 +74,7 @@ class EthGetTransactionCountTest {
   @ParameterizedTest
   @MethodSource("data")
   void shouldUseLatestTransactionsWhenNoPendingTransactions(
-      final AbstractPendingTransactionsSorter pendingTransactions) {
+      final PendingTransactionsSorter pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -92,7 +91,7 @@ class EthGetTransactionCountTest {
   @ParameterizedTest
   @MethodSource("data")
   void shouldUseLatestWhenItIsBiggerThanPending(
-      final AbstractPendingTransactionsSorter pendingTransactions) {
+      final PendingTransactionsSorter pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -109,8 +108,7 @@ class EthGetTransactionCountTest {
 
   @ParameterizedTest
   @MethodSource("data")
-  void shouldReturnPendingWithHighNonce(
-      final AbstractPendingTransactionsSorter pendingTransactions) {
+  void shouldReturnPendingWithHighNonce(final PendingTransactionsSorter pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -127,8 +125,7 @@ class EthGetTransactionCountTest {
 
   @ParameterizedTest
   @MethodSource("data")
-  void shouldReturnLatestWithHighNonce(
-      final AbstractPendingTransactionsSorter pendingTransactions) {
+  void shouldReturnLatestWithHighNonce(final PendingTransactionsSorter pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -143,7 +140,7 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0xfffffffffffffffe");
   }
 
-  private void setup(final AbstractPendingTransactionsSorter pendingTransactions) {
+  private void setup(final PendingTransactionsSorter pendingTransactions) {
     ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, pendingTransactions);
   }
 

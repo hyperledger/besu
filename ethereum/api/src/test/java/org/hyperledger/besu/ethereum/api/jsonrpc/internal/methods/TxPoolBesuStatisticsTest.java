@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsStatisticsResult;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
 
 import com.google.common.collect.Sets;
 import org.junit.Before;
@@ -35,7 +35,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TxPoolBesuStatisticsTest {
 
-  @Mock private GasPricePendingTransactionsSorter pendingTransactions;
+  @Mock private GasPricePrioritizedTransactions pendingTransactions;
   private TxPoolBesuStatistics method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuStatistics";
@@ -61,7 +61,7 @@ public class TxPoolBesuStatisticsTest {
     final PendingTransaction secondLocal = createTransactionInfo(true);
     final PendingTransaction remote = createTransactionInfo(false);
     when(pendingTransactions.maxSize()).thenReturn(123L);
-    when(pendingTransactions.getPendingTransactions())
+    when(pendingTransactions.getPrioritizedPendingTransactions())
         .thenReturn(Sets.newHashSet(local, secondLocal, remote));
 
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);

@@ -20,9 +20,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,14 +41,14 @@ public class LatestNonceProviderTest {
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private LatestNonceProvider nonceProvider;
 
-  @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
+  @Parameterized.Parameter public PendingTransactionsSorter pendingTransactions;
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {mock(GasPricePendingTransactionsSorter.class)},
-          {mock(BaseFeePendingTransactionsSorter.class)}
+          {mock(GasPricePrioritizedTransactions.class)},
+          {mock(BaseFeePrioritizedTransactions.class)}
         });
   }
 

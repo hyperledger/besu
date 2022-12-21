@@ -93,6 +93,7 @@ downloadLicenses {
       'BSD-2-Clause',
       'BSD licence',
       'The BSD License',
+      'HSQLDB License, a BSD open source license',
     ],
     (bsd3Clause) : [
       '3-Clause BSD License',
@@ -169,7 +170,8 @@ downloadLicenses {
 
     // jnr-posix is released under a tri EPL v2.0/GPL/LGPL license
     'com.github.jnr:jnr-posix:3.1.15' : epl2,
-
+    // h2 db is released under a bi EPL v1.0/MPL v.20 license
+    'com.h2database:h2:2.1.214' : epl1,
     // io.netty:netty-tcnative-boringssl-static license markings are not machine readable.
     // io.netty:netty-tcnative-classes license markings are not machine readable.
     // Explicitly state Apache 2 License for license scanning.

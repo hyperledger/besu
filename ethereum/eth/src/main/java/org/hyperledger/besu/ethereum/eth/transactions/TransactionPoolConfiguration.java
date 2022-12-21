@@ -32,6 +32,7 @@ public interface TransactionPoolConfiguration {
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
+  long DEFAULT_PENDING_TRANSACTIONS_CACHE_SIZE_BYTES = 100_000_000L;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -78,5 +79,10 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Boolean getStrictTransactionReplayProtectionEnabled() {
     return DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED;
+  }
+
+  @Value.Default
+  default long getPendingTransactionsCacheSizeBytes() {
+    return DEFAULT_PENDING_TRANSACTIONS_CACHE_SIZE_BYTES;
   }
 }

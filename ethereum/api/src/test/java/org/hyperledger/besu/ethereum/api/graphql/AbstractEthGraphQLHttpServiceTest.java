@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -140,19 +140,18 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             transactionPoolMock.addLocalTransaction(
                 ArgumentMatchers.argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
-    final GasPricePendingTransactionsSorter pendingTransactionsMock =
-        Mockito.mock(GasPricePendingTransactionsSorter.class);
+    final GasPricePrioritizedTransactions pendingTransactionsMock =
+        Mockito.mock(GasPricePrioritizedTransactions.class);
     Mockito.when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
-    Mockito.when(pendingTransactionsMock.getPendingTransactions())
+    Mockito.when(pendingTransactionsMock.getPrioritizedPendingTransactions())
         .thenReturn(
             Collections.singleton(
-                new PendingTransaction(
+                new PendingTransaction.Local(
                     Transaction.builder()
                         .type(TransactionType.FRONTIER)
                         .nonce(42)
                         .gasLimit(654321)
                         .build(),
-                    true,
                     Instant.ofEpochSecond(Integer.MAX_VALUE))));
 
     final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();

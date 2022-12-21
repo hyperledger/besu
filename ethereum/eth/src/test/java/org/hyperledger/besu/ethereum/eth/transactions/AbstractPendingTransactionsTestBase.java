@@ -15,12 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult.COMPLETE_OPERATION;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult.CONTINUE;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult.CONTINUE;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -38,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -310,7 +310,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return COMPLETE_OPERATION;
+          return PendingTransactionsSorter.TransactionSelectionResult.COMPLETE_OPERATION;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(1);

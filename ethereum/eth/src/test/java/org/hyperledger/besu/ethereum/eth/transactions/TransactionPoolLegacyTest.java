@@ -32,8 +32,10 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.cache.InMemoryPostponedTransactionsCache;
+import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -44,6 +46,7 @@ import java.math.BigInteger;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,35 +57,35 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
 
   @Override
-  protected AbstractPendingTransactionsSorter createPendingTransactionsSorter() {
+  protected PendingTransactionsSorter createPendingTransactionsSorter(
+      final TransactionPoolConfiguration poolConfig,
+      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+          transactionReplacementTester) {
 
-    return new GasPricePendingTransactionsSorter(
-        ImmutableTransactionPoolConfiguration.builder()
-            .txPoolMaxSize(MAX_TRANSACTIONS)
-            .txPoolLimitByAccountPercentage(1)
-            .build(),
+    return new GasPricePrioritizedTransactions(
+        poolConfig,
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
-        protocolContext.getBlockchain()::getChainHeadHeader);
+        transactionReplacementTester,
+        new ReadyTransactionsCache(
+            poolConfig, new InMemoryPostponedTransactionsCache(), transactionReplacementTester));
   }
 
   @Override
   protected Transaction createTransaction(
-      final int transactionNumber, final Optional<BigInteger> maybeChainId) {
-    return createBaseTransaction(transactionNumber)
-        .chainId(maybeChainId)
-        .createTransaction(KEY_PAIR1);
+      final int nonce, final Optional<BigInteger> maybeChainId) {
+    return createBaseTransaction(nonce).chainId(maybeChainId).createTransaction(KEY_PAIR1);
   }
 
   @Override
-  protected Transaction createTransaction(final int transactionNumber, final Wei maxPrice) {
-    return createBaseTransaction(transactionNumber).gasPrice(maxPrice).createTransaction(KEY_PAIR1);
+  protected Transaction createTransaction(final int nonce, final Wei maxPrice) {
+    return createBaseTransaction(nonce).gasPrice(maxPrice).createTransaction(KEY_PAIR1);
   }
 
   @Override
-  protected TransactionTestFixture createBaseTransaction(final int transactionNumber) {
+  protected TransactionTestFixture createBaseTransaction(final int nonce) {
     return new TransactionTestFixture()
-        .nonce(transactionNumber)
+        .nonce(nonce)
         .gasLimit(blockGasLimit)
         .type(TransactionType.FRONTIER);
   }
@@ -125,10 +128,10 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
       addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured_protectionNotSupportedAtCurrentBlock() {
     protocolSupportsTxReplayProtection(1337, false);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
-    final Transaction tx = createTransactionWithoutChainId(1);
+    final Transaction tx = createTransactionWithoutChainId(0);
     givenTransactionIsValid(tx);
 
-    assertLocalTransactionValid(tx);
+    addAndAssertLocalTransactionValid(tx);
   }
 
   @Test
@@ -136,30 +139,30 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
       addRemoteTransactions_strictReplayProtectionOff_txWithoutChainId_chainIdIsConfigured() {
     protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(false));
-    final Transaction tx = createTransactionWithoutChainId(1);
+    final Transaction tx = createTransactionWithoutChainId(0);
     givenTransactionIsValid(tx);
 
-    assertRemoteTransactionValid(tx);
+    addAndAssertRemoteTransactionValid(tx);
   }
 
   @Test
   public void addLocalTransaction_strictReplayProtectionOff_txWithoutChainId_chainIdIsConfigured() {
     protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(false));
-    final Transaction tx = createTransactionWithoutChainId(1);
+    final Transaction tx = createTransactionWithoutChainId(0);
     givenTransactionIsValid(tx);
 
-    assertLocalTransactionValid(tx);
+    addAndAssertLocalTransactionValid(tx);
   }
 
   @Test
   public void addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured() {
     protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
-    final Transaction tx = createTransactionWithoutChainId(1);
+    final Transaction tx = createTransactionWithoutChainId(0);
     givenTransactionIsValid(tx);
 
-    assertLocalTransactionInvalid(tx, REPLAY_PROTECTED_SIGNATURE_REQUIRED);
+    addAndAssertLocalTransactionInvalid(tx, REPLAY_PROTECTED_SIGNATURE_REQUIRED);
   }
 
   @Test
@@ -167,10 +170,10 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
       addRemoteTransactions_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured() {
     protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
-    final Transaction tx = createTransactionWithoutChainId(1);
+    final Transaction tx = createTransactionWithoutChainId(0);
     givenTransactionIsValid(tx);
 
-    assertRemoteTransactionValid(tx);
+    addAndAssertRemoteTransactionValid(tx);
   }
 
   @Test
@@ -178,10 +181,10 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
       addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsNotConfigured() {
     protocolDoesNotSupportTxReplayProtection();
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
-    final Transaction tx = createTransactionWithoutChainId(1);
+    final Transaction tx = createTransactionWithoutChainId(0);
     givenTransactionIsValid(tx);
 
-    assertLocalTransactionValid(tx);
+    addAndAssertLocalTransactionValid(tx);
   }
 
   @Test
@@ -189,10 +192,10 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
       addRemoteTransactions_strictReplayProtectionOn_txWithoutChainId_chainIdIsNotConfigured() {
     protocolDoesNotSupportTxReplayProtection();
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
-    final Transaction tx = createTransactionWithoutChainId(1);
+    final Transaction tx = createTransactionWithoutChainId(0);
     givenTransactionIsValid(tx);
 
-    assertRemoteTransactionValid(tx);
+    addAndAssertRemoteTransactionValid(tx);
   }
 
   @Test
@@ -208,7 +211,7 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
 
     givenTransactionIsValid(transaction);
 
-    assertLocalTransactionInvalid(transaction, INVALID_TRANSACTION_FORMAT);
+    addAndAssertLocalTransactionInvalid(transaction, INVALID_TRANSACTION_FORMAT);
   }
 
   @Test
@@ -239,7 +242,7 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
 
     givenTransactionIsValid(transaction);
 
-    assertLocalTransactionValid(transaction);
+    addAndAssertLocalTransactionValid(transaction);
   }
 
   @Test
@@ -250,11 +253,11 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
 
     givenTransactionIsValid(transaction);
 
-    assertLocalTransactionValid(transaction);
+    addAndAssertLocalTransactionValid(transaction);
   }
 
-  private Transaction createTransactionWithoutChainId(final int transactionNumber) {
-    return createTransaction(transactionNumber, Optional.empty());
+  private Transaction createTransactionWithoutChainId(final int nonce) {
+    return createTransaction(nonce, Optional.empty());
   }
 
   private void protocolDoesNotSupportTxReplayProtection() {

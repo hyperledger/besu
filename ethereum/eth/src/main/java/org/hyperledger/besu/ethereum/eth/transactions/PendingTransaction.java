@@ -29,20 +29,15 @@ import java.util.stream.Collectors;
  * Tracks the additional metadata associated with transactions to enable prioritization for mining
  * and deciding which transactions to drop when the transaction pool reaches its size limit.
  */
-public class PendingTransaction {
+public abstract class PendingTransaction {
 
   private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
   private final Transaction transaction;
-  private final boolean receivedFromLocalSource;
   private final Instant addedToPoolAt;
   private final long sequence; // Allows prioritization based on order transactions are added
 
-  public PendingTransaction(
-      final Transaction transaction,
-      final boolean receivedFromLocalSource,
-      final Instant addedToPoolAt) {
+  protected PendingTransaction(final Transaction transaction, final Instant addedToPoolAt) {
     this.transaction = transaction;
-    this.receivedFromLocalSource = receivedFromLocalSource;
     this.addedToPoolAt = addedToPoolAt;
     this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
   }
@@ -67,9 +62,7 @@ public class PendingTransaction {
     return transaction.getSender();
   }
 
-  public boolean isReceivedFromLocalSource() {
-    return receivedFromLocalSource;
-  }
+  public abstract boolean isReceivedFromLocalSource();
 
   public Hash getHash() {
     return transaction.getHash();
@@ -113,5 +106,29 @@ public class PendingTransaction {
         + ", "
         + transaction.toTraceLog()
         + "}";
+  }
+
+  public static class Local extends PendingTransaction {
+
+    public Local(final Transaction transaction, final Instant addedToPoolAt) {
+      super(transaction, addedToPoolAt);
+    }
+
+    @Override
+    public boolean isReceivedFromLocalSource() {
+      return true;
+    }
+  }
+
+  public static class Remote extends PendingTransaction {
+
+    public Remote(final Transaction transaction, final Instant addedToPoolAt) {
+      super(transaction, addedToPoolAt);
+    }
+
+    @Override
+    public boolean isReceivedFromLocalSource() {
+      return false;
+    }
   }
 }

@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
@@ -68,7 +68,7 @@ public class TransactionPoolFactoryTest {
   @Mock EthMessages ethMessages;
   @Mock EthScheduler ethScheduler;
 
-  @Mock GasPricePendingTransactionsSorter pendingTransactions;
+  @Mock GasPricePrioritizedTransactions pendingTransactions;
   @Mock PeerTransactionTracker peerTransactionTracker;
   @Mock TransactionsMessageSender transactionsMessageSender;
 

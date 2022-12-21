@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 public class TransactionBroadcaster implements TransactionBatchAddedListener {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionBroadcaster.class);
 
-  private final AbstractPendingTransactionsSorter pendingTransactions;
+  private final PendingTransactionsSorter pendingTransactions;
   private final PeerTransactionTracker transactionTracker;
   private final TransactionsMessageSender transactionsMessageSender;
   private final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -44,7 +44,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
 
   public TransactionBroadcaster(
       final EthContext ethContext,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
@@ -59,7 +59,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
 
   public void relayTransactionPoolTo(final EthPeer peer) {
     Set<PendingTransaction> pendingPendingTransaction =
-        pendingTransactions.getPendingTransactions();
+        pendingTransactions.getPrioritizedPendingTransactions();
     if (!pendingPendingTransaction.isEmpty()) {
       if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {
         sendTransactionHashes(toTransactionList(pendingPendingTransaction), List.of(peer));

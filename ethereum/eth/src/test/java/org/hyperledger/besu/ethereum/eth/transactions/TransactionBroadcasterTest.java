@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class TransactionBroadcasterTest {
   @Mock private EthContext ethContext;
   @Mock private EthPeers ethPeers;
   @Mock private EthScheduler ethScheduler;
-  @Mock private AbstractPendingTransactionsSorter pendingTransactions;
+  @Mock private PendingTransactionsSorter pendingTransactions;
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private TransactionsMessageSender transactionsMessageSender;
   @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -247,7 +247,7 @@ public class TransactionBroadcasterTest {
     Set<PendingTransaction> pendingTxs = createPendingTransactionList(numLocalTransactions, true);
     pendingTxs.addAll(createPendingTransactionList(numRemoteTransactions, false));
 
-    when(pendingTransactions.getPendingTransactions()).thenReturn(pendingTxs);
+    when(pendingTransactions.getPrioritizedPendingTransactions()).thenReturn(pendingTxs);
 
     return pendingTxs;
   }
@@ -255,7 +255,11 @@ public class TransactionBroadcasterTest {
   private Set<PendingTransaction> createPendingTransactionList(final int num, final boolean local) {
     return IntStream.range(0, num)
         .mapToObj(unused -> generator.transaction())
-        .map(tx -> new PendingTransaction(tx, local, Instant.now()))
+        .map(
+            tx ->
+                local
+                    ? new PendingTransaction.Local(tx, Instant.now())
+                    : new PendingTransaction.Remote(tx, Instant.now()))
         .collect(Collectors.toSet());
   }
 

@@ -40,8 +40,8 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -81,7 +81,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final Blockchain blockchain = new ReferenceTestBlockchain();
-  protected AbstractPendingTransactionsSorter pendingTransactions;
+  protected PendingTransactionsSorter pendingTransactions;
   protected MutableWorldState worldState;
   @Mock protected MainnetTransactionProcessor transactionProcessor;
   @Mock protected MainnetTransactionValidator transactionValidator;
@@ -94,7 +94,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
   }
 
-  protected abstract AbstractPendingTransactionsSorter createPendingTransactionsSorter();
+  protected abstract PendingTransactionsSorter createPendingTransactionsSorter();
 
   private Boolean isCancelled() {
     return false;

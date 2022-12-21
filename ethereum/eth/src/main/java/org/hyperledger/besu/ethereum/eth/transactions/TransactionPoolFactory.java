@@ -20,15 +20,17 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
+import java.util.function.BiFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +48,7 @@ public class TransactionPoolFactory {
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
-    final AbstractPendingTransactionsSorter pendingTransactions =
+    final PendingTransactionsSorter pendingTransactions =
         createPendingTransactionsSorter(
             protocolSchedule, protocolContext, clock, metricsSystem, transactionPoolConfiguration);
 
@@ -79,7 +81,7 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
@@ -156,30 +158,48 @@ public class TransactionPoolFactory {
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
   }
 
-  private static AbstractPendingTransactionsSorter createPendingTransactionsSorter(
+  private static PendingTransactionsSorter createPendingTransactionsSorter(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
       final MetricsSystem metricsSystem,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
-    boolean isFeeMarketImplementBaseFee =
+
+    final TransactionPoolReplacementHandler transactionReplacementHandler =
+        new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
+
+    final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
+        (t1, t2) ->
+            transactionReplacementHandler.shouldReplace(
+                t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
+
+    final boolean isFeeMarketImplementBaseFee =
         protocolSchedule
             .streamMilestoneBlocks()
             .map(protocolSchedule::getByBlockNumber)
             .map(ProtocolSpec::getFeeMarket)
             .anyMatch(FeeMarket::implementsBaseFee);
     if (isFeeMarketImplementBaseFee) {
-      return new BaseFeePendingTransactionsSorter(
+      final BaseFeeMarket baseFeeMarket =
+          protocolSchedule
+              .streamMilestoneBlocks()
+              .map(protocolSchedule::getByBlockNumber)
+              .map(ProtocolSpec::getFeeMarket)
+              .filter(FeeMarket::implementsBaseFee)
+              .map(BaseFeeMarket.class::cast)
+              .reduce((a, b) -> b)
+              .get();
+
+      return new BaseFeePrioritizedTransactions(
           transactionPoolConfiguration,
           clock,
           metricsSystem,
-          protocolContext.getBlockchain()::getChainHeadHeader);
+          protocolContext.getBlockchain()::getChainHeadHeader,
+          transactionReplacementTester,
+          baseFeeMarket);
     } else {
-      return new GasPricePendingTransactionsSorter(
-          transactionPoolConfiguration,
-          clock,
-          metricsSystem,
-          protocolContext.getBlockchain()::getChainHeadHeader);
+      return new GasPricePrioritizedTransactions(
+          transactionPoolConfiguration, clock, metricsSystem, transactionReplacementTester);
     }
   }
 }

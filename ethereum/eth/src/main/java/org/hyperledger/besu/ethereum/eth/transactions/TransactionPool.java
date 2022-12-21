@@ -16,8 +16,9 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.POSTPONED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
@@ -34,7 +35,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -52,9 +53,11 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +75,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
-  private final AbstractPendingTransactionsSorter pendingTransactions;
+  private final PendingTransactionsSorter pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBroadcaster transactionBroadcaster;
@@ -81,7 +84,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactionsSorter pendingTransactions,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
@@ -116,19 +119,19 @@ public class TransactionPool implements BlockAddedObserver {
 
     if (validationResult.result.isValid()) {
 
-      final TransactionAddedStatus transactionAddedStatus =
+      final TransactionAddedResult transactionAddedResult =
           pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
 
-      if (!transactionAddedStatus.equals(ADDED)) {
-        if (transactionAddedStatus.equals(ALREADY_KNOWN)) {
+      if (transactionAddedResult.isInvalid()) {
+        if (transactionAddedResult.equals(TransactionAddedResult.ALREADY_KNOWN)) {
           duplicateTransactionCounter.labels(LOCAL).inc();
         }
         return ValidationResult.invalid(
-            transactionAddedStatus
-                .getInvalidReason()
+            transactionAddedResult
+                .maybeInvalidReason()
                 .orElseGet(
                     () -> {
-                      LOG.warn("Missing invalid reason for status {}", transactionAddedStatus);
+                      LOG.warn("Missing invalid reason for status {}", transactionAddedResult);
                       return INTERNAL_ERROR;
                     }));
       }
@@ -150,56 +153,62 @@ public class TransactionPool implements BlockAddedObserver {
         .orElse(true);
   }
 
+  private Stream<Transaction> sortedBySenderAndNonce(final Collection<Transaction> transactions) {
+    return transactions.stream()
+        .sorted(Comparator.comparing(Transaction::getSender).thenComparing(Transaction::getNonce));
+  }
+
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
     final List<Transaction> addedTransactions = new ArrayList<>(transactions.size());
     LOG.trace("Adding {} remote transactions", transactions.size());
 
-    for (final Transaction transaction : transactions) {
+    sortedBySenderAndNonce(transactions)
+        .forEach(
+            transaction -> {
+              if (pendingTransactions.containsTransaction(transaction.getHash())) {
+                traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
+                // We already have this transaction, don't even validate it.
+                duplicateTransactionCounter.labels(REMOTE).inc();
 
-      if (pendingTransactions.containsTransaction(transaction.getHash())) {
-        traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
-        // We already have this transaction, don't even validate it.
-        duplicateTransactionCounter.labels(REMOTE).inc();
-        continue;
-      }
+              } else {
+                final ValidationResultAndAccount validationResult =
+                    validateRemoteTransaction(transaction);
 
-      final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
+                if (validationResult.result.isValid()) {
+                  final TransactionAddedResult status =
+                      pendingTransactions.addRemoteTransaction(
+                          transaction, validationResult.maybeAccount);
+                  if (status.equals(ADDED)) {
+                    traceLambda(LOG, "Added remote transaction {}", transaction::toTraceLog);
+                    addedTransactions.add(transaction);
+                  } else if (status.equals(POSTPONED)) {
+                    traceLambda(LOG, "Postponed remote transaction {}", transaction::toTraceLog);
+                    addedTransactions.add(transaction);
+                  } else if (status.equals(ALREADY_KNOWN)) {
 
-      if (validationResult.result.isValid()) {
-        final TransactionAddedStatus status =
-            pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
-        switch (status) {
-          case ADDED:
-            traceLambda(LOG, "Added remote transaction {}", transaction::toTraceLog);
-            addedTransactions.add(transaction);
-            break;
-          case ALREADY_KNOWN:
-            traceLambda(LOG, "Duplicate remote transaction {}", transaction::toTraceLog);
-            duplicateTransactionCounter.labels(REMOTE).inc();
-            break;
-          default:
-            traceLambda(LOG, "Transaction added status {}", status::name);
-        }
-      } else {
-        traceLambda(
-            LOG,
-            "Discard invalid transaction {}, reason {}",
-            transaction::toTraceLog,
-            validationResult.result::getInvalidReason);
-        pendingTransactions
-            .signalInvalidAndGetDependentTransactions(transaction)
-            .forEach(pendingTransactions::removeTransaction);
-      }
-    }
+                    traceLambda(LOG, "Duplicate remote transaction {}", transaction::toTraceLog);
+                    duplicateTransactionCounter.labels(REMOTE).inc();
+                  } else {
+                    LOG.trace("Transaction added result {}", status);
+                  }
+                } else {
+                  traceLambda(
+                      LOG,
+                      "Discard invalid transaction {}, reason {}",
+                      transaction::toTraceLog,
+                      validationResult.result::getInvalidReason);
+                }
+              }
+            });
 
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
       traceLambda(
           LOG,
-          "Added {} transactions to the pool, current pool size {}, content {}",
+          "Added {} transactions to the pool, current pool stats {}, content {}",
           addedTransactions::size,
-          pendingTransactions::size,
-          () -> pendingTransactions.toTraceLog(true, true));
+          pendingTransactions::logStats,
+          () -> pendingTransactions.toTraceLog());
     }
   }
 
@@ -222,8 +231,12 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     LOG.trace("Block added event {}", event);
-    event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
-    pendingTransactions.manageBlockAdded(event.getBlock());
+    pendingTransactions.manageBlockAdded(
+        event.getBlock(),
+        event.getAddedTransactions(),
+        protocolSchedule
+            .getByBlockNumber(event.getBlock().getHeader().getNumber() + 1)
+            .getFeeMarket());
     reAddTransactions(event.getRemovedTransactions());
   }
 
@@ -238,7 +251,7 @@ public class TransactionPool implements BlockAddedObserver {
       var reAddRemoteTxs = txsByOrigin.get(false);
       if (!reAddLocalTxs.isEmpty()) {
         LOG.trace("Re-adding {} local transactions from a block event", reAddLocalTxs.size());
-        reAddLocalTxs.forEach(this::addLocalTransaction);
+        sortedBySenderAndNonce(reAddLocalTxs).forEach(this::addLocalTransaction);
       }
       if (!reAddRemoteTxs.isEmpty()) {
         LOG.trace("Re-adding {} remote transactions from a block event", reAddRemoteTxs.size());
@@ -253,7 +266,7 @@ public class TransactionPool implements BlockAddedObserver {
         .getTransactionValidator();
   }
 
-  public AbstractPendingTransactionsSorter getPendingTransactions() {
+  public PendingTransactionsSorter getPendingTransactions() {
     return pendingTransactions;
   }
 

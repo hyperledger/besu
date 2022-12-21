@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -654,10 +653,13 @@ public class Transaction
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost() {
-    return getUpfrontGasCost(
-        Stream.concat(maxFeePerGas.stream(), gasPrice.stream())
-            .findFirst()
-            .orElseThrow(
+    return getUpfrontGasCost(getMaxGasFee());
+  }
+
+  public Wei getMaxGasFee() {
+    return maxFeePerGas.orElseGet(
+        () ->
+            gasPrice.orElseThrow(
                 () ->
                     new IllegalStateException(
                         String.format("Transaction requires either gasPrice or maxFeePerGas"))));

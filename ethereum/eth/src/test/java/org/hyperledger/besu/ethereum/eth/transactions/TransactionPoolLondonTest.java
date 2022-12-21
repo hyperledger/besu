@@ -33,8 +33,10 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.cache.InMemoryPostponedTransactionsCache;
+import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -48,9 +50,9 @@ import java.math.BigInteger;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
@@ -58,38 +60,40 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   private static final Wei BASE_FEE_FLOOR = Wei.of(7L);
 
   @Override
-  protected AbstractPendingTransactionsSorter createPendingTransactionsSorter() {
+  protected PendingTransactionsSorter createPendingTransactionsSorter(
+      final TransactionPoolConfiguration poolConfig,
+      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+          transactionReplacementTester) {
 
-    return new BaseFeePendingTransactionsSorter(
-        ImmutableTransactionPoolConfiguration.builder()
-            .txPoolMaxSize(MAX_TRANSACTIONS)
-            .txPoolLimitByAccountPercentage(1)
-            .build(),
+    return new BaseFeePrioritizedTransactions(
+        poolConfig,
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
-        protocolContext.getBlockchain()::getChainHeadHeader);
+        protocolContext.getBlockchain()::getChainHeadHeader,
+        transactionReplacementTester,
+        FeeMarket.london(0L),
+        new ReadyTransactionsCache(
+            poolConfig, new InMemoryPostponedTransactionsCache(), transactionReplacementTester));
   }
 
   @Override
   protected Transaction createTransaction(
-      final int transactionNumber, final Optional<BigInteger> maybeChainId) {
-    return createBaseTransaction(transactionNumber)
-        .chainId(maybeChainId)
-        .createTransaction(KEY_PAIR1);
+      final int nonce, final Optional<BigInteger> maybeChainId) {
+    return createBaseTransaction(nonce).chainId(maybeChainId).createTransaction(KEY_PAIR1);
   }
 
   @Override
-  protected Transaction createTransaction(final int transactionNumber, final Wei maxPrice) {
-    return createBaseTransaction(transactionNumber)
+  protected Transaction createTransaction(final int nonce, final Wei maxPrice) {
+    return createBaseTransaction(nonce)
         .maxFeePerGas(Optional.of(maxPrice))
         .maxPriorityFeePerGas(Optional.of(maxPrice.divide(5L)))
         .createTransaction(KEY_PAIR1);
   }
 
   @Override
-  protected TransactionTestFixture createBaseTransaction(final int transactionNumber) {
+  protected TransactionTestFixture createBaseTransaction(final int nonce) {
     return new TransactionTestFixture()
-        .nonce(transactionNumber)
+        .nonce(nonce)
         .gasLimit(blockGasLimit)
         .gasPrice(null)
         .maxFeePerGas(Optional.of(Wei.of(5000L)))
@@ -170,7 +174,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     final Transaction frontierTransaction = createFrontierTransaction(0, Wei.ZERO);
 
     givenTransactionIsValid(frontierTransaction);
-    assertLocalTransactionValid(frontierTransaction);
+    addAndAssertLocalTransactionValid(frontierTransaction);
   }
 
   @Test
@@ -182,7 +186,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     final Transaction transaction = createTransaction(0, Wei.ZERO);
 
     givenTransactionIsValid(transaction);
-    assertLocalTransactionValid(transaction);
+    addAndAssertLocalTransactionValid(transaction);
   }
 
   @Test
@@ -191,7 +195,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
 
     givenTransactionIsValid(frontierTransaction);
 
-    assertLocalTransactionValid(frontierTransaction);
+    addAndAssertLocalTransactionValid(frontierTransaction);
   }
 
   @Test
@@ -267,13 +271,6 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     }
 
     return transactions.size();
-  }
-
-  @Test
-  @Override
-  @Ignore
-  public void shouldRejectLocalTransactionIfFeeCapExceeded() {
-    // ignore since this is going to fail until the branch with the fix is released
   }
 
   private void whenBlockBaseFeeIs(final Wei baseFee) {

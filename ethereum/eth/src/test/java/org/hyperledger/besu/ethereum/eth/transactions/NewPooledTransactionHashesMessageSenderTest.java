@@ -33,9 +33,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.Arrays;
@@ -63,7 +63,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
 
-  @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
+  @Parameterized.Parameter public PendingTransactionsSorter pendingTransactions;
 
   private PeerTransactionTracker transactionTracker;
   private NewPooledTransactionHashesMessageSender messageSender;
@@ -72,8 +72,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {mock(GasPricePendingTransactionsSorter.class)},
-          {mock(BaseFeePendingTransactionsSorter.class)}
+          {mock(GasPricePrioritizedTransactions.class)},
+          {mock(BaseFeePrioritizedTransactions.class)}
         });
   }
 

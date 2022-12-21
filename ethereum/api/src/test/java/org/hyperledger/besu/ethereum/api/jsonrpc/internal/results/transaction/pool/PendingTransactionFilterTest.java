@@ -140,7 +140,7 @@ public class PendingTransactionFilterTest {
         when(transaction.isContractCreation()).thenReturn(true);
       }
       pendingTransactionList.add(
-          new PendingTransaction(transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)));
+          new PendingTransaction.Local(transaction, Instant.ofEpochSecond(Integer.MAX_VALUE)));
     }
     return new LinkedHashSet<>(pendingTransactionList);
   }
