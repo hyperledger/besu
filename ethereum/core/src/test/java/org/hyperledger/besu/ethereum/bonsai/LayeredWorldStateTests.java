@@ -26,7 +26,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 
 import java.nio.charset.StandardCharsets;
@@ -74,7 +73,6 @@ public class LayeredWorldStateTests {
             mockLayer);
 
     // mimic persisted state being at a different state:
-    when(archive.getMutable()).thenReturn(mock(MutableWorldState.class));
     when(archive.getMutableSnapshot(mockLayer.getBlockHash())).thenReturn(Optional.of(mockState));
 
     try (var copyOfLayer1 = mockLayerWs.copy()) {
@@ -92,21 +90,14 @@ public class LayeredWorldStateTests {
     BlockHeader testHeader = new BlockHeaderTestFixture().stateRoot(testStateRoot).buildHeader();
 
     BonsaiWorldStateKeyValueStorage testStorage =
-        when(mock(BonsaiWorldStateKeyValueStorage.class, Answers.RETURNS_DEEP_STUBS)
-                .getWorldStateRootHash())
-            .thenReturn(Optional.of(testStateRoot))
-            .getMock();
+        mock(BonsaiWorldStateKeyValueStorage.class, Answers.RETURNS_DEEP_STUBS);
 
     BonsaiSnapshotWorldState testState = mock(BonsaiSnapshotWorldState.class);
     when(testState.getWorldStateStorage()).thenReturn(testStorage);
     when(testState.rootHash()).thenReturn(testStateRoot);
     when(testState.blockHash()).thenReturn(testHeader.getBlockHash());
 
-    BonsaiWorldStateUpdater testUpdater =
-        when(spy(new BonsaiWorldStateUpdater(testState)).generateTrieLog(any(Hash.class)))
-            .thenReturn(mock(TrieLogLayer.class))
-            .getMock();
-
+    BonsaiWorldStateUpdater testUpdater = new BonsaiWorldStateUpdater(testState);
     // mock kvstorage to mimic head being in a different state than testState
     LayeredTrieLogManager manager =
         spy(
