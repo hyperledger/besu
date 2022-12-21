@@ -427,10 +427,6 @@ public class MainnetEVMs {
     registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 
-  public static EVM shanghai(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return shanghai(new LondonGasCalculator(), chainId, evmConfiguration);
-  }
-
   public static EVM shanghai(
       final GasCalculator gasCalculator,
       final BigInteger chainId,

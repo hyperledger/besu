@@ -52,7 +52,6 @@ import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShandongGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -82,7 +81,6 @@ public abstract class MainnetProtocolSpecs {
   public static final int FRONTIER_CONTRACT_SIZE_LIMIT = Integer.MAX_VALUE;
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
-  public static final int SHANGHAI_CONTRACT_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
   public static final int SHANDONG_CONTRACT_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
 
   private static final Address RIPEMD160_PRECOMPILE =
@@ -651,7 +649,6 @@ public abstract class MainnetProtocolSpecs {
 
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final BaseFeeMarket baseFeeMarket = getBaseFeeMarket(genesisConfigOptions);
-    final int contractSizeLimit = configContractSizeLimit.orElse(SHANGHAI_CONTRACT_SIZE_LIMIT);
 
     return parisDefinition(
             chainId,
@@ -661,7 +658,6 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
-        .gasCalculator(ShanghaiGasCalculator::new)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.shanghai(
@@ -681,15 +677,6 @@ public abstract class MainnetProtocolSpecs {
                     stackSizeLimit,
                     baseFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
-        .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
-                new ContractCreationProcessor(
-                    gasCalculator,
-                    evm,
-                    true,
-                    List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),
-                    1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .withdrawalsProcessorBuilder(WithdrawalsProcessor.AllowedWithdrawalsProcessor::new)
         .withdrawalsValidatorBuilder(WithdrawalsValidator.AllowedWithdrawals::new)
         .name("Shanghai");

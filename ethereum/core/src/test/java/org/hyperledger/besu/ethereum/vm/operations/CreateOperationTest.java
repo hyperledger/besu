@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.SHANDONG_CONTRACT_SIZE_LIMIT;
-import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.SHANGHAI_CONTRACT_SIZE_LIMIT;
 import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -74,7 +73,6 @@ public class CreateOperationTest {
               + "F3" // RETURN
           );
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
-  private static final int SHANGHAI_CREATE_GAS = 41240;
   private static final int SHANDONG_CREATE_GAS = 41240;
 
   @Test
@@ -178,63 +176,6 @@ public class CreateOperationTest {
     operation.execute(messageFrame, evm);
 
     assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
-  }
-
-  @Test
-  public void shanghaiMaxInitCodeSizeCreate() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SHANGHAI_CONTRACT_SIZE_LIMIT);
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
-
-    when(account.getMutable()).thenReturn(mutableAccount);
-    when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(worldUpdater.get(any())).thenReturn(account);
-    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getMutable()).thenReturn(newMutableAccount);
-    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
-    when(worldUpdater.updater()).thenReturn(worldUpdater);
-
-    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    final MessageFrame createFrame = messageFrameStack.peek();
-    final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
-    ccp.process(createFrame, OperationTracer.NO_TRACING);
-
-    final Log log = createFrame.getLogs().get(0);
-    final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
-    assertThat(calculatedTopic).isEqualTo(TOPIC);
-    assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
-  }
-
-  @Test
-  public void shanghaiMaxInitCodeSizePlus1Create() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SHANGHAI_CONTRACT_SIZE_LIMIT + 1);
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
-
-    when(account.getMutable()).thenReturn(mutableAccount);
-    when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(worldUpdater.get(any())).thenReturn(account);
-    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getMutable()).thenReturn(newMutableAccount);
-    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
-    when(worldUpdater.updater()).thenReturn(worldUpdater);
-
-    final EVM evm = MainnetEVMs.shandong(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
-    assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
   }
 
   @Test
