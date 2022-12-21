@@ -35,9 +35,9 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
+public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromFinalizedBlock.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromSafeBlock.class);
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
@@ -48,7 +48,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
 
   private volatile Optional<BlockHeader> maybeCachedHeadBlockHeader = Optional.empty();
 
-  public PivotSelectorFromFinalizedBlock(
+  public PivotSelectorFromSafeBlock(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
@@ -68,9 +68,8 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   @Override
   public Optional<FastSyncState> selectNewPivotBlock() {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
-    if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidFinalizedBlockHash()) {
-      return Optional.of(
-          selectLastFinalizedBlockAsPivot(maybeForkchoice.get().getFinalizedBlockHash()));
+    if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidSafeBlockHash()) {
+      return Optional.of(selectLastSafeBlockAsPivot(maybeForkchoice.get().getSafeBlockHash()));
     }
     LOG.debug("No finalized block hash announced yet");
     return Optional.empty();
@@ -82,9 +81,9 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
     return CompletableFuture.completedFuture(null);
   }
 
-  private FastSyncState selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
-    LOG.debug("Returning finalized block hash {} as pivot", finalizedHash);
-    return new FastSyncState(finalizedHash);
+  private FastSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
+    LOG.debug("Returning safe block hash {} as pivot", safeHash);
+    return new FastSyncState(safeHash);
   }
 
   @Override

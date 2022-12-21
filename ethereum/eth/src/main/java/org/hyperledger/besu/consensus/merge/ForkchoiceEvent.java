@@ -33,6 +33,10 @@ public class ForkchoiceEvent {
     return !finalizedBlockHash.equals(Hash.ZERO);
   }
 
+  public boolean hasValidSafeBlockHash() {
+    return !safeBlockHash.equals(Hash.ZERO);
+  }
+
   public Hash getHeadBlockHash() {
     return headBlockHash;
   }
