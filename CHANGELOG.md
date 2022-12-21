@@ -402,7 +402,7 @@ The final form of the Ethereum Panda will appear when the first finalized block 
 - Add support for Gray Glacier hardfork [#3961](https://github.com/hyperledger/besu/issues/3961)
 
 ### Bug Fixes
-- alias engine-rpc-port parameter with the former rpc param name [#3958](https://github.com/hyperledger/besu/pull/3958)
+- alias engine-rpc-port parameter with the former RPC param name [#3958](https://github.com/hyperledger/besu/pull/3958)
 
 ## 22.4.2
 
