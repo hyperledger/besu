@@ -18,10 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -29,8 +26,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -40,88 +35,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class TrieGenerator {
-
-  public static void main(final String[] args) {
-
-    List<Hash> accounts =
-        List.of(
-            Hash.fromHexString(
-                "0x0d174f45fb00f7905ce254c0ef491691c955a15fdf10c5665b4493a591627fbe"),
-            Hash.fromHexString(
-                "0x10204f45fb00f7905ce254c0ef491691c955a15fdf10c5665b4493a591627fbe"));
-
-    final WorldStateStorage recreatedWorldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
-
-    MerklePatriciaTrie<Bytes, Bytes> trie = generateTrie(recreatedWorldStateStorage, accounts);
-
-    final StoredMerklePatriciaTrie<Bytes, Bytes> tri2 =
-        new StoredMerklePatriciaTrie<>(
-            (location, key) -> recreatedWorldStateStorage.getAccountStateTrieNode(location, key),
-            trie.getRootHash(),
-            Function.identity(),
-            Function.identity());
-    tri2.removePath(
-        CompactEncoding.bytesToPath(accounts.get(0)),
-        new RemoveVisitor<>() {
-          @Override
-          public void remove(final Node<Bytes> node) {
-            System.out.println(node.print());
-            System.out.println(node.getLocation().get());
-          }
-        });
-    tri2.removePath(
-        CompactEncoding.bytesToPath(accounts.get(1)),
-        new RemoveVisitor<>() {
-          @Override
-          public void remove(final Node<Bytes> node) {
-            System.out.println(node.print());
-            System.out.println(node.getLocation().orElseThrow());
-          }
-        });
-
-    final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-        new StoredMerklePatriciaTrie<>(
-            (location, key) ->
-                recreatedWorldStateStorage.getAccountStorageTrieNode(
-                    accounts.get(0), location, key),
-            StateTrieAccountValue.readFrom(RLP.input(trie.get(accounts.get(0)).get()))
-                .getStorageRoot(),
-            Function.identity(),
-            Function.identity());
-    Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-    while (!entriesToDelete.isEmpty()) {
-      entriesToDelete.keySet().stream()
-          .forEach(
-              keyHash -> {
-                storageTrie.removePath(
-                    CompactEncoding.bytesToPath(keyHash),
-                    new RemoveVisitor<>() {
-                      @Override
-                      public void remove(final Node<Bytes> node) {
-                        // System.out.println(node.print());
-                        // System.out.println(node.getLocation().get());
-                      }
-                    });
-                // System.out.println("remove " + keyHash);
-              });
-      if (entriesToDelete.size() == 256) {
-        entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-      } else {
-        break;
-      }
-    }
-
-    final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie2 =
-        new StoredMerklePatriciaTrie<>(
-            (location, key) ->
-                recreatedWorldStateStorage.getAccountStorageTrieNode(
-                    accounts.get(0), location, key),
-            storageTrie.getRootHash(),
-            Function.identity(),
-            Function.identity());
-    storageTrie2.entriesFrom(Bytes32.ZERO, 30);
-  }
 
   public static MerklePatriciaTrie<Bytes, Bytes> generateTrie(
       final WorldStateStorage worldStateStorage, final int nbAccounts) {
