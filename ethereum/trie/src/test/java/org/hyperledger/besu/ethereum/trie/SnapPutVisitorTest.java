@@ -45,7 +45,7 @@ public class SnapPutVisitorTest {
     }
     final BranchNode<Bytes> invalidBranchNode =
         new BranchNode<>(
-            Bytes.EMPTY,
+            Optional.of(Bytes.EMPTY),
             children,
             Optional.of(Bytes.of(0x00)),
             storedNodeFactory,
@@ -53,7 +53,8 @@ public class SnapPutVisitorTest {
     final SnapPutVisitor<Bytes> snapPutVisitor =
         new SnapPutVisitor<>(storedNodeFactory, Bytes.EMPTY);
     Node<Bytes> visit =
-        snapPutVisitor.visit(invalidBranchNode, Bytes.of(CompactEncoding.LEAF_TERMINATOR));
+        snapPutVisitor.visit(
+            invalidBranchNode, Bytes.EMPTY, Bytes.of(CompactEncoding.LEAF_TERMINATOR));
     Assertions.assertThat(visit.isHealNeeded()).isFalse();
   }
 
@@ -68,7 +69,7 @@ public class SnapPutVisitorTest {
     }
     final BranchNode<Bytes> invalidBranchNode =
         new BranchNode<>(
-            Bytes.EMPTY,
+            Optional.of(Bytes.EMPTY),
             children,
             Optional.of(Bytes.of(0x00)),
             storedNodeFactory,
@@ -76,7 +77,8 @@ public class SnapPutVisitorTest {
     final SnapPutVisitor<Bytes> snapPutVisitor =
         new SnapPutVisitor<>(storedNodeFactory, Bytes.EMPTY);
     Node<Bytes> visit =
-        snapPutVisitor.visit(invalidBranchNode, Bytes.of(CompactEncoding.LEAF_TERMINATOR));
+        snapPutVisitor.visit(
+            invalidBranchNode, Bytes.EMPTY, Bytes.of(CompactEncoding.LEAF_TERMINATOR));
     Assertions.assertThat(visit.isHealNeeded()).isTrue();
   }
 
@@ -92,7 +94,7 @@ public class SnapPutVisitorTest {
     }
     final BranchNode<Bytes> invalidBranchNode =
         new BranchNode<>(
-            Bytes.EMPTY,
+            Optional.of(Bytes.EMPTY),
             children,
             Optional.of(Bytes.of(0x00)),
             storedNodeFactory,
@@ -100,7 +102,8 @@ public class SnapPutVisitorTest {
     final SnapPutVisitor<Bytes> snapPutVisitor =
         new SnapPutVisitor<>(storedNodeFactory, Bytes.EMPTY);
     Node<Bytes> visit =
-        snapPutVisitor.visit(invalidBranchNode, Bytes.of(CompactEncoding.LEAF_TERMINATOR));
+        snapPutVisitor.visit(
+            invalidBranchNode, Bytes.EMPTY, Bytes.of(CompactEncoding.LEAF_TERMINATOR));
     Assertions.assertThat(visit.isHealNeeded()).isFalse();
   }
 
@@ -119,7 +122,8 @@ public class SnapPutVisitorTest {
     final SnapPutVisitor<Bytes> snapPutVisitor =
         new SnapPutVisitor<>(storedNodeFactory, Bytes.EMPTY);
     Node<Bytes> visit =
-        snapPutVisitor.visit(invalidBranchNode, Bytes.of(CompactEncoding.LEAF_TERMINATOR));
+        snapPutVisitor.visit(
+            invalidBranchNode, Bytes.EMPTY, Bytes.of(CompactEncoding.LEAF_TERMINATOR));
     Assertions.assertThat(visit.isHealNeeded()).isTrue();
   }
 }
