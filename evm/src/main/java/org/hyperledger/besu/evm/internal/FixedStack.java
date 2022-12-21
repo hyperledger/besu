@@ -90,17 +90,41 @@ public class FixedStack<T> {
    * @throws UnderflowException when the items to pop is greater than {@link #size()}
    */
   public void bulkPop(final int items) {
-    if (items < 0) {
-      throw new IllegalArgumentException(
-          String.format("requested number of items to bulk pop (%d) is negative", items));
-    }
     checkArgument(items > 0, "number of items to pop must be greater than 0");
     if (items > size()) {
       throw new UnderflowException();
     }
 
-    for (int i = 0; i < items; ++i) {
-      pop();
+    Arrays.fill(entries, top - items + 1, top + 1, null);
+    top -= items;
+  }
+
+  /**
+   * Trims the "middle" section of items out of the stack. Items below the cutpoint remains, and of
+   * the items above only the itemsToKeep items remain. All items in the middle are removed.
+   *
+   * @param cutPoint Point at which to start removing items
+   * @param itemsToKeep itemsToKeep Number of items on top to place at the cutPoint
+   * @throws IllegalArgumentException if the cutPoint or items to keep is negative.
+   * @throws UnderflowException If there are less than itemsToKeep above the cutPoint
+   */
+  public void preserveTop(final int cutPoint, final int itemsToKeep) {
+    checkArgument(cutPoint >= 0, "cutPoint must be positive");
+    checkArgument(itemsToKeep >= 0, "itemsToKeep must be positive");
+    if (itemsToKeep == 0) {
+      if (cutPoint < size()) {
+        bulkPop(top - cutPoint);
+      }
+    } else {
+      int targetSize = cutPoint + itemsToKeep;
+      int currentSize = size();
+      if (targetSize > currentSize) {
+        throw new UnderflowException();
+      } else if (targetSize < currentSize) {
+        System.arraycopy(entries, currentSize - itemsToKeep, entries, cutPoint, itemsToKeep);
+        Arrays.fill(entries, targetSize, currentSize, null);
+        top = targetSize - 1;
+      }
     }
   }
 

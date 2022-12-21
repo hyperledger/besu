@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.evm.Code;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -44,7 +43,7 @@ public class EnvironmentInformation {
 
   private final Address callerAddress;
 
-  private final Code code;
+  private final Bytes code;
 
   private final Bytes data;
 
@@ -78,7 +77,7 @@ public class EnvironmentInformation {
       @JsonProperty("address") final String account,
       @JsonProperty("balance") final String balance,
       @JsonProperty("caller") final String caller,
-      @JsonProperty("code") final ReferenceTestCode code,
+      @JsonProperty("code") final Bytes code,
       @JsonProperty("data") final String data,
       @JsonProperty("gas") final String gas,
       @JsonProperty("gasPrice") final String gasPrice,
@@ -98,7 +97,7 @@ public class EnvironmentInformation {
   }
 
   private EnvironmentInformation(
-      final Code code,
+      final Bytes code,
       final int depth,
       final Address accountAddress,
       final Wei accountBalance,
@@ -179,7 +178,7 @@ public class EnvironmentInformation {
    *
    * @return code to be executed.
    */
-  public Code getCode() {
+  public Bytes getCode() {
     return code;
   }
 
@@ -241,7 +240,7 @@ public class EnvironmentInformation {
         .append("\nAccount: ")
         .append(accountAddress)
         .append("\nBlock header: \n  ")
-        .append(blockHeader.toString().replaceAll("\n", "\n  "))
+        .append(blockHeader.toString().replace("\n", "\n  "))
         .append("\nCaller: ")
         .append(callerAddress);
 

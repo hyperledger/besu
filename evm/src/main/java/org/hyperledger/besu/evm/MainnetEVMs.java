@@ -37,6 +37,7 @@ import org.hyperledger.besu.evm.operation.CallCodeOperation;
 import org.hyperledger.besu.evm.operation.CallDataCopyOperation;
 import org.hyperledger.besu.evm.operation.CallDataLoadOperation;
 import org.hyperledger.besu.evm.operation.CallDataSizeOperation;
+import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.CallOperation;
 import org.hyperledger.besu.evm.operation.CallValueOperation;
 import org.hyperledger.besu.evm.operation.CallerOperation;
@@ -62,6 +63,7 @@ import org.hyperledger.besu.evm.operation.GtOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.IsZeroOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
+import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.Keccak256Operation;
@@ -84,6 +86,10 @@ import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
+import org.hyperledger.besu.evm.operation.RetFOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
@@ -454,7 +460,12 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerParisOperations(registry, gasCalculator, chainID);
-    // Register the PUSH0 operation.
     registry.put(new Push0Operation(gasCalculator));
+    registry.put(new RelativeJumpOperation(gasCalculator));
+    registry.put(new RelativeJumpIfOperation(gasCalculator));
+    registry.put(new RelativeJumpVectorOperation(gasCalculator));
+    registry.put(new CallFOperation(gasCalculator));
+    registry.put(new RetFOperation(gasCalculator));
+    registry.put(new JumpFOperation(gasCalculator));
   }
 }
