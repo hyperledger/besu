@@ -225,6 +225,28 @@ public class EvmToolCommand implements Runnable {
       final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
       Log4j2ConfiguratorUtil.setLevel(
           "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
+      final Transaction tx =
+          new Transaction(
+              0,
+              Wei.ZERO,
+              Long.MAX_VALUE,
+              Optional.ofNullable(receiver),
+              Wei.ZERO,
+              null,
+              callData,
+              sender,
+              Optional.empty());
+
+      final long intrinsicGasCost =
+          protocolSpec
+              .getGasCalculator()
+              .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
+      final long accessListCost =
+          tx.getAccessList()
+              .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
+              .orElse(0L);
+      long txGas = gas - intrinsicGasCost - accessListCost;
+
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
@@ -253,7 +275,7 @@ public class EvmToolCommand implements Runnable {
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .messageFrameStack(messageFrameStack)
                 .worldUpdater(updater)
-                .initialGas(gas)
+                .initialGas(txGas)
                 .contract(Address.ZERO)
                 .address(receiver)
                 .originator(sender)
@@ -291,36 +313,14 @@ public class EvmToolCommand implements Runnable {
           }
 
           if (lastLoop && messageFrameStack.isEmpty()) {
-            final Transaction tx =
-                new Transaction(
-                    0,
-                    Wei.ZERO,
-                    Long.MAX_VALUE,
-                    Optional.ofNullable(receiver),
-                    Wei.ZERO,
-                    null,
-                    callData,
-                    sender,
-                    Optional.empty());
-
-            final long intrinsicGasCost =
-                protocolSpec
-                    .getGasCalculator()
-                    .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
-            final long accessListCost =
-                tx.getAccessList()
-                    .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
-                    .orElse(0L);
-            final long evmGas = gas - messageFrame.getRemainingGas();
+            final long evmGas = txGas - messageFrame.getRemainingGas();
             out.println();
             out.println(
                 new JsonObject()
                     .put("gasUser", "0x" + Long.toHexString(evmGas))
                     .put("timens", lastTime)
                     .put("time", lastTime / 1000)
-                    .put(
-                        "gasTotal",
-                        "0x" + Long.toHexString(evmGas + intrinsicGasCost) + accessListCost)
+                    .put("gasTotal", "0x" + Long.toHexString(evmGas))
                     .put("output", messageFrame.getOutputData().toHexString()));
           }
         }
