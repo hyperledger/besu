@@ -13,10 +13,9 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.SHANDONG_CONTRACT_SIZE_LIMIT;
 import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -25,12 +24,11 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -181,7 +179,7 @@ public class CreateOperationTest {
   @Test
   public void shandongMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SHANDONG_CONTRACT_SIZE_LIMIT);
+    final UInt256 memoryLength = UInt256.fromHexString("0xc000");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     final MessageFrame messageFrame =
         testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
@@ -213,7 +211,7 @@ public class CreateOperationTest {
   @Test
   public void shandongMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SHANDONG_CONTRACT_SIZE_LIMIT + 1);
+    final UInt256 memoryLength = UInt256.fromHexString("0xc001");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     final MessageFrame messageFrame =
         testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
@@ -254,8 +252,8 @@ public class CreateOperationTest {
             .depth(depth)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
-            .blockHashLookup(mock(BlockHashLookup.class))
-            .blockValues(mock(ProcessableBlockHeader.class))
+            .blockHashLookup(n -> Hash.hash(Bytes.ofUnsignedLong(n)))
+            .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(messageFrameStack)
             .miningBeneficiary(Address.ZERO)

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.evm.operation.SarOperation;
+import org.hyperledger.besu.evm.operation.ShrOperation;
 
 import java.util.Arrays;
 
@@ -32,14 +32,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class SarOperationTest {
-
+public class ShrOperationTest {
   private final String number;
   private final String shift;
   private final String expectedResult;
 
   private final GasCalculator gasCalculator = new SpuriousDragonGasCalculator();
-  private final SarOperation operation = new SarOperation(gasCalculator);
+  private final ShrOperation operation = new ShrOperation(gasCalculator);
 
   private static final String[][] testData = {
     {
@@ -74,23 +73,18 @@ public class SarOperationTest {
     },
     {
       "0x8000000000000000000000000000000000000000000000000000000000000000",
-      "0x01",
-      "0xc000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000000",
       "0xff",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x0000000000000000000000000000000000000000000000000000000000000001"
     },
     {
       "0x8000000000000000000000000000000000000000000000000000000000000000",
       "0x100",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "0x8000000000000000000000000000000000000000000000000000000000000000",
       "0x101",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -100,17 +94,17 @@ public class SarOperationTest {
     {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x01",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0xff",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x0000000000000000000000000000000000000000000000000000000000000001"
     },
     {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x100",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -118,31 +112,6 @@ public class SarOperationTest {
       "0x0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
-      "0x4000000000000000000000000000000000000000000000000000000000000000",
-      "0xfe",
-      "0x0000000000000000000000000000000000000000000000000000000000000001"
-    },
-    {
-      "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0xf8",
-      "0x000000000000000000000000000000000000000000000000000000000000007f"
-    },
-    {
-      "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0xfe",
-      "0x0000000000000000000000000000000000000000000000000000000000000001"
-    },
-    {
-      "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0xff",
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x100",
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
       "0x0000000000000000000000000000000000000000000000000000000000000400",
       "0x80",
       "0x0000000000000000000000000000000000000000000000000000000000000000"
@@ -171,45 +140,15 @@ public class SarOperationTest {
       "0x0000000000000000000000000000000000000000000000000000000000000400",
       "0x8000000000000000000000000000000000000000000000000000000000000000",
       "0x0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000400",
-      "0x80",
-      "0xffffffffffffffffffffffffffffffff80000000000000000000000000000000"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000400",
-      "0x8000",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000400",
-      "0x80000000",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000400",
-      "0x8000000000000000",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000400",
-      "0x80000000000000000000000000000000",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000400",
-      "0x8000000000000000000000000000000000000000000000000000000000000000",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    },
+    }
   };
 
   @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
-  public static Iterable<Object[]> data() {
-    return Arrays.asList((Object[][]) testData);
+  public static Iterable<String[]> data() {
+    return Arrays.asList(testData);
   }
 
-  public SarOperationTest(final String number, final String shift, final String expectedResult) {
+  public ShrOperationTest(final String number, final String shift, final String expectedResult) {
     this.number = number;
     this.shift = shift;
     this.expectedResult = expectedResult;

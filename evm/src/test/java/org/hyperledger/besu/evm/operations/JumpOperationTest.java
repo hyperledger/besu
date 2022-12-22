@@ -12,23 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -37,7 +30,8 @@ import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.testutils.FakeBlockValues;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -53,32 +47,20 @@ public class JumpOperationTest {
 
   private static final int CURRENT_PC = 1;
 
-  private Blockchain blockchain;
   private Address address;
-  private WorldUpdater worldStateUpdater;
   private EVM evm;
 
-  private MessageFrameTestFixture createMessageFrameBuilder(final long initialGas) {
-    final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
-    return new MessageFrameTestFixture()
+  private TestMessageFrameBuilder createMessageFrameBuilder(final long initialGas) {
+    final BlockValues blockValues = new FakeBlockValues(1337);
+    return new TestMessageFrameBuilder()
         .address(address)
-        .worldUpdater(worldStateUpdater)
-        .blockHeader(blockHeader)
-        .blockchain(blockchain)
+        .blockValues(blockValues)
         .initialGas(initialGas);
   }
 
   @Before
   public void init() {
-    blockchain = mock(Blockchain.class);
-
     address = Address.fromHexString("0x18675309");
-
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-
-    worldStateUpdater = worldStateArchive.getMutable().updater();
-    worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
-    worldStateUpdater.commit();
 
     final OperationRegistry registry = new OperationRegistry();
     registry.put(new JumpOperation(gasCalculator));

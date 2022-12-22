@@ -12,28 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.AddressHelpers;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.testutils.FakeBlockValues;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
+import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -43,12 +39,10 @@ import org.junit.Test;
 
 public class ExtCodeHashOperationTest {
 
-  private static final Address REQUESTED_ADDRESS = AddressHelpers.ofValue(22222222);
+  private static final Address REQUESTED_ADDRESS = Address.fromHexString("0x22222222");
 
-  private final Blockchain blockchain = mock(Blockchain.class);
-
-  private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-  private final WorldUpdater worldStateUpdater = worldStateArchive.getMutable().updater();
+  ToyWorld toyWorld = new ToyWorld();
+  private final WorldUpdater worldStateUpdater = toyWorld.updater();
 
   private final ExtCodeHashOperation operation =
       new ExtCodeHashOperation(new ConstantinopleGasCalculator());
@@ -132,12 +126,11 @@ public class ExtCodeHashOperationTest {
   }
 
   private MessageFrame createMessageFrame(final UInt256 stackItem) {
-    final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
+    final BlockValues blockValues = new FakeBlockValues(1337);
     final MessageFrame frame =
-        new MessageFrameTestFixture()
+        new TestMessageFrameBuilder()
             .worldUpdater(worldStateUpdater)
-            .blockHeader(blockHeader)
-            .blockchain(blockchain)
+            .blockValues(blockValues)
             .build();
 
     frame.pushStackItem(stackItem);

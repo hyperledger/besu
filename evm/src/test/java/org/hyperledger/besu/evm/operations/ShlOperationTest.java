@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.evm.operation.ShrOperation;
+import org.hyperledger.besu.evm.operation.ShlOperation;
 
 import java.util.Arrays;
 
@@ -32,13 +32,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class ShrOperationTest {
+public class ShlOperationTest {
+
   private final String number;
   private final String shift;
   private final String expectedResult;
 
   private final GasCalculator gasCalculator = new SpuriousDragonGasCalculator();
-  private final ShrOperation operation = new ShrOperation(gasCalculator);
+  private final ShlOperation operation = new ShlOperation(gasCalculator);
 
   private static final String[][] testData = {
     {
@@ -49,62 +50,37 @@ public class ShrOperationTest {
     {
       "0x0000000000000000000000000000000000000000000000000000000000000001",
       "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
+      "0x0000000000000000000000000000000000000000000000000000000000000002"
     },
     {
       "0x0000000000000000000000000000000000000000000000000000000000000002",
       "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000001"
+      "0x0000000000000000000000000000000000000000000000000000000000000004"
     },
     {
       "0x0000000000000000000000000000000000000000000000000000000000000004",
       "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000002"
+      "0x0000000000000000000000000000000000000000000000000000000000000008"
     },
     {
       "0x000000000000000000000000000000000000000000000000000000000000000f",
       "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000007"
+      "0x000000000000000000000000000000000000000000000000000000000000001e"
     },
     {
       "0x0000000000000000000000000000000000000000000000000000000000000008",
       "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000004"
+      "0x0000000000000000000000000000000000000000000000000000000000000010"
     },
     {
-      "0x8000000000000000000000000000000000000000000000000000000000000000",
-      "0xff",
-      "0x0000000000000000000000000000000000000000000000000000000000000001"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
       "0x100",
       "0x0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "0x8000000000000000000000000000000000000000000000000000000000000000",
-      "0x101",
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x0",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x01",
-      "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    },
-    {
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0xff",
-      "0x0000000000000000000000000000000000000000000000000000000000000001"
-    },
-    {
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x100",
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
+      "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
     },
     {
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -112,9 +88,14 @@ public class ShrOperationTest {
       "0x0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
+      "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0x01",
+      "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
+    },
+    {
       "0x0000000000000000000000000000000000000000000000000000000000000400",
       "0x80",
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
+      "0x0000000000000000000000000000040000000000000000000000000000000000"
     },
     {
       "0x0000000000000000000000000000000000000000000000000000000000000400",
@@ -144,11 +125,11 @@ public class ShrOperationTest {
   };
 
   @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
-  public static Iterable<Object[]> data() {
-    return Arrays.asList((Object[][]) testData);
+  public static Iterable<String[]> data() {
+    return Arrays.asList(testData);
   }
 
-  public ShrOperationTest(final String number, final String shift, final String expectedResult) {
+  public ShlOperationTest(final String number, final String shift, final String expectedResult) {
     this.number = number;
     this.shift = shift;
     this.expectedResult = expectedResult;
