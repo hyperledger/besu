@@ -12,34 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.core.TestCodeExecutor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.testutils.TestCodeExecutor;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ConstantinopleSStoreOperationGasCostTest {
 
-  private static final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(
-          new StubGenesisConfigOptions().constantinopleBlock(0), EvmConfiguration.DEFAULT);
-
-  @Parameters(name = "Code: {0}, Original: {1}")
   public static Object[][] scenarios() {
     // Tests specified in EIP-1283.
     return new Object[][] {
@@ -63,26 +51,17 @@ public class ConstantinopleSStoreOperationGasCostTest {
     };
   }
 
-  private TestCodeExecutor codeExecutor;
+  @ParameterizedTest
+  @MethodSource("scenarios")
+  void shouldCalculateGasAccordingToEip1283(
+      final String code,
+      final int originalValue,
+      final int expectedGasUsed,
+      final int expectedGasRefund) {
 
-  @Parameter public String code;
+    TestCodeExecutor codeExecutor =
+        new TestCodeExecutor(MainnetEVMs.constantinople(EvmConfiguration.DEFAULT));
 
-  @Parameter(value = 1)
-  public int originalValue;
-
-  @Parameter(value = 2)
-  public int expectedGasUsed;
-
-  @Parameter(value = 3)
-  public int expectedGasRefund;
-
-  @Before
-  public void setUp() {
-    codeExecutor = new TestCodeExecutor(protocolSchedule);
-  }
-
-  @Test
-  public void shouldCalculateGasAccordingToEip1283() {
     final long gasLimit = 1_000_000;
     final MessageFrame frame =
         codeExecutor.executeCode(
@@ -90,6 +69,7 @@ public class ConstantinopleSStoreOperationGasCostTest {
             gasLimit,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
+    System.out.println(gasLimit - frame.getRemainingGas());
     assertThat(frame.getRemainingGas()).isEqualTo(gasLimit - expectedGasUsed);
     assertThat(frame.getGasRefund()).isEqualTo(expectedGasRefund);
   }

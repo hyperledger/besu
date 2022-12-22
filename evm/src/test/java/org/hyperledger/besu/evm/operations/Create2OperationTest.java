@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,11 +22,10 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operation.Create2Operation;
@@ -146,8 +145,8 @@ public class Create2OperationTest {
             .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
-            .blockHashLookup(mock(BlockHashLookup.class))
-            .blockValues(mock(ProcessableBlockHeader.class))
+            .blockHashLookup(n -> Hash.hash(Bytes.ofUnsignedLong(n)))
+            .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(new ArrayDeque<>())
             .miningBeneficiary(Address.ZERO)

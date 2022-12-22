@@ -13,17 +13,19 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.evm.operations;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
@@ -39,11 +41,13 @@ class RelativeJumpOperationTest {
   void rjumpOperation(final int jumpLength) {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final MessageFrame messageFrame = mock(MessageFrame.class, Mockito.RETURNS_DEEP_STUBS);
+    final Code mockCode = mock(Code.class);
     final String twosComplementJump = String.format("%08x", jumpLength).substring(4);
     final int rjumpOperationIndex = 3;
     final Bytes code = Bytes.fromHexString("00".repeat(3) + "5c" + twosComplementJump);
 
-    when(messageFrame.getCode().getCodeBytes(messageFrame.getSection())).thenReturn(code);
+    when(messageFrame.getCode()).thenReturn(mockCode);
+    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
     when(messageFrame.getRemainingGas()).thenReturn(3L);
     when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
 
@@ -57,14 +61,18 @@ class RelativeJumpOperationTest {
   @Test
   void rjumpiOperation() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final MessageFrame messageFrame = mock(MessageFrame.class, Mockito.RETURNS_DEEP_STUBS);
+    final Code mockCode = mock(Code.class);
     final int rjumpOperationIndex = 3;
     final Bytes code = Bytes.fromHexString("00".repeat(rjumpOperationIndex) + "5d0004");
 
-    when(messageFrame.getCode().getCodeBytes(messageFrame.getSection())).thenReturn(code);
-    when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
-    when(messageFrame.getRemainingGas()).thenReturn(5L);
-    when(messageFrame.popStackItem()).thenReturn(Bytes.EMPTY);
+    MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(mockCode)
+            .pc(rjumpOperationIndex)
+            .initialGas(5L)
+            .pushStackItem(Bytes.EMPTY)
+            .build();
+    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
 
     RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
@@ -75,7 +83,7 @@ class RelativeJumpOperationTest {
   @Test
   void rjumpvOperation() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final MessageFrame messageFrame = mock(MessageFrame.class, Mockito.RETURNS_DEEP_STUBS);
+    final Code mockCode = mock(Code.class);
     final int rjumpOperationIndex = 3;
     final int jumpVectorSize = 1;
     final int jumpLength = 4;
@@ -84,10 +92,14 @@ class RelativeJumpOperationTest {
             "00".repeat(rjumpOperationIndex)
                 + String.format("5e%02x%04x", jumpVectorSize, jumpLength));
 
-    when(messageFrame.getCode().getCodeBytes(messageFrame.getSection())).thenReturn(code);
-    when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
-    when(messageFrame.getRemainingGas()).thenReturn(5L);
-    when(messageFrame.popStackItem()).thenReturn(Bytes.of(jumpVectorSize));
+    MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(mockCode)
+            .pc(rjumpOperationIndex)
+            .initialGas(5L)
+            .pushStackItem(Bytes.of(jumpVectorSize))
+            .build();
+    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
