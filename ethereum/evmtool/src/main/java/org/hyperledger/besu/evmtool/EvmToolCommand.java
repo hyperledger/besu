@@ -38,6 +38,7 @@ import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedWriter;
@@ -327,58 +328,60 @@ public class EvmToolCommand implements Runnable {
         stopwatch.reset();
         if (showJsonAlloc && lastLoop) {
           updater.commit();
-          out.println("{");
-          component
-              .getWorldState()
-              .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-              .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
-              .forEach(
-                  account -> {
-                    out.println(
-                        " \""
-                            + account.getAddress().map(Address::toHexString).orElse("-")
-                            + "\": {");
-                    if (account.getCode() != null && account.getCode().size() > 0) {
-                      out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
-                    }
-                    var storateEntries =
-                        account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
-                    if (!storateEntries.isEmpty()) {
-                      out.println("  \"storage\": {");
-                      out.println(
-                          STORAGE_JOINER.join(
-                              storateEntries.values().stream()
-                                  .map(
-                                      accountStorageEntry ->
-                                          "   \""
-                                              + accountStorageEntry
-                                                  .getKey()
-                                                  .map(UInt256::toHexString)
-                                                  .orElse("-")
-                                              + "\": \""
-                                              + accountStorageEntry.getValue().toHexString()
-                                              + "\"")
-                                  .collect(Collectors.toList())));
-                      out.println("  },");
-                    }
-                    out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
-                    if (account.getNonce() > 0) {
-                      out.println(",");
-                      out.println(
-                          "  \"nonce\": \""
-                              + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
-                              + "\"");
-                    } else {
-                      out.println();
-                    }
-                    out.println(" },");
-                  });
-          out.println("}");
+          WorldState worldState = component.getWorldState();
+          dumpWorldState(worldState, out);
         }
       } while (remainingIters-- > 0);
 
     } catch (final IOException e) {
       LOG.error("Unable to create Genesis module", e);
     }
+  }
+
+  public static void dumpWorldState(final WorldState worldState, final PrintWriter out) {
+    out.println("{");
+    worldState
+        .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+        .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
+        .forEach(
+            account -> {
+              out.println(
+                  " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
+              if (account.getCode() != null && account.getCode().size() > 0) {
+                out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
+              }
+              var storageEntries = account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              if (!storageEntries.isEmpty()) {
+                out.println("  \"storage\": {");
+                out.println(
+                    STORAGE_JOINER.join(
+                        storageEntries.values().stream()
+                            .map(
+                                accountStorageEntry ->
+                                    "   \""
+                                        + accountStorageEntry
+                                            .getKey()
+                                            .map(UInt256::toHexString)
+                                            .orElse("-")
+                                        + "\": \""
+                                        + accountStorageEntry.getValue().toHexString()
+                                        + "\"")
+                            .collect(Collectors.toList())));
+                out.println("  },");
+              }
+              out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
+              if (account.getNonce() > 0) {
+                out.println(",");
+                out.println(
+                    "  \"nonce\": \""
+                        + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
+                        + "\"");
+              } else {
+                out.println();
+              }
+              out.println(" },");
+            });
+    out.println("}");
+    out.flush();
   }
 }

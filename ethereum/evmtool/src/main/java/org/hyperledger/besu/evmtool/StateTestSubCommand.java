@@ -16,10 +16,10 @@
 
 package org.hyperledger.besu.evmtool;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -46,18 +46,18 @@ import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -66,9 +66,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -130,8 +127,7 @@ public class StateTestSubCommand implements Runnable {
     try {
       if (stateTestFiles.isEmpty()) {
         // if no state tests were specified use standard input to get filenames
-        final BufferedReader in =
-            new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
+        final BufferedReader in = new BufferedReader(new InputStreamReader(input, UTF_8));
         while (true) {
           final String fileName = in.readLine();
           if (fileName == null) {
@@ -172,10 +168,10 @@ public class StateTestSubCommand implements Runnable {
 
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
     Log4j2ConfiguratorUtil.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
+        "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
     final var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
     Log4j2ConfiguratorUtil.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
+        "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
 
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
@@ -281,53 +277,9 @@ public class StateTestSubCommand implements Runnable {
         }
 
         if (parentCommand.showJsonAlloc) {
-          output.println("{");
-          worldState
-              .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-              .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
-              .forEach(
-                  account -> {
-                    output.println(
-                        " \""
-                            + account.getAddress().map(Address::toHexString).orElse("-")
-                            + "\": {");
-                    if (account.getCode() != null && account.getCode().size() > 0) {
-                      output.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
-                    }
-                    var storateEntries =
-                        account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
-                    if (!storateEntries.isEmpty()) {
-                      output.println("  \"storage\": {");
-                      output.println(
-                          EvmToolCommand.STORAGE_JOINER.join(
-                              storateEntries.values().stream()
-                                  .map(
-                                      accountStorageEntry ->
-                                          "   \""
-                                              + accountStorageEntry
-                                                  .getKey()
-                                                  .map(UInt256::toHexString)
-                                                  .orElse("-")
-                                              + "\": \""
-                                              + accountStorageEntry.getValue().toHexString()
-                                              + "\"")
-                                  .collect(Collectors.toList())));
-                      output.println("  },");
-                    }
-                    output.print(
-                        "  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
-                    if (account.getNonce() > 0) {
-                      output.println(",");
-                      output.println(
-                          "  \"nonce\": \""
-                              + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
-                              + "\"");
-                    } else {
-                      output.println();
-                    }
-                    output.println(" },");
-                  });
-          output.println("}");
+          EvmToolCommand.dumpWorldState(
+              worldState,
+              new PrintWriter(new BufferedWriter(new OutputStreamWriter(output, UTF_8))));
         }
       }
 
