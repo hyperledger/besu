@@ -29,7 +29,11 @@ public class RetFOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    frame.returnFunction();
-    return retfSuccess;
+    var exception = frame.returnFunction();
+    if (exception == null) {
+      return retfSuccess;
+    } else {
+      return new OperationResult(retfSuccess.gasCost, exception);
+    }
   }
 }

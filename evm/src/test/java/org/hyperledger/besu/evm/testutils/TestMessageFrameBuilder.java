@@ -53,6 +53,7 @@ public class TestMessageFrameBuilder {
   private Bytes inputData = Bytes.EMPTY;
   private Code code = CodeV0.EMPTY_CODE;
   private int pc = 0;
+  private int section = 0;
   private final List<Bytes> stackItems = new ArrayList<>();
   private int depth = 0;
   private Optional<Function<Long, Hash>> blockHashLookup = Optional.empty();
@@ -117,6 +118,11 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
+  public TestMessageFrameBuilder section(final int section) {
+    this.section = section;
+    return this;
+  }
+
   public TestMessageFrameBuilder blockValues(final BlockValues blockValues) {
     this.blockValues = Optional.of(blockValues);
     return this;
@@ -162,6 +168,7 @@ public class TestMessageFrameBuilder {
             .maxStackSize(maxStackSize)
             .build();
     frame.setPC(pc);
+    frame.setSection(section);
     stackItems.forEach(frame::pushStackItem);
     return frame;
   }
