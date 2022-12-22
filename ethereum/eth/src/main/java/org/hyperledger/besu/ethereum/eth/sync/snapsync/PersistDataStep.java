@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -39,30 +38,46 @@ public class PersistDataStep {
 
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
+    tasks.parallelStream()
+        .forEach(
+            task -> {
+              if (task.getData().isResponseReceived()) {
+                // enqueue child requests
+                final Stream<SnapDataRequest> childRequests =
+                    task.getData()
+                        .getChildRequests(downloadState, worldStateStorage, snapSyncState);
+                enqueueChildren(childRequests);
+
+                // persist nodes
+                final int persistedNodes =
+                    task.getData()
+                        .persist(worldStateStorage, updater, downloadState, snapSyncState);
+                if (persistedNodes > 0) {
+                  downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
+                }
+              }
+            });
+    updater.commit();
+    return tasks;
+  }
+
+  public List<Task<SnapDataRequest>> persistTrieNode(final List<Task<SnapDataRequest>> tasks) {
+    final WorldStateStorage.Updater updater = worldStateStorage.updater();
     for (Task<SnapDataRequest> task : tasks) {
       if (task.getData().isResponseReceived()) {
         // enqueue child requests
         final Stream<SnapDataRequest> childRequests =
             task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
-        if (!(task.getData() instanceof TrieNodeDataRequest)) {
+        if (!task.getData().isExpired(snapSyncState)) {
           enqueueChildren(childRequests);
         } else {
-          if (!task.getData().isExpired(snapSyncState)) {
-            enqueueChildren(childRequests);
-          } else {
-            continue;
-          }
+          continue;
         }
-
         // persist nodes
         final int persistedNodes =
             task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
         if (persistedNodes > 0) {
-          if (task.getData() instanceof TrieNodeDataRequest) {
-            downloadState.getMetricsManager().notifyNodesHealed(persistedNodes);
-          } else {
-            downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
-          }
+          downloadState.getMetricsManager().notifyNodesHealed(persistedNodes);
         }
       }
     }

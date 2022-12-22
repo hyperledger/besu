@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -54,16 +53,17 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     if (getSyncMode(worldStateStorage) == BONSAI) {
       deletePotentialOldStorageEntries(
           (BonsaiWorldStateKeyValueStorage) worldStateStorage, accountHash, getLocation(), data);
-      final Node<Bytes> node = TrieNodeDecoder.decode(getLocation(), data);
-      node.getValue()
-          .ifPresent(
-              value -> {
-                ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                    .putStorageValueBySlotHash(
-                        accountHash,
-                        getSlotHash(node.getLocation().orElseThrow(), node.getPath()),
-                        Bytes32.leftPad(RLP.decodeValue(value)));
-              });
+      TrieNodeDecoder.decodeNodes(getLocation(), data)
+          .forEach(
+              node ->
+                  node.getValue()
+                      .ifPresent(
+                          value ->
+                              ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                                  .putStorageValueBySlotHash(
+                                      accountHash,
+                                      getSlotHash(node.getLocation().orElseThrow(), node.getPath()),
+                                      Bytes32.leftPad(RLP.decodeValue(value)))));
     }
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     return 1;

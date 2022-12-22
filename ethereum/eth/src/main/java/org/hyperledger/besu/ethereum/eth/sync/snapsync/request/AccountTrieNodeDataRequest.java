@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -66,18 +65,20 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     if (getSyncMode(worldStateStorage) == BONSAI) {
       deletePotentialOldAccountEntries(
           (BonsaiWorldStateKeyValueStorage) worldStateStorage, getLocation(), data);
-      final Node<Bytes> node = TrieNodeDecoder.decode(getLocation(), data);
-      node.getValue()
-          .ifPresent(
-              value -> {
-                final Hash accountHash =
-                    Hash.wrap(
-                        Bytes32.wrap(
-                            CompactEncoding.pathToBytes(
-                                Bytes.concatenate(getLocation(), node.getPath()))));
-                ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                    .putAccountInfoState(accountHash, value);
-              });
+      TrieNodeDecoder.decodeNodes(getLocation(), data)
+          .forEach(
+              node ->
+                  node.getValue()
+                      .ifPresent(
+                          value -> {
+                            final Hash accountHash =
+                                Hash.wrap(
+                                    Bytes32.wrap(
+                                        CompactEncoding.pathToBytes(
+                                            Bytes.concatenate(getLocation(), node.getPath()))));
+                            ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                                .putAccountInfoState(accountHash, value);
+                          }));
     }
     updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
 

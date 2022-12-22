@@ -367,7 +367,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcess(
                   "batchPersistTrieNodeData",
                   tasks -> {
-                    persistDataStep.persist(tasks);
+                    persistDataStep.persistTrieNode(tasks);
                     return tasks;
                   })
               .andFinishWith(
