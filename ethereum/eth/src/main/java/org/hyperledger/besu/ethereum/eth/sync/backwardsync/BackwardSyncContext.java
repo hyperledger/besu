@@ -344,7 +344,7 @@ public class BackwardSyncContext {
       return;
     }
 
-    debugLambda(LOG, "Rewinding head to last saved block {}", lastSavedBlock::toLogString);
+    traceLambda(LOG, "Rewinding head to last saved block {}", lastSavedBlock::toLogString);
     blockchain.rewindToBlock(lastSavedBlock.getHash());
   }
 
