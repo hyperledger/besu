@@ -249,8 +249,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
           switch (result) {
             case DELETE_TRANSACTION_AND_CONTINUE:
               transactionsToRemove.add(transactionToProcess);
-              signalInvalidAndGetDependentTransactions(transactionToProcess)
-                  .forEach(transactionsToRemove::add);
+              signalInvalidTransaction(transactionToProcess);
               break;
             case CONTINUE:
               break;
@@ -487,12 +486,13 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     }
   }
 
-  public List<Transaction> signalInvalidAndGetDependentTransactions(final Transaction transaction) {
+  @Override
+  public void signalInvalidTransaction(final Transaction transaction) {
     final long invalidNonce = lowestInvalidKnownNonceCache.registerInvalidTransaction(transaction);
 
     PendingTransactionsForSender txsForSender = transactionsBySender.get(transaction.getSender());
     if (txsForSender != null) {
-      return txsForSender
+      txsForSender
           .streamPendingTransactions()
           .filter(pendingTx -> pendingTx.getTransaction().getNonce() > invalidNonce)
           .peek(
@@ -503,10 +503,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                       pendingTx::toTraceLog,
                       () -> invalidNonce))
           .map(PendingTransaction::getTransaction)
-          .collect(Collectors.toList());
+          .forEach(this::removeTransaction);
     }
-
-    return List.of();
   }
 
   @Override

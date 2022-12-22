@@ -78,6 +78,10 @@ public interface PendingTransactionsSorter {
 
   String logStats();
 
+  default void signalInvalidTransaction(final Transaction transaction) {
+    // ToDo: remove when the legacy tx pool is removed
+  }
+
   public enum TransactionSelectionResult {
     DELETE_TRANSACTION_AND_CONTINUE,
     CONTINUE,

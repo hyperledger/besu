@@ -197,6 +197,7 @@ public class TransactionPool implements BlockAddedObserver {
                       "Discard invalid transaction {}, reason {}",
                       transaction::toTraceLog,
                       validationResult.result::getInvalidReason);
+                  pendingTransactions.signalInvalidTransaction(transaction);
                 }
               }
             });
