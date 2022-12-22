@@ -47,6 +47,8 @@ public class TransactionPoolOptions
   private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
       "--tx-pool-limit-by-account-percentage";
 
+  private static final String ENABLE_LAYERED_TX_POOL_FLAG = "--Xlayered-tx-pool";
+
   @CommandLine.Option(
       names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
       paramLabel = "<Boolean>",
@@ -87,6 +89,15 @@ public class TransactionPoolOptions
       TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
 
   @CommandLine.Option(
+      names = {ENABLE_LAYERED_TX_POOL_FLAG},
+      paramLabel = "<Boolean>",
+      hidden = true,
+      description = "Enable the Layered Transaction Pool (default: ${DEFAULT-VALUE})",
+      arity = "0..1")
+  private Boolean enabledLayeredTxPool =
+      TransactionPoolConfiguration.DEFAULT_ENABLE_LAYERED_TX_POOL;
+
+  @CommandLine.Option(
       hidden = true,
       names = {"--tx-pool-future-max-by-account"},
       description = "Deprecated parameter, see instead: --tx-pool-limit-by-account-percentage")
@@ -106,6 +117,7 @@ public class TransactionPoolOptions
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
+    options.enabledLayeredTxPool = config.getEnableLayeredTxPool();
     return options;
   }
 
@@ -121,7 +133,8 @@ public class TransactionPoolOptions
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
-        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage);
+        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
+        .enableLayeredTxPool(enabledLayeredTxPool);
   }
 
   @Override
@@ -133,6 +146,7 @@ public class TransactionPoolOptions
         TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
         OptionParser.format(txMessageKeepAliveSeconds),
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
-        OptionParser.format(eth65TrxAnnouncedBufferingPeriod));
+        OptionParser.format(eth65TrxAnnouncedBufferingPeriod),
+        ENABLE_LAYERED_TX_POOL_FLAG + "=" + enabledLayeredTxPool);
   }
 }

@@ -33,6 +33,7 @@ public interface TransactionPoolConfiguration {
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
   long DEFAULT_PENDING_TRANSACTIONS_CACHE_SIZE_BYTES = 100_000_000L;
+  boolean DEFAULT_ENABLE_LAYERED_TX_POOL = false;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -84,5 +85,10 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default long getPendingTransactionsCacheSizeBytes() {
     return DEFAULT_PENDING_TRANSACTIONS_CACHE_SIZE_BYTES;
+  }
+
+  @Value.Default
+  default Boolean getEnableLayeredTxPool() {
+    return DEFAULT_ENABLE_LAYERED_TX_POOL;
   }
 }

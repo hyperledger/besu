@@ -20,7 +20,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -165,6 +169,61 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
+    boolean isFeeMarketImplementBaseFee =
+        protocolSchedule
+            .streamMilestoneBlocks()
+            .map(protocolSchedule::getByBlockNumber)
+            .map(ProtocolSpec::getFeeMarket)
+            .anyMatch(FeeMarket::implementsBaseFee);
+
+    if (transactionPoolConfiguration.getEnableLayeredTxPool()) {
+      LOG.info("Using layered transaction pool");
+      return createPrioritizedTransactionSorted(
+          protocolSchedule,
+          protocolContext,
+          clock,
+          metricsSystem,
+          transactionPoolConfiguration,
+          isFeeMarketImplementBaseFee);
+    } else {
+      return createPendingTransactionSorter(
+          protocolContext,
+          clock,
+          metricsSystem,
+          transactionPoolConfiguration,
+          isFeeMarketImplementBaseFee);
+    }
+  }
+
+  private static AbstractPendingTransactionsSorter createPendingTransactionSorter(
+      final ProtocolContext protocolContext,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final boolean isFeeMarketImplementBaseFee) {
+    if (isFeeMarketImplementBaseFee) {
+      return new BaseFeePendingTransactionsSorter(
+          transactionPoolConfiguration,
+          clock,
+          metricsSystem,
+          protocolContext.getBlockchain()::getChainHeadHeader);
+    } else {
+      return new GasPricePendingTransactionsSorter(
+          transactionPoolConfiguration,
+          clock,
+          metricsSystem,
+          protocolContext.getBlockchain()::getChainHeadHeader);
+    }
+  }
+
+  private static AbstractPrioritizedTransactions createPrioritizedTransactionSorted(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final boolean isFeeMarketImplementBaseFee) {
+
     final TransactionPoolReplacementHandler transactionReplacementHandler =
         new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
 
@@ -173,12 +232,6 @@ public class TransactionPoolFactory {
             transactionReplacementHandler.shouldReplace(
                 t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
 
-    final boolean isFeeMarketImplementBaseFee =
-        protocolSchedule
-            .streamMilestoneBlocks()
-            .map(protocolSchedule::getByBlockNumber)
-            .map(ProtocolSpec::getFeeMarket)
-            .anyMatch(FeeMarket::implementsBaseFee);
     if (isFeeMarketImplementBaseFee) {
       final BaseFeeMarket baseFeeMarket =
           protocolSchedule
