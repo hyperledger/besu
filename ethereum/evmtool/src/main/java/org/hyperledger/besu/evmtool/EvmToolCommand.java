@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -72,7 +73,7 @@ import picocli.CommandLine.Option;
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
-    subcommands = {StateTestSubCommand.class})
+    subcommands = {StateTestSubCommand.class, CodeValidateSubCommand.class})
 public class EvmToolCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(EvmToolCommand.class);
@@ -81,7 +82,11 @@ public class EvmToolCommand implements Runnable {
       names = {"--code"},
       paramLabel = "<code>",
       description = "Byte stream of code to be executed.")
-  private final Bytes codeHexString = Bytes.EMPTY;
+  void setBytes(final String optionValue) {
+    codeBytes = Bytes.fromHexString(optionValue.replace(" ", ""));
+  }
+
+  private Bytes codeBytes = Bytes.EMPTY;
 
   @Option(
       names = {"--gas"},
@@ -232,7 +237,11 @@ public class EvmToolCommand implements Runnable {
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
-      Code code = evm.getCode(Hash.hash(codeHexString), codeHexString);
+      Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
+      if (!code.isValid()) {
+        out.println(((CodeInvalid) code).getInvalidReason());
+        return;
+      }
       final Stopwatch stopwatch = Stopwatch.createUnstarted();
       long lastTime = 0;
       do {
@@ -298,7 +307,8 @@ public class EvmToolCommand implements Runnable {
                     .put("gasUser", "0x" + Long.toHexString(evmGas))
                     .put("timens", lastTime)
                     .put("time", lastTime / 1000)
-                    .put("gasTotal", "0x" + Long.toHexString(evmGas)));
+                    .put("gasTotal", "0x" + Long.toHexString(evmGas))
+                    .put("output", messageFrame.getOutputData().toHexString()));
           }
         }
         lastTime = stopwatch.elapsed().toNanos();

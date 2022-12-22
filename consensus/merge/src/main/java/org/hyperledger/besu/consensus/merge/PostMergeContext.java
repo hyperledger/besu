@@ -63,6 +63,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
+  private boolean isCheckpointPostMergeSync;
 
   // TODO: cleanup - isChainPruningEnabled will not be required after
   // https://github.com/hyperledger/besu/pull/4703 is merged.
@@ -77,6 +78,7 @@ public class PostMergeContext implements MergeContext {
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
+    this.isCheckpointPostMergeSync = false;
   }
 
   public static PostMergeContext get() {
@@ -139,7 +141,9 @@ public class PostMergeContext implements MergeContext {
     return Optional.ofNullable(syncState.get()).map(s -> !s.isInSync()).orElse(Boolean.TRUE)
         // this is necessary for when we do not have a sync target yet, like at startup.
         // not being stopped at ttd implies we are syncing.
-        && !syncState.get().hasReachedTerminalDifficulty().orElse(Boolean.FALSE);
+        && Optional.ofNullable(syncState.get())
+            .map(s -> !(s.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)))
+            .orElse(Boolean.TRUE);
   }
 
   @Override
@@ -278,5 +282,15 @@ public class PostMergeContext implements MergeContext {
   @Override
   public boolean isChainPruningEnabled() {
     return isChainPruningEnabled;
+  }
+
+  public PostMergeContext setCheckpointPostMergeSync(final boolean isCheckpointPostMergeSync) {
+    this.isCheckpointPostMergeSync = isCheckpointPostMergeSync;
+    return this;
+  }
+
+  @Override
+  public boolean isCheckpointPostMergeSync() {
+    return this.isCheckpointPostMergeSync;
   }
 }

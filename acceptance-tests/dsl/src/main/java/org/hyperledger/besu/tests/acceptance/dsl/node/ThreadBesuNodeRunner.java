@@ -58,6 +58,7 @@ import org.hyperledger.besu.services.StorageServiceImpl;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -147,8 +148,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .setBootNodes(bootnodes);
     node.getConfiguration().getGenesisConfig().ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
+    final SynchronizerConfiguration synchronizerConfiguration =
+        new SynchronizerConfiguration.Builder().build();
     final BesuControllerBuilder builder =
-        new BesuController.Builder().fromEthNetworkConfig(ethNetworkConfig);
+        new BesuController.Builder()
+            .fromEthNetworkConfig(
+                ethNetworkConfig, Collections.emptyMap(), synchronizerConfiguration.getSyncMode());
 
     final KeyValueStorageProvider storageProvider =
         new KeyValueStorageProviderBuilder()
