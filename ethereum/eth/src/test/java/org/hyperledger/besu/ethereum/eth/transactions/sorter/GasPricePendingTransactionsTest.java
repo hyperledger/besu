@@ -12,22 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions;
+package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.Optional;
-import java.util.Random;
 
-public class BaseFeePendingTransactionsTest extends AbstractPendingTransactionsTestBase {
+public class GasPricePendingTransactionsTest extends AbstractPendingTransactionsTestBase {
 
   @Override
   AbstractPendingTransactionsSorter getSorter(
@@ -37,18 +31,5 @@ public class BaseFeePendingTransactionsTest extends AbstractPendingTransactionsT
         clock.orElse(TestClock.system(ZoneId.systemDefault())),
         metricsSystem,
         AbstractPendingTransactionsTestBase::mockBlockHeader);
-  }
-
-  private static final Random randomizeTxType = new Random();
-
-  @Override
-  protected Transaction createTransaction(final long transactionNumber) {
-    var tx = new TransactionTestFixture().value(Wei.of(transactionNumber)).nonce(transactionNumber);
-    if (randomizeTxType.nextBoolean()) {
-      tx.type(TransactionType.EIP1559)
-          .maxFeePerGas(Optional.of(Wei.of(5000L)))
-          .maxPriorityFeePerGas(Optional.of(Wei.of(50L)));
-    }
-    return tx.createTransaction(KEYS1);
   }
 }
