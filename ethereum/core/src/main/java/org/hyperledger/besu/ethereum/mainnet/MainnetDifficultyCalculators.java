@@ -99,8 +99,7 @@ public abstract class MainnetDifficultyCalculators {
           calculateThawedDifficulty(time, parent, GRAY_GLACIER_FAKE_BLOCK_OFFSET);
 
   // Proof-of-Stake difficulty must not be altered
-  static final DifficultyCalculator PROOF_OF_STAKE_DIFFICULTY =
-      (time, parent, protocolContext) -> parent.getDifficulty().getAsBigInteger();
+  static final DifficultyCalculator PROOF_OF_STAKE_DIFFICULTY = (time, parent, protocolContext) -> BigInteger.ZERO;
 
   private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {
