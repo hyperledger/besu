@@ -349,6 +349,7 @@ public interface GasCalculator {
   /**
    * Returns the cost for an SSTORE operation.
    *
+   * @param newValue the new value to be stored
    * @param currentValue the supplier of the current value
    * @param originalValue the supplier of the original value
    * @return the gas cost for the SSTORE operation
