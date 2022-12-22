@@ -64,9 +64,7 @@ public class SStoreOperation extends AbstractOperation {
         Suppliers.memoize(() -> account.getOriginalStorageValue(key));
 
     final long cost =
-        gasCalculator()
-                .calculateStorageCost(
-                    account, key, newValue, currentValueSupplier, originalValueSupplier)
+        gasCalculator().calculateStorageCost(newValue, currentValueSupplier, originalValueSupplier)
             + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
 
     final long remainingGas = frame.getRemainingGas();
@@ -81,8 +79,7 @@ public class SStoreOperation extends AbstractOperation {
     // Increment the refund counter.
     frame.incrementGasRefund(
         gasCalculator()
-            .calculateStorageRefundAmount(
-                account, key, newValue, currentValueSupplier, originalValueSupplier));
+            .calculateStorageRefundAmount(newValue, currentValueSupplier, originalValueSupplier));
 
     account.setStorageValue(key, newValue);
     frame.storageWasUpdated(key, newValue);

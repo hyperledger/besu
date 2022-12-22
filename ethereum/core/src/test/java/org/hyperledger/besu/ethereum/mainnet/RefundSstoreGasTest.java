@@ -19,7 +19,6 @@ import static org.apache.tuweni.units.bigints.UInt256.ZERO;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -123,8 +122,6 @@ public class RefundSstoreGasTest {
   @Parameter(value = 6)
   public long expectedGasRefund;
 
-  private final Account account = mock(Account.class);
-
   private final Supplier<UInt256> mockSupplierForOriginalValue = mockSupplier();
   private final Supplier<UInt256> mockSupplierCurrentValue = mockSupplier();
 
@@ -143,11 +140,7 @@ public class RefundSstoreGasTest {
   public void shouldChargeCorrectGas() {
     Assertions.assertThat(
             gasCalculator.calculateStorageCost(
-                account,
-                UInt256.ZERO,
-                newValue,
-                mockSupplierCurrentValue,
-                mockSupplierForOriginalValue))
+                newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
         .isEqualTo(expectedGasCost);
   }
 
@@ -155,11 +148,7 @@ public class RefundSstoreGasTest {
   public void shouldRefundCorrectGas() {
     Assertions.assertThat(
             gasCalculator.calculateStorageRefundAmount(
-                account,
-                UInt256.ZERO,
-                newValue,
-                mockSupplierCurrentValue,
-                mockSupplierForOriginalValue))
+                newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
         .isEqualTo(expectedGasRefund);
   }
 }

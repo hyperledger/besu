@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import com.google.common.base.Supplier;
@@ -49,17 +48,15 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1283
   public long calculateStorageCost(
-      final Account account,
-      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
 
-    UInt256 localCurrentValue = currentValue.get();
+    final UInt256 localCurrentValue = currentValue.get();
     if (localCurrentValue.equals(newValue)) {
       return SSTORE_NO_OP_COST;
     } else {
-      UInt256 localOriginalValue = originalValue.get();
+      final UInt256 localOriginalValue = originalValue.get();
       if (localOriginalValue.equals(localCurrentValue)) {
         return localOriginalValue.isZero()
             ? SSTORE_FIRST_DIRTY_NEW_STORAGE_COST
@@ -73,8 +70,6 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1283
   public long calculateStorageRefundAmount(
-      final Account account,
-      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {

@@ -418,8 +418,6 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long calculateStorageCost(
-      final Account account,
-      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
@@ -430,8 +428,6 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long calculateStorageRefundAmount(
-      final Account account,
-      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {

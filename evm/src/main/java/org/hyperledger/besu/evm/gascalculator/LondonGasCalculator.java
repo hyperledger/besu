@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.evm.account.Account;
-
 import com.google.common.base.Supplier;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -41,17 +39,15 @@ public class LondonGasCalculator extends BerlinGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-3529
   public long calculateStorageRefundAmount(
-      final Account account,
-      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
 
-    UInt256 localCurrentValue = currentValue.get();
+    final UInt256 localCurrentValue = currentValue.get();
     if (localCurrentValue.equals(newValue)) {
       return 0L;
     } else {
-      UInt256 localOriginalValue = originalValue.get();
+      final UInt256 localOriginalValue = originalValue.get();
       if (localOriginalValue.equals(localCurrentValue)) {
         if (localOriginalValue.isZero()) {
           return 0L;

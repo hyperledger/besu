@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.evm.account.Account;
-
 import com.google.common.base.Supplier;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -35,13 +33,10 @@ public class PetersburgGasCalculator extends ConstantinopleGasCalculator {
   private static final long STORAGE_RESET_REFUND_AMOUNT = 15_000L;
 
   /**
-   * Same as {#link {@link FrontierGasCalculator#calculateStorageCost(Account, UInt256, UInt256,
-   * Supplier, Supplier)}
+   * Same as {#link {@link FrontierGasCalculator#calculateStorageCost(UInt256, Supplier, Supplier)}
    */
   @Override
   public long calculateStorageCost(
-      final Account account,
-      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
@@ -51,13 +46,11 @@ public class PetersburgGasCalculator extends ConstantinopleGasCalculator {
   }
 
   /**
-   * Same as {#link {@link FrontierGasCalculator#calculateStorageRefundAmount(Account, UInt256,
-   * UInt256, Supplier, Supplier)}
+   * Same as {#link {@link FrontierGasCalculator#calculateStorageRefundAmount(UInt256, Supplier,
+   * Supplier)}
    */
   @Override
   public long calculateStorageRefundAmount(
-      final Account account,
-      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
