@@ -104,10 +104,6 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         nextBlockBaseFee.get()::toHumanReadableString,
         newNextBlockBaseFee::toHumanReadableString);
 
-    if (nextBlockBaseFee.orElse(Wei.ZERO).equals(newNextBlockBaseFee)) {
-      return;
-    }
-
     nextBlockBaseFee = Optional.of(newNextBlockBaseFee);
     orderByFee.clear();
     orderByFee.addAll(prioritizedPendingTransactions.values());
