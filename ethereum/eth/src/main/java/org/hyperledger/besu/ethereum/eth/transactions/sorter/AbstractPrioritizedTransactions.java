@@ -438,7 +438,11 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
         .map(Transaction::getHash)
         .map(prioritizedPendingTransactions::remove)
         .filter(Objects::nonNull)
-        .forEach(tx -> removeFromOrderedTransactions(tx, true));
+        .forEach(
+            tx -> {
+              removeFromOrderedTransactions(tx, true);
+              incrementTransactionRemovedCounter(tx.isReceivedFromLocalSource(), true);
+            });
 
     // update expected nonce for senders
     final var orderedConfirmedNonceBySender = maxConfirmedNonceNySender(confirmedTransactions);
