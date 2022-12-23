@@ -28,15 +28,14 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LayeredTrieLogManager
-    extends AbstractTrieLogManager<LayeredTrieLogManager.LayeredWorldStateCache> {
+public class LayeredTrieLogManager extends AbstractTrieLogManager<BonsaiLayeredWorldState> {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredTrieLogManager.class);
 
-  public LayeredTrieLogManager(
+  LayeredTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, LayeredWorldStateCache> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedWorldState<BonsaiLayeredWorldState>> cachedWorldStatesByHash) {
     super(blockchain, worldStateStorage, maxLayersToLoad, cachedWorldStatesByHash);
   }
 
@@ -47,23 +46,19 @@ public class LayeredTrieLogManager
     this(blockchain, worldStateStorage, maxLayersToLoad, new HashMap<>());
   }
 
-  public LayeredTrieLogManager(
-      final Blockchain blockchain, final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this(blockchain, worldStateStorage, RETAINED_LAYERS, new HashMap<>());
-  }
-
   @Override
   public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
-      final BonsaiWorldStateArchive worldStateArchive) {
+      final BonsaiWorldStateArchive worldStateArchive,
+      final BonsaiPersistedWorldState forWorldState) {
 
     final BonsaiLayeredWorldState bonsaiLayeredWorldState =
         new BonsaiLayeredWorldState(
             blockchain,
             worldStateArchive,
-            Optional.of((BonsaiPersistedWorldState) worldStateArchive.getMutable()),
+            Optional.of(forWorldState),
             blockHeader.getNumber(),
             worldStateRootHash,
             trieLog);
@@ -71,7 +66,7 @@ public class LayeredTrieLogManager
         LOG,
         "adding layered world state for block {}, state root hash {}",
         blockHeader::toLogString,
-        worldStateRootHash::toHexString);
+        worldStateRootHash::toShortHexString);
     cachedWorldStatesByHash.put(
         blockHeader.getHash(), new LayeredWorldStateCache(bonsaiLayeredWorldState));
   }
@@ -91,12 +86,17 @@ public class LayeredTrieLogManager
         });
   }
 
-  public static class LayeredWorldStateCache implements CachedWorldState {
+  public static class LayeredWorldStateCache implements CachedWorldState<BonsaiLayeredWorldState> {
 
     final BonsaiLayeredWorldState layeredWorldState;
 
     public LayeredWorldStateCache(final BonsaiLayeredWorldState layeredWorldState) {
       this.layeredWorldState = layeredWorldState;
+    }
+
+    @Override
+    public void dispose() {
+      // no-op
     }
 
     @Override
