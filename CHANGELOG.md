@@ -4,21 +4,16 @@
 ### Breaking Changes
 - GoQuorum-compatible privacy is deprecated and will be removed in 23.4
 - IBFT 1.0 is deprecated and will be removed in 23.4
+- Optimize SSTORE Operation execution time (memoize current and original value) [#4836](https://github.com/hyperledger/besu/pull/4836)
 
 ### Additions and Improvements
 - Added post-execution state logging option to EVM Tool [#4709](https://github.com/hyperledger/besu/pull/4709)
-
-## 22.10.4
-
-### Additions and Improvements
 - Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
 - Add timestamp fork support, including shanghaiTime and cancunTime forks [#4743](https://github.com/hyperledger/besu/pull/4743)
 - Optimization:  Memoize transaction size and hash at the same time [#4812](https://github.com/hyperledger/besu/pull/4812)
 
-### Breaking Changes
-- Optimize SSTORE Operation execution time (memoize current and original value) [#4836](https://github.com/hyperledger/besu/pull/4836)
-
 ### Bug Fixes
+- Fix for segmentation faults on worldstate truncation, snap-sync starts [#4786](https://github.com/hyperledger/besu/pull/4786)
 
 ### Download Links
 
