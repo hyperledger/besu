@@ -82,6 +82,14 @@ public class FixedStack<T> {
     return removed;
   }
 
+  public T peek() {
+    if (top < 0) {
+      return null;
+    } else {
+      return entries[top];
+    }
+  }
+
   /**
    * Pops the specified number of operands from the stack.
    *

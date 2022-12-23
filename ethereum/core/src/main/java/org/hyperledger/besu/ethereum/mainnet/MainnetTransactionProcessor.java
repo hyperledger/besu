@@ -37,6 +37,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
@@ -400,8 +401,13 @@ public class MainnetTransactionProcessor {
 
       messageFrameStack.addFirst(initialFrame);
 
-      while (!messageFrameStack.isEmpty()) {
-        process(messageFrameStack.peekFirst(), operationTracer);
+      if (initialFrame.getCode().isValid()) {
+        while (!messageFrameStack.isEmpty()) {
+          process(messageFrameStack.peekFirst(), operationTracer);
+        }
+      } else {
+        initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        initialFrame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INVALID_CODE));
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {

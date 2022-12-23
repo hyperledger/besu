@@ -221,10 +221,10 @@ public class EvmToolCommand implements Runnable {
       Log4j2ConfiguratorUtil.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int remainingIters = this.repeat;
       Log4j2ConfiguratorUtil.setLevel(
-          "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
+          "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
       final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
       Log4j2ConfiguratorUtil.setLevel(
-          "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
+          "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
       final Transaction tx =
           new Transaction(
               0,
