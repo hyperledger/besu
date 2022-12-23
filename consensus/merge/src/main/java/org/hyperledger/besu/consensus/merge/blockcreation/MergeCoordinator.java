@@ -527,7 +527,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         // move chain head forward:
         return blockchain.forwardToBlock(newHead);
       } else {
-        // failed to move head forward:
+        debugLambda(
+            LOG,
+            "Failed to move the worldstate forward to hash {}, not moving chain head",
+            newHead::toLogString);
         return false;
       }
     }
