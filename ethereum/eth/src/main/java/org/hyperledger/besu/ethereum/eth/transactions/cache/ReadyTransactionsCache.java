@@ -407,7 +407,6 @@ public class ReadyTransactionsCache {
       var promotableEntry = itSenderTxs.next();
       if (promotionFilter.test(promotableEntry.getValue())) {
         promotableTxs.add(promotableEntry.getValue());
-        decreaseTotalSize(promotableEntry.getValue());
       } else {
         break;
       }
