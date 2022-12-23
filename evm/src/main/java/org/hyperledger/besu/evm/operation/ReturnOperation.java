@@ -24,7 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class ReturnOperation extends AbstractOperation {
 
   public ReturnOperation(final GasCalculator gasCalculator) {
-    super(0xF3, "RETURN", 2, 0, 1, gasCalculator);
+    super(0xF3, "RETURN", 2, 0, gasCalculator);
   }
 
   @Override

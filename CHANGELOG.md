@@ -1,4 +1,13 @@
 # Changelog
+## 23.1.0-beta
+
+### Breaking Changes
+- GoQuorum-compatible privacy is deprecated and will be removed in 23.4
+- IBFT 1.0 is deprecated and will be removed in 23.4
+
+### Additions and Improvements
+- Added post-execution state logging option to EVM Tool [#4709](https://github.com/hyperledger/besu/pull/4709)
+
 ## 22.10.4
 
 ### Additions and Improvements
@@ -37,7 +46,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3
 This is a hotfix release to resolve a race condition that results in segfaults, introduced in 22.10.1 release.
 
 ### Bug Fixes
-- bugfix for async operations on Snashot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
+- bugfix for async operations on Snapshot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
 
 ### Download Links
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.tar.gz  / sha256: cdb36141e3cba6379d35016e0a2de2edba579d4786124b5f7257b1e4a68867a2
@@ -54,7 +63,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2
 - Support for ephemeral testnet Shandong, for EOF testing. [#4599](https://github.com/hyperledger/besu/pull/4599)
 - Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
-- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
+- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [#4580](https://github.com/hyperledger/besu/pull/4580)
 - Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 - Implement Eth/67 sub-protocol [#4596](https://github.com/hyperledger/besu/issues/4596)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)

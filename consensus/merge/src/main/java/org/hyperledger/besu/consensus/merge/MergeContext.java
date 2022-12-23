@@ -71,4 +71,6 @@ public interface MergeContext extends ConsensusContext {
   default boolean isChainPruningEnabled() {
     return false;
   }
+
+  boolean isCheckpointPostMergeSync();
 }

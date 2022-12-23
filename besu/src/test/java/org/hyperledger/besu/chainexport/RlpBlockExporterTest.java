@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -83,7 +84,7 @@ public final class RlpBlockExporterTest {
   private static BesuController createController() throws IOException {
     final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.mainnet())
+        .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())

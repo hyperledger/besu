@@ -85,6 +85,7 @@ import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
@@ -139,6 +140,7 @@ import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningCon
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
@@ -1424,6 +1426,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
 
+      setIgnorableStorageSegments();
+
       instantiateSignatureAlgorithmFactory();
 
       logger.info("Starting Besu");
@@ -1780,6 +1784,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     ensureValidPeerBoundParams();
     validateRpcOptionsParams();
     validateChainDataPruningParams();
+    validatePostMergeCheckpointBlockRequirements();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
@@ -2003,6 +2008,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !SyncMode.isFullSync(getDefaultSyncModeIfNotSet(syncMode)),
         singletonList("--fast-sync-min-peers"));
 
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
+        SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet(syncMode)),
+        singletonList("--Xcheckpoint-post-merge-enabled"));
+
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
       logger.warn(
@@ -2156,7 +2167,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
-        .fromEthNetworkConfig(updateNetworkConfig(network), genesisConfigOverrides)
+        .fromEthNetworkConfig(updateNetworkConfig(network), genesisConfigOverrides, syncMode)
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
@@ -3179,7 +3190,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
-  private void checkIfRequiredPortsAreAvailable() {
+  protected void checkIfRequiredPortsAreAvailable() {
     final List<Integer> unavailablePorts = new ArrayList<>();
     getEffectivePorts().stream()
         .filter(Objects::nonNull)
@@ -3342,6 +3353,52 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         .getConfigOptions(genesisConfigOverrides))
             .getTerminalTotalDifficulty()
             .isPresent());
+  }
+
+  private void setIgnorableStorageSegments() {
+    if (!unstableChainPruningOptions.getChainDataPruningEnabled()) {
+      rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
+    }
+  }
+
+  private void validatePostMergeCheckpointBlockRequirements() {
+    final GenesisConfigOptions genesisOptions =
+        Optional.ofNullable(genesisConfigOptions)
+            .orElseGet(
+                () ->
+                    GenesisConfigFile.fromConfig(
+                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
+                        .getConfigOptions(genesisConfigOverrides));
+    final SynchronizerConfiguration synchronizerConfiguration =
+        unstableSynchronizerOptions.toDomainObject().build();
+    final Optional<UInt256> terminalTotalDifficulty = genesisOptions.getTerminalTotalDifficulty();
+    final CheckpointConfigOptions checkpointConfigOptions = genesisOptions.getCheckpointOptions();
+    if (synchronizerConfiguration.isCheckpointPostMergeEnabled()) {
+      if (!checkpointConfigOptions.isValid()) {
+        throw new InvalidConfigurationException(
+            "Near head checkpoint sync requires a checkpoint block configured in the genesis file");
+      }
+      terminalTotalDifficulty.ifPresentOrElse(
+          ttd -> {
+            if (UInt256.fromHexString(
+                        genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
+                    .equals(UInt256.ZERO)
+                && ttd.equals(UInt256.ZERO)) {
+              throw new InvalidConfigurationException(
+                  "Post Merge checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+            }
+            if (UInt256.fromHexString(
+                    genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
+                .lessOrEqualThan(ttd)) {
+              throw new InvalidConfigurationException(
+                  "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
+            }
+          },
+          () -> {
+            throw new InvalidConfigurationException(
+                "Near head checkpoint sync requires TTD in the genesis file");
+          });
+    }
   }
 
   private boolean isMergeEnabled() {
