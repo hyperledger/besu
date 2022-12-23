@@ -549,7 +549,7 @@ public class CodeV1 implements Code {
     {3, 1, 1}, // 0xf0 - CREATE
     {7, 1, 1}, // 0xf1 - CALL
     {0, 1, 1}, // 0xf2 - CALLCODE
-    {2, 0, 1}, // 0xf3 - RETURN
+    {2, 0, -1}, // 0xf3 - RETURN
     {6, 1, 1}, // 0xf4 - DELEGATECALL
     {4, 1, 1}, // 0xf5 - CREATE2
     {0, 0, 0}, // 0xf6
