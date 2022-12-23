@@ -486,6 +486,7 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
         prioritizedPendingTransactions.remove(pendingTransaction.getHash());
     if (removedPendingTransaction != null) {
       removeFromOrderedTransactions(removedPendingTransaction, false);
+      incrementTransactionRemovedCounter(pendingTransaction.isReceivedFromLocalSource(), false);
     }
     incrementTransactionReplacedCounter(pendingTransaction.isReceivedFromLocalSource());
   }

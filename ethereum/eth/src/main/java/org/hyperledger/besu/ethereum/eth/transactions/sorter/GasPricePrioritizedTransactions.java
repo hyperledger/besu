@@ -78,10 +78,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   @Override
   protected void removeFromOrderedTransactions(
       final PendingTransaction removedPendingTx, final boolean addedToBlock) {
-    if (orderByFee.remove(removedPendingTx)) {
-      incrementTransactionRemovedCounter(
-          removedPendingTx.isReceivedFromLocalSource(), addedToBlock);
-    }
+    orderByFee.remove(removedPendingTx);
   }
 
   @Override

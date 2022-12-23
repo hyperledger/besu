@@ -126,9 +126,8 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   protected void removeFromOrderedTransactions(
       final PendingTransaction removedPendingTx, final boolean addedToBlock) {
     // when added to block we can avoid removing from orderByFee since it will be recreated
-    if (addedToBlock || orderByFee.remove(removedPendingTx)) {
-      incrementTransactionRemovedCounter(
-          removedPendingTx.isReceivedFromLocalSource(), addedToBlock);
+    if (!addedToBlock) {
+      orderByFee.remove(removedPendingTx);
     }
   }
 
