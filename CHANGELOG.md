@@ -14,6 +14,7 @@
 
 ### Bug Fixes
 - Fix for segmentation faults on worldstate truncation, snap-sync starts [#4786](https://github.com/hyperledger/besu/pull/4786)
+- Fix for worldstate mismatch on failed forkchoiceUpdate [#4862](https://github.com/hyperledger/besu/pull/4862)
 
 ### Download Links
 
