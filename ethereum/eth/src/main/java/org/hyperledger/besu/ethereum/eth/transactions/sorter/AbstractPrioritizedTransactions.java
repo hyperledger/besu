@@ -264,7 +264,7 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
           "Demote transactions for the sender of the current least priority transaction {}, to make space for the incoming transaction {}",
           currentLeastPriorityTx::toTraceLog,
           addedReadyTransaction::toTraceLog);
-      demoteTransactionForSenderAfter(currentLeastPriorityTx);
+      demoteLastTransactionForSenderOf(currentLeastPriorityTx);
     }
 
     addPrioritizedTransaction(addedReadyTransaction);
@@ -502,7 +502,7 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
     return orderByFee.descendingIterator();
   }
 
-  private void demoteTransactionForSenderAfter(final PendingTransaction firstDemotedTx) {
+  private void demoteLastTransactionForSenderOf(final PendingTransaction firstDemotedTx) {
     final var demotableSenderTxs =
         readyTransactionsCache
             .streamReadyTransactions(firstDemotedTx.getSender(), firstDemotedTx.getNonce())
@@ -519,6 +519,16 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
 
     prioritizedPendingTransactions.remove(lastPrioritizedForSender.getHash());
     removeFromOrderedTransactions(lastPrioritizedForSender, false);
+
+    expectedNonceForSender.compute(
+        firstDemotedTx.getSender(),
+        (sender, removedNonce) -> {
+          if (readyTransactionsCache.get(sender, removedNonce - 1).isPresent()) {
+            return removedNonce - 1;
+          }
+          return null;
+        });
+
     traceLambda(
         LOG,
         "Demoted transaction {}, to make space for the incoming transaction",
