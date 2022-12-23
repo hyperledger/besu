@@ -124,9 +124,10 @@ public class ReadyTransactionsCache {
     return OptionalLong.empty();
   }
 
-  public void removeConfirmedTransactions(final Map<Address, Optional<Long>> confirmedBySender) {
+  public void removeConfirmedTransactions(
+      final Map<Address, Optional<Long>> orderedConfirmedNonceBySender) {
 
-    for (var senderMaxConfirmedNonce : confirmedBySender.entrySet()) {
+    for (var senderMaxConfirmedNonce : orderedConfirmedNonceBySender.entrySet()) {
       final var maxConfirmedNonce = senderMaxConfirmedNonce.getValue().get();
       final var sender = senderMaxConfirmedNonce.getKey();
 
@@ -368,7 +369,8 @@ public class ReadyTransactionsCache {
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final long maxConfirmedNonce) {
     if (senderTxs != null) {
-      var confirmedTxsToRemove = senderTxs.headMap(maxConfirmedNonce, true);
+      final var confirmedTxsToRemove = senderTxs.headMap(maxConfirmedNonce, true);
+      confirmedTxsToRemove.values().stream().forEach(this::decreaseTotalSize);
       confirmedTxsToRemove.clear();
 
       postponedCache.removeForSenderBelowNonce(sender, maxConfirmedNonce);
