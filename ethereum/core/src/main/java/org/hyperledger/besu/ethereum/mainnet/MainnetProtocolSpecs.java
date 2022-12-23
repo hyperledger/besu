@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.MainnetDifficultyCalculators.PROOF_OF_STAKE_DIFFICULTY;
-
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
@@ -636,10 +634,9 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .difficultyCalculator(PROOF_OF_STAKE_DIFFICULTY)
+        .difficultyCalculator(MainnetDifficultyCalculators.PROOF_OF_STAKE_DIFFICULTY)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::mergeBlockHeaderValidator)
         .blockReward(Wei.ZERO)
-        .skipZeroBlockRewards(true)
         .name("ParisFork");
   }
 

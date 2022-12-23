@@ -15,16 +15,21 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 public class MergeProtocolSchedule {
 
@@ -43,7 +48,11 @@ public class MergeProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(0, MergeProtocolSchedule::applyMergeSpecificModifications),
+            ProtocolSpecAdapters.create(
+                0,
+                (specBuilder) ->
+                    MergeProtocolSchedule.applyMergeSpecificModifications(
+                        specBuilder, config.getChainId())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
@@ -60,7 +69,9 @@ public class MergeProtocolSchedule {
             DEFAULT_CHAIN_ID,
             ProtocolSpecAdapters.create(
                 config.getShanghaiTime().orElse(0),
-                MergeProtocolSchedule::applyMergeSpecificModifications),
+                (specBuilder) ->
+                    MergeProtocolSchedule.applyMergeSpecificModifications(
+                        specBuilder, config.getChainId())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
@@ -69,8 +80,21 @@ public class MergeProtocolSchedule {
   }
 
   private static ProtocolSpecBuilder applyMergeSpecificModifications(
-      final ProtocolSpecBuilder specBuilder) {
+      final ProtocolSpecBuilder specBuilder, final Optional<BigInteger> chainId) {
 
-    return specBuilder.blockProcessorBuilder(MergeBlockProcessor::new);
+    return specBuilder
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.paris(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), EvmConfiguration.DEFAULT))
+        .blockProcessorBuilder(MergeBlockProcessor::new)
+        .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
+        .blockReward(Wei.ZERO)
+        .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
+        .skipZeroBlockRewards(true);
+  }
+
+  private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
+    return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
 }
