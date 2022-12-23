@@ -16,6 +16,7 @@
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -39,6 +40,8 @@ public interface EvmToolComponent {
   Function<Integer, ProtocolSpec> getProtocolSpec();
 
   WorldUpdater getWorldUpdater();
+
+  MutableWorldState getWorldState();
 
   Blockchain getBlockchain();
 }
