@@ -39,9 +39,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
-  //0x776f726c64526f6f74
+  // 0x776f726c64526f6f74
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
-  //0x776f726c64426c6f636b48617368
+  // 0x776f726c64426c6f636b48617368
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
