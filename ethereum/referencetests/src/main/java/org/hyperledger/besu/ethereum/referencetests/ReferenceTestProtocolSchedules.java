@@ -76,9 +76,6 @@ public class ReferenceTestProtocolSchedules {
     builder.put("Shanghai", createSchedule(new StubGenesisConfigOptions().shanghaiTime(0)));
     builder.put("Cancun", createSchedule(new StubGenesisConfigOptions().cancunTime(0)));
     builder.put("Shandong", createSchedule(new StubGenesisConfigOptions().shandongBlock(0)));
-    builder.put("Merge+3540+3670", createSchedule(new StubGenesisConfigOptions().shandongBlock(0)));
-    builder.put("Merge+3860", createSchedule(new StubGenesisConfigOptions().shanghaiTime(0)));
-    builder.put("Merge+3855", createSchedule(new StubGenesisConfigOptions().shanghaiTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
