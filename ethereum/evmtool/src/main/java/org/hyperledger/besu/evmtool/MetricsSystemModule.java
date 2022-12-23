@@ -20,6 +20,8 @@ import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import javax.inject.Singleton;
+
 import dagger.Module;
 import dagger.Provides;
 
@@ -28,6 +30,7 @@ import dagger.Provides;
 public class MetricsSystemModule {
 
   @Provides
+  @Singleton
   MetricsSystem getMetricsSystem() {
     return MetricsSystemFactory.create(MetricsConfiguration.builder().build());
   }
