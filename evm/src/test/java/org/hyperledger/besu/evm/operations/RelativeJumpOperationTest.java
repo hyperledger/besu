@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.evm.operations;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,7 +29,6 @@ import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -54,7 +54,7 @@ class RelativeJumpOperationTest {
     RelativeJumpOperation rjump = new RelativeJumpOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjump.execute(messageFrame, null);
 
-    Assertions.assertThat(rjumpResult.getPcIncrement())
+    assertThat(rjumpResult.getPcIncrement())
         .isEqualTo(code.size() - rjumpOperationIndex + jumpLength);
   }
 
@@ -77,7 +77,29 @@ class RelativeJumpOperationTest {
     RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
 
-    Assertions.assertThat(rjumpResult.getPcIncrement()).isEqualTo(2 + 1);
+    assertThat(rjumpResult.getPcIncrement()).isEqualTo(2 + 1);
+  }
+
+  @Test
+  void rjumpiHitOperation() {
+    final GasCalculator gasCalculator = mock(GasCalculator.class);
+    final Code mockCode = mock(Code.class);
+    final int rjumpOperationIndex = 3;
+    final Bytes code = Bytes.fromHexString("00".repeat(rjumpOperationIndex) + "5dfffc00");
+
+    MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(mockCode)
+            .pc(rjumpOperationIndex)
+            .initialGas(5L)
+            .pushStackItem(Bytes.ofUnsignedInt(1))
+            .build();
+    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
+
+    RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
+    Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
+
+    assertThat(rjumpResult.getPcIncrement()).isEqualTo(-1);
   }
 
   @Test
@@ -104,6 +126,30 @@ class RelativeJumpOperationTest {
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
 
-    Assertions.assertThat(rjumpResult.getPcIncrement()).isEqualTo(1 + 2 * jumpVectorSize + 1);
+    assertThat(rjumpResult.getPcIncrement()).isEqualTo(1 + 2 * jumpVectorSize + 1);
+  }
+
+  @Test
+  void rjumpvHitOperation() {
+    final GasCalculator gasCalculator = mock(GasCalculator.class);
+    final Code mockCode = mock(Code.class);
+    final int rjumpOperationIndex = 3;
+    final int jumpVectorSize = 2;
+    final Bytes code =
+        Bytes.fromHexString("00".repeat(rjumpOperationIndex) + "5e" + "02" + "1234" + "5678");
+
+    MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(mockCode)
+            .pc(rjumpOperationIndex)
+            .initialGas(5L)
+            .pushStackItem(Bytes.of(jumpVectorSize - 1))
+            .build();
+    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
+
+    RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
+    Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
+
+    assertThat(rjumpResult.getPcIncrement()).isEqualTo(2 + 2 * jumpVectorSize + 0x5678);
   }
 }

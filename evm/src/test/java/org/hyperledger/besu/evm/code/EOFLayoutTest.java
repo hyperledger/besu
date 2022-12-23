@@ -149,43 +149,6 @@ public class EOFLayoutTest {
             "Incomplete data section",
             1
           },
-        });
-  }
-
-  public static Collection<Object[]> correctContainers() {
-
-    return Arrays.asList(
-        new Object[][] {
-          {
-            "EF0001 010004 0200010001 030000 00 00000000 FE",
-            "no data section, one code section",
-            null,
-            1
-          },
-          {
-            "EF0001 010004 0200010001 030001 00 00000000 FE DA",
-            "with data section, one code section",
-            null,
-            1
-          },
-          {
-            "EF0001 010008 02000200010001 030000 00 00000000 00000000 FE FE",
-            "no data section, multiple code section",
-            null,
-            1
-          },
-          {
-            "EF0001 010008 02000200010001 030001 00 00000000 00000000 FE FE DA",
-            "with data section, multiple code section",
-            null,
-            1
-          },
-          {
-            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00010000 02030000 FE 5000 3000 8000",
-            "non-void input and output types",
-            null,
-            1
-          },
           {
             "EF0001 0200010001 030001 00 FE DA",
             "type section missing",
@@ -223,11 +186,109 @@ public class EOFLayoutTest {
             1
           },
           {"EF0001 00", "all sections missing", "Expected kind 1 but read kind 0", 1},
+          {
+            "EF0001 010004 020401"
+                + " 0001".repeat(1025)
+                + " 030000 00"
+                + " 00000000".repeat(1025)
+                + " FE".repeat(1025),
+            "no data section, 1025 code sections",
+            "Too many code sections - 0x401",
+            1
+          },
+        });
+  }
+
+  public static Collection<Object[]> correctContainers() {
+    return Arrays.asList(
+        new Object[][] {
+          {
+            "EF0001 010004 0200010001 030000 00 00000000 FE",
+            "no data section, one code section",
+            null,
+            1
+          },
+          {
+            "EF0001 010004 0200010001 030001 00 00000000 FE DA",
+            "with data section, one code section",
+            null,
+            1
+          },
+          {
+            "EF0001 010008 02000200010001 030000 00 00000000 00000000 FE FE",
+            "no data section, multiple code section",
+            null,
+            1
+          },
+          {
+            "EF0001 010008 02000200010001 030001 00 00000000 00000000 FE FE DA",
+            "with data section, multiple code section",
+            null,
+            1
+          },
+          {
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00010000 02030000 FE 5000 3000 8000",
+            "non-void input and output types",
+            null,
+            1
+          },
+          {
+            "EF0001 010004 020400"
+                + " 0001".repeat(1024)
+                + " 030000 00"
+                + " 00000000".repeat(1024)
+                + " FE".repeat(1024),
+            "no data section, 1024 code sections",
+            null,
+            1
+          },
+        });
+  }
+
+  public static Collection<Object[]> typeSectionTests() {
+    return Arrays.asList(
+        new Object[][] {
+          {
+            "EF0001 010008 02000200020002 030000 00 0100000000000000",
+            "Incorrect section zero type input",
+            "Code section does not have zero inputs and outputs",
+            1
+          },
+          {
+            "EF0001 010008 02000200020002 030000 00 0001000000000000",
+            "Incorrect section zero type output",
+            "Code section does not have zero inputs and outputs",
+            1
+          },
+          {
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 80000000 00010000 02030000 FE 5000 3000 8000",
+            "inputs too large",
+            "Type data input stack too large - 0x80",
+            1
+          },
+          {
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00800000 02030000 FE 5000 3000 8000",
+            "outputs too large",
+            "Type data output stack too large - 0x80",
+            1
+          },
+          {
+            "EF0001 010010 0200040001000200020002 030000 00 00000400 01000000 00010000 02030400 FE 5000 3000 8000",
+            "stack too large",
+            "Type data max stack too large - 0x400",
+            1
+          },
+          {
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00010000 02030000 FE 5000 3000 8000",
+            "non-void input and output types",
+            null,
+            1
+          }
         });
   }
 
   @ParameterizedTest(name = "{1}")
-  @MethodSource({"correctContainers", "containersWithFormatErrors"})
+  @MethodSource({"correctContainers", "containersWithFormatErrors", "typeSectionTests"})
   void test(
       final String containerString,
       final String description,

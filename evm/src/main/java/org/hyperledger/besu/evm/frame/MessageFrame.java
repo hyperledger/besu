@@ -286,6 +286,7 @@ public class MessageFrame {
     this.memory = new Memory();
     this.stack = new OperandStack(maxStackSize);
     this.returnStack = new ReturnStack();
+    returnStack.push(new ReturnStack.ReturnStackItem(0, 0, 0));
     this.output = Bytes.EMPTY;
     this.returnData = Bytes.EMPTY;
     this.logs = new ArrayList<>();
@@ -348,6 +349,15 @@ public class MessageFrame {
   }
 
   /**
+   * Set the code section index.
+   *
+   * @param section the code section index
+   */
+  public void setSection(final int section) {
+    this.section = section;
+  }
+
+  /**
    * Return the current code section. Always zero for legacy code.
    *
    * @return the current code section
@@ -362,6 +372,8 @@ public class MessageFrame {
       return ExceptionalHaltReason.CODE_SECTION_MISSING;
     } else if (stack.size() + info.getMaxStackHeight() > maxStackSize) {
       return ExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
+    } else if (stack.size() < info.getInputs()) {
+      return ExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
     } else {
       returnStack.push(
           new ReturnStack.ReturnStackItem(section, pc + 2, stack.size() - info.getInputs()));
@@ -372,12 +384,11 @@ public class MessageFrame {
   }
 
   public ExceptionalHaltReason jumpFunction(final int section) {
-    CodeSection thisInfo = code.getCodeSection(this.section);
     CodeSection info = code.getCodeSection(section);
     if (info == null) {
       return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (thisInfo.getOutputs() != info.getOutputs()) {
-      return ExceptionalHaltReason.MISMATCHED_CODE_SECTION_OUTPUTS;
+    } else if (stackSize() != peekReturnStack().getStackHeight() + info.getInputs()) {
+      return ExceptionalHaltReason.JUMPF_STACK_MISMATCH;
     } else {
       pc = -1; // will be +1ed at end of operations loop
       this.section = section;
@@ -385,12 +396,20 @@ public class MessageFrame {
     }
   }
 
-  public void returnFunction() {
+  public ExceptionalHaltReason returnFunction() {
     CodeSection thisInfo = code.getCodeSection(this.section);
     var returnInfo = returnStack.pop();
-    stack.preserveTop(returnInfo.getStackHeight(), thisInfo.getOutputs());
-    this.pc = returnInfo.getPC();
-    this.section = returnInfo.getCodeSectionIndex();
+    if ((returnInfo.getStackHeight() + thisInfo.getOutputs()) != stack.size()) {
+      return ExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
+    } else if (returnStack.isEmpty()) {
+      setState(MessageFrame.State.CODE_SUCCESS);
+      setOutputData(Bytes.EMPTY);
+      return null;
+    } else {
+      this.pc = returnInfo.getPC();
+      this.section = returnInfo.getCodeSectionIndex();
+      return null;
+    }
   }
 
   /** Deducts the remaining gas. */
@@ -538,6 +557,33 @@ public class MessageFrame {
    */
   public int stackSize() {
     return stack.size();
+  }
+
+  /**
+   * Return the current return stack size.
+   *
+   * @return The current return stack size
+   */
+  public int returnStackSize() {
+    return returnStack.size();
+  }
+
+  /**
+   * The top item of the return stack
+   *
+   * @return The top item of the return stack, or null if the stack is empty
+   */
+  public ReturnStack.ReturnStackItem peekReturnStack() {
+    return returnStack.peek();
+  }
+
+  /**
+   * Pushes a new return stack item onto the return stack
+   *
+   * @param returnStackItem item to be pushed
+   */
+  public void pushReturnStackItem(final ReturnStack.ReturnStackItem returnStackItem) {
+    returnStack.push(returnStackItem);
   }
 
   /**

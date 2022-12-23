@@ -43,7 +43,7 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
             + 2 * vectorSize
             + ((offsetCase >= vectorSize)
                 ? 0
-                : readBigEndianI16(frame.getPC() + 1 + offsetCase * 2, code.toArrayUnsafe()))
+                : readBigEndianI16(frame.getPC() + 2 + offsetCase * 2, code.toArrayUnsafe()))
             + 1);
   }
 
