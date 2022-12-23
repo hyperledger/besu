@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.contractvalidation.CachedInvalidCodeRule;
@@ -727,7 +728,9 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     evm,
                     true,
-                    List.of(MaxCodeSizeRule.of(contractSizeLimit), CachedInvalidCodeRule.of()),
+                    List.of(
+                        MaxCodeSizeRule.of(contractSizeLimit),
+                        CachedInvalidCodeRule.of(EvmSpecVersion.SHANDONG)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .name("Shandong");

@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 
+import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -417,18 +418,20 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long calculateStorageCost(
-      final Account account, final UInt256 key, final UInt256 newValue) {
-    return !newValue.isZero() && account.getStorageValue(key).isZero()
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
+    return !newValue.isZero() && currentValue.get().isZero()
         ? STORAGE_SET_GAS_COST
         : STORAGE_RESET_GAS_COST;
   }
 
   @Override
   public long calculateStorageRefundAmount(
-      final Account account, final UInt256 key, final UInt256 newValue) {
-    return newValue.isZero() && !account.getStorageValue(key).isZero()
-        ? STORAGE_RESET_REFUND_AMOUNT
-        : 0L;
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
+    return newValue.isZero() && !currentValue.get().isZero() ? STORAGE_RESET_REFUND_AMOUNT : 0L;
   }
 
   @Override

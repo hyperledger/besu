@@ -38,6 +38,7 @@ import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedWriter;
@@ -47,13 +48,18 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -131,6 +137,12 @@ public class EvmToolCommand implements Runnable {
   final Boolean showJsonResults = false;
 
   @Option(
+      names = {"--json-alloc"},
+      description = "Output the final allocations after a run.",
+      scope = INHERIT)
+  final Boolean showJsonAlloc = false;
+
+  @Option(
       names = {"--nomemory"},
       description = "Disable showing the full memory output for each op.",
       scope = INHERIT)
@@ -151,6 +163,7 @@ public class EvmToolCommand implements Runnable {
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
 
+  static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
   private PrintWriter out =
       new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
@@ -313,10 +326,62 @@ public class EvmToolCommand implements Runnable {
         }
         lastTime = stopwatch.elapsed().toNanos();
         stopwatch.reset();
+        if (showJsonAlloc && lastLoop) {
+          updater.commit();
+          WorldState worldState = component.getWorldState();
+          dumpWorldState(worldState, out);
+        }
       } while (remainingIters-- > 0);
 
     } catch (final IOException e) {
       LOG.error("Unable to create Genesis module", e);
     }
+  }
+
+  public static void dumpWorldState(final WorldState worldState, final PrintWriter out) {
+    out.println("{");
+    worldState
+        .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+        .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
+        .forEach(
+            account -> {
+              out.println(
+                  " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
+              if (account.getCode() != null && account.getCode().size() > 0) {
+                out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
+              }
+              var storageEntries = account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              if (!storageEntries.isEmpty()) {
+                out.println("  \"storage\": {");
+                out.println(
+                    STORAGE_JOINER.join(
+                        storageEntries.values().stream()
+                            .map(
+                                accountStorageEntry ->
+                                    "   \""
+                                        + accountStorageEntry
+                                            .getKey()
+                                            .map(UInt256::toHexString)
+                                            .orElse("-")
+                                        + "\": \""
+                                        + accountStorageEntry.getValue().toHexString()
+                                        + "\"")
+                            .collect(Collectors.toList())));
+                out.println("  },");
+              }
+              out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
+              if (account.getNonce() > 0) {
+                out.println(",");
+                out.println(
+                    "  \"nonce\": \""
+                        + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
+                        + "\"");
+              } else {
+                out.println();
+              }
+              out.println(" },");
+            });
+    out.println("}");
+    out.flush();
   }
 }

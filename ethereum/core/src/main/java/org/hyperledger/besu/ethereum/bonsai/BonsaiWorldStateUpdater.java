@@ -367,8 +367,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
-    final Hash slotHash = Hash.hash(storageKey);
     if (localAccountStorage != null) {
+      final Hash slotHash = Hash.hash(storageKey);
       final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
       if (value != null) {
         if (value.isCleared()) {
