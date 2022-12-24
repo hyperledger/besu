@@ -203,14 +203,14 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
       var addResult = readyTransactionsCache.add(pendingTransaction, senderNonce);
 
       if (addResult.equals(ADDED) || addResult.isReplacement()) {
-        maybePrioritizedAddedTransaction(pendingTransaction, senderNonce, addResult);
+        maybePrioritizeAddedTransaction(pendingTransaction, senderNonce, addResult);
       }
 
       return addResult;
     }
   }
 
-  private void maybePrioritizedAddedTransaction(
+  private void maybePrioritizeAddedTransaction(
       final PendingTransaction addedReadyTransaction,
       final long senderNonce,
       final TransactionAddedResult addResult) {
@@ -267,7 +267,7 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
       demoteLastTransactionForSenderOf(currentLeastPriorityTx);
     }
 
-    addPrioritizedTransaction(addedReadyTransaction);
+    addPrioritizedTransaction(addedReadyTransaction, addResult.isReplacement());
     notifyTransactionAdded(addedReadyTransaction.getTransaction());
   }
 
@@ -432,7 +432,7 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
 
   protected abstract void manageBlockAdded(final Block block, final FeeMarket feeMarket);
 
-  protected void transactionsAddedToBlock(final List<Transaction> confirmedTransactions) {
+  private void transactionsAddedToBlock(final List<Transaction> confirmedTransactions) {
 
     confirmedTransactions.stream()
         .map(Transaction::getHash)
@@ -522,11 +522,12 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
 
     expectedNonceForSender.compute(
         firstDemotedTx.getSender(),
-        (sender, removedNonce) -> {
-          if (readyTransactionsCache.get(sender, removedNonce - 1).isPresent()) {
-            return removedNonce - 1;
+        (sender, expectedNonce) -> {
+          if (expectedNonce == firstDemotedTx.getNonce() + 1
+              || readyTransactionsCache.get(sender, expectedNonce - 1).isEmpty()) {
+            return null;
           }
-          return null;
+          return expectedNonce - 1;
         });
 
     traceLambda(
@@ -536,9 +537,16 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
   }
 
   protected void addPrioritizedTransaction(final PendingTransaction prioritizedTx) {
+    addPrioritizedTransaction(prioritizedTx, false);
+  }
+
+  protected void addPrioritizedTransaction(
+      final PendingTransaction prioritizedTx, final boolean isReplacement) {
     prioritizedPendingTransactions.put(prioritizedTx.getHash(), prioritizedTx);
     orderByFee.add(prioritizedTx);
-    expectedNonceForSender.put(prioritizedTx.getSender(), prioritizedTx.getNonce() + 1);
+    if (!isReplacement) {
+      expectedNonceForSender.put(prioritizedTx.getSender(), prioritizedTx.getNonce() + 1);
+    }
     incrementTransactionAddedCounter(prioritizedTx.isReceivedFromLocalSource());
   }
 
@@ -556,7 +564,10 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
                           false)
                       .map(PendingTransaction::toTraceLog)
                       .collect(Collectors.joining("; "))
-                  + " }");
+                  + " } Expected nonce for sender size "
+                  + expectedNonceForSender.size()
+                  + " content "
+                  + expectedNonceForSender.toString());
 
       return sb.toString();
     }
