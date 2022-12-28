@@ -31,7 +31,9 @@ public class MethodInputParametersMustBeFinalNegativeCases {
   }
 }
 
-@Generated(value="test", comments="Every method is buggy, but ignored because the class has been tagged generated")
+@Generated(
+    value = "test",
+    comments = "Every method is buggy, but ignored because the class has been tagged generated")
 class MethodInputParametersMustBeFinalPositiveCasesBugGenerated1 {
 
   public void primativeInputMethod(int value) {}
@@ -40,7 +42,9 @@ class MethodInputParametersMustBeFinalPositiveCasesBugGenerated1 {
 
   public void mixedInputMethod(Object value, int anotherValue) {}
 
-  @Generated(value="test", comments="Every method is buggy, but ignored because the class has been tagged generated")
+  @Generated(
+      value = "test",
+      comments = "Every method is buggy, but ignored because the class has been tagged generated")
   public abstract class abstractClassDefinition {
     public void concreteMethodsAreIncluded(int value) {}
   }
