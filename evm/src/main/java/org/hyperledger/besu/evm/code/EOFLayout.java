@@ -99,6 +99,15 @@ public class EOFLayout {
     if (codeSectionCount < 0) {
       return invalidLayout(container, version, "Invalid Code section count");
     }
+    if (codeSectionCount * 4 != typesLength) {
+      return invalidLayout(
+          container,
+          version,
+          "Type section length incompatible with code section count - 0x"
+              + Integer.toHexString(codeSectionCount)
+              + " * 4 != 0x"
+              + Integer.toHexString(typesLength));
+    }
     if (codeSectionCount > 1024) {
       return invalidLayout(
           container,
