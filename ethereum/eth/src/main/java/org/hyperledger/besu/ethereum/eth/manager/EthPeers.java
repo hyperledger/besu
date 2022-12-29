@@ -176,8 +176,7 @@ public class EthPeers {
                 while (peer.hasAvailableRequestCapacity() && !pendingRequests.isEmpty()) {
                   PendingPeerRequest request =
                       ((CopyOnWriteArrayList<PendingPeerRequest>) pendingRequests).get(0);
-                  request.sendRequest(peer);
-                  pendingRequests.remove(request);
+                  if (request.attemptExecution()) pendingRequests.remove(request);
                 }
               });
     }
