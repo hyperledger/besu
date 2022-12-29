@@ -67,7 +67,7 @@ public class PendingPeerRequest {
     }
   }
 
-  private synchronized void sendRequest(final EthPeer peer) {
+  synchronized void sendRequest(final EthPeer peer) {
     // Recheck if we should send the request now we're inside the synchronized block
     if (!result.isDone()) {
       try {

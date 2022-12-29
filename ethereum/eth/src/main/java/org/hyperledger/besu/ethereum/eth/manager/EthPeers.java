@@ -157,8 +157,8 @@ public class EthPeers {
 
   public void dispatchMessage(
       final EthPeer peer, final EthMessage ethMessage, final String protocolName) {
-    peer.dispatch(ethMessage, protocolName);
-    if (peer.hasAvailableRequestCapacity()) {
+    Optional<RequestManager> maybeRequestManager = peer.dispatch(ethMessage, protocolName);
+    if (maybeRequestManager.isPresent() && peer.hasAvailableRequestCapacity()) {
       reattemptPendingPeerRequests();
     }
   }
@@ -170,13 +170,16 @@ public class EthPeers {
   @VisibleForTesting
   void reattemptPendingPeerRequests() {
     synchronized (this) {
-      final Iterator<PendingPeerRequest> iterator = pendingRequests.iterator();
-      while (iterator.hasNext()) {
-        final PendingPeerRequest request = iterator.next();
-        if (request.attemptExecution()) {
-          pendingRequests.remove(request);
-        }
-      }
+      streamBestPeers()
+          .forEach(
+              peer -> {
+                while (peer.hasAvailableRequestCapacity() && !pendingRequests.isEmpty()) {
+                  PendingPeerRequest request =
+                      ((CopyOnWriteArrayList<PendingPeerRequest>) pendingRequests).get(0);
+                  request.sendRequest(peer);
+                  pendingRequests.remove(request);
+                }
+              });
     }
   }
 
