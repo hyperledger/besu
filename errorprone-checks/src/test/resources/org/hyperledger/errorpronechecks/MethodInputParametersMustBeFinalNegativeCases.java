@@ -14,6 +14,8 @@
  */
 package org.hyperledger.errorpronechecks;
 
+import javax.annotation.processing.Generated;
+
 public class MethodInputParametersMustBeFinalNegativeCases {
 
   public void noInputParameters() {}
@@ -27,4 +29,35 @@ public class MethodInputParametersMustBeFinalNegativeCases {
   public interface allInterfacesAreValid {
     void parameterCannotBeFinal(int value);
   }
+}
+
+@Generated(
+    value = "test",
+    comments = "Every method is buggy, but ignored because the class has been tagged generated")
+class MethodInputParametersMustBeFinalPositiveCasesBugGenerated1 {
+
+  public void primativeInputMethod(int value) {}
+
+  public void objectInputMethod(Object value) {}
+
+  public void mixedInputMethod(Object value, int anotherValue) {}
+
+  @Generated(
+      value = "test",
+      comments = "Every method is buggy, but ignored because the class has been tagged generated")
+  public abstract class abstractClassDefinition {
+    public void concreteMethodsAreIncluded(int value) {}
+  }
+
+  public void varArgsInputMethod(String... value) {}
+}
+
+@Generated(
+    value = "test",
+    comments = "Every method is buggy, but ignored because the class has been tagged generated")
+class MethodInputParametersMustBeFinalPositiveCasesBugGenerated2 {
+
+  public void mixedInputMethodFirstFinal(final Object value, int anotherValue) {}
+
+  public void mixedInputMethodSecondFinal(Object value, final int anotherValue) {}
 }
