@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SHANDONG_BOOTSTRAP_NODES;
 
 import java.math.BigInteger;
 
@@ -55,14 +54,6 @@ public class EthNetworkConfigTest {
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(GOERLI_DISCOVERY_URL);
     assertThat(config.getBootNodes()).isEqualTo(GOERLI_BOOTSTRAP_NODES);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(5));
-  }
-
-  @Test
-  public void testDefaultShandongConfig() {
-    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.SHANDONG);
-    assertThat(config.getDnsDiscoveryUrl()).isNull();
-    assertThat(config.getBootNodes()).isEqualTo(SHANDONG_BOOTSTRAP_NODES);
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337903));
   }
 
   @Test
