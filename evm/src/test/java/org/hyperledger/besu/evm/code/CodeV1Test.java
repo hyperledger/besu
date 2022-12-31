@@ -456,35 +456,35 @@ class CodeV1Test {
   static Stream<Arguments> stackRJumpForward() {
     return Stream.of(
         Arguments.of("RJUMP 0", null, 0, List.of(List.of("5C0000 00", 0, 0, 0))),
-        Arguments.of("RJUMP 1 w/ dead code", null, 0, List.of(List.of("5C0001 43 00", 0, 0, 0))),
-        Arguments.of("RJUMP 2 w/ dead code", null, 0, List.of(List.of("5C0002 43 50 00", 0, 0, 0))),
+        Arguments.of("RJUMP 1 w/ dead code", "Dead code detected at section 0 PC 3", 0, List.of(List.of("5C0001 43 00", 0, 0, 0))),
+        Arguments.of("RJUMP 2 w/ dead code", "Dead code detected at section 0 PC 3", 0, List.of(List.of("5C0002 43 50 00", 0, 0, 0))),
         Arguments.of(
             "RJUMP 3 and -10",
             null,
             0,
-            List.of(List.of("5C0003 01 50 00 6001 6001 5Cfff6 00", 0, 0, 2))));
+            List.of(List.of("5C0003 01 50 00 6001 6001 5Cfff6", 0, 0, 2))));
   }
 
   static Stream<Arguments> stackRJumpBackward() {
     return Stream.of(
-        Arguments.of("RJUMP -3", null, 0, List.of(List.of("5Cfffd 00", 0, 0, 0))),
-        Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B 5Cfffc 00", 0, 0, 0))),
+        Arguments.of("RJUMP -3", null, 0, List.of(List.of("5Cfffd", 0, 0, 0))),
+        Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B 5Cfffc", 0, 0, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
             "Jump into code stack height (0) does not match previous value (1)",
             0,
-            List.of(List.of("43 5Cfffc 50 00", 0, 0, 0))),
+            List.of(List.of("43 5Cfffc", 0, 0, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
             "Jump into code stack height (1) does not match previous value (0)",
             0,
             List.of(List.of("43 50 5Cfffc 00", 0, 0, 0))),
         Arguments.of(
-            "RJUMP -3 matched stack", null, 0, List.of(List.of("43 50 5Cfffd 00", 0, 0, 1))),
+            "RJUMP -3 matched stack", null, 0, List.of(List.of("43 50 5Cfffd", 0, 0, 1))),
         Arguments.of(
-            "RJUMP -4 matched stack", null, 0, List.of(List.of("43 50 5B 5Cfffc 00", 0, 0, 1))),
+            "RJUMP -4 matched stack", null, 0, List.of(List.of("43 50 5B 5Cfffc", 0, 0, 1))),
         Arguments.of(
-            "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 5Cfffb 50 00", 0, 0, 1))),
+            "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 5Cfffb", 0, 0, 1))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
             "Jump into code stack height (0) does not match previous value (1)",
@@ -727,32 +727,32 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "Max stack not changed by unreachable code",
-            null,
+            "Dead code detected at section 0 PC 3",
             0,
             List.of(List.of("30 50 00 30 30 30 50 50 50 00", 0, 0, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RETf",
-            null,
+            "Dead code detected at section 0 PC 3",
             0,
             List.of(List.of("30 50 B1 30 30 30 50 50 50 00", 0, 0, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RJUMP",
-            null,
+            "Dead code detected at section 0 PC 5",
             0,
             List.of(List.of("30 50 5C0006 30 30 30 50 50 50 00", 0, 0, 1))),
         Arguments.of(
             "Stack underflow in unreachable code",
-            null,
+            "Dead code detected at section 0 PC 3",
             0,
             List.of(List.of("30 50 00 50 00", 0, 0, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RETF",
-            null,
+            "Dead code detected at section 0 PC 3",
             0,
             List.of(List.of("30 50 B1 50 00", 0, 0, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RJUMP",
-            null,
+            "Dead code detected at section 0 PC 5",
             0,
             List.of(List.of("30 50 5C0001 50 00", 0, 0, 1))));
   }

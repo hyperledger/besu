@@ -682,102 +682,120 @@ public class CodeV1 implements Code {
    */
   public static String validateStack(
       final int codeSectionToValidate, final CodeSection[] codeSections) {
-    byte[] code = codeSections[codeSectionToValidate].code.toArrayUnsafe();
-    int codeLength = code.length;
-    int[] stackHeights = new int[codeLength];
-    Arrays.fill(stackHeights, -1);
+    try {
+      byte[] code = codeSections[codeSectionToValidate].code.toArrayUnsafe();
+      int codeLength = code.length;
+      int[] stackHeights = new int[codeLength];
+      Arrays.fill(stackHeights, -1);
 
-    int thisWork = 0;
-    int maxWork = 1;
-    int[][] workList = new int[codeLength][2];
+      int thisWork = 0;
+      int maxWork = 1;
+      int[][] workList = new int[codeLength][2];
 
-    int initialStackHeight = codeSections[codeSectionToValidate].getInputs();
-    int maxStackHeight = initialStackHeight;
-    stackHeights[0] = initialStackHeight;
-    workList[0][1] = initialStackHeight;
+      int initialStackHeight = codeSections[codeSectionToValidate].getInputs();
+      int maxStackHeight = initialStackHeight;
+      stackHeights[0] = initialStackHeight;
+      workList[0][1] = initialStackHeight;
 
-    while (thisWork < maxWork) {
-      int currentPC = workList[thisWork][0];
-      int currentStackHeight = workList[thisWork][1];
-      if (thisWork > 0 && stackHeights[currentPC] >= 0) {
-        // we've been here, validate the jump is what is expected
-        if (stackHeights[currentPC] != currentStackHeight) {
-          return String.format(
-              "Jump into code stack height (%d) does not match previous value (%d)",
-              stackHeights[currentPC], currentStackHeight);
-        } else {
-          thisWork++;
-          continue;
-        }
-      }
-
-      while (currentPC < codeLength) {
-        int thisOp = code[currentPC] & 0xff;
-        int recordedStack = stackHeights[currentPC];
-        if (recordedStack >= 0 && currentStackHeight != recordedStack) {
-          return String.format(
-              "Stack height mismatch %d/%d at %d", recordedStack, currentStackHeight, currentPC);
-        }
-
-        byte[] stackInfo = OPCODE_STACK_VALIDATION[thisOp];
-        int stackInputs;
-        int stackOutputs;
-        int pcAdvance = stackInfo[2];
-        if (pcAdvance == 0) {
-          return String.format("Invalid Instruction 0x%02x", thisOp);
-        }
-        if (thisOp == CallFOperation.OPCODE || thisOp == JumpFOperation.OPCODE) {
-          int section = readBigEndianU16(currentPC + 1, code);
-          stackInputs = codeSections[section].getInputs();
-          stackOutputs = codeSections[section].getOutputs();
-        } else {
-          stackInputs = stackInfo[0];
-          stackOutputs = stackInfo[1];
-        }
-
-        if (stackInputs > currentStackHeight) {
-          return String.format(
-              "Operation 0x%02X requires stack of %d but only has %d items",
-              thisOp, stackInputs, currentStackHeight);
-        }
-
-        currentStackHeight = currentStackHeight - stackInputs + stackOutputs;
-        if (currentStackHeight > MAX_STACK_HEIGHT) {
-          return "Stack height exceeds 1024";
-        }
-
-        maxStackHeight = Math.max(maxStackHeight, currentStackHeight);
-
-        if (thisOp == RelativeJumpOperation.OPCODE || thisOp == RelativeJumpIfOperation.OPCODE) {
-          // no `& 0xff` on high byte because this is one case we want sign extension
-          int rvalue = readBigEndianI16(currentPC + 1, code);
-          workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
-          maxWork++;
-        } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
-          int tableEnd = code[currentPC + 1] * 2 + currentPC + 2;
-          for (int i = currentPC + 2; i < tableEnd; i += 2) {
-            int rvalue = readBigEndianI16(i, code);
-            workList[maxWork] = new int[] {tableEnd + rvalue, currentStackHeight};
-            maxWork++;
+      while (thisWork < maxWork) {
+        int currentPC = workList[thisWork][0];
+        int currentStackHeight = workList[thisWork][1];
+        if (thisWork > 0 && stackHeights[currentPC] >= 0) {
+          // we've been here, validate the jump is what is expected
+          if (stackHeights[currentPC] != currentStackHeight) {
+            return String.format(
+                "Jump into code stack height (%d) does not match previous value (%d)",
+                stackHeights[currentPC], currentStackHeight);
+          } else {
+            thisWork++;
+            continue;
           }
-          currentPC = tableEnd - 2;
+        } else {
+          stackHeights[currentPC] = currentStackHeight;
         }
-        if (pcAdvance < 0) {
-          break;
+
+        while (currentPC < codeLength) {
+          int thisOp = code[currentPC] & 0xff;
+          int recordedStack = stackHeights[currentPC];
+          if (recordedStack >= 0 && currentStackHeight != recordedStack) {
+            return String.format(
+                "Stack height mismatch %d/%d at %d", recordedStack, currentStackHeight, currentPC);
+          }
+
+          byte[] stackInfo = OPCODE_STACK_VALIDATION[thisOp];
+          int stackInputs;
+          int stackOutputs;
+          int pcAdvance = stackInfo[2];
+          if (pcAdvance == 0) {
+            return String.format("Invalid Instruction 0x%02x", thisOp);
+          }
+          if (thisOp == CallFOperation.OPCODE || thisOp == JumpFOperation.OPCODE) {
+            int section = readBigEndianU16(currentPC + 1, code);
+            stackInputs = codeSections[section].getInputs();
+            stackOutputs = codeSections[section].getOutputs();
+          } else {
+            stackInputs = stackInfo[0];
+            stackOutputs = stackInfo[1];
+          }
+
+          if (stackInputs > currentStackHeight) {
+            return String.format(
+                "Operation 0x%02X requires stack of %d but only has %d items",
+                thisOp, stackInputs, currentStackHeight);
+          }
+
+          currentStackHeight = currentStackHeight - stackInputs + stackOutputs;
+          if (currentStackHeight > MAX_STACK_HEIGHT) {
+            return "Stack height exceeds 1024";
+          }
+
+          maxStackHeight = Math.max(maxStackHeight, currentStackHeight);
+
+          if (thisOp == RelativeJumpOperation.OPCODE || thisOp == RelativeJumpIfOperation.OPCODE) {
+            // no `& 0xff` on high byte because this is one case we want sign extension
+            int rvalue = readBigEndianI16(currentPC + 1, code);
+            workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
+            maxWork++;
+            stackHeights[currentPC+1] = -2;
+            stackHeights[currentPC+2] = -2;
+          } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
+            int tableEnd = code[currentPC + 1] * 2 + currentPC + 2;
+            for (int i = currentPC + 2; i < tableEnd; i += 2) {
+              int rvalue = readBigEndianI16(i, code);
+              workList[maxWork] = new int[] {tableEnd + rvalue, currentStackHeight};
+              maxWork++;
+            }
+            currentPC = tableEnd - 2;
+          }
+          if (pcAdvance < 0) {
+            break;
+          }
+          while (pcAdvance > 1) {
+            currentPC++;
+            pcAdvance--;
+            stackHeights[currentPC] = -2;
+          }
+          currentPC++;
+          stackHeights[currentPC] = currentStackHeight;
         }
-        currentPC += pcAdvance;
-        stackHeights[currentPC] = currentStackHeight;
+
+        thisWork++;
       }
 
-      thisWork++;
+      if (maxStackHeight != codeSections[codeSectionToValidate].maxStackHeight) {
+        return String.format(
+            "Calculated max stack height (%d) does not match reported stack height (%d)",
+            maxStackHeight, codeSections[codeSectionToValidate].maxStackHeight);
+      }
+      for (int i = 0; i < stackHeights.length; i++) {
+        if (stackHeights[i] == -1) {
+          return String.format("Dead code detected at section %d PC %d", codeSectionToValidate, i);
+        }
+      }
+      return null;
+    } catch (RuntimeException re) {
+      return "Internal Exception " + re.getMessage();
     }
-
-    if (maxStackHeight != codeSections[codeSectionToValidate].maxStackHeight) {
-      return String.format(
-          "Calculated max stack height (%d) does not match reported stack height (%d)",
-          maxStackHeight, codeSections[codeSectionToValidate].maxStackHeight);
-    }
-    return null;
   }
 
   @Override
