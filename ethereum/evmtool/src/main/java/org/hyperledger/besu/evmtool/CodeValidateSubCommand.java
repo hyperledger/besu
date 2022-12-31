@@ -79,7 +79,7 @@ public class CodeValidateSubCommand implements Runnable {
   public String considerCode(final String hexCode) {
     Bytes codeBytes;
     try {
-      codeBytes = Bytes.fromHexString(hexCode.replaceAll("\\s+", ""));
+      codeBytes = Bytes.fromHexString(hexCode.replaceAll("[^0-9A-Za-z]", ""));
     } catch (RuntimeException re) {
       return "err: hex string -" + re;
     }
