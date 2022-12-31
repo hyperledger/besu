@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 public class RoundChangeTest {
 

@@ -26,8 +26,8 @@ import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
 import org.hyperledger.besu.ethereum.core.Block;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 public class LocalNodeNotProposerTest {
 
@@ -50,7 +50,7 @@ public class LocalNodeNotProposerTest {
   private Prepare expectedTxPrepare;
   private Commit expectedTxCommit;
 
-  @BeforeEach
+  @Before
   public void setup() {
     expectedTxPrepare = localNodeMessageFactory.createPrepare(roundId, blockToPropose.getHash());
 

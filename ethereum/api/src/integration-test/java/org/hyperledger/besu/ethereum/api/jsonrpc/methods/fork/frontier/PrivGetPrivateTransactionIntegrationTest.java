@@ -52,8 +52,6 @@ import org.hyperledger.enclave.testutil.TesseraTestHarness;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Optional;
@@ -61,14 +59,15 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class PrivGetPrivateTransactionIntegrationTest {
 
-  @TempDir private static Path folder;
+  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
@@ -119,14 +118,16 @@ public class PrivGetPrivateTransactionIntegrationTest {
   private Enclave enclave;
   private PrivacyController privacyController;
 
-  @BeforeEach
+  @Before
   public void setUp() throws Exception {
+    folder.create();
+
     vertx = Vertx.vertx();
 
     testHarness =
         TesseraTestHarnessFactory.create(
             "enclave",
-            Files.createTempDirectory(folder, "enclave"),
+            folder.newFolder().toPath(),
             new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_0.key"),
             Optional.empty());
 
@@ -140,7 +141,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
             blockchain, privateStateStorage, enclave, null, null, null, null, null);
   }
 
-  @AfterEach
+  @After
   public void tearDown() {
     testHarness.close();
     vertx.close();

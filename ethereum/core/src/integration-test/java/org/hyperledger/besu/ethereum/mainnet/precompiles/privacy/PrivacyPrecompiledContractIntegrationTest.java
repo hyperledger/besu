@@ -54,8 +54,6 @@ import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.TesseraTestHarness;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -64,14 +62,15 @@ import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class PrivacyPrecompiledContractIntegrationTest {
 
-  @TempDir private static Path folder;
+  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   private static final Bytes VALID_PRIVATE_TRANSACTION_RLP =
       Bytes.fromHexString(
@@ -116,13 +115,14 @@ public class PrivacyPrecompiledContractIntegrationTest {
     return mockPrivateTransactionProcessor;
   }
 
-  @BeforeAll
+  @BeforeClass
   public static void setUpOnce() throws Exception {
+    folder.create();
 
     testHarness =
         TesseraTestHarnessFactory.create(
             "enclave",
-            Files.createTempDirectory(folder, "enclave"),
+            folder.newFolder().toPath(),
             new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_1.key"),
             Optional.empty());
 
@@ -168,7 +168,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
   }
 
-  @AfterAll
+  @AfterClass
   public static void tearDownOnce() {
     testHarness.stop();
     vertx.close();

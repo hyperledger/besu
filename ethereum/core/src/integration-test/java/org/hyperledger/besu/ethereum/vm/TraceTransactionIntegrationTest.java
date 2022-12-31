@@ -46,8 +46,8 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 public class TraceTransactionIntegrationTest {
 
@@ -64,7 +64,7 @@ public class TraceTransactionIntegrationTest {
   private MainnetTransactionProcessor transactionProcessor;
   private BlockHashLookup blockHashLookup;
 
-  @BeforeEach
+  @Before
   public void setUp() {
     final ExecutionContextTestFixture contextTestFixture = ExecutionContextTestFixture.create();
     genesisBlock = contextTestFixture.getGenesis();

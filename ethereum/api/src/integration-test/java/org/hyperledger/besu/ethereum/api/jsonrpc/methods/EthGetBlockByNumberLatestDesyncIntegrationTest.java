@@ -47,9 +47,12 @@ import java.util.Optional;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class EthGetBlockByNumberLatestDesyncIntegrationTest {
 
   private static JsonRpcTestMethodsFactory methodsFactorySynced;
@@ -57,7 +60,7 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
   private static JsonRpcTestMethodsFactory methodsFactoryMidDownload;
   private static final long ARBITRARY_SYNC_BLOCK = 4L;
 
-  @BeforeAll
+  @BeforeClass
   public static void setUpOnce() throws Exception {
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);

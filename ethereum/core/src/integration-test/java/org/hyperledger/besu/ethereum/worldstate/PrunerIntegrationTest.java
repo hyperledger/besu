@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 public class PrunerIntegrationTest {
 

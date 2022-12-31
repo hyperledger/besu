@@ -57,16 +57,13 @@ import org.hyperledger.besu.util.Subscribers;
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
+@RunWith(MockitoJUnitRunner.class)
 public class QbftRoundIntegrationTest {
 
   private final MessageFactory peerMessageFactory = new MessageFactory(NodeKeyUtils.generate());
@@ -94,7 +91,7 @@ public class QbftRoundIntegrationTest {
       SignatureAlgorithmFactory.getInstance()
           .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
 
-  @BeforeEach
+  @Before
   public void setup() {
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);
