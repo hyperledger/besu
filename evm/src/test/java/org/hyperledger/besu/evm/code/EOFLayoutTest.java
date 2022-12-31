@@ -233,7 +233,7 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00010000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000001 00010001 02030003 FE 5000 3000 8000",
             "non-void input and output types",
             null,
             1
@@ -285,7 +285,7 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00010000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000001 00010001 02030003 FE 5000 3000 8000",
             "non-void input and output types",
             null,
             1
@@ -301,6 +301,7 @@ public class EOFLayoutTest {
       final String failureReason,
       final int expectedVersion) {
     final Bytes container = Bytes.fromHexString(containerString.replace(" ", ""));
+    System.out.println(container.toHexString());
     final EOFLayout layout = EOFLayout.parseEOF(container);
 
     assertThat(layout.getVersion()).isEqualTo(expectedVersion);

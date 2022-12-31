@@ -42,7 +42,7 @@ public class CodeV1 implements Code {
   static final byte VALID = 0x02;
   static final byte TERMINAL = 0x04;
   static final byte VALID_AND_TERMINAL = VALID | TERMINAL;
-  private static final byte[] opcodeAttributes = {
+  static final byte[] OPCODE_ATTRIBUTES = {
     VALID_AND_TERMINAL, // 0x00	STOP
     VALID, // 0x01 - ADD
     VALID, // 0x02 - MUL
@@ -305,7 +305,7 @@ public class CodeV1 implements Code {
   // [0] - stack input consumed
   // [1] - stack outputs added
   // [2] - PC advance
-  private static final byte[][] opcodeStackValidation = {
+  static final byte[][] OPCODE_STACK_VALIDATION = {
     {0, 0, -1}, // 0x00 - STOP
     {2, 1, 1}, // 0x01 - ADD
     {2, 1, 1}, // 0x02 - MUL
@@ -548,7 +548,7 @@ public class CodeV1 implements Code {
     {0, 0, 0}, // 0xef
     {3, 1, 1}, // 0xf0 - CREATE
     {7, 1, 1}, // 0xf1 - CALL
-    {0, 1, 1}, // 0xf2 - CALLCODE
+    {0, 0, 0}, // 0xf2 - CALLCODE
     {2, 0, -1}, // 0xf3 - RETURN
     {6, 1, 1}, // 0xf4 - DELEGATECALL
     {4, 1, 1}, // 0xf5 - CREATE2
@@ -598,10 +598,10 @@ public class CodeV1 implements Code {
     int pos = 0;
     while (pos < size) {
       final int operationNum = rawCode[pos] & 0xff;
-      attribute = opcodeAttributes[operationNum];
+      attribute = OPCODE_ATTRIBUTES[operationNum];
       if ((attribute & INVALID) == INVALID) {
         // undefined instruction
-        return "Invalid Instruction 0x" + Integer.toHexString(operationNum);
+        return String.format("Invalid Instruction 0x%02x", operationNum);
       }
       pos += 1;
       int pcPostInstruction = pos;
@@ -719,12 +719,12 @@ public class CodeV1 implements Code {
               "Stack height mismatch %d/%d at %d", recordedStack, currentStackHeight, currentPC);
         }
 
-        byte[] stackInfo = opcodeStackValidation[thisOp];
+        byte[] stackInfo = OPCODE_STACK_VALIDATION[thisOp];
         int stackInputs;
         int stackOutputs;
         int pcAdvance = stackInfo[2];
         if (pcAdvance == 0) {
-          return String.format("Invalid opcode 0x%02X", thisOp);
+          return String.format("Invalid Instruction 0x%02x", thisOp);
         }
         if (thisOp == CallFOperation.OPCODE || thisOp == JumpFOperation.OPCODE) {
           int section = readBigEndianU16(currentPC + 1, code);
@@ -756,8 +756,8 @@ public class CodeV1 implements Code {
         } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
           int tableEnd = code[currentPC + 1] * 2 + currentPC + 2;
           for (int i = currentPC + 2; i < tableEnd; i += 2) {
-            int rvalue = readBigEndianI16(i + 1, code);
-            workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
+            int rvalue = readBigEndianI16(i, code);
+            workList[maxWork] = new int[] {tableEnd + rvalue, currentStackHeight};
             maxWork++;
           }
           currentPC = tableEnd - 2;
