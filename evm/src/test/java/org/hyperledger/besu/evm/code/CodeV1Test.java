@@ -741,19 +741,19 @@ class CodeV1Test {
             List.of(List.of("00", 0, 0, 0), List.of("5D0003 44 80 B1 30 80 B1", 1, 2, 2))),
         Arguments.of(
             "underflow 1",
-            "Calculated max stack height (0) does not match reported stack height (1)",
+            "Section return (RETF) calculated height 0x0 does not match configured height 0x1",
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("B1", 0, 1, 1))),
+            List.of(List.of("00", 0, 0, 0), List.of("B1", 0, 1, 0))),
         Arguments.of(
             "underflow 2",
-            "Calculated max stack height (1) does not match reported stack height (2)",
+            "Section return (RETF) calculated height 0x1 does not match configured height 0x2",
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("44 B1", 0, 2, 2))),
+            List.of(List.of("00", 0, 0, 0), List.of("44 B1", 0, 2, 1))),
         Arguments.of(
             "underflow 3",
-            "Calculated max stack height (2) does not match reported stack height (0)",
+            "Section return (RETF) calculated height 0x1 does not match configured height 0x2",
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("5D0003 44 80 B1 30 B1", 1, 2, 0))));
+            List.of(List.of("00", 0, 0, 0), List.of("5D0003 44 80 B1 30 B1", 1, 2, 2))));
   }
 
   static Stream<Arguments> stackUnreachable() {

@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
+import org.hyperledger.besu.evm.operation.RetFOperation;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -766,6 +767,13 @@ public class CodeV1 implements Code {
             }
             Arrays.fill(stackHeights, currentPC + 1, tableEnd, -2);
             currentPC = tableEnd - 2;
+          } else if (thisOp == RetFOperation.OPCODE) {
+            int returnStackItems = codeSections[codeSectionToValidate].getOutputs();
+            if (currentStackHeight != returnStackItems) {
+              return String.format(
+                  "Section return (RETF) calculated height 0x%x does not match configured height 0x%x",
+                  currentStackHeight, returnStackItems);
+            }
           }
           if (pcAdvance < 0) {
             break;
