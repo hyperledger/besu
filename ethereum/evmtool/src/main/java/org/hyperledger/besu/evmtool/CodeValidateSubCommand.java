@@ -20,6 +20,7 @@ import static org.hyperledger.besu.evmtool.CodeValidateSubCommand.COMMAND_NAME;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.code.EOFLayout;
 
 import java.io.BufferedReader;
@@ -29,6 +30,8 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
@@ -94,6 +97,11 @@ public class CodeValidateSubCommand implements Runnable {
       return "err: " + ((CodeInvalid) code).getInvalidReason();
     }
 
-    return "OK " + code.getCodeBytes(0).toUnprefixedHexString();
+    return "OK "
+        + IntStream.range(0, code.getCodeSectionCount())
+            .mapToObj(code::getCodeSection)
+            .map(CodeSection::getCode)
+            .map(Bytes::toUnprefixedHexString)
+            .collect(Collectors.joining(","));
   }
 }

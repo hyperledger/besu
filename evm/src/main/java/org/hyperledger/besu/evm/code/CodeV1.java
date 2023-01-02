@@ -135,7 +135,7 @@ public class CodeV1 implements Code {
     VALID, // 0x59 - MSIZE
     VALID, // 0x5a - GAS
     VALID, // 0x5b - NOOOP (née JUMPDEST)
-    VALID, // 0X5c - RJUMP
+    VALID_AND_TERMINAL, // 0X5c - RJUMP
     VALID, // 0X5d - RJUMPI
     VALID, // 0X5e - RJUMPV
     VALID, // 0X5f - PUSH0
@@ -756,8 +756,8 @@ public class CodeV1 implements Code {
             int rvalue = readBigEndianI16(currentPC + 1, code);
             workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
             maxWork++;
-            stackHeights[currentPC+1] = -2;
-            stackHeights[currentPC+2] = -2;
+            stackHeights[currentPC + 1] = -2;
+            stackHeights[currentPC + 2] = -2;
           } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
             int tableEnd = code[currentPC + 1] * 2 + currentPC + 2;
             for (int i = currentPC + 2; i < tableEnd; i += 2) {
@@ -765,17 +765,16 @@ public class CodeV1 implements Code {
               workList[maxWork] = new int[] {tableEnd + rvalue, currentStackHeight};
               maxWork++;
             }
+            Arrays.fill(stackHeights, currentPC + 1, tableEnd, -2);
             currentPC = tableEnd - 2;
           }
           if (pcAdvance < 0) {
             break;
           }
-          while (pcAdvance > 1) {
-            currentPC++;
-            pcAdvance--;
-            stackHeights[currentPC] = -2;
+          if (pcAdvance > 1) {
+            Arrays.fill(stackHeights, currentPC + 1, currentPC + pcAdvance, -2);
           }
-          currentPC++;
+          currentPC += pcAdvance;
           stackHeights[currentPC] = currentStackHeight;
         }
 
@@ -832,6 +831,11 @@ public class CodeV1 implements Code {
     checkArgument(section >= 0, "Section number is positive");
     checkArgument(section < codeSectionInfos.length, "Section index is valid");
     return codeSectionInfos[section];
+  }
+
+  @Override
+  public int getCodeSectionCount() {
+    return codeSectionInfos.length;
   }
 
   @Override

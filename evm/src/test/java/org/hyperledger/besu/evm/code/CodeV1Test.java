@@ -37,7 +37,8 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class CodeV1Test {
 
-  public static final String ZERO_HEX = String.format("%02x", 0);
+  public static final String ZERO_HEX = "00";
+  public static final String NOOP_HEX = "5b";
 
   @Test
   void validCode() {
@@ -91,12 +92,12 @@ class CodeV1Test {
             "5c000000",
             "5c00010000",
             "5c00010000000000",
-            "5c0100" + ZERO_HEX.repeat(256) + ZERO_HEX,
-            "5c7fff" + ZERO_HEX.repeat(32767) + ZERO_HEX,
+            "5c0100" + NOOP_HEX.repeat(256) + ZERO_HEX,
+            "5c7fff" + NOOP_HEX.repeat(32767) + ZERO_HEX,
             "5cfffd0000",
             "005cfffc00",
-            ZERO_HEX.repeat(253) + "5cff0000",
-            ZERO_HEX.repeat(32765) + "5c800000")
+            NOOP_HEX.repeat(253) + "5cff0000",
+            NOOP_HEX.repeat(32765) + "5c800000")
         .map(Arguments::arguments);
   }
 
@@ -116,8 +117,8 @@ class CodeV1Test {
             "60015d7fff" + "5b".repeat(32767) + ZERO_HEX,
             "60015dfffd0000",
             "60015dfffb00",
-            ZERO_HEX.repeat(252) + "60015dff0000",
-            ZERO_HEX.repeat(32763) + "60015d800000",
+            NOOP_HEX.repeat(252) + "60015dff0000",
+            NOOP_HEX.repeat(32763) + "60015d800000",
             "5d000000")
         .map(Arguments::arguments);
   }
@@ -178,7 +179,7 @@ class CodeV1Test {
     return Stream.concat(
             Stream.of("60"),
             IntStream.range(0, 31)
-                .mapToObj(i -> String.format("%02x", 0x61 + i) + ZERO_HEX.repeat(i + 1)))
+                .mapToObj(i -> String.format("%02x", 0x61 + i) + NOOP_HEX.repeat(i + 1)))
         .map(Arguments::arguments);
   }
 
@@ -456,8 +457,16 @@ class CodeV1Test {
   static Stream<Arguments> stackRJumpForward() {
     return Stream.of(
         Arguments.of("RJUMP 0", null, 0, List.of(List.of("5C0000 00", 0, 0, 0))),
-        Arguments.of("RJUMP 1 w/ dead code", "Dead code detected at section 0 PC 3", 0, List.of(List.of("5C0001 43 00", 0, 0, 0))),
-        Arguments.of("RJUMP 2 w/ dead code", "Dead code detected at section 0 PC 3", 0, List.of(List.of("5C0002 43 50 00", 0, 0, 0))),
+        Arguments.of(
+            "RJUMP 1 w/ dead code",
+            "Dead code detected at section 0 PC 3",
+            0,
+            List.of(List.of("5C0001 43 00", 0, 0, 0))),
+        Arguments.of(
+            "RJUMP 2 w/ dead code",
+            "Dead code detected at section 0 PC 3",
+            0,
+            List.of(List.of("5C0002 43 50 00", 0, 0, 0))),
         Arguments.of(
             "RJUMP 3 and -10",
             null,
@@ -479,8 +488,7 @@ class CodeV1Test {
             "Jump into code stack height (1) does not match previous value (0)",
             0,
             List.of(List.of("43 50 5Cfffc 00", 0, 0, 0))),
-        Arguments.of(
-            "RJUMP -3 matched stack", null, 0, List.of(List.of("43 50 5Cfffd", 0, 0, 1))),
+        Arguments.of("RJUMP -3 matched stack", null, 0, List.of(List.of("43 50 5Cfffd", 0, 0, 1))),
         Arguments.of(
             "RJUMP -4 matched stack", null, 0, List.of(List.of("43 50 5B 5Cfffc", 0, 0, 1))),
         Arguments.of(

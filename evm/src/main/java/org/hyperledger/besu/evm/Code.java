@@ -77,4 +77,10 @@ public interface Code {
    * @return The code section, or null of there is no associated section
    */
   CodeSection getCodeSection(final int section);
+
+  /**
+   * The number of code sections in this container.
+   * @return 1 for legacy, count for valid, zero for invalid.
+   */
+  int getCodeSectionCount();
 }

@@ -76,4 +76,9 @@ public class CodeInvalid implements Code {
   public CodeSection getCodeSection(final int section) {
     return null;
   }
+
+  @Override
+  public int getCodeSectionCount() {
+    return 0;
+  }
 }
