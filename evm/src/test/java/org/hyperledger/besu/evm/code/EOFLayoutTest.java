@@ -202,10 +202,15 @@ public class EOFLayoutTest {
             "Too many code sections - 0x401",
             1
           },
-                {"ef000101000002000003000000", "All kinds zero size", "Invalid Types section size", 1},
-                {"ef0001010000020001000103000000ef", "Zero type size ", "Invalid Types section size", 1},
-                {"ef0001010004020001000003000000", "Zero code section length", "Invalid Code section size for section 0", 1},
-                {"ef000101000402000003000000", "Zero code sections", "Invalid Code section count", 1},
+          {"ef000101000002000003000000", "All kinds zero size", "Invalid Types section size", 1},
+          {"ef0001010000020001000103000000ef", "Zero type size ", "Invalid Types section size", 1},
+          {
+            "ef0001010004020001000003000000",
+            "Zero code section length",
+            "Invalid Code section size for section 0",
+            1
+          },
+          {"ef000101000402000003000000", "Zero code sections", "Invalid Code section count", 1},
         });
   }
 
