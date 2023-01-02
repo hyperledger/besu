@@ -22,17 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 public enum NetworkName {
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
   RINKEBY("/rinkeby.json", BigInteger.valueOf(4)),
-  ROPSTEN("/ropsten.json", BigInteger.valueOf(3)),
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
-  SHANDONG("/shandong.json", BigInteger.valueOf(1337903)),
-  KILN("/kiln.json", BigInteger.valueOf(1337802), false),
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
-  ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021)),
-  ASTOR("/astor.json", BigInteger.valueOf(212));
+  ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021));
 
   private final String genesisFile;
   private final BigInteger networkId;
