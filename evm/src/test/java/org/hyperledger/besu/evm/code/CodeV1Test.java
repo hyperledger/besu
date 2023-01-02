@@ -25,6 +25,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -43,7 +44,7 @@ class CodeV1Test {
   @Test
   void validCode() {
     String codeHex =
-        "0xEF0001 01000C 020003 000A 0002 0008 030000 00 00000000 02010001 01000002 60016002b00001b20002 01b1 60005360106000f3";
+        "0xEF0001 01000C 020003 000b 0002 0008 030000 00 00000000 02010001 01000002 60016002b00001b00002b1 01b1 60005360106000f3";
     final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
 
     String validationError = validateCode(layout);
@@ -324,22 +325,46 @@ class CodeV1Test {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"b0", "b000", "b2", "b200"})
+  @ValueSource(strings = {"b0", "b000"})
+  void testCallFTruncated(final String code) {
+    final String validationError = validateCode(Bytes.fromHexString(code), 1);
+    assertThat(validationError).isEqualTo("Truncated CALLF");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"b2", "b200"})
+  @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
   void testJumpCallFTruncated(final String code) {
     final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isEqualTo("Truncated CALLF/JUMPF");
+    assertThat(validationError).isEqualTo("Truncated CALLF");
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"b00004", "b003ff", "b0ffff", "b20004", "b203ff", "b2ffff"})
-  void testJumpCallFWrongSection(final String code) {
+  @ValueSource(strings = {"b00004", "b003ff", "b0ffff"})
+  void testCallFWrongSection(final String code) {
     final String validationError = validateCode(Bytes.fromHexString(code), 3);
-    assertThat(validationError).startsWith("CALLF/JUMPF to non-existent section -");
+    assertThat(validationError).startsWith("CALLF to non-existent section -");
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"b0000100", "b0000200", "b0000000", "b20001", "b20002", "b20000"})
-  void testJumpCallFValid(final String code) {
+  @ValueSource(strings = {"b20004", "b203ff", "b2ffff"})
+  @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
+  void testJumpFWrongSection(final String code) {
+    final String validationError = validateCode(Bytes.fromHexString(code), 3);
+    assertThat(validationError).startsWith("CALLF to non-existent section -");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"b0000100", "b0000200", "b0000000"})
+  void testCallFValid(final String code) {
+    final String validationError = validateCode(Bytes.fromHexString(code), 3);
+    assertThat(validationError).isNull();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"b20001", "b20002", "b20000"})
+  @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
+  void testJumpFValid(final String code) {
     final String validationError = validateCode(Bytes.fromHexString(code), 3);
     assertThat(validationError).isNull();
   }

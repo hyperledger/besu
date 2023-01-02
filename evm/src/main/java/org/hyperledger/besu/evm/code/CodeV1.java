@@ -23,7 +23,6 @@ import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.operation.CallFOperation;
-import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
@@ -221,7 +220,7 @@ public class CodeV1 implements Code {
     INVALID, // 0xaf
     VALID, // 0xb0 - CALLF
     VALID_AND_TERMINAL, // 0xb1 - RETF
-    VALID_AND_TERMINAL, // 0xb2 - JUMPF
+    INVALID, // 0xb2 - JUMPF
     INVALID, // 0xb3
     INVALID, // 0xb4
     INVALID, // 0xb5
@@ -484,7 +483,7 @@ public class CodeV1 implements Code {
     {0, 0, 0}, // 0xaf
     {0, 0, 3}, // 0xb0 - CALLF
     {0, 0, -1}, // 0xb1 - RETF
-    {0, 0, -1}, // 0xb2 - JUMPF
+    {0, 0, 0}, // 0xb2 - JUMPF
     {0, 0, 0}, // 0xb3
     {0, 0, 0}, // 0xb4
     {0, 0, 0}, // 0xb5
@@ -640,13 +639,13 @@ public class CodeV1 implements Code {
           }
           rjumpdests.set(rjumpdest);
         }
-      } else if (operationNum == CallFOperation.OPCODE || operationNum == JumpFOperation.OPCODE) {
+      } else if (operationNum == CallFOperation.OPCODE) {
         if (pos + 2 > size) {
-          return "Truncated CALLF/JUMPF";
+          return "Truncated CALLF";
         }
         int section = readBigEndianU16(pos, rawCode);
         if (section >= sectionCount) {
-          return "CALLF/JUMPF to non-existent section - " + Integer.toHexString(section);
+          return "CALLF to non-existent section - " + Integer.toHexString(section);
         }
         pcPostInstruction += 2;
       }
@@ -677,7 +676,7 @@ public class CodeV1 implements Code {
    * immediates as well as no immediates falling off of the end of code sections.
    *
    * @param codeSectionToValidate The index of code to validate in the code sections
-   * @param codeSections The code sections to use for CALLF and JUMPF reference validation.
+   * @param codeSections The code sections to use for CALLF reference validation.
    * @return null if valid, otherwise an error string providing the validation error.
    */
   public static String validateStack(
@@ -729,7 +728,7 @@ public class CodeV1 implements Code {
           if (pcAdvance == 0) {
             return String.format("Invalid Instruction 0x%02x", thisOp);
           }
-          if (thisOp == CallFOperation.OPCODE || thisOp == JumpFOperation.OPCODE) {
+          if (thisOp == CallFOperation.OPCODE) {
             int section = readBigEndianU16(currentPC + 1, code);
             stackInputs = codeSections[section].getInputs();
             stackOutputs = codeSections[section].getOutputs();
