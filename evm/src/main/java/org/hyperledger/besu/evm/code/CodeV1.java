@@ -327,7 +327,7 @@ public class CodeV1 implements Code {
     {2, 1, 1}, // 0x12 - SLT
     {2, 1, 1}, // 0x13 - SGT
     {2, 1, 1}, // 0x14 - EQ
-    {2, 1, 1}, // 0x15 - ISZERO
+    {1, 1, 1}, // 0x15 - ISZERO
     {2, 1, 1}, // 0x16 - AND
     {2, 1, 1}, // 0x17 - OR
     {2, 1, 1}, // 0x18 - XOR
@@ -366,7 +366,7 @@ public class CodeV1 implements Code {
     {3, 0, 1}, // 0x39 - CODECOPY
     {0, 1, 1}, // 0x3a - GASPRICE
     {1, 1, 1}, // 0x3b - EXTCODESIZE
-    {4, 1, 1}, // 0x3c - EXTCODECOPY
+    {4, 0, 1}, // 0x3c - EXTCODECOPY
     {0, 1, 1}, // 0x3d - RETURNDATASIZE
     {3, 1, 1}, // 0x3e - RETURNDATACOPY
     {1, 1, 1}, // 0x3f - EXTCODEHASH
