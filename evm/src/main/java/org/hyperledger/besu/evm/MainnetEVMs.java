@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -433,29 +434,29 @@ public class MainnetEVMs {
     registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 
-  public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return shandong(new LondonGasCalculator(), chainId, evmConfiguration);
+  public static EVM shanghai(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shanghai(new ShanghaiGasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM shandong(
+  public static EVM shanghai(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
     return new EVM(
-        shandongOperations(gasCalculator, chainId),
+        shanghaiOperations(gasCalculator, chainId),
         gasCalculator,
         evmConfiguration,
-        EvmSpecVersion.SHANDONG);
+        EvmSpecVersion.SHANGHAI);
   }
 
-  public static OperationRegistry shandongOperations(
+  public static OperationRegistry shanghaiOperations(
       final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
-    registerShandongOperations(operationRegistry, gasCalculator, chainId);
+    registerShanghaiOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
-  public static void registerShandongOperations(
+  public static void registerShanghaiOperations(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
@@ -467,5 +468,16 @@ public class MainnetEVMs {
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
     registry.put(new JumpFOperation(gasCalculator));
+  }
+
+  public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shanghai(chainId, evmConfiguration);
+  }
+
+  public static EVM shandong(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return shanghai(gasCalculator, chainId, evmConfiguration);
   }
 }

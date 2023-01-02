@@ -71,7 +71,7 @@ public class CreateOperationTest {
               + "F3" // RETURN
           );
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
-  private static final int SHANDONG_CREATE_GAS = 41240;
+  private static final int SHANGHAI_CREATE_GAS = 41240;
 
   @Test
   public void createFromMemoryMutationSafe() {
@@ -177,7 +177,7 @@ public class CreateOperationTest {
   }
 
   @Test
-  public void shandongMaxInitCodeSizeCreate() {
+  public void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -195,7 +195,7 @@ public class CreateOperationTest {
     when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.shandong(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrameStack.peek();
     final ContractCreationProcessor ccp =
@@ -205,11 +205,11 @@ public class CreateOperationTest {
     final Log log = createFrame.getLogs().get(0);
     final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
     assertThat(calculatedTopic).isEqualTo(TOPIC);
-    assertThat(result.getGasCost()).isEqualTo(SHANDONG_CREATE_GAS);
+    assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
   }
 
   @Test
-  public void shandongMaxInitCodeSizePlus1Create() {
+  public void shanghaiMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc001");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -227,10 +227,10 @@ public class CreateOperationTest {
     when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.shandong(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
-    assertThat(result.getGasCost()).isEqualTo(SHANDONG_CREATE_GAS);
+    assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
   }
 
   @NotNull
