@@ -41,8 +41,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class LocalPermissioningConfigurationValidatorTest {
 
-  static final String PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES =
-      "/permissioning_config_ropsten_bootnodes.toml";
+  static final String PERMISSIONING_CONFIG_SEPOLIA_BOOTNODES =
+      "/permissioning_config_sepolia_bootnodes.toml";
   static final String PERMISSIONING_CONFIG = "/permissioning_config.toml";
   static final String PERMISSIONING_CONFIG_VALID_HOSTNAME =
       "/permissioning_config_valid_hostname.toml";
@@ -50,12 +50,12 @@ public class LocalPermissioningConfigurationValidatorTest {
       "/permissioning_config_unknown_hostname.toml";
 
   @Test
-  public void ropstenWithNodesAllowlistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
+  public void spoliaWithNodesAllowlistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
       throws Exception {
 
-    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.ROPSTEN);
+    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.SEPOLIA);
 
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_SEPOLIA_BOOTNODES);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
 
@@ -75,7 +75,7 @@ public class LocalPermissioningConfigurationValidatorTest {
   @Test
   public void nodesAllowlistOptionWhichDoesNotIncludeBootnodesMustError() throws Exception {
 
-    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.ROPSTEN);
+    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.SEPOLIA);
 
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG);
     final Path toml = Files.createTempFile("toml", "");
@@ -94,15 +94,15 @@ public class LocalPermissioningConfigurationValidatorTest {
       final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
       PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
           enodeURIs, permissioningConfiguration);
-      fail("expected exception because ropsten bootnodes are not in node-allowlist");
+      fail("expected exception because sepolia bootnodes are not in node-allowlist");
     } catch (Exception e) {
       assertThat(e.getMessage()).startsWith("Specified node(s) not in nodes-allowlist");
       assertThat(e.getMessage())
           .contains(
-              "enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303");
+              "enode://9246d00bc8fd1742e5ad2428b80fc4dc45d786283e05ef6edbd9002cbc335d40998444732fbe921cb88e1d2c73d1b1de53bae6a2237996e9bfe14f871baf7066@18.168.182.86:30303");
       assertThat(e.getMessage())
           .contains(
-              "enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303");
+              "enode://ec66ddcf1a974950bd4c782789a7e04f8aa7110a72569b6e65fcd51e937e74eed303b1ea734e4d19cfaec9fbff9b6ee65bf31dcb50ba79acce9dd63a6aca61c7@52.14.151.177:30303");
     }
   }
 
