@@ -103,6 +103,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
         methodFactory.create(vertx, protocolContext, mergeCoordinator, engineCallListener);
   }
 
+  @Test
   public abstract void shouldReturnExpectedMethodName();
 
   @Test

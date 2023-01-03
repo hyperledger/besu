@@ -115,6 +115,7 @@ public abstract class AbstractEngineNewPayloadTest {
             vertx, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
   }
 
+  @Test
   public abstract void shouldReturnExpectedMethodName();
 
   @Test
