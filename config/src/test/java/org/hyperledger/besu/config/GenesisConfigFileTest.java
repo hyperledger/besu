@@ -196,16 +196,6 @@ public class GenesisConfigFileTest {
   }
 
   @Test
-  public void assertRopstenTerminalTotalDifficulty() {
-    GenesisConfigOptions ropstenOptions =
-        GenesisConfigFile.genesisFileFromResources("/ropsten.json").getConfigOptions();
-
-    assertThat(ropstenOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(ropstenOptions.getTerminalTotalDifficulty())
-        .contains(UInt256.valueOf(new BigInteger("50000000000000000")));
-  }
-
-  @Test
   public void assertSepoliaTerminalTotalDifficulty() {
     GenesisConfigOptions sepoliaOptions =
         GenesisConfigFile.genesisFileFromResources("/sepolia.json").getConfigOptions();
@@ -238,12 +228,12 @@ public class GenesisConfigFileTest {
 
   @Test
   public void assertTerminalTotalDifficultyOverride() {
-    GenesisConfigOptions ropstenOverrideOptions =
-        GenesisConfigFile.genesisFileFromResources("/ropsten.json")
+    GenesisConfigOptions sepoliaOverrideOptions =
+        GenesisConfigFile.genesisFileFromResources("/sepolia.json")
             .getConfigOptions(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)));
 
-    assertThat(ropstenOverrideOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(ropstenOverrideOptions.getTerminalTotalDifficulty())
+    assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty()).isPresent();
+    assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty())
         .contains(UInt256.valueOf(Long.MAX_VALUE));
   }
 
