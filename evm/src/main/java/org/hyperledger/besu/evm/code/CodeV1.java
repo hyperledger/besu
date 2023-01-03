@@ -368,7 +368,7 @@ public class CodeV1 implements Code {
     {1, 1, 1}, // 0x3b - EXTCODESIZE
     {4, 0, 1}, // 0x3c - EXTCODECOPY
     {0, 1, 1}, // 0x3d - RETURNDATASIZE
-    {3, 1, 1}, // 0x3e - RETURNDATACOPY
+    {3, 0, 1}, // 0x3e - RETURNDATACOPY
     {1, 1, 1}, // 0x3f - EXTCODEHASH
     {1, 1, 1}, // 0x40 - BLOCKHASH
     {0, 1, 1}, // 0x41 - COINBASE
