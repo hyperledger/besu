@@ -118,7 +118,7 @@ public class EngineGetPayloadV1Test {
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 "2.0",
-                RpcMethod.ENGINE_GET_PAYLOAD.getMethodName(),
+                RpcMethod.ENGINE_GET_PAYLOAD_V1.getMethodName(),
                 new Object[] {pid.serialize()})));
   }
 }
