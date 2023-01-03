@@ -85,14 +85,16 @@ public class FastDownloaderFactory {
 
     final boolean shouldResync = shouldResyncWorldstate(dataDirectory.resolve(FAST_SYNC_RESYNC));
 
-    if (!shouldResync
-        && fastSyncState.getPivotBlockHeader().isEmpty()
+    if (shouldResync) {
+      worldStateStorage.clear();
+    } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
           "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
     }
+
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       worldStateStorage.clearFlatDatabase();
     } else {
