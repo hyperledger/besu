@@ -75,7 +75,14 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
-    if (fastSyncState.getPivotBlockHeader().isEmpty()
+
+    final boolean shouldResync = shouldResyncWorldstate(dataDirectory.resolve(FAST_SYNC_RESYNC));
+    if (shouldResync) {
+      snapContext.clear();
+    }
+
+    if (!shouldResync
+        && fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
