@@ -71,8 +71,25 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EngineNewPayloadTest {
-  private EngineNewPayload method;
+public abstract class AbstractEngineNewPayloadTest {
+
+  @FunctionalInterface
+  interface MethodFactory {
+    AbstractEngineNewPayload create(
+        final Vertx vertx,
+        final ProtocolContext protocolContext,
+        final MergeMiningCoordinator mergeCoordinator,
+        final EthPeers ethPeers,
+        final EngineCallListener engineCallListener);
+  }
+
+  private final MethodFactory methodFactory;
+  protected AbstractEngineNewPayload method;
+
+  public AbstractEngineNewPayloadTest(final MethodFactory methodFactory) {
+    this.methodFactory = methodFactory;
+  }
+
   private static final Vertx vertx = Vertx.vertx();
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
@@ -94,15 +111,11 @@ public class EngineNewPayloadTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(ethPeers.peerCount()).thenReturn(1);
     this.method =
-        new EngineNewPayload(
+        methodFactory.create(
             vertx, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
   }
 
-  @Test
-  public void shouldReturnExpectedMethodName() {
-    // will break as specs change, intentional:
-    assertThat(method.getName()).isEqualTo("engine_newPayloadV1");
-  }
+  public abstract void shouldReturnExpectedMethodName();
 
   @Test
   public void shouldReturnValid() {
