@@ -46,7 +46,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
   private OptionalLong shanghaiTime = OptionalLong.empty();
   private OptionalLong cancunTime = OptionalLong.empty();
-  private OptionalLong shandongBlockNumber = OptionalLong.empty();
+  private OptionalLong futureTime = OptionalLong.empty();
+  private OptionalLong experimentalTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
@@ -230,8 +231,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getShandongBlockNumber() {
-    return shandongBlockNumber;
+  public OptionalLong getFutureTime() {
+    return futureTime;
+  }
+
+  @Override
+  public OptionalLong getExperimentalTime() {
+    return experimentalTime;
   }
 
   @Override
@@ -356,7 +362,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
-    getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
+    getFutureTime().ifPresent(l -> builder.put("futureTime", l));
+    getExperimentalTime().ifPresent(l -> builder.put("experimentalTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
     // classic fork blocks
@@ -515,8 +522,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions shandongBlock(final long blockNumber) {
-    shandongBlockNumber = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions futureTime(final long blockNumber) {
+    futureTime = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions experimentalTime(final long blockNumber) {
+    experimentalTime = OptionalLong.of(blockNumber);
     return this;
   }
 

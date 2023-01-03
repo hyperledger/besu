@@ -289,8 +289,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getShandongBlockNumber() {
-    return getOptionalLong("shandongblock");
+  public OptionalLong getFutureTime() {
+    return getOptionalLong("futuretime");
+  }
+
+  @Override
+  public OptionalLong getExperimentalTime() {
+    return getOptionalLong("experimentaltime");
   }
 
   @Override
@@ -445,9 +450,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
-    getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
+    getFutureTime().ifPresent(l -> builder.put("futureTime", l));
+    getExperimentalTime().ifPresent(l -> builder.put("experimentalTime", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -569,7 +575,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getArrowGlacierBlockNumber(),
             getGrayGlacierBlockNumber(),
             getMergeNetSplitBlockNumber(),
-            getShandongBlockNumber(),
+            getShanghaiTime(),
+            getCancunTime(),
+            getFutureTime(),
+            getExperimentalTime(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),

@@ -207,8 +207,20 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
-  public ProtocolSpecBuilder shandongDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.shandongDefinition(
+  public ProtocolSpecBuilder futureDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.futureDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
+  public ProtocolSpecBuilder experimentalDefinition(
+      final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.experimentalDefinition(
         chainId,
         contractSizeLimit,
         evmStackSize,
