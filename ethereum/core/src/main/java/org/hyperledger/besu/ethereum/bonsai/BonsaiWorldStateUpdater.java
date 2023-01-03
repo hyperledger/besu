@@ -88,6 +88,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
+    emptySlot.addAll(source.emptySlot);
   }
 
   @Override
@@ -714,6 +715,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     storageToUpdate.clear();
     codeToUpdate.clear();
     accountsToUpdate.clear();
+    emptySlot.clear();
     super.reset();
   }
 
@@ -723,7 +725,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         && deletedAccounts.isEmpty()
         && storageToUpdate.isEmpty()
         && storageToClear.isEmpty()
-        && codeToUpdate.isEmpty());
+        && codeToUpdate.isEmpty()
+        && emptySlot.isEmpty());
   }
 
   public static class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
