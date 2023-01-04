@@ -24,6 +24,8 @@ import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.code.EOFLayout;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,6 +48,11 @@ public class CodeValidateSubCommand implements Runnable {
   private final InputStream input;
   private final PrintStream output;
 
+  @CommandLine.Option(
+      names = {"--file"},
+      description = "A file containing a set of inputs")
+  private final File codeFile = null;
+
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
   @CommandLine.Parameters
   private final List<String> cliCode = new ArrayList<>();
@@ -63,38 +70,55 @@ public class CodeValidateSubCommand implements Runnable {
 
   @Override
   public void run() {
-    if (cliCode.isEmpty()) {
+    if (cliCode.isEmpty() && codeFile == null) {
       BufferedReader in = new BufferedReader(new InputStreamReader(input, UTF_8));
-      try {
-        for (String code = in.readLine(); code != null; code = in.readLine()) {
-          output.println(considerCode(code));
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      checkCodeFromBufferedReader(in);
     } else {
-      for (String code : cliCode) {
-        output.println(considerCode(code));
+      if (codeFile != null) {
+        try {
+          BufferedReader in = new BufferedReader(new FileReader(codeFile, UTF_8));
+          checkCodeFromBufferedReader(in);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
+      for (String code : cliCode) {
+        output.print(considerCode(code));
+      }
+    }
+  }
+
+  private void checkCodeFromBufferedReader(final BufferedReader in) {
+    try {
+      for (String code = in.readLine(); code != null; code = in.readLine()) {
+        output.print(considerCode(code));
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
   public String considerCode(final String hexCode) {
     Bytes codeBytes;
     try {
-      codeBytes = Bytes.fromHexString(hexCode.replaceAll("[^0-9A-Za-z]", ""));
+      codeBytes =
+          Bytes.fromHexString(
+              hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", ""));
     } catch (RuntimeException re) {
-      return "err: hex string -" + re;
+      return "err: hex string -" + re + "\n";
+    }
+    if (codeBytes.size() == 0) {
+      return "";
     }
 
     var layout = EOFLayout.parseEOF(codeBytes);
     if (!layout.isValid()) {
-      return "err: layout - " + layout.getInvalidReason();
+      return "err: layout - " + layout.getInvalidReason() + "\n";
     }
 
     var code = CodeFactory.createCode(codeBytes, Hash.hash(codeBytes), 1, true);
     if (!code.isValid()) {
-      return "err: " + ((CodeInvalid) code).getInvalidReason();
+      return "err: " + ((CodeInvalid) code).getInvalidReason() + "\n";
     }
 
     return "OK "
@@ -102,6 +126,6 @@ public class CodeValidateSubCommand implements Runnable {
             .mapToObj(code::getCodeSection)
             .map(CodeSection::getCode)
             .map(Bytes::toUnprefixedHexString)
-            .collect(Collectors.joining(","));
+            .collect(Collectors.joining(",")) + "\n";
   }
 }

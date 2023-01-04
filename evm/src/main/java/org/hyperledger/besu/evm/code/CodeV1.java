@@ -716,19 +716,11 @@ public class CodeV1 implements Code {
 
         while (currentPC < codeLength) {
           int thisOp = code[currentPC] & 0xff;
-          int recordedStack = stackHeights[currentPC];
-          if (recordedStack >= 0 && currentStackHeight != recordedStack) {
-            return String.format(
-                "Stack height mismatch %d/%d at %d", recordedStack, currentStackHeight, currentPC);
-          }
 
           byte[] stackInfo = OPCODE_STACK_VALIDATION[thisOp];
           int stackInputs;
           int stackOutputs;
           int pcAdvance = stackInfo[2];
-          if (pcAdvance == 0) {
-            return String.format("Invalid Instruction 0x%02x", thisOp);
-          }
           if (thisOp == CallFOperation.OPCODE) {
             int section = readBigEndianU16(currentPC + 1, code);
             stackInputs = codeSections[section].getInputs();
