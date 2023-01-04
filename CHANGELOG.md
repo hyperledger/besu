@@ -14,6 +14,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Support for new DATAHASH opcode as part of EIP-4844
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
