@@ -46,11 +46,13 @@ public enum RpcMethod {
   DEBUG_BATCH_RAW_TRANSACTION("debug_batchSendRawTransaction"),
   DEBUG_GET_BAD_BLOCKS("debug_getBadBlocks"),
 
-  ENGINE_GET_PAYLOAD("engine_getPayloadV1"),
+  ENGINE_GET_PAYLOAD_V1("engine_getPayloadV1"),
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
   ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
-  ENGINE_NEW_PAYLOAD("engine_newPayloadV1"),
-  ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdatedV1"),
+  ENGINE_NEW_PAYLOAD_V1("engine_newPayloadV1"),
+  ENGINE_NEW_PAYLOAD_V2("engine_newPayloadV2"),
+  ENGINE_FORKCHOICE_UPDATED_V1("engine_forkchoiceUpdatedV1"),
+  ENGINE_FORKCHOICE_UPDATED_V2("engine_forkchoiceUpdatedV2"),
   ENGINE_EXCHANGE_TRANSITION_CONFIGURATION("engine_exchangeTransitionConfigurationV1"),
 
   GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),
