@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -41,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProce
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.util.RangeManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -193,9 +195,17 @@ public class SnapWorldDownloadStateTest {
   @Test
   public void shouldNotCompleteWhenThereAreStoragePendingTasks() {
     when(snapSyncState.isHealInProgress()).thenReturn(false);
+
+    final StateTrieAccountValue accountValue =
+        new StateTrieAccountValue(1L, Wei.of(2L), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+
     downloadState.pendingStorageRequests.add(
         SnapDataRequest.createStorageTrieNodeDataRequest(
-            Hash.EMPTY_TRIE_HASH, Hash.wrap(Bytes32.random()), Hash.EMPTY_TRIE_HASH, Bytes.EMPTY));
+            Hash.EMPTY_TRIE_HASH,
+            Hash.wrap(Bytes32.random()),
+            accountValue,
+            Hash.EMPTY_TRIE_HASH,
+            Bytes.EMPTY));
 
     downloadState.checkCompletion(header);
 
@@ -205,7 +215,11 @@ public class SnapWorldDownloadStateTest {
 
     downloadState.pendingBigStorageRequests.add(
         SnapDataRequest.createStorageTrieNodeDataRequest(
-            Hash.EMPTY_TRIE_HASH, Hash.wrap(Bytes32.random()), Hash.EMPTY_TRIE_HASH, Bytes.EMPTY));
+            Hash.EMPTY_TRIE_HASH,
+            Hash.wrap(Bytes32.random()),
+            accountValue,
+            Hash.EMPTY_TRIE_HASH,
+            Bytes.EMPTY));
 
     downloadState.checkCompletion(header);
 
@@ -232,6 +246,10 @@ public class SnapWorldDownloadStateTest {
   public void shouldCancelOutstandingTasksWhenFutureIsCancelled() {
     final EthTask<?> outstandingTask1 = mock(EthTask.class);
     final EthTask<?> outstandingTask2 = mock(EthTask.class);
+
+    final StateTrieAccountValue accountValue =
+        new StateTrieAccountValue(1L, Wei.of(2L), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+
     downloadState.addOutstandingTask(outstandingTask1);
     downloadState.addOutstandingTask(outstandingTask2);
 
@@ -243,7 +261,11 @@ public class SnapWorldDownloadStateTest {
             RangeManager.MAX_RANGE));
     downloadState.pendingStorageRequests.add(
         SnapDataRequest.createStorageTrieNodeDataRequest(
-            Hash.EMPTY_TRIE_HASH, Hash.wrap(Bytes32.random()), Hash.EMPTY_TRIE_HASH, Bytes.EMPTY));
+            Hash.EMPTY_TRIE_HASH,
+            Hash.wrap(Bytes32.random()),
+            accountValue,
+            Hash.EMPTY_TRIE_HASH,
+            Bytes.EMPTY));
     downloadState.setWorldStateDownloadProcess(worldStateDownloadProcess);
 
     future.cancel(true);

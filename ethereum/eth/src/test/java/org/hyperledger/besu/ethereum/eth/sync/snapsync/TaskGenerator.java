@@ -81,7 +81,7 @@ public class TaskGenerator {
             worldStateStorage,
             rootHash,
             accountHash,
-            stateTrieAccountValue.getStorageRoot(),
+            stateTrieAccountValue,
             withData);
     final BytecodeRequest bytecodeRequest =
         createBytecodeDataRequest(
@@ -102,7 +102,7 @@ public class TaskGenerator {
       final WorldStateStorage worldStateStorage,
       final Hash rootHash,
       final Hash accountHash,
-      final Bytes32 storageRoot,
+      final StateTrieAccountValue stateTrieAccountValue,
       final boolean withData) {
 
     final RangeStorageEntriesCollector collector =
@@ -112,7 +112,7 @@ public class TaskGenerator {
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
                 worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
-            storageRoot,
+            stateTrieAccountValue.getStorageRoot(),
             b -> b,
             b -> b);
 
@@ -126,7 +126,11 @@ public class TaskGenerator {
 
     final StorageRangeDataRequest request =
         SnapDataRequest.createStorageRangeDataRequest(
-            rootHash, accountHash, storageRoot, RangeManager.MIN_RANGE, RangeManager.MAX_RANGE);
+            rootHash,
+            accountHash,
+            stateTrieAccountValue,
+            RangeManager.MIN_RANGE,
+            RangeManager.MAX_RANGE);
     if (withData) {
       request.setProofValid(true);
       request.addResponse(null, worldStateProofProvider, slots, new ArrayDeque<>());

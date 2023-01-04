@@ -23,9 +23,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -49,10 +51,12 @@ public class CompleteTaskStepTest {
 
   private final CompleteTaskStep completeTaskStep =
       new CompleteTaskStep(snapSyncState, new NoOpMetricsSystem());
+  private StateTrieAccountValue accountValue;
 
   @Before
   public void setup() {
     when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(blockHeader));
+    accountValue = new StateTrieAccountValue(1L, Wei.of(2L), HASH, Hash.EMPTY);
   }
 
   @Test
@@ -88,7 +92,8 @@ public class CompleteTaskStepTest {
   public void shouldMarkStorageTrieNodeTaskAsFailedIfItDoesNotHaveData() {
     final StubTask task =
         new StubTask(
-            SnapDataRequest.createStorageTrieNodeDataRequest(HASH, HASH, HASH, Bytes.EMPTY));
+            SnapDataRequest.createStorageTrieNodeDataRequest(
+                HASH, HASH, accountValue, HASH, Bytes.EMPTY));
 
     completeTaskStep.markAsCompleteOrFailed(downloadState, task);
 
@@ -102,7 +107,8 @@ public class CompleteTaskStepTest {
   public void shouldMarkStorageTrieNodeTaskCompleteIfItDoesNotHaveDataAndExpired() {
     final StubTask task =
         new StubTask(
-            SnapDataRequest.createStorageTrieNodeDataRequest(HASH, HASH, HASH, Bytes.EMPTY));
+            SnapDataRequest.createStorageTrieNodeDataRequest(
+                HASH, HASH, accountValue, HASH, Bytes.EMPTY));
 
     when(snapSyncState.isExpired(any())).thenReturn(true);
 
