@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
@@ -61,15 +60,15 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
+public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
-  private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayload.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
 
-  public EngineNewPayload(
+  public AbstractEngineNewPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
@@ -78,11 +77,6 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     super(vertx, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
     this.ethPeers = ethPeers;
-  }
-
-  @Override
-  public String getName() {
-    return RpcMethod.ENGINE_NEW_PAYLOAD.getMethodName();
   }
 
   @Override
