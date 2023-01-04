@@ -4442,6 +4442,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("GoQuorum mode cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    verify(mockLogger, atLeast(1))
+        .warn(
+            DEPRECATION_WARNING_MSG,
+            "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)",
+            "--privacy-enabled");
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
