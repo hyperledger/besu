@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -31,5 +33,10 @@ public class EngineForkchoiceUpdatedV2Test extends AbstractEngineForkchoiceUpdat
   @Test
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_forkchoiceUpdatedV2");
+  }
+
+  @Override
+  protected String getMethodName() {
+    return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V2.getMethodName();
   }
 }

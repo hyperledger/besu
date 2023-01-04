@@ -61,8 +61,7 @@ public class EngineGetPayloadV1Test extends AbstractEngineGetPayloadTest {
   }
 
   @Override
-  @Test
-  public void shouldFailForUnknownPayloadId() {
-    shouldFailForUnknownPayloadId(RpcMethod.ENGINE_GET_PAYLOAD_V1.getMethodName());
+  protected String getMethodName() {
+    return RpcMethod.ENGINE_GET_PAYLOAD_V1.getMethodName();
   }
 }

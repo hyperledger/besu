@@ -33,7 +33,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
@@ -503,9 +502,11 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 "2.0",
-                RpcMethod.ENGINE_FORKCHOICE_UPDATED_V1.getMethodName(),
+                getMethodName(),
                 Stream.concat(Stream.of(forkchoiceParam), payloadParam.stream()).toArray())));
   }
+
+  abstract String getMethodName();
 
   private EngineUpdateForkchoiceResult fromSuccessResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);

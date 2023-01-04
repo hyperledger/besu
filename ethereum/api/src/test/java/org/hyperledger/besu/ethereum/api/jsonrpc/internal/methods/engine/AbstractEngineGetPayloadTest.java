@@ -100,17 +100,17 @@ public abstract class AbstractEngineGetPayloadTest {
   public abstract void shouldReturnBlockForKnownPayloadId();
 
   @Test
-  public abstract void shouldFailForUnknownPayloadId();
-
-  protected void shouldFailForUnknownPayloadId(final String methodName) {
+  public void shouldFailForUnknownPayloadId() {
     final var resp =
         resp(
-            methodName,
+            getMethodName(),
             PayloadIdentifier.forPayloadParams(
                 Hash.ZERO, 0L, Bytes32.random(), Address.fromHexString("0x42")));
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
+
+  abstract String getMethodName();
 
   protected JsonRpcResponse resp(final String methodName, final PayloadIdentifier pid) {
     return method.response(
