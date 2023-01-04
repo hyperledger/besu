@@ -1,7 +1,7 @@
 {
   "config": {
     "chainId": 2023,
-    "experimentalTime": 0,
+    "experimentalEipsTime": 0,
     "contractSizeLimit": 2147483647,
     "ethash": {
       "fixeddifficulty": 100

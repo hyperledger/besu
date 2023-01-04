@@ -28,9 +28,9 @@ public enum EvmSpecVersion {
   PARIS(0, true),
   SHANGHAI(1, false),
   /** Development fork for unscheduled EIPs */
-  FUTURE(1, false),
+  FUTURE_EIPS(1, false),
   /** Development fork for EIPs not accepted to Mainnet */
-  EXPERIMENTAL(1, false);
+  EXPERIMENTAL_EIPS(1, false);
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 

@@ -207,8 +207,19 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
-  public ProtocolSpecBuilder futureDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.futureDefinition(
+  /**
+   * The "future" fork consists of EIPs that have been approved for Ethereum Mainnet but not
+   * scheduled for a fork. This is also known as "Eligible For Inclusion" (EFI) or "Considered for
+   * Inclusion" (CFI).
+   *
+   * <p>There is no guarantee of the contents of this fork across Besu releases and should be
+   * considered unstable.
+   *
+   * @param genesisConfigOptions the chain options from the genesis config
+   * @return a protocol spec for the "Future" fork.
+   */
+  public ProtocolSpecBuilder futureEipsDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.futureEipsDefinition(
         chainId,
         contractSizeLimit,
         evmStackSize,
@@ -218,9 +229,19 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
-  public ProtocolSpecBuilder experimentalDefinition(
+  /**
+   * The "experimental" fork consists of EIPs and other changes that have not been approved for any
+   * fork but are implemented in Besu, either for demonstration or experimentation.
+   *
+   * <p>There is no guarantee of the contents of this fork across Besu releases and should be
+   * considered unstable.
+   *
+   * @param genesisConfigOptions the chain options from the genesis config
+   * @return a protocol spec for the "Experimental" fork.
+   */
+  public ProtocolSpecBuilder experimentalEipsDefinition(
       final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.experimentalDefinition(
+    return MainnetProtocolSpecs.experimentalEipsDefinition(
         chainId,
         contractSizeLimit,
         evmStackSize,

@@ -210,15 +210,16 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldGetFutureTime() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("futureTime", 1337));
-    assertThat(config.getFutureTime()).hasValue(1337);
+  public void shouldGetFutureEipsTime() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("futureEipsTime", 1337));
+    assertThat(config.getFutureEipsTime()).hasValue(1337);
   }
 
   @Test
-  public void shouldGetExperimentalTime() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("experimentalTime", 1337));
-    assertThat(config.getExperimentalTime()).hasValue(1337);
+  public void shouldGetExperimentalEipsTime() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("experimentalEipsTime", 1337));
+    assertThat(config.getExperimentalEipsTime()).hasValue(1337);
   }
 
   @Test
@@ -247,8 +248,8 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getMergeNetSplitBlockNumber()).isEmpty();
     assertThat(config.getShanghaiTime()).isEmpty();
     assertThat(config.getCancunTime()).isEmpty();
-    assertThat(config.getExperimentalTime()).isEmpty();
-    assertThat(config.getFutureTime()).isEmpty();
+    assertThat(config.getFutureEipsTime()).isEmpty();
+    assertThat(config.getExperimentalEipsTime()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 

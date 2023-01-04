@@ -21,8 +21,8 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
-import static org.hyperledger.besu.cli.config.NetworkName.EXPERIMENTAL;
-import static org.hyperledger.besu.cli.config.NetworkName.FUTURE;
+import static org.hyperledger.besu.cli.config.NetworkName.EXPERIMENTAL_EIPS;
+import static org.hyperledger.besu.cli.config.NetworkName.FUTURE_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
 import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
@@ -1029,11 +1029,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void testGenesisPathFutureEthConfig() {
+  public void testGenesisPathFutureEipsEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    parseCommand("--network", "future");
+    parseCommand("--network", "future_eips");
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
     verify(mockControllerBuilder).build();
@@ -1045,11 +1045,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void testGenesisPathExperimentalEthConfig() {
+  public void testGenesisPathExperimentalEipsEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    parseCommand("--network", "experimental");
+    parseCommand("--network", "experimental_eips");
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
     verify(mockControllerBuilder).build();
@@ -3972,8 +3972,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void futureValuesAreUsed() {
-    parseCommand("--network", "future");
+  public void futureEipsValuesAreUsed() {
+    parseCommand("--network", "future_eips");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
@@ -3981,15 +3981,15 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(FUTURE));
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(FUTURE_EIPS));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
-  public void experimentalValuesAreUsed() {
-    parseCommand("--network", "experimental");
+  public void experimentalEipsValuesAreUsed() {
+    parseCommand("--network", "experimental_eips");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
@@ -3997,7 +3997,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(EXPERIMENTAL));
+    assertThat(networkArg.getValue())
+        .isEqualTo(EthNetworkConfig.getNetworkConfig(EXPERIMENTAL_EIPS));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4080,13 +4081,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void futureValuesCanBeOverridden() throws Exception {
-    networkValuesCanBeOverridden("future");
+  public void futureEipsValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("future_eips");
   }
 
   @Test
-  public void experimentalValuesCanBeOverridden() throws Exception {
-    networkValuesCanBeOverridden("experimental");
+  public void experimentalEipsValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("experimental_eips");
   }
 
   @Test

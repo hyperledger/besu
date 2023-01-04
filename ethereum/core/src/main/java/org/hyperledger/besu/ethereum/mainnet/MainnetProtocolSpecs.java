@@ -717,7 +717,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
-  static ProtocolSpecBuilder futureDefinition(
+  static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -736,12 +736,12 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.future(
+                MainnetEVMs.futureEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .name("Future");
+        .name("FutureEips");
   }
 
-  static ProtocolSpecBuilder experimentalDefinition(
+  static ProtocolSpecBuilder experimentalEipsDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -750,7 +750,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
 
-    return futureDefinition(
+    return futureEipsDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
@@ -760,9 +760,9 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.experimental(
+                MainnetEVMs.experimentalEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .name("Experimental");
+        .name("ExperimentalEips");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

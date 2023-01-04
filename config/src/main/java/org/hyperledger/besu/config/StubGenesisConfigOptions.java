@@ -46,8 +46,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
   private OptionalLong shanghaiTime = OptionalLong.empty();
   private OptionalLong cancunTime = OptionalLong.empty();
-  private OptionalLong futureTime = OptionalLong.empty();
-  private OptionalLong experimentalTime = OptionalLong.empty();
+  private OptionalLong futureEipsTime = OptionalLong.empty();
+  private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
@@ -231,13 +231,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getFutureTime() {
-    return futureTime;
+  public OptionalLong getFutureEipsTime() {
+    return futureEipsTime;
   }
 
   @Override
-  public OptionalLong getExperimentalTime() {
-    return experimentalTime;
+  public OptionalLong getExperimentalEipsTime() {
+    return experimentalEipsTime;
   }
 
   @Override
@@ -362,8 +362,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
-    getFutureTime().ifPresent(l -> builder.put("futureTime", l));
-    getExperimentalTime().ifPresent(l -> builder.put("experimentalTime", l));
+    getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
+    getExperimentalEipsTime().ifPresent(l -> builder.put("experimentalEipsTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
     // classic fork blocks
@@ -522,13 +522,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions futureTime(final long blockNumber) {
-    futureTime = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions futureEipsTime(final long blockNumber) {
+    futureEipsTime = OptionalLong.of(blockNumber);
     return this;
   }
 
-  public StubGenesisConfigOptions experimentalTime(final long blockNumber) {
-    experimentalTime = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions experimentalEipsTime(final long blockNumber) {
+    experimentalEipsTime = OptionalLong.of(blockNumber);
     return this;
   }
 

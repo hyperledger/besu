@@ -128,8 +128,8 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMoveToNumber(params, "mergeNetSplitForkBlock", config, "mergeNetSplitBlock");
     maybeMoveToNumber(params, "shanghaiForkTime", config, "shanghaiTime");
     maybeMoveToNumber(params, "cancunForkTime", config, "cancunTime");
-    maybeMoveToNumber(params, "futureForkTime", config, "futureTime");
-    maybeMoveToNumber(params, "experimentalForkTime", config, "experimentalTime");
+    maybeMoveToNumber(params, "futureEipsForkTime", config, "futureEipsTime");
+    maybeMoveToNumber(params, "experimentalEipsForkTime", config, "experimentalEipsTime");
     maybeMoveToNumber(params, "chainID", config, "chainId", 1);
 
     maybeMove(genesis, "author", chainParamsJson, "coinbase");

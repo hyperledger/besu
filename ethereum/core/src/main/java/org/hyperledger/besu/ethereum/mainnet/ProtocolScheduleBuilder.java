@@ -121,15 +121,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         validateForkOrder("ArrowGlacier", config.getArrowGlacierBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("GrayGlacier", config.getGrayGlacierBlockNumber(), lastForkBlock);
-    lastForkBlock =
-        validateForkOrder("MergeNetSplit", config.getMergeNetSplitBlockNumber(), lastForkBlock);
-    // This works because mistaking the earliest possible time (1,663,224,162, when the merge
-    // happend) for a block number will not happen for over 626 years.
-    lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
-    lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
-    lastForkBlock = validateForkOrder("Future", config.getFutureTime(), lastForkBlock);
-    lastForkBlock = validateForkOrder("Experimental", config.getExperimentalTime(), lastForkBlock);
-
     assert (lastForkBlock >= 0);
   }
 
@@ -176,9 +167,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         create(config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
         create(config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
         create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
-        create(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
-        create(config.getFutureTime(), specFactory.futureDefinition(config)),
-        create(config.getExperimentalTime(), specFactory.experimentalDefinition(config)),
         // Classic Milestones
         create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
         create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
