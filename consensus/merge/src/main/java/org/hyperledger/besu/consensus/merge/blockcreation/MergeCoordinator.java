@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
@@ -521,30 +522,42 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           LOG,
           "Forwarding chain head to the block {} saved from a previous newPayload invocation",
           newHead::toLogString);
-      forwardWorldStateTo(newHead);
-      return blockchain.forwardToBlock(newHead);
+
+      if (forwardWorldStateTo(newHead)) {
+        // move chain head forward:
+        return blockchain.forwardToBlock(newHead);
+      } else {
+        debugLambda(
+            LOG,
+            "Failed to move the worldstate forward to hash {}, not moving chain head",
+            newHead::toLogString);
+        return false;
+      }
     }
 
     debugLambda(LOG, "New head {} is a chain reorg, rewind chain head to it", newHead::toLogString);
     return blockchain.rewindToBlock(newHead.getHash());
   }
 
-  private void forwardWorldStateTo(final BlockHeader newHead) {
-    protocolContext
-        .getWorldStateArchive()
-        .getMutable(newHead.getStateRoot(), newHead.getHash())
-        .ifPresentOrElse(
-            mutableWorldState ->
-                debugLambda(
-                    LOG,
-                    "World state for state root hash {} and block hash {} persisted successfully",
-                    mutableWorldState::rootHash,
-                    newHead::getHash),
-            () ->
-                LOG.error(
-                    "Could not persist world for root hash {} and block hash {}",
-                    newHead.getStateRoot(),
-                    newHead.getHash()));
+  private boolean forwardWorldStateTo(final BlockHeader newHead) {
+    Optional<MutableWorldState> newWorldState =
+        protocolContext
+            .getWorldStateArchive()
+            .getMutable(newHead.getStateRoot(), newHead.getHash());
+
+    newWorldState.ifPresentOrElse(
+        mutableWorldState ->
+            debugLambda(
+                LOG,
+                "World state for state root hash {} and block hash {} persisted successfully",
+                mutableWorldState::rootHash,
+                newHead::getHash),
+        () ->
+            LOG.error(
+                "Could not persist world for root hash {} and block hash {}",
+                newHead.getStateRoot(),
+                newHead.getHash()));
+    return newWorldState.isPresent();
   }
 
   @Override

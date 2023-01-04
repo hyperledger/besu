@@ -26,28 +26,25 @@ public interface TrieLogManager {
   void saveTrieLog(
       final BonsaiWorldStateArchive worldStateArchive,
       final BonsaiWorldStateUpdater localUpdater,
-      final Hash worldStateRootHash,
-      final BlockHeader blockHeader);
+      final Hash forWorldStateRootHash,
+      final BlockHeader forBlockHeader,
+      final BonsaiPersistedWorldState forWorldState);
 
   Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash);
 
   long getMaxLayersToLoad();
 
-  void addCachedLayer(
-      final BlockHeader blockHeader,
-      final Hash worldStateRootHash,
-      final TrieLogLayer trieLog,
-      final BonsaiWorldStateArchive worldStateArchive);
-
   void updateCachedLayers(final Hash blockParentHash, final Hash blockHash);
 
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
 
-  interface CachedWorldState {
+  interface CachedWorldState<Z extends MutableWorldState> {
+    void dispose();
+
     long getHeight();
 
     TrieLogLayer getTrieLog();
 
-    MutableWorldState getMutableWorldState();
+    Z getMutableWorldState();
   }
 }

@@ -552,7 +552,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public List<Long> getForks() {
+  public List<Long> getForkBlockNumbers() {
     Stream<OptionalLong> forkBlockNumbers =
         Stream.of(
             getHomesteadBlockNumber(),
@@ -584,6 +584,19 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers
+        .filter(OptionalLong::isPresent)
+        .map(OptionalLong::getAsLong)
+        .distinct()
+        .sorted()
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<Long> getForkBlockTimestamps() {
+    Stream<OptionalLong> forkBlockTimestamps = Stream.of(getShanghaiTime(), getCancunTime());
+    // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
+
+    return forkBlockTimestamps
         .filter(OptionalLong::isPresent)
         .map(OptionalLong::getAsLong)
         .distinct()

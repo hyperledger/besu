@@ -165,4 +165,18 @@ public interface Words {
   static long unsignedMin(final long a, final long b) {
     return Long.compareUnsigned(a, b) < 0 ? a : b;
   }
+
+  static int readBigEndianU16(final int index, final byte[] array) {
+    if (index + 1 >= array.length) {
+      throw new IndexOutOfBoundsException();
+    }
+    return ((array[index] & 0xff) << 8) | (array[index + 1] & 0xff);
+  }
+
+  static int readBigEndianI16(final int index, final byte[] array) {
+    if (index + 1 >= array.length) {
+      throw new IndexOutOfBoundsException();
+    }
+    return (array[index] << 8) | (array[index + 1] & 0xff);
+  }
 }

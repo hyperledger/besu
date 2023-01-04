@@ -25,7 +25,7 @@ public class SubOperation extends AbstractFixedCostOperation {
   static final OperationResult subSuccess = new OperationResult(3, null);
 
   public SubOperation(final GasCalculator gasCalculator) {
-    super(0x03, "SUB", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x03, "SUB", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

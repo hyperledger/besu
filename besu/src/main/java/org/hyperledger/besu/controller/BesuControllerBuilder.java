@@ -65,8 +65,8 @@ import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromFinalizedBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromSafeBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -550,7 +550,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
-      return new PivotSelectorFromFinalizedBlock(
+      return new PivotSelectorFromSafeBlock(
           protocolContext,
           protocolSchedule,
           ethContext,
@@ -636,7 +636,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        genesisConfig.getForks());
+        genesisConfig.getForkBlockNumbers(),
+        genesisConfig.getForkTimestamps());
   }
 
   protected ProtocolContext createProtocolContext(
