@@ -83,7 +83,8 @@ public class StackTrie {
     commit(nodeUpdater, (key, value) -> {});
   }
 
-  public void commit(final NodeUpdater nodeUpdater, final FlatDatabaseUpdater flatDatabaseUpdater) {
+  public boolean commit(
+      final NodeUpdater nodeUpdater, final FlatDatabaseUpdater flatDatabaseUpdater) {
 
     if (nbSegments.decrementAndGet() <= 0 && !elements.isEmpty()) {
 
@@ -131,7 +132,9 @@ public class StackTrie {
             }
           }));
       keys.forEach(flatDatabaseUpdater::store);
+      return true;
     }
+    return false;
   }
 
   public boolean addSegment() {

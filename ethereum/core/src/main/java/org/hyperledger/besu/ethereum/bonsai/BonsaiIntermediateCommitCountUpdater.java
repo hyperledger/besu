@@ -17,26 +17,27 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class BonsaiIntermediateCommitCountUpdater<WORLDSTATE extends WorldStateStorage> {
 
-  private final WORLDSTATE worldStateStorage;
+  private WorldStateStorage.Updater updater;
 
   private final Integer maxElements;
   final AtomicInteger nbElements = new AtomicInteger();
-  private WorldStateStorage.Updater updater;
+  private final Supplier<WorldStateStorage.Updater> updaterSupplier;
 
   public BonsaiIntermediateCommitCountUpdater(
-      final WORLDSTATE worldStateStorage, final Integer maxElements) {
-    this.updater = worldStateStorage.updater();
-    this.worldStateStorage = worldStateStorage;
+      final Supplier<WorldStateStorage.Updater> updaterSupplier, final Integer maxElements) {
+    this.updaterSupplier = updaterSupplier;
+    this.updater = updaterSupplier.get();
     this.maxElements = maxElements;
   }
 
   public WorldStateStorage.Updater getUpdater() {
     if (nbElements.incrementAndGet() % maxElements == 0) {
       updater.commit();
-      updater = worldStateStorage.updater();
+      updater = updaterSupplier.get();
     }
     return updater;
   }

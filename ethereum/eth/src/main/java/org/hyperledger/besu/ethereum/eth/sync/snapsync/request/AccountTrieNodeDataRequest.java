@@ -65,7 +65,8 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     if (getSyncMode(worldStateStorage) == BONSAI) {
       deletePotentialOldAccountEntries(
           (BonsaiWorldStateKeyValueStorage) worldStateStorage, getLocation(), data);
-      TrieNodeDecoder.decodeNodes(getLocation(), data)
+      TrieNodeDecoder.decodeNodes(getLocation(), data).stream()
+          .filter(node -> !node.isReferencedByHash())
           .forEach(
               node ->
                   node.getValue()
@@ -109,7 +110,8 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<SnapDataRequest> getRootStorageRequests(
+      final WorldStateStorage worldStateStorage, final WorldStateStorage.Updater updater) {
     final List<SnapDataRequest> requests = new ArrayList<>();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
@@ -135,6 +137,7 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
                     createStorageTrieNodeDataRequest(
                         stateTrieAccountValue.getStorageRoot(),
                         Hash.wrap(accountHash),
+                        stateTrieAccountValue,
                         getRootHash(),
                         Bytes.EMPTY));
               });
@@ -165,7 +168,7 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
       // If we detect an account storage we fill it with snapsync before completing with a heal
       final SnapDataRequest storageTrieRequest =
           createStorageTrieNodeDataRequest(
-              accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
+              accountValue.getStorageRoot(), accountHash, accountValue, getRootHash(), Bytes.EMPTY);
       builder.add(storageTrieRequest);
     }
     return builder.build();

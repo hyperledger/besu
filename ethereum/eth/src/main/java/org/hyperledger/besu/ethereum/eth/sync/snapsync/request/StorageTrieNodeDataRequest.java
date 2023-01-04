@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -37,11 +38,17 @@ import org.apache.tuweni.rlp.RLP;
 public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   final Hash accountHash;
+  final StateTrieAccountValue accountValue;
 
   StorageTrieNodeDataRequest(
-      final Hash nodeHash, final Hash accountHash, final Hash rootHash, final Bytes location) {
+      final Hash nodeHash,
+      final Hash accountHash,
+      final StateTrieAccountValue accountValue,
+      final Hash rootHash,
+      final Bytes location) {
     super(nodeHash, rootHash, location);
     this.accountHash = accountHash;
+    this.accountValue = accountValue;
   }
 
   @Override
@@ -53,17 +60,33 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     if (getSyncMode(worldStateStorage) == BONSAI) {
       deletePotentialOldStorageEntries(
           (BonsaiWorldStateKeyValueStorage) worldStateStorage, accountHash, getLocation(), data);
-      TrieNodeDecoder.decodeNodes(getLocation(), data)
+      BonsaiWorldStateKeyValueStorage.Updater bonsaiUpdater =
+          (BonsaiWorldStateKeyValueStorage.Updater) updater;
+      TrieNodeDecoder.decodeNodes(getLocation(), data).stream()
+          .filter(node -> !node.isReferencedByHash())
           .forEach(
               node ->
                   node.getValue()
                       .ifPresent(
                           value ->
-                              ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                                  .putStorageValueBySlotHash(
-                                      accountHash,
-                                      getSlotHash(node.getLocation().orElseThrow(), node.getPath()),
-                                      Bytes32.leftPad(RLP.decodeValue(value)))));
+                              bonsaiUpdater.putStorageValueBySlotHash(
+                                  accountHash,
+                                  getSlotHash(node.getLocation().orElseThrow(), node.getPath()),
+                                  Bytes32.leftPad(RLP.decodeValue(value)))));
+      if (getLocation().isEmpty()
+          && downloadState.inconsistentAccounts.contains(
+              CompactEncoding.bytesToPath(accountHash))) {
+        bonsaiUpdater.putAccountInfoState(
+            Hash.wrap(accountHash),
+            org.hyperledger.besu.ethereum.rlp.RLP.encode(
+                new StateTrieAccountValue(
+                        accountValue.getNonce(),
+                        accountValue.getBalance(),
+                        accountValue.getStorageRoot(),
+                        accountValue.getCodeHash(),
+                        true)
+                    ::writeTo));
+      }
     }
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     return 1;
@@ -77,7 +100,8 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected SnapDataRequest createChildNodeDataRequest(final Hash childHash, final Bytes location) {
-    return createStorageTrieNodeDataRequest(childHash, getAccountHash(), getRootHash(), location);
+    return createStorageTrieNodeDataRequest(
+        childHash, getAccountHash(), accountValue, getRootHash(), location);
   }
 
   @Override

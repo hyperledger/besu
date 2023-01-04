@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
@@ -65,11 +66,11 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   public static StorageRangeDataRequest createStorageRangeDataRequest(
       final Hash rootHash,
       final Bytes32 accountHash,
-      final Bytes32 storageRoot,
+      final StateTrieAccountValue accountValue,
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash) {
     return new StorageRangeDataRequest(
-        rootHash, accountHash, storageRoot, startKeyHash, endKeyHash);
+        rootHash, accountHash, accountValue, startKeyHash, endKeyHash);
   }
 
   public static AccountTrieNodeDataRequest createAccountTrieNodeDataRequest(
@@ -86,8 +87,12 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   public static StorageTrieNodeDataRequest createStorageTrieNodeDataRequest(
-      final Hash hash, final Hash accountHash, final Hash rootHash, final Bytes location) {
-    return new StorageTrieNodeDataRequest(hash, accountHash, rootHash, location);
+      final Hash hash,
+      final Hash accountHash,
+      final StateTrieAccountValue accountValue,
+      final Hash rootHash,
+      final Bytes location) {
+    return new StorageTrieNodeDataRequest(hash, accountHash, accountValue, rootHash, location);
   }
 
   public static BytecodeRequest createBytecodeRequest(

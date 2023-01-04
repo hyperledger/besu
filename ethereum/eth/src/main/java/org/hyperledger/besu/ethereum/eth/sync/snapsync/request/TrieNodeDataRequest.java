@@ -167,7 +167,8 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   protected abstract SnapDataRequest createChildNodeDataRequest(
       final Hash childHash, final Bytes location);
 
-  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<SnapDataRequest> getRootStorageRequests(
+      final WorldStateStorage worldStateStorage, final WorldStateStorage.Updater updater) {
     return Stream.empty();
   }
 

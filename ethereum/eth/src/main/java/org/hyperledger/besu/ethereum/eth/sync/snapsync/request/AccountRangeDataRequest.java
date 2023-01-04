@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.util.RangeManager.MIN_RANGE;
 import static org.hyperledger.besu.ethereum.util.RangeManager.findNewBeginElementInRange;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiIntermediateCommitCountUpdater;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -37,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -111,23 +111,24 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       return 0;
     }
 
+    final BonsaiIntermediateCommitCountUpdater<WorldStateStorage> countUpdater =
+        new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage::updater, 100);
     // search incomplete nodes in the range
-    final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
-          updater.putAccountStateTrieNode(location, hash, value);
-          nbNodesSaved.getAndIncrement();
+          countUpdater.getUpdater().putAccountStateTrieNode(location, hash, value);
         };
 
     StackTrie.FlatDatabaseUpdater flatDatabaseUpdater =
         (key, value) ->
-            ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+            ((BonsaiWorldStateKeyValueStorage.Updater) countUpdater.getUpdater())
                 .putAccountInfoState(Hash.wrap(key), value);
+
     stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
 
     downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getElementsCount().get());
 
-    return nbNodesSaved.get();
+    return countUpdater.close();
   }
 
   public void addResponse(
@@ -179,7 +180,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
             createStorageRangeDataRequest(
                 getRootHash(),
                 account.getKey(),
-                accountValue.getStorageRoot(),
+                accountValue,
                 startStorageRange.orElse(MIN_RANGE),
                 endStorageRange.orElse(MAX_RANGE)));
       }

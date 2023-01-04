@@ -45,6 +45,8 @@ public class SnapsyncMetricsManager {
   private final AtomicReference<BigDecimal> percentageDownloaded;
   private final AtomicLong nbAccounts;
   private final AtomicLong nbSlots;
+
+  private final AtomicLong nbSlotsSavedInFlat;
   private final AtomicLong nbCodes;
   private final AtomicLong nbNodesGenerated;
   private final AtomicLong nbNodesHealed;
@@ -59,6 +61,7 @@ public class SnapsyncMetricsManager {
     percentageDownloaded = new AtomicReference<>(new BigDecimal(0));
     nbAccounts = new AtomicLong(0);
     nbSlots = new AtomicLong(0);
+    nbSlotsSavedInFlat = new AtomicLong(0);
     nbCodes = new AtomicLong(0);
     nbNodesGenerated = new AtomicLong(0);
     nbNodesHealed = new AtomicLong(0);
@@ -123,6 +126,10 @@ public class SnapsyncMetricsManager {
     this.nbSlots.getAndAdd(nbSlots);
   }
 
+  public void notifySlotsSaved(final long nbSlots) {
+    this.nbSlotsSavedInFlat.getAndAdd(nbSlots);
+  }
+
   public void notifyCodeDownloaded() {
     this.nbCodes.getAndIncrement();
   }
@@ -142,10 +149,11 @@ public class SnapsyncMetricsManager {
       lastNotifyTimestamp = now;
       if (!isHeal) {
         LOG.info(
-            "Worldstate download in progress synced={}%, accounts={}, slots={}, codes={}, nodes={}",
+            "Worldstate download in progress synced={}%, accounts={}, slots={}({} saved in flat db), codes={}, nodes={}",
             percentageDownloaded.get().setScale(2, RoundingMode.HALF_UP),
             nbAccounts,
             nbSlots,
+            nbSlotsSavedInFlat,
             nbCodes,
             nbNodesGenerated);
       } else {

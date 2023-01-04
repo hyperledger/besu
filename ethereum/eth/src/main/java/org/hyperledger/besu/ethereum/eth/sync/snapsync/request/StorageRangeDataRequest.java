@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.util.RangeManager;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -53,7 +54,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   private static final Logger LOG = LoggerFactory.getLogger(StorageRangeDataRequest.class);
 
   private final Hash accountHash;
-  private final Bytes32 storageRoot;
+  private final StateTrieAccountValue accountValue;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
 
@@ -63,12 +64,12 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   protected StorageRangeDataRequest(
       final Hash rootHash,
       final Bytes32 accountHash,
-      final Bytes32 storageRoot,
+      final StateTrieAccountValue accountValue,
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash) {
     super(STORAGE_RANGE, rootHash);
     this.accountHash = Hash.wrap(accountHash);
-    this.storageRoot = storageRoot;
+    this.accountValue = accountValue;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
     this.isProofValid = Optional.empty();
@@ -90,20 +91,27 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     // search incomplete nodes in the range
     final BonsaiIntermediateCommitCountUpdater<WorldStateStorage> countUpdater =
-        new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage, 1000);
+        new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage::updater, 100);
     final NodeUpdater nodeUpdater =
         (location, hash, value) ->
             countUpdater.getUpdater().putAccountStorageTrieNode(accountHash, location, hash, value);
 
-    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater =
-        (key, value) ->
-            ((BonsaiWorldStateKeyValueStorage.Updater) countUpdater.getUpdater())
-                .putStorageValueBySlotHash(
-                    accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
-
-    stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
-
-    downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
+    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = (key, value) -> {};
+    Bytes path = CompactEncoding.bytesToPath(accountHash);
+    if (downloadState.inconsistentAccounts.contains(path)) {
+      flatDatabaseUpdater =
+          (key, value) ->
+              ((BonsaiWorldStateKeyValueStorage.Updater) countUpdater.getUpdater())
+                  .putStorageValueBySlotHash(
+                      accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
+    }
+    final boolean commit = stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
+    if (commit) {
+      downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
+      if (downloadState.inconsistentAccounts.contains(path)) {
+        downloadState.getMetricsManager().notifySlotsSaved(stackTrie.getElementsCount().get());
+      }
+    }
 
     return countUpdater.close();
   }
@@ -115,7 +123,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final ArrayDeque<Bytes> proofs) {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
-          startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
+          startKeyHash, endKeyHash, accountValue.getStorageRoot(), proofs, slots)) {
         downloadState.enqueueRequest(
             createAccountDataRequest(
                 getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
@@ -150,7 +158,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
 
-    findNewBeginElementInRange(storageRoot, taskElement.proofs(), taskElement.keys(), endKeyHash)
+    findNewBeginElementInRange(
+            accountValue.getStorageRoot(), taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement -> {
               final int nbRanges = findNbRanges(taskElement.keys());
@@ -159,7 +168,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                       (key, value) -> {
                         final StorageRangeDataRequest storageRangeDataRequest =
                             createStorageRangeDataRequest(
-                                getRootHash(), accountHash, storageRoot, key, value);
+                                getRootHash(), accountHash, accountValue, key, value);
                         storageRangeDataRequest.addStackTrie(Optional.of(stackTrie));
                         childRequests.add(storageRangeDataRequest);
                       });
@@ -190,7 +199,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   }
 
   public Bytes32 getStorageRoot() {
-    return storageRoot;
+    return accountValue.getStorageRoot();
   }
 
   public TreeMap<Bytes32, Bytes> getSlots() {

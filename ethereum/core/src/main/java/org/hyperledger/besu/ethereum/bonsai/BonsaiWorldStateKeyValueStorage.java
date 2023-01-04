@@ -18,20 +18,28 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.util.RangeManager.generateRangeFromLocation;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -49,6 +57,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final KeyValueStorage trieLogStorage;
 
   private Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder;
+
+  private final Cache<Hash, Boolean> isFullFlatted =
+      CacheBuilder.newBuilder().maximumSize(100).build();
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     this(
@@ -112,6 +123,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return response;
   }
 
+  private boolean isCompleteFlatDatabaseForAccount(final Hash accountHash) {
+    try {
+      return isFullFlatted.get(
+          accountHash,
+          () ->
+              getAccount(accountHash)
+                  .filter(bytes -> StateTrieAccountValue.readFrom(RLP.input(bytes)).isFullFlatted())
+                  .isPresent());
+    } catch (ExecutionException e) {
+      // ignore
+    }
+    return false;
+  }
+
   @Override
   public Optional<Bytes> getAccountTrieNodeData(final Bytes location, final Bytes32 hash) {
     // for Bonsai trie fast sync this method should return an empty
@@ -148,13 +173,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
               .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
               .map(Bytes::wrap);
       if (value.isPresent()) {
-        return value
-            .filter(b -> Hash.hash(b).equals(nodeHash))
-            .or(
-                () ->
-                    maybeFallbackNodeFinder.flatMap(
-                        finder ->
-                            finder.getAccountStorageTrieNode(accountHash, location, nodeHash)));
+        return value.filter(b -> Hash.hash(b).equals(nodeHash));
       }
       return Optional.empty();
     }
@@ -181,6 +200,23 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         storageStorage
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
+    if (response.isEmpty() && !isCompleteFlatDatabaseForAccount(accountHash)) {
+      final Optional<Bytes> account = getAccount(accountHash);
+      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      if (account.isPresent() && worldStateRootHash.isPresent()) {
+        final StateTrieAccountValue accountValue =
+            StateTrieAccountValue.readFrom(RLP.input(account.get()));
+        response =
+            new StoredMerklePatriciaTrie<>(
+                    new StoredNodeFactory<>(
+                        (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                        Function.identity(),
+                        Function.identity()),
+                    accountValue.getStorageRoot())
+                .get(slotHash)
+                .map(bytes -> Bytes32.leftPad(org.apache.tuweni.rlp.RLP.decodeValue(bytes)));
+      }
+    }
     return response;
   }
 
@@ -228,7 +264,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     final Pair<Bytes, Bytes> range = generateRangeFromLocation(Bytes.EMPTY, location);
 
     final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
-        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
+        new BonsaiIntermediateCommitCountUpdater<>(this::updater, 1000);
 
     // cleaning the account trie node in this location
     pruneTrieNode(Bytes.EMPTY, location, maybeExclude);
@@ -260,7 +296,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
     final Pair<Bytes, Bytes> range = generateRangeFromLocation(accountHash, location);
     final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
-        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
+        new BonsaiIntermediateCommitCountUpdater<>(this::updater, 1000);
 
     // cleaning the storage trie node in this location
     pruneTrieNode(accountHash, location, maybeExclude);
@@ -295,7 +331,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   private void pruneTrieNode(
       final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
     final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
-        new BonsaiIntermediateCommitCountUpdater<>(this, 1000);
+        new BonsaiIntermediateCommitCountUpdater<>(this::updater, 1000);
     trieBranchStorage
         .getByPrefix(Bytes.concatenate(accountHash, location))
         .forEach(

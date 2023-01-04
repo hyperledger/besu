@@ -61,9 +61,11 @@ public class LoadLocalDataStep {
         request.setData(existingData.get());
         request.setRequiresPersisting(false);
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
+        final Stream<SnapDataRequest> subIncompleteAccounts =
+            request.getRootStorageRequests(worldStateStorage, updater);
         request.persist(worldStateStorage, updater, downloadState, snapSyncState);
+        downloadState.enqueueRequests(subIncompleteAccounts);
         updater.commit();
-        downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
         completedTasks.put(task);
         return Stream.empty();
       }

@@ -38,6 +38,7 @@ public class PersistDataStep {
 
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
+
     tasks.parallelStream()
         .forEach(
             task -> {
@@ -47,16 +48,19 @@ public class PersistDataStep {
                     task.getData()
                         .getChildRequests(downloadState, worldStateStorage, snapSyncState);
                 enqueueChildren(childRequests);
-
-                // persist nodes
-                final int persistedNodes =
-                    task.getData()
-                        .persist(worldStateStorage, updater, downloadState, snapSyncState);
-                if (persistedNodes > 0) {
-                  downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
-                }
               }
             });
+    tasks.forEach(
+        task -> {
+          if (task.getData().isResponseReceived()) {
+            // persist nodes
+            final int persistedNodes =
+                task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
+            if (persistedNodes > 0) {
+              downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
+            }
+          }
+        });
     updater.commit();
     return tasks;
   }

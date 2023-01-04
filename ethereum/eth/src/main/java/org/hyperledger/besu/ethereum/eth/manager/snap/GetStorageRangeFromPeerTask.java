@@ -91,7 +91,11 @@ public class GetStorageRangeFromPeerTask
       // the data we're requesting.
       return Optional.empty();
     }
-
-    return Optional.of(StorageRangeMessage.readFrom(message).slotsData(true));
+    final StorageRangeMessage.SlotRangeData slotRangeData =
+        StorageRangeMessage.readFrom(message).slotsData(true);
+    if (slotRangeData.proofs().isEmpty() && slotRangeData.slots().isEmpty()) {
+      peer.recordUsefulResponse();
+    }
+    return Optional.of(slotRangeData);
   }
 }

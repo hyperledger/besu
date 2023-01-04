@@ -88,6 +88,9 @@ public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes32
       // Can't be the response to our request
       return Optional.empty();
     }
+    if (bytecodes.isEmpty()) {
+      peer.recordUsefulResponse();
+    }
     return mapCodeByHash(bytecodes);
   }
 

@@ -88,6 +88,9 @@ public class GetAccountRangeFromPeerTask
     final AccountRangeMessage accountRangeMessage = AccountRangeMessage.readFrom(message);
     final AccountRangeMessage.AccountRangeData accountRangeData =
         accountRangeMessage.accountData(true);
+    if (accountRangeData.accounts().isEmpty() && accountRangeData.proofs().isEmpty()) {
+      peer.recordUsefulResponse();
+    }
     return Optional.of(accountRangeData);
   }
 }

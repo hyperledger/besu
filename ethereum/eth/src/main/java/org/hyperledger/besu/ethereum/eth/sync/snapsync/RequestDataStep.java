@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetAccountRangeFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetBytecodeFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetStorageRangeFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.snap.GetAccountRangeFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.snap.GetBytecodeFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.snap.GetStorageRangeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetTrieNodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
@@ -73,8 +73,8 @@ public class RequestDataStep {
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
     final AccountRangeDataRequest accountDataRequest =
         (AccountRangeDataRequest) requestTask.getData();
-    final EthTask<AccountRangeMessage.AccountRangeData> getAccountTask =
-        RetryingGetAccountRangeFromPeerTask.forAccountRange(
+    final GetAccountRangeFromPeerTask getAccountTask =
+        GetAccountRangeFromPeerTask.forAccountRange(
             ethContext,
             accountDataRequest.getStartKeyHash(),
             accountDataRequest.getEndKeyHash(),
@@ -85,11 +85,12 @@ public class RequestDataStep {
         .run()
         .handle(
             (response, error) -> {
-              if (response != null) {
+              if (error == null) {
+                final AccountRangeMessage.AccountRangeData result = response.getResult();
                 downloadState.removeOutstandingTask(getAccountTask);
                 accountDataRequest.setRootHash(blockHeader.getStateRoot());
                 accountDataRequest.addResponse(
-                    worldStateProofProvider, response.accounts(), response.proofs());
+                    worldStateProofProvider, result.accounts(), result.proofs());
               }
               return requestTask;
             });
@@ -112,25 +113,26 @@ public class RequestDataStep {
         requestTasks.size() == 1
             ? ((StorageRangeDataRequest) requestTasks.get(0).getData()).getEndKeyHash()
             : RangeManager.MAX_RANGE;
-    final EthTask<StorageRangeMessage.SlotRangeData> getStorageRangeTask =
-        RetryingGetStorageRangeFromPeerTask.forStorageRange(
+    final GetStorageRangeFromPeerTask getStorageRangeTask =
+        GetStorageRangeFromPeerTask.forStorageRange(
             ethContext, accountHashes, minRange, maxRange, blockHeader, metricsSystem);
     downloadState.addOutstandingTask(getStorageRangeTask);
     return getStorageRangeTask
         .run()
         .handle(
             (response, error) -> {
-              if (response != null) {
+              if (error == null) {
+                final StorageRangeMessage.SlotRangeData result = response.getResult();
                 downloadState.removeOutstandingTask(getStorageRangeTask);
-                for (int i = 0; i < response.slots().size(); i++) {
+                for (int i = 0; i < result.slots().size(); i++) {
                   final StorageRangeDataRequest request =
                       (StorageRangeDataRequest) requestTasks.get(i).getData();
                   request.setRootHash(blockHeader.getStateRoot());
                   request.addResponse(
                       downloadState,
                       worldStateProofProvider,
-                      response.slots().get(i),
-                      i < response.slots().size() - 1 ? new ArrayDeque<>() : response.proofs());
+                      result.slots().get(i),
+                      i < result.slots().size() - 1 ? new ArrayDeque<>() : result.proofs());
                 }
               }
               return requestTasks;
@@ -147,21 +149,21 @@ public class RequestDataStep {
             .distinct()
             .collect(Collectors.toList());
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
-    final EthTask<Map<Bytes32, Bytes>> getByteCodeTask =
-        RetryingGetBytecodeFromPeerTask.forByteCode(
-            ethContext, codeHashes, blockHeader, metricsSystem);
+    final GetBytecodeFromPeerTask getByteCodeTask =
+        GetBytecodeFromPeerTask.forBytecode(ethContext, codeHashes, blockHeader, metricsSystem);
     downloadState.addOutstandingTask(getByteCodeTask);
     return getByteCodeTask
         .run()
         .handle(
             (response, error) -> {
-              if (response != null) {
+              if (error == null) {
+                final Map<Bytes32, Bytes> result = response.getResult();
                 downloadState.removeOutstandingTask(getByteCodeTask);
                 for (Task<SnapDataRequest> requestTask : requestTasks) {
                   final BytecodeRequest request = (BytecodeRequest) requestTask.getData();
                   request.setRootHash(blockHeader.getStateRoot());
-                  if (response.containsKey(request.getCodeHash())) {
-                    request.setCode(response.get(request.getCodeHash()));
+                  if (result.containsKey(request.getCodeHash())) {
+                    request.setCode(result.get(request.getCodeHash()));
                   }
                 }
               }
