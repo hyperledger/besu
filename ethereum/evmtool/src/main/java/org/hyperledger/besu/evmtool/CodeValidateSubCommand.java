@@ -71,12 +71,14 @@ public class CodeValidateSubCommand implements Runnable {
   @Override
   public void run() {
     if (cliCode.isEmpty() && codeFile == null) {
-      BufferedReader in = new BufferedReader(new InputStreamReader(input, UTF_8));
-      checkCodeFromBufferedReader(in);
+      try (BufferedReader in = new BufferedReader(new InputStreamReader(input, UTF_8))) {
+        checkCodeFromBufferedReader(in);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     } else {
       if (codeFile != null) {
-        try {
-          BufferedReader in = new BufferedReader(new FileReader(codeFile, UTF_8));
+        try (BufferedReader in = new BufferedReader(new FileReader(codeFile, UTF_8))) {
           checkCodeFromBufferedReader(in);
         } catch (IOException e) {
           throw new RuntimeException(e);
@@ -126,6 +128,7 @@ public class CodeValidateSubCommand implements Runnable {
             .mapToObj(code::getCodeSection)
             .map(CodeSection::getCode)
             .map(Bytes::toUnprefixedHexString)
-            .collect(Collectors.joining(",")) + "\n";
+            .collect(Collectors.joining(","))
+        + "\n";
   }
 }
