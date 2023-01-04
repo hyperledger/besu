@@ -639,16 +639,21 @@ task distDocker {
   def dockerBuildDir = "build/docker-besu/"
 
   doLast {
-    for (def variant in dockerVariants) {
+    for (def jvmVariant in dockerVariants) {
       copy {
-        from file("${projectDir}/docker/${variant}/Dockerfile")
+        from file("${projectDir}/docker/${jvmVariant}/Dockerfile")
         into(dockerBuildDir)
       }
       exec {
-        def image = "${dockerImageName}:${dockerBuildVersion}-${variant}"
+        def image = "${dockerImageName}:${dockerBuildVersion}-${jvmVariant}"
+        def dockerPlatform = ""
+        if (project.hasProperty('docker-platform')){
+          dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
+          println "Building for platform ${project.getProperty('docker-platform')}"
+        }
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
       }
     }
     // tag the "default" (which is the variant in the zero position)
