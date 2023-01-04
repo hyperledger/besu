@@ -21,7 +21,6 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
@@ -3266,8 +3265,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isGoQuorumCompatibilityMode) {
 
       logger.warn(
-          DEPRECATED_AND_USELESS_WARNING_MSG,
-          "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)");
+          DEPRECATION_WARNING_MSG,
+          "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)",
+          "--privacy-enabled");
       if (!minTransactionGasPrice.isZero()) {
         throw new ParameterException(
             this.commandLine,

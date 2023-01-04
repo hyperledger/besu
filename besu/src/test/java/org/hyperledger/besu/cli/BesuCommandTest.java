@@ -28,7 +28,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
@@ -4445,8 +4444,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     verify(mockLogger, atLeast(1))
         .warn(
-            DEPRECATED_AND_USELESS_WARNING_MSG,
-            "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)");
+            DEPRECATION_WARNING_MSG,
+            "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)",
+            "--privacy-enabled");
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
