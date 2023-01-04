@@ -96,28 +96,6 @@ public class MainnetProtocolScheduleTest {
   }
 
   @Test
-  public void shouldCreateRopstenConfig() throws Exception {
-    final ProtocolSchedule sched =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(
-                    Resources.toString(
-                        this.getClass().getResource("/ropsten.json"), StandardCharsets.UTF_8))
-                .getConfigOptions(),
-            EvmConfiguration.DEFAULT);
-    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockNumber(10L).getName()).isEqualTo("SpuriousDragon");
-    Assertions.assertThat(sched.getByBlockNumber(1_700_000L).getName()).isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockNumber(4_230_000L).getName()).isEqualTo("Constantinople");
-    Assertions.assertThat(sched.getByBlockNumber(4_939_394L).getName()).isEqualTo("Petersburg");
-    Assertions.assertThat(sched.getByBlockNumber(6_485_846L).getName()).isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockNumber(7_117_117L).getName()).isEqualTo("MuirGlacier");
-    Assertions.assertThat(sched.getByBlockNumber(9_812_189L).getName()).isEqualTo("Berlin");
-    Assertions.assertThat(sched.getByBlockNumber(10_499_401L).getName()).isEqualTo("London");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("London");
-  }
-
-  @Test
   public void shouldCreateGoerliConfig() throws Exception {
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
@@ -131,19 +109,6 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(4_460_644L).getName()).isEqualTo("Berlin");
     Assertions.assertThat(sched.getByBlockNumber(5_062_605L).getName()).isEqualTo("London");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("London");
-  }
-
-  @Test
-  public void shouldCreateShandongConfig() throws Exception {
-    final ProtocolSchedule sched =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(
-                    Resources.toString(
-                        this.getClass().getResource("/shandong.json"), StandardCharsets.UTF_8))
-                .getConfigOptions(),
-            EvmConfiguration.DEFAULT);
-    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("Shandong");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Shandong");
   }
 
   @Test
