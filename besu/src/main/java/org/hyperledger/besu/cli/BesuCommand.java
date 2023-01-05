@@ -3263,6 +3263,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
     if (isGoQuorumCompatibilityMode) {
+
+      logger.warn(
+          DEPRECATION_WARNING_MSG,
+          "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)",
+          "--privacy-enabled");
       if (!minTransactionGasPrice.isZero()) {
         throw new ParameterException(
             this.commandLine,
