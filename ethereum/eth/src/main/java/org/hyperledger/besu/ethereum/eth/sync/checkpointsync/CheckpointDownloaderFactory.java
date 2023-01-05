@@ -83,6 +83,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     final boolean shouldResync = shouldResyncWorldstate(dataDirectory.resolve(FAST_SYNC_RESYNC));
     if (shouldResync) {
       snapContext.clear();
+      worldStateStorage.clear();
     }
 
     if (!shouldResync

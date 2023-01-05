@@ -79,6 +79,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final boolean shouldResync = shouldResyncWorldstate(dataDirectory.resolve(FAST_SYNC_RESYNC));
     if (shouldResync) {
       snapContext.clear();
+      worldStateStorage.clear();
     }
 
     if (!shouldResync

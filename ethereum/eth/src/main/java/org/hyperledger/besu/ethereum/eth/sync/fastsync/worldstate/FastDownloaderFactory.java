@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 public class FastDownloaderFactory {
 
   protected static final String FAST_SYNC_FOLDER = "fastsync";
-  protected static final String FAST_SYNC_RESYNC = "resync";
+  protected static final String FAST_SYNC_RESYNC = FAST_SYNC_FOLDER + "/resync";
 
   private static final Logger LOG = LoggerFactory.getLogger(FastDownloaderFactory.class);
 
