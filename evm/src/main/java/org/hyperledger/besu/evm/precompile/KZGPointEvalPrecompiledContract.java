@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.BufferedReader;
@@ -26,25 +25,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
 
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
-  public KZGPointEvalPrecompiledContract(final Optional<Path> pathToTrustedSetup) {
+  public KZGPointEvalPrecompiledContract(final Optional<String> pathToTrustedSetup) {
 
-    String absolutePathToSetup;
+    String pathToSetup;
     CKZG4844JNI.Preset bitLength;
     if (pathToTrustedSetup.isPresent()) {
-      Path pathToSetup = pathToTrustedSetup.get();
-      absolutePathToSetup = pathToSetup.toAbsolutePath().toString();
+      pathToSetup = pathToTrustedSetup.get();
     } else {
       InputStream is =
           KZGPointEvalPrecompiledContract.class.getResourceAsStream(
@@ -53,13 +49,14 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
         File jniWillLoadFrom = File.createTempFile("kzgTrustedSetup", "txt");
         Files.copy(is, jniWillLoadFrom.toPath(), REPLACE_EXISTING);
         is.close();
-        absolutePathToSetup = jniWillLoadFrom.getAbsolutePath();
+        pathToSetup = jniWillLoadFrom.getAbsolutePath();
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
-    try (BufferedReader setupFile =
-        Files.newBufferedReader(Paths.get(absolutePathToSetup), Charset.defaultCharset()); ) {
+    try {
+      BufferedReader setupFile =
+          Files.newBufferedReader(Paths.get(pathToSetup), Charset.defaultCharset());
       String firstLine = setupFile.readLine();
       if ("4".equals(firstLine)) {
         bitLength = CKZG4844JNI.Preset.MINIMAL;
@@ -70,7 +67,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       }
       CKZG4844JNI.loadNativeLibrary(bitLength);
       try {
-        CKZG4844JNI.loadTrustedSetup(absolutePathToSetup);
+        CKZG4844JNI.loadTrustedSetup(pathToSetup);
       } catch (RuntimeException alreadyLoaded) {
         if (alreadyLoaded.getMessage().contains("Trusted Setup is already loaded")) {
         } else {
@@ -107,10 +104,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
     if (input.size() != 192) {
       return new PrecompileContractResult(
-          Bytes.EMPTY,
-          false,
-          MessageFrame.State.COMPLETED_FAILED,
-          Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+          Bytes.EMPTY, false, MessageFrame.State.COMPLETED_FAILED, Optional.empty());
     }
     // Bytes versionedHash = input.slice(0, 32);
     Bytes z = input.slice(32, 32);
@@ -124,39 +118,23 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       boolean proved =
           CKZG4844JNI.verifyKzgProof(
               commitment.toArray(), z.toArray(), y.toArray(), proof.toArray());
+
       // # Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
       //    return Bytes(U256(FIELD_ELEMENTS_PER_BLOB).to_be_bytes32() +
       // U256(BLS_MODULUS).to_be_bytes32())
 
-      if (proved) {
-        Bytes fieldElementsPerBlob =
-            Bytes32.wrap(
-                Bytes.of(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO)); // usually 4096
-        Bytes blsModulus =
-            Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
-
-        output = Bytes.concatenate(fieldElementsPerBlob, blsModulus);
-
-        result =
-            new PrecompileContractResult(
-                output, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
-      } else {
-        result =
-            new PrecompileContractResult(
-                output,
-                false,
-                MessageFrame.State.COMPLETED_FAILED,
-                Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
-      }
+      result =
+          new PrecompileContractResult(
+              output,
+              false,
+              proved ? MessageFrame.State.COMPLETED_SUCCESS : MessageFrame.State.COMPLETED_FAILED,
+              Optional.empty());
       return result;
     } catch (RuntimeException kzgFailed) {
       System.out.println(kzgFailed.getMessage());
       result =
           new PrecompileContractResult(
-              output,
-              false,
-              MessageFrame.State.COMPLETED_FAILED,
-              Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+              output, false, MessageFrame.State.COMPLETED_FAILED, Optional.empty());
     }
     return result;
   }
