@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,6 +16,8 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.Optional;
 
 /** Provides the various precompiled contracts used on mainnet hard forks. */
 public abstract class MainnetPrecompiledContracts {
@@ -133,5 +135,12 @@ public abstract class MainnetPrecompiledContracts {
     registry.put(Address.BLS12_PAIRING, new BLS12PairingPrecompiledContract());
     registry.put(Address.BLS12_MAP_FP_TO_G1, new BLS12MapFpToG1PrecompiledContract());
     registry.put(Address.BLS12_MAP_FP2_TO_G2, new BLS12MapFp2ToG2PrecompiledContract());
+  }
+
+  public static void populateForCancun(
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
+    populateForIstanbul(registry, gasCalculator);
+    // TODO: allow override to be configured?
+    registry.put(Address.KZG_POINT_EVAL, new KZGPointEvalPrecompiledContract(Optional.empty()));
   }
 }
