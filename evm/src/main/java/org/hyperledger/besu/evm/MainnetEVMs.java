@@ -470,11 +470,23 @@ public class MainnetEVMs {
     registry.put(new JumpFOperation(gasCalculator));
   }
 
-  public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+  public static EVM futureEips(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     return shanghai(chainId, evmConfiguration);
   }
 
-  public static EVM shandong(
+  public static EVM futureEips(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return shanghai(gasCalculator, chainId, evmConfiguration);
+  }
+
+  public static EVM experimentalEips(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shanghai(chainId, evmConfiguration);
+  }
+
+  public static EVM experimentalEips(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {

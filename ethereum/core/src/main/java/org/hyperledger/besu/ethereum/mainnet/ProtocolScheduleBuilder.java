@@ -121,7 +121,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         validateForkOrder("ArrowGlacier", config.getArrowGlacierBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("GrayGlacier", config.getGrayGlacierBlockNumber(), lastForkBlock);
-    lastForkBlock = validateForkOrder("Shandong", config.getShandongBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -168,7 +167,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         create(config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
         create(config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
         create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
-        create(config.getShandongBlockNumber(), specFactory.shandongDefinition(config)),
         // Classic Milestones
         create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
         create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
