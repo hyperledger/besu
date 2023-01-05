@@ -130,7 +130,7 @@ public class MainnetContractCreationProcessorTest {
 
   @Test
   public void shouldThrowAnExceptionWhenDeployingInvalidContract() {
-    EvmSpecVersion evmSpecVersion = EvmSpecVersion.SHANDONG;
+    EvmSpecVersion evmSpecVersion = EvmSpecVersion.SHANGHAI;
     processor =
         new ContractCreationProcessor(
             gasCalculator,

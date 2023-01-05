@@ -70,8 +70,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -189,7 +189,9 @@ public class PrivacyReorgTest {
 
     besuController =
         new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.development(), SyncMode.FULL)
+            .fromGenesisConfig(
+                GenesisConfigFile.genesisFileFromResources("/privacy_reorg_genesis.json"),
+                SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
