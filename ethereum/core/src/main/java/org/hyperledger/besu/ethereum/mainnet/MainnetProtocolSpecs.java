@@ -724,6 +724,7 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.cancun(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .name("Cancun");
   }
 

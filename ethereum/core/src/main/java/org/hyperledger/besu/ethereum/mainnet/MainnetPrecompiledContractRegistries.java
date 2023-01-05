@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForBLS12;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForByzantium;
+import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForCancun;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForFrontier;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForIstanbul;
 
@@ -57,6 +58,13 @@ public abstract class MainnetPrecompiledContractRegistries {
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
     populateForBLS12(registry, precompiledContractConfiguration.getGasCalculator());
+    return registry;
+  }
+
+  public static PrecompileContractRegistry cancun(
+      final PrecompiledContractConfiguration precompiledContractConfiguration) {
+    final PrecompileContractRegistry registry = new PrecompileContractRegistry();
+    populateForCancun(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
