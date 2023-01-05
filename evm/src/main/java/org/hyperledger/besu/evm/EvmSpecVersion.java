@@ -26,7 +26,8 @@ public enum EvmSpecVersion {
   ISTANBUL(0, true),
   LONDON(0, true),
   PARIS(0, true),
-  SHANGHAI(1, false),
+  SHANGHAI(0, true),
+  CANCUN(1, false),
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(1, false),
   /** Development fork for EIPs not accepted to Mainnet */
