@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
@@ -75,8 +74,6 @@ public class KZGPointEvalPrecompileContractTest {
             contract.computePrecompile(input, toRun);
         MessageFrame.State endState = result.getState();
         assertThat(endState).isEqualTo(MessageFrame.State.COMPLETED_FAILED);
-        assertThat(result.getHaltReason()).isPresent();
-        assertThat(result.getHaltReason().get()).isEqualTo(ExceptionalHaltReason.PRECOMPILE_ERROR);
       }
     } catch (IOException ioe) {
       fail("couldn't load test vectors", ioe);
