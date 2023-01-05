@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Optional;
@@ -57,9 +58,10 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
 
     final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
     mergeMiningCoordinator.finalizeProposalById(payloadId);
-    final Optional<Block> block = mergeContext.get().retrieveBlockById(payloadId);
-    if (block.isPresent()) {
-      final var proposal = block.get();
+    final Optional<BlockCreator.BlockCreationResult> blockWithResult =
+        mergeContext.get().retrieveBlockById(payloadId);
+    if (blockWithResult.isPresent()) {
+      final Block proposal = blockWithResult.get().getBlock();
       final var proposalHeader = proposal.getHeader();
       infoLambda(
           LOG,
@@ -69,12 +71,12 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
           proposalHeader::getNumber,
           proposalHeader::getCoinbase,
           () -> proposal.getBody().getTransactions().size());
-      debugLambda(LOG, "assembledBlock {}", () -> block.map(Block::toString).get());
-      return createResponse(request, block.get());
+      debugLambda(LOG, "assembledBlock {}", proposal::toString);
+      return createResponse(request, blockWithResult.get());
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_PAYLOAD);
   }
 
   protected abstract JsonRpcResponse createResponse(
-      final JsonRpcRequestContext request, final Block block);
+      final JsonRpcRequestContext request, final BlockCreator.BlockCreationResult blockWithResult);
 }

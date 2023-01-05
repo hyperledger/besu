@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 
 import io.vertx.core.Vertx;
 
@@ -42,8 +42,10 @@ public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
   }
 
   @Override
-  protected JsonRpcResponse createResponse(final JsonRpcRequestContext request, final Block block) {
+  protected JsonRpcResponse createResponse(
+      final JsonRpcRequestContext request, final BlockCreator.BlockCreationResult blockWithResult) {
     return new JsonRpcSuccessResponse(
-        request.getRequest().getId(), blockResultFactory.payloadTransactionCompleteV1(block));
+        request.getRequest().getId(),
+        blockResultFactory.payloadTransactionCompleteV1(blockWithResult.getBlock()));
   }
 }

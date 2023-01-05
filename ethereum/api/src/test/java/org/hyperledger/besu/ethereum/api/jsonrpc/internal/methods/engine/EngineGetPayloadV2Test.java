@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -74,7 +75,8 @@ public class EngineGetPayloadV2Test {
 
   @Before
   public void before() {
-    when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlock));
+    when(mergeContext.retrieveBlockById(mockPid))
+        .thenReturn(Optional.of(new BlockCreator.BlockCreationResult(mockBlock, null)));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         new EngineGetPayloadV2(

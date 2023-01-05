@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -131,11 +132,13 @@ public class PostMergeContextTest {
   @Test
   public void putAndRetrieveFirstPayload() {
     Block mockBlock = mock(Block.class);
+    BlockCreator.BlockCreationResult mockBlockWithResult =
+        new BlockCreator.BlockCreationResult(mockBlock, null);
 
     PayloadIdentifier firstPayloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(firstPayloadId, mockBlock);
+    postMergeContext.putPayloadById(firstPayloadId, mockBlockWithResult);
 
-    assertThat(postMergeContext.retrieveBlockById(firstPayloadId)).contains(mockBlock);
+    assertThat(postMergeContext.retrieveBlockById(firstPayloadId)).contains(mockBlockWithResult);
   }
 
   @Test
@@ -144,17 +147,21 @@ public class PostMergeContextTest {
     when(zeroTxBlockHeader.getGasUsed()).thenReturn(0L);
     Block zeroTxBlock = mock(Block.class);
     when(zeroTxBlock.getHeader()).thenReturn(zeroTxBlockHeader);
+    BlockCreator.BlockCreationResult zeroTxBlockWithResult =
+        new BlockCreator.BlockCreationResult(zeroTxBlock, null);
 
     BlockHeader betterBlockHeader = mock(BlockHeader.class);
     when(betterBlockHeader.getGasUsed()).thenReturn(11L);
     Block betterBlock = mock(Block.class);
     when(betterBlock.getHeader()).thenReturn(betterBlockHeader);
+    BlockCreator.BlockCreationResult betterBlockWithResult =
+        new BlockCreator.BlockCreationResult(betterBlock, null);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(payloadId, zeroTxBlock);
-    postMergeContext.putPayloadById(payloadId, betterBlock);
+    postMergeContext.putPayloadById(payloadId, zeroTxBlockWithResult);
+    postMergeContext.putPayloadById(payloadId, betterBlockWithResult);
 
-    assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlock);
+    assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlockWithResult);
   }
 
   @Test
@@ -163,23 +170,29 @@ public class PostMergeContextTest {
     when(zeroTxBlockHeader.getGasUsed()).thenReturn(0L);
     Block zeroTxBlock = mock(Block.class);
     when(zeroTxBlock.getHeader()).thenReturn(zeroTxBlockHeader);
+    BlockCreator.BlockCreationResult zeroTxBlockWithResult =
+        new BlockCreator.BlockCreationResult(zeroTxBlock, null);
 
     BlockHeader betterBlockHeader = mock(BlockHeader.class);
     when(betterBlockHeader.getGasUsed()).thenReturn(11L);
     Block betterBlock = mock(Block.class);
     when(betterBlock.getHeader()).thenReturn(betterBlockHeader);
+    BlockCreator.BlockCreationResult betterBlockWithResult =
+        new BlockCreator.BlockCreationResult(betterBlock, null);
 
     BlockHeader smallBlockHeader = mock(BlockHeader.class);
     when(smallBlockHeader.getGasUsed()).thenReturn(5L);
     Block smallBlock = mock(Block.class);
     when(smallBlock.getHeader()).thenReturn(smallBlockHeader);
+    BlockCreator.BlockCreationResult smallBlockWithResult =
+        new BlockCreator.BlockCreationResult(smallBlock, null);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(payloadId, zeroTxBlock);
-    postMergeContext.putPayloadById(payloadId, betterBlock);
-    postMergeContext.putPayloadById(payloadId, smallBlock);
+    postMergeContext.putPayloadById(payloadId, zeroTxBlockWithResult);
+    postMergeContext.putPayloadById(payloadId, betterBlockWithResult);
+    postMergeContext.putPayloadById(payloadId, smallBlockWithResult);
 
-    assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlock);
+    assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlockWithResult);
   }
 
   @Test
@@ -194,7 +207,8 @@ public class PostMergeContextTest {
     for (long i = 0; i < PostMergeContext.MAX_BLOCKS_IN_PROGRESS + 1; i++) {
       PayloadIdentifier payloadId = new PayloadIdentifier(i);
       Block mockBlock = mock(Block.class);
-      postMergeContext.putPayloadById(payloadId, mockBlock);
+      postMergeContext.putPayloadById(
+          payloadId, new BlockCreator.BlockCreationResult(mockBlock, null));
     }
 
     PayloadIdentifier evictedPayloadId = new PayloadIdentifier(0L);

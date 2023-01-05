@@ -232,28 +232,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     blockCreationTask.put(payloadIdentifier, new BlockCreationTask(mergeBlockCreator));
 
     // put the empty block in first
-    final Block emptyBlock =
-        mergeBlockCreator
-            .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp)
-            .getBlock();
+    final BlockCreationResult emptyBlockWithResults =
+        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp);
 
-    BlockProcessingResult result = validateBlock(emptyBlock);
-    if (result.isSuccessful()) {
-      mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
-      debugLambda(
-          LOG,
-          "Built empty block proposal {} for payload {}",
-          emptyBlock::toLogString,
-          payloadIdentifier::toString);
-    } else {
-      LOG.warn(
-          "failed to validate empty block proposal {}, reason {}",
-          emptyBlock.getHash(),
-          result.errorMessage);
-      if (result.causedBy().isPresent()) {
-        LOG.warn("caused by", result.causedBy().get());
-      }
-    }
+    mergeContext.putPayloadById(payloadIdentifier, emptyBlockWithResults);
+    debugLambda(
+        LOG,
+        "Built empty block proposal {} for payload {}",
+        emptyBlockWithResults.getBlock()::toLogString,
+        payloadIdentifier::toString);
 
     tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator);
 
@@ -336,7 +323,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final long startedAt) {
 
     try {
-      evaluateNewBlock(blockCreator.get().getBlock(), payloadIdentifier, startedAt);
+      evaluateNewBlock(blockCreator.get(), payloadIdentifier, startedAt);
     } catch (final Throwable throwable) {
       if (canRetryBlockCreation(throwable) && !isBlockCreationCancelled(payloadIdentifier)) {
         debugLambda(
@@ -352,33 +339,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private void evaluateNewBlock(
-      final Block bestBlock, final PayloadIdentifier payloadIdentifier, final long startedAt) {
+      final BlockCreationResult newBlockWithResults,
+      final PayloadIdentifier payloadIdentifier,
+      final long startedAt) {
 
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-    final var resultBest = validateBlock(bestBlock);
-    if (resultBest.isSuccessful()) {
-
-      if (isBlockCreationCancelled(payloadIdentifier)) return;
-
-      mergeContext.putPayloadById(payloadIdentifier, bestBlock);
-      debugLambda(
-          LOG,
-          "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms",
-          bestBlock::toLogString,
-          payloadIdentifier::toString,
-          bestBlock.getBody().getTransactions()::size,
-          () -> System.currentTimeMillis() - startedAt);
-    } else {
-      LOG.warn(
-          "Block {} built for proposal identified by {}, is not valid reason {}",
-          bestBlock.getHash(),
-          payloadIdentifier.toString(),
-          resultBest.errorMessage);
-      if (resultBest.causedBy().isPresent()) {
-        LOG.warn("caused by", resultBest.cause.get());
-      }
-    }
+    mergeContext.putPayloadById(payloadIdentifier, newBlockWithResults);
+    debugLambda(
+        LOG,
+        "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms",
+        newBlockWithResults.getBlock()::toLogString,
+        payloadIdentifier::toString,
+        newBlockWithResults.getBlock().getBody().getTransactions()::size,
+        () -> System.currentTimeMillis() - startedAt);
   }
 
   private boolean canRetryBlockCreation(final Throwable throwable) {

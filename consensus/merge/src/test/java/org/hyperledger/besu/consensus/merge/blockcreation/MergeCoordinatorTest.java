@@ -46,6 +46,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
@@ -217,7 +218,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, atLeastOnce())
+        .putPayloadById(eq(payloadId), new BlockCreator.BlockCreationResult(block.capture(), null));
 
     assertThat(block.getValue().getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
   }
@@ -292,7 +294,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
     verify(mergeContext, times(txPerBlock + 1))
-        .putPayloadById(eq(payloadId), block.capture()); // +1 for the empty
+        .putPayloadById(
+            eq(payloadId),
+            new BlockCreator.BlockCreationResult(block.capture(), null)); // +1 for the empty
     assertThat(block.getValue().getBody().getTransactions().size()).isEqualTo(txPerBlock);
     // this only verifies that adding the bad block didn't happen through the mergeCoordinator, it
     // still may be called directly.
@@ -331,7 +335,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(mergeContext, times(retries.intValue())).putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, times(retries.intValue()))
+        .putPayloadById(eq(payloadId), new BlockCreator.BlockCreationResult(block.capture(), null));
 
     assertThat(block.getAllValues().size()).isEqualTo(retries.intValue());
     for (int i = 0; i < retries.intValue(); i++) {
@@ -373,7 +378,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(mergeContext, times(2)).putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, times(2))
+        .putPayloadById(eq(payloadId), new BlockCreator.BlockCreationResult(block.capture(), null));
 
     assertThat(block.getAllValues().size()).isEqualTo(2);
     assertThat(block.getAllValues().get(0).getBody().getTransactions()).hasSize(0);
@@ -448,7 +454,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     // check that we only the empty block has been built
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(mergeContext, times(1)).putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, times(1))
+        .putPayloadById(eq(payloadId), new BlockCreator.BlockCreationResult(block.capture(), null));
 
     assertThat(block.getAllValues().size()).isEqualTo(1);
     assertThat(block.getAllValues().get(0).getBody().getTransactions()).hasSize(0);
@@ -496,7 +503,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(mergeContext, times(retries.intValue())).putPayloadById(eq(payloadId1), block.capture());
+    verify(mergeContext, times(retries.intValue()))
+        .putPayloadById(
+            eq(payloadId1), new BlockCreator.BlockCreationResult(block.capture(), null));
 
     assertThat(block.getAllValues().size()).isEqualTo(retries.intValue());
     for (int i = 0; i < retries.intValue(); i++) {

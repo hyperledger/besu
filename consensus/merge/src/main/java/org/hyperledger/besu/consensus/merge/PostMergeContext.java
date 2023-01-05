@@ -19,6 +19,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -42,8 +43,11 @@ public class PostMergeContext implements MergeContext {
 
   private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
 
-  private static final Comparator<Block> compareByGasUsedDesc =
-      Comparator.comparingLong((Block block) -> block.getHeader().getGasUsed()).reversed();
+  private static final Comparator<BlockCreator.BlockCreationResult> compareByGasUsedDesc =
+      Comparator.comparingLong(
+              (BlockCreator.BlockCreationResult blockWithResult) ->
+                  blockWithResult.getBlock().getHeader().getGasUsed())
+          .reversed();
 
   private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
@@ -213,39 +217,45 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void putPayloadById(final PayloadIdentifier payloadId, final Block newBlock) {
+  public void putPayloadById(
+      final PayloadIdentifier payloadId, final BlockCreator.BlockCreationResult payloadWithResult) {
     synchronized (blocksInProgress) {
-      final Optional<Block> maybeCurrBestBlock = retrieveBlockById(payloadId);
+      final Optional<BlockCreator.BlockCreationResult> maybeCurrBestBlock =
+          retrieveBlockById(payloadId);
 
       maybeCurrBestBlock.ifPresentOrElse(
           currBestBlock -> {
-            if (compareByGasUsedDesc.compare(newBlock, currBestBlock) < 0) {
+            if (compareByGasUsedDesc.compare(payloadWithResult, currBestBlock) < 0) {
               debugLambda(
                   LOG,
                   "New proposal for payloadId {} {} is better than the previous one {}",
                   payloadId::toString,
-                  () -> logBlockProposal(newBlock),
-                  () -> logBlockProposal(currBestBlock));
+                  () -> logBlockProposal(payloadWithResult.getBlock()),
+                  () -> logBlockProposal(currBestBlock.getBlock()));
               blocksInProgress.removeAll(
                   retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
-              blocksInProgress.add(new PayloadTuple(payloadId, newBlock));
+              blocksInProgress.add(new PayloadTuple(payloadId, payloadWithResult));
             }
           },
-          () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlock)));
+          () -> blocksInProgress.add(new PayloadTuple(payloadId, payloadWithResult)));
 
       debugLambda(
           LOG,
           "Current best proposal for payloadId {} {}",
           payloadId::toString,
-          () -> retrieveBlockById(payloadId).map(bb -> logBlockProposal(bb)).orElse("N/A"));
+          () ->
+              retrieveBlockById(payloadId)
+                  .map(bb -> logBlockProposal(bb.getBlock()))
+                  .orElse("N/A"));
     }
   }
 
   @Override
-  public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
+  public Optional<BlockCreator.BlockCreationResult> retrieveBlockById(
+      final PayloadIdentifier payloadId) {
     synchronized (blocksInProgress) {
       return retrieveTuplesById(payloadId)
-          .map(tuple -> tuple.block)
+          .map(tuple -> tuple.blockWithResult)
           .sorted(compareByGasUsedDesc)
           .findFirst();
     }
@@ -266,11 +276,13 @@ public class PostMergeContext implements MergeContext {
 
   private static class PayloadTuple {
     final PayloadIdentifier payloadIdentifier;
-    final Block block;
+    final BlockCreator.BlockCreationResult blockWithResult;
 
-    PayloadTuple(final PayloadIdentifier payloadIdentifier, final Block block) {
+    PayloadTuple(
+        final PayloadIdentifier payloadIdentifier,
+        final BlockCreator.BlockCreationResult blockWithResult) {
       this.payloadIdentifier = payloadIdentifier;
-      this.block = block;
+      this.blockWithResult = blockWithResult;
     }
   }
 

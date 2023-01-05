@@ -15,10 +15,15 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
@@ -95,19 +100,31 @@ public class BlockResultFactory {
     return new EngineGetPayloadResultV1(block.getHeader(), txs);
   }
 
-  public EngineGetPayloadResultV2 payloadTransactionCompleteV2(final Block block) {
+  public EngineGetPayloadResultV2 payloadTransactionCompleteV2(
+      final BlockCreator.BlockCreationResult blockWithResult) {
     final List<String> txs =
-        block.getBody().getTransactions().stream()
+        blockWithResult.getBlock().getBody().getTransactions().stream()
             .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    final long blockValue = calculateBlockValue(txs);
-    return new EngineGetPayloadResultV2(block.getHeader(), txs, Quantity.create(blockValue));
+    final long blockValue = calculateBlockValue(blockWithResult);
+    return new EngineGetPayloadResultV2(
+        blockWithResult.getBlock().getHeader(), txs, Quantity.create(blockValue));
   }
 
-  private long calculateBlockValue(final List<String> ignored) {
-    return 0L;
+  private long calculateBlockValue(final BlockCreator.BlockCreationResult blockWithResult) {
+    final Block block = blockWithResult.getBlock();
+    final BlockTransactionSelector.TransactionSelectionResults txResults =
+        blockWithResult.getTransactionSelectionResults();
+    final List<Transaction> txs = txResults.getTransactions();
+    final List<TransactionReceipt> receipts = txResults.getReceipts();
+    Wei totalFee = Wei.of(0);
+    for (int i = 0; i < txs.size(); i++) {
+      final Wei minerFee = txs.get(i).getEffectivePriorityFeePerGas(block.getHeader().getBaseFee());
+      totalFee = totalFee.add(minerFee.multiply(receipts.get(i).getCumulativeGasUsed()));
+    }
+    return totalFee.toLong();
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
