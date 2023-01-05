@@ -152,7 +152,7 @@ dependencyManagement {
     }
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
-
+    dependency 'tech.pegasys:jc-kzg-4844:0.1.0'
     dependencySet(group: 'org.hyperledger.besu', version: '0.7.1') {
       entry 'arithmetic'
       entry 'ipa-multipoint'

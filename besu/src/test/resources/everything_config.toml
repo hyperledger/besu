@@ -214,3 +214,4 @@ Xp2p-tls-crl-file="none.file"
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
+evm-kzg-trusted-setup-path="/tmp/trusted_setup.txt"

@@ -15,20 +15,18 @@
 
 package org.hyperledger.besu.evm.internal;
 
-/** The Evm configuration. */
-public class EvmConfiguration {
-  /** The constant DEFAULT. */
-  public static final EvmConfiguration DEFAULT = new EvmConfiguration(32_000L);
+import java.util.Optional;
 
+public class EvmConfiguration {
+  public static final EvmConfiguration DEFAULT = new EvmConfiguration(32_000L, Optional.empty());
   private final long jumpDestCacheWeightKB;
 
-  /**
-   * Instantiates a new Evm configuration.
-   *
-   * @param jumpDestCacheWeightKB the jump dest cache weight kb
-   */
-  public EvmConfiguration(final long jumpDestCacheWeightKB) {
+  private final Optional<String> kzgTrustedSetupPath;
+
+  public EvmConfiguration(
+      final long jumpDestCacheWeightKB, final Optional<String> pathToKZGTrustedSetup) {
     this.jumpDestCacheWeightKB = jumpDestCacheWeightKB;
+    this.kzgTrustedSetupPath = pathToKZGTrustedSetup;
   }
 
   /**
@@ -40,12 +38,7 @@ public class EvmConfiguration {
     return jumpDestCacheWeightKB * 1024L;
   }
 
-  /**
-   * Gets jump dest cache weight kb.
-   *
-   * @return the jump dest cache weight kb
-   */
-  public long getJumpDestCacheWeightKB() {
-    return jumpDestCacheWeightKB;
+  public Optional<String> getKzgTrustedSetupPath() {
+    return this.kzgTrustedSetupPath;
   }
 }
