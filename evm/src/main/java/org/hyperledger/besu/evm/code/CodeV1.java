@@ -751,7 +751,7 @@ public class CodeV1 implements Code {
             stackHeights[currentPC + 1] = -2;
             stackHeights[currentPC + 2] = -2;
           } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
-            int tableEnd = code[currentPC + 1] * 2 + currentPC + 2;
+            int tableEnd = (code[currentPC + 1] & 0xff) * 2 + currentPC + 2;
             for (int i = currentPC + 2; i < tableEnd; i += 2) {
               int rvalue = readBigEndianI16(i, code);
               workList[maxWork] = new int[] {tableEnd + rvalue, currentStackHeight};
