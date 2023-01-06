@@ -42,8 +42,10 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   protected long priority;
   protected final AtomicInteger pendingChildren = new AtomicInteger(0);
 
-  private final RequestType requestType;
+  private RequestType requestType;
   private Hash rootHash;
+
+  public SnapDataRequest() {}
 
   protected SnapDataRequest(final RequestType requestType, final Hash originalRootHash) {
     this.requestType = requestType;
@@ -98,6 +100,15 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   public static BytecodeRequest createBytecodeRequest(
       final Bytes32 accountHash, final Hash rootHash, final Bytes32 codeHash) {
     return new BytecodeRequest(rootHash, accountHash, codeHash);
+  }
+
+  public static FlatteningTask createFlatteningTask(
+      final Hash hash,
+      final Hash accountHash,
+      final StateTrieAccountValue accountValue,
+      final Hash rootHash,
+      final Bytes location) {
+    return new FlatteningTask(hash, accountHash, accountValue, rootHash, location);
   }
 
   public int persist(

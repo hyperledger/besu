@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -58,6 +59,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
   private final boolean useSnapshots;
+  private final WorldStateProofProvider worldStateProof;
 
   public BonsaiWorldStateArchive(
       final StorageProvider provider,
@@ -118,6 +120,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.useSnapshots = useSnapshots;
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain.observeBlockAdded(this::blockAddedHandler);
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   private void blockAddedHandler(final BlockAddedEvent event) {
@@ -319,8 +322,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final Hash worldStateRoot,
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
-    // FIXME we can do proofs for layered tries and the persisted trie
-    return Optional.empty();
+    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
+  }
+
+  @Override
+  public List<Bytes> getAccountProofRelatedNodes(
+      final Hash worldStateRoot, final Hash accountHash) {
+    return worldStateProof.getProofRelatedNodes(worldStateRoot, accountHash);
   }
 
   public void useFallbackNodeFinder(final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {

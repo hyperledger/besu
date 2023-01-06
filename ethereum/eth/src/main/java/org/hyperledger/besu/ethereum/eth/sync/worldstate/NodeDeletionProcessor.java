@@ -42,13 +42,14 @@ public class NodeDeletionProcessor {
 
   public static void deletePotentialOldAccountEntries(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage.Updater updater,
       final Bytes location,
       final Bytes data) {
     final Node<Bytes> newNode = TrieNodeDecoder.decode(location, data);
 
     if (newNode instanceof LeafNode) {
       final Bytes encodedPathToExclude = Bytes.concatenate(location, newNode.getPath());
-      worldStateStorage.pruneAccountState(location, Optional.of(encodedPathToExclude));
+      worldStateStorage.pruneAccountState(updater, location, Optional.of(encodedPathToExclude));
       // check state of the current account
       newNode
           .getValue()
@@ -60,11 +61,12 @@ public class NodeDeletionProcessor {
                 final Hash accountHash =
                     Hash.wrap(Bytes32.wrap(CompactEncoding.pathToBytes(encodedPathToExclude)));
                 if (account.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-                  worldStateStorage.pruneStorageState(accountHash, Bytes.EMPTY, Optional.empty());
+                  worldStateStorage.pruneStorageState(
+                      updater, accountHash, Bytes.EMPTY, Optional.empty());
                 }
                 // if code is deleted
                 if (account.getCodeHash().equals(Hash.EMPTY)) {
-                  worldStateStorage.pruneCodeState(accountHash);
+                  worldStateStorage.pruneCodeState(updater, accountHash);
                 }
               });
 
@@ -74,13 +76,13 @@ public class NodeDeletionProcessor {
           .getLocation()
           .ifPresent(
               subLocation ->
-                  worldStateStorage.pruneAccountState(location, Optional.of(subLocation)));
+                  worldStateStorage.pruneAccountState(updater, location, Optional.of(subLocation)));
     } else if (newNode instanceof BranchNode) {
       final List<Node<Bytes>> children = newNode.getChildren();
       for (int i = 0; i < MAX_CHILDREN; i++) {
         if (i >= children.size() || children.get(i) instanceof NullNode) {
           worldStateStorage.pruneAccountState(
-              Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
+              updater, Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
         }
       }
     }
@@ -88,6 +90,7 @@ public class NodeDeletionProcessor {
 
   public static void deletePotentialOldStorageEntries(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage.Updater updater,
       final Bytes accountHash,
       final Bytes location,
       final Bytes data) {
@@ -95,7 +98,8 @@ public class NodeDeletionProcessor {
 
     if (newNode instanceof LeafNode) {
       final Bytes encodedPathToExclude = Bytes.concatenate(location, newNode.getPath());
-      worldStateStorage.pruneStorageState(accountHash, location, Optional.of(encodedPathToExclude));
+      worldStateStorage.pruneStorageState(
+          updater, accountHash, location, Optional.of(encodedPathToExclude));
     } else if (newNode instanceof ExtensionNode) {
       ((ExtensionNode<Bytes>) newNode)
           .getChild()
@@ -103,13 +107,12 @@ public class NodeDeletionProcessor {
           .ifPresent(
               subLocation ->
                   worldStateStorage.pruneStorageState(
-                      accountHash, location, Optional.of(subLocation)));
+                      updater, accountHash, location, Optional.of(subLocation)));
     } else if (newNode instanceof BranchNode) {
       final List<Node<Bytes>> children = newNode.getChildren();
       for (int i = 0; i < MAX_CHILDREN; i++) {
         if (i >= children.size() || children.get(i) instanceof NullNode) {
-          worldStateStorage.pruneStorageState(
-              accountHash, Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
+          worldStateStorage.pruneStorageState(updater, accountHash, location, Optional.empty());
         }
       }
     }

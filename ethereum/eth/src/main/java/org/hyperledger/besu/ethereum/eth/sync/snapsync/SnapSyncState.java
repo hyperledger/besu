@@ -27,6 +27,8 @@ public class SnapSyncState extends FastSyncState {
   private boolean isHealInProgress;
   private boolean isWaitingBlockchain;
 
+  private boolean isFlattening;
+
   public SnapSyncState(final FastSyncState fastSyncState) {
     super(
         fastSyncState.getPivotBlockNumber(),
@@ -46,9 +48,17 @@ public class SnapSyncState extends FastSyncState {
     return isWaitingBlockchain;
   }
 
+  public boolean isFlattening() {
+    return isFlattening;
+  }
+
   public void setWaitingBlockchain(final boolean waitingBlockchain) {
     LOG.debug("Set waiting blockchain to {}", waitingBlockchain);
     isWaitingBlockchain = waitingBlockchain;
+  }
+
+  public void setFlattening(final boolean isFlattening) {
+    this.isFlattening = isFlattening;
   }
 
   public boolean isExpired(final SnapDataRequest request) {

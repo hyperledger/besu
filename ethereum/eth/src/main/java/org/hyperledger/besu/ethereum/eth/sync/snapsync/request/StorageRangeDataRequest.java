@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.util.RangeManager.findNewBeginElemen
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiIntermediateCommitCountUpdater;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
@@ -44,7 +43,6 @@ import com.google.common.annotations.VisibleForTesting;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,26 +89,14 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     // search incomplete nodes in the range
     final BonsaiIntermediateCommitCountUpdater<WorldStateStorage> countUpdater =
-        new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage::updater, 100);
+        new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage::updater, 100000);
     final NodeUpdater nodeUpdater =
         (location, hash, value) ->
             countUpdater.getUpdater().putAccountStorageTrieNode(accountHash, location, hash, value);
 
-    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = (key, value) -> {};
-    Bytes path = CompactEncoding.bytesToPath(accountHash);
-    if (downloadState.inconsistentAccounts.contains(path)) {
-      flatDatabaseUpdater =
-          (key, value) ->
-              ((BonsaiWorldStateKeyValueStorage.Updater) countUpdater.getUpdater())
-                  .putStorageValueBySlotHash(
-                      accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
-    }
-    final boolean commit = stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
+    final boolean commit = stackTrie.commit(nodeUpdater, (key, value) -> {});
     if (commit) {
       downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
-      if (downloadState.inconsistentAccounts.contains(path)) {
-        downloadState.getMetricsManager().notifySlotsSaved(stackTrie.getElementsCount().get());
-      }
     }
 
     return countUpdater.close();

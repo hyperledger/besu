@@ -33,14 +33,8 @@ public class StateTrieAccountValue {
   private final Hash storageRoot;
   private final Hash codeHash;
 
-  private final boolean isFullFlatted;
-
   public StateTrieAccountValue(
-      final long nonce,
-      final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
-      final boolean isFullFlatted) {
+      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
     checkNotNull(balance, "balance cannot be null");
     checkNotNull(storageRoot, "storageRoot cannot be null");
     checkNotNull(codeHash, "codeHash cannot be null");
@@ -48,12 +42,6 @@ public class StateTrieAccountValue {
     this.balance = balance;
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
-    this.isFullFlatted = isFullFlatted;
-  }
-
-  public StateTrieAccountValue(
-      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-    this(nonce, balance, storageRoot, codeHash, false);
   }
 
   /**
@@ -92,10 +80,6 @@ public class StateTrieAccountValue {
     return codeHash;
   }
 
-  public boolean isFullFlatted() {
-    return isFullFlatted;
-  }
-
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -119,9 +103,6 @@ public class StateTrieAccountValue {
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
-    if (isFullFlatted) {
-      out.writeInt(1);
-    }
 
     out.endList();
   }
@@ -133,7 +114,6 @@ public class StateTrieAccountValue {
     final Wei balance = Wei.of(in.readUInt256Scalar());
     Bytes32 storageRoot;
     Bytes32 codeHash;
-    Boolean isFullFlatted;
     if (in.nextIsNull()) {
       storageRoot = Hash.EMPTY_TRIE_HASH;
       in.skipNext();
@@ -146,15 +126,9 @@ public class StateTrieAccountValue {
     } else {
       codeHash = in.readBytes32();
     }
-    if (in.isEndOfCurrentList()) {
-      isFullFlatted = false;
-    } else {
-      isFullFlatted = in.readInt() == 1;
-    }
 
     in.leaveList();
 
-    return new StateTrieAccountValue(
-        nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash), isFullFlatted);
+    return new StateTrieAccountValue(nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash));
   }
 }

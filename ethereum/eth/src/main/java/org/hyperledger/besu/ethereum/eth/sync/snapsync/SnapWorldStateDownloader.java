@@ -203,6 +203,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                       metricsSystem))
               .persistDataStep(
                   new PersistDataStep(snapSyncState, worldStateStorage, newDownloadState))
+              .flatteningStep(
+                  new FlatteningStep(worldStateStorage, newDownloadState, snapSyncState))
               .completeTaskStep(maybeCompleteTask.get())
               .downloadState(newDownloadState)
               .fastSyncState(snapSyncState)

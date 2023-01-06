@@ -15,10 +15,13 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class PersistDataStep {
@@ -39,53 +42,35 @@ public class PersistDataStep {
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
 
-    tasks.parallelStream()
-        .forEach(
-            task -> {
-              if (task.getData().isResponseReceived()) {
-                // enqueue child requests
-                final Stream<SnapDataRequest> childRequests =
-                    task.getData()
-                        .getChildRequests(downloadState, worldStateStorage, snapSyncState);
-                enqueueChildren(childRequests);
-              }
-            });
-    tasks.forEach(
-        task -> {
-          if (task.getData().isResponseReceived()) {
-            // persist nodes
-            final int persistedNodes =
-                task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
-            if (persistedNodes > 0) {
-              downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
-            }
-          }
-        });
-    updater.commit();
-    return tasks;
-  }
+    List<SnapDataRequest> newRequests = new ArrayList<>();
 
-  public List<Task<SnapDataRequest>> persistTrieNode(final List<Task<SnapDataRequest>> tasks) {
-    final WorldStateStorage.Updater updater = worldStateStorage.updater();
     for (Task<SnapDataRequest> task : tasks) {
       if (task.getData().isResponseReceived()) {
         // enqueue child requests
-        final Stream<SnapDataRequest> childRequests =
-            task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
-        if (!task.getData().isExpired(snapSyncState)) {
-          enqueueChildren(childRequests);
-        } else {
+        if (task instanceof TrieNodeDataRequest && task.getData().isExpired(snapSyncState)) {
           continue;
         }
+        newRequests.addAll(
+            task.getData()
+                .getChildRequests(downloadState, worldStateStorage, snapSyncState)
+                .collect(Collectors.toList()));
+
         // persist nodes
         final int persistedNodes =
             task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
         if (persistedNodes > 0) {
-          downloadState.getMetricsManager().notifyNodesHealed(persistedNodes);
+          if (task.getData() instanceof TrieNodeDataRequest) {
+            downloadState.getMetricsManager().notifyNodesHealed(persistedNodes);
+          } else {
+            downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
+          }
         }
       }
     }
     updater.commit();
+
+    enqueueChildren(newRequests.stream());
+
     return tasks;
   }
 

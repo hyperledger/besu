@@ -163,6 +163,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       } else {
         final Hash addressHash = updatedAccount.getAddressHash();
         final Bytes accountValue = updatedAccount.serializeAccount();
+        if (bonsaiValue.getPrior() == null) {
+          stateUpdater.markFlattened(addressHash);
+        }
         stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
         accountTrie.put(addressHash, accountValue);
       }

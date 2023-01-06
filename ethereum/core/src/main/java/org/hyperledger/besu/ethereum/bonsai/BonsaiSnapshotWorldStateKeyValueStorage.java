@@ -179,6 +179,16 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     }
 
     @Override
+    public BonsaiUpdater markFlattened(final Hash accountHash) {
+      storageStorage
+          .getSnapshotTransaction()
+          .put(
+              Bytes.concatenate(accountHash, Bytes.wrap(FLATTENED_MARKER_KEY)).toArrayUnsafe(),
+              Bytes.of(0x01).toArrayUnsafe());
+      return this;
+    }
+
+    @Override
     public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
       storageStorage
           .getSnapshotTransaction()

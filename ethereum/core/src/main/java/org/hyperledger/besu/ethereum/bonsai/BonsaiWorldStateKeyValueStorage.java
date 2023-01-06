@@ -47,6 +47,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
+  public static final byte[] FLATTENED_MARKER_KEY = "flattened".getBytes(StandardCharsets.UTF_8);
+
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
@@ -58,7 +60,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   private Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder;
 
-  private final Cache<Hash, Boolean> isFullFlatted =
+  private final Cache<Hash, Boolean> flattenedAccount =
       CacheBuilder.newBuilder().maximumSize(100).build();
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
@@ -108,7 +110,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
     Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    /*if (response.isEmpty()) {
+    if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (worldStateRootHash.isPresent()) {
@@ -119,17 +121,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
       }
-    }*/
+    }
     return response;
   }
 
-  private boolean isCompleteFlatDatabaseForAccount(final Hash accountHash) {
+  private boolean isFlattenedAccount(final Hash accountHash) {
     try {
-      return isFullFlatted.get(
+      return flattenedAccount.get(
           accountHash,
           () ->
-              getAccount(accountHash)
-                  .filter(bytes -> StateTrieAccountValue.readFrom(RLP.input(bytes)).isFullFlatted())
+              storageStorage
+                  .get(
+                      Bytes.concatenate(accountHash, Bytes.wrap(FLATTENED_MARKER_KEY))
+                          .toArrayUnsafe())
                   .isPresent());
     } catch (ExecutionException e) {
       // ignore
@@ -200,7 +204,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         storageStorage
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
-    if (response.isEmpty() && !isCompleteFlatDatabaseForAccount(accountHash)) {
+    if (response.isEmpty() && !isFlattenedAccount(accountHash)) {
       final Optional<Bytes> account = getAccount(accountHash);
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (account.isPresent() && worldStateRootHash.isPresent()) {
@@ -260,14 +264,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         trieLogStorage.startTransaction());
   }
 
-  public void pruneAccountState(final Bytes location, final Optional<Bytes> maybeExclude) {
+  public void pruneAccountState(
+      final BonsaiWorldStateKeyValueStorage.Updater updater,
+      final Bytes location,
+      final Optional<Bytes> maybeExclude) {
     final Pair<Bytes, Bytes> range = generateRangeFromLocation(Bytes.EMPTY, location);
-
-    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
-        new BonsaiIntermediateCommitCountUpdater<>(this::updater, 1000);
-
     // cleaning the account trie node in this location
-    pruneTrieNode(Bytes.EMPTY, location, maybeExclude);
+    pruneTrieNode(updater, Bytes.EMPTY, location, maybeExclude);
 
     // cleaning the account flat database by searching for the keys that are in the range
     accountStorage
@@ -282,24 +285,24 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                                   == bytes.size())
                       .isPresent();
               if (!shouldExclude) {
+                Hash hash = Hash.wrap(Bytes32.wrap(key));
                 // clean the storage and code of the deleted account
-                pruneStorageState(key, Bytes.EMPTY, Optional.empty());
-                pruneCodeState(key);
-                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
-                    .accountStorageTransaction.remove(key.toArrayUnsafe());
+                pruneStorageState(updater, hash, Bytes.EMPTY, Optional.empty());
+                pruneCodeState(updater, hash);
+                updater.removeAccountInfoState(hash);
               }
             });
-    updater.close();
   }
 
   public void pruneStorageState(
-      final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
+      final BonsaiWorldStateKeyValueStorage.Updater updater,
+      final Bytes accountHash,
+      final Bytes location,
+      final Optional<Bytes> maybeExclude) {
     final Pair<Bytes, Bytes> range = generateRangeFromLocation(accountHash, location);
-    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
-        new BonsaiIntermediateCommitCountUpdater<>(this::updater, 1000);
 
     // cleaning the storage trie node in this location
-    pruneTrieNode(accountHash, location, maybeExclude);
+    pruneTrieNode(updater, accountHash, location, maybeExclude);
 
     // cleaning the storage flat database by searching for the keys that are in the range
     storageStorage
@@ -315,23 +318,21 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                                   == bytes.size())
                       .isPresent();
               if (!shouldExclude) {
-                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
-                    .storageStorageTransaction.remove(key.toArrayUnsafe());
+                updater.storageStorageTransaction.remove(key.toArrayUnsafe());
               }
             });
-    updater.close();
   }
 
-  public void pruneCodeState(final Bytes accountHash) {
-    final KeyValueStorageTransaction transaction = codeStorage.startTransaction();
-    transaction.remove(accountHash.toArrayUnsafe());
-    transaction.commit();
+  public void pruneCodeState(
+      final BonsaiWorldStateKeyValueStorage.Updater updater, final Hash accountHash) {
+    updater.removeCode(accountHash);
   }
 
   private void pruneTrieNode(
-      final Bytes accountHash, final Bytes location, final Optional<Bytes> maybeExclude) {
-    final BonsaiIntermediateCommitCountUpdater<BonsaiWorldStateKeyValueStorage> updater =
-        new BonsaiIntermediateCommitCountUpdater<>(this::updater, 1000);
+      final BonsaiWorldStateKeyValueStorage.Updater updater,
+      final Bytes accountHash,
+      final Bytes location,
+      final Optional<Bytes> maybeExclude) {
     trieBranchStorage
         .getByPrefix(Bytes.concatenate(accountHash, location))
         .forEach(
@@ -344,11 +345,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                                   == bytes.size())
                       .isPresent();
               if (!shouldExclude) {
-                ((BonsaiWorldStateKeyValueStorage.Updater) updater.getUpdater())
-                    .trieBranchStorageTransaction.remove(key.toArrayUnsafe());
+                updater.trieBranchStorageTransaction.remove(key.toArrayUnsafe());
               }
             });
-    updater.close();
   }
 
   @Override
@@ -404,6 +403,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     BonsaiUpdater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage);
+
+    BonsaiUpdater markFlattened(final Hash accountHash);
 
     void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash);
 
@@ -509,6 +510,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
+      return this;
+    }
+
+    @Override
+    public synchronized BonsaiUpdater markFlattened(final Hash accountHash) {
+      storageStorageTransaction.put(
+          Bytes.concatenate(accountHash, Bytes.wrap(FLATTENED_MARKER_KEY)).toArrayUnsafe(),
+          Bytes.of(0x01).toArrayUnsafe());
       return this;
     }
 

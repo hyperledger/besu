@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.util.RangeManager.findNewBeginElemen
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiIntermediateCommitCountUpdater;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
@@ -112,19 +111,14 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     }
 
     final BonsaiIntermediateCommitCountUpdater<WorldStateStorage> countUpdater =
-        new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage::updater, 100);
+        new BonsaiIntermediateCommitCountUpdater<>(worldStateStorage::updater, 100000);
     // search incomplete nodes in the range
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
           countUpdater.getUpdater().putAccountStateTrieNode(location, hash, value);
         };
 
-    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater =
-        (key, value) ->
-            ((BonsaiWorldStateKeyValueStorage.Updater) countUpdater.getUpdater())
-                .putAccountInfoState(Hash.wrap(key), value);
-
-    stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
+    stackTrie.commit(nodeUpdater, (key, value) -> {});
 
     downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getElementsCount().get());
 

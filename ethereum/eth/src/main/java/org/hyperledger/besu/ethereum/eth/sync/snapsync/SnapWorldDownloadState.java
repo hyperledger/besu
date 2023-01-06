@@ -15,7 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createFlatteningTask;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -24,7 +27,9 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.util.RangeManager;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
@@ -33,6 +38,7 @@ import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -58,6 +64,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   protected final InMemoryTaskQueue<SnapDataRequest> pendingCodeRequests =
       new InMemoryTaskQueue<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
+      new InMemoryTasksPriorityQueues<>();
+
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> flatteningTasks =
       new InMemoryTasksPriorityQueues<>();
   public HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
@@ -149,7 +158,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingCodeRequests.allTasksCompleted()
         && pendingStorageRequests.allTasksCompleted()
         && pendingBigStorageRequests.allTasksCompleted()
-        && pendingTrieNodeRequests.allTasksCompleted()) {
+        && pendingTrieNodeRequests.allTasksCompleted()
+        && flatteningTasks.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
         startHeal();
       } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
@@ -157,10 +167,13 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         if (blockObserverId.isEmpty())
           blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
         snapSyncState.setWaitingBlockchain(true);
-      } else {
+      } else if (!snapSyncState.isFlattening()) {
+        LOG.info("Contract flattening in progress");
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
         updater.commit();
+        startFlattening(header.getStateRoot());
+      } else {
         metricsManager.notifySnapSyncCompleted();
         snapContext.clear();
         internalFuture.complete(null);
@@ -194,6 +207,31 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           enqueueRequest(
               createAccountTrieNodeDataRequest(
                   blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
+        });
+  }
+
+  public synchronized void startFlattening(final Hash worldStateRootHash) {
+    snapSyncState.setFlattening(true);
+    final List<SnapDataRequest> tasks = new ArrayList<>();
+    MostUsedContract.MOST_USED_CONTRACT.forEach(
+        address -> {
+          ((BonsaiWorldStateKeyValueStorage) worldStateStorage)
+              .getAccount(Hash.hash(address))
+              .map(rlp -> StateTrieAccountValue.readFrom(RLP.input(rlp)))
+              .ifPresent(
+                  stateTrieAccountValue -> {
+                    if (!stateTrieAccountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
+                      System.out.println("Trigger flattening of " + address);
+                      tasks.add(
+                          createFlatteningTask(
+                              stateTrieAccountValue.getStorageRoot(),
+                              Hash.hash(address),
+                              stateTrieAccountValue,
+                              worldStateRootHash,
+                              Bytes.EMPTY));
+                    }
+                  });
+          enqueueRequests(tasks.stream());
         });
   }
 
@@ -301,6 +339,18 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     return dequeueRequestBlocking(
         List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
         pendingTrieNodeRequests,
+        __ -> {});
+  }
+
+  public synchronized Task<SnapDataRequest> dequeueFlatteningTaskBlocking() {
+    return dequeueRequestBlocking(
+        List.of(
+            pendingAccountRequests,
+            pendingStorageRequests,
+            pendingBigStorageRequests,
+            pendingCodeRequests,
+            pendingTrieNodeRequests),
+        flatteningTasks,
         __ -> {});
   }
 
