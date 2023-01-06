@@ -6,6 +6,7 @@
 - Default configurations for the deprecated Ropsten, Kiln, Shandong, and Astor networks have been removed from the CLI network list. These networks can currently be accessed but will require a user-provided genesis configuration. [#4896](https://github.com/hyperledger/besu/pull/4869)
 
 ### Additions and Improvements
+- Improve SLOAD and SSTORE performance by caching empty slots [#4874](https://github.com/hyperledger/besu/pull/4874)
 
 ### Bug Fixes
 
