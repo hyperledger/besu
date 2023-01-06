@@ -74,6 +74,7 @@ public class EVM {
 
   // Optimized operation flags
   private final boolean enableShanghai;
+  private final boolean enableCancun;
 
   public EVM(
       final OperationRegistry operations,
@@ -87,6 +88,7 @@ public class EVM {
     this.evmSpecVersion = evmSpecVersion;
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
+    enableCancun = EvmSpecVersion.CANCUN.ordinal() <= evmSpecVersion.ordinal();
   }
 
   public GasCalculator getGasCalculator() {
@@ -278,7 +280,7 @@ public class EVM {
           case 0xb0: // CALLF
           case 0xb1: // RETF
             // Function operations reset code
-            if (enableShanghai) {
+            if (enableCancun) {
               frame.setCurrentOperation(currentOperation);
               result = currentOperation.execute(frame, this);
               code = frame.getCode().getCodeSection(frame.getSection()).getCode().toArrayUnsafe();
