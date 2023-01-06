@@ -103,6 +103,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
   @Override
   protected void handleTaskError(final Throwable error) {
+    // TODO what if we disconnect on failure
     if (isPeerFailure(error)) {
       getAssignedPeer().ifPresent(peer -> failedPeers.add(peer));
     }
@@ -136,16 +137,26 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
   private void refreshPeers() {
     final EthPeers peers = getEthContext().getEthPeers();
-    // If we are at max connections, then refresh peers disconnecting one of the failed peers,
+    // If we are near max connections, then refresh peers disconnecting one of the failed peers,
     // or the least useful
-    if (peers.peerCount() >= peers.getMaxPeers()) {
+
+    // TODO what if we make a buffer here between max peers
+    final int buffer = 5;
+
+    if (peers.peerCount() >= peers.getMaxPeers() - buffer) {
       failedPeers.stream()
           .filter(peer -> !peer.isDisconnected())
           .findAny()
           .or(() -> peers.streamAvailablePeers().sorted(peers.getBestChainComparator()).findFirst())
           .ifPresent(
               peer -> {
-                debugLambda(LOG, "Refresh peers disconnecting peer {}", peer::toString);
+                // TODO do we see this log
+                debugLambda(
+                    LOG,
+                    "Refresh peers disconnecting peer {}. Waiting for better peers. Current {} of max {}",
+                    peer::toString,
+                    peers::peerCount,
+                    peers::getMaxPeers);
                 peer.disconnect(DisconnectReason.USELESS_PEER);
               });
     }
