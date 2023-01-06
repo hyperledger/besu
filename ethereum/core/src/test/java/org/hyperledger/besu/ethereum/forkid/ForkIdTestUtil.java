@@ -78,8 +78,6 @@ public class ForkIdTestUtil {
     public static final List<Long> RINKEBY =
         Arrays.asList(1L, 2L, 3L, 3L, 1035301L, 3660663L, 4321234L, 5435345L);
     public static final List<Long> GOERLI = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 1561651L);
-    public static final List<Long> SHANDONG =
-        Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
     public static final List<Long> PRIVATE = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
 
     public static final List<Long> MAINNET_WITH_SHANGHAI_BLOCKS =
