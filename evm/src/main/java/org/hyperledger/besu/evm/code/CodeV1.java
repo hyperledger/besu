@@ -398,7 +398,7 @@ public class CodeV1 implements Code {
     {0, 1, 1}, // 0x59 - MSIZE
     {0, 1, 1}, // 0x5a - GAS
     {0, 0, 1}, // 0x5b - NOOP (née JUMPDEST)
-    {0, 0, -1}, // 0x5c - RJUMP
+    {0, 0, -3}, // 0x5c - RJUMP
     {1, 0, 3}, // 0x5d - RJUMPI
     {1, 0, 2}, // 0x5e - RJUMPV
     {0, 1, 1}, // 0x5f - PUSH0
@@ -696,6 +696,7 @@ public class CodeV1 implements Code {
       int maxStackHeight = initialStackHeight;
       stackHeights[0] = initialStackHeight;
       workList[0][1] = initialStackHeight;
+      int unusedBytes = codeLength;
 
       while (thisWork < maxWork) {
         int currentPC = workList[thisWork][0];
@@ -748,16 +749,15 @@ public class CodeV1 implements Code {
             int rvalue = readBigEndianI16(currentPC + 1, code);
             workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
             maxWork++;
-            stackHeights[currentPC + 1] = -2;
-            stackHeights[currentPC + 2] = -2;
           } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
-            int tableEnd = (code[currentPC + 1] & 0xff) * 2 + currentPC + 2;
+            int immediateDataSize = (code[currentPC + 1] & 0xff) * 2;
+            unusedBytes -= immediateDataSize;
+            int tableEnd = immediateDataSize + currentPC + 2;
             for (int i = currentPC + 2; i < tableEnd; i += 2) {
               int rvalue = readBigEndianI16(i, code);
               workList[maxWork] = new int[] {tableEnd + rvalue, currentStackHeight};
               maxWork++;
             }
-            Arrays.fill(stackHeights, currentPC + 1, tableEnd, -2);
             currentPC = tableEnd - 2;
           } else if (thisOp == RetFOperation.OPCODE) {
             int returnStackItems = codeSections[codeSectionToValidate].getOutputs();
@@ -768,28 +768,28 @@ public class CodeV1 implements Code {
             }
           }
           if (pcAdvance < 0) {
+            unusedBytes += pcAdvance;
             break;
+          } else if (pcAdvance == 0) {
+            return String.format("Invalid Instruction 0x%02x", thisOp);
           }
-          if (pcAdvance > 1) {
-            Arrays.fill(stackHeights, currentPC + 1, currentPC + pcAdvance, -2);
-          }
+
           currentPC += pcAdvance;
           stackHeights[currentPC] = currentStackHeight;
+          unusedBytes -= pcAdvance;
         }
 
         thisWork++;
       }
-
       if (maxStackHeight != codeSections[codeSectionToValidate].maxStackHeight) {
         return String.format(
             "Calculated max stack height (%d) does not match reported stack height (%d)",
             maxStackHeight, codeSections[codeSectionToValidate].maxStackHeight);
       }
-      for (int i = 0; i < stackHeights.length; i++) {
-        if (stackHeights[i] == -1) {
-          return String.format("Dead code detected at section %d PC %d", codeSectionToValidate, i);
-        }
+      if (unusedBytes != 0) {
+        return String.format("Dead code detected in section %d", codeSectionToValidate);
       }
+
       return null;
     } catch (RuntimeException re) {
       return "Internal Exception " + re.getMessage();

@@ -484,12 +484,12 @@ class CodeV1Test {
         Arguments.of("RJUMP 0", null, 0, List.of(List.of("5C0000 00", 0, 0, 0))),
         Arguments.of(
             "RJUMP 1 w/ dead code",
-            "Dead code detected at section 0 PC 3",
+            "Dead code detected in section 0",
             0,
             List.of(List.of("5C0001 43 00", 0, 0, 0))),
         Arguments.of(
             "RJUMP 2 w/ dead code",
-            "Dead code detected at section 0 PC 3",
+            "Dead code detected in section 0",
             0,
             List.of(List.of("5C0002 43 50 00", 0, 0, 0))),
         Arguments.of(
@@ -760,32 +760,32 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "Max stack not changed by unreachable code",
-            "Dead code detected at section 0 PC 3",
+            "Dead code detected in section 0",
             0,
             List.of(List.of("30 50 00 30 30 30 50 50 50 00", 0, 0, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RETf",
-            "Dead code detected at section 0 PC 3",
+            "Dead code detected in section 0",
             0,
             List.of(List.of("30 50 B1 30 30 30 50 50 50 00", 0, 0, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RJUMP",
-            "Dead code detected at section 0 PC 5",
+            "Dead code detected in section 0",
             0,
             List.of(List.of("30 50 5C0006 30 30 30 50 50 50 00", 0, 0, 1))),
         Arguments.of(
             "Stack underflow in unreachable code",
-            "Dead code detected at section 0 PC 3",
+            "Dead code detected in section 0",
             0,
             List.of(List.of("30 50 00 50 00", 0, 0, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RETF",
-            "Dead code detected at section 0 PC 3",
+            "Dead code detected in section 0",
             0,
             List.of(List.of("30 50 B1 50 00", 0, 0, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RJUMP",
-            "Dead code detected at section 0 PC 5",
+            "Dead code detected in section 0",
             0,
             List.of(List.of("30 50 5C0001 50 00", 0, 0, 1))));
   }
