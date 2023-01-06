@@ -136,7 +136,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
   private void refreshPeers() {
     final EthPeers peers = getEthContext().getEthPeers();
-    // If we are near max connections, then refresh peers disconnecting one of the failed peers,
+    // If we are at max connections, then refresh peers disconnecting one of the failed peers,
     // or the least useful
 
     if (peers.peerCount() >= peers.getMaxPeers()) {
