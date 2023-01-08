@@ -49,7 +49,6 @@ import org.slf4j.LoggerFactory;
 public class FastDownloaderFactory {
 
   protected static final String FAST_SYNC_FOLDER = "fastsync";
-  protected static final String FAST_SYNC_RESYNC = FAST_SYNC_FOLDER + "/resync";
 
   private static final Logger LOG = LoggerFactory.getLogger(FastDownloaderFactory.class);
 
@@ -63,7 +62,8 @@ public class FastDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
-      final Clock clock) {
+      final Clock clock,
+      final boolean isResync) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -83,9 +83,7 @@ public class FastDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
-    final boolean shouldResync = shouldResyncWorldstate(dataDirectory.resolve(FAST_SYNC_RESYNC));
-
-    if (shouldResync) {
+    if (isResync) {
       worldStateStorage.clear();
     } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
@@ -163,21 +161,6 @@ public class FastDownloaderFactory {
     if (!dir.mkdirs() && !dir.isDirectory()) {
       throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
     }
-  }
-
-  static final AtomicBoolean shouldResync = new AtomicBoolean(false);
-
-  protected static boolean shouldResyncWorldstate(final Path resync) {
-    try {
-      if (resync.toFile().exists() && !shouldResync.get()) {
-        deleteFile(resync);
-        LOG.info("Triggering resync of worldstate, removed {}", resync);
-        shouldResync.set(true);
-      }
-    } catch (Exception ex) {
-      LOG.error("Not starting resync, unable to remove resync file: {}", resync);
-    }
-    return shouldResync.get();
   }
 
   private static InMemoryTasksPriorityQueues<NodeDataRequest>
