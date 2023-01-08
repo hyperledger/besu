@@ -349,4 +349,8 @@ public class ProtocolSpec {
   public Optional<PoWHasher> getPoWHasher() {
     return powHasher;
   }
+
+  public WithdrawalsValidator getWithdrawalsValidator() {
+    return new WithdrawalsValidator.ProhibitedWithdrawals();
+  }
 }
