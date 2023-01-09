@@ -82,7 +82,7 @@ public abstract class AbstractEngineGetPayloadTest {
 
   @Mock private ProtocolContext protocolContext;
 
-  @Mock private MergeContext mergeContext;
+  @Mock protected MergeContext mergeContext;
   @Mock private MergeMiningCoordinator mergeMiningCoordinator;
 
   @Mock protected EngineCallListener engineCallListener;

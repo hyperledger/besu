@@ -17,12 +17,28 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -59,6 +75,52 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));
               assertThat(res.getExecutionPayload().getPrevRandao())
                   .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
+            });
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnBlockWithCorrectValue() {
+    // Generate block with two transactions
+    final long baseFee = 15;
+    final Transaction tx1 =
+        new TransactionTestFixture()
+            .gasPrice(Wei.of(baseFee + 1))
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    final Transaction tx2 =
+        new TransactionTestFixture()
+            .gasPrice(Wei.of(baseFee + 2))
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    final TransactionReceipt receipt1 =
+        new TransactionReceipt(Hash.EMPTY_TRIE_HASH, 71, Collections.emptyList(), Optional.empty());
+    final TransactionReceipt receipt2 =
+        new TransactionReceipt(
+            Hash.EMPTY_TRIE_HASH, 143, Collections.emptyList(), Optional.empty());
+    final BlockHeader blockHeader =
+        new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
+    final Block block =
+        new Block(blockHeader, new BlockBody(List.of(tx1, tx2), Collections.emptyList()));
+    // Generate pid
+    final PayloadIdentifier pid =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x43"));
+    when(mergeContext.retrieveBlockById(pid))
+        .thenReturn(Optional.of(new BlockWithReceipts(block, List.of(receipt1, receipt2))));
+    // Test get payload
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), pid);
+    assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+    Optional.of(resp)
+        .map(JsonRpcSuccessResponse.class::cast)
+        .ifPresent(
+            r -> {
+              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
+              final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
+              assertThat(res.getExecutionPayload().getHash())
+                  .isEqualTo(blockHeader.getHash().toString());
+              // Block value = 71 * (1 + 15) + 143 * (2 + 15) = 3567
+              assertThat(res.getBlockValue()).isEqualTo(Quantity.create(3567));
+              assertThat(res.getExecutionPayload().getPrevRandao())
+                  .isEqualTo(blockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
             });
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
