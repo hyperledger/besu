@@ -549,9 +549,6 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidIfWithdrawalsIsNotNull_WhenWithdrawalsAllowed() {
-    // https://github.com/ethereum/execution-apis/blob/main/src/engine/specification.md#specification-3
-    // If withdrawal functionality is activated, client software MUST return
-    // error -38003: Invalid payload attributes if payloadAttributes.withdrawals is null
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
 
