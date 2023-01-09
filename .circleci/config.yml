@@ -12,10 +12,10 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
-  besu_executor_small_jdk17:
+  besu_executor_med_jdk17:
     docker:
       - image: cimg/openjdk:17.0
-    resource_class: small
+    resource_class: medium
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
@@ -138,7 +138,7 @@ jobs:
           when: always
 
   javadoc:
-    executor: besu_executor_small_jdk17
+    executor: besu_executor_med_jdk17
     steps:
       - prepare
       - attach_workspace:
