@@ -22,12 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-
 
 import java.util.Optional;
 
@@ -39,33 +33,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
 
-  private EngineGetPayloadV2 method;
-  private static final Vertx vertx = Vertx.vertx();
-  private static final BlockResultFactory factory = new BlockResultFactory();
-  private static final PayloadIdentifier mockPid =
-      PayloadIdentifier.forPayloadParams(
-          Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x42"));
-  private static final BlockHeader mockHeader =
-      new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
-  private static final Block mockBlock =
-      new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
-  private static final BlockWithReceipts mockBlockWithReceipts =
-      new BlockWithReceipts(mockBlock, Collections.emptyList());
-
-  @Mock private ProtocolContext protocolContext;
-
-  @Mock private MergeContext mergeContext;
-  @Mock private MergeMiningCoordinator mergeMiningCoordinator;
-
-  @Mock private EngineCallListener engineCallListener;
-
-  @Before
-  public void before() {
-    when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
-    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
-    this.method =
-        new EngineGetPayloadV2(
-            vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
+  public EngineGetPayloadV2Test() {
+    super(EngineGetPayloadV2::new);
   }
 
   @Override
