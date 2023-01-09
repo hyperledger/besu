@@ -32,5 +32,5 @@ jobs:
           distribution: adopt
           java-version: 17
           cache: gradle
-      - name: spotless
+      - name: javadoc (JDK 17)
         run: ./gradlew --no-daemon clean javadoc
