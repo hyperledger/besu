@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ForwardingMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -158,6 +159,22 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
     } else {
       return bonsaiValue.getUpdated();
+    }
+  }
+
+  protected BonsaiAccount getPriorAccount(final Address address) {
+    final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
+    if (bonsaiValue == null) {
+      final Account account = wrappedWorldView().get(address);
+      if (account instanceof BonsaiAccount) {
+        final BonsaiAccount mutableAccount = new BonsaiAccount((BonsaiAccount) account, this, true);
+        accountsToUpdate.put(address, new BonsaiValue<>((BonsaiAccount) account, mutableAccount));
+        return mutableAccount;
+      } else {
+        return null;
+      }
+    } else {
+      return bonsaiValue.getPrior();
     }
   }
 
@@ -350,7 +367,14 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
     }
     final Optional<UInt256> valueUInt =
-        wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
+        (wrappedWorldView() instanceof BonsaiPersistedWorldState)
+            ? ((BonsaiPersistedWorldState) wrappedWorldView())
+                .getStorageValueBySlotHash(
+                    Suppliers.memoize(
+                        () -> Optional.ofNullable(getPriorAccount(address).getStorageRoot())),
+                    address,
+                    slotHash)
+            : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
     valueUInt.ifPresent(
         v ->
             storageToUpdate
