@@ -130,6 +130,11 @@ public class CodeV0 implements Code {
     return null;
   }
 
+  @Override
+  public int getCodeSectionCount() {
+    return 1;
+  }
+
   /**
    * Calculate jump destination.
    *
