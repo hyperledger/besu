@@ -57,13 +57,15 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
-    // NOTE: This temporary fix is necessary to make certain options be treated as a multi-value.
-    // This can be done automatically by picocli if the object implements Collection.
-    final boolean isArray =
-        getKeyName(optionSpec).map(keyName -> result.isArray(keyName)).orElse(false);
+    // NOTE: This temporary fix is necessary to make certain options be treated as a
+    // multi-value.
+    // This can be done automatically by picocli if the object implements
+    // Collection.
+    final boolean isArray = getKeyName(optionSpec).map(keyName -> result.isArray(keyName)).orElse(false);
     final String defaultValue;
 
-    // Convert config values to the right string representation for default string value
+    // Convert config values to the right string representation for default string
+    // value
     if (optionSpec.type().equals(Boolean.class) || optionSpec.type().equals(boolean.class)) {
       defaultValue = getBooleanEntryAsString(optionSpec);
     } else if (optionSpec.isMultiValue() || isArray) {
@@ -76,6 +78,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
       defaultValue = getIntegerEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(BigInteger.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Double.class) || optionSpec.type().equals(double.class)) {
+      defaultValue = getEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);
     }
@@ -83,7 +87,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getEntryAsString(final OptionSpec spec) {
-    // returns the string value of the config line corresponding to the option in toml file
+    // returns the string value of the config line corresponding to the option in
+    // toml file
     // or null if not present in the config
     return getKeyName(spec).map(result::getString).orElse(null);
   }
@@ -99,7 +104,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getListEntryAsString(final OptionSpec spec) {
-    // returns the string representation of the array value of the config line in CLI format
+    // returns the string representation of the array value of the config line in
+    // CLI format
     // corresponding to the option in toml file
     // or null if not present in the config
     return decodeTomlArray(
@@ -107,7 +113,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String decodeTomlArray(final List<Object> tomlArrayElements) {
-    if (tomlArrayElements == null) return null;
+    if (tomlArrayElements == null)
+      return null;
     return tomlArrayElements.stream()
         .map(
             tomlObject -> {
@@ -121,14 +128,16 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getBooleanEntryAsString(final OptionSpec spec) {
-    // return the string representation of the boolean value corresponding to the option in toml
+    // return the string representation of the boolean value corresponding to the
+    // option in toml
     // file
     // or null if not present in the config
     return getKeyName(spec).map(result::getBoolean).map(Object::toString).orElse(null);
   }
 
   private String getIntegerEntryAsString(final OptionSpec spec) {
-    // return the string representation of the integer value corresponding to the option in toml
+    // return the string representation of the integer value corresponding to the
+    // option in toml
     // file
     // or null if not present in the config
     return getKeyName(spec).map(result::get).map(String::valueOf).orElse(null);
@@ -147,10 +156,9 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
         final TomlParseResult result = Toml.parse(configFile.toPath());
 
         if (result.hasErrors()) {
-          final String errors =
-              result.errors().stream()
-                  .map(TomlParseError::toString)
-                  .collect(Collectors.joining("%n"));
+          final String errors = result.errors().stream()
+              .map(TomlParseError::toString)
+              .collect(Collectors.joining("%n"));
 
           throw new ParameterException(
               commandLine, String.format("Invalid TOML configuration: %s", errors));
@@ -172,15 +180,13 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   private void checkUnknownOptions(final TomlParseResult result) {
     final CommandSpec commandSpec = commandLine.getCommandSpec();
 
-    final Set<String> unknownOptionsList =
-        result.keySet().stream()
-            .filter(option -> !commandSpec.optionsMap().containsKey("--" + option))
-            .collect(Collectors.toSet());
+    final Set<String> unknownOptionsList = result.keySet().stream()
+        .filter(option -> !commandSpec.optionsMap().containsKey("--" + option))
+        .collect(Collectors.toSet());
 
     if (!unknownOptionsList.isEmpty()) {
       final String options = unknownOptionsList.size() > 1 ? "options" : "option";
-      final String csvUnknownOptions =
-          unknownOptionsList.stream().collect(Collectors.joining(", "));
+      final String csvUnknownOptions = unknownOptionsList.stream().collect(Collectors.joining(", "));
       throw new ParameterException(
           commandLine,
           String.format("Unknown %s in TOML configuration file: %s", options, csvUnknownOptions));
