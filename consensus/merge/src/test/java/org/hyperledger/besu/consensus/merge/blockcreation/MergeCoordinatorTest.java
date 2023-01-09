@@ -213,7 +213,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
@@ -249,7 +250,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doThrow(new MerkleTrieException("missing leaf"))
               .doCallRealMethod()
               .when(beingSpiedOn)
-              .createBlock(any(), any(Bytes32.class), anyLong());
+              .createBlock(any(), any(Bytes32.class), anyLong(), eq(Optional.empty()));
           return beingSpiedOn;
         };
 
@@ -284,7 +285,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.random(),
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     verify(willThrow, never()).addBadBlock(any(), any());
     blockCreationTask.get();
@@ -325,7 +327,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     blockCreationTask.get();
 
@@ -367,7 +370,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     blockCreationTask.get();
 
@@ -397,7 +401,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     try {
       blockCreationTask.get();
@@ -438,7 +443,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     waitForBlockCreationInProgress.await();
     coordinator.finalizeProposalById(payloadId);
@@ -478,13 +484,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     var payloadId1 =
         coordinator.preparePayload(
-            genesisState.getBlock().getHeader(), timestamp, Bytes32.ZERO, suggestedFeeRecipient);
+            genesisState.getBlock().getHeader(),
+            timestamp,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
 
     final CompletableFuture<Void> task1 = blockCreationTask;
 
     var payloadId2 =
         coordinator.preparePayload(
-            genesisState.getBlock().getHeader(), timestamp, Bytes32.ZERO, suggestedFeeRecipient);
+            genesisState.getBlock().getHeader(),
+            timestamp,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
 
     assertThat(payloadId1).isEqualTo(payloadId2);
 

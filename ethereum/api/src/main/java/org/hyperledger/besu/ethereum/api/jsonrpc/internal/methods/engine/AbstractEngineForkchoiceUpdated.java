@@ -151,7 +151,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     newHead,
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
-                    payloadAttributes.getSuggestedFeeRecipient()));
+                    payloadAttributes.getSuggestedFeeRecipient(),
+                    Optional.empty()));
 
     payloadId.ifPresent(
         pid ->

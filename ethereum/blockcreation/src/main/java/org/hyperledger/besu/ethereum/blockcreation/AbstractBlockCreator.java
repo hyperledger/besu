@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
@@ -139,12 +141,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
-    return createBlock(maybeTransactions, maybeOmmers, Optional.empty(), timestamp, true);
+    return createBlock(
+        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), timestamp, true);
   }
 
   protected BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
@@ -183,6 +187,17 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       }
 
       throwIfStopped();
+
+      maybeWithdrawals.ifPresent(
+          withdrawals -> {
+            // TODO create this as a field?
+            final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+            final WorldUpdater updater = disposableWorldState.updater();
+            for (Withdrawal withdrawal : withdrawals) {
+              withdrawalsProcessor.processWithdrawal(withdrawal, updater);
+            }
+            updater.commit();
+          });
 
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()

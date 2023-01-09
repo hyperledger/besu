@@ -245,7 +245,11 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getSuggestedFeeRecipient());
 
     when(mergeCoordinator.preparePayload(
-            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
+            mockHeader,
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            Address.ECREC,
+            Optional.empty()))
         .thenReturn(mockPayloadId);
 
     var res =
@@ -431,7 +435,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var forkchoiceRes = (EngineUpdateForkchoiceResult) resp.getResult();
 
-    verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any());
+    verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any(), any());
 
     assertThat(forkchoiceRes.getPayloadStatus().getStatus()).isEqualTo(VALID);
     assertThat(forkchoiceRes.getPayloadStatus().getError()).isNull();

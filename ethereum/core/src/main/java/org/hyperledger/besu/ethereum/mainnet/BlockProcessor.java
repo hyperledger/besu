@@ -22,9 +22,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
 import java.util.List;
+import java.util.Optional;
 
 /** Processes a block. */
 public interface BlockProcessor {
@@ -79,6 +81,7 @@ public interface BlockProcessor {
         block.getHeader(),
         block.getBody().getTransactions(),
         block.getBody().getOmmers(),
+        Optional.empty(),
         null);
   }
 
@@ -98,7 +101,8 @@ public interface BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    return processBlock(blockchain, worldState, blockHeader, transactions, ommers, null);
+    return processBlock(
+        blockchain, worldState, blockHeader, transactions, ommers, Optional.empty(), null);
   }
 
   /**
@@ -118,6 +122,7 @@ public interface BlockProcessor {
       BlockHeader blockHeader,
       List<Transaction> transactions,
       List<BlockHeader> ommers,
+      Optional<List<Withdrawal>> withdrawals,
       PrivateMetadataUpdater privateMetadataUpdater);
 
   /**

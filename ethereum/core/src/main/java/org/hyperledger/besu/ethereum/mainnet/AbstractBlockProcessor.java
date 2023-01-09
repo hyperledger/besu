@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -59,6 +60,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final MainnetTransactionProcessor transactionProcessor;
 
+  protected final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
   final Wei blockReward;
@@ -87,6 +90,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -141,6 +145,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
+
+    maybeWithdrawals.ifPresent(
+        withdrawals -> {
+          final WorldUpdater worldStateUpdater = worldState.updater();
+          for (final Withdrawal withdrawal : withdrawals) {
+            withdrawalsProcessor.processWithdrawal(withdrawal, worldStateUpdater);
+          }
+          worldStateUpdater.commit();
+        });
 
     try {
       worldState.persist(blockHeader);
