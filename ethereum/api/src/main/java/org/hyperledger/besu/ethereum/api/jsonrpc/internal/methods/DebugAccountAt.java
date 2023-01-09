@@ -81,7 +81,6 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
           requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
     }
 
-    // transactions.isEmpty
     List<TransactionWithMetadata> transactions = block.get().getTransactions();
     if (transactions.isEmpty() || txIndex < 0 || txIndex > block.get().getTransactions().size()) {
       return new JsonRpcErrorResponse(
