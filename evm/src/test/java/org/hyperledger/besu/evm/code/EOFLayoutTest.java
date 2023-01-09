@@ -310,7 +310,6 @@ public class EOFLayoutTest {
       final String failureReason,
       final int expectedVersion) {
     final Bytes container = Bytes.fromHexString(containerString.replace(" ", ""));
-    System.out.println(container.toHexString());
     final EOFLayout layout = EOFLayout.parseEOF(container);
 
     assertThat(layout.getVersion()).isEqualTo(expectedVersion);
