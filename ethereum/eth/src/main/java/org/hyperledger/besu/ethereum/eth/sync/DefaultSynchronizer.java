@@ -317,18 +317,14 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
 
   @Override
   public boolean resyncWorldState() {
-    // if we do not have a fast sync mode configured, return false
-    if (!fastSyncDownloader.isPresent()) {
-      return false;
-    }
-
     // if sync is running currently, stop it and delete the fast sync state
-    if (running.get()) {
+    if (fastSyncDownloader.isPresent() && running.get()) {
       stop();
       fastSyncDownloader.get().deleteFastSyncState();
     }
 
     // recreate fast sync with resync and start
+    this.syncState.markInitialSyncRestart();
     this.fastSyncDownloader = this.fastSyncFactory.apply(true);
     start();
     return true;

@@ -20,7 +20,7 @@ public class DebugResyncWorldstate implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
-      return new JsonRpcSuccessResponse(request.getRequest().getId(), synchronizer.resyncWorldState());
+    return new JsonRpcSuccessResponse(
+        request.getRequest().getId(), synchronizer.resyncWorldState());
   }
-
 }
