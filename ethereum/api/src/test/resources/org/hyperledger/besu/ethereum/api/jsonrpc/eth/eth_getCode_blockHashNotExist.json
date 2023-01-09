@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 250,
+    "jsonrpc": "2.0",
+    "method": "eth_getCode",
+    "params": [
+      "0x8888f1f195afa192cfee860698584c030f4c9db1",
+      "0xe4ba271c3580fafebd874dc3107eba505b1061fd8d9780e3a5577e48f6168711"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 250,
+    "error" : {
+      "code" : -32000,
+      "message" : "Block not found"
+    }
+  },
+  "statusCode": 200
+}
