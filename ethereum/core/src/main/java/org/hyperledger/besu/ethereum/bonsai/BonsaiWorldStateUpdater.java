@@ -371,7 +371,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
             ? ((BonsaiPersistedWorldState) wrappedWorldView())
                 .getStorageValueBySlotHash(
                     Suppliers.memoize(
-                        () -> Optional.ofNullable(getPriorAccount(address).getStorageRoot())),
+                        () ->
+                            Optional.ofNullable(getPriorAccount(address))
+                                .map(BonsaiAccount::getStorageRoot)),
                     address,
                     slotHash)
             : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
