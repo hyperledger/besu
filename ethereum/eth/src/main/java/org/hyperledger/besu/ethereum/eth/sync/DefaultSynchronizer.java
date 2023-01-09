@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStatePeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
@@ -65,6 +66,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   private final Optional<FullSyncDownloader> fullSyncDownloader;
   private final EthContext ethContext;
   private final ProtocolContext protocolContext;
+  private final ProtocolManager protocolManager;
   private final WorldStateStorage worldStateStorage;
   private final MetricsSystem metricsSystem;
   private final PivotBlockSelector pivotBlockSelector;
@@ -84,9 +86,11 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition,
+      final ProtocolManager protocolManager,
       final PivotBlockSelector pivotBlockSelector) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
+    this.protocolManager = protocolManager;
     this.pivotBlockSelector = pivotBlockSelector;
     this.ethContext = ethContext;
     this.protocolContext = protocolContext;
@@ -272,7 +276,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final Optional<PeerTrieNodeFinder> fallbackNodeFinder =
           Optional.of(
               new WorldStatePeerTrieNodeFinder(
-                  ethContext, protocolContext.getBlockchain(), metricsSystem));
+                  ethContext, protocolManager, protocolContext.getBlockchain(), metricsSystem));
       ((BonsaiWorldStateArchive) protocolContext.getWorldStateArchive())
           .useFallbackNodeFinder(fallbackNodeFinder);
       ((BonsaiWorldStateKeyValueStorage) worldStateStorage)

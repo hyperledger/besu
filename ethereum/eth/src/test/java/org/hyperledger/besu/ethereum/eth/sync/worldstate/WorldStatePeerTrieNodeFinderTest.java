@@ -14,13 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -66,12 +72,16 @@ public class WorldStatePeerTrieNodeFinderTest {
 
   @Before
   public void setup() throws Exception {
-    ethProtocolManager = EthProtocolManagerTestUtil.create();
+    ethProtocolManager = spy(EthProtocolManagerTestUtil.create());
     ethPeers = ethProtocolManager.ethContext().getEthPeers();
     snapProtocolManager = SnapProtocolManagerTestUtil.create(ethPeers);
     worldStatePeerTrieNodeFinder =
-        new WorldStatePeerTrieNodeFinder(
-            ethProtocolManager.ethContext(), blockchain, new NoOpMetricsSystem());
+        spy(
+            new WorldStatePeerTrieNodeFinder(
+                ethProtocolManager.ethContext(),
+                ethProtocolManager,
+                blockchain,
+                new NoOpMetricsSystem()));
   }
 
   private RespondingEthPeer.Responder respondToGetNodeDataRequest(
@@ -95,7 +105,7 @@ public class WorldStatePeerTrieNodeFinderTest {
           }
           return true;
         },
-        (cap, msg) -> TrieNodesMessage.create(Optional.of(BigInteger.ZERO), List.of(nodeValue)));
+        (cap, msg) -> TrieNodesMessage.create(Optional.of(BigInteger.ONE), List.of(nodeValue)));
   }
 
   @Test
@@ -103,7 +113,7 @@ public class WorldStatePeerTrieNodeFinderTest {
 
     BlockHeader blockHeader = blockHeaderBuilder.number(1000).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
-
+    when(ethProtocolManager.getHighestProtocolVersion()).thenReturn(EthProtocolVersion.V66);
     final Bytes32 nodeValue = Bytes32.random();
     final Bytes32 nodeHash = Hash.hash(nodeValue);
 
@@ -133,6 +143,7 @@ public class WorldStatePeerTrieNodeFinderTest {
 
     final BlockHeader blockHeader = blockHeaderBuilder.number(1000).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+    when(ethProtocolManager.getHighestProtocolVersion()).thenReturn(EthProtocolVersion.V66);
 
     final Bytes32 nodeValue = Bytes32.random();
     final Bytes32 nodeHash = Hash.hash(nodeValue);
@@ -163,6 +174,7 @@ public class WorldStatePeerTrieNodeFinderTest {
 
     final BlockHeader blockHeader = blockHeaderBuilder.number(1000).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+    when(ethProtocolManager.getHighestProtocolVersion()).thenReturn(EthProtocolVersion.V66);
 
     final Bytes32 nodeValue = Bytes32.random();
     final Bytes32 nodeHash = Hash.hash(nodeValue);
@@ -182,6 +194,7 @@ public class WorldStatePeerTrieNodeFinderTest {
 
     BlockHeader blockHeader = blockHeaderBuilder.number(1000).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+    when(ethProtocolManager.getHighestProtocolVersion()).thenReturn(EthProtocolVersion.V66);
 
     final Hash accountHash = Hash.wrap(Bytes32.random());
     final Bytes32 nodeValue = Bytes32.random();
@@ -213,6 +226,7 @@ public class WorldStatePeerTrieNodeFinderTest {
 
     final BlockHeader blockHeader = blockHeaderBuilder.number(1000).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+    when(ethProtocolManager.getHighestProtocolVersion()).thenReturn(EthProtocolVersion.V66);
 
     final Hash accountHash = Hash.wrap(Bytes32.random());
     final Bytes32 nodeValue = Bytes32.random();
@@ -257,5 +271,37 @@ public class WorldStatePeerTrieNodeFinderTest {
     response.accountStateTrieNode =
         worldStatePeerTrieNodeFinder.getAccountStorageTrieNode(accountHash, Bytes.EMPTY, nodeHash);
     Assertions.assertThat(response.accountStateTrieNode).isEmpty();
+  }
+
+  @Test
+  public void getNodeDataRequestShouldBeCalled_IfProtocolIsEth66() {
+    final BlockHeader blockHeader = blockHeaderBuilder.number(1000).buildHeader();
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+    when(ethProtocolManager.getHighestProtocolVersion()).thenReturn(EthProtocolVersion.V66);
+
+    worldStatePeerTrieNodeFinder.getAccountStorageTrieNode(
+        Hash.wrap(Bytes32.random()), Bytes.EMPTY, Hash.wrap(Bytes32.random()));
+
+    // assert findByGetNodeData is called once
+    verify(worldStatePeerTrieNodeFinder, times(1)).findByGetNodeData(any());
+
+    // assert findByGetTrieNodeData is called once
+    verify(worldStatePeerTrieNodeFinder, times(1)).findByGetTrieNodeData(any(), any(), any());
+  }
+
+  @Test
+  public void getNodeDataRequestShouldNotBeCalled_IfProtocolIsEth67() {
+    final BlockHeader blockHeader = blockHeaderBuilder.number(1000).buildHeader();
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+    when(ethProtocolManager.getHighestProtocolVersion()).thenReturn(EthProtocolVersion.V67);
+
+    worldStatePeerTrieNodeFinder.getAccountStorageTrieNode(
+        Hash.wrap(Bytes32.random()), Bytes.EMPTY, Hash.wrap(Bytes32.random()));
+
+    // assert findByGetNodeData is never called
+    verify(worldStatePeerTrieNodeFinder, never()).findByGetNodeData(any());
+
+    // assert findByGetTrieNodeData is called once
+    verify(worldStatePeerTrieNodeFinder, times(1)).findByGetTrieNodeData(any(), any(), any());
   }
 }

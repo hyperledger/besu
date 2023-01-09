@@ -19,8 +19,12 @@ import static org.hyperledger.besu.evm.frame.MessageFrame.State.COMPLETED_SUCCES
 import static org.hyperledger.besu.evm.frame.MessageFrame.State.EXCEPTIONAL_HALT;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.contractvalidation.CachedInvalidCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -122,6 +126,33 @@ public class MainnetContractCreationProcessorTest {
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
         .contains(ExceptionalHaltReason.CODE_TOO_LARGE);
+  }
+
+  @Test
+  public void shouldThrowAnExceptionWhenDeployingInvalidContract() {
+    EvmSpecVersion evmSpecVersion = EvmSpecVersion.CANCUN;
+    processor =
+        new ContractCreationProcessor(
+            gasCalculator,
+            evm,
+            true,
+            Collections.singletonList(CachedInvalidCodeRule.of(evmSpecVersion)),
+            1,
+            Collections.emptyList());
+    final Bytes contractCreateCode = Bytes.fromHexString("0x67ef0001010001006060005260086018f3");
+    final MessageFrame messageFrame =
+        new MessageFrameTestFixture()
+            .code(
+                CodeFactory.createCode(
+                    contractCreateCode,
+                    Hash.hash(contractCreateCode),
+                    evmSpecVersion.getMaxEofVersion(),
+                    true))
+            .build();
+    messageFrame.setOutputData(Bytes.fromHexString("0xef00010100010060"));
+
+    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
+    assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
   }
 
   @Test

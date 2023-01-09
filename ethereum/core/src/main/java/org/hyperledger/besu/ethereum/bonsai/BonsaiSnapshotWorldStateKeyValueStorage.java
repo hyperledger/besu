@@ -15,19 +15,40 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
+
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage {
+public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
+    implements BonsaiStorageSubscriber {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
+
+  private final AtomicReference<BonsaiWorldStateKeyValueStorage> parentStorage =
+      new AtomicReference<>();
+  private final AtomicLong parentStorageSubscriberId = new AtomicLong(Long.MAX_VALUE);
+  private final AtomicBoolean shouldClose = new AtomicBoolean(false);
+  private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   public BonsaiSnapshotWorldStateKeyValueStorage(final StorageProvider snappableStorageProvider) {
     this(
@@ -65,6 +86,96 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         (SnappedKeyValueStorage) storageStorage,
         (SnappedKeyValueStorage) trieBranchStorage,
         trieLogStorage);
+  }
+
+  @Override
+  public void clear() {
+    // snapshot storage does not implement clear
+    throw new StorageException("Snapshot storage does not implement clear");
+  }
+
+  @Override
+  public void clearFlatDatabase() {
+    // snapshot storage does not implement clear
+    throw new StorageException("Snapshot storage does not implement clear");
+  }
+
+  @Override
+  public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
+    if (shouldClose.get()) {
+      throw new RuntimeException("Storage is marked to close or has already closed");
+    }
+    return super.subscribe(sub);
+  }
+
+  @Override
+  public synchronized void unSubscribe(final long id) {
+    super.unSubscribe(id);
+    try {
+      tryClose();
+    } catch (Exception e) {
+      warnLambda(LOG, "exception while trying to close : {}", e::getMessage);
+    }
+  }
+
+  void subscribeToParentStorage(final BonsaiWorldStateKeyValueStorage parentStorage) {
+    this.parentStorage.set(parentStorage);
+    parentStorageSubscriberId.set(parentStorage.subscribe(this));
+  }
+
+  @Override
+  public void onClearStorage() {
+    try {
+      // when the parent storage clears, close regardless of subscribers
+      doClose();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void onClearFlatDatabaseStorage() {
+    // when the parent storage clears, close regardless of subscribers
+    try {
+      doClose();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public synchronized void close() throws Exception {
+    // when the parent storage clears, close
+    shouldClose.set(true);
+    tryClose();
+  }
+
+  protected synchronized void tryClose() throws Exception {
+    if (shouldClose.get() && subscribers.getSubscriberCount() < 1) {
+      // attempting to close already closed snapshots will segfault
+      doClose();
+    }
+  }
+
+  private void doClose() throws Exception {
+    if (!isClosed.get()) {
+      // alert any subscribers we are closing:
+      subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);
+
+      // unsubscribe from parent storage if we have subscribed
+      Optional.ofNullable(parentStorage.get())
+          .filter(__ -> parentStorageSubscriberId.get() != Long.MAX_VALUE)
+          .ifPresent(parent -> parent.unSubscribe(parentStorageSubscriberId.get()));
+
+      // close all of the SnappedKeyValueStorages:
+      accountStorage.close();
+      codeStorage.close();
+      storageStorage.close();
+      trieBranchStorage.close();
+
+      // set storage closed
+      isClosed.set(true);
+    }
   }
 
   public static class SnapshotUpdater implements BonsaiWorldStateKeyValueStorage.BonsaiUpdater {

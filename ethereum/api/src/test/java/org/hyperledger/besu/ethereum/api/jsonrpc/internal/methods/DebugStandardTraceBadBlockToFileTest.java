@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -81,7 +82,7 @@ public class DebugStandardTraceBadBlockToFileTest {
     paths.add("path-1");
 
     final BadBlockManager badBlockManager = new BadBlockManager();
-    badBlockManager.addBadBlock(block);
+    badBlockManager.addBadBlock(block, Optional.empty());
 
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     when(protocolSpec.getBadBlocksManager()).thenReturn(badBlockManager);

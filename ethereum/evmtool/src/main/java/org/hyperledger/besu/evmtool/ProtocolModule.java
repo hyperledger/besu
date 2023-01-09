@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.function.Function;
+import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
@@ -28,6 +29,7 @@ import dagger.Provides;
 public class ProtocolModule {
 
   @Provides
+  @Singleton
   Function<Integer, ProtocolSpec> getProtocolSpec(final ProtocolSchedule protocolSchedule) {
     return protocolSchedule::getByBlockNumber;
   }

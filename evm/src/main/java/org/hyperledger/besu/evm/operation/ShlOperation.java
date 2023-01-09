@@ -28,7 +28,7 @@ public class ShlOperation extends AbstractFixedCostOperation {
   static final OperationResult shlSuccess = new OperationResult(3, null);
 
   public ShlOperation(final GasCalculator gasCalculator) {
-    super(0x1b, "SHL", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1b, "SHL", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

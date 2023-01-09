@@ -31,6 +31,12 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason CODE_TOO_LARGE = DefaultExceptionalHaltReason.CODE_TOO_LARGE;
   ExceptionalHaltReason INVALID_CODE = DefaultExceptionalHaltReason.INVALID_CODE;
   ExceptionalHaltReason PRECOMPILE_ERROR = DefaultExceptionalHaltReason.PRECOMPILE_ERROR;
+  ExceptionalHaltReason CODE_SECTION_MISSING = DefaultExceptionalHaltReason.CODE_SECTION_MISSING;
+  ExceptionalHaltReason INCORRECT_CODE_SECTION_RETURN_OUTPUTS =
+      DefaultExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
+  ExceptionalHaltReason TOO_FEW_INPUTS_FOR_CODE_SECTION =
+      DefaultExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
+  ExceptionalHaltReason JUMPF_STACK_MISMATCH = DefaultExceptionalHaltReason.JUMPF_STACK_MISMATCH;
 
   String name();
 
@@ -48,7 +54,14 @@ public interface ExceptionalHaltReason {
     OUT_OF_BOUNDS("Out of bounds"),
     CODE_TOO_LARGE("Code is too large"),
     INVALID_CODE("Code is invalid"),
-    PRECOMPILE_ERROR("Precompile error");
+    PRECOMPILE_ERROR("Precompile error"),
+    CODE_SECTION_MISSING("No code section at requested index"),
+    INSUFFICIENT_CODE_SECTION_RETURN_DATA("The stack for a return "),
+    INCORRECT_CODE_SECTION_RETURN_OUTPUTS(
+        "The return of a code section does not have the correct number of outputs"),
+    TOO_FEW_INPUTS_FOR_CODE_SECTION("Not enough stack items for a function call"),
+    JUMPF_STACK_MISMATCH(
+        "The stack height for a JUMPF does not match the requirements of the target section");
 
     final String description;
 

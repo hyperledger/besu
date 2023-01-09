@@ -32,8 +32,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
+import org.hyperledger.besu.ethereum.chain.ChainDataPrunerStorage;
+import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -50,6 +54,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
@@ -60,8 +65,8 @@ import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromFinalizedBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromSafeBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -139,6 +144,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
+  protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -267,6 +273,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  public BesuControllerBuilder chainPruningConfiguration(
+      final ChainPrunerConfiguration chainPrunerConfiguration) {
+    this.chainPrunerConfiguration = chainPrunerConfiguration;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -300,8 +312,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString());
 
+    final CachedMerkleTrieLoader cachedMerkleTrieLoader = new CachedMerkleTrieLoader(metricsSystem);
+
     final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(worldStateStorage, blockchain);
+        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
 
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
@@ -311,6 +325,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createProtocolContext(
             blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
     validateContext(protocolContext);
+
+    if (chainPrunerConfiguration.getChainPruningEnabled()) {
+      protocolContext
+          .safeConsensusContext(MergeContext.class)
+          .ifPresent(
+              mergeContext -> {
+                mergeContext.setIsChainPruningEnabled(true);
+              });
+      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
+      blockchain.observeBlockAdded(chainDataPruner);
+      LOG.info(
+          "Chain data pruning enabled with recent blocks retained to be: "
+              + chainPrunerConfiguration.getChainPruningBlocksRetained()
+              + " and frequency to be: "
+              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
+    }
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());
@@ -375,8 +405,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
-    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
+    final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
+    final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -394,7 +424,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
             protocolContext,
-            fastSyncEnabled,
+            syncConfig,
             transactionPool,
             ethereumWireProtocolConfiguration,
             ethPeers,
@@ -475,7 +505,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthProtocolManager ethProtocolManager,
       final PivotBlockSelector pivotBlockSelector) {
 
-    DefaultSynchronizer toUse =
+    final DefaultSynchronizer toUse =
         new DefaultSynchronizer(
             syncConfig,
             protocolSchedule,
@@ -490,6 +520,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             clock,
             metricsSystem,
             getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+            ethProtocolManager,
             pivotBlockSelector);
 
     return toUse;
@@ -519,7 +550,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
-      return new PivotSelectorFromFinalizedBlock(
+      return new PivotSelectorFromSafeBlock(
           protocolContext,
           protocolSchedule,
           ethContext,
@@ -583,7 +614,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext protocolContext,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
@@ -603,9 +634,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethContext,
         peerValidators,
         mergePeerFilter,
-        fastSyncEnabled,
+        synchronizerConfiguration,
         scheduler,
-        genesisConfig.getForks());
+        genesisConfig.getForkBlockNumbers(),
+        genesisConfig.getForkTimestamps());
   }
 
   protected ProtocolContext createProtocolContext(
@@ -627,14 +659,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private WorldStateArchive createWorldStateArchive(
-      final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
+      final WorldStateStorage worldStateStorage,
+      final Blockchain blockchain,
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
         return new BonsaiWorldStateArchive(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            dataStorageConfiguration.useBonsaiSnapshots());
+            dataStorageConfiguration.useBonsaiSnapshots(),
+            cachedMerkleTrieLoader);
 
       case FOREST:
       default:
@@ -642,6 +677,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             storageProvider.createWorldStatePreimageStorage();
         return new DefaultWorldStateArchive(worldStateStorage, preimageStorage);
     }
+  }
+
+  private ChainDataPruner createChainPruner(final BlockchainStorage blockchainStorage) {
+    return new ChainDataPruner(
+        blockchainStorage,
+        new ChainDataPrunerStorage(
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
+        chainPrunerConfiguration.getChainPruningBlocksRetained(),
+        chainPrunerConfiguration.getChainPruningBlocksFrequency(),
+        MonitoredExecutors.newBoundedThreadPool(
+            ChainDataPruner.class.getSimpleName(),
+            1,
+            1,
+            ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
+            metricsSystem));
   }
 
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {

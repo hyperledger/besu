@@ -15,13 +15,14 @@
 package org.hyperledger.besu.consensus.ibftlegacy.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -82,7 +84,7 @@ public class Istanbul99ProtocolManagerTest {
     final MockPeerConnection peer = setupPeerWithoutStatusExchange(ethManager, onSend);
     final StatusMessage statusMessage =
         StatusMessage.create(
-            EthProtocol.EthVersion.V63,
+            EthProtocolVersion.V63,
             BigInteger.ONE,
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
@@ -127,7 +129,7 @@ public class Istanbul99ProtocolManagerTest {
             messages,
             new EthContext(peers, messages, ethScheduler),
             Collections.emptyList(),
-            false,
+            mock(SynchronizerConfiguration.class),
             ethScheduler)) {
 
       final long startBlock = blockchain.getChainHeadBlockNumber() + 1;

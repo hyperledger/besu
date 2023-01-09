@@ -14,18 +14,15 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class MergeProtocolScheduleTest {
@@ -45,7 +42,7 @@ public class MergeProtocolScheduleTest {
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec londonSpec = protocolSchedule.getByBlockNumber(1559);
 
-    assertThat(homesteadSpec.equals(londonSpec)).isFalse();
+    assertThat(homesteadSpec).isNotEqualTo(londonSpec);
     assertThat(homesteadSpec.getFeeMarket().implementsBaseFee()).isFalse();
     assertThat(londonSpec.getFeeMarket().implementsBaseFee()).isTrue();
   }
@@ -58,10 +55,9 @@ public class MergeProtocolScheduleTest {
 
     assertThat(london.getName()).isEqualTo("Frontier");
     assertThat(london.getBlockReward()).isEqualTo(Wei.ZERO);
-    assertThat(london.isSkipZeroBlockRewards()).isEqualTo(true);
+    assertThat(london.isSkipZeroBlockRewards()).isTrue();
 
-    Bytes diffOp = Bytes.fromHexString("0x44");
-    var op = london.getEvm().operationAtOffset(Code.createLegacyCode(diffOp, Hash.hash(diffOp)), 0);
+    var op = london.getEvm().getOperationsUnsafe()[0x44];
     assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
   }
 }

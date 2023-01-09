@@ -32,6 +32,7 @@ import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransaction
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +46,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.BloomFilter;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
@@ -53,6 +55,8 @@ import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
 import org.rocksdb.OptimisticTransactionDB;
+import org.rocksdb.Options;
+import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
@@ -92,10 +96,30 @@ public class RocksDBColumnarKeyValueStorage
       final MetricsSystem metricsSystem,
       final RocksDBMetricsFactory rocksDBMetricsFactory)
       throws StorageException {
+    this(configuration, segments, List.of(), metricsSystem, rocksDBMetricsFactory);
+  }
+
+  public RocksDBColumnarKeyValueStorage(
+      final RocksDBConfiguration configuration,
+      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> ignorableSegments,
+      final MetricsSystem metricsSystem,
+      final RocksDBMetricsFactory rocksDBMetricsFactory)
+      throws StorageException {
 
     try (final ColumnFamilyOptions columnFamilyOptions = new ColumnFamilyOptions()) {
+      final List<SegmentIdentifier> trimmedSegments = new ArrayList<>(segments);
+      final List<byte[]> existingColumnFamilies =
+          RocksDB.listColumnFamilies(new Options(), configuration.getDatabaseDir().toString());
+      // Only ignore if not existed currently
+      ignorableSegments.stream()
+          .filter(
+              ignorableSegment ->
+                  existingColumnFamilies.stream()
+                      .noneMatch(existed -> Arrays.equals(existed, ignorableSegment.getId())))
+          .forEach(trimmedSegments::remove);
       final List<ColumnFamilyDescriptor> columnDescriptors =
-          segments.stream()
+          trimmedSegments.stream()
               .map(
                   segment ->
                       new ColumnFamilyDescriptor(
@@ -146,7 +170,7 @@ public class RocksDBColumnarKeyValueStorage
               options, configuration.getDatabaseDir().toString(), columnDescriptors, columnHandles);
       metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
       final Map<Bytes, String> segmentsById =
-          segments.stream()
+          trimmedSegments.stream()
               .collect(
                   Collectors.toMap(
                       segment -> Bytes.wrap(segment.getId()), SegmentIdentifier::getName));
@@ -174,10 +198,11 @@ public class RocksDBColumnarKeyValueStorage
   private BlockBasedTableConfig createBlockBasedTableConfigHighSpec() {
     final LRUCache cache = new LRUCache(ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC);
     return new BlockBasedTableConfig()
-        .setBlockCache(cache)
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setOptimizeFiltersForMemory(true)
-        .setCacheIndexAndFilterBlocks(true)
+        .setBlockCache(cache)
+        .setFilterPolicy(new BloomFilter(10, false))
+        .setPartitionFilters(true)
+        .setCacheIndexAndFilterBlocks(false)
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
@@ -185,10 +210,11 @@ public class RocksDBColumnarKeyValueStorage
       final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
     return new BlockBasedTableConfig()
-        .setBlockCache(cache)
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setOptimizeFiltersForMemory(true)
-        .setCacheIndexAndFilterBlocks(true)
+        .setBlockCache(cache)
+        .setFilterPolicy(new BloomFilter(10, false))
+        .setPartitionFilters(true)
+        .setCacheIndexAndFilterBlocks(false)
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 

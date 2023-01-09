@@ -21,6 +21,8 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SStoreOperation extends AbstractOperation {
@@ -34,7 +36,7 @@ public class SStoreOperation extends AbstractOperation {
   private final long minimumGasRemaining;
 
   public SStoreOperation(final GasCalculator gasCalculator, final long minimumGasRemaining) {
-    super(0x55, "SSTORE", 2, 0, 1, gasCalculator);
+    super(0x55, "SSTORE", 2, 0, gasCalculator);
     this.minimumGasRemaining = minimumGasRemaining;
   }
 
@@ -46,7 +48,7 @@ public class SStoreOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 
     final UInt256 key = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 newValue = UInt256.fromBytes(frame.popStackItem());
 
     final MutableAccount account =
         frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getMutable();
@@ -56,8 +58,13 @@ public class SStoreOperation extends AbstractOperation {
 
     final Address address = account.getAddress();
     final boolean slotIsWarm = frame.warmUpStorage(address, key);
+    final Supplier<UInt256> currentValueSupplier =
+        Suppliers.memoize(() -> account.getStorageValue(key));
+    final Supplier<UInt256> originalValueSupplier =
+        Suppliers.memoize(() -> account.getOriginalStorageValue(key));
+
     final long cost =
-        gasCalculator().calculateStorageCost(account, key, value)
+        gasCalculator().calculateStorageCost(newValue, currentValueSupplier, originalValueSupplier)
             + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
 
     final long remainingGas = frame.getRemainingGas();
@@ -70,10 +77,12 @@ public class SStoreOperation extends AbstractOperation {
     }
 
     // Increment the refund counter.
-    frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
+    frame.incrementGasRefund(
+        gasCalculator()
+            .calculateStorageRefundAmount(newValue, currentValueSupplier, originalValueSupplier));
 
-    account.setStorageValue(key, value);
-    frame.storageWasUpdated(key, value);
+    account.setStorageValue(key, newValue);
+    frame.storageWasUpdated(key, newValue);
     return new OperationResult(cost, null);
   }
 }

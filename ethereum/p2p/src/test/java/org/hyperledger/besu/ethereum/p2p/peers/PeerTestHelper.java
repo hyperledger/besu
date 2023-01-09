@@ -43,14 +43,18 @@ public class PeerTestHelper {
     return EnodeURLImpl.builder().ipAddress("127.0.0.1").useDefaultPorts().nodeId(Peer.randomId());
   }
 
-  /** @return A LocalNode that is setup and ready. */
+  /**
+   * @return A LocalNode that is setup and ready.
+   */
   public static LocalNode createLocalNode() {
     final MutableLocalNode localNode = createMutableLocalNode();
     localNode.setEnode(enode());
     return localNode;
   }
 
-  /** @return A MutableLocalNode that is not ready (the enode has not been set). */
+  /**
+   * @return A MutableLocalNode that is not ready (the enode has not been set).
+   */
   public static MutableLocalNode createMutableLocalNode() {
     return MutableLocalNode.create("clientId", 5, Arrays.asList(Capability.create("eth", 63)));
   }

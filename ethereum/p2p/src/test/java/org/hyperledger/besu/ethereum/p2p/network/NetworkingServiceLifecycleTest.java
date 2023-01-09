@@ -20,9 +20,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 import static org.junit.Assume.assumeThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -36,8 +41,8 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
 
@@ -55,7 +60,8 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork() throws IOException {
     final NetworkingConfiguration config = configWithRandomPorts();
-    try (final P2PNetwork service = builder().build()) {
+    final DefaultP2PNetwork.Builder builder = getP2PNetworkBuilder();
+    try (final P2PNetwork service = builder.build()) {
       service.start();
       final EnodeURL enode = service.getLocalEnode().get();
       final int udpPort = enode.getDiscoveryPortOrZero();
@@ -68,12 +74,25 @@ public class NetworkingServiceLifecycleTest {
     }
   }
 
+  @NotNull
+  private DefaultP2PNetwork.Builder getP2PNetworkBuilder() {
+    final DefaultP2PNetwork.Builder builder = builder();
+    final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
+    final Block blockMock = mock(Block.class);
+    when(blockMock.getHash()).thenReturn(Hash.ZERO);
+    when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
+    builder.blockchain(blockchainMock);
+    builder.blockNumberForks(Collections.emptyList());
+    builder.timestampForks(Collections.emptyList());
+    return builder;
+  }
+
   @Test
   public void createP2PNetwork_NullHost() throws IOException {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost(null));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = builder().config(config);
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder().config(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -88,7 +107,7 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = builder().config(config);
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder().config(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -103,7 +122,7 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(-1));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = builder().config(config);
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder().config(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -122,7 +141,7 @@ public class NetworkingServiceLifecycleTest {
 
   @Test
   public void startStopP2PNetwork() throws IOException {
-    try (final P2PNetwork service = builder().build()) {
+    try (final P2PNetwork service = getP2PNetworkBuilder().build()) {
       service.start();
       service.stop();
     }
@@ -130,8 +149,8 @@ public class NetworkingServiceLifecycleTest {
 
   @Test
   public void startDiscoveryAgentBackToBack() throws IOException {
-    try (final P2PNetwork service1 = builder().build();
-        final P2PNetwork service2 = builder().build()) {
+    try (final P2PNetwork service1 = getP2PNetworkBuilder().build();
+        final P2PNetwork service2 = getP2PNetworkBuilder().build()) {
       service1.start();
       service1.stop();
       service2.start();
@@ -145,13 +164,13 @@ public class NetworkingServiceLifecycleTest {
         "Ignored if system language is not English",
         System.getProperty("user.language"),
         startsWith("en"));
-    try (final P2PNetwork service1 = builder().config(config).build()) {
+    try (final P2PNetwork service1 = getP2PNetworkBuilder().config(config).build()) {
       service1.start();
       final NetworkingConfiguration config = configWithRandomPorts();
       final int usedPort = service1.getLocalEnode().get().getDiscoveryPortOrZero();
       assertThat(usedPort).isNotZero();
       config.getDiscovery().setBindPort(usedPort);
-      try (final P2PNetwork service2 = builder().config(config).build()) {
+      try (final P2PNetwork service2 = getP2PNetworkBuilder().config(config).build()) {
         try {
           service2.start();
         } catch (final Exception e) {
@@ -171,7 +190,7 @@ public class NetworkingServiceLifecycleTest {
 
   @Test
   public void createP2PNetwork_NoActivePeers() throws IOException {
-    try (final P2PNetwork agent = builder().build()) {
+    try (final P2PNetwork agent = getP2PNetworkBuilder().build()) {
       assertThat(agent.streamDiscoveredPeers().collect(toList())).isEmpty();
       assertThat(agent.getPeers()).isEmpty();
     }
@@ -184,7 +203,6 @@ public class NetworkingServiceLifecycleTest {
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
-        .storageProvider(new InMemoryKeyValueStorageProvider())
-        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
+        .storageProvider(new InMemoryKeyValueStorageProvider());
   }
 }

@@ -35,7 +35,6 @@ public class SwapOperation extends AbstractFixedCostOperation {
         "SWAP" + index,
         index + 1,
         index + 1,
-        1,
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.index = index;

@@ -37,9 +37,11 @@ public class StandardJsonTracer implements OperationTracer {
   private final PrintStream out;
   private final boolean showMemory;
   private int pc;
+  private int section;
   private List<String> stack;
   private String gas;
   private Bytes memory;
+  private int memorySize;
 
   public StandardJsonTracer(final PrintStream out, final boolean showMemory) {
     this.out = out;
@@ -65,8 +67,12 @@ public class StandardJsonTracer implements OperationTracer {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
     pc = messageFrame.getPC();
+    section = messageFrame.getSection();
     gas = shortNumber(messageFrame.getRemainingGas());
-    memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
+    memorySize = messageFrame.memoryWordSize() * 32;
+    if (showMemory) {
+      memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
+    }
   }
 
   @Override
@@ -80,20 +86,18 @@ public class StandardJsonTracer implements OperationTracer {
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
     sb.append("\"pc\":").append(pc).append(",");
+    if (section > 0) {
+      sb.append("\"section\":").append(section).append(",");
+    }
     sb.append("\"op\":").append(opcode).append(",");
     sb.append("\"gas\":\"").append(gas).append("\",");
     sb.append("\"gasCost\":\"").append(shortNumber(executeResult.getGasCost())).append("\",");
     if (showMemory) {
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
-      sb.append("\"memSize\":").append(memory.size()).append(",");
-    } else {
-      sb.append("\"memory\":\"0x\",");
-      sb.append("\"memSize\":").append(messageFrame.memoryByteSize()).append(",");
     }
+    sb.append("\"memSize\":").append(memorySize).append(",");
     sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
-    sb.append("\"returnData\":")
-        .append(returnData.size() > 0 ? '"' + returnData.toHexString() + '"' : "\"0x\"")
-        .append(",");
+    sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     sb.append("\"depth\":").append(depth).append(",");
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\",");

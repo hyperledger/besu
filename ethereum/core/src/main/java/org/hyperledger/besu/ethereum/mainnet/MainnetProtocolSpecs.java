@@ -36,8 +36,10 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.contractvalidation.CachedInvalidCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -49,6 +51,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -69,7 +72,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
 
@@ -79,8 +81,7 @@ public abstract class MainnetProtocolSpecs {
   public static final int FRONTIER_CONTRACT_SIZE_LIMIT = Integer.MAX_VALUE;
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
-
-  public static final String LONDON_FORK_NAME = "London";
+  public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
 
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
@@ -88,8 +89,8 @@ public abstract class MainnetProtocolSpecs {
   // A consensus bug at Ethereum mainnet transaction 0xcf416c53
   // deleted an empty account even when the message execution scope
   // failed, but the transaction itself succeeded.
-  private static final ImmutableSet<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES =
-      ImmutableSet.of(RIPEMD160_PRECOMPILE);
+  private static final Set<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES =
+      Set.of(RIPEMD160_PRECOMPILE);
 
   private static final Wei FRONTIER_BLOCK_REWARD = Wei.fromEth(5);
 
@@ -134,6 +135,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
+                    false,
                     false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
@@ -325,6 +327,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
+                    false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
@@ -541,6 +544,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
+                    false,
                     stackSizeLimit,
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
@@ -565,7 +569,7 @@ public abstract class MainnetProtocolSpecs {
             feeMarket ->
                 MainnetBlockHeaderValidator.createBaseFeeMarketOmmerValidator(londonFeeMarket))
         .blockBodyValidatorBuilder(BaseFeeBlockBodyValidator::new)
-        .name(LONDON_FORK_NAME);
+        .name("London");
   }
 
   static ProtocolSpecBuilder arrowGlacierDefinition(
@@ -628,7 +632,149 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .difficultyCalculator(MainnetDifficultyCalculators.PROOF_OF_STAKE_DIFFICULTY)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::mergeBlockHeaderValidator)
+        .blockReward(Wei.ZERO)
         .name("ParisFork");
+  }
+
+  static ProtocolSpecBuilder shanghaiDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    // extra vaiables need to support flipping the warm coinbase flag.
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+    final BaseFeeMarket londonFeeMarket =
+        genesisConfigOptions.isZeroBaseFee()
+            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+            : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+
+    // constant for max initcode size for EIP-3860 limit and meter initcode
+    final int contractSizeLimit = configContractSizeLimit.orElse(SHANGHAI_INIT_CODE_SIZE_LIMIT);
+
+    return parisDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        // gas calculator has new code to support EIP-3860 limit and meter initcode
+        .gasCalculator(ShanghaiGasCalculator::new)
+        // EVM has a new operation for EIP-3855 PUSH0 instruction
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.shanghai(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // we need to flip the Warm Coinbase flag for EIP-3651 warm coinbase
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    londonFeeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+        // Contract creation rules for EIP-3860 Limit and meter intitcode
+        .contractCreationProcessorBuilder(
+            (gasCalculator, evm) ->
+                new ContractCreationProcessor(
+                    gasCalculator,
+                    evm,
+                    true,
+                    List.of(
+                        MaxCodeSizeRule.of(contractSizeLimit),
+                        CachedInvalidCodeRule.of(EvmSpecVersion.SHANGHAI)),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .name("Shanghai");
+  }
+
+  static ProtocolSpecBuilder cancunDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return shanghaiDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.cancun(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("Cancun");
+  }
+
+  static ProtocolSpecBuilder futureEipsDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return cancunDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.futureEips(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("FutureEips");
+  }
+
+  static ProtocolSpecBuilder experimentalEipsDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return futureEipsDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.experimentalEips(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("ExperimentalEips");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

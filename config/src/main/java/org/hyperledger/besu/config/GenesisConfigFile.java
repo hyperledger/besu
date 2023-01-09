@@ -22,10 +22,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -37,7 +37,7 @@ public class GenesisConfigFile {
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 
-  public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1000000000L);
+  public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
   private final ObjectNode configRoot;
 
   private GenesisConfigFile(final ObjectNode config) {
@@ -96,11 +96,9 @@ public class GenesisConfigFile {
     // if baseFeePerGas has been explicitly configured, pass it as an override:
     final var optBaseFee = getBaseFeePerGas();
     if (optBaseFee.isPresent()) {
-      overridesRef =
-          Streams.concat(
-                  overrides.entrySet().stream(),
-                  Stream.of(Map.entry("baseFeePerGas", optBaseFee.get().toShortHexString())))
-              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      // streams and maps cannot handle null values.
+      overridesRef = new HashMap<>(overrides);
+      overridesRef.put("baseFeePerGas", optBaseFee.get().toShortHexString());
     }
 
     return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
@@ -139,12 +137,17 @@ public class GenesisConfigFile {
   }
 
   public Optional<Wei> getGenesisBaseFeePerGas() {
-    // if we have a base fee market at genesis, get either the configured baseFeePerGas, or the
-    // default
-    return getBaseFeePerGas()
-        .map(Optional::of)
-        .orElseGet(() -> Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE))
-        .filter(z -> 0L == getConfigOptions().getLondonBlockNumber().orElse(-1L));
+    if (getBaseFeePerGas().isPresent()) {
+      // always use specified basefee if present
+      return getBaseFeePerGas();
+    } else if (getConfigOptions().getLondonBlockNumber().orElse(-1L) == 0) {
+      // if not specified, and we specify london at block zero use a default fee
+      // this is needed for testing.
+      return Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE);
+    } else {
+      // no explicit base fee and no london block zero means no basefee at genesis
+      return Optional.empty();
+    }
   }
 
   public String getMixHash() {
@@ -170,7 +173,7 @@ public class GenesisConfigFile {
   private String getFirstRequiredString(final String... keys) {
     List<String> keysList = Arrays.asList(keys);
     return keysList.stream()
-        .filter(key -> configRoot.has(key))
+        .filter(configRoot::has)
         .findFirst()
         .map(key -> configRoot.get(key).asText())
         .orElseThrow(
@@ -194,7 +197,11 @@ public class GenesisConfigFile {
     }
   }
 
-  public List<Long> getForks() {
-    return getConfigOptions().getForks();
+  public List<Long> getForkBlockNumbers() {
+    return getConfigOptions().getForkBlockNumbers();
+  }
+
+  public List<Long> getForkTimestamps() {
+    return getConfigOptions().getForkBlockTimestamps();
   }
 }

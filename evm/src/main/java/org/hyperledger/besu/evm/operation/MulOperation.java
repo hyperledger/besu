@@ -18,14 +18,16 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class MulOperation extends AbstractFixedCostOperation {
 
   static final OperationResult mulSuccess = new OperationResult(5, null);
 
   public MulOperation(final GasCalculator gasCalculator) {
-    super(0x02, "MUL", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x02, "MUL", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
@@ -35,14 +37,16 @@ public class MulOperation extends AbstractFixedCostOperation {
   }
 
   public static OperationResult staticOperation(final MessageFrame frame) {
-
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-
-    final UInt256 result = value0.multiply(value1);
+    BigInteger a = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
+    BigInteger b = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
+    BigInteger c = a.multiply(b);
+    byte[] cBytes = c.toByteArray();
+    Bytes result = Bytes.wrap(cBytes);
+    if (cBytes.length > 32) {
+      result = result.slice(cBytes.length - 32, 32);
+    }
 
     frame.pushStackItem(result);
-
     return mulSuccess;
   }
 }

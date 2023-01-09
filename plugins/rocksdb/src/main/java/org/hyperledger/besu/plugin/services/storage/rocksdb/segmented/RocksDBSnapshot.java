@@ -26,6 +26,7 @@ import org.rocksdb.Snapshot;
  * use.
  */
 class RocksDBSnapshot {
+
   private final OptimisticTransactionDB db;
   private final Snapshot dbSnapshot;
   private final AtomicInteger usages = new AtomicInteger(0);
@@ -35,15 +36,15 @@ class RocksDBSnapshot {
     this.dbSnapshot = db.getSnapshot();
   }
 
-  Snapshot markAndUseSnapshot() {
+  synchronized Snapshot markAndUseSnapshot() {
     usages.incrementAndGet();
     return dbSnapshot;
   }
 
-  void unMarkSnapshot() {
+  synchronized void unMarkSnapshot() {
     if (usages.decrementAndGet() < 1) {
-      dbSnapshot.close();
       db.releaseSnapshot(dbSnapshot);
+      dbSnapshot.close();
     }
   }
 }

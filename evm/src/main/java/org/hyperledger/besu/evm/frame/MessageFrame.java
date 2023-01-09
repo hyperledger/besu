@@ -21,9 +21,11 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
+import org.hyperledger.besu.evm.internal.ReturnStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -201,8 +203,10 @@ public class MessageFrame {
   private final Function<Long, Hash> blockHashLookup;
   private final int maxStackSize;
   private int pc;
+  private int section;
   private final Memory memory;
   private final OperandStack stack;
+  private final ReturnStack returnStack;
   private Bytes output;
   private Bytes returnData;
   private final boolean isStatic;
@@ -278,8 +282,11 @@ public class MessageFrame {
     this.blockHashLookup = blockHashLookup;
     this.maxStackSize = maxStackSize;
     this.pc = 0;
+    this.section = 0;
     this.memory = new Memory();
     this.stack = new OperandStack(maxStackSize);
+    this.returnStack = new ReturnStack();
+    returnStack.push(new ReturnStack.ReturnStackItem(0, 0, 0));
     this.output = Bytes.EMPTY;
     this.returnData = Bytes.EMPTY;
     this.logs = new ArrayList<>();
@@ -341,6 +348,70 @@ public class MessageFrame {
     this.pc = pc;
   }
 
+  /**
+   * Set the code section index.
+   *
+   * @param section the code section index
+   */
+  public void setSection(final int section) {
+    this.section = section;
+  }
+
+  /**
+   * Return the current code section. Always zero for legacy code.
+   *
+   * @return the current code section
+   */
+  public int getSection() {
+    return section;
+  }
+
+  public ExceptionalHaltReason callFunction(final int calledSection) {
+    CodeSection info = code.getCodeSection(calledSection);
+    if (info == null) {
+      return ExceptionalHaltReason.CODE_SECTION_MISSING;
+    } else if (stack.size() + info.getMaxStackHeight() > maxStackSize) {
+      return ExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
+    } else if (stack.size() < info.getInputs()) {
+      return ExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
+    } else {
+      returnStack.push(
+          new ReturnStack.ReturnStackItem(section, pc + 2, stack.size() - info.getInputs()));
+      pc = -1; // will be +1ed at end of operations loop
+      this.section = calledSection;
+      return null;
+    }
+  }
+
+  public ExceptionalHaltReason jumpFunction(final int section) {
+    CodeSection info = code.getCodeSection(section);
+    if (info == null) {
+      return ExceptionalHaltReason.CODE_SECTION_MISSING;
+    } else if (stackSize() != peekReturnStack().getStackHeight() + info.getInputs()) {
+      return ExceptionalHaltReason.JUMPF_STACK_MISMATCH;
+    } else {
+      pc = -1; // will be +1ed at end of operations loop
+      this.section = section;
+      return null;
+    }
+  }
+
+  public ExceptionalHaltReason returnFunction() {
+    CodeSection thisInfo = code.getCodeSection(this.section);
+    var returnInfo = returnStack.pop();
+    if ((returnInfo.getStackHeight() + thisInfo.getOutputs()) != stack.size()) {
+      return ExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
+    } else if (returnStack.isEmpty()) {
+      setState(MessageFrame.State.CODE_SUCCESS);
+      setOutputData(Bytes.EMPTY);
+      return null;
+    } else {
+      this.pc = returnInfo.getPC();
+      this.section = returnInfo.getCodeSectionIndex();
+      return null;
+    }
+  }
+
   /** Deducts the remaining gas. */
   public void clearGasRemaining() {
     this.gasRemaining = 0L;
@@ -350,9 +421,10 @@ public class MessageFrame {
    * Decrement the amount of remaining gas.
    *
    * @param amount The amount of gas to deduct
+   * @return the amount of gas available, after deductions.
    */
-  public void decrementRemainingGas(final long amount) {
-    this.gasRemaining -= amount;
+  public long decrementRemainingGas(final long amount) {
+    return this.gasRemaining -= amount;
   }
 
   /**
@@ -488,6 +560,33 @@ public class MessageFrame {
   }
 
   /**
+   * Return the current return stack size.
+   *
+   * @return The current return stack size
+   */
+  public int returnStackSize() {
+    return returnStack.size();
+  }
+
+  /**
+   * The top item of the return stack
+   *
+   * @return The top item of the return stack, or null if the stack is empty
+   */
+  public ReturnStack.ReturnStackItem peekReturnStack() {
+    return returnStack.peek();
+  }
+
+  /**
+   * Pushes a new return stack item onto the return stack
+   *
+   * @param returnStackItem item to be pushed
+   */
+  public void pushReturnStackItem(final ReturnStack.ReturnStackItem returnStackItem) {
+    returnStack.push(returnStackItem);
+  }
+
+  /**
    * Returns whether the message frame is static or not.
    *
    * @return {@code} true if the frame is static; otherwise {@code false}
@@ -582,11 +681,11 @@ public class MessageFrame {
    */
   public MutableBytes readMutableMemory(
       final long offset, final long length, final boolean explicitMemoryRead) {
-    final MutableBytes value = memory.getMutableBytes(offset, length);
+    final MutableBytes memBytes = memory.getMutableBytes(offset, length);
     if (explicitMemoryRead) {
-      setUpdatedMemory(offset, value);
+      setUpdatedMemory(offset, memBytes);
     }
-    return value;
+    return memBytes;
   }
 
   /**

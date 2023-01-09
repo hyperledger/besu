@@ -65,6 +65,22 @@ public class EthNetworkConfigTest {
   }
 
   @Test
+  public void testDefaultFutureConfig() {
+    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.FUTURE_EIPS);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getBootNodes()).isEmpty();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2022));
+  }
+
+  @Test
+  public void testDefaultExperimentalConfig() {
+    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.EXPERIMENTAL_EIPS);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getBootNodes()).isEmpty();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2023));
+  }
+
+  @Test
   public void testBuilderWithNetworkId() {
     EthNetworkConfig config =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))

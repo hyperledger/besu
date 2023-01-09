@@ -70,6 +70,7 @@ import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -93,7 +94,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.junit.After;
@@ -108,6 +108,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public final class RunnerTest {
 
+  public static final BigInteger NETWORK_ID = BigInteger.valueOf(2929);
   private Vertx vertx;
 
   @Before
@@ -162,56 +163,24 @@ public final class RunnerTest {
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
     final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dbAhead));
+    final NodeKey behindDbNodeKey = NodeKeyUtils.generate();
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-    final BigInteger networkId = BigInteger.valueOf(2929);
-
-    // Setup state with block data
-    try (final BesuController controller =
-        new MainnetBesuControllerBuilder()
-            .genesisConfigFile(genesisConfig)
-            .synchronizerConfiguration(syncConfigAhead)
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .dataDirectory(dataDirAhead)
-            .networkId(networkId)
-            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
-            .nodeKey(aheadDbNodeKey)
-            .metricsSystem(noOpMetricsSystem)
-            .privacyParameters(PrivacyParameters.DEFAULT)
-            .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-            .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
-            .gasLimitCalculator(GasLimitCalculator.constant())
-            .evmConfiguration(EvmConfiguration.DEFAULT)
-            .build()) {
-      setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
-    }
 
     // Setup Runner with blocks
     final BesuController controllerAhead =
-        new MainnetBesuControllerBuilder()
-            .genesisConfigFile(genesisConfig)
-            .synchronizerConfiguration(syncConfigAhead)
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .dataDirectory(dataDirAhead)
-            .networkId(networkId)
-            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
-            .nodeKey(aheadDbNodeKey)
-            .metricsSystem(noOpMetricsSystem)
-            .privacyParameters(PrivacyParameters.DEFAULT)
-            .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-            .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
-            .gasLimitCalculator(GasLimitCalculator.constant())
-            .evmConfiguration(EvmConfiguration.DEFAULT)
-            .build();
+        getController(
+            genesisConfig,
+            syncConfigAhead,
+            dataDirAhead,
+            aheadDbNodeKey,
+            createKeyValueStorageProvider(dataDirAhead, dbAhead),
+            noOpMetricsSystem);
+    setupState(
+        blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
+
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
-    final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
-    final GraphQLConfiguration aheadGraphQLConfiguration = graphQLConfiguration();
-    final WebSocketConfiguration aheadWebSocketConfiguration = wsRpcConfiguration();
-    final JsonRpcIpcConfiguration aheadJsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
-    final MetricsConfiguration aheadMetricsConfiguration = metricsConfiguration();
     final Path pidPath = temp.getRoot().toPath().resolve("pid");
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
@@ -224,7 +193,6 @@ public final class RunnerTest {
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
             .storageProvider(new InMemoryKeyValueStorageProvider())
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl());
 
     Runner runnerBehind = null;
@@ -232,15 +200,14 @@ public final class RunnerTest {
         runnerBuilder
             .besuController(controllerAhead)
             .ethNetworkConfig(EthNetworkConfig.getNetworkConfig(DEV))
-            .jsonRpcConfiguration(aheadJsonRpcConfiguration)
-            .graphQLConfiguration(aheadGraphQLConfiguration)
-            .webSocketConfiguration(aheadWebSocketConfiguration)
-            .jsonRpcIpcConfiguration(aheadJsonRpcIpcConfiguration)
-            .metricsConfiguration(aheadMetricsConfiguration)
+            .jsonRpcConfiguration(jsonRpcConfiguration())
+            .graphQLConfiguration(graphQLConfiguration())
+            .webSocketConfiguration(wsRpcConfiguration())
+            .jsonRpcIpcConfiguration(new JsonRpcIpcConfiguration())
+            .metricsConfiguration(metricsConfiguration())
             .dataDir(dbAhead)
             .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
-            .forkIdSupplier(() -> controllerAhead.getProtocolManager().getForkIdAsBytesList())
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     try {
@@ -255,47 +222,35 @@ public final class RunnerTest {
               .fastSyncMinimumPeerCount(1)
               .build();
       final Path dataDirBehind = temp.newFolder().toPath();
-      final JsonRpcConfiguration behindJsonRpcConfiguration = jsonRpcConfiguration();
-      final GraphQLConfiguration behindGraphQLConfiguration = graphQLConfiguration();
-      final WebSocketConfiguration behindWebSocketConfiguration = wsRpcConfiguration();
-      final MetricsConfiguration behindMetricsConfiguration = metricsConfiguration();
 
       // Setup runner with no block data
       final BesuController controllerBehind =
-          new MainnetBesuControllerBuilder()
-              .genesisConfigFile(genesisConfig)
-              .synchronizerConfiguration(syncConfigBehind)
-              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-              .dataDirectory(dataDirBehind)
-              .networkId(networkId)
-              .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
-              .nodeKey(NodeKeyUtils.generate())
-              .storageProvider(new InMemoryKeyValueStorageProvider())
-              .metricsSystem(noOpMetricsSystem)
-              .privacyParameters(PrivacyParameters.DEFAULT)
-              .clock(TestClock.fixed())
-              .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-              .gasLimitCalculator(GasLimitCalculator.constant())
-              .evmConfiguration(EvmConfiguration.DEFAULT)
-              .build();
-      final EnodeURL enode = runnerAhead.getLocalEnode().get();
+          getController(
+              genesisConfig,
+              syncConfigBehind,
+              dataDirBehind,
+              behindDbNodeKey,
+              new InMemoryKeyValueStorageProvider(),
+              noOpMetricsSystem);
+
+      final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
               EthNetworkConfig.jsonConfig(DEV),
               DEV.getNetworkId(),
-              Collections.singletonList(enode),
+              Collections.singletonList(aheadEnode),
               null);
+
       runnerBehind =
           runnerBuilder
               .besuController(controllerBehind)
               .ethNetworkConfig(behindEthNetworkConfiguration)
-              .jsonRpcConfiguration(behindJsonRpcConfiguration)
-              .graphQLConfiguration(behindGraphQLConfiguration)
-              .webSocketConfiguration(behindWebSocketConfiguration)
-              .metricsConfiguration(behindMetricsConfiguration)
-              .dataDir(temp.newFolder().toPath())
+              .jsonRpcConfiguration(jsonRpcConfiguration())
+              .graphQLConfiguration(graphQLConfiguration())
+              .webSocketConfiguration(wsRpcConfiguration())
+              .metricsConfiguration(metricsConfiguration())
+              .dataDir(dataDirBehind)
               .metricsSystem(noOpMetricsSystem)
-              .forkIdSupplier(() -> controllerBehind.getProtocolManager().getForkIdAsBytesList())
               .build();
 
       runnerBehind.startExternalServices();
@@ -305,61 +260,53 @@ public final class RunnerTest {
       final OkHttpClient client = new OkHttpClient();
       Awaitility.await()
           .ignoreExceptions()
-          .atMost(5L, TimeUnit.MINUTES)
+          .atMost(2L, TimeUnit.MINUTES)
           .untilAsserted(
               () -> {
                 final String baseUrl = String.format("http://%s:%s", listenHost, behindJsonRpcPort);
-                try (final Response resp =
-                    client
-                        .newCall(
-                            new Request.Builder()
-                                .post(
-                                    RequestBody.create(
-                                        MediaType.parse("application/json; charset=utf-8"),
-                                        "{\"jsonrpc\":\"2.0\",\"id\":"
-                                            + Json.encode(7)
-                                            + ",\"method\":\"eth_blockNumber\"}"))
-                                .url(baseUrl)
-                                .build())
-                        .execute()) {
+                try (final Response blockNumberResp =
+                    client.newCall(getRequest("eth_blockNumber", baseUrl)).execute()) {
+                  assertThat(blockNumberResp.code()).isEqualTo(200);
+                  final int currentBlock = getNumber(blockNumberResp);
+                  blockNumberResp.close();
 
-                  assertThat(resp.code()).isEqualTo(200);
                   final Response syncingResp =
-                      client
-                          .newCall(
-                              new Request.Builder()
-                                  .post(
-                                      RequestBody.create(
-                                          MediaType.parse("application/json; charset=utf-8"),
-                                          "{\"jsonrpc\":\"2.0\",\"id\":"
-                                              + Json.encode(7)
-                                              + ",\"method\":\"eth_syncing\"}"))
-                                  .url(baseUrl)
-                                  .build())
-                          .execute();
+                      client.newCall(getRequest("eth_syncing", baseUrl)).execute();
                   assertThat(syncingResp.code()).isEqualTo(200);
+                  final JsonObject syncingRespJson = new JsonObject(syncingResp.body().string());
+                  syncingResp.close();
 
-                  final int currentBlock =
-                      UInt256.fromHexString(
-                              new JsonObject(resp.body().string()).getString("result"))
-                          .intValue();
-                  final JsonObject responseJson = new JsonObject(syncingResp.body().string());
+                  final Response peerCountResp =
+                      client.newCall(getRequest("net_peerCount", baseUrl)).execute();
+                  assertThat(peerCountResp.code()).isEqualTo(200);
+                  final int peerCount = getNumber(peerCountResp);
+                  peerCountResp.close();
+
+                  // if the test fails here, it means the node is not peering. check your config.
+                  // Expecting value to be true but was false
+                  assertThat(peerCount > 0).isTrue();
+
+                  // if not yet at blockCount, we should get a sync result from eth_syncing
                   if (currentBlock < blockCount) {
-                    // if not yet at blockCount, we should get a sync result from eth_syncing
-                    assertThat(responseJson.getValue("result")).isInstanceOf(JsonObject.class);
+                    // if the test fails here, it means that the node is not syncing ->
+                    //                    Expecting actual:
+                    //                    false
+                    //                    to be an instance of:
+                    //                    io.vertx.core.json.JsonObject
+                    //                    but was instance of:
+                    //                    java.lang.Boolean
+                    assertThat(syncingRespJson.getValue("result")).isInstanceOf(JsonObject.class);
                     final int syncResultCurrentBlock =
                         UInt256.fromHexString(
-                                responseJson.getJsonObject("result").getString("currentBlock"))
+                                syncingRespJson.getJsonObject("result").getString("currentBlock"))
                             .intValue();
                     assertThat(syncResultCurrentBlock).isLessThan(blockCount);
                   }
                   assertThat(currentBlock).isEqualTo(blockCount);
-                  resp.close();
 
                   // when we have synced to blockCount, eth_syncing should return false
-                  final boolean syncResult = responseJson.getBoolean("result");
+                  final boolean syncResult = syncingRespJson.getBoolean("result");
                   assertThat(syncResult).isFalse();
-                  syncingResp.close();
                 }
               });
       final Promise<String> promise = Promise.promise();
@@ -387,7 +334,7 @@ public final class RunnerTest {
       final Future<String> future = promise.future();
       Awaitility.await()
           .catchUncaughtExceptions()
-          .atMost(5L, TimeUnit.MINUTES)
+          .atMost(2L, TimeUnit.MINUTES)
           .until(future::isComplete);
     } finally {
       if (runnerBehind != null) {
@@ -395,6 +342,23 @@ public final class RunnerTest {
         runnerBehind.awaitStop();
       }
     }
+  }
+
+  private int getNumber(final Response response) throws IOException {
+    final int currentBlock =
+        UInt256.fromHexString(new JsonObject(response.body().string()).getString("result"))
+            .intValue();
+    return currentBlock;
+  }
+
+  private Request getRequest(final String method, final String baseUrl) {
+    return new Request.Builder()
+        .post(
+            RequestBody.create(
+                "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(7) + ",\"method\":\"" + method + "\"}",
+                MediaType.parse("application/json; charset=utf-8")))
+        .url(baseUrl)
+        .build();
   }
 
   private GenesisConfigFile getFastSyncGenesis() {
@@ -472,5 +436,30 @@ public final class RunnerTest {
         throw new IllegalStateException("Unable to import block " + block.getHeader().getNumber());
       }
     }
+  }
+
+  private BesuController getController(
+      final GenesisConfigFile genesisConfig,
+      final SynchronizerConfiguration syncConfig,
+      final Path dataDir,
+      final NodeKey nodeKey,
+      final StorageProvider storageProvider,
+      final ObservableMetricsSystem metricsSystem) {
+    return new MainnetBesuControllerBuilder()
+        .genesisConfigFile(genesisConfig)
+        .synchronizerConfiguration(syncConfig)
+        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .dataDirectory(dataDir)
+        .networkId(NETWORK_ID)
+        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
+        .nodeKey(nodeKey)
+        .storageProvider(storageProvider)
+        .metricsSystem(metricsSystem)
+        .privacyParameters(PrivacyParameters.DEFAULT)
+        .clock(TestClock.fixed())
+        .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+        .gasLimitCalculator(GasLimitCalculator.constant())
+        .evmConfiguration(EvmConfiguration.DEFAULT)
+        .build();
   }
 }

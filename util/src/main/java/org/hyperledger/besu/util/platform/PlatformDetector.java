@@ -14,7 +14,14 @@
  */
 package org.hyperledger.besu.util.platform;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Detects OS and VMs.
@@ -28,6 +35,7 @@ public class PlatformDetector {
   private static String _osType;
   private static String _vm;
   private static String _arch;
+  private static String _glibc;
 
   public static String getOSType() {
     if (_osType == null) {
@@ -55,6 +63,14 @@ public class PlatformDetector {
       detect();
     }
     return _vm;
+  }
+
+  public static String getGlibc() {
+    if (_glibc == null) {
+      detectGlibc();
+    }
+
+    return _glibc;
   }
 
   private static final String UNKNOWN = "unknown";
@@ -212,5 +228,44 @@ public class PlatformDetector {
       return "";
     }
     return System.getProperty(value).toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
+  }
+
+  private static void detectGlibc() {
+    final ProcessBuilder processBuilder =
+        new ProcessBuilder("/bin/bash").command("/usr/bin/ldd", "--version");
+    processBuilder.redirectErrorStream(true);
+
+    final StringBuilder rawGlibcVersionBuilder;
+    try {
+      final Process process = processBuilder.start();
+      rawGlibcVersionBuilder = readGlibcVersionStream(process.getInputStream());
+    } catch (IOException e) {
+      return;
+    }
+
+    _glibc = normalizeGLibcVersion(rawGlibcVersionBuilder.toString());
+  }
+
+  private static StringBuilder readGlibcVersionStream(final InputStream iStream)
+      throws IOException {
+    final StringBuilder builder = new StringBuilder();
+    String line;
+
+    try (BufferedReader bufferedReader =
+        new BufferedReader(new InputStreamReader(iStream, Charset.defaultCharset()))) {
+      while ((line = bufferedReader.readLine()) != null) {
+        builder.append(line);
+        builder.append(System.getProperty("line.separator"));
+      }
+    }
+
+    return builder;
+  }
+
+  private static String normalizeGLibcVersion(final String rawGlibcVersion) {
+    final Pattern pattern = Pattern.compile("[-+]?[0-9]*\\.?[0-9]+");
+    final Matcher matcher = pattern.matcher(rawGlibcVersion);
+
+    return matcher.find() ? matcher.group() : null;
   }
 }

@@ -64,12 +64,20 @@ public class ReferenceTestProtocolSchedules {
     builder.put("Istanbul", createSchedule(new StubGenesisConfigOptions().istanbulBlock(0)));
     builder.put("MuirGlacier", createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0)));
     builder.put("Berlin", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
-    builder.put("London", createSchedule(new StubGenesisConfigOptions().londonBlock(0)));
+    builder.put(
+        "London",
+        createSchedule(new StubGenesisConfigOptions().londonBlock(0).baseFeePerGas(0x0a)));
     builder.put(
         "ArrowGlacier", createSchedule(new StubGenesisConfigOptions().arrowGlacierBlock(0)));
     builder.put("GrayGlacier", createSchedule(new StubGenesisConfigOptions().grayGlacierBlock(0)));
     builder.put(
-        "MergeNetSplit", createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0)));
+        "Merge",
+        createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0).baseFeePerGas(0x0a)));
+    builder.put("Shanghai", createSchedule(new StubGenesisConfigOptions().shanghaiTime(0)));
+    builder.put("Cancun", createSchedule(new StubGenesisConfigOptions().cancunTime(0)));
+    builder.put("FutureEips", createSchedule(new StubGenesisConfigOptions().futureEipsTime(0)));
+    builder.put(
+        "ExperimentalEips", createSchedule(new StubGenesisConfigOptions().experimentalEipsTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

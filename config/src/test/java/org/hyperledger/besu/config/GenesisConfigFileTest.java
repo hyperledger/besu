@@ -160,37 +160,34 @@ public class GenesisConfigFileTest {
     // no specified baseFeePerGas:
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isNotPresent();
     // supply a default genesis baseFeePerGas when london-at-genesis:
-    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas().get())
-        .isEqualTo(GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE);
+    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas())
+        .contains(GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE);
   }
 
   @Test
-  public void shouldNotGetBaseFeeAtGenesis() {
+  public void shouldGetBaseFeeExplicitlyAtGenesis() {
     GenesisConfigFile withBaseFeeNotAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":10},\"baseFeePerGas\":\"0xa\"}");
     // specified baseFeePerGas:
-    assertThat(withBaseFeeNotAtGenesis.getBaseFeePerGas().get().toLong()).isEqualTo(10L);
+    Wei expectedBaseFee = Wei.of(0xa);
+    assertThat(withBaseFeeNotAtGenesis.getBaseFeePerGas()).contains(expectedBaseFee);
     // but no baseFeePerGas since london block is not at genesis:
-    assertThat(withBaseFeeNotAtGenesis.getGenesisBaseFeePerGas()).isNotPresent();
+    assertThat(withBaseFeeNotAtGenesis.getGenesisBaseFeePerGas()).contains(expectedBaseFee);
   }
 
   @Test
   public void shouldOverrideConfigOptionsBaseFeeWhenSpecified() {
     GenesisConfigOptions withOverrides =
         EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", Wei.of(8).toString()));
-    assertThat(withOverrides.getBaseFeePerGas().get().toLong()).isEqualTo(8L);
+    assertThat(withOverrides.getBaseFeePerGas()).contains(Wei.of(8L));
   }
 
   @Test
   public void shouldGetTerminalTotalDifficultyAtGenesis() {
     GenesisConfigFile withTerminalTotalDifficultyAtGenesis =
         fromConfig("{\"config\":{\"terminalTotalDifficulty\":1000}}");
-    assertThat(
-            withTerminalTotalDifficultyAtGenesis
-                .getConfigOptions()
-                .getTerminalTotalDifficulty()
-                .get())
-        .isEqualTo(UInt256.valueOf(1000L));
+    assertThat(withTerminalTotalDifficultyAtGenesis.getConfigOptions().getTerminalTotalDifficulty())
+        .contains(UInt256.valueOf(1000L));
   }
 
   @Test
@@ -199,23 +196,13 @@ public class GenesisConfigFileTest {
   }
 
   @Test
-  public void assertRopstenTerminalTotalDifficulty() {
-    GenesisConfigOptions ropstenOptions =
-        GenesisConfigFile.genesisFileFromResources("/ropsten.json").getConfigOptions();
-
-    assertThat(ropstenOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(ropstenOptions.getTerminalTotalDifficulty().get())
-        .isEqualTo(UInt256.valueOf(new BigInteger("50000000000000000")));
-  }
-
-  @Test
   public void assertSepoliaTerminalTotalDifficulty() {
     GenesisConfigOptions sepoliaOptions =
         GenesisConfigFile.genesisFileFromResources("/sepolia.json").getConfigOptions();
 
     assertThat(sepoliaOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(sepoliaOptions.getTerminalTotalDifficulty().get())
-        .isEqualTo(UInt256.valueOf(new BigInteger("17000000000000000")));
+    assertThat(sepoliaOptions.getTerminalTotalDifficulty())
+        .contains(UInt256.valueOf(new BigInteger("17000000000000000")));
   }
 
   @Test
@@ -224,8 +211,8 @@ public class GenesisConfigFileTest {
         GenesisConfigFile.genesisFileFromResources("/goerli.json").getConfigOptions();
 
     assertThat(goerliOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(goerliOptions.getTerminalTotalDifficulty().get())
-        .isEqualTo(UInt256.valueOf(new BigInteger("10790000")));
+    assertThat(goerliOptions.getTerminalTotalDifficulty())
+        .contains(UInt256.valueOf(new BigInteger("10790000")));
   }
 
   @Test
@@ -235,19 +222,19 @@ public class GenesisConfigFileTest {
 
     assertThat(mainnetOptions.getTerminalTotalDifficulty()).isPresent();
     // tentative as of 2022-08-11:
-    assertThat(mainnetOptions.getTerminalTotalDifficulty().get())
-        .isEqualTo(UInt256.valueOf(new BigInteger("58750000000000000000000")));
+    assertThat(mainnetOptions.getTerminalTotalDifficulty())
+        .contains(UInt256.valueOf(new BigInteger("58750000000000000000000")));
   }
 
   @Test
   public void assertTerminalTotalDifficultyOverride() {
-    GenesisConfigOptions ropstenOverrideOptions =
-        GenesisConfigFile.genesisFileFromResources("/ropsten.json")
+    GenesisConfigOptions sepoliaOverrideOptions =
+        GenesisConfigFile.genesisFileFromResources("/sepolia.json")
             .getConfigOptions(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)));
 
-    assertThat(ropstenOverrideOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(ropstenOverrideOptions.getTerminalTotalDifficulty().get())
-        .isEqualTo(UInt256.valueOf(Long.MAX_VALUE));
+    assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty()).isPresent();
+    assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty())
+        .contains(UInt256.valueOf(Long.MAX_VALUE));
   }
 
   @Test
@@ -255,7 +242,7 @@ public class GenesisConfigFileTest {
     GenesisConfigFile mergeNetSplitGenesis =
         GenesisConfigFile.fromConfig(
             "{\"config\":{\"mergeNetsplitBlock\":11},\"baseFeePerGas\":\"0xa\"}");
-    assertThat(mergeNetSplitGenesis.getForks()).hasSize(1);
+    assertThat(mergeNetSplitGenesis.getForkBlockNumbers()).hasSize(1);
     assertThat(mergeNetSplitGenesis.getConfigOptions().getMergeNetSplitBlockNumber()).isPresent();
     assertThat(mergeNetSplitGenesis.getConfigOptions().getMergeNetSplitBlockNumber().getAsLong())
         .isEqualTo(11L);
@@ -263,7 +250,7 @@ public class GenesisConfigFileTest {
     // assert empty if not present:
     GenesisConfigFile londonGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
-    assertThat(londonGenesis.getForks()).hasSize(1);
+    assertThat(londonGenesis.getForkBlockNumbers()).hasSize(1);
     assertThat(londonGenesis.getConfigOptions().getMergeNetSplitBlockNumber()).isEmpty();
   }
 
@@ -298,8 +285,8 @@ public class GenesisConfigFileTest {
         config
             .streamAllocations()
             .collect(Collectors.toMap(GenesisAllocation::getAddress, Function.identity()));
-    assertThat(allocations.keySet())
-        .containsOnly(
+    assertThat(allocations)
+        .containsOnlyKeys(
             "fe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "627306090abab3a6e1400e9345bc60c78a8bef57",
             "f17f52151ebef6c7334fad080c5704d77216b732");
@@ -310,17 +297,15 @@ public class GenesisConfigFileTest {
     assertThat(alloc1.getBalance()).isEqualTo("0xad78ebc5ac6200000");
     assertThat(alloc2.getBalance()).isEqualTo("1000");
     assertThat(alloc3.getBalance()).isEqualTo("90000000000000000000000");
-    assertThat(alloc3.getStorage().size()).isEqualTo(2);
-    assertThat(
-            alloc3
-                .getStorage()
-                .get("0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a4"))
-        .isEqualTo("0x937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0");
-    assertThat(
-            alloc3
-                .getStorage()
-                .get("0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a3"))
-        .isEqualTo("0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012");
+    assertThat(alloc3.getStorage()).hasSize(2);
+    assertThat(alloc3.getStorage())
+        .containsEntry(
+            "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a4",
+            "0x937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0");
+    assertThat(alloc3.getStorage())
+        .containsEntry(
+            "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a3",
+            "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012");
   }
 
   @Test
@@ -360,7 +345,7 @@ public class GenesisConfigFileTest {
     override.put("chainId", bigBlockString);
     override.put("contractSizeLimit", bigBlockString);
 
-    assertThat(config.getForks()).isNotEmpty();
+    assertThat(config.getForkBlockNumbers()).isNotEmpty();
     assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).hasValue(bigBlock);
     assertThat(config.getConfigOptions(override).getChainId())
         .hasValue(BigInteger.valueOf(bigBlock));
@@ -375,7 +360,7 @@ public class GenesisConfigFileTest {
     override.put("chainId", null);
     override.put("contractSizeLimit", null);
 
-    assertThat(config.getForks()).isNotEmpty();
+    assertThat(config.getForkBlockNumbers()).isNotEmpty();
     assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).isNotPresent();
     assertThat(config.getConfigOptions(override).getChainId()).isNotPresent();
     assertThat(config.getConfigOptions(override).getContractSizeLimit()).isNotPresent();
@@ -387,7 +372,7 @@ public class GenesisConfigFileTest {
     final int bigBlock = 999_999_999;
     final String bigBlockString = Integer.toString(bigBlock);
     final Map<String, String> override = new HashMap<>();
-    // as speicified
+    // as specified
     override.put("istanbulBlock", bigBlockString);
     // ALL CAPS
     override.put("CHAINID", bigBlockString);
@@ -417,7 +402,7 @@ public class GenesisConfigFileTest {
   public void testNoOverride() {
     final GenesisConfigFile config = GenesisConfigFile.development();
 
-    assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
+    assertThat(config.getConfigOptions().getLondonBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(1337));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
@@ -428,9 +413,9 @@ public class GenesisConfigFileTest {
   @Test
   public void testConstantinopleFixShouldNotBeSupportedAlongPetersburg() {
     // petersburg node
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.genesisFileFromResources("/all_forks.json");
 
-    assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
+    assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(7);
 
     // constantinopleFix node
     final Map<String, String> override = new HashMap<>();
@@ -459,7 +444,7 @@ public class GenesisConfigFileTest {
 
     final GenesisConfigFile config = fromConfig(configNode);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L, 2222222L);
+    assertThat(config.getForkBlockNumbers()).containsExactly(1L, 2L, 3L, 1035301L, 2222222L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
   }
 
@@ -479,7 +464,7 @@ public class GenesisConfigFileTest {
                         StandardCharsets.UTF_8)));
     final GenesisConfigFile config = fromConfig(configNode);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
+    assertThat(config.getForkBlockNumbers()).containsExactly(1L, 2L, 3L, 1035301L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(61));
   }
 
@@ -527,10 +512,12 @@ public class GenesisConfigFileTest {
     final GenesisConfigFile configFileMultipleUnexpectedForks =
         fromConfig(configMultipleUnexpectedForks);
 
-    assertThat(configFileNoUnexpectedForks.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
-    assertThat(configFileNoUnexpectedForks.getForks()).isEqualTo(configFileClassicFork.getForks());
-    assertThat(configFileNoUnexpectedForks.getForks())
-        .isEqualTo(configFileMultipleUnexpectedForks.getForks());
+    assertThat(configFileNoUnexpectedForks.getForkBlockNumbers())
+        .containsExactly(1L, 2L, 3L, 1035301L);
+    assertThat(configFileNoUnexpectedForks.getForkBlockNumbers())
+        .isEqualTo(configFileClassicFork.getForkBlockNumbers());
+    assertThat(configFileNoUnexpectedForks.getForkBlockNumbers())
+        .isEqualTo(configFileMultipleUnexpectedForks.getForkBlockNumbers());
     assertThat(configFileNoUnexpectedForks.getConfigOptions().getChainId())
         .hasValue(BigInteger.valueOf(61));
   }
@@ -541,8 +528,8 @@ public class GenesisConfigFileTest {
    * all_forks.json will also be updated.
    *
    * <p>This catches a common error in JsonGenesisConfigOptions where internally the names are all
-   * lower ase but 'canonicaly' they are mixed case, as well as being mixed case almost everywhere
-   * else in the code. Case differences are common in custom genesis files so historically we have
+   * lower ase but 'canonically' they are mixed case, as well as being mixed case almost everywhere
+   * else in the code. Case differences are common in custom genesis files, so historically we have
    * been case agnostic.
    */
   @Test

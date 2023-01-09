@@ -237,7 +237,8 @@ public class BlockAdapterBase extends AdapterBase {
             maxPriorityFeePerGas,
             maxFeePerGas,
             valueParam,
-            data);
+            data,
+            Optional.empty());
 
     final Optional<TransactionSimulatorResult> opt =
         transactionSimulator.process(
