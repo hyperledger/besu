@@ -157,7 +157,9 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("baseFeePerGas") final String baseFee,
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
-        @JsonProperty("hash") final String hash) {
+        @JsonProperty("hash") final String hash,
+        @JsonProperty("withdrawalsRoot") final Object withdrawalsRoot) {
+      // TODO handle withdrawalsRoot
       super(
           Hash.fromHexString(parentHash), // parentHash
           Hash.fromHexString(uncleHash), // ommersHash
@@ -216,7 +218,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("rlp") final String rlp,
         @JsonProperty("blockHeader") final Object blockHeader,
         @JsonProperty("transactions") final Object transactions,
-        @JsonProperty("uncleHeaders") final Object uncleHeaders) {
+        @JsonProperty("uncleHeaders") final Object uncleHeaders,
+        @JsonProperty("withdrawals") final Object withdrawals) {
       boolean blockVaid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
@@ -227,7 +230,10 @@ public class BlockchainReferenceTestCaseSpec {
       }
       this.rlp = rlpAttempt;
 
-      if (blockHeader == null && transactions == null && uncleHeaders == null) {
+      if (blockHeader == null
+          && transactions == null
+          && uncleHeaders == null
+          && withdrawals == null) {
         blockVaid = false;
       }
 
