@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -124,16 +125,20 @@ public class ReadyTransactionsCache {
     return OptionalLong.empty();
   }
 
-  public void removeConfirmedTransactions(
+  public List<PendingTransaction> removeConfirmedTransactions(
       final Map<Address, Optional<Long>> orderedConfirmedNonceBySender) {
+
+    final List<PendingTransaction> removed = new ArrayList<>();
 
     for (var senderMaxConfirmedNonce : orderedConfirmedNonceBySender.entrySet()) {
       final var maxConfirmedNonce = senderMaxConfirmedNonce.getValue().get();
       final var sender = senderMaxConfirmedNonce.getKey();
 
-      modifySenderReadyTxsWrapper(
-          sender, senderTxs -> removeConfirmed(sender, senderTxs, maxConfirmedNonce));
+      removed.addAll(
+          modifySenderReadyTxsWrapper(
+              sender, senderTxs -> removeConfirmed(sender, senderTxs, maxConfirmedNonce)));
     }
+    return removed;
   }
 
   /**
@@ -244,7 +249,7 @@ public class ReadyTransactionsCache {
           .thenAccept(
               toReadyTxs -> {
                 modifySenderReadyTxsWrapper(
-                    sender, senderTxs -> postponedToReady(senderTxs, toReadyTxs));
+                    sender, senderTxs -> postponedToReady(senderTxs, currLastNonce, toReadyTxs));
               })
           .exceptionally(
               throwable -> {
@@ -261,18 +266,20 @@ public class ReadyTransactionsCache {
 
   private Void postponedToReady(
       final NavigableMap<Long, PendingTransaction> senderTxs,
+      final long currLastNonce,
       final List<PendingTransaction> toReadyTxs) {
 
-    var expectedNonce = senderTxs.lastKey() + 1;
+    var expectedNonce = currLastNonce + 1;
 
     for (var tx : toReadyTxs) {
-      if (!fitsInCache(tx)) {
-        // cache full, stop moving to ready
-        break;
-      }
-      if (tx.getNonce() == expectedNonce++) {
+      if (tx.getNonce() == expectedNonce) {
+        if (!fitsInCache(tx)) {
+          // cache full, stop moving to ready
+          break;
+        }
         senderTxs.put(tx.getNonce(), tx);
         increaseTotalSize(tx);
+        ++expectedNonce;
       }
     }
     return null;
@@ -364,18 +371,23 @@ public class ReadyTransactionsCache {
     return null;
   }
 
-  private Void removeConfirmed(
+  private List<PendingTransaction> removeConfirmed(
       final Address sender,
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final long maxConfirmedNonce) {
     if (senderTxs != null) {
       final var confirmedTxsToRemove = senderTxs.headMap(maxConfirmedNonce, true);
-      confirmedTxsToRemove.values().stream().forEach(this::decreaseTotalSize);
+      final List<PendingTransaction> removed =
+          confirmedTxsToRemove.values().stream()
+              .peek(this::decreaseTotalSize)
+              .collect(Collectors.toUnmodifiableList());
       confirmedTxsToRemove.clear();
 
       postponedCache.removeForSenderBelowNonce(sender, maxConfirmedNonce);
+
+      return removed;
     }
-    return null;
+    return List.of();
   }
 
   private Collection<PendingTransaction> promoteReady(

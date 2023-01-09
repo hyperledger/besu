@@ -214,61 +214,74 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
       final PendingTransaction addedReadyTransaction,
       final long senderNonce,
       final TransactionAddedResult addResult) {
-    addResult
-        .maybeReplacedTransaction()
-        .ifPresent(
-            replacedTx -> {
-              traceLambda(
-                  LOG,
-                  "Replace existing transaction {}, with new transaction {}",
-                  replacedTx::toTraceLog,
-                  addedReadyTransaction::toTraceLog);
-              removeReplacedPrioritizedTransaction(replacedTx);
-            });
 
-    final var expectedNonce =
-        expectedNonceForSender.getOrDefault(addedReadyTransaction.getSender(), senderNonce);
+    final var prioritizedTxReplaced =
+        addResult
+            .maybeReplacedTransaction()
+            .filter(replacedTx -> prioritizedPendingTransactions.containsKey(replacedTx.getHash()))
+            .map(
+                replacedTx -> {
+                  traceLambda(
+                      LOG,
+                      "Replace existing transaction {}, with new transaction {}",
+                      replacedTx::toTraceLog,
+                      addedReadyTransaction::toTraceLog);
 
-    // only add to prioritized if it appends to the already prioritized for its sender, without gaps
-    if (!addResult.isReplacement() && addedReadyTransaction.getNonce() != expectedNonce) {
-      traceLambda(
-          LOG,
-          "Not adding transaction {} to prioritized list since expected next nonce for this sender is {}",
-          addedReadyTransaction::toTraceLog,
-          () -> expectedNonce);
-      return;
-    }
+                  removeReplacedPrioritizedTransaction(replacedTx);
+                  addPrioritizedTransaction(addedReadyTransaction, true);
+                  return true;
+                })
+            .orElse(false);
 
-    if (prioritizedPendingTransactions.size() >= poolConfig.getTxPoolMaxSize()) {
-      LOG.trace("Max number of prioritized transactions reached");
+    if (!prioritizedTxReplaced) {
+      final var expectedNonce =
+          expectedNonceForSender.getOrDefault(addedReadyTransaction.getSender(), senderNonce);
 
-      var currentLeastPriorityTx = orderByFee.first();
-      if (compareByFee(addedReadyTransaction, currentLeastPriorityTx) <= 0) {
+      // only add to prioritized if it appends to the already prioritized for its sender, without
+      // gaps
+      if (addedReadyTransaction.getNonce() != expectedNonce) {
         traceLambda(
             LOG,
-            "Not adding incoming transaction {} to the prioritized list, since it is less valuable than the current least priority transactions {}",
+            "Not adding transaction {} to prioritized list since expected next nonce for this sender is {}",
             addedReadyTransaction::toTraceLog,
-            currentLeastPriorityTx::toTraceLog);
-        return;
-      } else if (currentLeastPriorityTx.getSender().equals(addedReadyTransaction.getSender())) {
-        traceLambda(
-            LOG,
-            "Not adding incoming transaction {} to the prioritized list, since it is from the same sender as the least valuable one {}",
-            addedReadyTransaction::toTraceLog,
-            currentLeastPriorityTx::toTraceLog);
+            () -> expectedNonce);
         return;
       }
 
-      traceLambda(
-          LOG,
-          "Demote transactions for the sender of the current least priority transaction {}, to make space for the incoming transaction {}",
-          currentLeastPriorityTx::toTraceLog,
-          addedReadyTransaction::toTraceLog);
-      demoteLastTransactionForSenderOf(currentLeastPriorityTx);
-    }
+      if (prioritizedPendingTransactions.size() >= poolConfig.getTxPoolMaxSize()) {
+        LOG.trace("Max number of prioritized transactions reached");
 
-    addPrioritizedTransaction(addedReadyTransaction, addResult.isReplacement());
-    notifyTransactionAdded(addedReadyTransaction.getTransaction());
+        var currentLeastPriorityTx = orderByFee.first();
+        if (compareByFee(addedReadyTransaction, currentLeastPriorityTx) <= 0) {
+          traceLambda(
+              LOG,
+              "Not adding incoming transaction {} to the prioritized list, "
+                  + "since it is less valuable than the current least priority transactions {}",
+              addedReadyTransaction::toTraceLog,
+              currentLeastPriorityTx::toTraceLog);
+          return;
+        } else if (currentLeastPriorityTx.getSender().equals(addedReadyTransaction.getSender())) {
+          traceLambda(
+              LOG,
+              "Not adding incoming transaction {} to the prioritized list, "
+                  + "since it is from the same sender as the least valuable one {}",
+              addedReadyTransaction::toTraceLog,
+              currentLeastPriorityTx::toTraceLog);
+          return;
+        }
+
+        traceLambda(
+            LOG,
+            "Demote transactions for the sender of the current least priority transaction {}, "
+                + "to make space for the incoming transaction {}",
+            currentLeastPriorityTx::toTraceLog,
+            addedReadyTransaction::toTraceLog);
+        demoteLastTransactionForSenderOf(currentLeastPriorityTx);
+      }
+
+      addPrioritizedTransaction(addedReadyTransaction);
+      notifyTransactionAdded(addedReadyTransaction.getTransaction());
+    }
   }
 
   private void removeInvalidTransaction(final Transaction transaction) {
@@ -434,8 +447,12 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
 
   private void transactionsAddedToBlock(final List<Transaction> confirmedTransactions) {
 
-    confirmedTransactions.stream()
-        .map(Transaction::getHash)
+    final var orderedConfirmedNonceBySender = maxConfirmedNonceBySender(confirmedTransactions);
+    final var removedTransactions =
+        readyTransactionsCache.removeConfirmedTransactions(orderedConfirmedNonceBySender);
+
+    removedTransactions.stream()
+        .map(PendingTransaction::getHash)
         .map(prioritizedPendingTransactions::remove)
         .filter(Objects::nonNull)
         .forEach(
@@ -445,7 +462,6 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
             });
 
     // update expected nonce for senders
-    final var orderedConfirmedNonceBySender = maxConfirmedNonceNySender(confirmedTransactions);
     for (final var confirmedNonceEntry : orderedConfirmedNonceBySender.entrySet()) {
       expectedNonceForSender.computeIfPresent(
           confirmedNonceEntry.getKey(),
@@ -458,11 +474,9 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
             return expectedNonce;
           });
     }
-
-    readyTransactionsCache.removeConfirmedTransactions(orderedConfirmedNonceBySender);
   }
 
-  private Map<Address, Optional<Long>> maxConfirmedNonceNySender(
+  private Map<Address, Optional<Long>> maxConfirmedNonceBySender(
       final List<Transaction> confirmedTransactions) {
     return confirmedTransactions.stream()
         .collect(
@@ -485,14 +499,12 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
     }
   }
 
-  private void removeReplacedPrioritizedTransaction(final PendingTransaction pendingTransaction) {
+  private void removeReplacedPrioritizedTransaction(final PendingTransaction replacedTx) {
     final PendingTransaction removedPendingTransaction =
-        prioritizedPendingTransactions.remove(pendingTransaction.getHash());
-    if (removedPendingTransaction != null) {
-      removeFromOrderedTransactions(removedPendingTransaction, false);
-      incrementTransactionRemovedCounter(pendingTransaction.isReceivedFromLocalSource(), false);
-    }
-    incrementTransactionReplacedCounter(pendingTransaction.isReceivedFromLocalSource());
+        prioritizedPendingTransactions.remove(replacedTx.getHash());
+    removeFromOrderedTransactions(removedPendingTransaction, false);
+    incrementTransactionRemovedCounter(replacedTx.isReceivedFromLocalSource(), false);
+    incrementTransactionReplacedCounter(replacedTx.isReceivedFromLocalSource());
   }
 
   protected abstract void removeFromOrderedTransactions(
@@ -516,6 +528,13 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
       }
       lastPrioritizedForSender = maybeNewLast;
     }
+
+    traceLambda(
+        LOG,
+        "Higher nonce prioritized transaction for sender {} is {}, expected nonce for sender is {}",
+        firstDemotedTx::getSender,
+        lastPrioritizedForSender::toTraceLog,
+        () -> expectedNonceForSender.get(firstDemotedTx.getSender()));
 
     prioritizedPendingTransactions.remove(lastPrioritizedForSender.getHash());
     removeFromOrderedTransactions(lastPrioritizedForSender, false);
@@ -557,7 +576,11 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
     synchronized (lock) {
       StringBuilder sb =
           new StringBuilder(
-              "Prioritized transactions { "
+              "Prioritized transactions "
+                  + prioritizedPendingTransactions.size()
+                  + " content "
+                  + prioritizedPendingTransactions.keySet()
+                  + " Ordered transactions { "
                   + StreamSupport.stream(
                           Spliterators.spliteratorUnknownSize(
                               prioritizedTransactions(), Spliterator.ORDERED),
@@ -567,7 +590,7 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
                   + " } Expected nonce for sender size "
                   + expectedNonceForSender.size()
                   + " content "
-                  + expectedNonceForSender.toString());
+                  + expectedNonceForSender);
 
       return sb.toString();
     }
