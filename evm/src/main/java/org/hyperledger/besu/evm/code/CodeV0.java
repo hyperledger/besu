@@ -37,6 +37,9 @@ public class CodeV0 implements Code {
   /** Used to cache valid jump destinations. */
   private long[] validJumpDestinations;
 
+  /** Code section info for the legacy code */
+  private final CodeSection codeSectionZero;
+
   /**
    * Public constructor.
    *
@@ -46,6 +49,7 @@ public class CodeV0 implements Code {
   CodeV0(final Bytes bytes, final Hash codeHash) {
     this.bytes = bytes;
     this.codeHash = codeHash;
+    this.codeSectionZero = new CodeSection(bytes.size(), 0, -1, -1, 0);
   }
 
   /**
@@ -80,17 +84,7 @@ public class CodeV0 implements Code {
   }
 
   @Override
-  public Bytes getCodeBytes(final int function) {
-
-    if (function == 0) {
-      return getContainerBytes();
-    } else {
-      return null;
-    }
-  }
-
-  @Override
-  public Bytes getContainerBytes() {
+  public Bytes getBytes() {
     return bytes;
   }
 
@@ -125,7 +119,11 @@ public class CodeV0 implements Code {
 
   @Override
   public CodeSection getCodeSection(final int section) {
-    return null;
+    if (section == 0) {
+      return codeSectionZero;
+    } else {
+      return null;
+    }
   }
 
   @Override

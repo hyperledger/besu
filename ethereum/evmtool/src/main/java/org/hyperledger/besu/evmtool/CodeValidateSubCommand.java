@@ -20,7 +20,6 @@ import static org.hyperledger.besu.evmtool.CodeValidateSubCommand.COMMAND_NAME;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.code.EOFLayout;
 
 import java.io.BufferedReader;
@@ -126,7 +125,7 @@ public class CodeValidateSubCommand implements Runnable {
     return "OK "
         + IntStream.range(0, code.getCodeSectionCount())
             .mapToObj(code::getCodeSection)
-            .map(CodeSection::getCode)
+            .map(cs -> layout.getContainer().slice(cs.getEntryPoint(), cs.getLength()))
             .map(Bytes::toUnprefixedHexString)
             .collect(Collectors.joining(","))
         + "\n";
