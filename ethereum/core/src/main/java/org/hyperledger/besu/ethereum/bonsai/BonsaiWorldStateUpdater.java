@@ -725,8 +725,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         && deletedAccounts.isEmpty()
         && storageToUpdate.isEmpty()
         && storageToClear.isEmpty()
-        && codeToUpdate.isEmpty()
-        && emptySlot.isEmpty());
+        && codeToUpdate.isEmpty());
   }
 
   public static class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
