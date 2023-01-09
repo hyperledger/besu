@@ -34,11 +34,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -65,6 +65,8 @@ public class EngineGetPayloadV2Test {
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
       new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+  private static final BlockWithReceipts mockBlockWithReceipts =
+      new BlockWithReceipts(mockBlock, Collections.emptyList());
 
   @Mock private ProtocolContext protocolContext;
 
@@ -75,8 +77,7 @@ public class EngineGetPayloadV2Test {
 
   @Before
   public void before() {
-    when(mergeContext.retrieveBlockById(mockPid))
-        .thenReturn(Optional.of(new BlockCreator.BlockCreationResult(mockBlock, null)));
+    when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         new EngineGetPayloadV2(

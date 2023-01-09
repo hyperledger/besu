@@ -26,8 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 import java.util.Optional;
 
@@ -58,10 +57,10 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
 
     final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
     mergeMiningCoordinator.finalizeProposalById(payloadId);
-    final Optional<BlockCreator.BlockCreationResult> blockWithResult =
+    final Optional<BlockWithReceipts> blockWithReceipts =
         mergeContext.get().retrieveBlockById(payloadId);
-    if (blockWithResult.isPresent()) {
-      final Block proposal = blockWithResult.get().getBlock();
+    if (blockWithReceipts.isPresent()) {
+      final var proposal = blockWithReceipts.get();
       final var proposalHeader = proposal.getHeader();
       infoLambda(
           LOG,
@@ -70,13 +69,13 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
           proposalHeader::getHash,
           proposalHeader::getNumber,
           proposalHeader::getCoinbase,
-          () -> proposal.getBody().getTransactions().size());
-      debugLambda(LOG, "assembledBlock {}", proposal::toString);
-      return createResponse(request, blockWithResult.get());
+          () -> proposal.getBlock().getBody().getTransactions().size());
+      debugLambda(LOG, "assembledBlock {}", () -> proposal);
+      return createResponse(request, proposal);
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_PAYLOAD);
   }
 
   protected abstract JsonRpcResponse createResponse(
-      final JsonRpcRequestContext request, final BlockCreator.BlockCreationResult blockWithResult);
+      final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts);
 }

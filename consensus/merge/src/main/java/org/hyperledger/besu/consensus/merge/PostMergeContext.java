@@ -19,9 +19,9 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
@@ -43,10 +43,10 @@ public class PostMergeContext implements MergeContext {
 
   private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
 
-  private static final Comparator<BlockCreator.BlockCreationResult> compareByGasUsedDesc =
+  private static final Comparator<BlockWithReceipts> compareByGasUsedDesc =
       Comparator.comparingLong(
-              (BlockCreator.BlockCreationResult blockWithResult) ->
-                  blockWithResult.getBlock().getHeader().getGasUsed())
+              (BlockWithReceipts blockWithReceipts) ->
+                  blockWithReceipts.getBlock().getHeader().getGasUsed())
           .reversed();
 
   private final AtomicReference<SyncState> syncState;
@@ -218,26 +218,25 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void putPayloadById(
-      final PayloadIdentifier payloadId, final BlockCreator.BlockCreationResult payloadWithResult) {
+      final PayloadIdentifier payloadId, final BlockWithReceipts newBlockWithReceipts) {
     synchronized (blocksInProgress) {
-      final Optional<BlockCreator.BlockCreationResult> maybeCurrBestBlock =
-          retrieveBlockById(payloadId);
+      final Optional<BlockWithReceipts> maybeCurrBestBlock = retrieveBlockById(payloadId);
 
       maybeCurrBestBlock.ifPresentOrElse(
           currBestBlock -> {
-            if (compareByGasUsedDesc.compare(payloadWithResult, currBestBlock) < 0) {
+            if (compareByGasUsedDesc.compare(newBlockWithReceipts, currBestBlock) < 0) {
               debugLambda(
                   LOG,
                   "New proposal for payloadId {} {} is better than the previous one {}",
                   payloadId::toString,
-                  () -> logBlockProposal(payloadWithResult.getBlock()),
+                  () -> logBlockProposal(newBlockWithReceipts.getBlock()),
                   () -> logBlockProposal(currBestBlock.getBlock()));
               blocksInProgress.removeAll(
                   retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
-              blocksInProgress.add(new PayloadTuple(payloadId, payloadWithResult));
+              blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts));
             }
           },
-          () -> blocksInProgress.add(new PayloadTuple(payloadId, payloadWithResult)));
+          () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts)));
 
       debugLambda(
           LOG,
@@ -251,11 +250,10 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public Optional<BlockCreator.BlockCreationResult> retrieveBlockById(
-      final PayloadIdentifier payloadId) {
+  public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
     synchronized (blocksInProgress) {
       return retrieveTuplesById(payloadId)
-          .map(tuple -> tuple.blockWithResult)
+          .map(tuple -> tuple.blockWithReceipts)
           .sorted(compareByGasUsedDesc)
           .findFirst();
     }
@@ -276,13 +274,12 @@ public class PostMergeContext implements MergeContext {
 
   private static class PayloadTuple {
     final PayloadIdentifier payloadIdentifier;
-    final BlockCreator.BlockCreationResult blockWithResult;
+    final BlockWithReceipts blockWithReceipts;
 
     PayloadTuple(
-        final PayloadIdentifier payloadIdentifier,
-        final BlockCreator.BlockCreationResult blockWithResult) {
+        final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts) {
       this.payloadIdentifier = payloadIdentifier;
-      this.blockWithResult = blockWithResult;
+      this.blockWithReceipts = blockWithReceipts;
     }
   }
 
