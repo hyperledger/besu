@@ -74,11 +74,6 @@ public enum TransactionType {
                     String.format("Unsupported transaction type %x", serializedTypeValue)));
   }
 
-  /**
-   * Does transaction type Supports access list.
-   *
-   * @return the boolean
-   */
   public boolean supportsAccessList() {
     return ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES.contains(this);
   }
