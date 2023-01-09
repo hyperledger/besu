@@ -12,14 +12,6 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
-  besu_executor_med_jdk17:
-    docker:
-      - image: cimg/openjdk:17.0
-    resource_class: medium
-    working_directory: ~/project
-    environment:
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
-
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: cimg/openjdk:11.0
@@ -137,17 +129,6 @@ jobs:
           destination: distributions
           when: always
 
-  javadoc:
-    executor: besu_executor_med_jdk17
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: JavaDoc
-          no_output_timeout: 20m
-          command: |
-            ./gradlew --no-daemon clean javadoc
   testWindows:
     executor: win/default
     steps:
