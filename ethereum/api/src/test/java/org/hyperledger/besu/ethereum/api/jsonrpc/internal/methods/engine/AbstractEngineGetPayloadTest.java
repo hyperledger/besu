@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -76,6 +77,8 @@ public abstract class AbstractEngineGetPayloadTest {
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
       new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+  private static final BlockWithReceipts mockBlockWithReceipts =
+      new BlockWithReceipts(mockBlock, Collections.emptyList());
 
   @Mock private ProtocolContext protocolContext;
 
@@ -86,7 +89,7 @@ public abstract class AbstractEngineGetPayloadTest {
 
   @Before
   public void before() {
-    when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlock));
+    when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         methodFactory.create(

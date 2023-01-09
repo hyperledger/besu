@@ -338,7 +338,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final long startedAt) {
 
     try {
-      evaluateNewBlock(blockCreator.get(), payloadIdentifier, startedAt);
+      evaluateNewBlock(blockCreator.get().getBlock(), payloadIdentifier, startedAt);
     } catch (final Throwable throwable) {
       if (canRetryBlockCreation(throwable) && !isBlockCreationCancelled(payloadIdentifier)) {
         debugLambda(
@@ -354,9 +354,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private void evaluateNewBlock(
-      final BlockCreationResult newBlockWithResults,
-      final PayloadIdentifier payloadIdentifier,
-      final long startedAt) {
+      final Block bestBlock, final PayloadIdentifier payloadIdentifier, final long startedAt) {
 
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
