@@ -353,9 +353,6 @@ workflows:
   default:
     jobs:
       - assemble
-      - javadoc:
-          requires:
-            - assemble
       - unitTests:
            requires:
             - assemble
