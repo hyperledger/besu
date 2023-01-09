@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -107,7 +108,7 @@ public class PrivacyTest {
             .setFlexiblePrivacyGroupsEnabled(flexibleEnabled)
             .build();
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.mainnet())
+        .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FULL)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())

@@ -48,10 +48,6 @@ public class ToyAccount implements EvmAccount, MutableAccount {
       Suppliers.memoize(() -> code == null ? Hash.EMPTY : Hash.hash(code));
   private final Map<UInt256, UInt256> storage = new HashMap<>();
 
-  public ToyAccount(final Address address, final long nonce, final Wei balance) {
-    this(null, address, nonce, balance, Bytes.EMPTY);
-  }
-
   public ToyAccount(
       final Account parent,
       final Address address,
@@ -99,8 +95,10 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   public UInt256 getStorageValue(final UInt256 key) {
     if (storage.containsKey(key)) {
       return storage.get(key);
-    } else {
+    } else if (parent != null) {
       return getOriginalStorageValue(key);
+    } else {
+      return UInt256.ZERO;
     }
   }
 
@@ -109,7 +107,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
     if (parent != null) {
       return parent.getStorageValue(key);
     } else {
-      return UInt256.ZERO;
+      return getStorageValue(key);
     }
   }
 

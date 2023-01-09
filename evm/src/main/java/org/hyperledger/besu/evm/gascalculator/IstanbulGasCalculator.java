@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.evm.account.Account;
-
+import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -56,15 +55,17 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
-    final UInt256 currentValue = account.getStorageValue(key);
-    if (currentValue.equals(newValue)) {
+    final UInt256 localCurrentValue = currentValue.get();
+    if (localCurrentValue.equals(newValue)) {
       return SLOAD_GAS;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
-      if (originalValue.equals(currentValue)) {
-        return originalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
+      final UInt256 localOriginalValue = originalValue.get();
+      if (localOriginalValue.equals(localCurrentValue)) {
+        return localOriginalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
       } else {
         return SLOAD_GAS;
       }
@@ -74,15 +75,17 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageRefundAmount(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
-    final UInt256 currentValue = account.getStorageValue(key);
-    if (currentValue.equals(newValue)) {
+    final UInt256 localCurrentValue = currentValue.get();
+    if (localCurrentValue.equals(newValue)) {
       return 0L;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
-      if (originalValue.equals(currentValue)) {
-        if (originalValue.isZero()) {
+      final UInt256 localOriginalValue = originalValue.get();
+      if (localOriginalValue.equals(localCurrentValue)) {
+        if (localOriginalValue.isZero()) {
           return 0L;
         } else if (newValue.isZero()) {
           return SSTORE_CLEARS_SCHEDULE;
@@ -91,18 +94,18 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
         }
       } else {
         long refund = 0L;
-        if (!originalValue.isZero()) {
-          if (currentValue.isZero()) {
+        if (!localOriginalValue.isZero()) {
+          if (localCurrentValue.isZero()) {
             refund = NEGATIVE_SSTORE_CLEARS_SCHEDULE;
           } else if (newValue.isZero()) {
             refund = SSTORE_CLEARS_SCHEDULE;
           }
         }
 
-        if (originalValue.equals(newValue)) {
+        if (localOriginalValue.equals(newValue)) {
           refund =
               refund
-                  + (originalValue.isZero()
+                  + (localOriginalValue.isZero()
                       ? SSTORE_SET_GAS_LESS_SLOAD_GAS
                       : SSTORE_RESET_GAS_LESS_SLOAD_GAS);
         }

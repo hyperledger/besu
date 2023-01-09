@@ -210,9 +210,16 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldGetShandongBlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("shandongBlock", 1337));
-    assertThat(config.getShandongBlockNumber()).hasValue(1337);
+  public void shouldGetFutureEipsTime() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("futureEipsTime", 1337));
+    assertThat(config.getFutureEipsTime()).hasValue(1337);
+  }
+
+  @Test
+  public void shouldGetExperimentalEipsTime() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("experimentalEipsTime", 1337));
+    assertThat(config.getExperimentalEipsTime()).hasValue(1337);
   }
 
   @Test
@@ -238,7 +245,11 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getLondonBlockNumber()).isEmpty();
     assertThat(config.getArrowGlacierBlockNumber()).isEmpty();
     assertThat(config.getGrayGlacierBlockNumber()).isEmpty();
-    assertThat(config.getShandongBlockNumber()).isEmpty();
+    assertThat(config.getMergeNetSplitBlockNumber()).isEmpty();
+    assertThat(config.getShanghaiTime()).isEmpty();
+    assertThat(config.getCancunTime()).isEmpty();
+    assertThat(config.getFutureEipsTime()).isEmpty();
+    assertThat(config.getExperimentalEipsTime()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
