@@ -35,7 +35,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public ExtCodeSizeOperation(final GasCalculator gasCalculator) {
-    super(0x3B, "EXTCODESIZE", 1, 1, 1, gasCalculator);
+    super(0x3B, "EXTCODESIZE", 1, 1, gasCalculator);
   }
 
   /**

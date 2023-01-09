@@ -45,7 +45,6 @@ public class PushOperation extends AbstractFixedCostOperation {
         "PUSH" + length,
         0,
         1,
-        length + 1,
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.length = length;
@@ -53,7 +52,7 @@ public class PushOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final byte[] code = frame.getCode().getCodeBytes().toArrayUnsafe();
+    final byte[] code = frame.getCode().getCodeBytes(frame.getSection()).toArrayUnsafe();
     return staticOperation(frame, code, frame.getPC(), length);
   }
 

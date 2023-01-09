@@ -32,7 +32,7 @@ public class CallDataCopyOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public CallDataCopyOperation(final GasCalculator gasCalculator) {
-    super(0x37, "CALLDATACOPY", 3, 0, 1, gasCalculator);
+    super(0x37, "CALLDATACOPY", 3, 0, gasCalculator);
   }
 
   @Override

@@ -32,7 +32,7 @@ public class LtOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public LtOperation(final GasCalculator gasCalculator) {
-    super(0x10, "LT", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x10, "LT", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

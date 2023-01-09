@@ -35,7 +35,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public ExtCodeHashOperation(final GasCalculator gasCalculator) {
-    super(0x3F, "EXTCODEHASH", 1, 1, 1, gasCalculator);
+    super(0x3F, "EXTCODEHASH", 1, 1, gasCalculator);
   }
 
   /**

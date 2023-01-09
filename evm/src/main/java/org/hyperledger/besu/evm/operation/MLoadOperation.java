@@ -32,7 +32,7 @@ public class MLoadOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public MLoadOperation(final GasCalculator gasCalculator) {
-    super(0x51, "MLOAD", 1, 1, 1, gasCalculator);
+    super(0x51, "MLOAD", 1, 1, gasCalculator);
   }
 
   @Override

@@ -27,7 +27,7 @@ public class PrevRanDaoOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public PrevRanDaoOperation(final GasCalculator gasCalculator) {
-    super(0x44, "PREVRANDAO", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x44, "PREVRANDAO", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

@@ -25,6 +25,7 @@ import org.hyperledger.besu.services.BesuConfigurationImpl;
 
 import java.nio.file.Path;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
@@ -71,6 +72,7 @@ public class EvmToolCommandOptionsModule {
   final Path dataPath = getDefaultBesuDataPath(this);
 
   @Provides
+  @Singleton
   BesuConfiguration provideBesuConfiguration() {
     return new BesuConfigurationImpl(dataPath, dataPath.resolve(BesuController.DATABASE_PATH));
   }
@@ -83,6 +85,7 @@ public class EvmToolCommandOptionsModule {
   private final BlockParameter blockParameter = BlockParameter.PENDING;
 
   @Provides
+  @Singleton
   BlockParameter provideBlockParameter() {
     return blockParameter;
   }

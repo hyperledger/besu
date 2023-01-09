@@ -34,7 +34,7 @@ public class Keccak256Operation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public Keccak256Operation(final GasCalculator gasCalculator) {
-    super(0x20, "KECCAK256", 2, 1, 1, gasCalculator);
+    super(0x20, "KECCAK256", 2, 1, gasCalculator);
   }
 
   @Override

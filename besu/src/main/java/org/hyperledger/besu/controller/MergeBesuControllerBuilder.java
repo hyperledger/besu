@@ -197,7 +197,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .get()
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
-                    .orElse(Difficulty.ZERO));
+                    .orElse(Difficulty.ZERO))
+            .setCheckpointPostMergeSync(syncConfig.isCheckpointPostMergeEnabled());
 
     blockchain
         .getFinalized()
@@ -246,6 +247,13 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       LOG.debug("unable to validate peers with terminal difficulty blocks");
     }
     return retval;
+  }
+
+  @Override
+  public BesuController build() {
+    final BesuController controller = super.build();
+    PostMergeContext.get().setSyncState(controller.getSyncState());
+    return controller;
   }
 
   /**

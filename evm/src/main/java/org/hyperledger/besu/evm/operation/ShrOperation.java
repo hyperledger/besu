@@ -35,7 +35,7 @@ public class ShrOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public ShrOperation(final GasCalculator gasCalculator) {
-    super(0x1c, "SHR", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1c, "SHR", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

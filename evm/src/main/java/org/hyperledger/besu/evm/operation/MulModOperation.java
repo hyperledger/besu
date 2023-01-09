@@ -35,7 +35,7 @@ public class MulModOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public MulModOperation(final GasCalculator gasCalculator) {
-    super(0x09, "MULMOD", 3, 1, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(0x09, "MULMOD", 3, 1, gasCalculator, gasCalculator.getMidTierGasCost());
   }
 
   @Override

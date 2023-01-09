@@ -30,7 +30,7 @@ public class ExpOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public ExpOperation(final GasCalculator gasCalculator) {
-    super(0x0A, "EXP", 2, 1, 1, gasCalculator);
+    super(0x0A, "EXP", 2, 1, gasCalculator);
   }
 
   @Override

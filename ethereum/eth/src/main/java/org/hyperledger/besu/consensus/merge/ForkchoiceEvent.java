@@ -47,6 +47,14 @@ public class ForkchoiceEvent {
   }
 
   /**
+   * Has valid safe block hash
+   * @return boolean
+   */
+  public boolean hasValidSafeBlockHash() {
+    return !safeBlockHash.equals(Hash.ZERO);
+  }
+
+  /**
    * Gets head block hash.
    *
    * @return the head block hash

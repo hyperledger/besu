@@ -38,7 +38,7 @@ public class SarOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SarOperation(final GasCalculator gasCalculator) {
-    super(0x1d, "SAR", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1d, "SAR", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

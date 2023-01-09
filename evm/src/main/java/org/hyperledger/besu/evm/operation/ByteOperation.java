@@ -33,7 +33,7 @@ public class ByteOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public ByteOperation(final GasCalculator gasCalculator) {
-    super(0x1A, "BYTE", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1A, "BYTE", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   private static UInt256 getByte(final UInt256 seq, final UInt256 offset) {

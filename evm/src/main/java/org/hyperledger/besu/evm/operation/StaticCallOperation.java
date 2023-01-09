@@ -32,7 +32,7 @@ public class StaticCallOperation extends AbstractCallOperation {
    * @param gasCalculator the gas calculator
    */
   public StaticCallOperation(final GasCalculator gasCalculator) {
-    super(0xFA, "STATICCALL", 6, 1, 1, gasCalculator);
+    super(0xFA, "STATICCALL", 6, 1, gasCalculator);
   }
 
   @Override

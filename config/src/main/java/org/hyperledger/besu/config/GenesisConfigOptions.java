@@ -255,12 +255,9 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getCancunTime();
 
-  /**
-   * Gets shandong block number.
-   *
-   * @return the shandong block number
-   */
-  OptionalLong getShandongBlockNumber();
+  OptionalLong getFutureEipsTime();
+
+  OptionalLong getExperimentalEipsTime();
 
   /**
    * Gets base fee per gas.
@@ -290,12 +287,9 @@ public interface GenesisConfigOptions {
    */
   Optional<Hash> getTerminalBlockHash();
 
-  /**
-   * Gets forks.
-   *
-   * @return the forks
-   */
-  List<Long> getForks();
+  List<Long> getForkBlockNumbers();
+
+  List<Long> getForkBlockTimestamps();
 
   /**
    * Block number for the Dao Fork, this value is used to tell node to connect with peer that did

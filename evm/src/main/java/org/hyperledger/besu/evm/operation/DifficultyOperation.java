@@ -27,7 +27,7 @@ public class DifficultyOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public DifficultyOperation(final GasCalculator gasCalculator) {
-    super(0x44, "DIFFICULTY", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x44, "DIFFICULTY", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

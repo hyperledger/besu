@@ -43,7 +43,6 @@ public class DupOperation extends AbstractFixedCostOperation {
         "DUP" + index,
         index,
         index + 1,
-        1,
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.index = index;

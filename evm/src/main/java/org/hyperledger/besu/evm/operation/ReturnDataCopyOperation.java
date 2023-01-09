@@ -39,7 +39,7 @@ public class ReturnDataCopyOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public ReturnDataCopyOperation(final GasCalculator gasCalculator) {
-    super(0x3E, "RETURNDATACOPY", 3, 0, 1, gasCalculator);
+    super(0x3E, "RETURNDATACOPY", 3, 0, gasCalculator);
   }
 
   @Override

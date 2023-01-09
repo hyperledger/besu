@@ -29,7 +29,7 @@ public class TimestampOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public TimestampOperation(final GasCalculator gasCalculator) {
-    super(0x42, "TIMESTAMP", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x42, "TIMESTAMP", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

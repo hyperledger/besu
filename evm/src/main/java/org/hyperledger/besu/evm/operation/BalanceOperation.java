@@ -35,7 +35,7 @@ public class BalanceOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public BalanceOperation(final GasCalculator gasCalculator) {
-    super(0x31, "BALANCE", 1, 1, 1, gasCalculator);
+    super(0x31, "BALANCE", 1, 1, gasCalculator);
   }
 
   /**

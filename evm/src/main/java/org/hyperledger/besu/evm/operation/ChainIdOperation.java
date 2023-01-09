@@ -33,7 +33,7 @@ public class ChainIdOperation extends AbstractFixedCostOperation {
    * @param chainId the chain id
    */
   public ChainIdOperation(final GasCalculator gasCalculator, final Bytes32 chainId) {
-    super(0x46, "CHAINID", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x46, "CHAINID", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
     this.chainId = UInt256.fromBytes(chainId);
   }
 

@@ -35,7 +35,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public BlockHashOperation(final GasCalculator gasCalculator) {
-    super(0x40, "BLOCKHASH", 1, 1, 1, gasCalculator, gasCalculator.getBlockHashOperationGasCost());
+    super(0x40, "BLOCKHASH", 1, 1, gasCalculator, gasCalculator.getBlockHashOperationGasCost());
   }
 
   @Override

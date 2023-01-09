@@ -27,7 +27,7 @@ public class OriginOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public OriginOperation(final GasCalculator gasCalculator) {
-    super(0x32, "ORIGIN", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x32, "ORIGIN", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

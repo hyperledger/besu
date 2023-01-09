@@ -31,7 +31,7 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SelfBalanceOperation(final GasCalculator gasCalculator) {
-    super(0x47, "SELFBALANCE", 0, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x47, "SELFBALANCE", 0, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

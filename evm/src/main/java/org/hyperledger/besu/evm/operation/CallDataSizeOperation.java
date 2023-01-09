@@ -30,7 +30,7 @@ public class CallDataSizeOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public CallDataSizeOperation(final GasCalculator gasCalculator) {
-    super(0x36, "CALLDATASIZE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x36, "CALLDATASIZE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

@@ -32,7 +32,7 @@ public class DelegateCallOperation extends AbstractCallOperation {
    * @param gasCalculator the gas calculator
    */
   public DelegateCallOperation(final GasCalculator gasCalculator) {
-    super(0xF4, "DELEGATECALL", 6, 1, 1, gasCalculator);
+    super(0xF4, "DELEGATECALL", 6, 1, gasCalculator);
   }
 
   @Override

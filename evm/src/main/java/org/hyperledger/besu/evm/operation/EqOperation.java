@@ -32,7 +32,7 @@ public class EqOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public EqOperation(final GasCalculator gasCalculator) {
-    super(0x14, "EQ", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x14, "EQ", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

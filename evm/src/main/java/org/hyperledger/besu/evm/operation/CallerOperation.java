@@ -27,7 +27,7 @@ public class CallerOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public CallerOperation(final GasCalculator gasCalculator) {
-    super(0x33, "CALLER", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x33, "CALLER", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

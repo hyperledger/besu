@@ -30,7 +30,7 @@ public class PopOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public PopOperation(final GasCalculator gasCalculator) {
-    super(0x50, "POP", 1, 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x50, "POP", 1, 0, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

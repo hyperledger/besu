@@ -35,7 +35,7 @@ public class SDivOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SDivOperation(final GasCalculator gasCalculator) {
-    super(0x05, "SDIV", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x05, "SDIV", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

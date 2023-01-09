@@ -32,7 +32,7 @@ public class RevertOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public RevertOperation(final GasCalculator gasCalculator) {
-    super(0xFD, "REVERT", 2, 0, 1, gasCalculator);
+    super(0xFD, "REVERT", 2, 0, gasCalculator);
   }
 
   @Override

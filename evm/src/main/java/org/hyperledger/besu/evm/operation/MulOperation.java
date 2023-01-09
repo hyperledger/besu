@@ -34,7 +34,7 @@ public class MulOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public MulOperation(final GasCalculator gasCalculator) {
-    super(0x02, "MUL", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x02, "MUL", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

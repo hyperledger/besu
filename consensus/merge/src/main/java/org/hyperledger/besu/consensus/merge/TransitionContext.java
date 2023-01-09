@@ -148,4 +148,9 @@ public class TransitionContext implements MergeContext {
   public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
     return postMergeContext.retrieveBlockById(payloadId);
   }
+
+  @Override
+  public boolean isCheckpointPostMergeSync() {
+    return false;
+  }
 }

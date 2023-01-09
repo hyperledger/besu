@@ -32,7 +32,7 @@ public class SubOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SubOperation(final GasCalculator gasCalculator) {
-    super(0x03, "SUB", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x03, "SUB", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

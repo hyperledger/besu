@@ -32,7 +32,7 @@ public class NotOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public NotOperation(final GasCalculator gasCalculator) {
-    super(0x19, "NOT", 1, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x19, "NOT", 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

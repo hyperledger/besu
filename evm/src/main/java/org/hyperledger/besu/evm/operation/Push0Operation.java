@@ -34,7 +34,7 @@ public class Push0Operation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public Push0Operation(final GasCalculator gasCalculator) {
-    super(PUSH_BASE, "PUSH0", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(PUSH_BASE, "PUSH0", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

@@ -73,6 +73,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
 
+  private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
+
   /**
    * Parse block propagation range.
    *
@@ -278,6 +280,13 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int snapsyncTrieNodeCountPerRequest =
       SnapSyncConfiguration.DEFAULT_TRIENODE_COUNT_PER_REQUEST;
 
+  @CommandLine.Option(
+      names = {CHECKPOINT_POST_MERGE_FLAG},
+      hidden = true,
+      description = "Enable the sync to start from a post-merge block.")
+  private Boolean checkpointPostMergeSyncEnabled =
+      SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
+
   private SynchronizerOptions() {}
 
   /**
@@ -325,6 +334,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getBytecodeCountPerRequest();
     options.snapsyncTrieNodeCountPerRequest =
         config.getSnapSyncConfiguration().getTrienodeCountPerRequest();
+    options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     return options;
   }
 
@@ -355,6 +365,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .bytecodeCountPerRequest(snapsyncBytecodeCountPerRequest)
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .build());
+    builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
     return builder;
   }

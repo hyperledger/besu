@@ -32,7 +32,7 @@ public class StopOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public StopOperation(final GasCalculator gasCalculator) {
-    super(0x00, "STOP", 0, 0, 1, gasCalculator, gasCalculator.getZeroTierGasCost());
+    super(0x00, "STOP", 0, 0, gasCalculator, gasCalculator.getZeroTierGasCost());
   }
 
   @Override

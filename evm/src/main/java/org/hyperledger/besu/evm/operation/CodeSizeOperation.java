@@ -30,7 +30,7 @@ public class CodeSizeOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public CodeSizeOperation(final GasCalculator gasCalculator) {
-    super(0x38, "CODESIZE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x38, "CODESIZE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

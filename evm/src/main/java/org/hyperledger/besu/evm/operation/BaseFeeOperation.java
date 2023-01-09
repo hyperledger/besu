@@ -31,7 +31,7 @@ public class BaseFeeOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public BaseFeeOperation(final GasCalculator gasCalculator) {
-    super(0x48, "BASEFEE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x48, "BASEFEE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

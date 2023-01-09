@@ -33,7 +33,7 @@ public class SelfDestructOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public SelfDestructOperation(final GasCalculator gasCalculator) {
-    super(0xFF, "SELFDESTRUCT", 1, 0, 1, gasCalculator);
+    super(0xFF, "SELFDESTRUCT", 1, 0, gasCalculator);
   }
 
   @Override

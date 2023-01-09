@@ -32,7 +32,7 @@ public class MStoreOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public MStoreOperation(final GasCalculator gasCalculator) {
-    super(0x52, "MSTORE", 2, 0, 1, gasCalculator);
+    super(0x52, "MSTORE", 2, 0, gasCalculator);
   }
 
   @Override

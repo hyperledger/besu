@@ -56,6 +56,11 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
     long lastForkTimestamp = 0;
     lastForkTimestamp = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkTimestamp);
     lastForkTimestamp = validateForkOrder("Cancun", config.getCancunTime(), lastForkTimestamp);
+    lastForkTimestamp =
+        validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkTimestamp);
+    lastForkTimestamp =
+        validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkTimestamp);
+
     assert (lastForkTimestamp >= 0);
   }
 
@@ -73,7 +78,9 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
         // TransitionProtocolSchedule.getByBlockHeader if the given timestamp is before the
         // first entry in TimestampSchedule
         create(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
-        create(config.getCancunTime(), specFactory.cancunDefinition(config)));
+        create(config.getCancunTime(), specFactory.cancunDefinition(config)),
+        create(config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
+        create(config.getExperimentalEipsTime(), specFactory.experimentalEipsDefinition(config)));
   }
 
   @Override

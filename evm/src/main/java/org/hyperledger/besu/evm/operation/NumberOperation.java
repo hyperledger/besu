@@ -29,7 +29,7 @@ public class NumberOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public NumberOperation(final GasCalculator gasCalculator) {
-    super(0x43, "NUMBER", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x43, "NUMBER", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

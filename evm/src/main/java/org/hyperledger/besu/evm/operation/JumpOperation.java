@@ -34,7 +34,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public JumpOperation(final GasCalculator gasCalculator) {
-    super(0x56, "JUMP", 2, 0, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(0x56, "JUMP", 2, 0, gasCalculator, gasCalculator.getMidTierGasCost());
     invalidJumpResponse =
         new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
     jumpResponse = new OperationResult(gasCost, null, 0);

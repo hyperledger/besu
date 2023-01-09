@@ -31,7 +31,7 @@ public class CodeCopyOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public CodeCopyOperation(final GasCalculator gasCalculator) {
-    super(0x39, "CODECOPY", 3, 0, 1, gasCalculator);
+    super(0x39, "CODECOPY", 3, 0, gasCalculator);
   }
 
   @Override

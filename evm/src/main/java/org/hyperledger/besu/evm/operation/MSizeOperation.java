@@ -29,7 +29,7 @@ public class MSizeOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public MSizeOperation(final GasCalculator gasCalculator) {
-    super(0x59, "MSIZE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x59, "MSIZE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

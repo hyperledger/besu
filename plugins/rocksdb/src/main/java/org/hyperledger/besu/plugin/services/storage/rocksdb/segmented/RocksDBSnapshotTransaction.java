@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -47,6 +48,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   private final RocksDBSnapshot snapshot;
   private final WriteOptions writeOptions;
   private final ReadOptions readOptions;
+  private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   /**
    * Instantiates a new RocksDb snapshot transaction.
@@ -91,6 +93,11 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
    * @return the optional data
    */
   public Optional<byte[]> get(final byte[] key) {
+    if (isClosed.get()) {
+      LOG.debug("Attempted to access closed snapshot");
+      return Optional.empty();
+    }
+
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(snapTx.get(columnFamilyHandle, readOptions, key));
     } catch (final RocksDBException e) {
@@ -100,6 +107,11 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void put(final byte[] key, final byte[] value) {
+    if (isClosed.get()) {
+      LOG.debug("Attempted to access closed snapshot");
+      return;
+    }
+
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
       snapTx.put(columnFamilyHandle, key, value);
     } catch (final RocksDBException e) {
@@ -113,6 +125,10 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void remove(final byte[] key) {
+    if (isClosed.get()) {
+      LOG.debug("Attempted to access closed snapshot");
+      return;
+    }
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
       snapTx.delete(columnFamilyHandle, key);
     } catch (final RocksDBException e) {
@@ -174,6 +190,9 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
    * @return the rocks db snapshot transaction
    */
   public RocksDBSnapshotTransaction copy() {
+    if (isClosed.get()) {
+      throw new StorageException("Snapshot already closed");
+    }
     try {
       var copyReadOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
       var copySnapTx = db.beginTransaction(writeOptions);
@@ -193,5 +212,6 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     writeOptions.close();
     readOptions.close();
     snapshot.unMarkSnapshot();
+    isClosed.set(true);
   }
 }

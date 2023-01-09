@@ -35,7 +35,7 @@ public class SModOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SModOperation(final GasCalculator gasCalculator) {
-    super(0x07, "SMOD", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x07, "SMOD", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

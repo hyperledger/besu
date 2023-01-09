@@ -30,7 +30,7 @@ public class JumpDestOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public JumpDestOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "JUMPDEST", 0, 0, 1, gasCalculator, gasCalculator.getJumpDestOperationGasCost());
+    super(OPCODE, "JUMPDEST", 0, 0, gasCalculator, gasCalculator.getJumpDestOperationGasCost());
   }
 
   @Override

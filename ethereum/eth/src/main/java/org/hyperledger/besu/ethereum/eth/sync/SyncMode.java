@@ -40,4 +40,8 @@ public enum SyncMode {
   public static boolean isFullSync(final SyncMode syncMode) {
     return !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP, SyncMode.X_CHECKPOINT).contains(syncMode);
   }
+
+  public static boolean isCheckpointSync(final SyncMode syncMode) {
+    return syncMode.equals(X_CHECKPOINT);
+  }
 }

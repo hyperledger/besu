@@ -1,13 +1,32 @@
 # Changelog
-## 22.10.4
 
-### Additions and Improvements
-- Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
-- Add timestamp fork support, including shanghaiTime and cancunTime forks [#4743](https://github.com/hyperledger/besu/pull/4743)
+## 23.1.0-beta2
 
 ### Breaking Changes
+- Default configurations for the deprecated Ropsten, Kiln, Shandong, and Astor networks have been removed from the CLI network list. These networks can currently be accessed but will require a user-provided genesis configuration. [#4896](https://github.com/hyperledger/besu/pull/4869)
+
+### Additions and Improvements
 
 ### Bug Fixes
+
+## 23.1.0-beta
+
+### Breaking Changes
+- GoQuorum-compatible privacy is deprecated and will be removed in 23.4
+- IBFT 1.0 is deprecated and will be removed in 23.4
+- Optimize SSTORE Operation execution time (memoize current and original value) [#4836](https://github.com/hyperledger/besu/pull/4836)
+
+### Additions and Improvements
+- Added post-execution state logging option to EVM Tool [#4709](https://github.com/hyperledger/besu/pull/4709)
+- Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
+- Add timestamp fork support, including shanghaiTime and cancunTime forks [#4743](https://github.com/hyperledger/besu/pull/4743)
+- Optimization:  Memoize transaction size and hash at the same time [#4812](https://github.com/hyperledger/besu/pull/4812)
+- Add chain data pruning feature with three experimental CLI options: `--Xchain-pruning-enabled`, `--Xchain-pruning-blocks-retained` and `--Xchain-pruning-frequency` [#4686](https://github.com/hyperledger/besu/pull/4686)
+  - Note that chain pruning is hidden and disabled by default. Once you choose to enable chain pruning, a new column family will be added to the db and you cannot roll back to a previous version of Besu.
+
+### Bug Fixes
+- Fix for segmentation faults on worldstate truncation, snap-sync starts [#4786](https://github.com/hyperledger/besu/pull/4786)
+- Fix for worldstate mismatch on failed forkchoiceUpdate [#4862](https://github.com/hyperledger/besu/pull/4862)
 
 ### Download Links
 
@@ -22,7 +41,6 @@
 - Increase the speed of modexp gas execution and execution. [#4780](https://github.com/hyperledger/besu/pull/4780)
 - Added experimental CLI options `--Xeth-capability-max` and `--Xeth-capability-min` to specify a range of capabilities to be supported by the Eth protocol. [#4752](https://github.com/hyperledger/besu/pull/4752)
 - Set the default curve in the EVMTool, like is done in production operations [#4790](https://github.com/hyperledger/besu/pull/4790)
-- Add chain data pruning feature with three experimental CLI options: `--Xchain-pruning-enabled`, `--Xchain-pruning-blocks-retained` and `--Xchain-pruning-frequency` [#4686](https://github.com/hyperledger/besu/pull/4686)
 
 ### Bug Fixes
 - Fix storage key format for eth_getProof so that it follows the EIP-1474 spec [#4564](https://github.com/hyperledger/besu/pull/4564)
@@ -35,7 +53,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3
 This is a hotfix release to resolve a race condition that results in segfaults, introduced in 22.10.1 release.
 
 ### Bug Fixes
-- bugfix for async operations on Snashot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
+- bugfix for async operations on Snapshot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
 
 ### Download Links
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.tar.gz  / sha256: cdb36141e3cba6379d35016e0a2de2edba579d4786124b5f7257b1e4a68867a2
@@ -52,7 +70,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2
 - Support for ephemeral testnet Shandong, for EOF testing. [#4599](https://github.com/hyperledger/besu/pull/4599)
 - Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
-- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
+- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [#4580](https://github.com/hyperledger/besu/pull/4580)
 - Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 - Implement Eth/67 sub-protocol [#4596](https://github.com/hyperledger/besu/issues/4596)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)

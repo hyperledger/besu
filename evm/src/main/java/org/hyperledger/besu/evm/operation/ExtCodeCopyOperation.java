@@ -36,7 +36,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public ExtCodeCopyOperation(final GasCalculator gasCalculator) {
-    super(0x3C, "EXTCODECOPY", 4, 0, 1, gasCalculator);
+    super(0x3C, "EXTCODECOPY", 4, 0, gasCalculator);
   }
 
   /**

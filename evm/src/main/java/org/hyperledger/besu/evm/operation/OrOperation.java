@@ -32,7 +32,7 @@ public class OrOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public OrOperation(final GasCalculator gasCalculator) {
-    super(0x17, "OR", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x17, "OR", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

@@ -35,10 +35,13 @@ public enum EvmSpecVersion {
   /** Paris evm spec version. */
   PARIS(0, true),
   /** Shanghai evm spec version. */
-  SHANGHAI(1, false),
-
-  /** Transient fork, will be removed */
-  SHANDONG(1, false);
+  SHANGHAI(0, true),
+  /** Cancun evm spec version. */
+  CANCUN(1, false),
+  /** Development fork for unscheduled EIPs */
+  FUTURE_EIPS(1, false),
+  /** Development fork for EIPs not accepted to Mainnet */
+  EXPERIMENTAL_EIPS(1, false);
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 

@@ -29,7 +29,7 @@ public class GasOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public GasOperation(final GasCalculator gasCalculator) {
-    super(0x5A, "GAS", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x5A, "GAS", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

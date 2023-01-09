@@ -32,7 +32,7 @@ public class GtOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public GtOperation(final GasCalculator gasCalculator) {
-    super(0x11, "GT", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x11, "GT", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

@@ -35,7 +35,7 @@ public class DivOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public DivOperation(final GasCalculator gasCalculator) {
-    super(0x04, "DIV", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x04, "DIV", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

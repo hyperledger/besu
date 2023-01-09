@@ -30,7 +30,7 @@ public class ReturnOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public ReturnOperation(final GasCalculator gasCalculator) {
-    super(0xF3, "RETURN", 2, 0, 1, gasCalculator);
+    super(0xF3, "RETURN", 2, 0, gasCalculator);
   }
 
   @Override
