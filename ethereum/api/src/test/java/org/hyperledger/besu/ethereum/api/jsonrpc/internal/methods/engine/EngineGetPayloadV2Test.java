@@ -36,13 +36,13 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -123,7 +123,8 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
         PayloadIdentifier.forPayloadParams(
             Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x43"));
     when(mergeContext.retrieveBlockById(pid))
-        .thenReturn(Optional.of(new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3))));
+        .thenReturn(
+            Optional.of(new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3))));
     // Test get payload
     final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), pid);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
