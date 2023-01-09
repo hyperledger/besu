@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -83,29 +84,46 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
   public void shouldReturnBlockWithCorrectValue() {
     // Generate block with two transactions
     final long baseFee = 15;
+    final long maxFee = 20;
     final Transaction tx1 =
         new TransactionTestFixture()
-            .gasPrice(Wei.of(baseFee + 1))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(maxFee)))
+            .type(TransactionType.EIP1559)
             .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
     final Transaction tx2 =
         new TransactionTestFixture()
-            .gasPrice(Wei.of(baseFee + 2))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(2)))
+            .maxFeePerGas(Optional.of(Wei.of(maxFee)))
+            .type(TransactionType.EIP1559)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    final Transaction tx3 =
+        new TransactionTestFixture()
+            .maxPriorityFeePerGas(Optional.of(Wei.of(10)))
+            .maxFeePerGas(Optional.of(Wei.of(maxFee)))
+            .type(TransactionType.EIP1559)
             .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
     final TransactionReceipt receipt1 =
         new TransactionReceipt(Hash.EMPTY_TRIE_HASH, 71, Collections.emptyList(), Optional.empty());
     final TransactionReceipt receipt2 =
         new TransactionReceipt(
             Hash.EMPTY_TRIE_HASH, 143, Collections.emptyList(), Optional.empty());
+    final TransactionReceipt receipt3 =
+        new TransactionReceipt(
+            Hash.EMPTY_TRIE_HASH, 214, Collections.emptyList(), Optional.empty());
     final BlockHeader blockHeader =
-        new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
+        new BlockHeaderTestFixture()
+            .prevRandao(Bytes32.random())
+            .baseFeePerGas(Wei.of(baseFee))
+            .buildHeader();
     final Block block =
-        new Block(blockHeader, new BlockBody(List.of(tx1, tx2), Collections.emptyList()));
+        new Block(blockHeader, new BlockBody(List.of(tx1, tx2, tx3), Collections.emptyList()));
     // Generate pid
     final PayloadIdentifier pid =
         PayloadIdentifier.forPayloadParams(
             Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x43"));
     when(mergeContext.retrieveBlockById(pid))
-        .thenReturn(Optional.of(new BlockWithReceipts(block, List.of(receipt1, receipt2))));
+        .thenReturn(Optional.of(new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3))));
     // Test get payload
     final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), pid);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
@@ -117,8 +135,8 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
               final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
               assertThat(res.getExecutionPayload().getHash())
                   .isEqualTo(blockHeader.getHash().toString());
-              // Block value = 71 * (1 + 15) + 143 * (2 + 15) = 3567
-              assertThat(res.getBlockValue()).isEqualTo(Quantity.create(3567));
+              // Block value = 71 * 1 + 143 * 2 + 214 * 5 = 1427
+              assertThat(res.getBlockValue()).isEqualTo(Quantity.create(1427));
               assertThat(res.getExecutionPayload().getPrevRandao())
                   .isEqualTo(blockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
             });
