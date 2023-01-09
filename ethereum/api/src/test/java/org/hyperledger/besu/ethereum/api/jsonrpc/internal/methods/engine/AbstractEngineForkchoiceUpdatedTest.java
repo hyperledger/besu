@@ -33,7 +33,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
@@ -61,9 +60,24 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EngineForkchoiceUpdatedTest {
+public abstract class AbstractEngineForkchoiceUpdatedTest {
 
-  private EngineForkchoiceUpdated method;
+  @FunctionalInterface
+  interface MethodFactory {
+    AbstractEngineForkchoiceUpdated create(
+        final Vertx vertx,
+        final ProtocolContext protocolContext,
+        final MergeMiningCoordinator mergeCoordinator,
+        final EngineCallListener engineCallListener);
+  }
+
+  private final MethodFactory methodFactory;
+  protected AbstractEngineForkchoiceUpdated method;
+
+  public AbstractEngineForkchoiceUpdatedTest(final MethodFactory methodFactory) {
+    this.methodFactory = methodFactory;
+  }
+
   private static final Vertx vertx = Vertx.vertx();
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
@@ -85,14 +99,11 @@ public class EngineForkchoiceUpdatedTest {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method =
-        new EngineForkchoiceUpdated(vertx, protocolContext, mergeCoordinator, engineCallListener);
+        methodFactory.create(vertx, protocolContext, mergeCoordinator, engineCallListener);
   }
 
   @Test
-  public void shouldReturnExpectedMethodName() {
-    // will break as specs change, intentional:
-    assertThat(method.getName()).isEqualTo("engine_forkchoiceUpdatedV1");
-  }
+  public abstract void shouldReturnExpectedMethodName();
 
   @Test
   public void shouldReturnSyncingIfForwardSync() {
@@ -422,7 +433,7 @@ public class EngineForkchoiceUpdatedTest {
 
     verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any());
 
-    assertThat(forkchoiceRes.getPayloadStatus().getStatus()).isEqualTo(EngineStatus.VALID);
+    assertThat(forkchoiceRes.getPayloadStatus().getStatus()).isEqualTo(VALID);
     assertThat(forkchoiceRes.getPayloadStatus().getError()).isNull();
     assertThat(forkchoiceRes.getPayloadStatus().getLatestValidHashAsString())
         .isEqualTo(mockHeader.getHash().toHexString());
@@ -491,9 +502,11 @@ public class EngineForkchoiceUpdatedTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 "2.0",
-                RpcMethod.ENGINE_FORKCHOICE_UPDATED.getMethodName(),
+                getMethodName(),
                 Stream.concat(Stream.of(forkchoiceParam), payloadParam.stream()).toArray())));
   }
+
+  abstract String getMethodName();
 
   private EngineUpdateForkchoiceResult fromSuccessResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);

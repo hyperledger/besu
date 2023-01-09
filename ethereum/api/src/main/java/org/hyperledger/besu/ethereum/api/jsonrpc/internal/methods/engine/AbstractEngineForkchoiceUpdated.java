@@ -25,7 +25,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadAttributes;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
@@ -44,22 +43,17 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
-  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdated.class);
+public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
 
-  public EngineForkchoiceUpdated(
+  public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
-  }
-
-  @Override
-  public String getName() {
-    return RpcMethod.ENGINE_FORKCHOICE_UPDATED.getMethodName();
   }
 
   @Override

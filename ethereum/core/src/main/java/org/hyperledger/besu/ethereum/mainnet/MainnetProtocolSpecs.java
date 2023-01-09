@@ -647,12 +647,15 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
 
+    // extra vaiables need to support flipping the warm coinbase flag.
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
     final BaseFeeMarket londonFeeMarket =
         genesisConfigOptions.isZeroBaseFee()
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
             : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+
+    // constant for max initcode size for EIP-3860 limit and meter initcode
     final int contractSizeLimit = configContractSizeLimit.orElse(SHANGHAI_INIT_CODE_SIZE_LIMIT);
 
     return parisDefinition(
@@ -663,11 +666,14 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        // gas calculator has new code to support EIP-3860 limit and meter initcode
         .gasCalculator(ShanghaiGasCalculator::new)
+        // EVM has a new operation for EIP-3855 PUSH0 instruction
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.shanghai(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // we need to flip the Warm Coinbase flag for EIP-3651 warm coinbase
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -683,6 +689,7 @@ public abstract class MainnetProtocolSpecs {
                     stackSizeLimit,
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
+        // Contract creation rules for EIP-3860 Limit and meter intitcode
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
@@ -714,10 +721,15 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.cancun(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .name("Cancun");
   }
 
-  static ProtocolSpecBuilder shandongDefinition(
+  static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -726,7 +738,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
 
-    return shanghaiDefinition(
+    return cancunDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
@@ -734,7 +746,35 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
-        .name("Shandong");
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.futureEips(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("FutureEips");
+  }
+
+  static ProtocolSpecBuilder experimentalEipsDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return futureEipsDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.experimentalEips(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("ExperimentalEips");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
