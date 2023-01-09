@@ -20,11 +20,19 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Call F operation. */
 public class CallFOperation extends AbstractOperation {
 
+  /** The constant OPCODE. */
   public static final int OPCODE = 0xb0;
+  /** The Call F success. */
   static final OperationResult callfSuccess = new OperationResult(5, null);
 
+  /**
+   * Instantiates a new Call F operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CallFOperation(final GasCalculator gasCalculator) {
     super(OPCODE, "CALLF", 0, 0, gasCalculator);
   }
@@ -35,6 +43,14 @@ public class CallFOperation extends AbstractOperation {
     return staticOperation(frame, code, frame.getPC());
   }
 
+  /**
+   * Performs Call F operation.
+   *
+   * @param frame the frame
+   * @param code the code
+   * @param pc the pc
+   * @return the successful operation result
+   */
   public static OperationResult staticOperation(
       final MessageFrame frame, final byte[] code, final int pc) {
     int section = readBigEndianU16(pc + 1, code);

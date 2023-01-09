@@ -372,6 +372,12 @@ public class MessageFrame {
     return section;
   }
 
+  /**
+   * Call function and return exceptional halt reason.
+   *
+   * @param calledSection the called section
+   * @return the exceptional halt reason
+   */
   public ExceptionalHaltReason callFunction(final int calledSection) {
     CodeSection info = code.getCodeSection(calledSection);
     if (info == null) {
@@ -389,6 +395,12 @@ public class MessageFrame {
     }
   }
 
+  /**
+   * Jump function exceptional halt reason.
+   *
+   * @param section the section
+   * @return the exceptional halt reason
+   */
   public ExceptionalHaltReason jumpFunction(final int section) {
     CodeSection info = code.getCodeSection(section);
     if (info == null) {
@@ -402,6 +414,11 @@ public class MessageFrame {
     }
   }
 
+  /**
+   * Return function exceptional halt reason.
+   *
+   * @return the exceptional halt reason
+   */
   public ExceptionalHaltReason returnFunction() {
     CodeSection thisInfo = code.getCodeSection(this.section);
     var returnInfo = returnStack.pop();

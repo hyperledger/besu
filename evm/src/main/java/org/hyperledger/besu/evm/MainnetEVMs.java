@@ -660,6 +660,7 @@ public class MainnetEVMs {
 
   /**
    * Shanghai evm
+   *
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
    * @return the evm
@@ -716,6 +717,14 @@ public class MainnetEVMs {
     registry.put(new Push0Operation(gasCalculator));
   }
 
+  /**
+   * Cancun evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
   public static EVM cancun(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
@@ -727,6 +736,13 @@ public class MainnetEVMs {
         EvmSpecVersion.CANCUN);
   }
 
+  /**
+   * Cancun operations operation registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
   public static OperationRegistry cancunOperations(
       final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
@@ -734,6 +750,13 @@ public class MainnetEVMs {
     return operationRegistry;
   }
 
+  /**
+   * Register cancun operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
   public static void registerCancunOperations(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
@@ -747,10 +770,25 @@ public class MainnetEVMs {
     registry.put(new JumpFOperation(gasCalculator));
   }
 
+  /**
+   * Future eips evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
   public static EVM futureEips(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     return shanghai(chainId, evmConfiguration);
   }
 
+  /**
+   * Future eips evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
   public static EVM futureEips(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
@@ -758,11 +796,26 @@ public class MainnetEVMs {
     return cancun(gasCalculator, chainId, evmConfiguration);
   }
 
+  /**
+   * Experimental eips evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
   public static EVM experimentalEips(
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     return futureEips(chainId, evmConfiguration);
   }
 
+  /**
+   * Experimental eips evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
   public static EVM experimentalEips(
       final GasCalculator gasCalculator,
       final BigInteger chainId,

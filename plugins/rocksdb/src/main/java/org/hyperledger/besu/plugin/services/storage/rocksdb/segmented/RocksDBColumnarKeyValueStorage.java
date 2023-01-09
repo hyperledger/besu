@@ -109,6 +109,16 @@ public class RocksDBColumnarKeyValueStorage
     this(configuration, segments, List.of(), metricsSystem, rocksDBMetricsFactory);
   }
 
+  /**
+   * Instantiates a new Rocks db columnar key value storage.
+   *
+   * @param configuration the configuration
+   * @param segments the segments
+   * @param ignorableSegments the ignorable segments
+   * @param metricsSystem the metrics system
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   * @throws StorageException the storage exception
+   */
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,

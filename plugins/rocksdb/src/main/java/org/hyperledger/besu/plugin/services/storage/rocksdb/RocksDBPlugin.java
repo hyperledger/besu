@@ -49,6 +49,11 @@ public class RocksDBPlugin implements BesuPlugin {
     this.options = RocksDBCLIOptions.create();
   }
 
+  /**
+   * Add ignorable segment identifier.
+   *
+   * @param ignorable the ignorable
+   */
   public void addIgnorableSegmentIdentifier(final SegmentIdentifier ignorable) {
     ignorableSegments.add(ignorable);
   }

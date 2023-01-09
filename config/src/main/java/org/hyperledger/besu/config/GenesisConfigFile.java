@@ -307,6 +307,7 @@ public class GenesisConfigFile {
 
   /**
    * Get Fork Block numbers
+   *
    * @return list of fork block numbers
    */
   public List<Long> getForkBlockNumbers() {
@@ -315,6 +316,7 @@ public class GenesisConfigFile {
 
   /**
    * Get fork time stamps
+   *
    * @return list of fork time stamps
    */
   public List<Long> getForkTimestamps() {

@@ -20,13 +20,26 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Code section. */
 //// java17 convert to record
 public final class CodeSection {
+  /** The Code. */
   final Bytes code;
+  /** The Inputs. */
   final int inputs;
+  /** The Outputs. */
   final int outputs;
+  /** The Max stack height. */
   final int maxStackHeight;
 
+  /**
+   * Instantiates a new Code section.
+   *
+   * @param code the code
+   * @param inputs the inputs
+   * @param outputs the outputs
+   * @param maxStackHeight the max stack height
+   */
   public CodeSection(
       final Bytes code, final int inputs, final int outputs, final int maxStackHeight) {
     this.code = code;
@@ -35,18 +48,38 @@ public final class CodeSection {
     this.maxStackHeight = maxStackHeight;
   }
 
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   public Bytes getCode() {
     return code;
   }
 
+  /**
+   * Gets inputs.
+   *
+   * @return the inputs
+   */
   public int getInputs() {
     return inputs;
   }
 
+  /**
+   * Gets outputs.
+   *
+   * @return the outputs
+   */
   public int getOutputs() {
     return outputs;
   }
 
+  /**
+   * Gets max stack height.
+   *
+   * @return the max stack height
+   */
   public int getMaxStackHeight() {
     return maxStackHeight;
   }

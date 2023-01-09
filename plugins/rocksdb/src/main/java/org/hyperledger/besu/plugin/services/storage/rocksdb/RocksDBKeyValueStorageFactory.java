@@ -66,6 +66,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
    *
    * @param configuration the configuration
    * @param segments the segments
+   * @param ignorableSegments the ignorable segments
    * @param defaultVersion the default version
    * @param rocksDBMetricsFactory the rocks db metrics factory
    */
@@ -87,6 +88,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
    *
    * @param configuration the configuration
    * @param segments the segments
+   * @param defaultVersion the default version
    * @param rocksDBMetricsFactory the rocks db metrics factory
    */
   public RocksDBKeyValueStorageFactory(
@@ -97,6 +99,14 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     this(configuration, segments, List.of(), defaultVersion, rocksDBMetricsFactory);
   }
 
+  /**
+   * Instantiates a new Rocks db key value storage factory.
+   *
+   * @param configuration the configuration
+   * @param segments the segments
+   * @param ignorableSegments the ignorable segments
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   */
   public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments,
@@ -105,6 +115,13 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     this(configuration, segments, ignorableSegments, DEFAULT_VERSION, rocksDBMetricsFactory);
   }
 
+  /**
+   * Instantiates a new Rocks db key value storage factory.
+   *
+   * @param configuration the configuration
+   * @param segments the segments
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   */
   public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments,

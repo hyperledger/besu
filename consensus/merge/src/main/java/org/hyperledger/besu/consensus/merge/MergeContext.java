@@ -186,5 +186,10 @@ public interface MergeContext extends ConsensusContext {
     return false;
   }
 
+  /**
+   * Is checkpoint post merge sync.
+   *
+   * @return the boolean
+   */
   boolean isCheckpointPostMergeSync();
 }

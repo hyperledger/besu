@@ -48,7 +48,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param name the name
    * @param stackItemsConsumed the stack items consumed
    * @param stackItemsProduced the stack items produced
-   * @param opSize the op size
    * @param gasCalculator the gas calculator
    */
   AbstractCallOperation(

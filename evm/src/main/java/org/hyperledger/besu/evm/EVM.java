@@ -348,6 +348,7 @@ public class EVM {
 
   /**
    * Get Operations (unsafe)
+   *
    * @return Operations array
    */
   public Operation[] getOperationsUnsafe() {

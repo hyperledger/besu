@@ -31,6 +31,11 @@ public class CachedInvalidCodeRule implements ContractValidationRule {
 
   private final int maxEofVersion;
 
+  /**
+   * Instantiates a new Cached invalid code rule.
+   *
+   * @param maxEofVersion the max eof version
+   */
   public CachedInvalidCodeRule(final int maxEofVersion) {
     this.maxEofVersion = maxEofVersion;
   }

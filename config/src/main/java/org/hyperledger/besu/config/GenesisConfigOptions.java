@@ -255,8 +255,18 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getCancunTime();
 
+  /**
+   * Gets future eips time.
+   *
+   * @return the future eips time
+   */
   OptionalLong getFutureEipsTime();
 
+  /**
+   * Gets experimental eips time.
+   *
+   * @return the experimental eips time
+   */
   OptionalLong getExperimentalEipsTime();
 
   /**
@@ -287,8 +297,18 @@ public interface GenesisConfigOptions {
    */
   Optional<Hash> getTerminalBlockHash();
 
+  /**
+   * Gets fork block numbers.
+   *
+   * @return the fork block numbers
+   */
   List<Long> getForkBlockNumbers();
 
+  /**
+   * Gets fork block timestamps.
+   *
+   * @return the fork block timestamps
+   */
   List<Long> getForkBlockTimestamps();
 
   /**

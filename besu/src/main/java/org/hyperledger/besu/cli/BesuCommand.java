@@ -3303,6 +3303,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
+  /**
+   * Check if required ports are available
+   *
+   * @throws InvalidConfigurationException if ports are not available.
+   */
   protected void checkIfRequiredPortsAreAvailable() {
     final List<Integer> unavailablePorts = new ArrayList<>();
     getEffectivePorts().stream()

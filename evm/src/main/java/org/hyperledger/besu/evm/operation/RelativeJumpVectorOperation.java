@@ -23,10 +23,17 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Relative jump vector operation. */
 public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
 
+  /** The constant OPCODE. */
   public static final int OPCODE = 0x5e;
 
+  /**
+   * Instantiates a new Relative jump vector operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public RelativeJumpVectorOperation(final GasCalculator gasCalculator) {
     super(OPCODE, "RJUMPV", 0, 0, gasCalculator, 4L);
   }
@@ -47,6 +54,13 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
             + 1);
   }
 
+  /**
+   * Gets vector size.
+   *
+   * @param code the code
+   * @param offsetCountByteIndex the offset count byte index
+   * @return the vector size
+   */
   public static int getVectorSize(final Bytes code, final int offsetCountByteIndex) {
     return code.get(offsetCountByteIndex) & 0xff;
   }

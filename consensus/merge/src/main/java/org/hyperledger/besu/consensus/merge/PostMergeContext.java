@@ -305,6 +305,12 @@ public class PostMergeContext implements MergeContext {
     return isChainPruningEnabled;
   }
 
+  /**
+   * Sets checkpoint post merge sync.
+   *
+   * @param isCheckpointPostMergeSync the is checkpoint post merge sync
+   * @return the checkpoint post merge sync
+   */
   public PostMergeContext setCheckpointPostMergeSync(final boolean isCheckpointPostMergeSync) {
     this.isCheckpointPostMergeSync = isCheckpointPostMergeSync;
     return this;

@@ -103,6 +103,11 @@ public class FixedStack<T> {
     return removed;
   }
 
+  /**
+   * Peek and return type T.
+   *
+   * @return the T entry
+   */
   public T peek() {
     if (top < 0) {
       return null;

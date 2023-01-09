@@ -44,11 +44,16 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason INVALID_CODE = DefaultExceptionalHaltReason.INVALID_CODE;
   /** The constant PRECOMPILE_ERROR. */
   ExceptionalHaltReason PRECOMPILE_ERROR = DefaultExceptionalHaltReason.PRECOMPILE_ERROR;
+
+  /** The constant CODE_SECTION_MISSING. */
   ExceptionalHaltReason CODE_SECTION_MISSING = DefaultExceptionalHaltReason.CODE_SECTION_MISSING;
+  /** The constant INCORRECT_CODE_SECTION_RETURN_OUTPUTS. */
   ExceptionalHaltReason INCORRECT_CODE_SECTION_RETURN_OUTPUTS =
       DefaultExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
+  /** The constant TOO_FEW_INPUTS_FOR_CODE_SECTION. */
   ExceptionalHaltReason TOO_FEW_INPUTS_FOR_CODE_SECTION =
       DefaultExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
+  /** The constant JUMPF_STACK_MISMATCH. */
   ExceptionalHaltReason JUMPF_STACK_MISMATCH = DefaultExceptionalHaltReason.JUMPF_STACK_MISMATCH;
 
   /**
@@ -91,11 +96,16 @@ public interface ExceptionalHaltReason {
     INVALID_CODE("Code is invalid"),
     /** The Precompile error. */
     PRECOMPILE_ERROR("Precompile error"),
+    /** The Code section missing. */
     CODE_SECTION_MISSING("No code section at requested index"),
+    /** The Insufficient code section return data. */
     INSUFFICIENT_CODE_SECTION_RETURN_DATA("The stack for a return "),
+    /** The Incorrect code section return outputs. */
     INCORRECT_CODE_SECTION_RETURN_OUTPUTS(
         "The return of a code section does not have the correct number of outputs"),
+    /** The Too few inputs for code section. */
     TOO_FEW_INPUTS_FOR_CODE_SECTION("Not enough stack items for a function call"),
+    /** The Jumpf stack mismatch. */
     JUMPF_STACK_MISMATCH(
         "The stack height for a JUMPF does not match the requirements of the target section");
 

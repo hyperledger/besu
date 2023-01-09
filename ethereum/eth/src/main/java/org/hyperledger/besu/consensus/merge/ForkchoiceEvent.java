@@ -48,6 +48,7 @@ public class ForkchoiceEvent {
 
   /**
    * Has valid safe block hash
+   *
    * @return boolean
    */
   public boolean hasValidSafeBlockHash() {
