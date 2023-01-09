@@ -157,9 +157,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("baseFeePerGas") final String baseFee,
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
-        @JsonProperty("hash") final String hash,
-        @JsonProperty("withdrawalsRoot") final Object withdrawalsRoot) {
-      // TODO handle withdrawalsRoot
+        @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
+        @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
           Hash.fromHexString(uncleHash), // ommersHash
@@ -177,6 +176,7 @@ public class BlockchainReferenceTestCaseSpec {
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
+          // withdrawalsRoot == null ? Hash.EMPTY : Hash.fromHexString(withdrawalsRoot),
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -257,6 +257,10 @@ public class BlockchainReferenceTestCaseSpec {
           new BlockBody(
               input.readList(Transaction::readFrom),
               input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)));
+      // input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions),
+      // input.isEndOfCurrentList()
+      //         ? Optional.empty()
+      //           : Optional.of(input.readList(Withdrawal::readFrom))));
       return new Block(header, body);
     }
   }
