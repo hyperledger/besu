@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -93,6 +94,14 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
       if (blockHash.isEmpty()) {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+      }
+
+      // return error if block hash does not find a block
+      Optional<BlockHeader> maybeBlockHeader =
+          getBlockchainQueries().getBlockHeaderByHash(blockHash.get());
+      if (maybeBlockHeader.isEmpty()) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
       }
 
       if (Boolean.TRUE.equals(blockParameterOrBlockHash.getRequireCanonical())
