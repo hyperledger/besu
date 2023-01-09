@@ -701,6 +701,7 @@ public abstract class MainnetProtocolSpecs {
                         CachedInvalidCodeRule.of(EvmSpecVersion.SHANGHAI)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .withdrawalsValidatorBuilder(WithdrawalsValidator.AllowedWithdrawals::new)
         .name("Shanghai");
   }
 

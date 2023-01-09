@@ -72,6 +72,7 @@ public class ProtocolSpecBuilder {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
+  private WithdrawalsValidatorBuilder withdrawalsValidatorBuilder;
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -243,6 +244,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder withdrawalsValidatorBuilder(
+      final WithdrawalsValidatorBuilder withdrawalsValidatorBuilder) {
+    this.withdrawalsValidatorBuilder = withdrawalsValidatorBuilder;
+    return this;
+  }
+
   public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
@@ -316,6 +323,11 @@ public class ProtocolSpecBuilder {
               privacyParameters.getPrivateStateGenesisAllocator());
     }
 
+    WithdrawalsValidator withdrawalsValidator = new WithdrawalsValidator.ProhibitedWithdrawals();
+    if (withdrawalsValidatorBuilder != null) {
+      withdrawalsValidator = withdrawalsValidatorBuilder.apply();
+    }
+
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(
             blockHeaderValidator,
@@ -347,7 +359,8 @@ public class ProtocolSpecBuilder {
         gasLimitCalculator,
         feeMarket,
         badBlockManager,
-        Optional.ofNullable(powHasher));
+        Optional.ofNullable(powHasher),
+        withdrawalsValidator);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(
@@ -441,6 +454,10 @@ public class ProtocolSpecBuilder {
         BlockProcessor blockProcessor,
         BadBlockManager badBlockManager,
         Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
+  }
+
+  public interface WithdrawalsValidatorBuilder {
+    WithdrawalsValidator apply();
   }
 
   public interface BlockImporterBuilder {
