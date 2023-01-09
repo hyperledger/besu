@@ -17,33 +17,23 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 
 import io.vertx.core.Vertx;
 
-public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
+public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
 
-  public EngineGetPayloadV1(
+  public EngineNewPayloadV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final MergeMiningCoordinator mergeMiningCoordinator,
-      final BlockResultFactory blockResultFactory,
+      final MergeMiningCoordinator mergeCoordinator,
+      final EthPeers ethPeers,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
+    super(vertx, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_GET_PAYLOAD_V1.getMethodName();
-  }
-
-  @Override
-  protected JsonRpcResponse createResponse(final JsonRpcRequestContext request, final Block block) {
-    return new JsonRpcSuccessResponse(
-        request.getRequest().getId(), blockResultFactory.payloadTransactionCompleteV1(block));
+    return RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName();
   }
 }
