@@ -157,6 +157,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         new ForkIdManager(
             blockchain,
             Collections.emptyList(),
+            Collections.emptyList(),
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
@@ -173,7 +174,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final Optional<MergePeerFilter> mergePeerFilter,
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
-      final List<Long> forks) {
+      final List<Long> blockNumberForks,
+      final List<Long> timestampForks) {
     this(
         blockchain,
         networkId,
@@ -188,7 +190,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         synchronizerConfiguration,
         scheduler,
         new ForkIdManager(
-            blockchain, forks, ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
+            blockchain,
+            blockNumberForks,
+            timestampForks,
+            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
   public EthContext ethContext() {

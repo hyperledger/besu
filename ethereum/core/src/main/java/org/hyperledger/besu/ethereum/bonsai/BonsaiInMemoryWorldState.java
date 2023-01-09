@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
@@ -27,14 +28,17 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
+public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
+    implements BonsaiStorageSubscriber {
 
   private boolean isPersisted = false;
+  private final Long worldstateSubcriberId;
 
   public BonsaiInMemoryWorldState(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     super(archive, worldStateStorage);
+    worldstateSubcriberId = worldStateStorage.subscribe(this);
   }
 
   @Override
@@ -146,7 +150,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     final Hash newWorldStateRootHash = rootHash(localUpdater);
     archive
         .getTrieLogManager()
-        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
+        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader, this);
     worldStateRootHash = newWorldStateRootHash;
     worldStateBlockHash = blockHeader.getBlockHash();
     isPersisted = true;
@@ -155,6 +159,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   @Override
   public void close() throws Exception {
     // if storage is snapshot-based we need to close:
+    worldStateStorage.unSubscribe(worldstateSubcriberId);
     worldStateStorage.close();
   }
 }

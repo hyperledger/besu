@@ -99,7 +99,7 @@ public class EthProtocolManagerTestUtil {
         mergePeerFilter,
         mock(SynchronizerConfiguration.class),
         ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), false));
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(
@@ -120,7 +120,7 @@ public class EthProtocolManagerTestUtil {
         ethPeers,
         ethMessages,
         ethContext,
-        new ForkIdManager(blockchain, Collections.emptyList(), false));
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(

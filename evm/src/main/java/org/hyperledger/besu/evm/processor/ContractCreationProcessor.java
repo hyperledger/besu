@@ -140,7 +140,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     } else {
       final var invalidReason =
           contractValidationRules.stream()
-              .map(rule -> rule.validate(frame))
+              .map(rule -> rule.validate(contractCode))
               .filter(Optional::isPresent)
               .findFirst();
       if (invalidReason.isEmpty()) {

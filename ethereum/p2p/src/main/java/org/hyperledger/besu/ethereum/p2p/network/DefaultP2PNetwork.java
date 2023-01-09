@@ -499,7 +499,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private StorageProvider storageProvider;
     private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
     private Blockchain blockchain;
-    private List<Long> forks;
+    private List<Long> blockNumberForks;
+    private List<Long> timestampForks;
     private boolean legacyForkIdEnabled = false;
 
     public P2PNetwork build() {
@@ -542,11 +543,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(metricsSystem != null, "MetricsSystem must be set.");
       checkState(storageProvider != null, "StorageProvider must be set.");
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
+      checkState(blockNumberForks != null, "BlockNumberForks must be set.");
+      checkState(timestampForks != null, "TimestampForks must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
       final ForkIdManager forkIdManager =
-          new ForkIdManager(blockchain, forks, this.legacyForkIdEnabled);
+          new ForkIdManager(blockchain, blockNumberForks, timestampForks, this.legacyForkIdEnabled);
 
       return new VertxPeerDiscoveryAgent(
           vertx,
@@ -656,9 +659,15 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder forks(final List<Long> forks) {
+    public Builder blockNumberForks(final List<Long> forks) {
       checkNotNull(forks);
-      this.forks = forks;
+      this.blockNumberForks = forks;
+      return this;
+    }
+
+    public Builder timestampForks(final List<Long> forks) {
+      checkNotNull(forks);
+      this.timestampForks = forks;
       return this;
     }
 

@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.Restriction;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.TesseraTestHarness;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
@@ -127,7 +128,10 @@ public class PrivGetPrivateTransactionIntegrationTest {
         TesseraTestHarnessFactory.create(
             "enclave",
             Files.createTempDirectory(folder, "enclave"),
-            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_0.key"),
+            new EnclaveKeyConfiguration(
+                new String[] {"enclave_key_0.pub"},
+                new String[] {"enclave_key_0.key"},
+                EnclaveEncryptorType.NOOP),
             Optional.empty());
 
     testHarness.start();

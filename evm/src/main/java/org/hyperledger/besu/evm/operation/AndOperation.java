@@ -25,7 +25,7 @@ public class AndOperation extends AbstractFixedCostOperation {
   static final OperationResult andSuccess = new OperationResult(3, null);
 
   public AndOperation(final GasCalculator gasCalculator) {
-    super(0x16, "AND", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x16, "AND", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

@@ -22,10 +22,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -96,11 +96,9 @@ public class GenesisConfigFile {
     // if baseFeePerGas has been explicitly configured, pass it as an override:
     final var optBaseFee = getBaseFeePerGas();
     if (optBaseFee.isPresent()) {
-      overridesRef =
-          Streams.concat(
-                  overrides.entrySet().stream(),
-                  Stream.of(Map.entry("baseFeePerGas", optBaseFee.get().toShortHexString())))
-              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      // streams and maps cannot handle null values.
+      overridesRef = new HashMap<>(overrides);
+      overridesRef.put("baseFeePerGas", optBaseFee.get().toShortHexString());
     }
 
     return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
@@ -199,7 +197,11 @@ public class GenesisConfigFile {
     }
   }
 
-  public List<Long> getForks() {
-    return getConfigOptions().getForks();
+  public List<Long> getForkBlockNumbers() {
+    return getConfigOptions().getForkBlockNumbers();
+  }
+
+  public List<Long> getForkTimestamps() {
+    return getConfigOptions().getForkBlockTimestamps();
   }
 }

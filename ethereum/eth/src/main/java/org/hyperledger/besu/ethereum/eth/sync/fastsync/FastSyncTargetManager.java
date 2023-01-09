@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.SyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
@@ -66,7 +67,8 @@ public class FastSyncTargetManager extends SyncTargetManager {
   @Override
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
-    final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
+    final EthPeers ethPeers = ethContext.getEthPeers();
+    final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeerWithHeightEstimate();
     if (!maybeBestPeer.isPresent()) {
       LOG.debug(
           "No sync target, checking current peers for usefulness: {}",
@@ -76,10 +78,13 @@ public class FastSyncTargetManager extends SyncTargetManager {
       final EthPeer bestPeer = maybeBestPeer.get();
       if (bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
         LOG.info(
-            "Best peer {} has chain height {} below pivotBlock height {}",
+            "Best peer {} has chain height {} below pivotBlock height {}. Waiting for better peers. Current {} of max {}",
             maybeBestPeer.map(EthPeer::getShortNodeId).orElse("none"),
             maybeBestPeer.map(p -> p.chainState().getEstimatedHeight()).orElse(-1L),
-            pivotBlockHeader.getNumber());
+            pivotBlockHeader.getNumber(),
+            ethPeers.peerCount(),
+            ethPeers.getMaxPeers());
+        ethPeers.disconnectWorstUselessPeer();
         return completedFuture(Optional.empty());
       } else {
         return confirmPivotBlockHeader(bestPeer);
