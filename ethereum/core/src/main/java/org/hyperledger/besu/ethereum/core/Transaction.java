@@ -303,7 +303,7 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes ) {
     this(
         nonce,
         Optional.of(gasPrice),
