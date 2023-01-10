@@ -21,9 +21,14 @@ public class DataHashOperation extends AbstractOperation{
         int blobIndex = frame.popStackItem().toInt();
         final Optional<List<Hash>> maybeHashes = frame.getVersionedHashes();
         if(frame.getVersionedHashes().isPresent()) {
+
             List<Hash> versionedHashes = maybeHashes.get();
-            Hash requested = versionedHashes.get(blobIndex);
-            frame.pushStackItem(requested);
+            if(blobIndex < versionedHashes.size()) {
+                Hash requested = versionedHashes.get(blobIndex);
+                frame.pushStackItem(requested);
+            } else {
+                return new OperationResult(3, ExceptionalHaltReason.INVALID_OPERATION);
+            }
         } else {
             return new OperationResult(3, ExceptionalHaltReason.INVALID_OPERATION);
         }
