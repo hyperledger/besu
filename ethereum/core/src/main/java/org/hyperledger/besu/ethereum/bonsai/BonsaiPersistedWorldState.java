@@ -126,13 +126,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .getAccountStateTrieNode(worldStateStorage, location, hash),
-            worldStateRootHash,
-            Function.identity(),
-            Function.identity());
+            archive.getCachedMerkleTrieLoader().getAccountCachedNodeFactory(worldStateStorage),
+            worldStateRootHash);
 
     // for manicured tries and composting, collect branches here (not implemented)
 
@@ -199,14 +194,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
         final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
             new StoredMerklePatriciaTrie<>(
-                (location, key) ->
-                    archive
-                        .getCachedMerkleTrieLoader()
-                        .getAccountStorageTrieNode(
-                            worldStateStorage, updatedAddressHash, location, key),
-                storageRoot,
-                Function.identity(),
-                Function.identity());
+                archive
+                    .getCachedMerkleTrieLoader()
+                    .getStorageCachedNodeFactory(worldStateStorage, updatedAddressHash),
+                storageRoot);
 
         // for manicured tries and composting, collect branches here (not implemented)
 

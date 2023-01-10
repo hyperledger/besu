@@ -18,9 +18,11 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
@@ -40,9 +42,9 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
-  private final Cache<Bytes, Bytes> accountNodes =
+  private final Cache<Bytes, Node<Bytes>> accountNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
-  private final Cache<Bytes, Bytes> storageNodes =
+  private final Cache<Bytes, Node<Bytes>> storageNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
 
   public CachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
@@ -72,14 +74,7 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, hash) -> {
-                Optional<Bytes> node = getAccountStateTrieNode(worldStateStorage, location, hash);
-                node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
-                return node;
-              },
-              worldStateRootHash,
-              Function.identity(),
-              Function.identity());
+              getAccountCachedNodeFactory(worldStateStorage), worldStateRootHash);
       accountTrie.get(Hash.hash(account));
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
@@ -108,18 +103,11 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
           .ifPresent(
               storageRoot -> {
                 try {
+
                   final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
                       new StoredMerklePatriciaTrie<>(
-                          (location, hash) -> {
-                            Optional<Bytes> node =
-                                getAccountStorageTrieNode(
-                                    worldStateStorage, accountHash, location, hash);
-                            node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
-                            return node;
-                          },
-                          Hash.hash(storageRoot),
-                          Function.identity(),
-                          Function.identity());
+                          getStorageCachedNodeFactory(worldStateStorage, accountHash),
+                          Hash.hash(storageRoot));
                   storageTrie.get(slotHash);
                 } catch (MerkleTrieException e) {
                   // ignore exception for the cache
@@ -130,31 +118,38 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
     }
   }
 
-  public Optional<Bytes> getAccountStateTrieNode(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Bytes location,
-      final Bytes32 nodeHash) {
-    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
-    } else {
-      return Optional.ofNullable(accountNodes.getIfPresent(nodeHash))
-          .or(() -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));
-    }
+  public CacheStoredNodeFactory getAccountCachedNodeFactory(
+      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+    return new CacheStoredNodeFactory(accountNodes, worldStateStorage::getAccountStateTrieNode);
   }
 
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Hash accountHash,
-      final Bytes location,
-      final Bytes32 nodeHash) {
-    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
-    } else {
-      return Optional.ofNullable(storageNodes.getIfPresent(nodeHash))
-          .or(
-              () ->
-                  worldStateKeyValueStorage.getAccountStorageTrieNode(
-                      accountHash, location, nodeHash));
+  public CacheStoredNodeFactory getStorageCachedNodeFactory(
+      final BonsaiWorldStateKeyValueStorage worldStateStorage, final Hash accountHash) {
+    return new CacheStoredNodeFactory(
+        storageNodes,
+        (location, hash) ->
+            worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash));
+  }
+
+  static class CacheStoredNodeFactory extends StoredNodeFactory<Bytes> {
+
+    private final Cache<Bytes, Node<Bytes>> cache;
+
+    public CacheStoredNodeFactory(
+        final Cache<Bytes, Node<Bytes>> cache, final NodeLoader nodeLoader) {
+      super(nodeLoader, Function.identity(), Function.identity());
+      this.cache = cache;
+    }
+
+    @Override
+    public Optional<Node<Bytes>> retrieve(final Bytes location, final Bytes32 hash)
+        throws MerkleTrieException {
+      Optional<Node<Bytes>> cachedNode = Optional.ofNullable(cache.getIfPresent(hash));
+      if (cachedNode.isEmpty()) {
+        cachedNode = super.retrieve(location, hash);
+        cachedNode.ifPresent(node -> cache.put(node.getHash(), node));
+      }
+      return cachedNode;
     }
   }
 }

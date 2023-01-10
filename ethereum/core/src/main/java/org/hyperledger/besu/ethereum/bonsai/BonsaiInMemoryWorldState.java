@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 import java.util.Map;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -68,13 +67,8 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .getAccountStateTrieNode(worldStateStorage, location, hash),
-            worldStateRootHash,
-            Function.identity(),
-            Function.identity());
+            archive.getCachedMerkleTrieLoader().getAccountCachedNodeFactory(worldStateStorage),
+            worldStateRootHash);
 
     // for manicured tries and composting, collect branches here (not implemented)
 
@@ -114,14 +108,10 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
 
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, key) ->
-                  archive
-                      .getCachedMerkleTrieLoader()
-                      .getAccountStorageTrieNode(
-                          worldStateStorage, updatedAddressHash, location, key),
-              storageRoot,
-              Function.identity(),
-              Function.identity());
+              archive
+                  .getCachedMerkleTrieLoader()
+                  .getStorageCachedNodeFactory(worldStateStorage, updatedAddressHash),
+              storageRoot);
 
       // for manicured tries and composting, collect branches here (not implemented)
 

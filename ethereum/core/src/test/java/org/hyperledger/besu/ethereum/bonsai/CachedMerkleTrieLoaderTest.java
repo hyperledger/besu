@@ -68,11 +68,7 @@ public class CachedMerkleTrieLoaderTest {
         new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                merkleTrieLoader.getAccountStateTrieNode(emptyStorage, location, hash),
-            trie.getRootHash(),
-            Function.identity(),
-            Function.identity());
+            merkleTrieLoader.getAccountCachedNodeFactory(emptyStorage), trie.getRootHash());
 
     final Hash hashAccountZero = Hash.hash(accounts.get(0));
     assertThat(cachedTrie.get(hashAccountZero)).isEqualTo(trie.get(hashAccountZero));
@@ -104,12 +100,8 @@ public class CachedMerkleTrieLoaderTest {
         new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                merkleTrieLoader.getAccountStorageTrieNode(
-                    emptyStorage, hashAccountZero, location, hash),
-            stateTrieAccountValue.getStorageRoot(),
-            Function.identity(),
-            Function.identity());
+            merkleTrieLoader.getStorageCachedNodeFactory(emptyStorage, hashAccountZero),
+            stateTrieAccountValue.getStorageRoot());
     cachedTrie.visitLeafs(
         (keyHash, node) -> {
           cachedSlots.add(node.getRlp());
@@ -123,11 +115,7 @@ public class CachedMerkleTrieLoaderTest {
   public void shouldFallbackWhenAccountNodesIsNotInCache() {
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                merkleTrieLoader.getAccountStateTrieNode(inMemoryWorldState, location, hash),
-            trie.getRootHash(),
-            Function.identity(),
-            Function.identity());
+            merkleTrieLoader.getAccountCachedNodeFactory(inMemoryWorldState), trie.getRootHash());
     final Hash hashAccountZero = Hash.hash(accounts.get(0));
     assertThat(cachedTrie.get(hashAccountZero)).isEqualTo(trie.get(hashAccountZero));
   }
@@ -154,12 +142,8 @@ public class CachedMerkleTrieLoaderTest {
     final List<Bytes> cachedSlots = new ArrayList<>();
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                merkleTrieLoader.getAccountStorageTrieNode(
-                    inMemoryWorldState, hashAccountZero, location, hash),
-            stateTrieAccountValue.getStorageRoot(),
-            Function.identity(),
-            Function.identity());
+            merkleTrieLoader.getStorageCachedNodeFactory(inMemoryWorldState, hashAccountZero),
+            stateTrieAccountValue.getStorageRoot());
     cachedTrie.visitLeafs(
         (keyHash, node) -> {
           cachedSlots.add(node.getRlp());
