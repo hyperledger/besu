@@ -76,7 +76,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
       defaultValue = getIntegerEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(BigInteger.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Double.class) || optionSpec.type().equals(double.class)){
+    } else if (optionSpec.type().equals(Double.class) || optionSpec.type().equals(double.class)) {
       defaultValue = getDoubleEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);
