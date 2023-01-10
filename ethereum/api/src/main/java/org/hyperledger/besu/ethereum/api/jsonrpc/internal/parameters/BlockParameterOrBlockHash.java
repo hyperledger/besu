@@ -27,8 +27,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * Represents a block parameter that can be a special value ("pending", "earliest", "latest") or a
- * number formatted as a hex string or a block hash.
+ * Represents a block parameter (or block hash) that can be a special value ("pending", "earliest",
+ * "latest", "finalized", "safe") or a number formatted as a hex string, or a block hash.
  *
  * <p>When distinguishing between a hash and a number it is presumed that a hash won't have three
  * quarters of the leading bytes as zero. This is fine for block hashes but not for precompiled
