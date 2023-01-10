@@ -57,11 +57,15 @@ class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCal
     }
   }
 
-  public void enable() {
+  public void setEnabled() {
     isEnabled.set(true);
   }
 
-  public void disable() {
+  public void setDisabled() {
     isEnabled.set(false);
+  }
+
+  public boolean isEnabled() {
+    return isEnabled.get();
   }
 }

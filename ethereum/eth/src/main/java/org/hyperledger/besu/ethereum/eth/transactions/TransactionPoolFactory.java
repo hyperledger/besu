@@ -127,9 +127,9 @@ public class TransactionPoolFactory {
 
     if (!syncState.isInitialSyncPhaseDone()) {
       LOG.info("Disabling transaction handling during initial sync");
-      pooledTransactionsMessageHandler.disable();
-      transactionsMessageHandler.disable();
-      transactionPool.disable();
+      pooledTransactionsMessageHandler.setDisabled();
+      transactionsMessageHandler.setDisabled();
+      transactionPool.setDisabled();
     }
 
     syncState.subscribeCompletionReached(
@@ -137,17 +137,17 @@ public class TransactionPoolFactory {
           @Override
           public void onInitialSyncCompleted() {
             LOG.info("Enabling transaction handling following initial sync");
-            transactionPool.enable();
-            transactionsMessageHandler.enable();
-            pooledTransactionsMessageHandler.enable();
+            transactionPool.setEnabled();
+            transactionsMessageHandler.setEnabled();
+            pooledTransactionsMessageHandler.setEnabled();
           }
 
           @Override
           public void onInitialSyncRestart() {
             LOG.info("Disabling transaction handling during re-sync");
-            pooledTransactionsMessageHandler.disable();
-            transactionsMessageHandler.disable();
-            transactionPool.disable();
+            pooledTransactionsMessageHandler.setDisabled();
+            transactionsMessageHandler.setDisabled();
+            transactionPool.setDisabled();
           }
         });
 

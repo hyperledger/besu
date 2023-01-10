@@ -53,11 +53,15 @@ class TransactionsMessageHandler implements EthMessages.MessageCallback {
     }
   }
 
-  public void disable() {
+  public void setDisabled() {
     isEnabled.set(false);
   }
 
-  public void enable() {
+  public void setEnabled() {
     isEnabled.set(true);
+  }
+
+  public boolean isEnabled() {
+    return isEnabled.get();
   }
 }
