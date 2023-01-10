@@ -17,7 +17,6 @@ package org.hyperledger.besu.plugin.data;
 import org.hyperledger.besu.plugin.Unstable;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;

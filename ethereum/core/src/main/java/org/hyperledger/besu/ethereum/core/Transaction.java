@@ -273,7 +273,7 @@ public class Transaction
         null,
         chainId,
         v,
-            versionedHashes);
+        versionedHashes);
   }
 
   /**
@@ -303,7 +303,7 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<List<Hash>> versionedHashes ) {
+      final Optional<List<Hash>> versionedHashes) {
     this(
         nonce,
         Optional.of(gasPrice),
@@ -317,7 +317,7 @@ public class Transaction
         sender,
         chainId,
         Optional.empty(),
-            versionedHashes);
+        versionedHashes);
   }
 
   /**
@@ -362,7 +362,8 @@ public class Transaction
         payload,
         sender,
         chainId,
-        v, versionedHashes);
+        v,
+        versionedHashes);
   }
 
   /**
