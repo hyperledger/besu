@@ -114,6 +114,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                 .get(accountHash);
       }
     }
+    System.out.println("Get Account "+ accountHash);
     return response;
   }
 
