@@ -436,10 +436,6 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void setDisabled() {
-    //    should disable:
-    //    block added listener / behavior
-    //    transactionsMessageHandler
-    //    pooledTransactionsMessageHandler
     isPoolEnabled.set(false);
   }
 
