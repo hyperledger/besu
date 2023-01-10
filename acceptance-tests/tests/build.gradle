@@ -114,7 +114,7 @@ task acceptanceTest(type: Test) {
   testLogging {
     exceptionFormat = 'full'
     showStackTraces = true
-    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showStandardStreams = true
     showExceptions = true
     showCauses = true
   }
