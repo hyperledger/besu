@@ -57,6 +57,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -378,6 +379,7 @@ public class MainnetTransactionProcessor {
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
+                    .versionedHashes(transaction.getType() == TransactionType.BLOB_TX_TYPE ? transaction.getVersionedHashes() : Optional.empty())
                 .code(
                     contractCreationProcessor.getCodeFromEVM(
                         Hash.hash(initCodeBytes), initCodeBytes))
@@ -392,6 +394,7 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
+                    .versionedHashes(transaction.getType() == TransactionType.BLOB_TX_TYPE ? transaction.getVersionedHashes() : Optional.empty())
                 .code(
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))

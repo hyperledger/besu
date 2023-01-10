@@ -112,6 +112,7 @@ public class Transaction
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+  private final Optional<List<Hash>> versionedHashes;
 
   public static Builder builder() {
     return new Builder();
@@ -164,7 +165,8 @@ public class Transaction
       final Optional<List<AccessListEntry>> maybeAccessList,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v) {
+      final Optional<BigInteger> v,
+      final Optional<List<Hash>> versionedHashes) {
     if (v.isPresent() && chainId.isPresent()) {
       throw new IllegalArgumentException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
@@ -210,6 +212,7 @@ public class Transaction
     this.sender = sender;
     this.chainId = chainId;
     this.v = v;
+    this.versionedHashes = versionedHashes;
   }
 
   public Transaction(
@@ -224,7 +227,8 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v) {
+      final Optional<BigInteger> v,
+      final Optional<List<Hash>> versionedHashes) {
     this(
         TransactionType.FRONTIER,
         nonce,
@@ -239,7 +243,8 @@ public class Transaction
         Optional.empty(),
         sender,
         chainId,
-        v);
+        v,
+        versionedHashes);
   }
 
   public Transaction(
@@ -251,7 +256,8 @@ public class Transaction
       final SECPSignature signature,
       final Bytes payload,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v) {
+      final Optional<BigInteger> v,
+      final Optional<List<Hash>> versionedHashes) {
     this(
         TransactionType.FRONTIER,
         nonce,
@@ -266,7 +272,8 @@ public class Transaction
         Optional.empty(),
         null,
         chainId,
-        v);
+        v,
+            versionedHashes);
   }
 
   /**
@@ -295,7 +302,8 @@ public class Transaction
       final SECPSignature signature,
       final Bytes payload,
       final Address sender,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final Optional<List<Hash>> versionedHashes ) {
     this(
         nonce,
         Optional.of(gasPrice),
@@ -308,7 +316,8 @@ public class Transaction
         payload,
         sender,
         chainId,
-        Optional.empty());
+        Optional.empty(),
+            versionedHashes);
   }
 
   /**
@@ -339,7 +348,8 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v) {
+      final Optional<BigInteger> v,
+      final Optional<List<Hash>> versionedHashes) {
     this(
         nonce,
         Optional.of(gasPrice),
@@ -352,7 +362,7 @@ public class Transaction
         payload,
         sender,
         chainId,
-        v);
+        v, versionedHashes);
   }
 
   /**
@@ -699,6 +709,10 @@ public class Transaction
     return this.transactionType;
   }
 
+  public Optional<List<Hash>> getVersionedHashes() {
+    return this.versionedHashes;
+  }
+
   /**
    * Returns whether or not the transaction is a GoQuorum private transaction. <br>
    * <br>
@@ -979,6 +993,7 @@ public class Transaction
     protected Optional<BigInteger> chainId = Optional.empty();
 
     protected Optional<BigInteger> v = Optional.empty();
+    protected Optional<List<Hash>> versionedHashes;
 
     public Builder type(final TransactionType transactionType) {
       this.transactionType = transactionType;
@@ -1050,6 +1065,11 @@ public class Transaction
       return this;
     }
 
+    public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
+      this.versionedHashes = versionedHashes;
+      return this;
+    }
+
     public Builder guessType() {
       if (maxPriorityFeePerGas != null || maxFeePerGas != null) {
         transactionType = TransactionType.EIP1559;
@@ -1081,7 +1101,8 @@ public class Transaction
           accessList,
           sender,
           chainId,
-          v);
+          v,
+          versionedHashes);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
