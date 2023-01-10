@@ -1,6 +1,5 @@
 package org.hyperledger.besu.evm.operations;
 
-import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
@@ -38,10 +37,9 @@ public class DataHashOperationTest {
         verify(frame).pushStackItem(version0Hash);
     }
 
-    //case where list of versioned hashes missing.
     @Test
     public void failsOnBloblessTx() {
-        
+
         EVM fakeEVM = mock(EVM.class);
 
         DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
@@ -59,7 +57,6 @@ public class DataHashOperationTest {
         assertThat(failed2.getGasCost()).isEqualTo(3);
         assertThat(failed2.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
     }
-    //case where version index out of bounds.
     @Test
     public void failsOnVersionIndexOutOFBounds() {
         Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
