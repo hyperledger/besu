@@ -16,9 +16,6 @@
 
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
-
 import java.util.Optional;
 
 public class BlockValidationResult {
@@ -55,18 +52,5 @@ public class BlockValidationResult {
 
   public Optional<Throwable> causedBy() {
     return cause;
-  }
-
-  public boolean isInternalError() {
-    if (causedBy().isPresent()) {
-      Throwable t = causedBy().get();
-      // As new "internal only" types of exception are discovered, add them here.
-      if (t instanceof StorageException) {
-        return true;
-      } else if (t instanceof MerkleTrieException) {
-        return true;
-      }
-    }
-    return false;
   }
 }

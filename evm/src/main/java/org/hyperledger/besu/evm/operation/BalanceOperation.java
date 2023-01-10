@@ -29,7 +29,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BalanceOperation extends AbstractOperation {
 
   public BalanceOperation(final GasCalculator gasCalculator) {
-    super(0x31, "BALANCE", 1, 1, 1, gasCalculator);
+    super(0x31, "BALANCE", 1, 1, gasCalculator);
   }
 
   protected long cost(final boolean accountIsWarm) {

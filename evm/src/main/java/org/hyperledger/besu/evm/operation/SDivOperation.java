@@ -29,7 +29,7 @@ public class SDivOperation extends AbstractFixedCostOperation {
   private static final OperationResult sdivSuccess = new OperationResult(5, null);
 
   public SDivOperation(final GasCalculator gasCalculator) {
-    super(0x05, "SDIV", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x05, "SDIV", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

@@ -24,6 +24,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -391,7 +394,7 @@ public class P2PPlainNetworkTest {
   }
 
   private byte[] buildPaddedMessage(final int messageSize) {
-    byte[] bytes = new byte[messageSize];
+    final byte[] bytes = new byte[messageSize];
     Arrays.fill(bytes, (byte) 9);
     return bytes;
   }
@@ -416,7 +419,7 @@ public class P2PPlainNetworkTest {
       final Path targetFilePath = createTemporaryFile("nsscfg");
       Files.write(targetFilePath, updated.getBytes(Charsets.UTF_8));
       ret = targetFilePath;
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException("Error populating nss config file", e);
     }
     return ret;
@@ -427,7 +430,7 @@ public class P2PPlainNetworkTest {
     try {
       tempFile = File.createTempFile("temp", suffix);
       tempFile.deleteOnExit();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException("Error creating temporary file", e);
     }
     return tempFile.toPath();
@@ -482,13 +485,17 @@ public class P2PPlainNetworkTest {
               .withCrlPath(toPath(String.format(crl, name)));
           break;
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
     return Optional.of(builder.build());
   }
 
   private DefaultP2PNetwork.Builder builder(final String name) {
+    final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
+    final Block blockMock = mock(Block.class);
+    when(blockMock.getHash()).thenReturn(Hash.ZERO);
+    when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
     return DefaultP2PNetwork.builder()
         .vertx(vertx)
         .config(config)
@@ -497,6 +504,8 @@ public class P2PPlainNetworkTest {
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
         .storageProvider(new InMemoryKeyValueStorageProvider())
-        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
+        .blockNumberForks(Collections.emptyList())
+        .timestampForks(Collections.emptyList())
+        .blockchain(blockchainMock);
   }
 }

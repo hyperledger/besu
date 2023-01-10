@@ -43,6 +43,7 @@ dependencies {
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
 
+
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'io.opentelemetry:opentelemetry-api'
@@ -55,6 +56,8 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
+
+  implementation 'io.prometheus:simpleclient_guava'
 
   implementation 'org.xerial.snappy:snappy-java'
 
@@ -78,6 +81,7 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.awaitility:awaitility'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 

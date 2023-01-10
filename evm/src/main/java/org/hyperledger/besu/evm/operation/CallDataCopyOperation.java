@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class CallDataCopyOperation extends AbstractOperation {
 
   public CallDataCopyOperation(final GasCalculator gasCalculator) {
-    super(0x37, "CALLDATACOPY", 3, 0, 1, gasCalculator);
+    super(0x37, "CALLDATACOPY", 3, 0, gasCalculator);
   }
 
   @Override

@@ -31,6 +31,8 @@ import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
@@ -43,15 +45,17 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +109,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
-    supportedCapabilities = calculateCapabilities(synchronizerConfiguration);
+    supportedCapabilities =
+        calculateCapabilities(synchronizerConfiguration, ethereumWireProtocolConfiguration);
 
     // Run validators
     for (final PeerValidator peerValidator : this.peerValidators) {
@@ -151,6 +156,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         new ForkIdManager(
             blockchain,
             Collections.emptyList(),
+            Collections.emptyList(),
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
@@ -167,7 +173,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final Optional<MergePeerFilter> mergePeerFilter,
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
-      final List<Long> forks) {
+      final List<Long> blockNumberForks,
+      final List<Long> timestampForks) {
     this(
         blockchain,
         networkId,
@@ -182,7 +189,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         synchronizerConfiguration,
         scheduler,
         new ForkIdManager(
-            blockchain, forks, ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
+            blockchain,
+            blockNumberForks,
+            timestampForks,
+            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
   public EthContext ethContext() {
@@ -199,8 +209,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   private List<Capability> calculateCapabilities(
-      final SynchronizerConfiguration synchronizerConfiguration) {
-    final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final EthProtocolConfiguration ethProtocolConfiguration) {
+    final List<Capability> capabilities = new ArrayList<>();
 
     if (SyncMode.isFullSync(synchronizerConfiguration.getSyncMode())) {
       capabilities.add(EthProtocol.ETH62);
@@ -210,7 +221,26 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     capabilities.add(EthProtocol.ETH65);
     capabilities.add(EthProtocol.ETH66);
 
-    return capabilities.build();
+    // Version 67 removes the GetNodeData and NodeData
+    // Fast sync depends on GetNodeData and NodeData
+    // see https://eips.ethereum.org/EIPS/eip-4938
+    if (!Objects.equals(SyncMode.FAST, synchronizerConfiguration.getSyncMode())) {
+      capabilities.add(EthProtocol.ETH67);
+      capabilities.add(EthProtocol.ETH68);
+    }
+
+    capabilities.removeIf(cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapability());
+    capabilities.removeIf(cap -> cap.getVersion() < ethProtocolConfiguration.getMinEthCapability());
+
+    return Collections.unmodifiableList(capabilities);
+  }
+
+  @Override
+  public int getHighestProtocolVersion() {
+    return getSupportedCapabilities().stream()
+        .max(Comparator.comparing(Capability::getVersion))
+        .map(Capability::getVersion)
+        .orElse(0);
   }
 
   @Override

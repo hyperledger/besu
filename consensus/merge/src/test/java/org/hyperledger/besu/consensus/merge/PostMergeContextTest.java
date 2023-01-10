@@ -202,6 +202,32 @@ public class PostMergeContextTest {
     assertThat(postMergeContext.retrieveBlockById(evictedPayloadId)).isEmpty();
   }
 
+  @Test
+  public void syncStateNullShouldNotThrowWhenIsSyncingIsCalled() {
+    // simulate a possible syncState null when we still have got a syncState set yet.
+    postMergeContext.setSyncState(null);
+    assertThat(postMergeContext.isSyncing()).isTrue();
+
+    // after setting a syncState things should progress as expected.
+    postMergeContext.setSyncState(mockSyncState);
+
+    // Assuming we're not in sync
+    when(mockSyncState.isInSync()).thenReturn(Boolean.FALSE);
+
+    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.empty());
+    assertThat(postMergeContext.isSyncing()).isTrue();
+
+    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.FALSE));
+    assertThat(postMergeContext.isSyncing()).isTrue();
+
+    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.TRUE));
+    assertThat(postMergeContext.isSyncing()).isFalse();
+
+    // if we're in sync reached ttd does not matter anymore
+    when(mockSyncState.isInSync()).thenReturn(Boolean.TRUE);
+    assertThat(postMergeContext.isSyncing()).isFalse();
+  }
+
   private static class MergeStateChangeCollector implements MergeStateHandler {
     final List<Boolean> stateChanges = new ArrayList<>();
 

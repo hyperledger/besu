@@ -158,4 +158,8 @@ public class ProcessableBlockHeader implements BlockValues {
   public Optional<Bytes32> getPrevRandao() {
     return Optional.ofNullable(mixHashOrPrevRandao);
   }
+
+  public String toLogString() {
+    return getNumber() + " (time: " + getTimestamp() + ")";
+  }
 }

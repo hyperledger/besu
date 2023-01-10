@@ -52,10 +52,8 @@ import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
-import java.util.Objects;
 import java.util.Optional;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +74,7 @@ public class EVM {
 
   // Optimized operation flags
   private final boolean enableShanghai;
+  private final boolean enableCancun;
 
   public EVM(
       final OperationRegistry operations,
@@ -89,6 +88,7 @@ public class EVM {
     this.evmSpecVersion = evmSpecVersion;
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
+    enableCancun = EvmSpecVersion.CANCUN.ordinal() <= evmSpecVersion.ordinal();
   }
 
   public GasCalculator getGasCalculator() {
@@ -107,7 +107,7 @@ public class EVM {
     evmSpecVersion.maybeWarnVersion();
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
-    byte[] code = frame.getCode().getCodeBytes().toArrayUnsafe();
+    byte[] code = frame.getCode().getCodeBytes(frame.getSection()).toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
@@ -277,6 +277,17 @@ public class EVM {
           case 0x9f:
             result = SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
             break;
+          case 0xb0: // CALLF
+          case 0xb1: // RETF
+            // Function operations reset code
+            if (enableCancun) {
+              frame.setCurrentOperation(currentOperation);
+              result = currentOperation.execute(frame, this);
+              code = frame.getCode().getCodeSection(frame.getSection()).getCode().toArrayUnsafe();
+            } else {
+              result = InvalidOperation.INVALID_RESULT;
+            }
+            break;
           default: // unoptimized operations
             frame.setCurrentOperation(currentOperation);
             result = currentOperation.execute(frame, this);
@@ -292,8 +303,9 @@ public class EVM {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
         frame.setExceptionalHaltReason(Optional.of(haltReason));
         frame.setState(State.EXCEPTIONAL_HALT);
-      } else {
-        frame.decrementRemainingGas(result.getGasCost());
+      } else if (frame.decrementRemainingGas(result.getGasCost()) < 0) {
+        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+        frame.setState(State.EXCEPTIONAL_HALT);
       }
       if (frame.getState() == State.CODE_EXECUTING) {
         final int currentPC = frame.getPC();
@@ -306,17 +318,8 @@ public class EVM {
     }
   }
 
-  @VisibleForTesting
-  public Operation operationAtOffset(final Code code, final int offset) {
-    final Bytes bytecode = code.getCodeBytes();
-    // If the length of the program code is shorter than the required offset, halt execution.
-    if (offset >= bytecode.size()) {
-      return endOfScriptStop;
-    }
-
-    final byte opcode = bytecode.get(offset);
-    final Operation operation = operations.get(opcode);
-    return Objects.requireNonNullElseGet(operation, () -> new InvalidOperation(opcode, null));
+  public Operation[] getOperationsUnsafe() {
+    return operations.getOperations();
   }
 
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {

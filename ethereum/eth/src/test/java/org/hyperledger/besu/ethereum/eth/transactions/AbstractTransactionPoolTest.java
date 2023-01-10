@@ -108,7 +108,7 @@ public abstract class AbstractTransactionPoolTest {
   protected MutableBlockchain blockchain;
   private TransactionBroadcaster transactionBroadcaster;
 
-  private AbstractPendingTransactionsSorter transactions;
+  protected AbstractPendingTransactionsSorter transactions;
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
 
@@ -348,7 +348,8 @@ public abstract class AbstractTransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction));
 
     assertTransactionNotPending(transaction);
-    verifyNoInteractions(transactionValidator); // Reject before validation
+    verify(transactionValidator).getGoQuorumCompatibilityMode();
+    verifyNoMoreInteractions(transactionValidator);
   }
 
   @Test

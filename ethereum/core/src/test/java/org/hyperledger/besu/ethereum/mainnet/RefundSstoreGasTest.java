@@ -19,12 +19,12 @@ import static org.apache.tuweni.units.bigints.UInt256.ZERO;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 
+import com.google.common.base.Supplier;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -122,24 +122,33 @@ public class RefundSstoreGasTest {
   @Parameter(value = 6)
   public long expectedGasRefund;
 
-  private final Account account = mock(Account.class);
+  private final Supplier<UInt256> mockSupplierForOriginalValue = mockSupplier();
+  private final Supplier<UInt256> mockSupplierCurrentValue = mockSupplier();
+
+  @SuppressWarnings("unchecked")
+  private <T> Supplier<T> mockSupplier() {
+    return mock(Supplier.class);
+  }
 
   @Before
   public void setUp() {
-    when(account.getOriginalStorageValue(UInt256.ZERO)).thenReturn(originalValue);
-    when(account.getStorageValue(UInt256.ZERO)).thenReturn(currentValue);
+    when(mockSupplierForOriginalValue.get()).thenReturn(originalValue);
+    when(mockSupplierCurrentValue.get()).thenReturn(currentValue);
   }
 
   @Test
   public void shouldChargeCorrectGas() {
-    Assertions.assertThat(gasCalculator.calculateStorageCost(account, UInt256.ZERO, newValue))
+    Assertions.assertThat(
+            gasCalculator.calculateStorageCost(
+                newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
         .isEqualTo(expectedGasCost);
   }
 
   @Test
   public void shouldRefundCorrectGas() {
     Assertions.assertThat(
-            gasCalculator.calculateStorageRefundAmount(account, UInt256.ZERO, newValue))
+            gasCalculator.calculateStorageRefundAmount(
+                newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
         .isEqualTo(expectedGasRefund);
   }
 }

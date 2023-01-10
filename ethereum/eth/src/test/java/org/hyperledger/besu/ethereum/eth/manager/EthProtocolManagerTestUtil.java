@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler.Timeo
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -91,7 +92,7 @@ public class EthProtocolManagerTestUtil {
         mergePeerFilter,
         mock(SynchronizerConfiguration.class),
         ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), false));
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(
@@ -112,7 +113,7 @@ public class EthProtocolManagerTestUtil {
         ethPeers,
         ethMessages,
         ethContext,
-        new ForkIdManager(blockchain, Collections.emptyList(), false));
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(

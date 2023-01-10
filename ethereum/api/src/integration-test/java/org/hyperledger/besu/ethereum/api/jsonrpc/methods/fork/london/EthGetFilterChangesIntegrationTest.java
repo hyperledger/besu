@@ -297,7 +297,7 @@ public class EthGetFilterChangesIntegrationTest {
         .type(TransactionType.FRONTIER)
         .gasLimit(100)
         .gasPrice(Wei.ZERO)
-        .nonce(1)
+        .nonce(0)
         .payload(Bytes.EMPTY)
         .to(Address.ID)
         .value(Wei.of(transactionNumber))

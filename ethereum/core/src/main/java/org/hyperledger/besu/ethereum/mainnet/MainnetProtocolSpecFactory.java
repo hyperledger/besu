@@ -185,8 +185,63 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
-  public ProtocolSpecBuilder shandongDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.shandongDefinition(
+  public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.shanghaiDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
+  public ProtocolSpecBuilder cancunDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.cancunDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
+  /**
+   * The "future" fork consists of EIPs that have been approved for Ethereum Mainnet but not
+   * scheduled for a fork. This is also known as "Eligible For Inclusion" (EFI) or "Considered for
+   * Inclusion" (CFI).
+   *
+   * <p>There is no guarantee of the contents of this fork across Besu releases and should be
+   * considered unstable.
+   *
+   * @param genesisConfigOptions the chain options from the genesis config
+   * @return a protocol spec for the "Future" fork.
+   */
+  public ProtocolSpecBuilder futureEipsDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.futureEipsDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
+  /**
+   * The "experimental" fork consists of EIPs and other changes that have not been approved for any
+   * fork but are implemented in Besu, either for demonstration or experimentation.
+   *
+   * <p>There is no guarantee of the contents of this fork across Besu releases and should be
+   * considered unstable.
+   *
+   * @param genesisConfigOptions the chain options from the genesis config
+   * @return a protocol spec for the "Experimental" fork.
+   */
+  public ProtocolSpecBuilder experimentalEipsDefinition(
+      final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.experimentalEipsDefinition(
         chainId,
         contractSizeLimit,
         evmStackSize,

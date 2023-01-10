@@ -1,4 +1,66 @@
 # Changelog
+
+## 23.1.0-beta2
+
+### Breaking Changes
+- Default configurations for the deprecated Ropsten, Kiln, Shandong, and Astor networks have been removed from the CLI network list. These networks can currently be accessed but will require a user-provided genesis configuration. [#4869](https://github.com/hyperledger/besu/pull/4869)
+
+### Additions and Improvements
+- RPC methods that lookup block by hash will now return an error response if no block found [#4582](https://github.com/hyperledger/besu/pull/4582)
+
+### Bug Fixes
+
+## 23.1.0-beta
+
+### Breaking Changes
+- GoQuorum-compatible privacy is deprecated and will be removed in 23.4
+- IBFT 1.0 is deprecated and will be removed in 23.4
+- Optimize SSTORE Operation execution time (memoize current and original value) [#4836](https://github.com/hyperledger/besu/pull/4836)
+
+### Additions and Improvements
+- Added post-execution state logging option to EVM Tool [#4709](https://github.com/hyperledger/besu/pull/4709)
+- Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
+- Add timestamp fork support, including shanghaiTime and cancunTime forks [#4743](https://github.com/hyperledger/besu/pull/4743)
+- Optimization:  Memoize transaction size and hash at the same time [#4812](https://github.com/hyperledger/besu/pull/4812)
+- Add chain data pruning feature with three experimental CLI options: `--Xchain-pruning-enabled`, `--Xchain-pruning-blocks-retained` and `--Xchain-pruning-frequency` [#4686](https://github.com/hyperledger/besu/pull/4686)
+  - Note that chain pruning is hidden and disabled by default. Once you choose to enable chain pruning, a new column family will be added to the db and you cannot roll back to a previous version of Besu.
+
+### Bug Fixes
+- Fix for segmentation faults on worldstate truncation, snap-sync starts [#4786](https://github.com/hyperledger/besu/pull/4786)
+- Fix for worldstate mismatch on failed forkchoiceUpdate [#4862](https://github.com/hyperledger/besu/pull/4862)
+
+### Download Links
+
+## 22.10.3
+
+### Breaking Changes
+- Added `--rpc-max-logs-range` CLI option to allow limiting the number of blocks queried by `eth_getLogs` RPC API. Default value: 1000 [#4597](https://github.com/hyperledger/besu/pull/4597)
+- The `graalvm` docker variant no longer meets the performance requirements for Ethereum Mainnet.  The `openjdk-11` and `openjdk-latest` variants are recommended in its place.
+
+### Additions and Improvements
+- Implement Eth/68 sub-protocol [#4715](https://github.com/hyperledger/besu/issues/4715)
+- Increase the speed of modexp gas execution and execution. [#4780](https://github.com/hyperledger/besu/pull/4780)
+- Added experimental CLI options `--Xeth-capability-max` and `--Xeth-capability-min` to specify a range of capabilities to be supported by the Eth protocol. [#4752](https://github.com/hyperledger/besu/pull/4752)
+- Set the default curve in the EVMTool, like is done in production operations [#4790](https://github.com/hyperledger/besu/pull/4790)
+
+### Bug Fixes
+- Fix storage key format for eth_getProof so that it follows the EIP-1474 spec [#4564](https://github.com/hyperledger/besu/pull/4564)
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.tar.gz / sha256: 7213f9445a84a196e94ae1877c6fdb1e51d37bfb19615da02ef5121d4f40e38c
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.zip / sha256: 0bf6bc98e01b0c1045f1b7d841a390c575bc5203c2a4e543d922fbc1ea0d3d5d
+
+## 22.10.2
+This is a hotfix release to resolve a race condition that results in segfaults, introduced in 22.10.1 release.
+
+### Bug Fixes
+- bugfix for async operations on Snapshot worldstates [#4767](https://github.com/hyperledger/besu/pull/4767)
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.tar.gz  / sha256: cdb36141e3cba6379d35016e0a2de2edba579d4786124b5f7257b1e4a68867a2
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2.zip / sha256: 4c9208f684762670cb4f2c6ebfb6930e05e339a7c3c586fe8caa9f26462830aa
+
+
 ## 22.10.1
 
 ### Breaking Changes
@@ -9,26 +71,38 @@
 - Support for ephemeral testnet Shandong, for EOF testing. [#4599](https://github.com/hyperledger/besu/pull/4599)
 - Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
-- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
+- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [#4580](https://github.com/hyperledger/besu/pull/4580)
 - Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
+- Implement Eth/67 sub-protocol [#4596](https://github.com/hyperledger/besu/issues/4596)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)
+- Enable RocksDB Bloom filters to improve read performance [#4682](https://github.com/hyperledger/besu/pull/4682)
 - Backward sync: use retry switching peer when fetching data from peers [#4656](https://github.com/hyperledger/besu/pull/4656)
 - Shanghai implementation of EIP-3651 Warm coinbase [#4620](https://github.com/hyperledger/besu/pull/4620) 
 - Shanghai implementation of EIP-3855 Push0 [#4660](https://github.com/hyperledger/besu/pull/4660)
 - Shanghai implementation of EIP-3540 and EIP-3670 Ethereum Object Format and Code Validation [#4644](https://github.com/hyperledger/besu/pull/4644)
+- Remove some log statements that are keeping some objects live in heap for a long time, to reduce the amount of memory required during initial sync [#4705](https://github.com/hyperledger/besu/pull/4705)
+- Add field `type` to Transaction receipt object (eth_getTransactionReceipt) [#4505](https://github.com/hyperledger/besu/issues/4505)
+- Print an overview of configuration and system information at startup [#4451](https://github.com/hyperledger/besu/pull/4451)
+- Do not send new payloads to backward sync if initial sync is in progress [#4720](https://github.com/hyperledger/besu/issues/4720)
+- Improve the way transaction fee cap validation is done on London fee market to not depend on transient network conditions [#4598](https://github.com/hyperledger/besu/pull/4598) 
+- Preload and cache account and storage data from RocksDB to improve performance  [#4737](https://github.com/hyperledger/besu/issues/4737)
 
 ### Bug Fixes
+- Restore updating chain head and finalized block during backward sync [#4718](https://github.com/hyperledger/besu/pull/4718)
 
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.1/besu-22.10.1.tar.gz  / sha256: b6757b9fc69b782cdabb95b1e784d31b1effcc2e25c6b198b2f9d6b3786c7a8a
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.1/besu-22.10.1.zip / sha256: 0dbee534620c7cc0fac0596e6df0c7f8a74be9df9cecd9d4f1407016f30fb9a1
 
 ## 22.10.0
 
 ### Breaking Changes
+- Internal and interface APIs relating to storage have migrated from `UInt256` to `Bytes32` [#4562](https://github.com/hyperledger/besu/pull/4562)
 - Flexible Privacy Groups (early access) support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
   * Before this change, the `bytes32` type was used for the enclave public keys, just supporting encryptors with public keys of that length (like the default NaCl)
   * For the EC encryptor, the encoded public key length is 91
 - `--tx-pool-hashes-max-size` option removed (deprecated in 22.1.3)
-- `--Xmerge-support` option remove (deprecated in 22.4.2) [#4518](https://github.com/hyperledger/besu/pull/4518)
+- `--Xmerge-support` option removed (deprecated in 22.4.2) [#4518](https://github.com/hyperledger/besu/pull/4518)
 - Breaking API changes in the `OperationTracer` interface to enable performance work.
   * The `traceExecution` method has been replaced with `tracePreExecution` and `tracePostExecution` methods, called just before and just after operation execution.
   * See `DebugOperationTracer` and `StandardJsonTracer` for migration examples.
@@ -71,7 +145,6 @@
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.tar.gz  / sha256: 88fb5df567e4ec3547d7d2970cfef00debbd020c0da66b19166d43779b3b2b85
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.zip / sha256: c8e39f7c879409cb9b47f4d3de5e9c521249083830a8c9a45e8a14a319fe195d
 
-
 ## 22.10.0-RC2
 
 ### Breaking Changes
@@ -88,7 +161,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0
 - Reduce the number of runtime exceptions (SecurityModuleException) and unnecessary executions during ECIES handshake, by trying to decrypt EIP-8 formatted messages first [#4508](https://github.com/hyperledger/besu/pull/4508).
 - Improved RLP processing of zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
 - Increased level of detail in JSON-RPC parameter error log messages [#4510](https://github.com/hyperledger/besu/pull/4510)
-- New unstable configuration options to set the maximum time, in milliseconds, a PoS block creation jobs is allowed to run [#4519](https://github.com/hyperledger/besu/pull/4519)
+- New experimental configuration options to set the maximum time, in milliseconds, a PoS block creation jobs is allowed to run [#4519](https://github.com/hyperledger/besu/pull/4519)
 - Tune EthScheduler thread pools to avoid recreating too many threads [#4529](https://github.com/hyperledger/besu/pull/4529)
 - RocksDB snapshot based worldstate and plugin-api addition of Snapshot interfaces [#4409](https://github.com/hyperledger/besu/pull/4409)
 - Continuously try to build better block proposals until timeout or GetPayload is called [#4516](https://github.com/hyperledger/besu/pull/4516)

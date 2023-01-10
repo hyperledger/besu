@@ -30,8 +30,6 @@ public class DefaultDiscoveryConfiguration {
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.mainnet.ethdisco.net";
   public static final String RINKEBY_DISCOVERY_URL =
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.rinkeby.ethdisco.net";
-  public static final String ROPSTEN_DISCOVERY_URL =
-      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.ropsten.ethdisco.net";
   public static final List<EnodeURL> MAINNET_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
@@ -65,15 +63,6 @@ public class DefaultDiscoveryConfiguration {
                   "enode://b6b28890b006743680c52e64e0d16db57f28124885595fa03a562be1d2bf0f3a1da297d56b13da25fb992888fd556d4c1a27b1f39d531bde7de1921c90061cc6@159.89.28.211:30303")
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
-  public static final List<EnodeURL> ROPSTEN_BOOTSTRAP_NODES =
-      Collections.unmodifiableList(
-          Stream.of(
-                  "enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303",
-                  "enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303",
-                  "enode://30b7ab30a01c124a6cceca36863ece12c4f5fa68e3ba9b0b51407ccc002eeed3b3102d20a88f1c1d3c3154e2449317b8ef95090e77b312d5cc39354f86d5d606@52.176.7.10:30303",
-                  "enode://865a63255b3bb68023b6bffd5095118fcc13e79dcf014fe4e47e065c350c7cc72af2e53eff895f11ba1bbb6a2b33271c1116ee870f266618eadfc2e78aa7349c@52.176.100.77:30303")
-              .map(EnodeURLImpl::fromString)
-              .collect(toList()));
   public static final List<EnodeURL> GOERLI_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
@@ -93,20 +82,8 @@ public class DefaultDiscoveryConfiguration {
   public static final List<EnodeURL> SEPOLIA_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
-                  "enode://9246d00bc8fd1742e5ad2428b80fc4dc45d786283e05ef6edbd9002cbc335d40998444732fbe921cb88e1d2c73d1b1de53bae6a2237996e9bfe14f871baf7066@18.168.182.86:30303")
-              .map(EnodeURLImpl::fromString)
-              .collect(toList()));
-  public static final List<EnodeURL> SHANDONG_BOOTSTRAP_NODES =
-      Collections.unmodifiableList(
-          Stream.of(
-                  "enode://11e43515d6258ab2bd814b25a50c911c155a46a27e9be8ce6ea68e293ec13aa4cd6740418baf9abf1e79ba9252c497d66aa4a293c94ef8168d0e7c211ef73690@46.101.126.45:30303",
-                  "enode://95b683a66aba396551bafff688644fc6dc1bada2de78491f89b268ebdcf3d88dfc9942a9f2833ecc3887d49dfb4e96851c2f5eb0adde41847cc356f15ac4ac67@178.128.206.76:30303",
-                  "enode://bcd3eeabca8ff3a1c3b19384e064cc79fda547939324e0699d030041a8960a1d68f1e19141d19305e79675be50434521d024352a5eae00da8ace7933abf20fdf@142.93.160.7:30303",
-                  "enode://6a65c7e62360e1fcc98c88cf8dd8e9492d2e95372f5d7b742b73ab8f82e849bae196bd18b79bc9502b204cef7bf64b589147700368d877c32a76f9c4fd7dd941@104.248.21.4:30303",
-                  "enode://2ae5ef4b4c338e4ee15a347aba8e60bcb451ca19d26f8d67e731bb5f2972ad6ce867ec85f9942a5efe349470106b21c49a9aeb5b00b91063e35f1c1643c0930c@104.248.251.20:30303",
-                  "enode://85ecd8fcab723a33ee68e5f8530c9d264bd601899dc74af7f020bc2f8e0d0ad8ec5c5324364f127c77ddab607bc16e1c5fbae2c675b6d94a79a24222e7e4766e@164.92.174.56:30303",
-                  "enode://24951d3b76f20aed18e32096941d572b98518c9e4dace6b7d0b1f34292dfc5ee7d295453b955be4d2967c6ce1948c11513cd70d76dbee8d3034ddb40d63f5517@142.93.173.170:30303",
-                  "enode://73e2396ac78c462287edd22957096890ca1995a4995c51a1fe24accbe931209fb0fc5359fc1043a0edad3fc53ba64fba5262255c70a03e5fca86f924c261ad4f@178.128.203.243:30303")
+                  "enode://9246d00bc8fd1742e5ad2428b80fc4dc45d786283e05ef6edbd9002cbc335d40998444732fbe921cb88e1d2c73d1b1de53bae6a2237996e9bfe14f871baf7066@18.168.182.86:30303",
+                  "enode://ec66ddcf1a974950bd4c782789a7e04f8aa7110a72569b6e65fcd51e937e74eed303b1ea734e4d19cfaec9fbff9b6ee65bf31dcb50ba79acce9dd63a6aca61c7@52.14.151.177:30303")
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
   public static final List<EnodeURL> CLASSIC_BOOTSTRAP_NODES =
@@ -203,12 +180,6 @@ public class DefaultDiscoveryConfiguration {
                   "enode://8fa15f5012ac3c47619147220b7772fcc5db0cb7fd132b5d196e7ccacb166ac1fcf83be1dace6cd288e288a85e032423b6e7e9e57f479fe7373edea045caa56b@176.9.51.216:31355", // @q9f Ceibo
                   "enode://34c14141b79652afc334dcd2ba4d8047946246b2310dc8e45737ebe3e6f15f9279ca4702b90bc5be12929f6194e2c3ce19a837b7fec7ebffcee9e9fe4693b504@176.9.51.216:31365" // @q9f Ceibo
                   )
-              .map(EnodeURLImpl::fromString)
-              .collect(toList()));
-  public static final List<EnodeURL> ASTOR_BOOTSTRAP_NODES =
-      Collections.unmodifiableList(
-          Stream.of(
-                  "enode://b638fc3dca6181ae97fac2ea0157e8330f5ac8a20c0d4c63aa6f98dcbac4e35b4e023f656757b58c1da7a7b2be9ffad9342e0f769b8cf0f5e35ff73116ff7dfd@3.16.171.213:30303")
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
 }

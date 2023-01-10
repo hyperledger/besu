@@ -121,6 +121,14 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
             requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
       }
 
+      // return error if block hash does not find a block
+      Optional<BlockHeader> maybeBlockHeader =
+          getBlockchainQueries().getBlockHeaderByHash(blockHash.get());
+      if (maybeBlockHeader.isEmpty()) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
+      }
+
       if (Boolean.TRUE.equals(blockParameterOrBlockHash.getRequireCanonical())
           && !getBlockchainQueries().blockIsOnCanonicalChain(blockHash.get())) {
         return new JsonRpcErrorResponse(

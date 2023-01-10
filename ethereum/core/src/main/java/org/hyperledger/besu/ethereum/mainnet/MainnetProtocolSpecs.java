@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.contractvalidation.CachedInvalidCodeRule;
@@ -50,6 +51,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -79,6 +81,7 @@ public abstract class MainnetProtocolSpecs {
   public static final int FRONTIER_CONTRACT_SIZE_LIMIT = Integer.MAX_VALUE;
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
+  public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
 
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
@@ -635,7 +638,7 @@ public abstract class MainnetProtocolSpecs {
         .name("ParisFork");
   }
 
-  static ProtocolSpecBuilder shandongDefinition(
+  static ProtocolSpecBuilder shanghaiDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -643,14 +646,17 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
+
+    // extra vaiables need to support flipping the warm coinbase flag.
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
     final BaseFeeMarket londonFeeMarket =
         genesisConfigOptions.isZeroBaseFee()
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
             : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+
+    // constant for max initcode size for EIP-3860 limit and meter initcode
+    final int contractSizeLimit = configContractSizeLimit.orElse(SHANGHAI_INIT_CODE_SIZE_LIMIT);
 
     return parisDefinition(
             chainId,
@@ -660,10 +666,14 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        // gas calculator has new code to support EIP-3860 limit and meter initcode
+        .gasCalculator(ShanghaiGasCalculator::new)
+        // EVM has a new operation for EIP-3855 PUSH0 instruction
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.shandong(
+                MainnetEVMs.shanghai(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // we need to flip the Warm Coinbase flag for EIP-3651 warm coinbase
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -679,16 +689,92 @@ public abstract class MainnetProtocolSpecs {
                     stackSizeLimit,
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
+        // Contract creation rules for EIP-3860 Limit and meter intitcode
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     true,
-                    List.of(MaxCodeSizeRule.of(contractSizeLimit), CachedInvalidCodeRule.of()),
+                    List.of(
+                        MaxCodeSizeRule.of(contractSizeLimit),
+                        CachedInvalidCodeRule.of(EvmSpecVersion.SHANGHAI)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        .name("Shandong");
+        .name("Shanghai");
+  }
+
+  static ProtocolSpecBuilder cancunDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return shanghaiDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.cancun(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("Cancun");
+  }
+
+  static ProtocolSpecBuilder futureEipsDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return cancunDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.futureEips(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("FutureEips");
+  }
+
+  static ProtocolSpecBuilder experimentalEipsDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return futureEipsDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.experimentalEips(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("ExperimentalEips");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

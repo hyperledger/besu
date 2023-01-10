@@ -86,6 +86,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final MiningCoordinator miningCoordinator;
   private final Set<Capability> supportedCapabilities;
   private final PrivacyParameters privacyParameters;
+  private final Optional<Long> maxLogRange;
 
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -95,7 +96,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Set<Capability> supportedCapabilities,
-      final PrivacyParameters privacyParameters) {
+      final PrivacyParameters privacyParameters,
+      final Optional<Long> maxLogRange) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
     this.protocolSchedule = protocolSchedule;
@@ -104,6 +106,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
     this.privacyParameters = privacyParameters;
+    this.maxLogRange = maxLogRange;
   }
 
   @Override
@@ -130,7 +133,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 privacyParameters)),
         new EthFeeHistory(protocolSchedule, blockchainQueries.getBlockchain()),
         new EthGetCode(blockchainQueries, Optional.of(privacyParameters)),
-        new EthGetLogs(blockchainQueries),
+        new EthGetLogs(blockchainQueries, maxLogRange),
         new EthGetProof(blockchainQueries),
         new EthGetUncleCountByBlockHash(blockchainQueries),
         new EthGetUncleCountByBlockNumber(blockchainQueries),

@@ -179,7 +179,9 @@ public class TestNode implements Closeable {
                         .metricsSystem(new NoOpMetricsSystem())
                         .supportedCapabilities(capabilities)
                         .storageProvider(new InMemoryKeyValueStorageProvider())
-                        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+                        .blockchain(blockchain)
+                        .blockNumberForks(Collections.emptyList())
+                        .timestampForks(Collections.emptyList())
                         .build())
             .metricsSystem(new NoOpMetricsSystem())
             .build();
