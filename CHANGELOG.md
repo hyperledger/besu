@@ -7,6 +7,7 @@
 
 ### Additions and Improvements
 - RPC methods that lookup block by hash will now return an error response if no block found [#4582](https://github.com/hyperledger/besu/pull/4582)
+- Added support for `safe` and `finalized` strings for the RPC methods using defaultBlock parameter [#4902](https://github.com/hyperledger/besu/pull/4902)
 
 ### Bug Fixes
 
