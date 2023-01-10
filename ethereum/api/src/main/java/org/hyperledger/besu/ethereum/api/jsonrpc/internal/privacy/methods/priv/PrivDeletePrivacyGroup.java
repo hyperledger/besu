@@ -48,15 +48,27 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    LOG.trace("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
+    LOG.info("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
 
     final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    LOG.info("privacyGroupId: {}", privacyGroupId);
+
+    LOG.info("privacyController: {}", privacyController.getClass().getSimpleName());
+    LOG.info("privacyIdProvider: {}", privacyIdProvider.getClass().getSimpleName());
+
+    if (requestContext.getUser().isEmpty()) {
+      LOG.info("user is empty");
+    } else {
+      LOG.info("User: {}", requestContext.getUser().get());
+    }
 
     final String response;
     try {
+      LOG.info("Before deletePrivacyGroup");
       response =
           privacyController.deletePrivacyGroup(
               privacyGroupId, privacyIdProvider.getPrivacyUserId(requestContext.getUser()));
+      LOG.info("After deletePrivacyGroup");
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(
