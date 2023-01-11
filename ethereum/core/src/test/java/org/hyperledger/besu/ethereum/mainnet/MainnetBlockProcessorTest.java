@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -30,6 +32,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
 import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -41,6 +44,16 @@ public class MainnetBlockProcessorTest {
       mock(MainnetTransactionProcessor.class);
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
+  private final HeaderBasedProtocolSchedule protocolSchedule =
+      mock(HeaderBasedProtocolSchedule.class);
+  private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+
+  @Before
+  public void setup() {
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    when(protocolSpec.getWithdrawalsProcessor())
+        .thenReturn(new WithdrawalsProcessor.ProhibitedWithdrawalsProcessor());
+  }
 
   @Test
   public void noAccountCreatedWhenBlockRewardIsZeroAndSkipped() {
@@ -52,7 +65,8 @@ public class MainnetBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            Optional.empty());
+            Optional.empty(),
+            protocolSchedule);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
     final Hash initialHash = worldState.rootHash();
@@ -78,7 +92,8 @@ public class MainnetBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             false,
-            Optional.empty());
+            Optional.empty(),
+            protocolSchedule);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
     final Hash initialHash = worldState.rootHash();

@@ -18,11 +18,31 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-public class WithdrawalsProcessor {
+import java.util.List;
 
-  public void processWithdrawal(final Withdrawal withdrawal, final WorldUpdater worldUpdater) {
-    final EvmAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
-    account.getMutable().incrementBalance(withdrawal.getAmount());
-    worldUpdater.commit();
+public interface WithdrawalsProcessor {
+
+  void processWithdrawals(final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater);
+
+  class ProhibitedWithdrawalsProcessor implements WithdrawalsProcessor {
+
+    @Override
+    public void processWithdrawals(
+        final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {
+      throw new UnsupportedOperationException("Withdrawals not supported");
+    }
+  }
+
+  class AllowedWithdrawalsProcessor implements WithdrawalsProcessor {
+
+    @Override
+    public void processWithdrawals(
+        final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {
+      for (final Withdrawal withdrawal : withdrawals) {
+        final EvmAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
+        account.getMutable().incrementBalance(withdrawal.getAmount());
+      }
+      worldUpdater.commit();
+    }
   }
 }

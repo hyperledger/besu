@@ -60,13 +60,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final MainnetTransactionProcessor transactionProcessor;
 
-  protected final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
-
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
   final Wei blockReward;
 
   protected final boolean skipZeroBlockRewards;
+  private final HeaderBasedProtocolSchedule protocolSchedule;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
@@ -75,12 +74,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
+    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
@@ -146,14 +147,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
+    final WithdrawalsProcessor withdrawalsProcessor =
+        protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
     maybeWithdrawals.ifPresent(
-        withdrawals -> {
-          final WorldUpdater worldStateUpdater = worldState.updater();
-          for (final Withdrawal withdrawal : withdrawals) {
-            withdrawalsProcessor.processWithdrawal(withdrawal, worldStateUpdater);
-          }
-          worldStateUpdater.commit();
-        });
+        withdrawals -> withdrawalsProcessor.processWithdrawals(withdrawals, worldState.updater()));
 
     try {
       worldState.persist(blockHeader);

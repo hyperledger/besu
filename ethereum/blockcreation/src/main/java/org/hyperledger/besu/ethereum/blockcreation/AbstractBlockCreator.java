@@ -188,16 +188,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
+      final WithdrawalsProcessor withdrawalsProcessor = newProtocolSpec.getWithdrawalsProcessor();
       maybeWithdrawals.ifPresent(
-          withdrawals -> {
-            // TODO create this as a field?
-            final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
-            final WorldUpdater updater = disposableWorldState.updater();
-            for (Withdrawal withdrawal : withdrawals) {
-              withdrawalsProcessor.processWithdrawal(withdrawal, updater);
-            }
-            updater.commit();
-          });
+          withdrawals ->
+              withdrawalsProcessor.processWithdrawals(withdrawals, disposableWorldState.updater()));
+
+      throwIfStopped();
 
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()

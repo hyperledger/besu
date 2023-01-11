@@ -72,6 +72,10 @@ public class ProtocolSpecBuilder {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
+
+  private WithdrawalsProcessor withdrawalsProcessor =
+      new WithdrawalsProcessor.ProhibitedWithdrawalsProcessor();
+
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -243,6 +247,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder withdrawalsProcessor(final WithdrawalsProcessor withdrawalsProcessor) {
+    this.withdrawalsProcessor = withdrawalsProcessor;
+    return this;
+  }
+
   public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
@@ -295,7 +304,7 @@ public class ProtocolSpecBuilder {
 
     final BlockBodyValidator blockBodyValidator = blockBodyValidatorBuilder.apply(protocolSchedule);
 
-    BlockProcessor blockProcessor = createBlockProcessor(transactionProcessor);
+    BlockProcessor blockProcessor = createBlockProcessor(transactionProcessor, protocolSchedule);
     // Set private Tx Processor
     PrivateTransactionProcessor privateTransactionProcessor =
         createPrivateTransactionProcessor(
@@ -347,7 +356,8 @@ public class ProtocolSpecBuilder {
         gasLimitCalculator,
         feeMarket,
         badBlockManager,
-        Optional.ofNullable(powHasher));
+        Optional.ofNullable(powHasher),
+        withdrawalsProcessor);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(
@@ -386,14 +396,16 @@ public class ProtocolSpecBuilder {
   }
 
   private BlockProcessor createBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor) {
+      final MainnetTransactionProcessor transactionProcessor,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
     return blockProcessorBuilder.apply(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        privacyParameters.getGoQuorumPrivacyParameters());
+        privacyParameters.getGoQuorumPrivacyParameters(),
+        protocolSchedule);
   }
 
   private BlockHeaderValidator createBlockHeaderValidator(
@@ -431,7 +443,8 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
+        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
+        HeaderBasedProtocolSchedule protocolSchedule);
   }
 
   public interface BlockValidatorBuilder {

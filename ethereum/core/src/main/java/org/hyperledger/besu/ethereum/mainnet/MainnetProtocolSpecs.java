@@ -250,7 +250,8 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                goQuorumPrivacyParameters) ->
+                goQuorumPrivacyParameters,
+                protocolSchedule) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
                         transactionProcessor,
@@ -258,7 +259,8 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        Optional.empty())))
+                        Optional.empty(),
+                        protocolSchedule)))
         .name("DaoRecoveryInit");
   }
 
@@ -702,6 +704,7 @@ public abstract class MainnetProtocolSpecs {
                         CachedInvalidCodeRule.of(EvmSpecVersion.SHANGHAI)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .withdrawalsProcessor(new WithdrawalsProcessor.AllowedWithdrawalsProcessor())
         .name("Shanghai");
   }
 
