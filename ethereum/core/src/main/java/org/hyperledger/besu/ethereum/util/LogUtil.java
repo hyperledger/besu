@@ -32,8 +32,7 @@ public class LogUtil {
     if (shouldLog.compareAndSet(true, false)) {
       logger.accept(logMessage);
 
-      final Runnable runnable =
-          () -> shouldLog.set(true);
+      final Runnable runnable = () -> shouldLog.set(true);
       executor.schedule(runnable, logRepeatDelay, TimeUnit.SECONDS);
     }
   }
