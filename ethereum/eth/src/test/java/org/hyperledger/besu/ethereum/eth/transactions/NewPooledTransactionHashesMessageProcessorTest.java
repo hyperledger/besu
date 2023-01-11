@@ -170,7 +170,8 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   }
 
   @Test
-  public void shouldScheduleGetPooledTransactionsTaskWhenNewTransactionAdded() {
+  public void
+      shouldScheduleGetPooledTransactionsTaskWhenNewTransactionAddedFromPeerForTheFirstTime() {
 
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
@@ -183,7 +184,8 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         ofMinutes(1));
 
     verify(ethScheduler, times(1))
-        .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
+        .scheduleFutureTaskWithFixedDelay(
+            any(FetcherCreatorTask.class), any(Duration.class), any(Duration.class));
   }
 
   @Test
@@ -204,7 +206,8 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         ofMinutes(1));
 
     verify(ethScheduler, times(1))
-        .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
+        .scheduleFutureTaskWithFixedDelay(
+            any(FetcherCreatorTask.class), any(Duration.class), any(Duration.class));
   }
 
   @Test

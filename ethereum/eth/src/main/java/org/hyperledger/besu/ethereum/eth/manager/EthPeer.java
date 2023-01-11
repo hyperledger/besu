@@ -136,7 +136,7 @@ public class EthPeer implements Comparable<EthPeer> {
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
-    this.requestManagers = new HashMap<>();
+    this.requestManagers = new ConcurrentHashMap<>();
 
     initEthRequestManagers();
     initSnapRequestManagers();
@@ -375,22 +375,23 @@ public class EthPeer implements Comparable<EthPeer> {
    * @param ethMessage the Eth message to dispatch
    * @param protocolName Specific protocol name if needed
    */
-  void dispatch(final EthMessage ethMessage, final String protocolName) {
+  Optional<RequestManager> dispatch(final EthMessage ethMessage, final String protocolName) {
     checkArgument(
         ethMessage.getPeer().equals(this), "Mismatched Eth message sent to peer for dispatch");
     final int messageCode = ethMessage.getData().getCode();
     reputation.resetTimeoutCount(messageCode);
 
-    getRequestManager(protocolName, messageCode)
-        .ifPresentOrElse(
-            requestManager -> requestManager.dispatchResponse(ethMessage),
-            () -> {
-              LOG.trace(
-                  "Message {} not expected has just been received for protocol {}, peer {} ",
-                  messageCode,
-                  protocolName,
-                  this);
-            });
+    Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
+    requestManager.ifPresentOrElse(
+        localRequestManager -> localRequestManager.dispatchResponse(ethMessage),
+        () -> {
+          LOG.trace(
+              "Message {} not expected has just been received for protocol {}, peer {} ",
+              messageCode,
+              protocolName,
+              this);
+        });
+    return requestManager;
   }
 
   /**
