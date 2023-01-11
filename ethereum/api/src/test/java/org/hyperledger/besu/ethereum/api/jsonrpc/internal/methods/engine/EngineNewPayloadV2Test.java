@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,28 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbt.support;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class RlpTestCaseSpec {
-  private final RlpTestCaseMessage message;
-  private final String rlp;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
-  @JsonCreator
-  public RlpTestCaseSpec(
-      @JsonProperty("message") final RlpTestCaseMessage message,
-      @JsonProperty("rlp") final String rlp) {
-    this.message = message;
-    this.rlp = rlp;
+@RunWith(MockitoJUnitRunner.class)
+public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
+
+  public EngineNewPayloadV2Test() {
+    super(EngineNewPayloadV2::new);
   }
 
-  public RlpTestCaseMessage getMessage() {
-    return message;
-  }
-
-  public String getRlp() {
-    return rlp;
+  @Override
+  @Test
+  public void shouldReturnExpectedMethodName() {
+    assertThat(method.getName()).isEqualTo("engine_newPayloadV2");
   }
 }
