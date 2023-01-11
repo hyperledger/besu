@@ -37,8 +37,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ForwardingMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -147,22 +147,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   protected BonsaiAccount getForMutation(final Address address) {
-    final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
-    if (bonsaiValue == null) {
-      final Account account = wrappedWorldView().get(address);
-      if (account instanceof BonsaiAccount) {
-        final BonsaiAccount mutableAccount = new BonsaiAccount((BonsaiAccount) account, this, true);
-        accountsToUpdate.put(address, new BonsaiValue<>((BonsaiAccount) account, mutableAccount));
-        return mutableAccount;
-      } else {
-        return null;
-      }
-    } else {
-      return bonsaiValue.getUpdated();
-    }
+    return loadAccount(address, BonsaiValue::getUpdated);
   }
 
-  protected BonsaiAccount getPriorAccount(final Address address) {
+  protected BonsaiAccount loadAccount(
+      final Address address,
+      final Function<BonsaiValue<BonsaiAccount>, BonsaiAccount> bonsaiAccountFunction) {
     final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
     if (bonsaiValue == null) {
       final Account account = wrappedWorldView().get(address);
@@ -174,7 +164,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         return null;
       }
     } else {
-      return bonsaiValue.getPrior();
+      return bonsaiAccountFunction.apply(bonsaiValue);
     }
   }
 
@@ -370,10 +360,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         (wrappedWorldView() instanceof BonsaiPersistedWorldState)
             ? ((BonsaiPersistedWorldState) wrappedWorldView())
                 .getStorageValueBySlotHash(
-                    Suppliers.memoize(
-                        () ->
-                            Optional.ofNullable(getPriorAccount(address))
-                                .map(BonsaiAccount::getStorageRoot)),
+                    () ->
+                        Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
+                            .map(BonsaiAccount::getStorageRoot),
                     address,
                     slotHash)
             : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
