@@ -55,6 +55,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   private final Consumer<Hash> storagePreloader;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
+  private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
@@ -90,6 +91,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
+    emptySlot.addAll(source.emptySlot);
   }
 
   @Override
@@ -352,18 +354,26 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         return Optional.ofNullable(value.getUpdated());
       }
     }
-    final Optional<UInt256> valueUInt =
-        wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
-    valueUInt.ifPresent(
-        v ->
-            storageToUpdate
-                .computeIfAbsent(
-                    address,
-                    key ->
-                        new StorageConsumingMap<>(
-                            address, new ConcurrentHashMap<>(), storagePreloader))
-                .put(slotHash, new BonsaiValue<>(v, v)));
-    return valueUInt;
+    final Bytes slot = Bytes.concatenate(Hash.hash(address), slotHash);
+    if (emptySlot.contains(slot)) {
+      return Optional.empty();
+    } else {
+      final Optional<UInt256> valueUInt =
+          wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
+      valueUInt.ifPresentOrElse(
+          v ->
+              storageToUpdate
+                  .computeIfAbsent(
+                      address,
+                      key ->
+                          new StorageConsumingMap<>(
+                              address, new ConcurrentHashMap<>(), storagePreloader))
+                  .put(slotHash, new BonsaiValue<>(v, v)),
+          () -> {
+            emptySlot.add(Bytes.concatenate(Hash.hash(address), slotHash));
+          });
+      return valueUInt;
+    }
   }
 
   @Override
@@ -706,6 +716,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     storageToUpdate.clear();
     codeToUpdate.clear();
     accountsToUpdate.clear();
+    emptySlot.clear();
     super.reset();
   }
 
