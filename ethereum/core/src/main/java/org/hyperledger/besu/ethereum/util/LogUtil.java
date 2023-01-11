@@ -26,14 +26,14 @@ public class LogUtil {
       final String logMessage,
       final AtomicBoolean shouldLog,
       final int logRepeatDelay) {
+
+    final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
     if (shouldLog.compareAndSet(true, false)) {
       logger.accept(logMessage);
-      final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
       final Runnable runnable =
-          () -> {
-            shouldLog.set(true);
-            executor.shutdown();
-          };
+          () -> shouldLog.set(true);
       executor.schedule(runnable, logRepeatDelay, TimeUnit.SECONDS);
     }
   }
