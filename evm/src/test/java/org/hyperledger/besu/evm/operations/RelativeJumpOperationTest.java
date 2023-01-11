@@ -47,7 +47,7 @@ class RelativeJumpOperationTest {
     final Bytes code = Bytes.fromHexString("00".repeat(3) + "5c" + twosComplementJump);
 
     when(messageFrame.getCode()).thenReturn(mockCode);
-    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
     when(messageFrame.getRemainingGas()).thenReturn(3L);
     when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
 
@@ -72,7 +72,7 @@ class RelativeJumpOperationTest {
             .initialGas(5L)
             .pushStackItem(Bytes.EMPTY)
             .build();
-    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
     RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
@@ -94,7 +94,7 @@ class RelativeJumpOperationTest {
             .initialGas(5L)
             .pushStackItem(Bytes.ofUnsignedInt(1))
             .build();
-    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
     RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
@@ -121,7 +121,7 @@ class RelativeJumpOperationTest {
             .initialGas(5L)
             .pushStackItem(Bytes.of(jumpVectorSize))
             .build();
-    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
@@ -145,7 +145,7 @@ class RelativeJumpOperationTest {
             .initialGas(5L)
             .pushStackItem(Bytes.of(jumpVectorSize - 1))
             .build();
-    when(mockCode.getCodeBytes(messageFrame.getSection())).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);

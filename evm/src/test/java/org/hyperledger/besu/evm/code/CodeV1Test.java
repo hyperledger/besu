@@ -17,9 +17,9 @@
 package org.hyperledger.besu.evm.code;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.evm.code.CodeV1.validateCode;
+import static org.hyperledger.besu.evm.code.CodeV1Validation.validateCode;
+import static org.hyperledger.besu.evm.code.CodeV1Validation.validateStack;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -422,18 +422,34 @@ class CodeV1Test {
       final int sectionToTest,
       final List<List<Object>> rawCodeSections) {
 
-    List<CodeSection> codeSectionList = new ArrayList<>(rawCodeSections.size());
-    for (var rawCodeSection : rawCodeSections) {
-      codeSectionList.add(
-          new CodeSection(
-              Bytes.fromHexString(((String) rawCodeSection.get(0)).replace(" ", "")),
-              (Integer) rawCodeSection.get(1),
-              (Integer) rawCodeSection.get(2),
-              (Integer) rawCodeSection.get(3)));
-    }
+    StringBuilder codeLengths = new StringBuilder();
+    StringBuilder typesData = new StringBuilder();
+    StringBuilder codeData = new StringBuilder();
 
-    assertThat(CodeV1.validateStack(sectionToTest, codeSectionList.toArray(new CodeSection[0])))
-        .isEqualTo(expectedError);
+    for (var rawCodeSection : rawCodeSections) {
+      var code = Bytes.fromHexString(((String) rawCodeSection.get(0)).replace(" ", ""));
+      int inputs = (Integer) rawCodeSection.get(1);
+      int outputs = (Integer) rawCodeSection.get(2);
+      int length = (Integer) rawCodeSection.get(3);
+
+      codeLengths.append(String.format("%04x", code.size()));
+      typesData.append(String.format("%02x%02x%04x", inputs, outputs, length));
+      codeData.append(code.toUnprefixedHexString());
+    }
+    int sectionCount = rawCodeSections.size();
+    String sb =
+        "0xef0001"
+            + String.format("01%04x", sectionCount * 4)
+            + String.format("02%04x", sectionCount)
+            + codeLengths
+            + "030000"
+            + "00"
+            + typesData
+            + codeData;
+
+    EOFLayout eofLayout = EOFLayout.parseEOF(Bytes.fromHexString(sb));
+
+    assertThat(validateStack(sectionToTest, eofLayout)).isEqualTo(expectedError);
   }
 
   /**
@@ -806,7 +822,7 @@ class CodeV1Test {
 
   static Stream<Arguments> invalidInstructions() {
     return IntStream.range(0, 256)
-        .filter(opcode -> CodeV1.OPCODE_ATTRIBUTES[opcode] == CodeV1.INVALID)
+        .filter(opcode -> CodeV1Validation.OPCODE_ATTRIBUTES[opcode] == CodeV1Validation.INVALID)
         .mapToObj(
             opcode ->
                 Arguments.of(
