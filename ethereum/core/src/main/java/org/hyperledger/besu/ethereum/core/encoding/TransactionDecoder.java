@@ -55,7 +55,9 @@ public class TransactionDecoder {
           TransactionType.ACCESS_LIST,
           TransactionDecoder::decodeAccessList,
           TransactionType.EIP1559,
-          TransactionDecoder::decodeEIP1559);
+          TransactionDecoder::decodeEIP1559,
+          TransactionType.BLOB_TX_TYPE,
+          TransactionDecoder::decodeEIP4844);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -182,6 +184,47 @@ public class TransactionDecoder {
     final Transaction.Builder builder =
         Transaction.builder()
             .type(TransactionType.EIP1559)
+            .chainId(chainId)
+            .nonce(input.readLongScalar())
+            .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
+            .maxFeePerGas(Wei.of(input.readUInt256Scalar()))
+            .gasLimit(input.readLongScalar())
+            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(input.readUInt256Scalar()))
+            .payload(input.readBytes())
+            .accessList(
+                input.readList(
+                    accessListEntryRLPInput -> {
+                      accessListEntryRLPInput.enterList();
+                      final AccessListEntry accessListEntry =
+                          new AccessListEntry(
+                              Address.wrap(accessListEntryRLPInput.readBytes()),
+                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
+                      accessListEntryRLPInput.leaveList();
+                      return accessListEntry;
+                    }));
+    final byte recId = (byte) input.readIntScalar();
+    final Transaction transaction =
+        builder
+            .signature(
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createSignature(
+                        input.readUInt256Scalar().toUnsignedBigInteger(),
+                        input.readUInt256Scalar().toUnsignedBigInteger(),
+                        recId))
+            .build();
+    input.leaveList();
+    return transaction;
+  }
+
+  // TODO: copypasta till SSZ decoder available
+  static Transaction decodeEIP4844(final RLPInput input) {
+    input.enterList();
+    final BigInteger chainId = input.readBigIntegerScalar();
+    final Transaction.Builder builder =
+        Transaction.builder()
+            .type(TransactionType.BLOB_TX_TYPE)
             .chainId(chainId)
             .nonce(input.readLongScalar())
             .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))

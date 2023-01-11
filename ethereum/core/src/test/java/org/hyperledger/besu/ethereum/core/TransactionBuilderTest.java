@@ -18,11 +18,14 @@ package org.hyperledger.besu.ethereum.core;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -38,9 +41,11 @@ public class TransactionBuilderTest {
     final Transaction.Builder accessListBuilder =
         Transaction.builder()
             .accessList(List.of(new AccessListEntry(gen.address(), List.of(gen.bytes32()))));
+    final Transaction.Builder eip4844Builder =
+        Transaction.builder().versionedHashes(Optional.of(Arrays.asList(Hash.ZERO)));
 
     final Set<TransactionType> guessedTypes =
-        Stream.of(frontierBuilder, eip1559Builder, accessListBuilder)
+        Stream.of(frontierBuilder, eip1559Builder, accessListBuilder, eip4844Builder)
             .map(transactionBuilder -> transactionBuilder.guessType().getTransactionType())
             .collect(toUnmodifiableSet());
 

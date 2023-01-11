@@ -43,6 +43,8 @@ public class TransactionEncoder {
           TransactionType.ACCESS_LIST,
           TransactionEncoder::encodeAccessList,
           TransactionType.EIP1559,
+          TransactionEncoder::encodeEIP1559,
+          TransactionType.BLOB_TX_TYPE,
           TransactionEncoder::encodeEIP1559);
 
   public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {

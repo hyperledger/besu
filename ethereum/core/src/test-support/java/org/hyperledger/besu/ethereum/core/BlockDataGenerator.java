@@ -373,6 +373,8 @@ public class BlockDataGenerator {
         return eip1559Transaction(payload, to);
       case ACCESS_LIST:
         return accessListTransaction(payload, to);
+      case BLOB_TX_TYPE:
+        return eip4844Transaction(payload, to);
       default:
         throw new RuntimeException(
             String.format(
@@ -392,6 +394,22 @@ public class BlockDataGenerator {
         .payload(payload)
         .accessList(accessList())
         .chainId(BigInteger.ONE)
+        .signAndBuild(generateKeyPair());
+  }
+
+  private Transaction eip4844Transaction(final Bytes payload, final Address to) {
+    return Transaction.builder()
+        .type(TransactionType.BLOB_TX_TYPE)
+        .nonce(random.nextLong())
+        .maxPriorityFeePerGas(Wei.wrap(bytesValue(4)))
+        .maxFeePerGas(Wei.wrap(bytesValue(4)))
+        .gasLimit(positiveLong())
+        .to(to)
+        .value(Wei.wrap(bytes32()))
+        .payload(payload)
+        .chainId(BigInteger.ONE)
+        .versionedHashes(
+            Optional.of(Arrays.asList(Hash.fromHexStringLenient("0xdeadbeefb0b0facecafebabe"))))
         .signAndBuild(generateKeyPair());
   }
 
