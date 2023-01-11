@@ -256,16 +256,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               if (ws.isPersistable()) {
                 return ws;
               } else {
-                var wsCopy = ws.copy();
-                try {
-                  ws.close();
-                } catch (Exception ex) {
-                  LOG.error(
-                      "unexpected error closing non-peristable worldstate + "
-                          + parentHeader.toLogString(),
-                      ex);
-                }
-                return wsCopy;
+                // non-persistable worldstates should return a copy which is persistable:
+                return ws.copy();
               }
             })
         .orElseThrow(

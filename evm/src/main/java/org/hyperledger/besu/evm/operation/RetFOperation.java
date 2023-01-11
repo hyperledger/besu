@@ -20,7 +20,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public class RetFOperation extends AbstractOperation {
 
-  static final int OPCODE = 0xb1;
+  public static final int OPCODE = 0xb1;
   static final OperationResult retfSuccess = new OperationResult(4, null);
 
   public RetFOperation(final GasCalculator gasCalculator) {
@@ -29,7 +29,11 @@ public class RetFOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    frame.returnFunction();
-    return retfSuccess;
+    var exception = frame.returnFunction();
+    if (exception == null) {
+      return retfSuccess;
+    } else {
+      return new OperationResult(retfSuccess.gasCost, exception);
+    }
   }
 }

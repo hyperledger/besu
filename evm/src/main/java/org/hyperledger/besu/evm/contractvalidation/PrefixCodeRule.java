@@ -15,10 +15,10 @@
 package org.hyperledger.besu.evm.contractvalidation;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +30,8 @@ public class PrefixCodeRule implements ContractValidationRule {
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-3541
-  public Optional<ExceptionalHaltReason> validate(final MessageFrame frame) {
-    if (!frame.getOutputData().isEmpty() && frame.getOutputData().get(0) == FORMAT_RESERVED) {
+  public Optional<ExceptionalHaltReason> validate(final Bytes contractCode) {
+    if (!contractCode.isEmpty() && contractCode.get(0) == FORMAT_RESERVED) {
       LOG.trace("Contract creation error: code cannot start with {}", FORMAT_RESERVED);
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     } else {

@@ -27,10 +27,10 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -39,8 +39,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
+  // 0x776f726c64526f6f74
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
-
+  // 0x776f726c64426c6f636b48617368
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
@@ -49,6 +50,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final KeyValueStorage storageStorage;
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
+  protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
   private Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder;
 
@@ -221,6 +223,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public void clear() {
+    subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);
     accountStorage.clear();
     codeStorage.clear();
     storageStorage.clear();
@@ -230,6 +233,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public void clearFlatDatabase() {
+    subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
     accountStorage.clear();
     storageStorage.clear();
   }
@@ -268,24 +272,17 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
   }
 
-  public void safeExecute(final Consumer<KeyValueStorage> toExec) throws Exception {
-    final long id = subscribe();
-    toExec.accept((KeyValueStorage) this);
-    unSubscribe(id);
+  public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
+    return subscribers.subscribe(sub);
   }
 
-  public long subscribe() {
-    // No op because close() is not implemented for BonsaiWorldStateKeyValueStorage
-    return 0;
-  }
-
-  public void unSubscribe(final long id) {
-    // No op because close() is not implemented for BonsaiWorldStateKeyValueStorage
+  public synchronized void unSubscribe(final long id) {
+    subscribers.unsubscribe(id);
   }
 
   @Override
   public void close() throws Exception {
-    // No need to close because BonsaiWorldStateKeyValueStorage is persistent
+    // No need to close or notify because BonsaiWorldStateKeyValueStorage is persistent
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {
@@ -438,5 +435,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       trieBranchStorageTransaction.rollback();
       trieLogStorageTransaction.rollback();
     }
+  }
+
+  interface BonsaiStorageSubscriber {
+    default void onClearStorage() {}
+
+    default void onClearFlatDatabaseStorage() {}
+
+    default void onCloseStorage() {}
   }
 }

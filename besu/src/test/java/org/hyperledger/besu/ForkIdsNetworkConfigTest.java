@@ -77,20 +77,6 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 0L))
           },
           new Object[] {
-            NetworkName.ROPSTEN,
-            List.of(
-                new ForkId(Bytes.ofUnsignedInt(0x30c7ddbcL), 10L),
-                new ForkId(Bytes.ofUnsignedInt(0x63760190L), 1700000L),
-                new ForkId(Bytes.ofUnsignedInt(0x3ea159c7L), 4230000L),
-                new ForkId(Bytes.ofUnsignedInt(0x97b544f3L), 4939394L),
-                new ForkId(Bytes.ofUnsignedInt(0xd6e2149bL), 6485846L),
-                new ForkId(Bytes.ofUnsignedInt(0x4bc66396L), 7117117L),
-                new ForkId(Bytes.ofUnsignedInt(0x6727ef90L), 9812189L),
-                new ForkId(Bytes.ofUnsignedInt(0xa157d377L), 10499401L),
-                new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 0L))
-          },
-          new Object[] {
             NetworkName.RINKEBY,
             List.of(
                 new ForkId(Bytes.ofUnsignedInt(0x3b8e0691L), 1L),
@@ -113,12 +99,6 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 5062605L),
                 new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 0L),
                 new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 0L))
-          },
-          new Object[] {
-            NetworkName.SHANDONG,
-            List.of(
-                new ForkId(Bytes.ofUnsignedInt(0x0459e09dL), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0x0459e09dL), 0L))
           },
           new Object[] {
             NetworkName.MAINNET,

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.internal;
 
+import java.util.Objects;
+
 public class ReturnStack extends FixedStack<ReturnStack.ReturnStackItem> {
 
   // Java17 convert to record
@@ -39,6 +41,33 @@ public class ReturnStack extends FixedStack<ReturnStack.ReturnStackItem> {
 
     public int getStackHeight() {
       return stackHeight;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ReturnStackItem that = (ReturnStackItem) o;
+      return codeSectionIndex == that.codeSectionIndex
+          && pc == that.pc
+          && stackHeight == that.stackHeight;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(codeSectionIndex, pc, stackHeight);
+    }
+
+    @Override
+    public String toString() {
+      return "ReturnStackItem{"
+          + "codeSectionIndex="
+          + codeSectionIndex
+          + ", pc="
+          + pc
+          + ", stackHeight="
+          + stackHeight
+          + '}';
     }
   }
 

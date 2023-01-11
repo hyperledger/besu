@@ -87,7 +87,7 @@ public class EOFLayout {
       return invalidLayout(container, version, error);
     }
     int typesLength = readUnsignedShort(inputStream);
-    if (typesLength < 0) {
+    if (typesLength <= 0) {
       return invalidLayout(container, version, "Invalid Types section size");
     }
 
@@ -96,8 +96,23 @@ public class EOFLayout {
       return invalidLayout(container, version, error);
     }
     int codeSectionCount = readUnsignedShort(inputStream);
-    if (codeSectionCount < 0) {
+    if (codeSectionCount <= 0) {
       return invalidLayout(container, version, "Invalid Code section count");
+    }
+    if (codeSectionCount * 4 != typesLength) {
+      return invalidLayout(
+          container,
+          version,
+          "Type section length incompatible with code section count - 0x"
+              + Integer.toHexString(codeSectionCount)
+              + " * 4 != 0x"
+              + Integer.toHexString(typesLength));
+    }
+    if (codeSectionCount > 1024) {
+      return invalidLayout(
+          container,
+          version,
+          "Too many code sections - 0x" + Integer.toHexString(codeSectionCount));
     }
     int[] codeSectionSizes = new int[codeSectionCount];
     for (int i = 0; i < codeSectionCount; i++) {
@@ -141,6 +156,24 @@ public class EOFLayout {
       byte[] code = new byte[codeSectionSize];
       if (inputStream.read(code, 0, codeSectionSize) != codeSectionSize) {
         return invalidLayout(container, version, "Incomplete code section " + i);
+      }
+      if (typeData[i][0] > 0x7f) {
+        return invalidLayout(
+            container,
+            version,
+            "Type data input stack too large - 0x" + Integer.toHexString(typeData[i][0]));
+      }
+      if (typeData[i][1] > 0x7f) {
+        return invalidLayout(
+            container,
+            version,
+            "Type data output stack too large - 0x" + Integer.toHexString(typeData[i][1]));
+      }
+      if (typeData[i][2] > 0x3ff) {
+        return invalidLayout(
+            container,
+            version,
+            "Type data max stack too large - 0x" + Integer.toHexString(typeData[i][2]));
       }
       codeSections[i] =
           new CodeSection(Bytes.wrap(code), typeData[i][0], typeData[i][1], typeData[i][2]);

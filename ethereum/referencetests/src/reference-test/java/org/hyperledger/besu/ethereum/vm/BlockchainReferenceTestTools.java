@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
@@ -49,7 +49,6 @@ public class BlockchainReferenceTestTools {
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "Shandong,"
                 + "London,Merge,Shanghai,Cancun,Prague,Osaka,Bogota");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }
@@ -104,7 +103,7 @@ public class BlockchainReferenceTestTools {
             .get();
     assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
-    final ProtocolSchedule schedule =
+    final HeaderBasedProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
@@ -119,7 +118,7 @@ public class BlockchainReferenceTestTools {
       try {
         final Block block = candidateBlock.getBlock();
 
-        final ProtocolSpec protocolSpec = schedule.getByBlockNumber(block.getHeader().getNumber());
+        final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())

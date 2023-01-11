@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -63,7 +64,6 @@ import org.hyperledger.besu.evm.operation.GtOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.IsZeroOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
-import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.Keccak256Operation;
@@ -433,39 +433,86 @@ public class MainnetEVMs {
     registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 
-  public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return shandong(new LondonGasCalculator(), chainId, evmConfiguration);
+  public static EVM shanghai(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shanghai(new ShanghaiGasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM shandong(
+  public static EVM shanghai(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
     return new EVM(
-        shandongOperations(gasCalculator, chainId),
+        shanghaiOperations(gasCalculator, chainId),
         gasCalculator,
         evmConfiguration,
-        EvmSpecVersion.SHANDONG);
+        EvmSpecVersion.SHANGHAI);
   }
 
-  public static OperationRegistry shandongOperations(
+  public static OperationRegistry shanghaiOperations(
       final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
-    registerShandongOperations(operationRegistry, gasCalculator, chainId);
+    registerShanghaiOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
-  public static void registerShandongOperations(
+  public static void registerShanghaiOperations(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerParisOperations(registry, gasCalculator, chainID);
     registry.put(new Push0Operation(gasCalculator));
+  }
+
+  public static EVM cancun(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        cancunOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.CANCUN);
+  }
+
+  public static OperationRegistry cancunOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerCancunOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  public static void registerCancunOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerShanghaiOperations(registry, gasCalculator, chainID);
     registry.put(new RelativeJumpOperation(gasCalculator));
     registry.put(new RelativeJumpIfOperation(gasCalculator));
     registry.put(new RelativeJumpVectorOperation(gasCalculator));
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
-    registry.put(new JumpFOperation(gasCalculator));
+  }
+
+  public static EVM futureEips(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shanghai(chainId, evmConfiguration);
+  }
+
+  public static EVM futureEips(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return cancun(gasCalculator, chainId, evmConfiguration);
+  }
+
+  public static EVM experimentalEips(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return futureEips(chainId, evmConfiguration);
+  }
+
+  public static EVM experimentalEips(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return futureEips(gasCalculator, chainId, evmConfiguration);
   }
 }

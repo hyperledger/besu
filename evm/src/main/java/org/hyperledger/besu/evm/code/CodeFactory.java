@@ -71,7 +71,7 @@ public final class CodeFactory {
 
         final String stackValidationError = CodeV1.validateStack(layout);
         if (stackValidationError != null) {
-          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + codeValidationError);
+          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + stackValidationError);
         }
 
         return new CodeV1(codeHash, layout);

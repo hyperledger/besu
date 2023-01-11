@@ -23,11 +23,11 @@ import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.operation.CallFOperation;
-import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
+import org.hyperledger.besu.evm.operation.RetFOperation;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -42,7 +42,7 @@ public class CodeV1 implements Code {
   static final byte VALID = 0x02;
   static final byte TERMINAL = 0x04;
   static final byte VALID_AND_TERMINAL = VALID | TERMINAL;
-  private static final byte[] opcodeAttributes = {
+  static final byte[] OPCODE_ATTRIBUTES = {
     VALID_AND_TERMINAL, // 0x00	STOP
     VALID, // 0x01 - ADD
     VALID, // 0x02 - MUL
@@ -135,7 +135,7 @@ public class CodeV1 implements Code {
     VALID, // 0x59 - MSIZE
     VALID, // 0x5a - GAS
     VALID, // 0x5b - NOOOP (née JUMPDEST)
-    VALID, // 0X5c - RJUMP
+    VALID_AND_TERMINAL, // 0X5c - RJUMP
     VALID, // 0X5d - RJUMPI
     VALID, // 0X5e - RJUMPV
     VALID, // 0X5f - PUSH0
@@ -221,7 +221,7 @@ public class CodeV1 implements Code {
     INVALID, // 0xaf
     VALID, // 0xb0 - CALLF
     VALID_AND_TERMINAL, // 0xb1 - RETF
-    VALID_AND_TERMINAL, // 0xb2 - JUMPF
+    INVALID, // 0xb2 - JUMPF
     INVALID, // 0xb3
     INVALID, // 0xb4
     INVALID, // 0xb5
@@ -305,7 +305,7 @@ public class CodeV1 implements Code {
   // [0] - stack input consumed
   // [1] - stack outputs added
   // [2] - PC advance
-  private static final byte[][] opcodeStackValidation = {
+  static final byte[][] OPCODE_STACK_VALIDATION = {
     {0, 0, -1}, // 0x00 - STOP
     {2, 1, 1}, // 0x01 - ADD
     {2, 1, 1}, // 0x02 - MUL
@@ -327,7 +327,7 @@ public class CodeV1 implements Code {
     {2, 1, 1}, // 0x12 - SLT
     {2, 1, 1}, // 0x13 - SGT
     {2, 1, 1}, // 0x14 - EQ
-    {2, 1, 1}, // 0x15 - ISZERO
+    {1, 1, 1}, // 0x15 - ISZERO
     {2, 1, 1}, // 0x16 - AND
     {2, 1, 1}, // 0x17 - OR
     {2, 1, 1}, // 0x18 - XOR
@@ -366,9 +366,9 @@ public class CodeV1 implements Code {
     {3, 0, 1}, // 0x39 - CODECOPY
     {0, 1, 1}, // 0x3a - GASPRICE
     {1, 1, 1}, // 0x3b - EXTCODESIZE
-    {4, 1, 1}, // 0x3c - EXTCODECOPY
+    {4, 0, 1}, // 0x3c - EXTCODECOPY
     {0, 1, 1}, // 0x3d - RETURNDATASIZE
-    {3, 1, 1}, // 0x3e - RETURNDATACOPY
+    {3, 0, 1}, // 0x3e - RETURNDATACOPY
     {1, 1, 1}, // 0x3f - EXTCODEHASH
     {1, 1, 1}, // 0x40 - BLOCKHASH
     {0, 1, 1}, // 0x41 - COINBASE
@@ -398,7 +398,7 @@ public class CodeV1 implements Code {
     {0, 1, 1}, // 0x59 - MSIZE
     {0, 1, 1}, // 0x5a - GAS
     {0, 0, 1}, // 0x5b - NOOP (née JUMPDEST)
-    {0, 0, -1}, // 0x5c - RJUMP
+    {0, 0, -3}, // 0x5c - RJUMP
     {1, 0, 3}, // 0x5d - RJUMPI
     {1, 0, 2}, // 0x5e - RJUMPV
     {0, 1, 1}, // 0x5f - PUSH0
@@ -484,7 +484,7 @@ public class CodeV1 implements Code {
     {0, 0, 0}, // 0xaf
     {0, 0, 3}, // 0xb0 - CALLF
     {0, 0, -1}, // 0xb1 - RETF
-    {0, 0, -1}, // 0xb2 - JUMPF
+    {0, 0, 0}, // 0xb2 - JUMPF
     {0, 0, 0}, // 0xb3
     {0, 0, 0}, // 0xb4
     {0, 0, 0}, // 0xb5
@@ -548,8 +548,8 @@ public class CodeV1 implements Code {
     {0, 0, 0}, // 0xef
     {3, 1, 1}, // 0xf0 - CREATE
     {7, 1, 1}, // 0xf1 - CALL
-    {0, 1, 1}, // 0xf2 - CALLCODE
-    {2, 0, 1}, // 0xf3 - RETURN
+    {0, 0, 0}, // 0xf2 - CALLCODE
+    {2, 0, -1}, // 0xf3 - RETURN
     {6, 1, 1}, // 0xf4 - DELEGATECALL
     {4, 1, 1}, // 0xf5 - CREATE2
     {0, 0, 0}, // 0xf6
@@ -598,10 +598,10 @@ public class CodeV1 implements Code {
     int pos = 0;
     while (pos < size) {
       final int operationNum = rawCode[pos] & 0xff;
-      attribute = opcodeAttributes[operationNum];
+      attribute = OPCODE_ATTRIBUTES[operationNum];
       if ((attribute & INVALID) == INVALID) {
         // undefined instruction
-        return "Invalid Instruction 0x" + Integer.toHexString(operationNum);
+        return String.format("Invalid Instruction 0x%02x", operationNum);
       }
       pos += 1;
       int pcPostInstruction = pos;
@@ -640,13 +640,13 @@ public class CodeV1 implements Code {
           }
           rjumpdests.set(rjumpdest);
         }
-      } else if (operationNum == CallFOperation.OPCODE || operationNum == JumpFOperation.OPCODE) {
+      } else if (operationNum == CallFOperation.OPCODE) {
         if (pos + 2 > size) {
-          return "Truncated CALLF/JUMPF";
+          return "Truncated CALLF";
         }
         int section = readBigEndianU16(pos, rawCode);
         if (section >= sectionCount) {
-          return "CALLF/JUMPF to non-existent section - " + Integer.toHexString(section);
+          return "CALLF to non-existent section - " + Integer.toHexString(section);
         }
         pcPostInstruction += 2;
       }
@@ -677,107 +677,123 @@ public class CodeV1 implements Code {
    * immediates as well as no immediates falling off of the end of code sections.
    *
    * @param codeSectionToValidate The index of code to validate in the code sections
-   * @param codeSections The code sections to use for CALLF and JUMPF reference validation.
+   * @param codeSections The code sections to use for CALLF reference validation.
    * @return null if valid, otherwise an error string providing the validation error.
    */
   public static String validateStack(
       final int codeSectionToValidate, final CodeSection[] codeSections) {
-    byte[] code = codeSections[codeSectionToValidate].code.toArrayUnsafe();
-    int codeLength = code.length;
-    int[] stackHeights = new int[codeLength];
-    Arrays.fill(stackHeights, -1);
+    try {
+      byte[] code = codeSections[codeSectionToValidate].code.toArrayUnsafe();
+      int codeLength = code.length;
+      int[] stackHeights = new int[codeLength];
+      Arrays.fill(stackHeights, -1);
 
-    int thisWork = 0;
-    int maxWork = 1;
-    int[][] workList = new int[codeLength][2];
+      int thisWork = 0;
+      int maxWork = 1;
+      int[][] workList = new int[codeLength][2];
 
-    int initialStackHeight = codeSections[codeSectionToValidate].getInputs();
-    int maxStackHeight = initialStackHeight;
-    stackHeights[0] = initialStackHeight;
-    workList[0][1] = initialStackHeight;
+      int initialStackHeight = codeSections[codeSectionToValidate].getInputs();
+      int maxStackHeight = initialStackHeight;
+      stackHeights[0] = initialStackHeight;
+      workList[0][1] = initialStackHeight;
+      int unusedBytes = codeLength;
 
-    while (thisWork < maxWork) {
-      int currentPC = workList[thisWork][0];
-      int currentStackHeight = workList[thisWork][1];
-      if (thisWork > 0 && stackHeights[currentPC] >= 0) {
-        // we've been here, validate the jump is what is expected
-        if (stackHeights[currentPC] != currentStackHeight) {
-          return String.format(
-              "Jump into code stack height (%d) does not match previous value (%d)",
-              stackHeights[currentPC], currentStackHeight);
+      while (thisWork < maxWork) {
+        int currentPC = workList[thisWork][0];
+        int currentStackHeight = workList[thisWork][1];
+        if (thisWork > 0 && stackHeights[currentPC] >= 0) {
+          // we've been here, validate the jump is what is expected
+          if (stackHeights[currentPC] != currentStackHeight) {
+            return String.format(
+                "Jump into code stack height (%d) does not match previous value (%d)",
+                stackHeights[currentPC], currentStackHeight);
+          } else {
+            thisWork++;
+            continue;
+          }
         } else {
-          thisWork++;
-          continue;
-        }
-      }
-
-      while (currentPC < codeLength) {
-        int thisOp = code[currentPC] & 0xff;
-        int recordedStack = stackHeights[currentPC];
-        if (recordedStack >= 0 && currentStackHeight != recordedStack) {
-          return String.format(
-              "Stack height mismatch %d/%d at %d", recordedStack, currentStackHeight, currentPC);
+          stackHeights[currentPC] = currentStackHeight;
         }
 
-        byte[] stackInfo = opcodeStackValidation[thisOp];
-        int stackInputs;
-        int stackOutputs;
-        int pcAdvance = stackInfo[2];
-        if (pcAdvance == 0) {
-          return String.format("Invalid opcode 0x%02X", thisOp);
-        }
-        if (thisOp == CallFOperation.OPCODE || thisOp == JumpFOperation.OPCODE) {
-          int section = readBigEndianU16(currentPC + 1, code);
-          stackInputs = codeSections[section].getInputs();
-          stackOutputs = codeSections[section].getOutputs();
-        } else {
-          stackInputs = stackInfo[0];
-          stackOutputs = stackInfo[1];
-        }
+        while (currentPC < codeLength) {
+          int thisOp = code[currentPC] & 0xff;
 
-        if (stackInputs > currentStackHeight) {
-          return String.format(
-              "Operation 0x%02X requires stack of %d but only has %d items",
-              thisOp, stackInputs, currentStackHeight);
-        }
+          byte[] stackInfo = OPCODE_STACK_VALIDATION[thisOp];
+          int stackInputs;
+          int stackOutputs;
+          int pcAdvance = stackInfo[2];
+          if (thisOp == CallFOperation.OPCODE) {
+            int section = readBigEndianU16(currentPC + 1, code);
+            stackInputs = codeSections[section].getInputs();
+            stackOutputs = codeSections[section].getOutputs();
+          } else {
+            stackInputs = stackInfo[0];
+            stackOutputs = stackInfo[1];
+          }
 
-        currentStackHeight = currentStackHeight - stackInputs + stackOutputs;
-        if (currentStackHeight > MAX_STACK_HEIGHT) {
-          return "Stack height exceeds 1024";
-        }
+          if (stackInputs > currentStackHeight) {
+            return String.format(
+                "Operation 0x%02X requires stack of %d but only has %d items",
+                thisOp, stackInputs, currentStackHeight);
+          }
 
-        maxStackHeight = Math.max(maxStackHeight, currentStackHeight);
+          currentStackHeight = currentStackHeight - stackInputs + stackOutputs;
+          if (currentStackHeight > MAX_STACK_HEIGHT) {
+            return "Stack height exceeds 1024";
+          }
 
-        if (thisOp == RelativeJumpOperation.OPCODE || thisOp == RelativeJumpIfOperation.OPCODE) {
-          // no `& 0xff` on high byte because this is one case we want sign extension
-          int rvalue = readBigEndianI16(currentPC + 1, code);
-          workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
-          maxWork++;
-        } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
-          int tableEnd = code[currentPC + 1] * 2 + currentPC + 2;
-          for (int i = currentPC + 2; i < tableEnd; i += 2) {
-            int rvalue = readBigEndianI16(i + 1, code);
+          maxStackHeight = Math.max(maxStackHeight, currentStackHeight);
+
+          if (thisOp == RelativeJumpOperation.OPCODE || thisOp == RelativeJumpIfOperation.OPCODE) {
+            // no `& 0xff` on high byte because this is one case we want sign extension
+            int rvalue = readBigEndianI16(currentPC + 1, code);
             workList[maxWork] = new int[] {currentPC + rvalue + 3, currentStackHeight};
             maxWork++;
+          } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
+            int immediateDataSize = (code[currentPC + 1] & 0xff) * 2;
+            unusedBytes -= immediateDataSize;
+            int tableEnd = immediateDataSize + currentPC + 2;
+            for (int i = currentPC + 2; i < tableEnd; i += 2) {
+              int rvalue = readBigEndianI16(i, code);
+              workList[maxWork] = new int[] {tableEnd + rvalue, currentStackHeight};
+              maxWork++;
+            }
+            currentPC = tableEnd - 2;
+          } else if (thisOp == RetFOperation.OPCODE) {
+            int returnStackItems = codeSections[codeSectionToValidate].getOutputs();
+            if (currentStackHeight != returnStackItems) {
+              return String.format(
+                  "Section return (RETF) calculated height 0x%x does not match configured height 0x%x",
+                  currentStackHeight, returnStackItems);
+            }
           }
-          currentPC = tableEnd - 2;
+          if (pcAdvance < 0) {
+            unusedBytes += pcAdvance;
+            break;
+          } else if (pcAdvance == 0) {
+            return String.format("Invalid Instruction 0x%02x", thisOp);
+          }
+
+          currentPC += pcAdvance;
+          stackHeights[currentPC] = currentStackHeight;
+          unusedBytes -= pcAdvance;
         }
-        if (pcAdvance < 0) {
-          break;
-        }
-        currentPC += pcAdvance;
-        stackHeights[currentPC] = currentStackHeight;
+
+        thisWork++;
+      }
+      if (maxStackHeight != codeSections[codeSectionToValidate].maxStackHeight) {
+        return String.format(
+            "Calculated max stack height (%d) does not match reported stack height (%d)",
+            maxStackHeight, codeSections[codeSectionToValidate].maxStackHeight);
+      }
+      if (unusedBytes != 0) {
+        return String.format("Dead code detected in section %d", codeSectionToValidate);
       }
 
-      thisWork++;
+      return null;
+    } catch (RuntimeException re) {
+      return "Internal Exception " + re.getMessage();
     }
-
-    if (maxStackHeight != codeSections[codeSectionToValidate].maxStackHeight) {
-      return String.format(
-          "Calculated max stack height (%d) does not match reported stack height (%d)",
-          maxStackHeight, codeSections[codeSectionToValidate].maxStackHeight);
-    }
-    return null;
   }
 
   @Override
@@ -814,6 +830,11 @@ public class CodeV1 implements Code {
     checkArgument(section >= 0, "Section number is positive");
     checkArgument(section < codeSectionInfos.length, "Section index is valid");
     return codeSectionInfos[section];
+  }
+
+  @Override
+  public int getCodeSectionCount() {
+    return codeSectionInfos.length;
   }
 
   @Override
