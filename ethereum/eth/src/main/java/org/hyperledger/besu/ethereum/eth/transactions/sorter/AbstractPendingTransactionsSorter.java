@@ -201,14 +201,14 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   @Override
   public void manageBlockAdded(
-      final Block block, final List<Transaction> confirmedTransactions, final FeeMarket feeMarket) {
+      final BlockHeader blockHeader, final List<Transaction> confirmedTransactions, final FeeMarket feeMarket) {
     synchronized (lock) {
       confirmedTransactions.forEach(this::transactionAddedToBlock);
-      manageBlockAdded(block, feeMarket);
+      manageBlockAdded(blockHeader, feeMarket);
     }
   }
 
-  protected abstract void manageBlockAdded(final Block block, final FeeMarket feeMarket);
+  protected abstract void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket);
 
   public void transactionAddedToBlock(final Transaction transaction) {
     removeTransaction(transaction, true);
@@ -503,6 +503,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                       pendingTx::toTraceLog,
                       () -> invalidNonce))
           .map(PendingTransaction::getTransaction)
+              .collect(Collectors.toList())
           .forEach(this::removeTransaction);
     }
   }

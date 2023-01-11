@@ -91,8 +91,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   }
 
   @Override
-  protected void manageBlockAdded(final Block block, final FeeMarket feeMarket) {
-    final BlockHeader blockHeader = block.getHeader();
+  protected void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     final BaseFeeMarket baseFeeMarket = (BaseFeeMarket) feeMarket;
     final Wei newNextBlockBaseFee = calculateNextBlockBaseFee(baseFeeMarket, blockHeader);
 

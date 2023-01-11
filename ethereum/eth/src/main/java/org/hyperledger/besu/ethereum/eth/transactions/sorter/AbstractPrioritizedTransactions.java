@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
@@ -434,15 +435,15 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
 
   @Override
   public void manageBlockAdded(
-      final Block block, final List<Transaction> confirmedTransactions, final FeeMarket feeMarket) {
+          final BlockHeader blockHeader, final List<Transaction> confirmedTransactions, final FeeMarket feeMarket) {
     synchronized (lock) {
       transactionsAddedToBlock(confirmedTransactions);
-      manageBlockAdded(block, feeMarket);
+      manageBlockAdded(blockHeader, feeMarket);
       promoteFromReady();
     }
   }
 
-  protected abstract void manageBlockAdded(final Block block, final FeeMarket feeMarket);
+  protected abstract void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket);
 
   private void transactionsAddedToBlock(final List<Transaction> confirmedTransactions) {
 

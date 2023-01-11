@@ -95,8 +95,8 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
               .reversed());
 
   @Override
-  public void manageBlockAdded(final Block block, final FeeMarket feeMarket) {
-    block.getHeader().getBaseFee().ifPresent(this::updateBaseFee);
+  public void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
+    blockHeader.getBaseFee().ifPresent(this::updateBaseFee);
   }
 
   @Override

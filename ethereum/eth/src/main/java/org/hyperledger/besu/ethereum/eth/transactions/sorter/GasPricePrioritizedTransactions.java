@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 import static java.util.Comparator.comparing;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
@@ -69,7 +70,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   }
 
   @Override
-  protected void manageBlockAdded(final Block block, final FeeMarket feeMarket) {
+  protected void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     // no-op
   }
 

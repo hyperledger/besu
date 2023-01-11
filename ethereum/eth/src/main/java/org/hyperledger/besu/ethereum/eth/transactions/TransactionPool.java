@@ -228,7 +228,7 @@ public class TransactionPool implements BlockAddedObserver {
   public void onBlockAdded(final BlockAddedEvent event) {
     LOG.trace("Block added event {}", event);
     pendingTransactions.manageBlockAdded(
-        event.getBlock(),
+        event.getBlock().getHeader(),
         event.getAddedTransactions(),
         protocolSchedule
             .getByBlockNumber(event.getBlock().getHeader().getNumber() + 1)

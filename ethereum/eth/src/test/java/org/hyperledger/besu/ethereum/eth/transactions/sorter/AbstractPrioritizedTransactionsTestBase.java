@@ -18,6 +18,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED_SPARSE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TX_POOL_FULL;
@@ -378,7 +379,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase {
 
     final Block block = createBlock(transaction2);
 
-    transactions.manageBlockAdded(block, List.of(transaction2), FeeMarket.london(0));
+    transactions.manageBlockAdded(block.getHeader(), List.of(transaction2), FeeMarket.london(0));
 
     verifyNoInteractions(droppedListener);
   }
@@ -680,17 +681,15 @@ public abstract class AbstractPrioritizedTransactionsTestBase {
 
     assertThat(transactions.addLocalTransaction(transaction1, Optional.of(sender)))
         .isEqualTo(ADDED);
-    // tx 4 is postponed
+    // tx 4 is added as sparse
     assertThat(transactions.addLocalTransaction(transaction4, Optional.of(sender)))
-        .isEqualTo(TX_POOL_FULL);
+        .isEqualTo(ADDED_SPARSE);
     assertThat(transactions.addLocalTransaction(transaction2, Optional.of(sender)))
         .isEqualTo(ADDED);
     assertThat(transactions.addLocalTransaction(transaction3, Optional.of(sender)))
         .isEqualTo(ADDED);
 
-    // Todo: when postponed to ready is completed, tx 3 will fill the gap and add 4 to prioritized
-
-    final List<Transaction> iterationOrder = new ArrayList<>(4);
+    final List<Transaction> iterationOrder = new ArrayList<>(3);
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
@@ -698,6 +697,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase {
         });
 
     assertThat(iterationOrder).containsExactly(transaction1, transaction2, transaction3);
+
   }
 
   @Test
@@ -733,7 +733,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase {
     final Account sender = mock(Account.class);
     when(sender.getNonce()).thenReturn(1L);
     assertThat(transactions.getNextNonceForSender(transaction2.getSender())).isEmpty();
-    // since tx 3 is missing, 4 is postponed,
+    // since tx 3 is missing, 4 is sparse,
     // note that 0 is already known since sender nonce is 1
     addLocalTransactions(sender, 0, 1, 2, 4);
     assertThat(transactions.size()).isEqualTo(2);
@@ -741,16 +741,15 @@ public abstract class AbstractPrioritizedTransactionsTestBase {
         .isPresent()
         .hasValue(3);
 
-    // tx 3 arrives and is added, while 4 is still postponed
-    // Todo: change when we have the code to move from postponed to ready
+    // tx 3 arrives and is added, while 4 is move to ready
     addLocalTransactions(sender, 3);
-    assertThat(transactions.size()).isEqualTo(3);
+    assertThat(transactions.size()).isEqualTo(4);
     assertThat(transactions.getNextNonceForSender(transaction2.getSender()))
         .isPresent()
-        .hasValue(4);
+        .hasValue(5);
 
     // when 4 is added, the pool is full, and so 6 and 7 are postponed since last for the sender
-    addLocalTransactions(sender, 4, 5, 6, 7);
+    addLocalTransactions(sender, 5, 6, 7);
     assertThat(transactions.size()).isEqualTo(5);
 
     // assert that transactions are pruned by account from the latest future nonce first

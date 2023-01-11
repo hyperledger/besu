@@ -54,7 +54,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
   }
 
   @Override
-  public void manageBlockAdded(final Block block, final FeeMarket feeMarket) {
+  public void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     // nothing to do
   }
 
