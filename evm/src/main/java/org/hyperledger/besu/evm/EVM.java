@@ -279,7 +279,6 @@ public class EVM {
             break;
           case 0xb0: // CALLF
           case 0xb1: // RETF
-          case 0xb2: // JUMPF
             // Function operations reset code
             if (enableCancun) {
               frame.setCurrentOperation(currentOperation);

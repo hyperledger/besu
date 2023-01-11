@@ -26,9 +26,16 @@ import picocli.CommandLine;
 
 public class CodeValidationSubCommandTest {
 
-  static final String CODE_STOP_ONLY = "0xef0001 010001 020001 0001 030000 00 00000000 00";
-  static final String CODE_RETF_ONLY = "0xef0001 010001 020001 0001 030000 00 00000000 b1";
-  static final String CODE_BAD_MAGIC = "0xefffff 010001 020001 0001 030000 00 00000000 b1";
+  static final String CODE_STOP_ONLY = "0xef0001 010004 020001-0001 030000 00 00000000 00";
+  static final String CODE_RETF_ONLY = "0xef0001 010004 020001-0001 030000 00 00000000 b1";
+  static final String CODE_BAD_MAGIC = "0xefffff 010004 020001-0001 030000 00 00000000 b1";
+  static final String CODE_INTERIOR_COMMENTS =
+      "0xef0001 010008 020002-000c-0002 030000 00 \n"
+          + "# 7 inputs 1 output,\n"
+          + "00000007-07010007 \n"
+          + "59-59-59-59-59-59-59-b00001-50-b1\n"
+          + "# No immediate data\n"
+          + "f1-b1";
   static final String CODE_MULTIPLE =
       CODE_STOP_ONLY + "\n" + CODE_BAD_MAGIC + "\n" + CODE_RETF_ONLY + "\n";
 
@@ -110,5 +117,29 @@ public class CodeValidationSubCommandTest {
     cmd.parseArgs(CODE_RETF_ONLY);
     codeValidateSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("OK b1\n");
+  }
+
+  @Test
+  public void testInteriorCommentsSkipped() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
+    final CodeValidateSubCommand codeValidateSubCommand =
+        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    final CommandLine cmd = new CommandLine(codeValidateSubCommand);
+    cmd.parseArgs(CODE_INTERIOR_COMMENTS);
+    codeValidateSubCommand.run();
+    assertThat(baos.toString(UTF_8)).contains("OK 59595959595959b0000150b1,f1b1\n");
+  }
+
+  @Test
+  public void testBlankLinesAndCommentsSkipped() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final ByteArrayInputStream bais =
+        new ByteArrayInputStream(("# comment\n\n#blank line\n\n" + CODE_MULTIPLE).getBytes(UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand =
+        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    codeValidateSubCommand.run();
+    assertThat(baos.toString(UTF_8))
+        .isEqualTo("OK 00\n" + "err: layout - EOF header byte 1 incorrect\n" + "OK b1\n");
   }
 }

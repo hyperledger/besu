@@ -87,7 +87,7 @@ public class EOFLayout {
       return invalidLayout(container, version, error);
     }
     int typesLength = readUnsignedShort(inputStream);
-    if (typesLength < 0) {
+    if (typesLength <= 0) {
       return invalidLayout(container, version, "Invalid Types section size");
     }
 
@@ -96,8 +96,17 @@ public class EOFLayout {
       return invalidLayout(container, version, error);
     }
     int codeSectionCount = readUnsignedShort(inputStream);
-    if (codeSectionCount < 0) {
+    if (codeSectionCount <= 0) {
       return invalidLayout(container, version, "Invalid Code section count");
+    }
+    if (codeSectionCount * 4 != typesLength) {
+      return invalidLayout(
+          container,
+          version,
+          "Type section length incompatible with code section count - 0x"
+              + Integer.toHexString(codeSectionCount)
+              + " * 4 != 0x"
+              + Integer.toHexString(typesLength));
     }
     if (codeSectionCount > 1024) {
       return invalidLayout(

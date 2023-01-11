@@ -128,6 +128,11 @@ public class CodeV0 implements Code {
     return null;
   }
 
+  @Override
+  public int getCodeSectionCount() {
+    return 1;
+  }
+
   long[] calculateJumpDests() {
     final int size = getSize();
     final long[] bitmap = new long[(size >> 6) + 1];
