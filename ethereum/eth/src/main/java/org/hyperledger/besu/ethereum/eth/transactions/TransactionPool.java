@@ -112,6 +112,10 @@ public class TransactionPool implements BlockAddedObserver {
     transactionBroadcaster.relayTransactionPoolTo(peer);
   }
 
+  public void reset() {
+    pendingTransactions.reset();
+  }
+
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
     final ValidationResultAndAccount validationResult = validateLocalTransaction(transaction);

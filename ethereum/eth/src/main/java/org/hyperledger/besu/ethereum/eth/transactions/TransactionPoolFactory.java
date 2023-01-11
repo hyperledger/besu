@@ -137,6 +137,8 @@ public class TransactionPoolFactory {
           @Override
           public void onInitialSyncCompleted() {
             LOG.info("Enabling transaction handling following initial sync");
+            transactionPool.reset();
+            transactionTracker.reset();
             transactionPool.setEnabled();
             transactionsMessageHandler.setEnabled();
             pooledTransactionsMessageHandler.setEnabled();
