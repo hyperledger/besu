@@ -58,16 +58,12 @@ public class ForkIdTestUtil {
   public static class GenesisHash {
     public static final String MAINNET =
         "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
-    public static final String ROPSTEN =
-        "0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d";
     public static final String SEPOLIA =
         "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9";
     public static final String RINKEBY =
         "0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177";
     public static final String GOERLI =
         "0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a";
-    public static final String SHANDONG =
-        "0xbea94d3492ed9c41556a1c45c27da4947938880fb4c15f31fb742e5a1c10a2fb";
     public static final String PRIVATE =
         "0x0000000000000000000000000000000000000000000000000000000000000000";
   }
@@ -77,15 +73,11 @@ public class ForkIdTestUtil {
         Arrays.asList(
             1920000L, 1150000L, 2463000L, 2675000L, 2675000L, 4370000L, 7280000L, 7280000L,
             9069000L, 9200000L, 12244000L, 12965000L, 13773000L, 15050000L);
-    public static final List<Long> ROPSTEN =
-        Arrays.asList(0L, 0L, 10L, 1700000L, 4230000L, 4939394L, 6485846L, 7117117L);
     public static final List<Long> SEPOLIA =
         Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1735371L);
     public static final List<Long> RINKEBY =
         Arrays.asList(1L, 2L, 3L, 3L, 1035301L, 3660663L, 4321234L, 5435345L);
     public static final List<Long> GOERLI = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 1561651L);
-    public static final List<Long> SHANDONG =
-        Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
     public static final List<Long> PRIVATE = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
 
     public static final List<Long> MAINNET_WITH_SHANGHAI_BLOCKS =
@@ -111,15 +103,6 @@ public class ForkIdTestUtil {
             new ForkId(Bytes.fromHexString("0xb715077d"), 13773000L), // First London block
             new ForkId(Bytes.fromHexString("0x20c327fc"), 15050000L), // First Arrow Glacier block
             new ForkId(Bytes.fromHexString("0xf0afd0e3"), 0L)); // First Gray Glacier block
-    public static final List<ForkId> ROPSTEN =
-        Arrays.asList(
-            new ForkId(Bytes.fromHexString("0x30c7ddbc"), 10L),
-            new ForkId(Bytes.fromHexString("0x63760190"), 1700000L),
-            new ForkId(Bytes.fromHexString("0x3ea159c7"), 4230000L),
-            new ForkId(Bytes.fromHexString("0x97b544f3"), 4939394L),
-            new ForkId(Bytes.fromHexString("0xd6e2149b"), 6485846L),
-            new ForkId(Bytes.fromHexString("0x4bc66396"), 7117117L),
-            new ForkId(Bytes.fromHexString("0x6727ef90"), 0L));
     public static final List<ForkId> SEPOLIA =
         Arrays.asList(
             new ForkId(Bytes.fromHexString("0xfe3366e7"), 1735371L),
@@ -162,12 +145,9 @@ public class ForkIdTestUtil {
 
   public static class Network {
     public static final Network MAINNET = network(GenesisHash.MAINNET, Forks.MAINNET, emptyList());
-    public static final Network ROPSTEN = network(GenesisHash.ROPSTEN, Forks.ROPSTEN, emptyList());
     public static final Network SEPOLIA = network(GenesisHash.SEPOLIA, Forks.SEPOLIA, emptyList());
     public static final Network RINKEBY = network(GenesisHash.RINKEBY, Forks.RINKEBY, emptyList());
     public static final Network GOERLI = network(GenesisHash.GOERLI, Forks.GOERLI, emptyList());
-    public static final Network SHANDONG =
-        network(GenesisHash.SHANDONG, Forks.SHANDONG, emptyList());
     public static final Network PRIVATE = network(GenesisHash.PRIVATE, Forks.PRIVATE, emptyList());
 
     public static final Network MAINNET_WITH_SHANGHAI =

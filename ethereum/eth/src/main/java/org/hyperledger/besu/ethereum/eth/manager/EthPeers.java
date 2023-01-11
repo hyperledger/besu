@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
+
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -245,6 +248,22 @@ public class EthPeers {
 
   public Comparator<EthPeer> getBestChainComparator() {
     return bestPeerComparator;
+  }
+
+  public void disconnectWorstUselessPeer() {
+    streamAvailablePeers()
+        .sorted(getBestChainComparator())
+        .findFirst()
+        .ifPresent(
+            peer -> {
+              infoLambda(
+                  LOG,
+                  "disconnecting peer {}. Waiting for better peers. Current {} of max {}",
+                  peer::toString,
+                  this::peerCount,
+                  this::getMaxPeers);
+              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+            });
   }
 
   @FunctionalInterface

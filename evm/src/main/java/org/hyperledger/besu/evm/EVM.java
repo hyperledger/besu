@@ -105,7 +105,7 @@ public class EVM {
     evmSpecVersion.maybeWarnVersion();
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
-    byte[] code = frame.getCode().getCodeBytes(frame.getSection()).toArrayUnsafe();
+    byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
@@ -274,18 +274,6 @@ public class EVM {
           case 0x9e:
           case 0x9f:
             result = SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
-            break;
-          case 0xb0: // CALLF
-          case 0xb1: // RETF
-          case 0xb2: // JUMPF
-            // Function operations reset code
-            if (enableShanghai) {
-              frame.setCurrentOperation(currentOperation);
-              result = currentOperation.execute(frame, this);
-              code = frame.getCode().getCodeSection(frame.getSection()).getCode().toArrayUnsafe();
-            } else {
-              result = InvalidOperation.INVALID_RESULT;
-            }
             break;
           default: // unoptimized operations
             frame.setCurrentOperation(currentOperation);

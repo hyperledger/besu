@@ -38,7 +38,7 @@ public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_GET_PAYLOAD.getMethodName();
+    return RpcMethod.ENGINE_GET_PAYLOAD_V1.getMethodName();
   }
 
   @Override
