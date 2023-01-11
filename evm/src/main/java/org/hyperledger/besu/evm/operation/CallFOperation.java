@@ -31,7 +31,7 @@ public class CallFOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final byte[] code = frame.getCode().getCodeBytes(frame.getSection()).toArrayUnsafe();
+    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     return staticOperation(frame, code, frame.getPC());
   }
 
