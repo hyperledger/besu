@@ -23,10 +23,10 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -76,7 +76,7 @@ public class PendingMultiTypesTransactionsTest {
       transactionReplacementTester =
           (t1, t2) -> transactionReplacementHandler.shouldReplace(t1, t2, getBlockHeader());
 
-  private final BaseFeePrioritizedTransactions transactions =
+  private final BaseFeePrioritizedTransactions sorter =
       new BaseFeePrioritizedTransactions(
           transactionPoolConfiguration,
           TestClock.system(ZoneId.systemDefault()),
@@ -84,6 +84,8 @@ public class PendingMultiTypesTransactionsTest {
           () -> mockBlockHeader(Wei.of(7L)),
           transactionReplacementTester,
           FeeMarket.london(0L));
+
+  private final ReadyTransactionsCache transactions = new ReadyTransactionsCache(transactionPoolConfiguration, sorter, transactionReplacementTester);
 
   @Test
   public void shouldReturnExclusivelyLocal1559TransactionsWhenAppropriate() {

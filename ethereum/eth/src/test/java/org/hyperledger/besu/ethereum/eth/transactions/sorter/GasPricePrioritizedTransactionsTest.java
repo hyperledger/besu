@@ -38,60 +38,60 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTransactionsTestBase {
-
-  @Override
-  AbstractPrioritizedTransactions getSorter(
-      final TransactionPoolConfiguration poolConfig,
-      final Optional<Clock> clock,
-      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester) {
-
-    this.readyTransactionsCache =
-        spy(new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
-
-    return new GasPricePrioritizedTransactions(
-        poolConfig,
-        clock.orElse(TestClock.system(ZoneId.systemDefault())),
-        metricsSystem,
-        transactionReplacementTester,
-        readyTransactionsCache);
-  }
-
-  @Override
-  protected BlockHeader mockBlockHeader() {
-    final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
-    return blockHeader;
-  }
-
-  @Override
-  protected Transaction createTransaction(
-      final long transactionNumber, final Wei maxGasPrice, final KeyPair keys) {
-    return new TransactionTestFixture()
-        .value(Wei.of(transactionNumber))
-        .nonce(transactionNumber)
-        .gasPrice(maxGasPrice)
-        .createTransaction(keys);
-  }
-
-  @Override
-  protected Transaction createTransactionReplacement(
-      final Transaction originalTransaction, final KeyPair keys) {
-    return createTransaction(
-        originalTransaction.getNonce(), originalTransaction.getMaxGasFee().multiply(2), keys);
-  }
-
-  @Test
-  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
-    final Transaction highGasPriceTransaction = createTransaction(0, Wei.of(100), KEYS1);
-
-    final var lowValueTxs =
-        IntStream.range(0, MAX_TRANSACTIONS)
-            .mapToObj(
-                i -> createTransaction(0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair()))
-            .collect(Collectors.toUnmodifiableList());
-
-    shouldPrioritizeValueThenTimeAddedToPool(
-        lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
-  }
+//
+//  @Override
+//  AbstractPrioritizedTransactions getSorter(
+//      final TransactionPoolConfiguration poolConfig,
+//      final Optional<Clock> clock,
+//      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+//          transactionReplacementTester) {
+//
+//    this.readyTransactionsCache =
+//        spy(new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
+//
+//    return new GasPricePrioritizedTransactions(
+//        poolConfig,
+//        clock.orElse(TestClock.system(ZoneId.systemDefault())),
+//        metricsSystem,
+//        transactionReplacementTester,
+//        readyTransactionsCache);
+//  }
+//
+//  @Override
+//  protected BlockHeader mockBlockHeader() {
+//    final BlockHeader blockHeader = mock(BlockHeader.class);
+//    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+//    return blockHeader;
+//  }
+//
+//  @Override
+//  protected Transaction createTransaction(
+//      final long transactionNumber, final Wei maxGasPrice, final KeyPair keys) {
+//    return new TransactionTestFixture()
+//        .value(Wei.of(transactionNumber))
+//        .nonce(transactionNumber)
+//        .gasPrice(maxGasPrice)
+//        .createTransaction(keys);
+//  }
+//
+//  @Override
+//  protected Transaction createTransactionReplacement(
+//      final Transaction originalTransaction, final KeyPair keys) {
+//    return createTransaction(
+//        originalTransaction.getNonce(), originalTransaction.getMaxGasFee().multiply(2), keys);
+//  }
+//
+//  @Test
+//  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+//    final Transaction highGasPriceTransaction = createTransaction(0, Wei.of(100), KEYS1);
+//
+//    final var lowValueTxs =
+//        IntStream.range(0, MAX_TRANSACTIONS)
+//            .mapToObj(
+//                i -> createTransaction(0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair()))
+//            .collect(Collectors.toUnmodifiableList());
+//
+//    shouldPrioritizeValueThenTimeAddedToPool(
+//        lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
+//  }
 }

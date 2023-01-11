@@ -63,15 +63,14 @@ public class LayeredTransactionPoolLondonTest extends AbstractLayeredTransaction
       final TransactionPoolConfiguration poolConfig,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
-
-    return new BaseFeePrioritizedTransactions(
+return new ReadyTransactionsCache(poolConfig,
+     new BaseFeePrioritizedTransactions(
         poolConfig,
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
         protocolContext.getBlockchain()::getChainHeadHeader,
         transactionReplacementTester,
-        FeeMarket.london(0L),
-        new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
+        FeeMarket.london(0L)), transactionReplacementTester);
   }
 
   @Override

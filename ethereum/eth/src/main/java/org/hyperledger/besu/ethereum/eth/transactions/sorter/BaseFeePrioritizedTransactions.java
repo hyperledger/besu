@@ -17,11 +17,9 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -56,26 +54,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BaseFeeMarket baseFeeMarket) {
-    this(
-        poolConfig,
-        clock,
-        metricsSystem,
-        chainHeadHeaderSupplier,
-        transactionReplacementTester,
-        baseFeeMarket,
-        new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
-  }
-
-  public BaseFeePrioritizedTransactions(
-      final TransactionPoolConfiguration poolConfig,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
-      final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester,
-      final BaseFeeMarket baseFeeMarket,
-      final ReadyTransactionsCache readyTransactionsCache) {
-    super(poolConfig, clock, metricsSystem, transactionReplacementTester, readyTransactionsCache);
+    super(poolConfig, clock, metricsSystem, transactionReplacementTester);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(baseFeeMarket, chainHeadHeaderSupplier.get()));
   }
@@ -91,7 +70,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   }
 
   @Override
-  protected void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
+  public void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     final BaseFeeMarket baseFeeMarket = (BaseFeeMarket) feeMarket;
     final Wei newNextBlockBaseFee = calculateNextBlockBaseFee(baseFeeMarket, blockHeader);
 
@@ -125,7 +104,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   }
 
   @Override
-  protected Predicate<PendingTransaction> getPromotionFilter() {
+  public Predicate<PendingTransaction> getPromotionFilter() {
     return pendingTransaction ->
         nextBlockBaseFee
             .map(

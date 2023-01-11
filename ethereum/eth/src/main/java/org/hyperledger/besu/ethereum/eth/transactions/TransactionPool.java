@@ -163,7 +163,7 @@ public class TransactionPool implements BlockAddedObserver {
     sortedBySenderAndNonce(transactions)
         .forEach(
             transaction -> {
-              if (pendingTransactions.containsTransaction(transaction.getHash())) {
+              if (pendingTransactions.containsTransaction(transaction)) {
                 traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
                 // We already have this transaction, don't even validate it.
                 duplicateTransactionCounter.labels(REMOTE).inc();

@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
+import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -100,12 +101,15 @@ public abstract class AbstractIsolationTests {
               transactionReplacementHandler.shouldReplace(
                   t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
 
+  protected final TransactionPoolConfiguration poolConfiguration = ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
+
   protected final PendingTransactionsSorter sorter =
-      new GasPricePrioritizedTransactions(
-          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build(),
+          new ReadyTransactionsCache(poolConfiguration,
+      new GasPricePrioritizedTransactions(poolConfiguration
+          ,
           Clock.systemUTC(),
           new NoOpMetricsSystem(),
-          transactionReplacementTester);
+          transactionReplacementTester), transactionReplacementTester);
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()

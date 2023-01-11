@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -57,7 +56,7 @@ public interface PendingTransactionsSorter {
 
   int size();
 
-  boolean containsTransaction(Hash transactionHash);
+  boolean containsTransaction(Transaction transaction);
 
   Optional<Transaction> getTransactionByHash(Hash transactionHash);
 
@@ -73,7 +72,8 @@ public interface PendingTransactionsSorter {
 
   OptionalLong getNextNonceForSender(Address sender);
 
-  void manageBlockAdded(BlockHeader blockHeader, List<Transaction> confirmedTransactions, FeeMarket feeMarket);
+  void manageBlockAdded(
+      BlockHeader blockHeader, List<Transaction> confirmedTransactions, FeeMarket feeMarket);
 
   String toTraceLog();
 

@@ -25,7 +25,6 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -201,14 +200,17 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   @Override
   public void manageBlockAdded(
-      final BlockHeader blockHeader, final List<Transaction> confirmedTransactions, final FeeMarket feeMarket) {
+      final BlockHeader blockHeader,
+      final List<Transaction> confirmedTransactions,
+      final FeeMarket feeMarket) {
     synchronized (lock) {
       confirmedTransactions.forEach(this::transactionAddedToBlock);
       manageBlockAdded(blockHeader, feeMarket);
     }
   }
 
-  protected abstract void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket);
+  protected abstract void manageBlockAdded(
+      final BlockHeader blockHeader, final FeeMarket feeMarket);
 
   public void transactionAddedToBlock(final Transaction transaction) {
     removeTransaction(transaction, true);
@@ -350,8 +352,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   }
 
   @Override
-  public boolean containsTransaction(final Hash transactionHash) {
-    return pendingTransactions.containsKey(transactionHash);
+  public boolean containsTransaction(final Transaction transaction) {
+    return pendingTransactions.containsKey(transaction.getHash());
   }
 
   @Override
@@ -503,7 +505,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                       pendingTx::toTraceLog,
                       () -> invalidNonce))
           .map(PendingTransaction::getTransaction)
-              .collect(Collectors.toList())
+          .collect(Collectors.toList())
           .forEach(this::removeTransaction);
     }
   }

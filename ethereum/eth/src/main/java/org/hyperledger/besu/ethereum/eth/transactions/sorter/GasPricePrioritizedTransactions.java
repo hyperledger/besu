@@ -16,11 +16,9 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static java.util.Comparator.comparing;
 
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -42,22 +40,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
       final MetricsSystem metricsSystem,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
-    this(
-        poolConfig,
-        clock,
-        metricsSystem,
-        transactionReplacementTester,
-        new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
-  }
-
-  public GasPricePrioritizedTransactions(
-      final TransactionPoolConfiguration poolConfig,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
-      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester,
-      final ReadyTransactionsCache readyTransactionsCache) {
-    super(poolConfig, clock, metricsSystem, transactionReplacementTester, readyTransactionsCache);
+    super(poolConfig, clock, metricsSystem, transactionReplacementTester);
   }
 
   @Override
@@ -70,7 +53,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   }
 
   @Override
-  protected void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
+  public void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     // no-op
   }
 
@@ -81,7 +64,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   }
 
   @Override
-  protected Predicate<PendingTransaction> getPromotionFilter() {
+  public Predicate<PendingTransaction> getPromotionFilter() {
     return pt -> true;
   }
 }

@@ -424,10 +424,10 @@ public abstract class AbstractLayeredTransactionPoolTest {
 
   @Test
   public void shouldDiscardRemoteTransactionThatAlreadyExistsBeforeValidation() {
-    doReturn(true).when(transactions).containsTransaction(transaction0.getHash());
+    doReturn(true).when(transactions).containsTransaction(transaction0);
     transactionPool.addRemoteTransactions(singletonList(transaction0));
 
-    verify(transactions).containsTransaction(transaction0.getHash());
+    verify(transactions).containsTransaction(transaction0);
     verifyNoInteractions(transactionValidator);
     verifyNoMoreInteractions(transactions);
   }

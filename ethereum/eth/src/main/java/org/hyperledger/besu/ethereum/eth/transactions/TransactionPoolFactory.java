@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
@@ -216,7 +217,7 @@ public class TransactionPoolFactory {
     }
   }
 
-  private static AbstractPrioritizedTransactions createPrioritizedTransactionSorted(
+  private static PendingTransactionsSorter createPrioritizedTransactionSorted(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
@@ -232,6 +233,7 @@ public class TransactionPoolFactory {
             transactionReplacementHandler.shouldReplace(
                 t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
 
+    final AbstractPrioritizedTransactions pendingTransactionsSorter;
     if (isFeeMarketImplementBaseFee) {
       final BaseFeeMarket baseFeeMarket =
           protocolSchedule
@@ -243,16 +245,21 @@ public class TransactionPoolFactory {
               .reduce((a, b) -> b)
               .get();
 
-      return new BaseFeePrioritizedTransactions(
-          transactionPoolConfiguration,
-          clock,
-          metricsSystem,
-          protocolContext.getBlockchain()::getChainHeadHeader,
-          transactionReplacementTester,
-          baseFeeMarket);
+      pendingTransactionsSorter =
+          new BaseFeePrioritizedTransactions(
+              transactionPoolConfiguration,
+              clock,
+              metricsSystem,
+              protocolContext.getBlockchain()::getChainHeadHeader,
+              transactionReplacementTester,
+              baseFeeMarket);
     } else {
-      return new GasPricePrioritizedTransactions(
-          transactionPoolConfiguration, clock, metricsSystem, transactionReplacementTester);
+      pendingTransactionsSorter =
+          new GasPricePrioritizedTransactions(
+              transactionPoolConfiguration, clock, metricsSystem, transactionReplacementTester);
     }
+
+    return new ReadyTransactionsCache(
+        transactionPoolConfiguration, pendingTransactionsSorter, transactionReplacementTester);
   }
 }
