@@ -217,9 +217,10 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
 
-      // TODO this warning can be removed once ibft1 has been deprecated
+      // TODO remove this warning once ibft1 has been deprecated
       if (builder instanceof IbftLegacyBesuControllerBuilder) {
-        LOG.warn("IBFT1 is being deprecated. Consider using IBFT2 or QBFT.");
+        LOG.warn(
+            "IBFT1 is being deprecated and will be removed in a future release. Consider using QBFT instead of IBFT1 or using GoQuorum instead of Besu if you need to use IBFT1");
       }
 
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
@@ -246,8 +247,9 @@ public class BesuController implements java.io.Closeable {
       if (configOptions.isIbft2()) {
         originalControllerBuilder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
-        // TODO this warning can be removed once ibf1 has been deprecated
-        LOG.warn("IBFT1 is being deprecated. Consider using IBFT2 or QBFT.");
+        // TODO remove this warning once ibf1 has been deprecated
+        LOG.warn(
+            "IBFT1 is being deprecated and will be removed in a future release. Consider using QBFT instead of IBFT1 or using GoQuorum instead of Besu if you need to use IBFT1");
         originalControllerBuilder = new IbftLegacyBesuControllerBuilder();
       } else {
         throw new IllegalStateException(
