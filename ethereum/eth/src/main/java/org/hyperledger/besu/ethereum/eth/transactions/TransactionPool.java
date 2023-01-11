@@ -16,9 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.POSTPONED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
@@ -178,11 +176,8 @@ public class TransactionPool implements BlockAddedObserver {
                   final TransactionAddedResult status =
                       pendingTransactions.addRemoteTransaction(
                           transaction, validationResult.maybeAccount);
-                  if (status.equals(ADDED)) {
+                  if (status.isSuccess()) {
                     traceLambda(LOG, "Added remote transaction {}", transaction::toTraceLog);
-                    addedTransactions.add(transaction);
-                  } else if (status.equals(POSTPONED)) {
-                    traceLambda(LOG, "Postponed remote transaction {}", transaction::toTraceLog);
                     addedTransactions.add(transaction);
                   } else if (status.equals(ALREADY_KNOWN)) {
 

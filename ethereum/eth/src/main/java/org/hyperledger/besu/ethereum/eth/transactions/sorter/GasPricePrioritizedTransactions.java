@@ -19,7 +19,6 @@ import static java.util.Comparator.comparing;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.NoOpPostponedTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -47,8 +46,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
         clock,
         metricsSystem,
         transactionReplacementTester,
-        new ReadyTransactionsCache(
-            poolConfig, new NoOpPostponedTransactionsCache(), transactionReplacementTester));
+        new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
   }
 
   public GasPricePrioritizedTransactions(

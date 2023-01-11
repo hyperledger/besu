@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.InMemoryPostponedTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
@@ -72,8 +71,7 @@ public class LayeredTransactionPoolLondonTest extends AbstractLayeredTransaction
         protocolContext.getBlockchain()::getChainHeadHeader,
         transactionReplacementTester,
         FeeMarket.london(0L),
-        new ReadyTransactionsCache(
-            poolConfig, new InMemoryPostponedTransactionsCache(), transactionReplacementTester));
+        new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
   }
 
   @Override

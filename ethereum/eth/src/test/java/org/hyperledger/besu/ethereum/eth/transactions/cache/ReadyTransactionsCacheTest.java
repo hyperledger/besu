@@ -16,12 +16,10 @@ package org.hyperledger.besu.ethereum.eth.transactions.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED_SPARSE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.POSTPONED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TX_POOL_FULL;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,7 +45,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
 import com.google.common.base.Supplier;
@@ -75,8 +72,6 @@ public class ReadyTransactionsCacheTest {
 
   private ReadyTransactionsCache readyTransactionsCache;
 
-  private PostponedTransactionsCache postponedTransactionsCache;
-
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(100)));
@@ -90,12 +85,7 @@ public class ReadyTransactionsCacheTest {
             new TransactionPoolReplacementHandler(poolConf.getPriceBump())
                 .shouldReplace(t1, t2, mockBlockHeader());
 
-    postponedTransactionsCache = mock(PostponedTransactionsCache.class);
-    when(postponedTransactionsCache.promoteForSender(any(), anyLong(), anyLong()))
-        .thenReturn(CompletableFuture.completedFuture(List.of()));
-    readyTransactionsCache =
-        new ReadyTransactionsCache(
-            poolConf, postponedTransactionsCache, transactionReplacementTester);
+    readyTransactionsCache = new ReadyTransactionsCache(poolConf, transactionReplacementTester);
   }
 
   @Test
@@ -122,7 +112,7 @@ public class ReadyTransactionsCacheTest {
   public void shouldPostponeFirstTransactionWithNonceGap() {
     final var firstTransaction = createTransaction(1);
     assertThat(readyTransactionsCache.add(createPendingTransaction(firstTransaction), 0))
-        .isEqualTo(POSTPONED);
+        .isEqualTo(TX_POOL_FULL);
     assertTransactionNotPresent(firstTransaction);
   }
 
@@ -134,7 +124,7 @@ public class ReadyTransactionsCacheTest {
         .isEqualTo(ADDED);
     assertTransactionPresent(transaction0);
     assertThat(readyTransactionsCache.add(createPendingTransaction(transaction2), 0))
-        .isEqualTo(POSTPONED);
+        .isEqualTo(TX_POOL_FULL);
     assertTransactionNotPresent(transaction2);
   }
 
@@ -143,7 +133,7 @@ public class ReadyTransactionsCacheTest {
     final var futureTransaction =
         createTransaction(poolConf.getTxPoolMaxFutureTransactionByAccount() + 1);
     assertThat(readyTransactionsCache.add(createPendingTransaction(futureTransaction), 0))
-        .isEqualTo(POSTPONED);
+        .isEqualTo(TX_POOL_FULL);
     assertTransactionNotPresent(futureTransaction);
   }
 
@@ -418,7 +408,7 @@ public class ReadyTransactionsCacheTest {
   public void postponeTransactionIfNotFitsInCache() {
     final var largeTransaction = createTransaction(0, CACHE_CAPACITY_BYTES);
     assertThat(readyTransactionsCache.add(createPendingTransaction(largeTransaction), 0))
-        .isEqualTo(POSTPONED);
+        .isEqualTo(TX_POOL_FULL);
     assertTransactionNotPresent(largeTransaction);
   }
 
@@ -429,7 +419,7 @@ public class ReadyTransactionsCacheTest {
     populateCache(lowFeeTransaction);
     // largeTransaction is postponed even if of higher fee than the first one, to avoid gaps
     assertThat(readyTransactionsCache.add(createPendingTransaction(largeTransaction), 0))
-        .isEqualTo(POSTPONED);
+        .isEqualTo(TX_POOL_FULL);
     assertSenderHasExactlyTransactions(lowFeeTransaction);
   }
 
@@ -455,39 +445,39 @@ public class ReadyTransactionsCacheTest {
     assertSenderHasExactlyTransactions(largeHighFeeTransactionSenderC);
   }
 
-  @Test
-  void postponedToReadyWhenFillingNonceGap() {
-    final var postponedTransaction = createTransaction(1);
-    when(postponedTransactionsCache.promoteForSender(
-            eq(postponedTransaction.getSender()), eq(0L), anyLong()))
-        .thenReturn(
-            CompletableFuture.completedFuture(
-                List.of(createPendingTransaction(postponedTransaction))));
+  //  @Test
+  //  void postponedToReadyWhenFillingNonceGap() {
+  //    final var postponedTransaction = createTransaction(1);
+  //    when(postponedTransactionsCache.promoteForSender(
+  //            eq(postponedTransaction.getSender()), eq(0L), anyLong()))
+  //        .thenReturn(
+  //            CompletableFuture.completedFuture(
+  //                List.of(createPendingTransaction(postponedTransaction))));
+  //
+  //    assertTransactionNotPresent(postponedTransaction);
+  //
+  //    final var previousTransaction = createTransaction(0);
+  //    populateCache(previousTransaction);
+  //    assertSenderHasExactlyTransactions(previousTransaction, postponedTransaction);
+  //  }
 
-    assertTransactionNotPresent(postponedTransaction);
-
-    final var previousTransaction = createTransaction(0);
-    populateCache(previousTransaction);
-    assertSenderHasExactlyTransactions(previousTransaction, postponedTransaction);
-  }
-
-  @Test
-  void noPostponedToReadyWhenPostponedDoesNotFitInCache() {
-    final var arrivesLateTransaction = createTransaction(0);
-    final var postponedTransaction =
-        createTransaction(
-            1, Wei.of(10), CACHE_CAPACITY_BYTES - arrivesLateTransaction.getSize() + 1, KEYS1);
-    when(postponedTransactionsCache.promoteForSender(
-            eq(postponedTransaction.getSender()), eq(0L), anyLong()))
-        .thenReturn(
-            CompletableFuture.completedFuture(
-                List.of(createPendingTransaction(postponedTransaction))));
-
-    assertTransactionNotPresent(postponedTransaction);
-
-    populateCache(arrivesLateTransaction);
-    assertSenderHasExactlyTransactions(arrivesLateTransaction);
-  }
+  //  @Test
+  //  void noPostponedToReadyWhenPostponedDoesNotFitInCache() {
+  //    final var arrivesLateTransaction = createTransaction(0);
+  //    final var postponedTransaction =
+  //        createTransaction(
+  //            1, Wei.of(10), CACHE_CAPACITY_BYTES - arrivesLateTransaction.getSize() + 1, KEYS1);
+  //    when(postponedTransactionsCache.promoteForSender(
+  //            eq(postponedTransaction.getSender()), eq(0L), anyLong()))
+  //        .thenReturn(
+  //            CompletableFuture.completedFuture(
+  //                List.of(createPendingTransaction(postponedTransaction))));
+  //
+  //    assertTransactionNotPresent(postponedTransaction);
+  //
+  //    populateCache(arrivesLateTransaction);
+  //    assertSenderHasExactlyTransactions(arrivesLateTransaction);
+  //  }
 
   private Transaction[] populateCache(final int numTxs, final KeyPair keys) {
     return populateCache(numTxs, keys, 0, OptionalLong.empty());
@@ -518,7 +508,7 @@ public class ReadyTransactionsCacheTest {
         final var res =
             readyTransactionsCache.add(createPendingTransaction(transaction), startingNonce);
         if (afterGap) {
-          assertThat(res).isEqualTo(POSTPONED);
+          assertThat(res).isEqualTo(ADDED_SPARSE);
           assertTransactionNotPresent(transaction);
         } else {
           assertThat(res).isEqualTo(ADDED);

@@ -15,9 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.transactions.cache;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED_SPARSE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.POSTPONED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TX_POOL_FULL;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -44,32 +45,30 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class ReadyTransactionsCache {
-  private static final Logger LOG = LoggerFactory.getLogger(ReadyTransactionsCache.class);
+  //  private static final Logger LOG = LoggerFactory.getLogger(ReadyTransactionsCache.class);
 
   private final TransactionPoolConfiguration poolConfig;
-  private final PostponedTransactionsCache postponedCache;
   private final BiFunction<PendingTransaction, PendingTransaction, Boolean>
       transactionReplacementTester;
   private final Map<Address, NavigableMap<Long, PendingTransaction>> readyBySender =
       new ConcurrentHashMap<>();
-
   private final NavigableSet<Transaction> orderByMaxFee =
       new TreeSet<>(
           Comparator.comparing(Transaction::getMaxGasFee).thenComparing(Transaction::getSender));
+
+  private final Map<Address, NavigableMap<Long, PendingTransaction>> sparseBySender =
+      new ConcurrentHashMap<>();
+  private final NavigableSet<PendingTransaction> sparseEvictionOrder =
+      new TreeSet<>(Comparator.comparing(PendingTransaction::getSequence));
 
   private final AtomicLong readyTotalSize = new AtomicLong();
 
   public ReadyTransactionsCache(
       final TransactionPoolConfiguration poolConfig,
-      final PostponedTransactionsCache postponedCache,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
     this.poolConfig = poolConfig;
-    this.postponedCache = postponedCache;
     this.transactionReplacementTester = transactionReplacementTester;
   }
 
@@ -77,31 +76,36 @@ public class ReadyTransactionsCache {
       final PendingTransaction pendingTransaction, final long senderNonce) {
 
     // try to add to the ready set
-    var addToReadyStatus =
+    var addStatus =
         modifySenderReadyTxsWrapper(
             pendingTransaction.getSender(),
             senderTxs -> tryAddToReady(senderTxs, pendingTransaction, senderNonce));
 
-    if (addToReadyStatus.equals(POSTPONED)) {
-      postponedCache.add(pendingTransaction);
-    }
-
-    if (addToReadyStatus.equals(ADDED) || addToReadyStatus.isReplacement()) {
-      final var cacheFreeSpace = cacheFreeSpace();
+    if (addStatus.isSuccess()) {
+      var cacheFreeSpace = cacheFreeSpace();
       if (cacheFreeSpace < 0) {
-        // free some space moving less valuable ready to postponed
-        final var evictedTransactions = evictReadyTransactions(-cacheFreeSpace);
-        postponedCache.addAll(evictedTransactions);
-
-        if (evictedTransactions.contains(pendingTransaction)) {
+        // free some space moving trying first to evict older sparse txs,
+        // then less valuable ready to postponed
+        final var evictedSparseTxs = evictSparseTransactions(-cacheFreeSpace);
+        if (evictedSparseTxs.contains(pendingTransaction)) {
           // in case the just added transaction is postponed to free space change the returned
           // result
-          return POSTPONED;
+          return TX_POOL_FULL;
+        }
+
+        cacheFreeSpace = cacheFreeSpace();
+        if (cacheFreeSpace < 0) {
+          final var evictedTransactions = evictReadyTransactions(-cacheFreeSpace);
+          if (evictedTransactions.contains(pendingTransaction)) {
+            // in case the just added transaction is postponed to free space change the returned
+            // result
+            return TX_POOL_FULL;
+          }
         }
       }
     }
 
-    return addToReadyStatus;
+    return addStatus;
   }
 
   public Optional<PendingTransaction> get(final Address sender, final long nonce) {
@@ -136,7 +140,7 @@ public class ReadyTransactionsCache {
 
       removed.addAll(
           modifySenderReadyTxsWrapper(
-              sender, senderTxs -> removeConfirmed(sender, senderTxs, maxConfirmedNonce)));
+              sender, senderTxs -> removeConfirmed(senderTxs, maxConfirmedNonce)));
     }
     return removed;
   }
@@ -199,7 +203,8 @@ public class ReadyTransactionsCache {
     }
 
     if (prevLastNonce != currLastNonce) {
-      promoteFromPostponed(sender, currLastNonce);
+      sparseToReady(sender, senderTxs, currLastNonce);
+      // promoteFromPostponed(sender, currLastNonce);
     }
 
     if (senderTxs != null && senderTxs.isEmpty()) {
@@ -236,54 +241,91 @@ public class ReadyTransactionsCache {
     return toPostponed;
   }
 
+  private List<PendingTransaction> evictSparseTransactions(final long evictSize) {
+    final List<PendingTransaction> toPostponed = new ArrayList<>();
+    long postponedSize = 0;
+    while (postponedSize < evictSize && !sparseBySender.isEmpty()) {
+      final var oldestSparse = sparseEvictionOrder.pollFirst();
+      toPostponed.add(oldestSparse);
+      decreaseTotalSize(oldestSparse);
+      postponedSize += oldestSparse.getTransaction().getSize();
+
+      sparseBySender.compute(
+          oldestSparse.getSender(),
+          (sender, sparseTxs) -> {
+            sparseTxs.remove(oldestSparse.getNonce());
+            return sparseTxs.isEmpty() ? null : sparseTxs;
+          });
+    }
+    return toPostponed;
+  }
+
   private long cacheFreeSpace() {
     return poolConfig.getPendingTransactionsCacheSizeBytes() - readyTotalSize.get();
   }
 
-  private void promoteFromPostponed(final Address sender, final long currLastNonce) {
-
-    final long maxSize = cacheFreeSpace();
-    if (maxSize > 0) {
-      postponedCache
-          .promoteForSender(sender, currLastNonce, maxSize)
-          .thenAccept(
-              toReadyTxs -> {
-                modifySenderReadyTxsWrapper(
-                    sender, senderTxs -> postponedToReady(senderTxs, currLastNonce, toReadyTxs));
-              })
-          .exceptionally(
-              throwable -> {
-                LOG.debug(
-                    "Error moving from postponed to ready for sender {}, last nonce {}, max size {} bytes, cause {}",
-                    sender,
-                    currLastNonce,
-                    maxSize,
-                    throwable.getMessage());
-                return null;
-              });
-    }
-  }
-
-  private Void postponedToReady(
-      final NavigableMap<Long, PendingTransaction> senderTxs,
-      final long currLastNonce,
-      final List<PendingTransaction> toReadyTxs) {
-
-    var expectedNonce = currLastNonce + 1;
-
-    for (var tx : toReadyTxs) {
-      if (tx.getNonce() == expectedNonce) {
-        if (!fitsInCache(tx)) {
-          // cache full, stop moving to ready
-          break;
-        }
-        senderTxs.put(tx.getNonce(), tx);
-        increaseTotalSize(tx);
-        ++expectedNonce;
+  private void sparseToReady(
+      final Address sender,
+      final NavigableMap<Long, PendingTransaction> senderReadyTxs,
+      final long currLastNonce) {
+    final var senderSparseTxs = sparseBySender.get(sender);
+    long nextNonce = currLastNonce + 1;
+    if (senderSparseTxs != null) {
+      while (senderSparseTxs.containsKey(nextNonce)) {
+        final var toReadyTx = senderSparseTxs.remove(nextNonce);
+        sparseEvictionOrder.remove(toReadyTx);
+        senderReadyTxs.put(nextNonce, toReadyTx);
+        nextNonce++;
       }
     }
-    return null;
   }
+
+  //  private void promoteFromPostponed(final Address sender, final long currLastNonce) {
+  //
+  //    final long maxSize = cacheFreeSpace();
+  //    if (maxSize > 0) {
+  //      postponedCache
+  //          .promoteForSender(sender, currLastNonce, maxSize)
+  //          .thenAccept(
+  //              toReadyTxs -> {
+  //                modifySenderReadyTxsWrapper(
+  //                    sender, senderTxs -> postponedToReady(senderTxs, currLastNonce,
+  // toReadyTxs));
+  //              })
+  //          .exceptionally(
+  //              throwable -> {
+  //                LOG.debug(
+  //                    "Error moving from postponed to ready for sender {}, last nonce {}, max size
+  // {} bytes, cause {}",
+  //                    sender,
+  //                    currLastNonce,
+  //                    maxSize,
+  //                    throwable.getMessage());
+  //                return null;
+  //              });
+  //    }
+  //  }
+
+  //  private Void postponedToReady(
+  //      final NavigableMap<Long, PendingTransaction> senderTxs,
+  //      final long currLastNonce,
+  //      final List<PendingTransaction> toReadyTxs) {
+  //
+  //    var expectedNonce = currLastNonce + 1;
+  //
+  //    for (var tx : toReadyTxs) {
+  //      if (tx.getNonce() == expectedNonce) {
+  //        if (!fitsInCache(tx)) {
+  //          // cache full, stop moving to ready
+  //          break;
+  //        }
+  //        senderTxs.put(tx.getNonce(), tx);
+  //        increaseTotalSize(tx);
+  //        ++expectedNonce;
+  //      }
+  //    }
+  //    return null;
+  //  }
 
   private Optional<Transaction> getFirstReadyTransaction(
       final NavigableMap<Long, PendingTransaction> senderTxs) {
@@ -314,25 +356,30 @@ public class ReadyTransactionsCache {
         increaseTotalSize(pendingTransaction);
         return ADDED;
       }
-      return POSTPONED;
+      return tryAddToSparse(pendingTransaction);
     }
 
     // is replacing an existing one?
-    var existingReadyTx = senderTxs.get(pendingTransaction.getNonce());
-    if (existingReadyTx != null) {
-
-      if (existingReadyTx.getHash().equals(pendingTransaction.getHash())) {
-        return ALREADY_KNOWN;
-      }
-
-      if (!transactionReplacementTester.apply(existingReadyTx, pendingTransaction)) {
-        return REJECTED_UNDERPRICED_REPLACEMENT;
-      }
-      senderTxs.put(pendingTransaction.getNonce(), pendingTransaction);
-      decreaseTotalSize(existingReadyTx);
-      increaseTotalSize(pendingTransaction);
-      return TransactionAddedResult.createForReplacement(existingReadyTx);
+    final var maybeReplaced = maybeReplaceTransaction(senderTxs, pendingTransaction, true);
+    if (maybeReplaced != null) {
+      return maybeReplaced;
     }
+
+    //    var existingReadyTx = senderTxs.get(pendingTransaction.getNonce());
+    //    if (existingReadyTx != null) {
+    //
+    //      if (existingReadyTx.getHash().equals(pendingTransaction.getHash())) {
+    //        return ALREADY_KNOWN;
+    //      }
+    //
+    //      if (!transactionReplacementTester.apply(existingReadyTx, pendingTransaction)) {
+    //        return REJECTED_UNDERPRICED_REPLACEMENT;
+    //      }
+    //      senderTxs.put(pendingTransaction.getNonce(), pendingTransaction);
+    //      decreaseTotalSize(existingReadyTx);
+    //      increaseTotalSize(pendingTransaction);
+    //      return TransactionAddedResult.createForReplacement(existingReadyTx);
+    //    }
 
     // is the next one?
     if (pendingTransaction.getNonce() == senderTxs.lastKey() + 1) {
@@ -340,7 +387,54 @@ public class ReadyTransactionsCache {
       increaseTotalSize(pendingTransaction);
       return ADDED;
     }
-    return POSTPONED;
+    return tryAddToSparse(pendingTransaction);
+  }
+
+  private TransactionAddedResult tryAddToSparse(final PendingTransaction sparseTransaction) {
+    // add if fits in cache or there are other sparse txs that we can evict
+    // to make space for this one
+    if (fitsInCache(sparseTransaction) || !sparseBySender.isEmpty()) {
+      final var senderSparseTxs =
+          sparseBySender.getOrDefault(sparseTransaction.getSender(), new TreeMap<>());
+      final var maybeReplaced = maybeReplaceTransaction(senderSparseTxs, sparseTransaction, false);
+      if (maybeReplaced != null) {
+        maybeReplaced
+            .maybeReplacedTransaction()
+            .ifPresent(
+                replacedTx -> {
+                  sparseEvictionOrder.remove(replacedTx);
+                  sparseEvictionOrder.add(sparseTransaction);
+                });
+        return maybeReplaced;
+      }
+      senderSparseTxs.put(sparseTransaction.getNonce(), sparseTransaction);
+      sparseEvictionOrder.add(sparseTransaction);
+      return ADDED_SPARSE;
+    }
+    return TX_POOL_FULL;
+  }
+
+  private TransactionAddedResult maybeReplaceTransaction(
+      final NavigableMap<Long, PendingTransaction> existingTxs,
+      final PendingTransaction incomingTx,
+      final boolean isReady) {
+
+    final var existingReadyTx = existingTxs.get(incomingTx.getNonce());
+    if (existingReadyTx != null) {
+
+      if (existingReadyTx.getHash().equals(incomingTx.getHash())) {
+        return ALREADY_KNOWN;
+      }
+
+      if (!transactionReplacementTester.apply(existingReadyTx, incomingTx)) {
+        return REJECTED_UNDERPRICED_REPLACEMENT;
+      }
+      existingTxs.put(incomingTx.getNonce(), incomingTx);
+      decreaseTotalSize(existingReadyTx);
+      increaseTotalSize(incomingTx);
+      return TransactionAddedResult.createForReplacement(existingReadyTx, isReady);
+    }
+    return null;
   }
 
   private void increaseTotalSize(final PendingTransaction pendingTransaction) {
@@ -367,14 +461,11 @@ public class ReadyTransactionsCache {
       decreaseTotalSize(transaction);
     }
 
-    postponedCache.remove(transaction);
     return null;
   }
 
   private List<PendingTransaction> removeConfirmed(
-      final Address sender,
-      final NavigableMap<Long, PendingTransaction> senderTxs,
-      final long maxConfirmedNonce) {
+      final NavigableMap<Long, PendingTransaction> senderTxs, final long maxConfirmedNonce) {
     if (senderTxs != null) {
       final var confirmedTxsToRemove = senderTxs.headMap(maxConfirmedNonce, true);
       final List<PendingTransaction> removed =
@@ -382,8 +473,6 @@ public class ReadyTransactionsCache {
               .peek(this::decreaseTotalSize)
               .collect(Collectors.toUnmodifiableList());
       confirmedTxsToRemove.clear();
-
-      postponedCache.removeForSenderBelowNonce(sender, maxConfirmedNonce);
 
       return removed;
     }

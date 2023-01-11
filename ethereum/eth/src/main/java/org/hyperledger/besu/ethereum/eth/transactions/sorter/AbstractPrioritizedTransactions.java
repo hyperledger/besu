@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.maxBy;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
@@ -167,13 +166,13 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
   public TransactionAddedResult addLocalTransaction(
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
-    final TransactionAddedResult transactionAdded =
+    final TransactionAddedResult addedResult =
         addTransaction(
             new PendingTransaction.Local(transaction, clock.instant()), maybeSenderAccount);
-    if (transactionAdded.equals(ADDED)) {
+    if (addedResult.isSuccess()) {
       localSenders.add(transaction.getSender());
     }
-    return transactionAdded;
+    return addedResult;
   }
 
   private TransactionAddedResult addTransaction(
@@ -202,7 +201,7 @@ public abstract class AbstractPrioritizedTransactions implements PendingTransact
     synchronized (lock) {
       var addResult = readyTransactionsCache.add(pendingTransaction, senderNonce);
 
-      if (addResult.equals(ADDED) || addResult.isReplacement()) {
+      if (addResult.isPrioritizable()) {
         maybePrioritizeAddedTransaction(pendingTransaction, senderNonce, addResult);
       }
 

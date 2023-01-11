@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.NoOpPostponedTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -64,8 +63,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         chainHeadHeaderSupplier,
         transactionReplacementTester,
         baseFeeMarket,
-        new ReadyTransactionsCache(
-            poolConfig, new NoOpPostponedTransactionsCache(), transactionReplacementTester));
+        new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
   }
 
   public BaseFeePrioritizedTransactions(

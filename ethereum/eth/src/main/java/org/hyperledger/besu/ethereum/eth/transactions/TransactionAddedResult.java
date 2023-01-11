@@ -23,7 +23,7 @@ public final class TransactionAddedResult {
   private enum Status {
     INVALID,
     REPLACED,
-    POSTPONED,
+    DROPPED,
     ADDED
   }
 
@@ -35,9 +35,11 @@ public final class TransactionAddedResult {
       new TransactionAddedResult(TransactionInvalidReason.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER);
   public static final TransactionAddedResult LOWER_NONCE_INVALID_TRANSACTION_KNOWN =
       new TransactionAddedResult(TransactionInvalidReason.LOWER_NONCE_INVALID_TRANSACTION_EXISTS);
-  public static final TransactionAddedResult POSTPONED =
-      new TransactionAddedResult(Status.POSTPONED);
-  public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED);
+  public static final TransactionAddedResult TX_POOL_FULL =
+      new TransactionAddedResult((TransactionInvalidReason.TX_POOL_FULL));
+  public static final TransactionAddedResult ADDED_SPARSE =
+      new TransactionAddedResult(Status.ADDED, false);
+  public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED, true);
 
   private final Optional<TransactionInvalidReason> invalidReason;
 
@@ -45,22 +47,28 @@ public final class TransactionAddedResult {
 
   private final Status status;
 
-  private TransactionAddedResult(final PendingTransaction replacedTransaction) {
+  private final boolean prioritizable;
+
+  private TransactionAddedResult(
+      final PendingTransaction replacedTransaction, final boolean prioritizable) {
     this.replacedTransaction = Optional.of(replacedTransaction);
     this.invalidReason = Optional.empty();
     this.status = Status.REPLACED;
+    this.prioritizable = prioritizable;
   }
 
   private TransactionAddedResult(final TransactionInvalidReason invalidReason) {
     this.replacedTransaction = Optional.empty();
     this.invalidReason = Optional.of(invalidReason);
     this.status = Status.INVALID;
+    this.prioritizable = false;
   }
 
-  private TransactionAddedResult(final Status status) {
+  private TransactionAddedResult(final Status status, final boolean prioritizable) {
     this.replacedTransaction = Optional.empty();
     this.invalidReason = Optional.empty();
     this.status = status;
+    this.prioritizable = prioritizable;
   }
 
   public boolean isSuccess() {
@@ -69,6 +77,10 @@ public final class TransactionAddedResult {
 
   public boolean isInvalid() {
     return status == Status.INVALID;
+  }
+
+  public boolean isPrioritizable() {
+    return prioritizable;
   }
 
   public boolean isReplacement() {
@@ -84,45 +96,37 @@ public final class TransactionAddedResult {
   }
 
   public static TransactionAddedResult createForReplacement(
-      final PendingTransaction replacedTransaction) {
-    return new TransactionAddedResult(replacedTransaction);
+      final PendingTransaction replacedTransaction, final boolean prioritizable) {
+    return new TransactionAddedResult(replacedTransaction, prioritizable);
   }
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     TransactionAddedResult that = (TransactionAddedResult) o;
-
-    if (!Objects.equals(invalidReason, that.invalidReason)) {
-      return false;
-    }
-    if (!Objects.equals(replacedTransaction, that.replacedTransaction)) {
-      return false;
-    }
-    return status == that.status;
+    return prioritizable == that.prioritizable
+        && Objects.equals(invalidReason, that.invalidReason)
+        && Objects.equals(replacedTransaction, that.replacedTransaction)
+        && status == that.status;
   }
 
   @Override
   public int hashCode() {
-    int result = invalidReason != null ? invalidReason.hashCode() : 0;
-    result = 31 * result + (replacedTransaction != null ? replacedTransaction.hashCode() : 0);
-    result = 31 * result + (status != null ? status.hashCode() : 0);
-    return result;
+    return Objects.hash(invalidReason, replacedTransaction, status, prioritizable);
   }
 
   @Override
   public String toString() {
-    return "status="
-        + status
-        + ", invalidReason="
+    return "TransactionAddedResult{"
+        + "invalidReason="
         + invalidReason
         + ", replacedTransaction="
-        + replacedTransaction;
+        + replacedTransaction
+        + ", status="
+        + status
+        + ", prioritizable="
+        + prioritizable
+        + '}';
   }
 }

@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.InMemoryPostponedTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
@@ -67,8 +66,7 @@ public class LayeredTransactionPoolLegacyTest extends AbstractLayeredTransaction
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
         transactionReplacementTester,
-        new ReadyTransactionsCache(
-            poolConfig, new InMemoryPostponedTransactionsCache(), transactionReplacementTester));
+        new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
   }
 
   @Override

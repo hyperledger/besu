@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.NoOpPostponedTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -54,9 +53,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
           transactionReplacementTester) {
 
     this.readyTransactionsCache =
-        spy(
-            new ReadyTransactionsCache(
-                poolConfig, new NoOpPostponedTransactionsCache(), transactionReplacementTester));
+        spy(new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
 
     return new BaseFeePrioritizedTransactions(
         poolConfig,

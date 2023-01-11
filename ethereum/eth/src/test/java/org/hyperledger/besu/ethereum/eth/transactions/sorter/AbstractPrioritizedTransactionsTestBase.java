@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.POSTPONED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TX_POOL_FULL;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult.COMPLETE_OPERATION;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult.CONTINUE;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
@@ -35,7 +37,10 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -45,6 +50,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -370,7 +376,9 @@ public abstract class AbstractPrioritizedTransactionsTestBase {
 
     transactions.subscribeDroppedTransactions(droppedListener);
 
-    transactions.transactionsAddedToBlock(List.of(transaction2));
+    final Block block = createBlock(transaction2);
+
+    transactions.manageBlockAdded(block, List.of(transaction2), FeeMarket.london(0));
 
     verifyNoInteractions(droppedListener);
   }
@@ -674,7 +682,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase {
         .isEqualTo(ADDED);
     // tx 4 is postponed
     assertThat(transactions.addLocalTransaction(transaction4, Optional.of(sender)))
-        .isEqualTo(POSTPONED);
+        .isEqualTo(TX_POOL_FULL);
     assertThat(transactions.addLocalTransaction(transaction2, Optional.of(sender)))
         .isEqualTo(ADDED);
     assertThat(transactions.addLocalTransaction(transaction3, Optional.of(sender)))
@@ -887,5 +895,19 @@ public abstract class AbstractPrioritizedTransactionsTestBase {
     for (final long nonce : nonces) {
       sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
     }
+  }
+
+  protected Block createBlock(final Transaction... transactionsToAdd) {
+    final List<Transaction> transactionList = asList(transactionsToAdd);
+    final Block block =
+        new Block(
+            new BlockHeaderTestFixture()
+                .baseFeePerGas(Wei.of(10L))
+                .gasLimit(300000)
+                .parentHash(Hash.ZERO)
+                .number(1)
+                .buildHeader(),
+            new BlockBody(transactionList, emptyList()));
+    return block;
   }
 }

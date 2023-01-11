@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.NoOpPostponedTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -48,9 +47,7 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
           transactionReplacementTester) {
 
     this.readyTransactionsCache =
-        spy(
-            new ReadyTransactionsCache(
-                poolConfig, new NoOpPostponedTransactionsCache(), transactionReplacementTester));
+        spy(new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
 
     return new GasPricePrioritizedTransactions(
         poolConfig,
