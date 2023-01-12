@@ -134,6 +134,12 @@ public abstract class AbstractPendingTransactionsSorter {
         pendingTransactions::size);
   }
 
+  public void reset() {
+    pendingTransactions.clear();
+    transactionsBySender.clear();
+    lowestInvalidKnownNonceCache.reset();
+  }
+
   public void evictOldTransactions() {
     final Instant removeTransactionsBefore =
         clock.instant().minus(poolConfig.getPendingTxRetentionPeriod(), ChronoUnit.HOURS);

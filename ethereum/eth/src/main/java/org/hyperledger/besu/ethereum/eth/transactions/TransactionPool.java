@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -79,6 +80,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final TransactionPoolConfiguration configuration;
+  private final AtomicBoolean isPoolEnabled = new AtomicBoolean(true);
 
   public TransactionPool(
       final AbstractPendingTransactionsSorter pendingTransactions,
@@ -108,6 +110,10 @@ public class TransactionPool implements BlockAddedObserver {
 
   void handleConnect(final EthPeer peer) {
     transactionBroadcaster.relayTransactionPoolTo(peer);
+  }
+
+  public void reset() {
+    pendingTransactions.reset();
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
@@ -222,9 +228,11 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     LOG.trace("Block added event {}", event);
-    event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
-    pendingTransactions.manageBlockAdded(event.getBlock());
-    reAddTransactions(event.getRemovedTransactions());
+    if (isPoolEnabled.get()) {
+      event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
+      pendingTransactions.manageBlockAdded(event.getBlock());
+      reAddTransactions(event.getRemovedTransactions());
+    }
   }
 
   private void reAddTransactions(final List<Transaction> reAddTransactions) {
@@ -433,5 +441,17 @@ public class TransactionPool implements BlockAddedObserver {
     static ValidationResultAndAccount invalid(final TransactionInvalidReason reason) {
       return new ValidationResultAndAccount(ValidationResult.invalid(reason));
     }
+  }
+
+  public void setEnabled() {
+    isPoolEnabled.set(true);
+  }
+
+  public void setDisabled() {
+    isPoolEnabled.set(false);
+  }
+
+  public boolean isEnabled() {
+    return isPoolEnabled.get();
   }
 }

@@ -60,7 +60,8 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
-      final Clock clock) {
+      final Clock clock,
+      final boolean isResync) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -79,7 +80,14 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
 
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
-    if (fastSyncState.getPivotBlockHeader().isEmpty()
+
+    if (isResync) {
+      snapContext.clear();
+      worldStateStorage.clear();
+    }
+
+    if (!isResync
+        && fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(

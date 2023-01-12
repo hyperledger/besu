@@ -40,6 +40,8 @@ public interface Synchronizer {
    */
   Optional<SyncStatus> getSyncStatus();
 
+  boolean resyncWorldState();
+
   long subscribeSyncStatus(final BesuEvents.SyncStatusListener listener);
 
   boolean unsubscribeSyncStatus(long observerId);
