@@ -60,12 +60,14 @@ public class LayeredTransactionPoolLegacyTest extends AbstractLayeredTransaction
       final TransactionPoolConfiguration poolConfig,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
-return new ReadyTransactionsCache(poolConfig,
-     new GasPricePrioritizedTransactions(
+    return new ReadyTransactionsCache(
         poolConfig,
-        TestClock.system(ZoneId.systemDefault()),
-        metricsSystem,
-        transactionReplacementTester), transactionReplacementTester);
+        new GasPricePrioritizedTransactions(
+            poolConfig,
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            transactionReplacementTester),
+        transactionReplacementTester);
   }
 
   @Override

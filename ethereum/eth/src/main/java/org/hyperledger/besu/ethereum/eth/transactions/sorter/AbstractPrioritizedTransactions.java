@@ -21,8 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -30,7 +28,6 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
 import java.util.HashMap;
@@ -71,14 +68,6 @@ public abstract class AbstractPrioritizedTransactions {
 
   protected final TreeSet<PendingTransaction> orderByFee;
   protected final Map<Address, Long> expectedNonceForSender;
-
-  //  protected final ReadyTransactionsCache readyTransactionsCache;
-
-  protected final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
-      Subscribers.create();
-
-  protected final Subscribers<PendingTransactionDroppedListener> transactionDroppedListeners =
-      Subscribers.create();
 
   protected final LabelledMetric<Counter> transactionAddedCounter;
   protected final LabelledMetric<Counter> transactionRemovedCounter;
@@ -476,6 +465,12 @@ public abstract class AbstractPrioritizedTransactions {
           + " content "
           + expectedNonceForSender;
     }
+  }
+
+  public void reset() {
+    prioritizedPendingTransactions.clear();
+    orderByFee.clear();
+    expectedNonceForSender.clear();
   }
 
   public static class PrioritizeResult {

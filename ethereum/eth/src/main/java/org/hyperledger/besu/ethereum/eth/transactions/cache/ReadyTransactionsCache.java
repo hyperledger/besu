@@ -110,6 +110,19 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
   }
 
   @Override
+  public void reset() {
+    synchronized (lock) {
+      pendingTransactions.clear();
+      readyBySender.clear();
+      orderByMaxFee.clear();
+      sparseBySender.clear();
+      sparseEvictionOrder.clear();
+      readyTotalSize.set(0);
+      prioritizedTransactions.reset();
+    }
+  }
+
+  @Override
   public TransactionAddedResult addRemoteTransaction(
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
@@ -167,10 +180,13 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
 
       if (addStatus.isSuccess()) {
 
-        addStatus.maybeReplacedTransaction().ifPresent(replacedTx -> {
-          pendingTransactions.remove(replacedTx.getHash());
-          decreaseTotalSize(replacedTx);
-        });
+        addStatus
+            .maybeReplacedTransaction()
+            .ifPresent(
+                replacedTx -> {
+                  pendingTransactions.remove(replacedTx.getHash());
+                  decreaseTotalSize(replacedTx);
+                });
 
         pendingTransactions.put(pendingTransaction.getHash(), pendingTransaction);
         increaseTotalSize(pendingTransaction);

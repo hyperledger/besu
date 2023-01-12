@@ -101,15 +101,18 @@ public abstract class AbstractIsolationTests {
               transactionReplacementHandler.shouldReplace(
                   t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
 
-  protected final TransactionPoolConfiguration poolConfiguration = ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
+  protected final TransactionPoolConfiguration poolConfiguration =
+      ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
 
   protected final PendingTransactionsSorter sorter =
-          new ReadyTransactionsCache(poolConfiguration,
-      new GasPricePrioritizedTransactions(poolConfiguration
-          ,
-          Clock.systemUTC(),
-          new NoOpMetricsSystem(),
-          transactionReplacementTester), transactionReplacementTester);
+      new ReadyTransactionsCache(
+          poolConfiguration,
+          new GasPricePrioritizedTransactions(
+              poolConfiguration,
+              Clock.systemUTC(),
+              new NoOpMetricsSystem(),
+              transactionReplacementTester),
+          transactionReplacementTester);
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()

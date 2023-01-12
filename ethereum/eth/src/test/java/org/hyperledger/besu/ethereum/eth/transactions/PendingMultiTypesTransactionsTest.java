@@ -85,7 +85,9 @@ public class PendingMultiTypesTransactionsTest {
           transactionReplacementTester,
           FeeMarket.london(0L));
 
-  private final ReadyTransactionsCache transactions = new ReadyTransactionsCache(transactionPoolConfiguration, sorter, transactionReplacementTester);
+  private final ReadyTransactionsCache transactions =
+      new ReadyTransactionsCache(
+          transactionPoolConfiguration, sorter, transactionReplacementTester);
 
   @Test
   public void shouldReturnExclusivelyLocal1559TransactionsWhenAppropriate() {

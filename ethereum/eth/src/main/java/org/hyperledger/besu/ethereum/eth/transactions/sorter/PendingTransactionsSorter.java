@@ -79,6 +79,8 @@ public interface PendingTransactionsSorter {
 
   String logStats();
 
+  void reset();
+
   default void signalInvalidTransaction(final Transaction transaction) {
     // ToDo: remove when the legacy tx pool is removed
   }

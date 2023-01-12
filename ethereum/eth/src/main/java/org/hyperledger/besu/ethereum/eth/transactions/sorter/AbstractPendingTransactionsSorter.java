@@ -135,6 +135,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         pendingTransactions::size);
   }
 
+  @Override
   public void reset() {
     pendingTransactions.clear();
     transactionsBySender.clear();

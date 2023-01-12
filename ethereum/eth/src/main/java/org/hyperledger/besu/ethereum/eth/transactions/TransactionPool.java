@@ -235,11 +235,11 @@ public class TransactionPool implements BlockAddedObserver {
     LOG.trace("Block added event {}", event);
     if (isPoolEnabled.get()) {
       pendingTransactions.manageBlockAdded(
-              event.getBlock().getHeader(),
-              event.getAddedTransactions(),
-              protocolSchedule
-                      .getByBlockNumber(event.getBlock().getHeader().getNumber() + 1)
-                      .getFeeMarket());
+          event.getBlock().getHeader(),
+          event.getAddedTransactions(),
+          protocolSchedule
+              .getByBlockNumber(event.getBlock().getHeader().getNumber() + 1)
+              .getFeeMarket());
       reAddTransactions(event.getRemovedTransactions());
     }
   }
