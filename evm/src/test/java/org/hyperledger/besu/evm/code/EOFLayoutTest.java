@@ -317,10 +317,10 @@ public class EOFLayoutTest {
     assertThat(layout.getContainer()).isEqualTo(container);
     if (layout.getInvalidReason() != null) {
       assertThat(layout.isValid()).isFalse();
-      assertThat(layout.getCodeSections()).isNull();
+      assertThat(layout.getCodeSectionCount()).isZero();
     } else {
       assertThat(layout.isValid()).isTrue();
-      assertThat(layout.getCodeSections()).isNotNull();
+      assertThat(layout.getCodeSectionCount()).isNotZero();
     }
   }
 }
