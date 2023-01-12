@@ -91,6 +91,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   private static final EngineForkchoiceUpdatedParameter mockFcuParam =
       new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash);
 
+  private static final BlockHeaderTestFixture blockHeaderBuilder =
+      new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
+
   @Mock private ProtocolSpec protocolSpec;
   @Mock private TimestampSchedule timestampSchedule;
   @Mock private ProtocolContext protocolContext;
@@ -133,7 +136,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidOnBadTerminalBlock() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
 
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
@@ -148,7 +151,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidWithLatestValidHashOnBadBlock() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
     when(mergeCoordinator.isBadBlock(mockHeader.getHash())).thenReturn(true);
     when(mergeCoordinator.getLatestValidHashOfBadBlock(mockHeader.getHash()))
@@ -171,7 +174,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidWithoutFinalizedOrPayload() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
@@ -185,10 +188,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidOnOldTimestamp() {
-    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader parent = blockHeaderBuilder.buildHeader();
     BlockHeader mockHeader =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
+        blockHeaderBuilder
             .parentHash(parent.getHash())
             .timestamp(parent.getTimestamp())
             .buildHeader();
@@ -221,14 +223,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidWithNewHeadAndFinalizedNoPayload() {
-    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    BlockHeader mockParent = builder.number(9L).buildHeader();
-    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
 
     assertSuccessWithPayloadForForkchoiceResult(
         new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
@@ -239,7 +237,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidWithoutFinalizedWithPayload() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
@@ -273,7 +271,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfFinalizedBlockIsUnknown() {
-    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader newHead = blockHeaderBuilder.buildHeader();
     Hash finalizedBlockHash = Hash.hash(Bytes32.fromHexStringLenient("0x424abcdef"));
 
     when(blockchain.getBlockHeader(finalizedBlockHash)).thenReturn(Optional.empty());
@@ -293,8 +291,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfFinalizedBlockIsNotAnAncestorOfNewHead() {
-    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader finalized = blockHeaderBuilder.buildHeader();
+    BlockHeader newHead = blockHeaderBuilder.buildHeader();
 
     when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
@@ -315,10 +313,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfSafeHeadZeroWithFinalizedBlock() {
-    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader parent = blockHeaderBuilder.buildHeader();
     BlockHeader newHead =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
+        blockHeaderBuilder
             .parentHash(parent.getHash())
             .timestamp(parent.getTimestamp())
             .buildHeader();
@@ -340,10 +337,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsUnknown() {
-    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader finalized = blockHeaderBuilder.buildHeader();
     BlockHeader newHead =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
+        blockHeaderBuilder
             .parentHash(finalized.getHash())
             .timestamp(finalized.getTimestamp())
             .buildHeader();
@@ -368,9 +364,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsNotADescendantOfFinalized() {
-    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader safeBlock = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader finalized = blockHeaderBuilder.buildHeader();
+    BlockHeader newHead = blockHeaderBuilder.buildHeader();
+    BlockHeader safeBlock = blockHeaderBuilder.buildHeader();
 
     when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
@@ -393,9 +389,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsNotAnAncestorOfNewHead() {
-    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader safeBlock = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader finalized = blockHeaderBuilder.buildHeader();
+    BlockHeader newHead = blockHeaderBuilder.buildHeader();
+    BlockHeader safeBlock = blockHeaderBuilder.buildHeader();
 
     when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
@@ -419,7 +415,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldIgnoreUpdateToOldHeadAndNotPreparePayload() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
 
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
@@ -457,14 +453,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidIfPayloadTimestampIsInvalid() {
-    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    BlockHeader mockParent = builder.number(9L).buildHeader();
-    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
 
     final long timestampNotGreaterThanHead = mockHeader.getTimestamp();
 
@@ -487,14 +479,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidIfWithdrawalsIsNotNull_WhenWithdrawalsProhibited() {
-    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    BlockHeader mockParent = builder.number(9L).buildHeader();
-    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -515,14 +503,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidIfWithdrawalsIsNull_WhenWithdrawalsProhibited() {
-    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    BlockHeader mockParent = builder.number(9L).buildHeader();
-    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -555,14 +539,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
 
-    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    BlockHeader mockParent = builder.number(9L).buildHeader();
-    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -586,14 +566,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
 
-    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    BlockHeader mockParent = builder.number(9L).buildHeader();
-    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -625,14 +601,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   public void shouldReturnValidIfTimestampScheduleIsEmpty() {
     when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.empty());
 
-    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    BlockHeader mockParent = builder.number(9L).buildHeader();
-    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -658,6 +630,14 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
         ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
         VALID);
     verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  private void setupValidForkchoiceUpdate(final BlockHeader mockHeader) {
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
+        .thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
   }
 
   protected EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
