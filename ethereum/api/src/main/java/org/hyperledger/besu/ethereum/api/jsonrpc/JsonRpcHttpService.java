@@ -351,7 +351,28 @@ public class JsonRpcHttpService {
     nonBlockingJsonRpcExecutorHandler =
         (NonBlockingJsonRpcExecutorHandler)
             HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(1));
-    mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
+
+    final JsonRpcExecutor jsonRpcExecutor;
+
+    if (maybeAuthenticationService.isPresent()) {
+      jsonRpcExecutor = new JsonRpcExecutor(
+          new AuthenticatedJsonRpcProcessor(
+              new TimedJsonRpcProcessor(
+                  new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
+                  requestTimer),
+              maybeAuthenticationService.get(),
+              config.getNoAuthRpcApis()),
+          rpcMethods);
+    } else {
+      jsonRpcExecutor = new JsonRpcExecutor(
+          new TimedJsonRpcProcessor(
+              new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
+              requestTimer),
+          rpcMethods);
+    }
+
+//    mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
+    mainRoute.handler(HandlerFactory.jsonRpcExecutor(jsonRpcExecutor, tracer));
 
     if (maybeAuthenticationService.isPresent()) {
       router
