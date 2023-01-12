@@ -222,6 +222,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
+    executor: trivy_executor
     steps:
       - prepare
       - attach_workspace:
@@ -376,59 +377,59 @@ workflows:
 #      - buildArm64Docker:
 #          requires:
 #            - assemble
-      - publish:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
-          requires:
-            - assemble
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
-            - buildDocker
-      - publishDocker:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
-          requires:
-            - assemble
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
-            - buildDocker
-          context:
-            - besu-dockerhub-rw
-      - publishArm64Docker:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
-          requires:
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
-            - buildArm64Docker
-          context:
-            - besu-dockerhub-rw
-      - manifestDocker:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
-          requires:
-            - publishDocker
-            - publishArm64Docker
-          context:
-            - besu-dockerhub-rw
+#      - publish:
+#          filters:
+#            branches:
+#              only:
+#                - main
+#                - /^release-.*/
+#          requires:
+#            - assemble
+#            - integrationTests
+#            - unitTests
+#            - acceptanceTests
+#            - referenceTests
+#            - buildDocker
+#      - publishDocker:
+#          filters:
+#            branches:
+#              only:
+#                - main
+#                - /^release-.*/
+#          requires:
+#            - assemble
+#            - integrationTests
+#            - unitTests
+#            - acceptanceTests
+#            - referenceTests
+#            - buildDocker
+#          context:
+#            - besu-dockerhub-rw
+#      - publishArm64Docker:
+#          filters:
+#            branches:
+#              only:
+#                - main
+#                - /^release-.*/
+#          requires:
+#            - integrationTests
+#            - unitTests
+#            - acceptanceTests
+#            - referenceTests
+#            - buildArm64Docker
+#          context:
+#            - besu-dockerhub-rw
+#      - manifestDocker:
+#          filters:
+#            branches:
+#              only:
+#                - main
+#                - /^release-.*/
+#          requires:
+#            - publishDocker
+#            - publishArm64Docker
+#          context:
+#            - besu-dockerhub-rw
 
   nightly:
     triggers:
