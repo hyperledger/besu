@@ -57,7 +57,7 @@ public class Create2OperationTest {
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final EVM evm = mock(EVM.class);
   private final Create2Operation operation =
-      new Create2Operation(new ConstantinopleGasCalculator());
+      new Create2Operation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
 
   @Parameters(name = "sender: {0}, salt: {1}, code: {2}")
   public static Object[][] params() {

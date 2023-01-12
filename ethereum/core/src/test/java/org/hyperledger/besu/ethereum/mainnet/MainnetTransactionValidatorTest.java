@@ -45,8 +45,8 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -259,7 +259,8 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.values()),
-            defaultGoQuorumCompatibilityMode);
+            defaultGoQuorumCompatibilityMode,
+            Integer.MAX_VALUE);
     validator.setTransactionFilter(transactionFilter(true));
 
     final Transaction transaction =
@@ -342,7 +343,8 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER),
-            defaultGoQuorumCompatibilityMode);
+            defaultGoQuorumCompatibilityMode,
+            Integer.MAX_VALUE);
 
     final MainnetTransactionValidator eip1559Validator =
         new MainnetTransactionValidator(
@@ -351,7 +353,8 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            defaultGoQuorumCompatibilityMode);
+            defaultGoQuorumCompatibilityMode,
+            Integer.MAX_VALUE);
 
     final Transaction transaction =
         new TransactionTestFixture()
@@ -383,7 +386,8 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            defaultGoQuorumCompatibilityMode);
+            defaultGoQuorumCompatibilityMode,
+            Integer.MAX_VALUE);
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
@@ -406,7 +410,8 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            defaultGoQuorumCompatibilityMode);
+            defaultGoQuorumCompatibilityMode,
+            Integer.MAX_VALUE);
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
@@ -428,7 +433,8 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            defaultGoQuorumCompatibilityMode);
+            defaultGoQuorumCompatibilityMode,
+            Integer.MAX_VALUE);
     final Transaction transaction =
         new TransactionTestFixture()
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
@@ -452,7 +458,8 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            defaultGoQuorumCompatibilityMode);
+            defaultGoQuorumCompatibilityMode,
+            Integer.MAX_VALUE);
     final Transaction transaction =
         new TransactionTestFixture()
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))

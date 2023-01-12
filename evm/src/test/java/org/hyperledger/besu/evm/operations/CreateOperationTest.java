@@ -54,7 +54,8 @@ public class CreateOperationTest {
   private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final MutableAccount newMutableAccount = mock(MutableAccount.class);
-  private final CreateOperation operation = new CreateOperation(new ConstantinopleGasCalculator());
+  private final CreateOperation operation =
+      new CreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
 
   private static final String TOPIC =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
