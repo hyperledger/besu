@@ -64,9 +64,13 @@ public class EthCallTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
 
+  @Mock private BlockHeader blockHeader;
+
   @Before
   public void setUp() {
     method = new EthCall(blockchainQueries, transactionSimulator);
+    blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
   }
 
   @Test
@@ -161,6 +165,32 @@ public class EthCallTest {
   }
 
   @Test
+  public void shouldUseCorrectBlockNumberWhenSafe() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "safe");
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
+    when(blockchainQueries.safeBlockHeader()).thenReturn(Optional.of(blockHeader));
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
+    method.response(request);
+
+    verify(blockchainQueries).getBlockHeaderByHash(Hash.ZERO);
+    verify(blockchainQueries).safeBlockHeader();
+    verify(transactionSimulator).process(any(), any(), any(), any());
+  }
+
+  @Test
+  public void shouldUseCorrectBlockNumberWhenFinalized() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "finalized");
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
+    when(blockchainQueries.finalizedBlockHeader()).thenReturn(Optional.of(blockHeader));
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
+    method.response(request);
+
+    verify(blockchainQueries).getBlockHeaderByHash(Hash.ZERO);
+    verify(blockchainQueries).finalizedBlockHeader();
+    verify(transactionSimulator).process(any(), any(), any(), any());
+  }
+
+  @Test
   public void shouldUseCorrectBlockNumberWhenSpecified() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), Quantity.create(13L));
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
@@ -226,7 +256,7 @@ public class EthCallTest {
   private void internalAutoSelectIsAllowedExceedingBalance(
       final JsonCallParameter callParameter,
       final Optional<Wei> baseFee,
-      final boolean isAllowedExeedingBalance) {
+      final boolean isAllowedExceedingBalance) {
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
 
     final BlockHeader blockHeader = mock(BlockHeader.class);
@@ -241,7 +271,7 @@ public class EthCallTest {
     final TransactionValidationParams transactionValidationParams =
         ImmutableTransactionValidationParams.builder()
             .from(TransactionValidationParams.transactionSimulator())
-            .isAllowExceedingBalance(isAllowedExeedingBalance)
+            .isAllowExceedingBalance(isAllowedExceedingBalance)
             .build();
 
     verify(transactionSimulator).process(any(), eq(transactionValidationParams), any(), any());

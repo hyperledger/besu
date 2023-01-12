@@ -38,10 +38,9 @@ class JumpFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b2" + "0001" + "00");
-    when(mockCode.getCodeBytes(2)).thenReturn(code);
-    when(mockCode.getCodeBytes(1)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 1, 2, 3);
+    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
     when(mockCode.getCodeSection(2)).thenReturn(codeSection);
 
@@ -70,9 +69,9 @@ class JumpFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b2" + "03ff" + "00");
-    when(mockCode.getCodeBytes(0)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 1, 2, 3);
+    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =
@@ -100,13 +99,11 @@ class JumpFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b2" + "0001" + "00");
-    when(mockCode.getCodeBytes(0)).thenReturn(code);
-    when(mockCode.getCodeBytes(2)).thenReturn(code);
-    when(mockCode.getCodeBytes(1)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection1 = new CodeSection(Bytes.EMPTY, 1, 2, 3);
+    final CodeSection codeSection1 = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection1);
-    final CodeSection codeSection2 = new CodeSection(Bytes.EMPTY, 2, 2, 3);
+    final CodeSection codeSection2 = new CodeSection(0, 2, 2, 3, 0);
     when(mockCode.getCodeSection(2)).thenReturn(codeSection2);
 
     MessageFrame messageFrame =

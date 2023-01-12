@@ -64,12 +64,12 @@ public final class CodeFactory {
               codeHash, bytes, "Invalid EOF Layout: " + layout.getInvalidReason());
         }
 
-        final String codeValidationError = CodeV1.validateCode(layout);
+        final String codeValidationError = CodeV1Validation.validateCode(layout);
         if (codeValidationError != null) {
           return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + codeValidationError);
         }
 
-        final String stackValidationError = CodeV1.validateStack(layout);
+        final String stackValidationError = CodeV1Validation.validateStack(layout);
         if (stackValidationError != null) {
           return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + stackValidationError);
         }
