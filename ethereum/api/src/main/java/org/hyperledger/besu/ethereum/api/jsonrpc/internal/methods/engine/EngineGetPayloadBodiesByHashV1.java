@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -62,13 +63,7 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
     final Blockchain blockchain = protocolContext.getBlockchain();
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(),
-        Arrays.stream(blockHashes)
-            .map(
-                blockHash ->
-                    blockchain
-                        .getBlockBody(blockHash)
-                        .map(blockResultFactory::payloadBodyCompleteV1)
-                        .orElse(null))
-            .toArray());
+        blockResultFactory.payloadBodiesCompleteV1(
+            Arrays.stream(blockHashes).map(blockchain::getBlockBody).collect(Collectors.toList())));
   }
 }

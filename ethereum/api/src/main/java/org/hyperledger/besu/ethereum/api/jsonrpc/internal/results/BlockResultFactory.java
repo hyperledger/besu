@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -107,13 +108,22 @@ public class BlockResultFactory {
     return new EngineGetPayloadResultV2(block.getHeader(), txs, Quantity.create(blockValue));
   }
 
-  public EngineGetPayloadBodyResultV1 payloadBodyCompleteV1(final BlockBody blockBody) {
-    final List<String> txs =
-        blockBody.getTransactions().stream()
-            .map(TransactionEncoder::encodeOpaqueBytes)
-            .map(Bytes::toHexString)
+  public EngineGetPayloadBodiesResultV1 payloadBodiesCompleteV1(
+      final List<Optional<BlockBody>> blockBodies) {
+    final List<List<String>> payloadBodies =
+        blockBodies.stream()
+            .map(
+                maybeBody ->
+                    maybeBody
+                        .map(
+                            blockBody ->
+                                blockBody.getTransactions().stream()
+                                    .map(TransactionEncoder::encodeOpaqueBytes)
+                                    .map(Bytes::toHexString)
+                                    .collect(Collectors.toList()))
+                        .orElse(null))
             .collect(Collectors.toList());
-    return new EngineGetPayloadBodyResultV1(txs);
+    return new EngineGetPayloadBodiesResultV1(payloadBodies);
   }
 
   private long calculateBlockValue(final List<String> ignored) {

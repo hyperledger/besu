@@ -18,15 +18,15 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public class EngineGetPayloadBodyResultV1 {
-  private final List<String> transactions;
+public class EngineGetPayloadBodiesResultV1 {
+  private final List<List<String>> payloadBodies;
 
-  public EngineGetPayloadBodyResultV1(final List<String> transactions) {
-    this.transactions = transactions;
+  public EngineGetPayloadBodiesResultV1(final List<List<String>> payloadBodies) {
+    this.payloadBodies = payloadBodies;
   }
 
   @JsonValue
-  public List<String> getTransactions() {
-    return transactions;
+  public List<List<String>> getPayloadBodies() {
+    return payloadBodies;
   }
 }
