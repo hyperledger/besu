@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
@@ -112,6 +113,15 @@ public class BlockResultFactory {
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
         Quantity.create(blockValue));
+  }
+
+  public EngineGetPayloadBodyResultV1 payloadBodyCompleteV1(final BlockBody blockBody) {
+    final List<String> txs =
+        blockBody.getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+    return new EngineGetPayloadBodyResultV1(txs);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
