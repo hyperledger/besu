@@ -77,9 +77,10 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
   private final Map<Hash, PendingTransaction> pendingTransactions = new ConcurrentHashMap<>();
   private final Map<Address, NavigableMap<Long, PendingTransaction>> readyBySender =
       new ConcurrentHashMap<>();
-  private final NavigableSet<Transaction> orderByMaxFee =
+  private final NavigableSet<PendingTransaction> orderByMaxFee =
       new TreeSet<>(
-          Comparator.comparing(Transaction::getMaxGasFee).thenComparing(Transaction::getSender));
+          Comparator.comparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasFee())
+              .thenComparing(PendingTransaction::getSequence));
 
   private final Map<Address, NavigableMap<Long, PendingTransaction>> sparseBySender =
       new ConcurrentHashMap<>();
@@ -216,6 +217,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
             }
           }
         }
+        notifyTransactionAdded(pendingTransaction.getTransaction());
       }
 
       return addStatus;
@@ -229,25 +231,21 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
 
     final var prioritizeResult =
         prioritizedTransactions.maybePrioritizeAddedTransaction(
-            addedReadyTransaction, senderNonce, addResult);
-    prioritizeResult
-        .maybeDemotedTransaction()
-        .ifPresent(
-            overflowTx -> {
-              prioritizedTransactions.demoteLastPrioritizedForSender(
-                  overflowTx, readyBySender.get(overflowTx.getSender()));
-            });
+            readyBySender.get(addedReadyTransaction.getSender()),
+            addedReadyTransaction,
+            senderNonce,
+            addResult);
 
     if (prioritizeResult.isPrioritized() && !prioritizeResult.isReplacement()) {
       // try to see if we can prioritize any transactions that moved from sparse to ready for this
       // sender
-      get(addedReadyTransaction.getSender(), addedReadyTransaction.getNonce() + 1)
+      getReady(addedReadyTransaction.getSender(), addedReadyTransaction.getNonce() + 1)
           .ifPresent(
               nextReadyTx -> maybePrioritizeReadyTransaction(nextReadyTx, senderNonce, ADDED));
     }
   }
 
-  public Optional<PendingTransaction> get(final Address sender, final long nonce) {
+  public Optional<PendingTransaction> getReady(final Address sender, final long nonce) {
     var senderTxs = readyBySender.get(sender);
     if (senderTxs != null) {
       return Optional.ofNullable(senderTxs.get(nonce));
@@ -255,7 +253,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
     return Optional.empty();
   }
 
-  public void remove(final Transaction transaction) {
+  private void remove(final Transaction transaction) {
     modifySenderReadyTxsWrapper(
         transaction.getSender(), senderTxs -> remove(senderTxs, transaction));
     pendingTransactions.remove(transaction.getHash());
@@ -324,7 +322,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
       final Function<NavigableMap<Long, PendingTransaction>, R> modifySenderTxs) {
 
     var senderTxs = readyBySender.get(sender);
-    final Optional<Transaction> prevFirstTx = getFirstReadyTransaction(senderTxs);
+    final Optional<PendingTransaction> prevFirstTx = getFirstReadyTransaction(senderTxs);
     final long prevLastNonce = getLastReadyNonce(senderTxs);
 
     final var result = modifySenderTxs.apply(senderTxs);
@@ -334,7 +332,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
       senderTxs = readyBySender.get(sender);
     }
 
-    final Optional<Transaction> currFirstTx = getFirstReadyTransaction(senderTxs);
+    final Optional<PendingTransaction> currFirstTx = getFirstReadyTransaction(senderTxs);
     final long currLastNonce = getLastReadyNonce(senderTxs);
 
     if (!prevFirstTx.equals(currFirstTx)) {
@@ -357,13 +355,14 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
     final var lessReadySender = orderByMaxFee.first().getSender();
     final var lessReadySenderTxs = readyBySender.get(lessReadySender);
 
-    final List<PendingTransaction> toPostponed = new ArrayList<>();
+    final List<PendingTransaction> evictedTxs = new ArrayList<>();
     long postponedSize = 0;
     PendingTransaction lastTx = null;
     // lastTx must never be null, because the sender have at least the lessReadyTx
     while (postponedSize < evictSize && !lessReadySenderTxs.isEmpty()) {
       lastTx = lessReadySenderTxs.pollLastEntry().getValue();
-      toPostponed.add(lastTx);
+      pendingTransactions.remove(lastTx.getHash());
+      evictedTxs.add(lastTx);
       decreaseTotalSize(lastTx);
       postponedSize += lastTx.getTransaction().getSize();
     }
@@ -371,21 +370,22 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
     if (lessReadySenderTxs.isEmpty()) {
       readyBySender.remove(lessReadySender);
       // at this point lastTx was the first for the sender, then remove it from eviction order too
-      orderByMaxFee.remove(lastTx.getTransaction());
+      orderByMaxFee.remove(lastTx);
       if (!readyBySender.isEmpty()) {
         // try next less valuable sender
-        toPostponed.addAll(evictReadyTransactions(evictSize - postponedSize));
+        evictedTxs.addAll(evictReadyTransactions(evictSize - postponedSize));
       }
     }
-    return toPostponed;
+    return evictedTxs;
   }
 
   private List<PendingTransaction> evictSparseTransactions(final long evictSize) {
-    final List<PendingTransaction> toPostponed = new ArrayList<>();
+    final List<PendingTransaction> evictedTxs = new ArrayList<>();
     long postponedSize = 0;
     while (postponedSize < evictSize && !sparseBySender.isEmpty()) {
       final var oldestSparse = sparseEvictionOrder.pollFirst();
-      toPostponed.add(oldestSparse);
+      pendingTransactions.remove(oldestSparse.getHash());
+      evictedTxs.add(oldestSparse);
       decreaseTotalSize(oldestSparse);
       postponedSize += oldestSparse.getTransaction().getSize();
 
@@ -396,11 +396,15 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
             return sparseTxs.isEmpty() ? null : sparseTxs;
           });
     }
-    return toPostponed;
+    return evictedTxs;
   }
 
   private long cacheFreeSpace() {
     return poolConfig.getPendingTransactionsCacheSizeBytes() - readyTotalSize.get();
+  }
+
+  public long getUsedSpace() {
+    return readyTotalSize.get();
   }
 
   private void sparseToReady(
@@ -419,12 +423,12 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
     }
   }
 
-  private Optional<Transaction> getFirstReadyTransaction(
+  private Optional<PendingTransaction> getFirstReadyTransaction(
       final NavigableMap<Long, PendingTransaction> senderTxs) {
     if (senderTxs == null || senderTxs.isEmpty()) {
       return Optional.empty();
     }
-    return Optional.of(senderTxs.firstEntry().getValue().getTransaction());
+    return Optional.of(senderTxs.firstEntry().getValue());
   }
 
   private long getLastReadyNonce(final NavigableMap<Long, PendingTransaction> senderTxs) {
@@ -615,9 +619,10 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
   public void selectTransactions(final PendingTransactionsSorter.TransactionSelector selector) {
     synchronized (lock) {
       final List<PendingTransaction> transactionsToRemove = new ArrayList<>();
-      final Set<Hash> selectedTransactions = new HashSet<>();
+      final Set<Hash> alreadyChecked = new HashSet<>();
       final Iterator<PendingTransaction> itPrioritizedTransactions =
           prioritizedTransactions.prioritizedTransactions();
+      outerloop:
       while (itPrioritizedTransactions.hasNext()) {
         final PendingTransaction highestPriorityPendingTransaction =
             itPrioritizedTransactions.next();
@@ -627,61 +632,36 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
         while (itSenderCandidateTxs.hasNext()) {
           final var candidateTx = itSenderCandidateTxs.next();
           if (candidateTx.getNonce() <= highestPriorityPendingTransaction.getNonce()
-              && !selectedTransactions.contains(candidateTx.getHash())) {
+              && !alreadyChecked.contains(candidateTx.getHash())) {
             final PendingTransactionsSorter.TransactionSelectionResult result =
                 selector.evaluateTransaction(candidateTx.getTransaction());
             switch (result) {
               case DELETE_TRANSACTION_AND_CONTINUE:
+                alreadyChecked.add(candidateTx.getHash());
                 transactionsToRemove.add(candidateTx);
                 break;
               case CONTINUE:
-                selectedTransactions.add(candidateTx.getHash());
+                alreadyChecked.add(candidateTx.getHash());
                 break;
               case COMPLETE_OPERATION:
-                transactionsToRemove.forEach(this::removeInvalidTransaction);
-                return;
+                break outerloop;
               default:
                 throw new RuntimeException("Illegal value for TransactionSelectionResult.");
             }
           }
         }
-        transactionsToRemove.forEach(this::removeInvalidTransaction);
-
-        //        final AccountTransactionOrder accountTransactionOrder =
-        //                accountTransactions.computeIfAbsent(
-        //                        highestPriorityPendingTransaction.getSender(),
-        // this::createSenderTransactionOrder);
-        //
-        //        for (final Transaction transactionToProcess :
-        //                accountTransactionOrder.transactionsToProcess(
-        //                        highestPriorityPendingTransaction.getTransaction())) {
-        //          final PendingTransactionsSorter.TransactionSelectionResult result =
-        //                  selector.evaluateTransaction(transactionToProcess);
-        //          switch (result) {
-        //            case DELETE_TRANSACTION_AND_CONTINUE:
-        //              transactionsToRemove.add(transactionToProcess);
-        //              break;
-        //            case CONTINUE:
-        //              break;
-        //            case COMPLETE_OPERATION:
-        //              transactionsToRemove.forEach(this::removeInvalidTransaction);
-        //            default:
-        //              throw new RuntimeException("Illegal value for TransactionSelectionResult.");
-        //          }
-        //        }
       }
+      transactionsToRemove.forEach(this::removeInvalidTransaction);
     }
   }
 
-  private void removeInvalidTransaction(final PendingTransaction transaction) {
-    // ToDo: this could be optimized to remove only the invalid tx if metrics show it is worth to do
-
+  private void removeInvalidTransaction(final PendingTransaction invalidTransaction) {
     // remove the invalid transaction and move all the following to sparse set
-    final var sender = transaction.getSender();
+    final var sender = invalidTransaction.getSender();
     final var followingTxs =
-        streamReadyTransactions(sender, transaction.getNonce()).collect(Collectors.toList());
+        streamReadyTransactions(sender, invalidTransaction.getNonce()).collect(Collectors.toList());
 
-    remove(transaction.getTransaction());
+    remove(invalidTransaction.getTransaction());
 
     followingTxs.forEach(
         followingTx -> {
@@ -693,13 +673,14 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
         });
 
     final var maybeLastValidSenderNonce =
-        get(sender, transaction.getNonce() - 1).map(PendingTransaction::getNonce);
+        getReady(sender, invalidTransaction.getNonce() - 1).map(PendingTransaction::getNonce);
 
-    followingTxs.add(0, transaction);
+    followingTxs.add(0, invalidTransaction);
 
     prioritizedTransactions.demoteInvalidTransactions(
         sender, followingTxs, maybeLastValidSenderNonce);
 
+    notifyTransactionDropped(invalidTransaction.getTransaction());
     //
     //
     //    List<PendingTransaction> allSenderTxs =
@@ -747,7 +728,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
   }
 
   @Override
-  // ToDo: remane to pending transactions
+  // ToDo: rename to pending transactions
   public Set<PendingTransaction> getPrioritizedPendingTransactions() {
     return new HashSet<>(pendingTransactions.values());
   }
@@ -821,6 +802,14 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
 
       promoteTransactions.forEach(prioritizedTransactions::addPrioritizedTransaction);
     }
+  }
+
+  private void notifyTransactionAdded(final Transaction transaction) {
+    pendingTransactionSubscribers.forEach(listener -> listener.onTransactionAdded(transaction));
+  }
+
+  private void notifyTransactionDropped(final Transaction transaction) {
+    transactionDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
   }
 
   @Override

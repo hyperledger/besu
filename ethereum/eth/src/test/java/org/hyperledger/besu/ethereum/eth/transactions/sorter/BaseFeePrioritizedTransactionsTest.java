@@ -14,31 +14,55 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.testutil.TestClock;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.junit.jupiter.api.Test;
+
 public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTransactionsTestBase {
+
   //  private static final Random randomizeTxType = new Random();
   //
-  //  @Override
-  //  AbstractPrioritizedTransactions getSorter(
-  //      final TransactionPoolConfiguration poolConfig,
-  //      final Optional<Clock> clock,
-  //      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-  //          transactionReplacementTester) {
-  //
-  //    return new BaseFeePrioritizedTransactions(
-  //        poolConfig,
-  //        clock.orElse(TestClock.system(ZoneId.systemDefault())),
-  //        metricsSystem,
-  //        this::mockBlockHeader,
-  //        transactionReplacementTester,
-  //        FeeMarket.london(0L));
-  //  }
-  //
-  //  @Override
-  //  protected BlockHeader mockBlockHeader() {
-  //    final BlockHeader blockHeader = mock(BlockHeader.class);
-  //    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
-  //    return blockHeader;
-  //  }
+  @Override
+  AbstractPrioritizedTransactions getSorter(
+      final TransactionPoolConfiguration poolConfig,
+      final Optional<Clock> clock,
+      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+          transactionReplacementTester) {
+
+    return new BaseFeePrioritizedTransactions(
+        poolConfig,
+        clock.orElse(TestClock.system(ZoneId.systemDefault())),
+        metricsSystem,
+        this::mockBlockHeader,
+        transactionReplacementTester,
+        FeeMarket.london(0L));
+  }
+
+  @Override
+  protected BlockHeader mockBlockHeader() {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
+    return blockHeader;
+  }
   //
   //  @Override
   //  protected Transaction createTransaction(
@@ -74,74 +98,76 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
   //        keys);
   //  }
   //
-  //  @Test
-  //  public void shouldPrioritizePriorityFeeThenTimeAddedToPoolOnlyEIP1559Txs() {
-  //    shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(TransactionType.EIP1559);
-  //  }
-  //
-  //  @Test
-  //  public void shouldPrioritizeGasPriceThenTimeAddedToPoolOnlyFrontierTxs() {
-  //    shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(TransactionType.FRONTIER);
-  //  }
-  //
-  //  @Test
-  //  public void shouldPrioritizeEffectivePriorityFeeThenTimeAddedToPoolOnMixedTypes() {
-  //    final var nextBlockBaseFee = Optional.of(Wei.ONE);
-  //
-  //    final Transaction highGasPriceTransaction = createTransaction(0, Wei.of(100), KEYS1);
-  //
-  //    final var lowValueTxs =
-  //        IntStream.range(0, MAX_TRANSACTIONS)
-  //            .mapToObj(
-  //                i ->
-  //                    new PendingTransaction.Remote(
-  //                        createTransaction(
-  //                            0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair()),
-  //                        Instant.now()))
-  //            .collect(Collectors.toUnmodifiableList());
-  //
-  //    final var lowestPriorityFee =
-  //        lowValueTxs.stream()
-  //            .sorted(
-  //                Comparator.comparing(
-  //                    pt -> pt.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee)))
-  //            .findFirst()
-  //            .get()
-  //            .getTransaction()
-  //            .getEffectivePriorityFeePerGas(nextBlockBaseFee);
-  //
-  //    final var firstLowValueTx =
-  //        lowValueTxs.stream()
-  //            .filter(
-  //                pt ->
-  //                    pt.getTransaction()
-  //                        .getEffectivePriorityFeePerGas(nextBlockBaseFee)
-  //                        .equals(lowestPriorityFee))
-  //            .findFirst()
-  //            .get();
-  //
-  //    shouldPrioritizeValueThenTimeAddedToPool(
-  //        lowValueTxs.stream().map(PendingTransaction::getTransaction).iterator(),
-  //        highGasPriceTransaction,
-  //        firstLowValueTx.getTransaction());
-  //  }
-  //
-  //  private void shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(
-  //      final TransactionType transactionType) {
-  //    final Transaction highGasPriceTransaction = createTransaction(0, Wei.of(100), KEYS1);
-  //
-  //    final var lowValueTxs =
-  //        IntStream.range(0, MAX_TRANSACTIONS)
-  //            .mapToObj(
-  //                i ->
-  //                    createTransaction(
-  //                        transactionType,
-  //                        0,
-  //                        Wei.of(10),
-  //                        SIGNATURE_ALGORITHM.get().generateKeyPair()))
-  //            .collect(Collectors.toUnmodifiableList());
-  //
-  //    shouldPrioritizeValueThenTimeAddedToPool(
-  //        lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
-  //  }
+  @Test
+  public void shouldPrioritizePriorityFeeThenTimeAddedToPoolOnlyEIP1559Txs() {
+    shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(TransactionType.EIP1559);
+  }
+
+  @Test
+  public void shouldPrioritizeGasPriceThenTimeAddedToPoolOnlyFrontierTxs() {
+    shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(TransactionType.FRONTIER);
+  }
+
+  @Test
+  public void shouldPrioritizeEffectivePriorityFeeThenTimeAddedToPoolOnMixedTypes() {
+    final var nextBlockBaseFee = Optional.of(Wei.ONE);
+
+    final PendingTransaction highGasPriceTransaction =
+        createRemotePendingTransaction(createTransaction(0, Wei.of(100), KEYS1));
+
+    final List<PendingTransaction> lowValueTxs =
+        IntStream.range(0, MAX_TRANSACTIONS)
+            .mapToObj(
+                i ->
+                    new PendingTransaction.Remote(
+                        createTransaction(
+                            0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair()),
+                        Instant.now()))
+            .collect(Collectors.toUnmodifiableList());
+
+    final var lowestPriorityFee =
+        lowValueTxs.stream()
+            .sorted(
+                Comparator.comparing(
+                    pt -> pt.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee)))
+            .findFirst()
+            .get()
+            .getTransaction()
+            .getEffectivePriorityFeePerGas(nextBlockBaseFee);
+
+    final var firstLowValueTx =
+        lowValueTxs.stream()
+            .filter(
+                pt ->
+                    pt.getTransaction()
+                        .getEffectivePriorityFeePerGas(nextBlockBaseFee)
+                        .equals(lowestPriorityFee))
+            .findFirst()
+            .get();
+
+    shouldPrioritizeValueThenTimeAddedToPool(
+        lowValueTxs.iterator(), highGasPriceTransaction, firstLowValueTx);
+  }
+
+  private void shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(
+      final TransactionType transactionType) {
+    final PendingTransaction highGasPriceTransaction =
+        createRemotePendingTransaction(createTransaction(0, Wei.of(100), KEYS1));
+
+    final var lowValueTxs =
+        IntStream.range(0, MAX_TRANSACTIONS)
+            .mapToObj(
+                i ->
+                    createRemotePendingTransaction(
+                        createTransaction(
+                            transactionType,
+                            0,
+                            Wei.of(10),
+                            0,
+                            SIGNATURE_ALGORITHM.get().generateKeyPair())))
+            .collect(Collectors.toUnmodifiableList());
+
+    shouldPrioritizeValueThenTimeAddedToPool(
+        lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
+  }
 }

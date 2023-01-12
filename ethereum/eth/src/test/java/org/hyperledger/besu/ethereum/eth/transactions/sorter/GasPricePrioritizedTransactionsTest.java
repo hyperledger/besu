@@ -14,32 +14,47 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.testutil.TestClock;
+
+import java.time.Clock;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.junit.jupiter.api.Test;
+
 public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTransactionsTestBase {
-  //
-  //  @Override
-  //  AbstractPrioritizedTransactions getSorter(
-  //      final TransactionPoolConfiguration poolConfig,
-  //      final Optional<Clock> clock,
-  //      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-  //          transactionReplacementTester) {
-  //
-  //    this.readyTransactionsCache =
-  //        spy(new ReadyTransactionsCache(poolConfig, transactionReplacementTester));
-  //
-  //    return new GasPricePrioritizedTransactions(
-  //        poolConfig,
-  //        clock.orElse(TestClock.system(ZoneId.systemDefault())),
-  //        metricsSystem,
-  //        transactionReplacementTester,
-  //        readyTransactionsCache);
-  //  }
-  //
-  //  @Override
-  //  protected BlockHeader mockBlockHeader() {
-  //    final BlockHeader blockHeader = mock(BlockHeader.class);
-  //    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
-  //    return blockHeader;
-  //  }
+
+  @Override
+  AbstractPrioritizedTransactions getSorter(
+      final TransactionPoolConfiguration poolConfig,
+      final Optional<Clock> clock,
+      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+          transactionReplacementTester) {
+
+    return new GasPricePrioritizedTransactions(
+        poolConfig,
+        clock.orElse(TestClock.system(ZoneId.systemDefault())),
+        metricsSystem,
+        transactionReplacementTester);
+  }
+
+  @Override
+  protected BlockHeader mockBlockHeader() {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    return blockHeader;
+  }
   //
   //  @Override
   //  protected Transaction createTransaction(
@@ -58,18 +73,21 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
   //        originalTransaction.getNonce(), originalTransaction.getMaxGasFee().multiply(2), keys);
   //  }
   //
-  //  @Test
-  //  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
-  //    final Transaction highGasPriceTransaction = createTransaction(0, Wei.of(100), KEYS1);
-  //
-  //    final var lowValueTxs =
-  //        IntStream.range(0, MAX_TRANSACTIONS)
-  //            .mapToObj(
-  //                i -> createTransaction(0, Wei.of(10),
-  // SIGNATURE_ALGORITHM.get().generateKeyPair()))
-  //            .collect(Collectors.toUnmodifiableList());
-  //
-  //    shouldPrioritizeValueThenTimeAddedToPool(
-  //        lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
-  //  }
+  @Test
+  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+    final PendingTransaction highGasPriceTransaction =
+        createRemotePendingTransaction(createTransaction(0, Wei.of(100), KEYS1));
+
+    final List<PendingTransaction> lowValueTxs =
+        IntStream.range(0, MAX_TRANSACTIONS)
+            .mapToObj(
+                i ->
+                    createRemotePendingTransaction(
+                        createTransaction(
+                            0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair())))
+            .collect(Collectors.toUnmodifiableList());
+
+    shouldPrioritizeValueThenTimeAddedToPool(
+        lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
+  }
 }

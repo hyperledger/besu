@@ -121,6 +121,7 @@ public abstract class AbstractPrioritizedTransactions {
   protected abstract int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2);
 
   public PrioritizeResult maybePrioritizeAddedTransaction(
+      final NavigableMap<Long, PendingTransaction> senderReadyTxs,
       final PendingTransaction addedReadyTransaction,
       final long senderNonce,
       final TransactionAddedResult addResult) {
@@ -192,7 +193,7 @@ public abstract class AbstractPrioritizedTransactions {
               + "to make space for the incoming transaction {}",
           currentLeastPriorityTx::toTraceLog,
           addedReadyTransaction::toTraceLog);
-      // demoteLastTransactionForSenderOf(currentLeastPriorityTx);
+      demoteLastPrioritizedForSender(currentLeastPriorityTx, senderReadyTxs);
       addPrioritizedTransaction(addedReadyTransaction);
       return PrioritizeResult.prioritizedDemotingTransaction(currentLeastPriorityTx);
     }
@@ -390,7 +391,7 @@ public abstract class AbstractPrioritizedTransactions {
         firstDemotedTx.getSender(),
         (sender, expectedNonce) -> {
           if (expectedNonce == firstDemotedTx.getNonce() + 1
-              || senderReadyTxs.containsKey(expectedNonce - 1)) {
+              || !senderReadyTxs.containsKey(expectedNonce - 1)) {
             return null;
           }
           return expectedNonce - 1;
