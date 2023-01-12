@@ -1,6 +1,14 @@
 # Changelog
 
-## 23.1.0-beta2
+## 23.1.0
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+## 23.1.0-RC1
 
 ### Breaking Changes
 - Default configurations for the deprecated Ropsten, Kiln, Shandong, and Astor networks have been removed from the CLI network list. These networks can currently be accessed but will require a user-provided genesis configuration. [#4869](https://github.com/hyperledger/besu/pull/4869)
@@ -12,6 +20,10 @@
 - Added support for `safe` and `finalized` strings for the RPC methods using defaultBlock parameter [#4902](https://github.com/hyperledger/besu/pull/4902)
 
 ### Bug Fixes
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.0-RC1/besu-23.1.0-RC1.tar.gz / sha256: 30906891e528b3b4e3ce8e2313550a1da066b31ea10b05456dd0ad026792b46d
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.0-RC1/besu-23.1.0-RC1.zip / sha256: 9067d1929079ae4a7c165e6f1e2bae08834939ed191f976d26544dc93352c306
 
 ## 23.1.0-beta
 

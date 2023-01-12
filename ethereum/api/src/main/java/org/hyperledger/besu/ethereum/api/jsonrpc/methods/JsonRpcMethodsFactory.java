@@ -100,6 +100,7 @@ public class JsonRpcMethodsFactory {
                   protocolSchedule,
                   metricsSystem,
                   transactionPool,
+                  synchronizer,
                   dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
