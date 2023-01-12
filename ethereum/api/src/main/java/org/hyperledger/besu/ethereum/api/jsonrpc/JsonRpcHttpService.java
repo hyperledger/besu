@@ -350,7 +350,7 @@ public class JsonRpcHttpService {
 
     nonBlockingJsonRpcExecutorHandler =
         (NonBlockingJsonRpcExecutorHandler)
-            HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(4));
+            HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(1));
     mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
 
     if (maybeAuthenticationService.isPresent()) {
