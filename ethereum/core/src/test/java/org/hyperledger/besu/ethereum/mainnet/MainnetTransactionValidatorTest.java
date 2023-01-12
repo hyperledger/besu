@@ -476,6 +476,33 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
+  public void shouldRejectTooLargeInitcode() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            defaultGoQuorumCompatibilityMode,
+            0xc000);
+
+    var bigPayload =
+        new TransactionTestFixture()
+            .payload(Bytes.fromHexString("0x" + "00".repeat(0xc001)))
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(bigPayload, Optional.empty(), transactionValidationParams);
+
+    assertThat(validationResult.isValid()).isFalse();
+    assertThat(validationResult.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INITCODE_TOO_LARGE);
+    assertThat(validationResult.getErrorMessage())
+        .isEqualTo("Initcode size of 49153 exceeds maximum size of 49152");
+  }
+
+  @Test
   public void goQuorumCompatibilityModeRejectNonZeroGasPrice() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), true);
