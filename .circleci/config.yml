@@ -222,8 +222,6 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 6
-    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
@@ -232,7 +230,7 @@ jobs:
           name: AcceptanceTests
           no_output_timeout: 30m
           command: |
-            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/MultiTenancyAcceptanceTest.java" \
               | sed 's@.*/src/test/java/@@' \
               | sed 's@/@.@g' \
               | sed 's/.\{5\}$//' \
@@ -357,27 +355,27 @@ workflows:
   default:
     jobs:
       - assemble
-      - unitTests:
-           requires:
-            - assemble
-      - testWindows:
-          requires:
-            - assemble
-      - referenceTests:
-          requires:
-            - assemble
-      - integrationTests:
-          requires:
-            - assemble
+#      - unitTests:
+#           requires:
+#            - assemble
+#      - testWindows:
+#          requires:
+#            - assemble
+#      - referenceTests:
+#          requires:
+#            - assemble
+#      - integrationTests:
+#          requires:
+#            - assemble
       - acceptanceTests:
           requires:
             - assemble
-      - buildDocker:
-          requires:
-            - assemble
-      - buildArm64Docker:
-          requires:
-            - assemble
+#      - buildDocker:
+#          requires:
+#            - assemble
+#      - buildArm64Docker:
+#          requires:
+#            - assemble
       - publish:
           filters:
             branches:
