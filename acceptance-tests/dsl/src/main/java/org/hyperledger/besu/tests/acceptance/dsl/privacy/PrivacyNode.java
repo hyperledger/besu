@@ -98,6 +98,7 @@ public class PrivacyNode implements AutoCloseable {
 
     this.besu =
         new BesuNode(
+            vertx,
             besuConfig.getName(),
             besuConfig.getDataPath(),
             besuConfig.getMiningParameters(),

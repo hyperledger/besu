@@ -55,9 +55,11 @@ public class BesuNodeFactory {
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
   private final PkiKeystoreConfigurationFactory pkiKeystoreConfigurationFactory =
       new PkiKeystoreConfigurationFactory();
+  private final Vertx vertx = Vertx.vertx();
 
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
+        vertx,
         config.getName(),
         config.getDataPath(),
         config.getMiningParameters(),
@@ -272,7 +274,7 @@ public class BesuNodeFactory {
             .setEnabled(true)
             .setFlexiblePrivacyGroupsEnabled(enableFlexiblePrivacy)
             .setStorageProvider(new InMemoryPrivacyStorageProvider())
-            .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
+            .setEnclaveFactory(new EnclaveFactory(vertx))
             .setEnclaveUrl(URI.create(enclaveUrl))
             .setPrivateKeyPath(
                 Paths.get(ClassLoader.getSystemResource(privTransactionSigningKey).toURI()))

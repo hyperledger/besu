@@ -2113,7 +2113,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GoQuorumEnclave createGoQuorumEnclave() {
-    final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
+    final EnclaveFactory enclaveFactory = new EnclaveFactory(vertx);
     if (privacyOptionGroup.privacyKeyStoreFile != null) {
       return enclaveFactory.createGoQuorumEnclave(
           privacyOptionGroup.privacyUrl,

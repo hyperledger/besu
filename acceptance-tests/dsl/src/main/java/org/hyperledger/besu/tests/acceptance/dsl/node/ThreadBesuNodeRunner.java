@@ -67,7 +67,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -199,7 +198,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
 
     runnerBuilder
-        .vertx(Vertx.vertx())
+        .vertx(node.getVertx())
         .besuController(besuController)
         .ethNetworkConfig(ethNetworkConfig)
         .discovery(node.isDiscoveryEnabled())

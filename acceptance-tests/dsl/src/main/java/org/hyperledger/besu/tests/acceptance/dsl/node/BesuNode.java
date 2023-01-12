@@ -67,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.MoreObjects;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
+import io.vertx.core.Vertx;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
@@ -97,6 +98,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
 
+  private final Vertx vertx;
   private final String name;
   private final MiningParameters miningParameters;
   private final List<String> runCommand;
@@ -130,6 +132,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final Map<String, String> environment;
 
   public BesuNode(
+      final Vertx vertx,
       final String name,
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
@@ -163,6 +166,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean isStrictTxReplayProtectionEnabled,
       final Map<String, String> environment)
       throws IOException {
+    this.vertx = vertx;
+
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
     keyfilePath.ifPresent(
@@ -228,6 +233,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     } catch (final IOException e) {
       throw new RuntimeException("Unable to create temporary data directory", e);
     }
+  }
+
+  public Vertx getVertx() {
+    return vertx;
   }
 
   @Override
