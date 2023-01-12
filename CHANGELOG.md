@@ -6,7 +6,10 @@
 - Default configurations for the deprecated Ropsten, Kiln, Shandong, and Astor networks have been removed from the CLI network list. These networks can currently be accessed but will require a user-provided genesis configuration. [#4869](https://github.com/hyperledger/besu/pull/4869)
 
 ### Additions and Improvements
+
+- Improve SLOAD and SSTORE performance by caching empty slots [#4874](https://github.com/hyperledger/besu/pull/4874)
 - RPC methods that lookup block by hash will now return an error response if no block found [#4582](https://github.com/hyperledger/besu/pull/4582)
+- Added support for `safe` and `finalized` strings for the RPC methods using defaultBlock parameter [#4902](https://github.com/hyperledger/besu/pull/4902)
 
 ### Bug Fixes
 
@@ -574,7 +577,7 @@ The final form of the Ethereum Panda will appear when the first finalized block 
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
 - Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
 - Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
-- add a websocket frame size configuration CLI parameter [3386][https://github.com/hyperledger/besu/pull/3386]
+- add a websocket frame size configuration CLI parameter [#3386](https://github.com/hyperledger/besu/pull/3386)
 - Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
 
 ### Bug Fixes

@@ -74,7 +74,6 @@ public class EVM {
 
   // Optimized operation flags
   private final boolean enableShanghai;
-  private final boolean enableCancun;
 
   public EVM(
       final OperationRegistry operations,
@@ -88,7 +87,6 @@ public class EVM {
     this.evmSpecVersion = evmSpecVersion;
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
-    enableCancun = EvmSpecVersion.CANCUN.ordinal() <= evmSpecVersion.ordinal();
   }
 
   public GasCalculator getGasCalculator() {
@@ -107,7 +105,7 @@ public class EVM {
     evmSpecVersion.maybeWarnVersion();
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
-    byte[] code = frame.getCode().getCodeBytes(frame.getSection()).toArrayUnsafe();
+    byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
@@ -276,17 +274,6 @@ public class EVM {
           case 0x9e:
           case 0x9f:
             result = SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
-            break;
-          case 0xb0: // CALLF
-          case 0xb1: // RETF
-            // Function operations reset code
-            if (enableCancun) {
-              frame.setCurrentOperation(currentOperation);
-              result = currentOperation.execute(frame, this);
-              code = frame.getCode().getCodeSection(frame.getSection()).getCode().toArrayUnsafe();
-            } else {
-              result = InvalidOperation.INVALID_RESULT;
-            }
             break;
           default: // unoptimized operations
             frame.setCurrentOperation(currentOperation);
