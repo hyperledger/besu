@@ -110,7 +110,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
         jsonRpcExecutorVerticle ->
             vertx.deployVerticle(
                 jsonRpcExecutorVerticle,
-                new DeploymentOptions().setWorker(true),
+                new DeploymentOptions(),
                 deploymentResult -> {
                   if (deploymentResult.succeeded()) {
                     verticleDeploymentIds.add(deploymentResult.result());
