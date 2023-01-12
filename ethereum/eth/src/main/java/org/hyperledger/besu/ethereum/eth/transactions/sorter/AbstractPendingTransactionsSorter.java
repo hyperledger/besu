@@ -135,6 +135,12 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         pendingTransactions::size);
   }
 
+  public void reset() {
+    pendingTransactions.clear();
+    transactionsBySender.clear();
+    lowestInvalidKnownNonceCache.reset();
+  }
+
   @Override
   public void evictOldTransactions() {
     final Instant removeTransactionsBefore =
