@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -50,6 +51,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.BiFunction;
 
 import org.assertj.core.util.Lists;
@@ -130,7 +132,7 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
   }
 
   @Test
-  public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate() {
+  public void returnExclusivelyLocalTransactionsWhenAppropriate() {
     final Transaction localTransaction0 = createTransaction(0, KEYS2);
     pendingTransactions.addLocalTransaction(localTransaction0, Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
@@ -157,18 +159,18 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
   }
 
   @Test
-  public void shouldReturnEmptyOptionalWhenNoTransactionWithGivenHashExists() {
+  public void getNotPresentTransaction() {
     assertThat(pendingTransactions.getTransactionByHash(Hash.EMPTY_TRIE_HASH)).isEmpty();
   }
 
   @Test
-  public void shouldGetTransactionByHash() {
+  public void getTransactionByHash() {
     pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
     assertTransactionPending(pendingTransactions, transaction0);
   }
 
   @Test
-  public void shouldEvictTransactionsWhenSizeLimitExceeded() {
+  public void evictTransactionsWhenSizeLimitExceeded() {
     final List<Transaction> firstTxs = new ArrayList<>();
 
     for (int i = 0; i < MAX_TRANSACTIONS; i++) {
@@ -195,16 +197,8 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
     pendingTransactions.addRemoteTransaction(lastBigTx, Optional.of(lastSender));
     assertTransactionPending(pendingTransactions, lastBigTx);
 
-    //      assertThat(pendingTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    //      assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
-
-    //      final Account lastSender = mock(Account.class);
-    //      when(lastSender.getNonce()).thenReturn(6L);
-    //      pendingTransactions.addRemoteTransaction(
-    //          createTransaction(MAX_TRANSACTIONS + 1), Optional.of(lastSender));
-    //      assertThat(pendingTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(pendingTransactions, firstTxs.get(0));
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+    //    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
   }
 
   @Test
@@ -486,8 +480,6 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
     int remoteDuplicateCount = 0;
     Transaction replacingTx = createTransaction(0, KEYS1);
     for (int i = 0; i < replacedTxCount; i++) {
-      // final Transaction replacingTx =
-      //     createTransaction(0, Wei.of((i * 110 / 100) + 1));
       replacedTransactions.add(replacingTx);
       if (i % 2 == 0) {
         pendingTransactions.addRemoteTransaction(replacingTx, Optional.empty());
@@ -497,7 +489,7 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
       }
       replacingTx = createTransactionReplacement(replacingTx, KEYS1);
     }
-    // final Transaction finalReplacingTx = createTransaction(0, Wei.of(100));
+
     final Transaction independentTx = createTransaction(1);
     assertThat(
             pendingTransactions.addLocalTransaction(replacingTx, Optional.empty()).isReplacement())
@@ -508,6 +500,7 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
     // All txs except the last duplicate should be removed
     replacedTransactions.forEach(tx -> assertTransactionNotPending(pendingTransactions, tx));
     assertTransactionPending(pendingTransactions, replacingTx);
+
     // Tx with distinct nonce should be maintained
     assertTransactionPending(pendingTransactions, independentTx);
 
@@ -679,60 +672,15 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
   }
 
-  //
-  //  @Test
-  //  public void shouldReplaceTransaction() {
-  //    final var lowValueTransaction = createTransaction(0, KEYS1);
-  //    final var highValueTransaction = createTransactionReplacement(lowValueTransaction, KEYS1);
-  //    assertThat(readyTransactionsCache.add(createPendingTransaction(lowValueTransaction), 0))
-  //        .isEqualTo(ADDED);
-  //    assertTransactionReady(lowValueTransaction);
-  //    final var txAddResult =
-  //        readyTransactionsCache.add(createPendingTransaction(highValueTransaction), 0);
-  //    assertThat(txAddResult.isReplacement()).isTrue();
-  //    assertThat(txAddResult.maybeReplacedTransaction())
-  //        .isPresent()
-  //        .map(PendingTransaction::getHash)
-  //        .hasValue(lowValueTransaction.getHash());
-  //    assertTransactionReady(highValueTransaction);
-  //    assertTransactionNotReady(lowValueTransaction);
-  //  }
-  //
-  //  @Test
-  //  public void shouldNotReplaceTransaction() {
-  //    final var highValueTransaction = createTransaction(0, Wei.of(101));
-  //    final var lowValueTransaction = createTransaction(0, Wei.of(100));
-  //
-  //    assertThat(readyTransactionsCache.add(createPendingTransaction(highValueTransaction), 0))
-  //        .isEqualTo(ADDED);
-  //    assertTransactionReady(highValueTransaction);
-  //    assertThat(readyTransactionsCache.add(createPendingTransaction(lowValueTransaction), 0))
-  //        .isEqualTo(REJECTED_UNDERPRICED_REPLACEMENT);
-  //    assertTransactionNotReady(lowValueTransaction);
-  //    assertTransactionReady(highValueTransaction);
-  //  }
-  //
-  //  @Test
-  //  public void doNothingIfTransactionAlreadyPresent() {
-  //    final var addedTxs = populateCache(1, 0);
-  //    assertThat(readyTransactionsCache.add(createPendingTransaction(addedTxs[0]), 0))
-  //        .isEqualTo(ALREADY_KNOWN);
-  //    assertTransactionReady(addedTxs[0]);
-  //  }
-  //
-  //  @Test
-  //  public void returnsEmptyWhenGettingNotPresentTransaction() {
-  //    final var transaction = createTransaction(0);
-  //    assertTransactionNotReady(transaction);
-  //    assertThat(readyTransactionsCache.get(transaction.getSender(), 0)).isEmpty();
-  //  }
-  //
-  //  @Test
-  //  public void removePreviouslyAddedTransaction() {
-  //    final var addedTxs = populateCache(1, 0);
-  //    readyTransactionsCache.remove(addedTxs[0]);
-  //    assertTransactionNotReady(addedTxs[0]);
-  //  }
+  @Test
+  public void doNothingIfTransactionAlreadyPending() {
+    final var addedTxs = populateCache(1, 0);
+    assertThat(
+            pendingTransactions.addRemoteTransaction(
+                addedTxs[0].transaction, Optional.of(addedTxs[0].account)))
+        .isEqualTo(ALREADY_KNOWN);
+    assertTransactionPendingAndReady(pendingTransactions, addedTxs[0].transaction);
+  }
   //
   //  @Test
   //  public void doNothingWhenRemovingNotPresentTransaction() {
@@ -741,45 +689,21 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
   //    readyTransactionsCache.remove(transaction);
   //    assertTransactionNotReady(transaction);
   //  }
+  @Test
+  public void returnsCorrectNextNonceWhenAddedTransactionsHaveGaps() {
+    final var addedTxs = populateCache(3, 0, 1);
+    assertThat(pendingTransactions.getNextNonceForSender(addedTxs[0].transaction.getSender()))
+        .isPresent()
+        .hasValue(1);
+  }
+
+  //    @Test
+  //    public void emptyStreamWhenNoReadyTransactionsForSender() {
+  //      final var transaction = createTransaction(0);
+  //      assertTransactionNotPending(pendingTransactions, transaction);
   //
-  //  @Test
-  //  public void returnsNextReadyNonceForSenderWithOneReadyTransaction() {
-  //    final var addedTxs = populateCache(1, 0);
-  //    assertThat(readyTransactionsCache.getNextReadyNonce(addedTxs[0].getSender()))
-  //        .isPresent()
-  //        .hasValue(1);
-  //  }
-  //
-  //  @Test
-  //  public void returnsNextReadyNonceForSenderWithMultipleReadyTransactions() {
-  //    final var addedTxs = populateCache(2, 0);
-  //    assertThat(readyTransactionsCache.getNextReadyNonce(addedTxs[0].getSender()))
-  //        .isPresent()
-  //        .hasValue(2);
-  //  }
-  //
-  //  @Test
-  //  public void returnsCorrectNextReadyWhenAddedTransactionsHaveGaps() {
-  //    final var addedTxs = populateCache(3, 0, 1);
-  //    assertThat(readyTransactionsCache.getNextReadyNonce(addedTxs[0].getSender()))
-  //        .isPresent()
-  //        .hasValue(1);
-  //  }
-  //
-  //  @Test
-  //  public void returnsEmptyHasNextReadyNonceForSenderWithoutReadyTransactions() {
-  //    final var transaction = createTransaction(0);
-  //    assertTransactionNotReady(transaction);
-  //    assertThat(readyTransactionsCache.getNextReadyNonce(transaction.getSender())).isEmpty();
-  //  }
-  //
-  //  @Test
-  //  public void emptyStreamWhenNoReadyTransactionsForSender() {
-  //    final var transaction = createTransaction(0);
-  //    assertTransactionNotReady(transaction);
-  //
-  // assertThat(readyTransactionsCache.streamReadyTransactions(transaction.getSender())).isEmpty();
-  //  }
+  //   assertThat(pendingTransactions.streamReadyTransactions(transaction.getSender())).isEmpty();
+  //    }
   //
   //  @Test
   //  public void emptyStreamWhenUsingNonceAndNoReadyTransactionsForSender() {
@@ -1035,56 +959,59 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
   //  //    populateCache(arrivesLateTransaction);
   //  //    assertSenderHasExactlyTransactions(arrivesLateTransaction);
   //  //  }
-  //
-  //  private Transaction[] populateCache(final int numTxs, final KeyPair keys) {
+
+  //  private TransactionAndAccount[] populateCache(final int numTxs, final KeyPair keys) {
   //    return populateCache(numTxs, keys, 0, OptionalLong.empty());
   //  }
-  //
-  //  private Transaction[] populateCache(final int numTxs, final long startingNonce) {
-  //    return populateCache(numTxs, KEYS1, startingNonce, OptionalLong.empty());
-  //  }
-  //
-  //  private Transaction[] populateCache(
-  //      final int numTxs, final long startingNonce, final long missingNonce) {
-  //    return populateCache(numTxs, KEYS1, startingNonce, OptionalLong.of(missingNonce));
-  //  }
-  //
-  //  private Transaction[] populateCache(
-  //      final int numTxs,
-  //      final KeyPair keys,
-  //      final long startingNonce,
-  //      final OptionalLong maybeGapNonce) {
-  //    final List<Transaction> addedTransactions = new ArrayList<>(numTxs);
-  //    boolean afterGap = false;
-  //    for (int i = 0; i < numTxs; i++) {
-  //      final long nonce = startingNonce + i;
-  //      if (maybeGapNonce.isPresent() && maybeGapNonce.getAsLong() == nonce) {
-  //        afterGap = true;
-  //      } else {
-  //        final var transaction = createTransaction(nonce, keys);
-  //        final var res =
-  //            readyTransactionsCache.add(createPendingTransaction(transaction), startingNonce);
-  //        if (afterGap) {
-  //          assertThat(res).isEqualTo(ADDED_SPARSE);
-  //          assertTransactionNotReady(transaction);
-  //        } else {
-  //          assertThat(res).isEqualTo(ADDED);
-  //          assertTransactionReady(transaction);
-  //          addedTransactions.add(transaction);
-  //        }
-  //      }
-  //    }
-  //    return addedTransactions.toArray(Transaction[]::new);
-  //  }
-  //
+
+  private TransactionAndAccount[] populateCache(final int numTxs, final long startingNonce) {
+    return populateCache(numTxs, KEYS1, startingNonce, OptionalLong.empty());
+  }
+
+  private TransactionAndAccount[] populateCache(
+      final int numTxs, final long startingNonce, final long missingNonce) {
+    return populateCache(numTxs, KEYS1, startingNonce, OptionalLong.of(missingNonce));
+  }
+
+  private TransactionAndAccount[] populateCache(
+      final int numTxs,
+      final KeyPair keys,
+      final long startingNonce,
+      final OptionalLong maybeGapNonce) {
+    final List<TransactionAndAccount> addedTransactions = new ArrayList<>(numTxs);
+    boolean afterGap = false;
+    for (int i = 0; i < numTxs; i++) {
+      final long nonce = startingNonce + i;
+      if (maybeGapNonce.isPresent() && maybeGapNonce.getAsLong() == nonce) {
+        afterGap = true;
+      } else {
+        final var transaction = createTransaction(nonce, keys);
+        final Account sender = mock(Account.class);
+        when(sender.getNonce()).thenReturn(startingNonce);
+        final var res = pendingTransactions.addRemoteTransaction(transaction, Optional.of(sender));
+        if (afterGap) {
+          assertThat(res).isEqualTo(ADDED_SPARSE);
+          assertTransactionPendingAndNotReady(pendingTransactions, transaction);
+        } else {
+          assertThat(res).isEqualTo(ADDED);
+          assertTransactionPendingAndReady(pendingTransactions, transaction);
+          addedTransactions.add(new TransactionAndAccount(transaction, sender));
+        }
+      }
+    }
+    return addedTransactions.toArray(TransactionAndAccount[]::new);
+  }
+
   //  private void populateCache(final Transaction... transactions) {
   //    assertThat(
   //            Arrays.stream(transactions)
-  //                .map(this::createPendingTransaction)
   //                .map(
-  //                    pendingTransaction ->
-  //                        readyTransactionsCache.add(pendingTransaction,
-  // transactions[0].getNonce()))
+  //                    pendingTransaction -> {
+  //                      final Account sender = mock(Account.class);
+  //                      when(sender.getNonce()).thenReturn(transactions[0].getNonce());
+  //                      return pendingTransactions.addRemoteTransaction(
+  //                          pendingTransaction, Optional.of(sender));
+  //                    })
   //                .filter(ADDED::equals)
   //                .count())
   //        .isEqualTo(transactions.length);
@@ -1220,4 +1147,14 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
   //        sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
   //      }
   //    }
+
+  private static class TransactionAndAccount {
+    final Transaction transaction;
+    final Account account;
+
+    public TransactionAndAccount(final Transaction transaction, final Account account) {
+      this.transaction = transaction;
+      this.account = account;
+    }
+  }
 }

@@ -42,6 +42,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PendingMultiTypesTransactionsTest {
@@ -67,6 +68,7 @@ public class PendingMultiTypesTransactionsTest {
       ImmutableTransactionPoolConfiguration.builder()
           .txPoolMaxSize(MAX_TRANSACTIONS)
           .txPoolLimitByAccountPercentage(MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE)
+          .pendingTransactionsCacheSizeBytes(1024)
           .build();
 
   protected final TransactionPoolReplacementHandler transactionReplacementHandler =
@@ -108,20 +110,27 @@ public class PendingMultiTypesTransactionsTest {
 
   @Test
   public void shouldReplaceTransactionWithLowestMaxFeePerGas() {
+
     final Transaction localTransaction0 = create1559Transaction(0, 200, 20, KEYS1);
     final Transaction localTransaction1 = create1559Transaction(0, 190, 20, KEYS2);
     final Transaction localTransaction2 = create1559Transaction(0, 220, 20, KEYS3);
     final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
     final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
-    final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
     transactions.addLocalTransaction(localTransaction1, Optional.empty());
     transactions.addLocalTransaction(localTransaction2, Optional.empty());
     transactions.addLocalTransaction(localTransaction3, Optional.empty());
     transactions.addLocalTransaction(localTransaction4, Optional.empty());
-
+    assertThat(transactions.size()).isEqualTo(5);
     final BlockHeader newBlockHeader = mockBlockHeader(Wei.of(300L));
     transactions.manageBlockAdded(newBlockHeader, List.of(), FeeMarket.london(0));
+
+    final int freeSpace =
+        (int)
+            (transactionPoolConfiguration.getPendingTransactionsCacheSizeBytes()
+                - transactions.getUsedSpace());
+    final Transaction localTransaction5 =
+        create1559Transaction(0, 900, 20, freeSpace - localTransaction1.getSize() + 1, KEYS6);
 
     transactions.addLocalTransaction(localTransaction5, Optional.empty());
     assertThat(transactions.size()).isEqualTo(5);
@@ -140,12 +149,20 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction2 = create1559Transaction(0, 200, 18, KEYS3);
     final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
     final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
-    final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
     transactions.addLocalTransaction(localTransaction1, Optional.empty());
     transactions.addLocalTransaction(localTransaction2, Optional.empty());
     transactions.addLocalTransaction(localTransaction3, Optional.empty());
     transactions.addLocalTransaction(localTransaction4, Optional.empty());
+
+    assertThat(transactions.size()).isEqualTo(5);
+
+    final int freeSpace =
+        (int)
+            (transactionPoolConfiguration.getPendingTransactionsCacheSizeBytes()
+                - transactions.getUsedSpace());
+    final Transaction localTransaction5 =
+        create1559Transaction(0, 900, 20, freeSpace - localTransaction1.getSize() + 1, KEYS6);
     transactions.addLocalTransaction(localTransaction5, Optional.empty()); // causes eviction
 
     assertThat(transactions.size()).isEqualTo(5);
@@ -164,12 +181,20 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction2 = create1559Transaction(0, 200, 18, KEYS3);
     final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
     final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
-    final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
     transactions.addLocalTransaction(localTransaction1, Optional.empty());
     transactions.addLocalTransaction(localTransaction2, Optional.empty());
     transactions.addLocalTransaction(localTransaction3, Optional.empty());
     transactions.addLocalTransaction(localTransaction4, Optional.empty());
+    assertThat(transactions.size()).isEqualTo(5);
+
+    final int freeSpace =
+        (int)
+            (transactionPoolConfiguration.getPendingTransactionsCacheSizeBytes()
+                - transactions.getUsedSpace());
+
+    final Transaction localTransaction5 =
+        create1559Transaction(0, 900, 20, freeSpace - localTransaction1.getSize() + 1, KEYS6);
     transactions.addLocalTransaction(localTransaction5, Optional.empty()); // causes eviction
     assertThat(transactions.size()).isEqualTo(5);
 
@@ -187,14 +212,21 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction2 = create1559Transaction(0, 200, 18, KEYS3);
     final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
     final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
-    final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
     transactions.addLocalTransaction(localTransaction1, Optional.empty());
     transactions.addLocalTransaction(localTransaction2, Optional.empty());
     transactions.addLocalTransaction(localTransaction3, Optional.empty());
     transactions.addLocalTransaction(localTransaction4, Optional.empty());
-    transactions.addLocalTransaction(localTransaction5, Optional.empty()); // causes eviction
     assertThat(transactions.size()).isEqualTo(5);
+
+    final int freeSpace =
+        (int)
+            (transactionPoolConfiguration.getPendingTransactionsCacheSizeBytes()
+                - transactions.getUsedSpace());
+
+    final Transaction localTransaction5 =
+        create1559Transaction(0, 900, 20, freeSpace - localTransaction1.getSize() + 1, KEYS6);
+    transactions.addLocalTransaction(localTransaction5, Optional.empty()); // causes eviction
 
     transactions.selectTransactions(
         transaction -> {
@@ -310,7 +342,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.addLocalTransaction(localTransaction2, Optional.empty());
     transactions.addLocalTransaction(localTransaction3, Optional.empty());
 
-    final List<Transaction> iterationOrder = new ArrayList<>();
+    final List<Transaction> iterationOrder = new ArrayList<>(4);
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
@@ -319,7 +351,7 @@ public class PendingMultiTypesTransactionsTest {
 
     assertThat(iterationOrder)
         .containsExactly(
-            localTransaction1, localTransaction0, localTransaction2, localTransaction3);
+            localTransaction2, localTransaction3, localTransaction1, localTransaction0);
   }
 
   @Test
@@ -380,12 +412,25 @@ public class PendingMultiTypesTransactionsTest {
       final long maxFeePerGas,
       final long maxPriorityFeePerGas,
       final KeyPair keyPair) {
+    return create1559Transaction(transactionNumber, maxFeePerGas, maxPriorityFeePerGas, 0, keyPair);
+  }
+
+  private Transaction create1559Transaction(
+      final long transactionNumber,
+      final long maxFeePerGas,
+      final long maxPriorityFeePerGas,
+      final int payloadSize,
+      final KeyPair keyPair) {
+
+    final var payloadBytes = Bytes.repeat((byte) 1, payloadSize);
+
     return new TransactionTestFixture()
         .type(TransactionType.EIP1559)
         .value(Wei.of(transactionNumber))
         .nonce(transactionNumber)
         .maxFeePerGas(Optional.of(Wei.of(maxFeePerGas)))
         .maxPriorityFeePerGas(Optional.of(Wei.of(maxPriorityFeePerGas)))
+        .payload(payloadBytes)
         .createTransaction(keyPair);
   }
 

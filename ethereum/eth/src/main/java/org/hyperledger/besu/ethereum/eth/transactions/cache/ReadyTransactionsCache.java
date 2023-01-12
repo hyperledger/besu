@@ -304,11 +304,11 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
     return promotableTxs;
   }
 
-  public Stream<PendingTransaction> streamReadyTransactions(final Address sender) {
+  private Stream<PendingTransaction> streamReadyTransactions(final Address sender) {
     return streamReadyTransactions(sender, -1);
   }
 
-  public Stream<PendingTransaction> streamReadyTransactions(
+  private Stream<PendingTransaction> streamReadyTransactions(
       final Address sender, final long afterNonce) {
     var senderTxs = readyBySender.get(sender);
     if (senderTxs != null) {

@@ -17,8 +17,11 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.testutil.TestClock;
@@ -55,29 +58,26 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
     when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
     return blockHeader;
   }
-  //
-  //  @Override
-  //  protected Transaction createTransaction(
-  //      final long transactionNumber, final Wei maxGasPrice, final KeyPair keys) {
-  //    return new TransactionTestFixture()
-  //        .value(Wei.of(transactionNumber))
-  //        .nonce(transactionNumber)
-  //        .gasPrice(maxGasPrice)
-  //        .createTransaction(keys);
-  //  }
-  //
-  //  @Override
-  //  protected Transaction createTransactionReplacement(
-  //      final Transaction originalTransaction, final KeyPair keys) {
-  //    return createTransaction(
-  //        originalTransaction.getNonce(), originalTransaction.getMaxGasFee().multiply(2), keys);
-  //  }
-  //
+
+  @Override
+  protected Transaction createTransaction(
+      final long transactionNumber, final Wei maxGasPrice, final KeyPair keys) {
+    return new TransactionTestFixture()
+        .value(Wei.of(transactionNumber))
+        .nonce(transactionNumber)
+        .gasPrice(maxGasPrice)
+        .createTransaction(keys);
+  }
+
+  @Override
+  protected Transaction createTransactionReplacement(
+      final Transaction originalTransaction, final KeyPair keys) {
+    return createTransaction(
+        originalTransaction.getNonce(), originalTransaction.getMaxGasFee().multiply(2), keys);
+  }
+
   @Test
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
-    final PendingTransaction highGasPriceTransaction =
-        createRemotePendingTransaction(createTransaction(0, Wei.of(100), KEYS1));
-
     final List<PendingTransaction> lowValueTxs =
         IntStream.range(0, MAX_TRANSACTIONS)
             .mapToObj(
@@ -86,6 +86,9 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
                         createTransaction(
                             0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair())))
             .collect(Collectors.toUnmodifiableList());
+
+    final PendingTransaction highGasPriceTransaction =
+        createRemotePendingTransaction(createTransaction(0, Wei.of(100), KEYS1));
 
     shouldPrioritizeValueThenTimeAddedToPool(
         lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));

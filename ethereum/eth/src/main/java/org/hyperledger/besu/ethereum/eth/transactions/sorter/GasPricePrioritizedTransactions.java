@@ -47,7 +47,6 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   public int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
     return comparing(PendingTransaction::isReceivedFromLocalSource)
         .thenComparing(PendingTransaction::getGasPrice)
-        .thenComparing(PendingTransaction::getAddedToPoolAt)
         .thenComparing(PendingTransaction::getSequence)
         .compare(pt1, pt2);
   }
