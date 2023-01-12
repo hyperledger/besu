@@ -102,7 +102,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
-    if (shouldClose.get()) {
+    if (isClosed.get()) {
       throw new RuntimeException("Storage is marked to close or has already closed");
     }
     return super.subscribe(sub);
