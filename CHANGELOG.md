@@ -1,5 +1,10 @@
 # Changelog
 
+## 23.1.1
+
+### Additions and Improvements
+- Added option to evm CLI tool to allow code execution at specific forks [#4913](https://github.com/hyperledger/besu/pull/4913)
+
 ## 23.1.0-beta2
 
 ### Breaking Changes
