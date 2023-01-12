@@ -26,13 +26,13 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
  */
 public class ScheduleBasedBlockHeaderFunctions implements BlockHeaderFunctions {
 
-  private final ProtocolSchedule protocolSchedule;
+  private final HeaderBasedProtocolSchedule protocolSchedule;
 
-  private ScheduleBasedBlockHeaderFunctions(final ProtocolSchedule protocolSchedule) {
+  private ScheduleBasedBlockHeaderFunctions(final HeaderBasedProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
   }
 
-  public static BlockHeaderFunctions create(final ProtocolSchedule protocolSchedule) {
+  public static BlockHeaderFunctions create(final HeaderBasedProtocolSchedule protocolSchedule) {
     return new ScheduleBasedBlockHeaderFunctions(protocolSchedule);
   }
 
@@ -47,6 +47,6 @@ public class ScheduleBasedBlockHeaderFunctions implements BlockHeaderFunctions {
   }
 
   private BlockHeaderFunctions getBlockHeaderFunctions(final SealableBlockHeader header) {
-    return protocolSchedule.getByBlockNumber(header.getNumber()).getBlockHeaderFunctions();
+    return protocolSchedule.getByBlockHeader(header).getBlockHeaderFunctions();
   }
 }
