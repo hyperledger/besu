@@ -198,8 +198,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(mergeContext.isSyncing()).thenReturn(false);
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), parent.getHash()))
         .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.updateForkChoice(
-            mockHeader, parent.getHash(), parent.getHash(), Optional.empty()))
+    when(mergeCoordinator.updateForkChoice(mockHeader, parent.getHash(), parent.getHash()))
         .thenReturn(
             ForkchoiceResult.withFailure(
                 ForkchoiceResult.Status.INVALID,
@@ -427,8 +426,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
     var ignoreOldHeadUpdateRes = ForkchoiceResult.withIgnoreUpdateToOldHead(mockHeader);
-    when(mergeCoordinator.updateForkChoice(any(), any(), any(), any()))
-        .thenReturn(ignoreOldHeadUpdateRes);
+    when(mergeCoordinator.updateForkChoice(any(), any(), any())).thenReturn(ignoreOldHeadUpdateRes);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -458,12 +456,45 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   }
 
   @Test
+  public void shouldReturnInvalidIfPayloadTimestampIsInvalid() {
+    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
+    BlockHeader mockParent = builder.number(9L).buildHeader();
+    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
+        .thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+
+    final long timestampNotGreaterThanHead = mockHeader.getTimestamp();
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(timestampNotGreaterThanHead),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            emptyList());
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+            Optional.of(payloadParams));
+
+    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
   public void shouldReturnInvalidIfWithdrawalsIsNotNull_WhenWithdrawalsProhibited() {
     var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
     BlockHeader mockParent = builder.number(9L).buildHeader();
     BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -527,8 +558,11 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
     BlockHeader mockParent = builder.number(9L).buildHeader();
     BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -644,7 +678,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     // result from mergeCoordinator has no new finalized, new head:
     when(mergeCoordinator.updateForkChoice(
-            any(BlockHeader.class), any(Hash.class), any(Hash.class), any()))
+            any(BlockHeader.class), any(Hash.class), any(Hash.class)))
         .thenReturn(forkchoiceResult);
     var resp = resp(fcuParam, payloadParam);
     var res = fromSuccessResp(resp);

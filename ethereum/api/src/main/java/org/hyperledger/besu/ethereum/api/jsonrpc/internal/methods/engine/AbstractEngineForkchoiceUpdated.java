@@ -23,7 +23,6 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
-import org.hyperledger.besu.consensus.merge.blockcreation.PayloadAttributes;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -113,20 +112,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     final BlockHeader newHead = maybeNewHead.get();
 
-    maybePayloadAttributes.ifPresentOrElse(
-        this::logPayload, () -> LOG.debug("Payload attributes are null"));
-
-    final boolean payloadAttributesAreValid =
-        maybePayloadAttributes.map(this::validateWithdrawals).orElse(true);
-    if (!payloadAttributesAreValid) {
-      warnLambda(
-          LOG,
-          "Invalid payload attributes: {}",
-          () ->
-              maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize).orElse(null));
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
-    }
-
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -147,17 +132,22 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
               Optional.of(newHead + " did not descend from terminal block")));
     }
 
+    maybePayloadAttributes.ifPresentOrElse(
+        this::logPayload, () -> LOG.debug("Payload attributes are null"));
+
+    if (maybePayloadAttributes.isPresent()
+        && !isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
+      warnLambda(
+          LOG,
+          "Invalid payload attributes: {}",
+          () ->
+              maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize).orElse(null));
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    }
+
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
-            newHead,
-            forkChoice.getFinalizedBlockHash(),
-            forkChoice.getSafeBlockHash(),
-            maybePayloadAttributes.map(
-                payloadAttributes ->
-                    new PayloadAttributes(
-                        payloadAttributes.getTimestamp(),
-                        payloadAttributes.getPrevRandao(),
-                        payloadAttributes.getSuggestedFeeRecipient())));
+            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -192,13 +182,20 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             Optional.empty()));
   }
 
-  private boolean validateWithdrawals(final EnginePayloadAttributesParameter payloadAttributes) {
-    // TODO Withdrawals move this into mergeCoordinator.updateForkChoice with the other
-    // payloadAttributes validation?
+  private boolean isPayloadAttributesValid(
+      final EnginePayloadAttributesParameter payloadAttributes, final BlockHeader headBlockHeader) {
+
+    final boolean newTimestampGreaterThanHead =
+        payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
+    return newTimestampGreaterThanHead && isWithdrawalsValid(payloadAttributes);
+  }
+
+  private boolean isWithdrawalsValid(final EnginePayloadAttributesParameter payloadAttributes) {
     final List<Withdrawal> withdrawals =
         Optional.ofNullable(payloadAttributes.getWithdrawals())
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
             .orElse(null);
+
     return timestampSchedule
         .getByTimestamp(payloadAttributes.getTimestamp())
         .map(
