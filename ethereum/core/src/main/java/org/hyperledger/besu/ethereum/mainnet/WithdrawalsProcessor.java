@@ -24,16 +24,14 @@ public interface WithdrawalsProcessor {
 
   void processWithdrawals(final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater);
 
-  class ProhibitedWithdrawalsProcessor implements WithdrawalsProcessor {
+  class NoOpWithdrawalsProcessor implements WithdrawalsProcessor {
 
     @Override
     public void processWithdrawals(
-        final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {
-      throw new UnsupportedOperationException("Withdrawals not supported");
-    }
+        final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {}
   }
 
-  class AllowedWithdrawalsProcessor implements WithdrawalsProcessor {
+  class DefaultWithdrawalsProcessor implements WithdrawalsProcessor {
 
     @Override
     public void processWithdrawals(

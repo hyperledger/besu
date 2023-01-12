@@ -70,7 +70,7 @@ public class GoQuorumBlockProcessorTest {
   public void setup() {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getWithdrawalsProcessor())
-        .thenReturn(new WithdrawalsProcessor.ProhibitedWithdrawalsProcessor());
+        .thenReturn(new WithdrawalsProcessor.NoOpWithdrawalsProcessor());
     goQuorumPrivacyParameters =
         new GoQuorumPrivacyParameters(goQuorumEnclave, "123", goQuorumPrivateStorage, null);
   }

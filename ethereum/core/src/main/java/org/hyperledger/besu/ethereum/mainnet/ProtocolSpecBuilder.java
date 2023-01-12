@@ -74,7 +74,7 @@ public class ProtocolSpecBuilder {
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
 
   private WithdrawalsProcessor withdrawalsProcessor =
-      new WithdrawalsProcessor.ProhibitedWithdrawalsProcessor();
+      new WithdrawalsProcessor.NoOpWithdrawalsProcessor();
 
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;

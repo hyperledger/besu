@@ -108,7 +108,7 @@ public class BlockImportExceptionHandlingTest {
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getWithdrawalsProcessor())
-        .thenReturn(new WithdrawalsProcessor.ProhibitedWithdrawalsProcessor());
+        .thenReturn(new WithdrawalsProcessor.NoOpWithdrawalsProcessor());
     mainnetBlockValidator =
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
