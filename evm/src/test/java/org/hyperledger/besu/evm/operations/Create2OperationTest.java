@@ -15,6 +15,8 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
+import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.CODE_TOO_LARGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,43 +25,65 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.ArrayDeque;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class Create2OperationTest {
 
-  private final String sender;
-  private final String salt;
-  private final String code;
-  private final String expectedAddress;
-  private final int expectedGas;
   private MessageFrame messageFrame;
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final EVM evm = mock(EVM.class);
+  private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
+  private final MutableAccount newMutableAccount = mock(MutableAccount.class);
+
   private final Create2Operation operation =
       new Create2Operation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
 
-  @Parameters(name = "sender: {0}, salt: {1}, code: {2}")
+  private final Create2Operation maxInitCodeOperation =
+      new Create2Operation(
+          new ConstantinopleGasCalculator(), MainnetEVMs.SHANGHAI_INIT_CODE_SIZE_LIMIT);
+
+  private static final String TOPIC =
+      "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
+  private static final Bytes SIMPLE_CREATE =
+      Bytes.fromHexString(
+          "0x"
+              + "7f" // push32
+              + TOPIC
+              + "6000" // PUSH1 0x00
+              + "6000" // PUSH1 0x00
+              + "A1" // LOG1
+              + "6000" // PUSH1 0x00
+              + "6000" // PUSH1 0x00
+              + "F3" // RETURN
+          );
+  public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
+  private static final int SHANGHAI_CREATE_GAS = 41240 + (0xc000 / 32) * 6;
+
   public static Object[][] params() {
     return new Object[][] {
       {
@@ -114,21 +138,8 @@ public class Create2OperationTest {
     };
   }
 
-  public Create2OperationTest(
-      final String sender,
-      final String salt,
-      final String code,
-      final String expectedAddress,
-      final int expectedGas) {
-    this.sender = sender;
-    this.salt = salt;
-    this.code = code;
-    this.expectedAddress = expectedAddress;
-    this.expectedGas = expectedGas;
-  }
+  public void setUp(final String sender, final String salt, final String code) {
 
-  @Before
-  public void setUp() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final Bytes codeBytes = Bytes.fromHexString(code);
     final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
@@ -171,16 +182,124 @@ public class Create2OperationTest {
                     invocation.getArgument(1), invocation.getArgument(0), 0, true));
   }
 
-  @Test
-  public void shouldCalculateAddress() {
+  @ParameterizedTest
+  @MethodSource("params")
+  void shouldCalculateAddress(
+      final String sender,
+      final String salt,
+      final String code,
+      final String expectedAddress,
+      final int ignoredExpectedGas) {
+    setUp(sender, salt, code);
     final Address targetContractAddress = operation.targetContractAddress(messageFrame);
     assertThat(targetContractAddress).isEqualTo(Address.fromHexString(expectedAddress));
   }
 
-  @Test
-  public void shouldCalculateGasPrice() {
+  @ParameterizedTest
+  @MethodSource("params")
+  void shouldCalculateGasPrice(
+      final String sender,
+      final String salt,
+      final String code,
+      final String ignoredExpectedAddress,
+      final int expectedGas) {
+    setUp(sender, salt, code);
     final OperationResult result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isNull();
     assertThat(result.getGasCost()).isEqualTo(expectedGas);
+  }
+
+  @org.junit.Test
+  public void shanghaiMaxInitCodeSizeCreate() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.fromHexString("0xc000");
+    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+    final MessageFrame messageFrame =
+        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
+
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(account.getNonce()).thenReturn(55L);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
+    when(newAccount.getMutable()).thenReturn(newMutableAccount);
+    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    final MessageFrame createFrame = messageFrameStack.peek();
+    final ContractCreationProcessor ccp =
+        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
+    ccp.process(createFrame, OperationTracer.NO_TRACING);
+
+    final Log log = createFrame.getLogs().get(0);
+    final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
+    assertThat(calculatedTopic).isEqualTo(TOPIC);
+    assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
+  }
+
+  @Test
+  public void shanghaiMaxInitCodeSizePlus1Create() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.fromHexString("0xc001");
+    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+    final MessageFrame messageFrame =
+        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
+
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(account.getNonce()).thenReturn(55L);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
+    when(newAccount.getMutable()).thenReturn(newMutableAccount);
+    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
+  }
+
+  @NotNull
+  private MessageFrame testMemoryFrame(
+      final UInt256 memoryOffset,
+      final UInt256 memoryLength,
+      final UInt256 value,
+      final int depth,
+      final ArrayDeque<MessageFrame> messageFrameStack) {
+    final MessageFrame messageFrame =
+        MessageFrame.builder()
+            .type(MessageFrame.Type.CONTRACT_CREATION)
+            .contract(Address.ZERO)
+            .inputData(Bytes.EMPTY)
+            .sender(Address.fromHexString(SENDER))
+            .value(Wei.ZERO)
+            .apparentValue(Wei.ZERO)
+            .code(CodeFactory.createCode(SIMPLE_CREATE, Hash.hash(SIMPLE_CREATE), 0, true))
+            .depth(depth)
+            .completer(__ -> {})
+            .address(Address.fromHexString(SENDER))
+            .blockHashLookup(n -> Hash.hash(Bytes.ofUnsignedLong(n)))
+            .blockValues(mock(BlockValues.class))
+            .gasPrice(Wei.ZERO)
+            .messageFrameStack(messageFrameStack)
+            .miningBeneficiary(Address.ZERO)
+            .originator(Address.ZERO)
+            .initialGas(100000L)
+            .worldUpdater(worldUpdater)
+            .build();
+    messageFrame.pushStackItem(Bytes.EMPTY);
+    messageFrame.pushStackItem(memoryLength);
+    messageFrame.pushStackItem(memoryOffset);
+    messageFrame.pushStackItem(value);
+    messageFrame.expandMemory(0, 500);
+    messageFrame.writeMemory(
+        memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
+    return messageFrame;
   }
 }

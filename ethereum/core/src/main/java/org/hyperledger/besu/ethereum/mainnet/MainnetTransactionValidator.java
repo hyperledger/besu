@@ -189,7 +189,7 @@ public class MainnetTransactionValidator {
               intrinsicGasCost, transaction.getGasLimit()));
     }
 
-    if (transaction.getTo().isEmpty() && transaction.getPayload().size() > maxInitcodeSize) {
+    if (transaction.isContractCreation() && transaction.getPayload().size() > maxInitcodeSize) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INITCODE_TOO_LARGE,
           String.format(
