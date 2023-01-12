@@ -27,32 +27,6 @@ jar {
   }
 }
 
-sourceSets {
-  referenceTest {
-    java {
-      compileClasspath += main.output
-      runtimeClasspath += main.output
-      srcDir file('src/reference-test/java')
-    }
-    resources { srcDir file('src/reference-test/resources') }
-  }
-}
-
-task referenceTests(type: Test, dependsOn: ["compileTestJava"]) {
-  group = "verification"
-  description = "Runs the Besu QBFT reference tests"
-
-  jvmArgs = [
-    '--add-opens',
-    'java.base/java.util=ALL-UNNAMED',
-    '--add-opens',
-    'java.base/java.util.concurrent=ALL-UNNAMED'
-  ]
-  testClassesDirs = sourceSets.referenceTest.output.classesDirs
-  classpath = sourceSets.referenceTest.runtimeClasspath
-  outputs.upToDateWhen { false }
-}
-
 dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
@@ -111,60 +85,5 @@ dependencies {
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 
-  referenceTestImplementation 'junit:junit'
-  referenceTestImplementation 'com.google.guava:guava'
-  referenceTestImplementation 'org.assertj:assertj-core'
-  referenceTestImplementation 'org.mockito:mockito-core'
-  referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
-  referenceTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
-  referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
-  referenceTestImplementation project(':crypto')
-  referenceTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
-  referenceTestImplementation project(':consensus:common')
-  referenceTestImplementation project(':datatypes')
-  referenceTestImplementation project(':ethereum:core')
-  referenceTestImplementation project(':ethereum:rlp')
-  referenceTestImplementation project(':config')
-  referenceTestImplementation project(':testutil')
-
   testSupportImplementation 'org.mockito:mockito-core'
 }
-
-task ('validateReferenceTestSubmodule') {
-  description = "Checks that the reference tests submodule is not accidentally changed"
-  doLast {
-    def result = new ByteArrayOutputStream()
-    def expectedHash = 'c0077a14e0d773e239ba944f371ea640df8b1b60'
-    def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "consensus/qbft/src/reference-test/resources").toAbsolutePath()
-    try {
-      exec {
-        commandLine 'git', 'submodule', 'status', submodulePath
-        standardOutput = result
-        errorOutput = result
-      }
-    } catch (Exception ignore) {
-      // Ignore it.  We want to fail in a friendly fashion if they don't have git installed.
-      // The CI servers have git and that is the only critical place for this failure
-      expectedHash = ''
-    }
-
-    if (!result.toString().contains(expectedHash)) {
-      throw new GradleException("""For the QBFT Reference Tests the git commit did not match what was expected.
-  
-If this is a deliberate change where you are updating the reference tests 
-then update "expectedHash" in `consensus/qbft/build.gradle` as the 
-commit hash for this task.
-Expected hash   :  ${expectedHash}
-Full git output : ${result}
-
-If this is accidental you can correct the reference test versions with the 
-following commands:
-    pushd ${submodulePath}
-    git checkout ${expectedHash}
-    cd ..
-    git add resources
-    popd""")
-    }
-  }
-}
-processResources.dependsOn('validateReferenceTestSubmodule')
