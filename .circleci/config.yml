@@ -222,7 +222,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    executor: trivy_executor
+    executor: besu_executor_small
     steps:
       - prepare
       - attach_workspace:
