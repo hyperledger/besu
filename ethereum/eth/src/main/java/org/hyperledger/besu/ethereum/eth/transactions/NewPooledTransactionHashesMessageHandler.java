@@ -25,12 +25,14 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCallback {
 
   private final NewPooledTransactionHashesMessageProcessor transactionsMessageProcessor;
   private final EthScheduler scheduler;
   private final Duration txMsgKeepAlive;
+  private final AtomicBoolean isEnabled = new AtomicBoolean(true);
 
   public NewPooledTransactionHashesMessageHandler(
       final EthScheduler scheduler,
@@ -47,9 +49,23 @@ class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCal
     final NewPooledTransactionHashesMessage transactionsMessage =
         NewPooledTransactionHashesMessage.readFrom(message.getData(), capability);
     final Instant startedAt = now();
-    scheduler.scheduleTxWorkerTask(
-        () ->
-            transactionsMessageProcessor.processNewPooledTransactionHashesMessage(
-                message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive));
+    if (isEnabled.get()) {
+      scheduler.scheduleTxWorkerTask(
+          () ->
+              transactionsMessageProcessor.processNewPooledTransactionHashesMessage(
+                  message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive));
+    }
+  }
+
+  public void setEnabled() {
+    isEnabled.set(true);
+  }
+
+  public void setDisabled() {
+    isEnabled.set(false);
+  }
+
+  public boolean isEnabled() {
+    return isEnabled.get();
   }
 }

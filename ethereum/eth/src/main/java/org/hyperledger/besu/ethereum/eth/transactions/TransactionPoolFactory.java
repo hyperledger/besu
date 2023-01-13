@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -116,31 +117,46 @@ public class TransactionPoolFactory {
                 metricsSystem),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
 
-    if (syncState.isInitialSyncPhaseDone()) {
-      enableTransactionPool(
-          protocolContext,
-          ethContext,
-          transactionTracker,
-          transactionPool,
-          transactionsMessageHandler,
-          pooledTransactionsMessageHandler);
-    } else {
-      syncState.subscribeCompletionReached(
-          () -> {
-            enableTransactionPool(
-                protocolContext,
-                ethContext,
-                transactionTracker,
-                transactionPool,
-                transactionsMessageHandler,
-                pooledTransactionsMessageHandler);
-          });
+    subscribeTransactionHandlers(
+        protocolContext,
+        ethContext,
+        transactionTracker,
+        transactionPool,
+        transactionsMessageHandler,
+        pooledTransactionsMessageHandler);
+
+    if (!syncState.isInitialSyncPhaseDone()) {
+      LOG.info("Disabling transaction handling during initial sync");
+      pooledTransactionsMessageHandler.setDisabled();
+      transactionsMessageHandler.setDisabled();
+      transactionPool.setDisabled();
     }
+
+    syncState.subscribeCompletionReached(
+        new BesuEvents.InitialSyncCompletionListener() {
+          @Override
+          public void onInitialSyncCompleted() {
+            LOG.info("Enabling transaction handling following initial sync");
+            transactionPool.reset();
+            transactionTracker.reset();
+            transactionPool.setEnabled();
+            transactionsMessageHandler.setEnabled();
+            pooledTransactionsMessageHandler.setEnabled();
+          }
+
+          @Override
+          public void onInitialSyncRestart() {
+            LOG.info("Disabling transaction handling during re-sync");
+            pooledTransactionsMessageHandler.setDisabled();
+            transactionsMessageHandler.setDisabled();
+            transactionPool.setDisabled();
+          }
+        });
 
     return transactionPool;
   }
 
-  private static void enableTransactionPool(
+  private static void subscribeTransactionHandlers(
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final PeerTransactionTracker transactionTracker,

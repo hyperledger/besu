@@ -87,7 +87,7 @@ public class EOFLayout {
       return invalidLayout(container, version, error);
     }
     int typesLength = readUnsignedShort(inputStream);
-    if (typesLength < 0) {
+    if (typesLength <= 0) {
       return invalidLayout(container, version, "Invalid Types section size");
     }
 
@@ -96,8 +96,17 @@ public class EOFLayout {
       return invalidLayout(container, version, error);
     }
     int codeSectionCount = readUnsignedShort(inputStream);
-    if (codeSectionCount < 0) {
+    if (codeSectionCount <= 0) {
       return invalidLayout(container, version, "Invalid Code section count");
+    }
+    if (codeSectionCount * 4 != typesLength) {
+      return invalidLayout(
+          container,
+          version,
+          "Type section length incompatible with code section count - 0x"
+              + Integer.toHexString(codeSectionCount)
+              + " * 4 != 0x"
+              + Integer.toHexString(typesLength));
     }
     if (codeSectionCount > 1024) {
       return invalidLayout(
@@ -142,10 +151,17 @@ public class EOFLayout {
           container, version, "Code section does not have zero inputs and outputs");
     }
     CodeSection[] codeSections = new CodeSection[codeSectionCount];
+    int pos = // calculate pos in stream...
+        3 // header and version
+            + 3 // type header
+            + 3
+            + (codeSectionCount * 2) // code section size
+            + 3 // data section header
+            + 1 // padding
+            + (codeSectionCount * 4); // type data
     for (int i = 0; i < codeSectionCount; i++) {
       int codeSectionSize = codeSectionSizes[i];
-      byte[] code = new byte[codeSectionSize];
-      if (inputStream.read(code, 0, codeSectionSize) != codeSectionSize) {
+      if (inputStream.skip(codeSectionSize) != codeSectionSize) {
         return invalidLayout(container, version, "Incomplete code section " + i);
       }
       if (typeData[i][0] > 0x7f) {
@@ -167,7 +183,8 @@ public class EOFLayout {
             "Type data max stack too large - 0x" + Integer.toHexString(typeData[i][2]));
       }
       codeSections[i] =
-          new CodeSection(Bytes.wrap(code), typeData[i][0], typeData[i][1], typeData[i][2]);
+          new CodeSection(codeSectionSize, typeData[i][0], typeData[i][1], typeData[i][2], pos);
+      pos += codeSectionSize;
     }
 
     if (inputStream.skip(dataSize) != dataSize) {
@@ -196,8 +213,12 @@ public class EOFLayout {
     return version;
   }
 
-  public CodeSection[] getCodeSections() {
-    return codeSections;
+  public int getCodeSectionCount() {
+    return codeSections == null ? 0 : codeSections.length;
+  }
+
+  public CodeSection getCodeSection(final int i) {
+    return codeSections[i];
   }
 
   public String getInvalidReason() {

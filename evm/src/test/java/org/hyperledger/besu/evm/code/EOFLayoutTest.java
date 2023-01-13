@@ -82,15 +82,15 @@ public class EOFLayoutTest {
             1
           },
           {"EF0001 010004 0200010001 030000", "No Terminator", "Improper section headers", 1},
-          {"EF0001 010008 0200010002 030000 00", "No type section", "Incomplete type section", 1},
+          {"EF0001 010004 0200010002 030000 00", "No type section", "Incomplete type section", 1},
           {
-            "EF0001 010008 0200010002 030001 030001 00 DA DA",
+            "EF0001 010004 0200010002 030001 030001 00 DA DA",
             "Duplicate data sections",
             "Expected kind 0 but read kind 3",
             1
           },
           {
-            "EF0001 010008 0200010002 030000 00 00",
+            "EF0001 010004 0200010002 030000 00 00",
             "Incomplete type section",
             "Incomplete type section",
             1
@@ -102,25 +102,31 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010008 02000200020002 030000 00 0100000000000000",
+            "EF0001 010008 0200010001 030000 00 00000000 FE ",
+            "Incorrect type section size",
+            "Type section length incompatible with code section count - 0x1 * 4 != 0x8",
+            1
+          },
+          {
+            "EF0001 010008 02000200010001 030000 00 0100000000000000 FE FE",
             "Incorrect section zero type input",
             "Code section does not have zero inputs and outputs",
             1
           },
           {
-            "EF0001 010008 02000200020002 030000 00 0001000000000000",
+            "EF0001 010008 02000200010001 030000 00 0001000000000000 FE FE",
             "Incorrect section zero type output",
             "Code section does not have zero inputs and outputs",
             1
           },
           {
-            "EF0001 010008 0200010002 030000 00 00000000 ",
+            "EF0001 010004 0200010002 030000 00 00000000 ",
             "Incomplete code section",
             "Incomplete code section 0",
             1
           },
           {
-            "EF0001 010008 0200010002 030000 00 00000000 FE",
+            "EF0001 010004 0200010002 030000 00 00000000 FE",
             "Incomplete code section",
             "Incomplete code section 0",
             1
@@ -138,13 +144,13 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010008 0200010001 030003 00 00000000 FE DEADBEEF",
+            "EF0001 010004 0200010001 030003 00 00000000 FE DEADBEEF",
             "Incomplete data section",
             "Dangling data after end of all sections",
             1
           },
           {
-            "EF0001 010008 0200010001 030003 00 00000000 FE BEEF",
+            "EF0001 010004 0200010001 030003 00 00000000 FE BEEF",
             "Incomplete data section",
             "Incomplete data section",
             1
@@ -187,7 +193,7 @@ public class EOFLayoutTest {
           },
           {"EF0001 00", "all sections missing", "Expected kind 1 but read kind 0", 1},
           {
-            "EF0001 010004 020401"
+            "EF0001 011004 020401"
                 + " 0001".repeat(1025)
                 + " 030000 00"
                 + " 00000000".repeat(1025)
@@ -196,6 +202,15 @@ public class EOFLayoutTest {
             "Too many code sections - 0x401",
             1
           },
+          {"ef000101000002000003000000", "All kinds zero size", "Invalid Types section size", 1},
+          {"ef0001010000020001000103000000ef", "Zero type size ", "Invalid Types section size", 1},
+          {
+            "ef0001010004020001000003000000",
+            "Zero code section length",
+            "Invalid Code section size for section 0",
+            1
+          },
+          {"ef000101000402000003000000", "Zero code sections", "Invalid Code section count", 1},
         });
   }
 
@@ -227,13 +242,13 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00010000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000001 00010001 02030003 FE 5000 3000 8000",
             "non-void input and output types",
             null,
             1
           },
           {
-            "EF0001 010004 020400"
+            "EF0001 011000 020400"
                 + " 0001".repeat(1024)
                 + " 030000 00"
                 + " 00000000".repeat(1024)
@@ -279,7 +294,7 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00010000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000001 00010001 02030003 FE 5000 3000 8000",
             "non-void input and output types",
             null,
             1
@@ -302,10 +317,10 @@ public class EOFLayoutTest {
     assertThat(layout.getContainer()).isEqualTo(container);
     if (layout.getInvalidReason() != null) {
       assertThat(layout.isValid()).isFalse();
-      assertThat(layout.getCodeSections()).isNull();
+      assertThat(layout.getCodeSectionCount()).isZero();
     } else {
       assertThat(layout.isValid()).isTrue();
-      assertThat(layout.getCodeSections()).isNotNull();
+      assertThat(layout.getCodeSectionCount()).isNotZero();
     }
   }
 }
