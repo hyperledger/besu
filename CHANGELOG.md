@@ -1,4 +1,23 @@
 # Changelog
+
+## 22.10.4
+
+### Breaking Changes
+
+### Additions and Improvements
+- Use safe block as snap sync pivot block [#4819](https://github.com/hyperledger/besu/pull/4912)
+- Disconnect worst peer when retrying p2p tasks fails [#4888](https://github.com/hyperledger/besu/pull/4888)
+
+### Bug Fixes
+- Fix for segmentation faults on worldstate truncation, snap-sync starts [#4786](https://github.com/hyperledger/besu/pull/4786)
+- Fix for worldstate mismatch on failed forkchoiceUpdate [#4862](https://github.com/hyperledger/besu/pull/4862)
+- Fix for cpu spikes on peer disconnect [#4867](https://github.com/hyperledger/besu/pull/4867)
+- Fix for performance regression in CachedMerkleTrieLoader [#4912](https://github.com/hyperledger/besu/pull/4912)
+- fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
+
+### Download Links
+
+
 ## 22.10.3
 
 ### Breaking Changes
