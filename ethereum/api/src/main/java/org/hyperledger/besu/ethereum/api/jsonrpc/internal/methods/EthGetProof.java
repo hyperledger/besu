@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 
 import java.util.Arrays;
@@ -90,5 +91,11 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
     return Arrays.stream(request.getRequiredParameter(1, String[].class))
         .map(UInt256::fromHexString)
         .collect(Collectors.toList());
+  }
+
+  @Override
+  protected Object resultByBlockHeader(
+      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
+    return resultByBlockHash(request, blockHeader.getBlockHash());
   }
 }

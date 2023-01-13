@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 
 import java.util.function.Supplier;
@@ -76,5 +77,11 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
     final long transactionCount = getBlockchainQueries().getTransactionCount(address, blockHash);
 
     return Quantity.create(transactionCount);
+  }
+
+  @Override
+  protected Object resultByBlockHeader(
+      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
+    return resultByBlockHash(request, blockHeader.getBlockHash());
   }
 }

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.function.Supplier;
 
@@ -52,5 +53,11 @@ public class EthGetBalance extends AbstractBlockParameterOrBlockHashMethod {
         .accountBalance(address, blockHash)
         .map(Quantity::create)
         .orElse(null);
+  }
+
+  @Override
+  protected Object resultByBlockHeader(
+      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
+    return resultByBlockHash(request, blockHeader.getBlockHash());
   }
 }

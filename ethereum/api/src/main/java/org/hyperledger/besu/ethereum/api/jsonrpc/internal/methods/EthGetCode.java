@@ -80,4 +80,10 @@ public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
     }
     return getBlockchainQueries().getCode(address, blockHash).map(Bytes::toString).orElse(null);
   }
+
+  @Override
+  protected Object resultByBlockHeader(
+      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
+    return resultByBlockHash(request, blockHeader.getBlockHash());
+  }
 }
