@@ -72,7 +72,8 @@ public class ProtocolSpecBuilder {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
-  private WithdrawalsValidatorBuilder withdrawalsValidatorBuilder;
+  private WithdrawalsValidator withdrawalsValidator =
+      new WithdrawalsValidator.ProhibitedWithdrawals();
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -244,9 +245,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder withdrawalsValidatorBuilder(
-      final WithdrawalsValidatorBuilder withdrawalsValidatorBuilder) {
-    this.withdrawalsValidatorBuilder = withdrawalsValidatorBuilder;
+  public ProtocolSpecBuilder withdrawalsValidator(final WithdrawalsValidator withdrawalsValidator) {
+    this.withdrawalsValidator = withdrawalsValidator;
     return this;
   }
 
@@ -321,11 +321,6 @@ public class ProtocolSpecBuilder {
               privacyParameters.getPrivateWorldStateArchive(),
               privacyParameters.getPrivateStateRootResolver(),
               privacyParameters.getPrivateStateGenesisAllocator());
-    }
-
-    WithdrawalsValidator withdrawalsValidator = new WithdrawalsValidator.ProhibitedWithdrawals();
-    if (withdrawalsValidatorBuilder != null) {
-      withdrawalsValidator = withdrawalsValidatorBuilder.apply();
     }
 
     final BlockValidator blockValidator =
@@ -454,10 +449,6 @@ public class ProtocolSpecBuilder {
         BlockProcessor blockProcessor,
         BadBlockManager badBlockManager,
         Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
-  }
-
-  public interface WithdrawalsValidatorBuilder {
-    WithdrawalsValidator apply();
   }
 
   public interface BlockImporterBuilder {

@@ -35,7 +35,7 @@ public interface WithdrawalsValidator {
       final boolean isValid = withdrawals == null;
       if (!isValid) {
         LOG.warn(
-            "withdrawals should be null when Withdrawals are prohibited but were: {}", withdrawals);
+            "withdrawals must be null when Withdrawals are prohibited but were: {}", withdrawals);
       }
       return isValid;
     }
@@ -49,7 +49,7 @@ public interface WithdrawalsValidator {
     public boolean validateWithdrawals(final List<Withdrawal> withdrawals) {
       final boolean isValid = withdrawals != null;
       if (!isValid) {
-        LOG.warn("withdrawals should not be null when Withdrawals are activated");
+        LOG.warn("withdrawals must not be null when Withdrawals are activated");
       }
       return isValid;
     }
