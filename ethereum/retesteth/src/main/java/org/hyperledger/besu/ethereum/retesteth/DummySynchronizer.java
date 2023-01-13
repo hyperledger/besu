@@ -45,6 +45,11 @@ public class DummySynchronizer implements Synchronizer {
   }
 
   @Override
+  public boolean resyncWorldState() {
+    return false;
+  }
+
+  @Override
   public long subscribeSyncStatus(final BesuEvents.SyncStatusListener listener) {
     return 0;
   }
