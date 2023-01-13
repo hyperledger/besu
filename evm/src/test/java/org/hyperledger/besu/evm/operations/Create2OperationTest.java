@@ -46,7 +46,7 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -210,7 +210,7 @@ public class Create2OperationTest {
   }
 
   @Test
-  public void shanghaiMaxInitCodeSizeCreate() {
+  void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -242,7 +242,7 @@ public class Create2OperationTest {
   }
 
   @Test
-  public void shanghaiMaxInitCodeSizePlus1Create() {
+  void shanghaiMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc001");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
