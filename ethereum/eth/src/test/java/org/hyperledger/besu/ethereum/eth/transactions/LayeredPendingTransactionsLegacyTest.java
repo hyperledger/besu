@@ -32,9 +32,7 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -53,14 +51,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
-public class LayeredTransactionPoolLegacyTest extends AbstractLayeredTransactionPoolTest {
+public class LayeredPendingTransactionsLegacyTest extends AbstractLayeredPendingTransactionsTest {
 
   @Override
-  protected PendingTransactionsSorter createPendingTransactionsSorter(
+  protected PendingTransactions createPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
-    return new ReadyTransactionsCache(
+    return new LayeredPendingTransactions(
         poolConfig,
         new GasPricePrioritizedTransactions(
             poolConfig,

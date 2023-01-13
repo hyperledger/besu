@@ -26,9 +26,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -87,8 +86,8 @@ public class PendingMultiTypesTransactionsTest {
           transactionReplacementTester,
           FeeMarket.london(0L));
 
-  private final ReadyTransactionsCache transactions =
-      new ReadyTransactionsCache(
+  private final LayeredPendingTransactions transactions =
+      new LayeredPendingTransactions(
           transactionPoolConfiguration, sorter, transactionReplacementTester);
 
   @Test

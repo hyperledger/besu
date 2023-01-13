@@ -20,14 +20,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -54,7 +52,7 @@ public class TransactionPoolFactory {
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
-    final PendingTransactionsSorter pendingTransactions =
+    final PendingTransactions pendingTransactions =
         createPendingTransactionsSorter(
             protocolSchedule, protocolContext, clock, metricsSystem, transactionPoolConfiguration);
 
@@ -87,7 +85,7 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
@@ -179,7 +177,7 @@ public class TransactionPoolFactory {
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
   }
 
-  private static PendingTransactionsSorter createPendingTransactionsSorter(
+  private static PendingTransactions createPendingTransactionsSorter(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
@@ -233,7 +231,7 @@ public class TransactionPoolFactory {
     }
   }
 
-  private static PendingTransactionsSorter createPrioritizedTransactionSorted(
+  private static PendingTransactions createPrioritizedTransactionSorted(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
@@ -275,7 +273,7 @@ public class TransactionPoolFactory {
               transactionPoolConfiguration, clock, metricsSystem, transactionReplacementTester);
     }
 
-    return new ReadyTransactionsCache(
+    return new LayeredPendingTransactions(
         transactionPoolConfiguration, pendingTransactionsSorter, transactionReplacementTester);
   }
 }

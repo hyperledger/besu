@@ -24,8 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -127,7 +125,7 @@ public class BaseTransactionPoolTest {
   }
 
   protected void assertTransactionPendingAndReady(
-      final ReadyTransactionsCache pendingTransactions, final Transaction transaction) {
+      final LayeredPendingTransactions pendingTransactions, final Transaction transaction) {
     assertTransactionPending(pendingTransactions, transaction);
     assertThat(pendingTransactions.getReady(transaction.getSender(), transaction.getNonce()))
         .isPresent()
@@ -136,7 +134,7 @@ public class BaseTransactionPoolTest {
   }
 
   protected void assertTransactionPendingAndNotReady(
-      final ReadyTransactionsCache pendingTransactions, final Transaction transaction) {
+      final LayeredPendingTransactions pendingTransactions, final Transaction transaction) {
     assertTransactionPending(pendingTransactions, transaction);
     final var maybeTransaction =
         pendingTransactions.getReady(transaction.getSender(), transaction.getNonce());
@@ -149,27 +147,27 @@ public class BaseTransactionPoolTest {
   }
 
   protected void assertTransactionPending(
-      final PendingTransactionsSorter transactions, final Transaction t) {
+      final PendingTransactions transactions, final Transaction t) {
     assertThat(transactions.getTransactionByHash(t.getHash())).contains(t);
   }
 
   protected void assertTransactionNotPending(
-      final PendingTransactionsSorter transactions, final Transaction t) {
+      final PendingTransactions transactions, final Transaction t) {
     assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty();
   }
 
   protected void assertNoNextNonceForSender(
-      final PendingTransactionsSorter pendingTransactions, final Address sender) {
+      final PendingTransactions pendingTransactions, final Address sender) {
     assertThat(pendingTransactions.getNextNonceForSender(sender)).isEmpty();
   }
 
   protected void assertNextNonceForSender(
-      final PendingTransactionsSorter pendingTransactions, final Address sender1, final int i) {
+      final PendingTransactions pendingTransactions, final Address sender1, final int i) {
     assertThat(pendingTransactions.getNextNonceForSender(sender1)).isPresent().hasValue(i);
   }
 
   protected void addLocalTransactions(
-      final PendingTransactionsSorter sorter, final Account sender, final long... nonces) {
+      final PendingTransactions sorter, final Account sender, final long... nonces) {
     for (final long nonce : nonces) {
       sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
     }

@@ -60,7 +60,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -89,7 +88,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
-public abstract class AbstractLayeredTransactionPoolTest {
+public abstract class AbstractLayeredPendingTransactionsTest {
 
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final KeyPair KEY_PAIR1 =
@@ -110,7 +109,7 @@ public abstract class AbstractLayeredTransactionPoolTest {
   protected MutableBlockchain blockchain;
   private TransactionBroadcaster transactionBroadcaster;
 
-  protected PendingTransactionsSorter transactions;
+  protected PendingTransactions transactions;
   private final Transaction transaction0 = createTransaction(0);
   private final Transaction transaction1 = createTransaction(1);
 
@@ -125,7 +124,7 @@ public abstract class AbstractLayeredTransactionPoolTest {
   private PeerTransactionTracker peerTransactionTracker;
   private ArgumentCaptor<Runnable> syncTaskCapture;
 
-  protected abstract PendingTransactionsSorter createPendingTransactionsSorter(
+  protected abstract PendingTransactions createPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
       BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester);
 

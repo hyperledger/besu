@@ -20,9 +20,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.LayeredPendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,19 +37,20 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class LatestNonceProviderTest {
 
-  private final Address senderAdress = Address.fromHexString("1");
+  private final Address senderAddress = Address.fromHexString("1");
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private LatestNonceProvider nonceProvider;
 
-  @Parameterized.Parameter public PendingTransactionsSorter pendingTransactions;
+  @Parameterized.Parameter public PendingTransactions pendingTransactions;
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {mock(GasPricePrioritizedTransactions.class)},
-          {mock(BaseFeePrioritizedTransactions.class)}
+          {mock(GasPricePendingTransactionsSorter.class)},
+          {mock(BaseFeePendingTransactionsSorter.class)},
+          {mock(LayeredPendingTransactions.class)}
         });
   }
 
@@ -60,19 +62,19 @@ public class LatestNonceProviderTest {
   @Test
   public void nextNonceUsesTxPool() {
     final long highestNonceInPendingTransactions = 123;
-    when(pendingTransactions.getNextNonceForSender(senderAdress))
+    when(pendingTransactions.getNextNonceForSender(senderAddress))
         .thenReturn(OptionalLong.of(highestNonceInPendingTransactions));
-    assertThat(nonceProvider.getNonce(senderAdress)).isEqualTo(highestNonceInPendingTransactions);
+    assertThat(nonceProvider.getNonce(senderAddress)).isEqualTo(highestNonceInPendingTransactions);
   }
 
   @Test
   public void nextNonceIsTakenFromBlockchainIfNoPendingTransactionResponse() {
     final long headBlockNumber = 8;
-    final long nonceInBLockchain = 56;
-    when(pendingTransactions.getNextNonceForSender(senderAdress)).thenReturn(OptionalLong.empty());
+    final long nonceInBlockchain = 56;
+    when(pendingTransactions.getNextNonceForSender(senderAddress)).thenReturn(OptionalLong.empty());
     when(blockchainQueries.headBlockNumber()).thenReturn(headBlockNumber);
-    when(blockchainQueries.getTransactionCount(senderAdress, headBlockNumber))
-        .thenReturn(nonceInBLockchain);
-    assertThat(nonceProvider.getNonce(senderAdress)).isEqualTo(nonceInBLockchain);
+    when(blockchainQueries.getTransactionCount(senderAddress, headBlockNumber))
+        .thenReturn(nonceInBlockchain);
+    assertThat(nonceProvider.getNonce(senderAddress)).isEqualTo(nonceInBlockchain);
   }
 }

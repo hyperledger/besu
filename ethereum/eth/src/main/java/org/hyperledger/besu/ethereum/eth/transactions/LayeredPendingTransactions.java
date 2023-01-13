@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions.cache;
+package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
@@ -29,13 +29,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
@@ -67,8 +61,8 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ReadyTransactionsCache implements PendingTransactionsSorter {
-  private static final Logger LOG = LoggerFactory.getLogger(ReadyTransactionsCache.class);
+public class LayeredPendingTransactions implements PendingTransactions {
+  private static final Logger LOG = LoggerFactory.getLogger(LayeredPendingTransactions.class);
 
   private final TransactionPoolConfiguration poolConfig;
   private final BiFunction<PendingTransaction, PendingTransaction, Boolean>
@@ -100,7 +94,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
 
   protected final AbstractPrioritizedTransactions prioritizedTransactions;
 
-  public ReadyTransactionsCache(
+  public LayeredPendingTransactions(
       final TransactionPoolConfiguration poolConfig,
       final AbstractPrioritizedTransactions prioritizedTransactions,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
@@ -616,7 +610,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
   // block could end up with transactions of the new type.
   // This seems like it would be very rare but worth it to document that we don't handle that case
   // right now.
-  public void selectTransactions(final PendingTransactionsSorter.TransactionSelector selector) {
+  public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
     synchronized (lock) {
       final List<PendingTransaction> transactionsToRemove = new ArrayList<>();
       final Set<Hash> alreadyChecked = new HashSet<>();
@@ -633,7 +627,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
           final var candidateTx = itSenderCandidateTxs.next();
           if (candidateTx.getNonce() <= highestPriorityPendingTransaction.getNonce()
               && !alreadyChecked.contains(candidateTx.getHash())) {
-            final PendingTransactionsSorter.TransactionSelectionResult result =
+            final PendingTransactions.TransactionSelectionResult result =
                 selector.evaluateTransaction(candidateTx.getTransaction());
             switch (result) {
               case DELETE_TRANSACTION_AND_CONTINUE:
@@ -729,7 +723,7 @@ public class ReadyTransactionsCache implements PendingTransactionsSorter {
 
   @Override
   // ToDo: rename to pending transactions
-  public Set<PendingTransaction> getPrioritizedPendingTransactions() {
+  public Set<PendingTransaction> getPendingTransactions() {
     return new HashSet<>(pendingTransactions.values());
   }
 

@@ -20,15 +20,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsStatisticsResult;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
 import java.util.Set;
 
 public class TxPoolBesuStatistics implements JsonRpcMethod {
 
-  private final PendingTransactionsSorter pendingTransactions;
+  private final PendingTransactions pendingTransactions;
 
-  public TxPoolBesuStatistics(final PendingTransactionsSorter pendingTransactions) {
+  public TxPoolBesuStatistics(final PendingTransactions pendingTransactions) {
     this.pendingTransactions = pendingTransactions;
   }
 
@@ -43,8 +43,7 @@ public class TxPoolBesuStatistics implements JsonRpcMethod {
   }
 
   private PendingTransactionsStatisticsResult statistics() {
-    final Set<PendingTransaction> pendingTransaction =
-        pendingTransactions.getPrioritizedPendingTransactions();
+    final Set<PendingTransaction> pendingTransaction = pendingTransactions.getPendingTransactions();
     final long localCount =
         pendingTransaction.stream().filter(PendingTransaction::isReceivedFromLocalSource).count();
     final long remoteCount = pendingTransaction.size() - localCount;

@@ -27,16 +27,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.OptionalLong;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.Test;
 
 class EthGetTransactionCountTest {
   private final Blockchain blockchain = mock(Blockchain.class);
@@ -47,17 +42,8 @@ class EthGetTransactionCountTest {
   private final String pendingTransactionString = "0x00000000000000000000000000000000000000AA";
   private final Object[] pendingParams = new Object[] {pendingTransactionString, "pending"};
 
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {mock(GasPricePrioritizedTransactions.class)},
-          {mock(BaseFeePrioritizedTransactions.class)}
-        });
-  }
-
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldUsePendingTransactionsWhenToldTo(final PendingTransactionsSorter pendingTransactions) {
+  @Test
+  void shouldUsePendingTransactionsWhenToldTo(final PendingTransactions pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -71,10 +57,9 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0xc");
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
+  @Test
   void shouldUseLatestTransactionsWhenNoPendingTransactions(
-      final PendingTransactionsSorter pendingTransactions) {
+      final PendingTransactions pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -88,10 +73,8 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0x7");
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldUseLatestWhenItIsBiggerThanPending(
-      final PendingTransactionsSorter pendingTransactions) {
+  @Test
+  void shouldUseLatestWhenItIsBiggerThanPending(final PendingTransactions pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -106,9 +89,8 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0x8");
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldReturnPendingWithHighNonce(final PendingTransactionsSorter pendingTransactions) {
+  @Test
+  void shouldReturnPendingWithHighNonce(final PendingTransactions pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -123,9 +105,8 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0xfffffffffffffffe");
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldReturnLatestWithHighNonce(final PendingTransactionsSorter pendingTransactions) {
+  @Test
+  void shouldReturnLatestWithHighNonce(final PendingTransactions pendingTransactions) {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
@@ -140,7 +121,7 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0xfffffffffffffffe");
   }
 
-  private void setup(final PendingTransactionsSorter pendingTransactions) {
+  private void setup(final PendingTransactions pendingTransactions) {
     ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, pendingTransactions);
   }
 

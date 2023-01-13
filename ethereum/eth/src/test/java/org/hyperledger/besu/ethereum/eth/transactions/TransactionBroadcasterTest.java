@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -56,7 +55,7 @@ public class TransactionBroadcasterTest {
   @Mock private EthContext ethContext;
   @Mock private EthPeers ethPeers;
   @Mock private EthScheduler ethScheduler;
-  @Mock private PendingTransactionsSorter pendingTransactions;
+  @Mock private PendingTransactions pendingTransactions;
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private TransactionsMessageSender transactionsMessageSender;
   @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -247,7 +246,7 @@ public class TransactionBroadcasterTest {
     Set<PendingTransaction> pendingTxs = createPendingTransactionList(numLocalTransactions, true);
     pendingTxs.addAll(createPendingTransactionList(numRemoteTransactions, false));
 
-    when(pendingTransactions.getPrioritizedPendingTransactions()).thenReturn(pendingTxs);
+    when(pendingTransactions.getPendingTransactions()).thenReturn(pendingTxs);
 
     return pendingTxs;
   }

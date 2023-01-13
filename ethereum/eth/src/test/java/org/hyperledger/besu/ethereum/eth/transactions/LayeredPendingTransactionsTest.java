@@ -12,17 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions.cache;
+package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.COMPLETE_OPERATION;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.CONTINUE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED_SPARSE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult.COMPLETE_OPERATION;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult.CONTINUE;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -34,13 +34,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.BaseTransactionPoolTest;
-import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -58,7 +51,7 @@ import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
+public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final int CACHE_CAPACITY_BYTES = 1024;
   private static final float LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
@@ -90,8 +83,8 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
           .txPoolLimitByAccountPercentage(LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE)
           .pendingTransactionsCacheSizeBytes(CACHE_CAPACITY_BYTES)
           .build();
-  protected ReadyTransactionsCache senderLimitedTransactions;
-  private ReadyTransactionsCache pendingTransactions;
+  protected LayeredPendingTransactions senderLimitedTransactions;
+  private LayeredPendingTransactions pendingTransactions;
 
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
@@ -111,21 +104,21 @@ public class ReadyTransactionsCacheTest extends BaseTransactionPoolTest {
             poolConf,
             clock,
             metricsSystem,
-            ReadyTransactionsCacheTest::mockBlockHeader,
+            LayeredPendingTransactionsTest::mockBlockHeader,
             transactionReplacementTester,
             FeeMarket.london(0));
     pendingTransactions =
-        new ReadyTransactionsCache(
+        new LayeredPendingTransactions(
             poolConf, pendingTransactionsSorter, transactionReplacementTester);
 
     senderLimitedTransactions =
-        new ReadyTransactionsCache(
+        new LayeredPendingTransactions(
             senderLimitedConfig,
             new BaseFeePrioritizedTransactions(
                 senderLimitedConfig,
                 clock,
                 metricsSystem,
-                ReadyTransactionsCacheTest::mockBlockHeader,
+                LayeredPendingTransactionsTest::mockBlockHeader,
                 transactionReplacementTester,
                 FeeMarket.london(0)),
             transactionReplacementTester);

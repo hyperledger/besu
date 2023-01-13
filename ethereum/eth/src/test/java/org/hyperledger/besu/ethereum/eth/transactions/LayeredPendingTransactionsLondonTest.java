@@ -33,9 +33,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.cache.ReadyTransactionsCache;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePrioritizedTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -54,16 +52,16 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
-public class LayeredTransactionPoolLondonTest extends AbstractLayeredTransactionPoolTest {
+public class LayeredPendingTransactionsLondonTest extends AbstractLayeredPendingTransactionsTest {
 
   private static final Wei BASE_FEE_FLOOR = Wei.of(7L);
 
   @Override
-  protected PendingTransactionsSorter createPendingTransactionsSorter(
+  protected PendingTransactions createPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
-    return new ReadyTransactionsCache(
+    return new LayeredPendingTransactions(
         poolConfig,
         new BaseFeePrioritizedTransactions(
             poolConfig,

@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.Arrays;
@@ -57,7 +56,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
 
-  public PendingTransactionsSorter pendingTransactions;
+  public PendingTransactions pendingTransactions;
 
   private PeerTransactionTracker transactionTracker;
   private NewPooledTransactionHashesMessageSender messageSender;
@@ -67,7 +66,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
     transactionTracker = new PeerTransactionTracker();
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
     final Transaction tx = mock(Transaction.class);
-    pendingTransactions = mock(PendingTransactionsSorter.class);
+    pendingTransactions = mock(PendingTransactions.class);
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
 
     when(peer1.getConnection())

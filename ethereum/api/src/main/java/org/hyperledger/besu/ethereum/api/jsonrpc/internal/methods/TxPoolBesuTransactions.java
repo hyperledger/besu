@@ -19,13 +19,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsResult;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
 public class TxPoolBesuTransactions implements JsonRpcMethod {
 
-  private final PendingTransactionsSorter pendingTransactions;
+  private final PendingTransactions pendingTransactions;
 
-  public TxPoolBesuTransactions(final PendingTransactionsSorter pendingTransactions) {
+  public TxPoolBesuTransactions(final PendingTransactions pendingTransactions) {
     this.pendingTransactions = pendingTransactions;
   }
 
@@ -39,7 +39,7 @@ public class TxPoolBesuTransactions implements JsonRpcMethod {
     final JsonRpcSuccessResponse jsonRpcSuccessResponse =
         new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),
-            new PendingTransactionsResult(pendingTransactions.getPrioritizedPendingTransactions()));
+            new PendingTransactionsResult(pendingTransactions.getPendingTransactions()));
     return jsonRpcSuccessResponse;
   }
 }

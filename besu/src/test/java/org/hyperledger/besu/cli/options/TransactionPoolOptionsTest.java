@@ -160,7 +160,8 @@ public class TransactionPoolOptionsTest
         .strictTransactionReplayProtectionEnabled(false)
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
-        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage());
+        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
+        .enableLayeredTxPool(defaultValue.getEnableLayeredTxPool());
   }
 
   @Override
@@ -171,7 +172,8 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
-        .txPoolLimitByAccountPercentage(0.5f);
+        .txPoolLimitByAccountPercentage(0.5f)
+        .enableLayeredTxPool(true);
   }
 
   @Override

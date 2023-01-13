@@ -12,16 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions.sorter;
+package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
 
@@ -30,7 +26,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 
-public interface PendingTransactionsSorter {
+public interface PendingTransactions {
   void evictOldTransactions();
 
   List<Transaction> getLocalTransactions();
@@ -43,13 +39,6 @@ public interface PendingTransactionsSorter {
 
   boolean isLocalSender(Address sender);
 
-  // There's a small edge case here we could encounter.
-  // When we pass an upgrade block that has a new transaction type, we start allowing transactions
-  // of that new type into our pool.
-  // If we then reorg to a block lower than the upgrade block height _and_ we create a block, that
-  // block could end up with transactions of the new type.
-  // This seems like it would be very rare but worth it to document that we don't handle that case
-  // right now.
   void selectTransactions(TransactionSelector selector);
 
   long maxSize();
@@ -60,7 +49,7 @@ public interface PendingTransactionsSorter {
 
   Optional<Transaction> getTransactionByHash(Hash transactionHash);
 
-  Set<PendingTransaction> getPrioritizedPendingTransactions();
+  Set<PendingTransaction> getPendingTransactions();
 
   long subscribePendingTransactions(PendingTransactionListener listener);
 
@@ -85,14 +74,14 @@ public interface PendingTransactionsSorter {
     // ToDo: remove when the legacy tx pool is removed
   }
 
-  public enum TransactionSelectionResult {
+  enum TransactionSelectionResult {
     DELETE_TRANSACTION_AND_CONTINUE,
     CONTINUE,
     COMPLETE_OPERATION
   }
 
   @FunctionalInterface
-  public interface TransactionSelector {
+  interface TransactionSelector {
     TransactionSelectionResult evaluateTransaction(final Transaction transaction);
   }
 }

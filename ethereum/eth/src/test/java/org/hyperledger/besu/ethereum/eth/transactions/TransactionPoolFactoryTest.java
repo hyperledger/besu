@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -65,7 +64,7 @@ public class TransactionPoolFactoryTest {
   @Mock EthMessages ethMessages;
   @Mock EthScheduler ethScheduler;
 
-  @Mock PendingTransactionsSorter pendingTransactions;
+  @Mock PendingTransactions pendingTransactions;
   @Mock PeerTransactionTracker peerTransactionTracker;
   @Mock TransactionsMessageSender transactionsMessageSender;
 

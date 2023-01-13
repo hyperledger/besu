@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.PendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.time.Instant;
@@ -59,7 +59,7 @@ public class EthGetTransactionByHashTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_getTransactionByHash";
 
-  @Mock private PendingTransactionsSorter pendingTransactions;
+  @Mock private PendingTransactions pendingTransactions;
 
   @Before
   public void setUp() {
