@@ -27,8 +27,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * Represents a block parameter that can be a special value ("pending", "earliest", "latest") or a
- * number formatted as a hex string or a block hash.
+ * Represents a block parameter (or block hash) that can be a special value ("pending", "earliest",
+ * "latest", "finalized", "safe") or a number formatted as a hex string, or a block hash.
  *
  * <p>When distinguishing between a hash and a number it is presumed that a hash won't have three
  * quarters of the leading bytes as zero. This is fine for block hashes but not for precompiled
@@ -61,11 +61,23 @@ public class BlockParameterOrBlockHash {
         number = OptionalLong.empty();
         blockHash = Optional.empty();
         requireCanonical = false;
-      } else if (normalizedValue.length() > 16) {
+      } else if (Objects.equals(normalizedValue, "safe")) {
+        type = BlockParameterType.SAFE;
+        number = OptionalLong.empty();
+        blockHash = Optional.empty();
+        requireCanonical = false;
+      } else if (Objects.equals(normalizedValue, "finalized")) {
+        type = BlockParameterType.FINALIZED;
+        number = OptionalLong.empty();
+        blockHash = Optional.empty();
+        requireCanonical = false;
+      } else if (normalizedValue.length() >= 65) { // with or without hex prefix
         type = BlockParameterType.HASH;
         number = OptionalLong.empty();
         blockHash = Optional.of(Hash.fromHexStringLenient(normalizedValue));
         requireCanonical = false;
+      } else if (normalizedValue.length() > 16) {
+        throw new IllegalArgumentException("hex number > 64 bits");
       } else {
         type = BlockParameterType.NUMERIC;
         number = OptionalLong.of(Long.decode(value.toString()));
@@ -112,6 +124,14 @@ public class BlockParameterOrBlockHash {
     return this.type == BlockParameterType.LATEST;
   }
 
+  public boolean isSafe() {
+    return this.type == BlockParameterType.SAFE;
+  }
+
+  public boolean isFinalized() {
+    return this.type == BlockParameterType.FINALIZED;
+  }
+
   public boolean isEarliest() {
     return this.type == BlockParameterType.EARLIEST;
   }
@@ -128,6 +148,8 @@ public class BlockParameterOrBlockHash {
     EARLIEST,
     LATEST,
     PENDING,
+    SAFE,
+    FINALIZED,
     NUMERIC,
     HASH
   }

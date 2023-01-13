@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.time.Instant;
@@ -70,6 +71,26 @@ public class BlockHeaderBuilder {
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
+  }
+
+  public static BlockHeaderBuilder createDefault() {
+    return new BlockHeaderBuilder()
+        .parentHash(Hash.EMPTY)
+        .coinbase(Address.ZERO)
+        .difficulty(Difficulty.ONE)
+        .number(0)
+        .gasLimit(30_000_000)
+        .timestamp(0)
+        .ommersHash(Hash.EMPTY_LIST_HASH)
+        .stateRoot(Hash.EMPTY_TRIE_HASH)
+        .transactionsRoot(Hash.EMPTY)
+        .receiptsRoot(Hash.EMPTY)
+        .logsBloom(LogsBloomFilter.empty())
+        .gasUsed(0)
+        .extraData(Bytes.EMPTY)
+        .mixHash(Hash.EMPTY)
+        .nonce(0)
+        .blockHeaderFunctions(new MainnetBlockHeaderFunctions());
   }
 
   public static BlockHeaderBuilder fromHeader(final BlockHeader header) {

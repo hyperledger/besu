@@ -24,8 +24,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -207,13 +207,13 @@ public class StateTestSubCommand implements Runnable {
         }
 
         final String forkName = fork == null ? spec.getFork() : fork;
-        final ProtocolSchedule protocolSchedule =
+        final HeaderBasedProtocolSchedule protocolSchedule =
             referenceTestProtocolSchedules.getByName(forkName);
         if (protocolSchedule == null) {
           throw new UnsupportedForkException(forkName);
         }
 
-        ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(0);
+        ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
         final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
         final WorldUpdater worldStateUpdater = worldState.updater();
         final ReferenceTestBlockchain blockchain =
