@@ -15,14 +15,12 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
@@ -107,21 +105,9 @@ public class BlockResultFactory {
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    final long blockValue = calculateBlockValue(blockWithReceipts);
+    final long blockValue = BlockValueCalculator.calculateBlockValue(blockWithReceipts);
     return new EngineGetPayloadResultV2(
         blockWithReceipts.getHeader(), txs, Quantity.create(blockValue));
-  }
-
-  private long calculateBlockValue(final BlockWithReceipts blockWithReceipts) {
-    final Block block = blockWithReceipts.getBlock();
-    final List<Transaction> txs = block.getBody().getTransactions();
-    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
-    Wei totalFee = Wei.of(0);
-    for (int i = 0; i < txs.size(); i++) {
-      final Wei minerFee = txs.get(i).getEffectivePriorityFeePerGas(block.getHeader().getBaseFee());
-      totalFee = totalFee.add(minerFee.multiply(receipts.get(i).getCumulativeGasUsed()));
-    }
-    return totalFee.toLong();
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
