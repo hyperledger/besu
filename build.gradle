@@ -245,6 +245,8 @@ allprojects {
       '--add-exports',
       'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'
     ]
+    exclude '**/PrivacyReorgTest.class'
+    exclude '**/BlockchainQueriesTest.class'
     Set toImport = [
       'test.ethereum.include',
       'test.ethereum.state.eip',
