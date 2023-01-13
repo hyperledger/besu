@@ -372,7 +372,7 @@ public class JsonRpcHttpService {
     }
 
 //    mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
-    mainRoute.handler(HandlerFactory.jsonRpcExecutor(jsonRpcExecutor, tracer));
+    mainRoute.blockingHandler(HandlerFactory.jsonRpcExecutor(jsonRpcExecutor, tracer));
 
     if (maybeAuthenticationService.isPresent()) {
       router
