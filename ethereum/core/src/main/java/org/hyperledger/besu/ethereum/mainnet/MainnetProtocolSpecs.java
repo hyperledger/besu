@@ -82,7 +82,7 @@ public abstract class MainnetProtocolSpecs {
   public static final int FRONTIER_CONTRACT_SIZE_LIMIT = Integer.MAX_VALUE;
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
-  public static final int SHANGHAI_CONTRACT_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
+  public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
   public static final int SHANDONG_CONTRACT_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
 
   private static final Address RIPEMD160_PRECOMPILE =
@@ -534,7 +534,8 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    quorumCompatibilityMode))
+                    quorumCompatibilityMode,
+                    Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -651,7 +652,6 @@ public abstract class MainnetProtocolSpecs {
 
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final BaseFeeMarket baseFeeMarket = getBaseFeeMarket(genesisConfigOptions);
-    final int contractSizeLimit = configContractSizeLimit.orElse(SHANGHAI_CONTRACT_SIZE_LIMIT);
 
     return parisDefinition(
             chainId,
@@ -681,15 +681,20 @@ public abstract class MainnetProtocolSpecs {
                     stackSizeLimit,
                     baseFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
-        .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
-                new ContractCreationProcessor(
+        // Contract creation rules for EIP-3860 Limit and meter intitcode
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
                     gasCalculator,
-                    evm,
+                    baseFeeMarket,
                     true,
-                    List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),
-                    1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
+                    quorumCompatibilityMode,
+                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .withdrawalsProcessorBuilder(WithdrawalsProcessor.AllowedWithdrawalsProcessor::new)
         .withdrawalsValidatorBuilder(WithdrawalsValidator.AllowedWithdrawals::new)
         .name("Shanghai");

@@ -117,6 +117,9 @@ public class MainnetEVMs {
 
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
+  public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 0x6000;
+  public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
+
   private MainnetEVMs() {
     // utility class
   }
@@ -203,7 +206,7 @@ public class MainnetEVMs {
     registry.put(new InvalidOperation(gasCalculator));
     registry.put(new StopOperation(gasCalculator));
     registry.put(new SelfDestructOperation(gasCalculator));
-    registry.put(new CreateOperation(gasCalculator));
+    registry.put(new CreateOperation(gasCalculator, Integer.MAX_VALUE));
     registry.put(new CallOperation(gasCalculator));
     registry.put(new CallCodeOperation(gasCalculator));
 
@@ -311,7 +314,7 @@ public class MainnetEVMs {
   public static void registerConstantinopleOperations(
       final OperationRegistry registry, final GasCalculator gasCalculator) {
     registerByzantiumOperations(registry, gasCalculator);
-    registry.put(new Create2Operation(gasCalculator));
+    registry.put(new Create2Operation(gasCalculator, Integer.MAX_VALUE));
     registry.put(new SarOperation(gasCalculator));
     registry.put(new ShlOperation(gasCalculator));
     registry.put(new ShrOperation(gasCalculator));
@@ -456,6 +459,8 @@ public class MainnetEVMs {
     registerParisOperations(registry, gasCalculator, chainID);
     // Register the PUSH0 operation.
     registry.put(new Push0Operation(gasCalculator));
+    registry.put(new CreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
+    registry.put(new Create2Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
   }
 
   public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {

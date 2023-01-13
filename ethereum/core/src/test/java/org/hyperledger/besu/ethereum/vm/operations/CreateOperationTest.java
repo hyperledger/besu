@@ -16,9 +16,8 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.SHANDONG_CONTRACT_SIZE_LIMIT;
-import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.SHANGHAI_CONTRACT_SIZE_LIMIT;
 import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
+import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.CODE_TOO_LARGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,12 +25,11 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -57,7 +55,11 @@ public class CreateOperationTest {
   private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final MutableAccount newMutableAccount = mock(MutableAccount.class);
-  private final CreateOperation operation = new CreateOperation(new ConstantinopleGasCalculator());
+  private final CreateOperation operation =
+      new CreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
+  private final CreateOperation maxInitCodeOperation =
+      new CreateOperation(
+          new ConstantinopleGasCalculator(), MainnetEVMs.SHANGHAI_INIT_CODE_SIZE_LIMIT);
 
   private static final String TOPIC =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
@@ -75,7 +77,6 @@ public class CreateOperationTest {
           );
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
   private static final int SHANGHAI_CREATE_GAS = 41240;
-  private static final int SHANDONG_CREATE_GAS = 41240;
 
   @Test
   public void createFromMemoryMutationSafe() {
@@ -183,7 +184,7 @@ public class CreateOperationTest {
   @Test
   public void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SHANGHAI_CONTRACT_SIZE_LIMIT);
+    final UInt256 memoryLength = UInt256.fromHexString("0xc000");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     final MessageFrame messageFrame =
         testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
@@ -200,7 +201,7 @@ public class CreateOperationTest {
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
+    var result = maxInitCodeOperation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrameStack.peek();
     final ContractCreationProcessor ccp =
         new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
@@ -215,7 +216,7 @@ public class CreateOperationTest {
   @Test
   public void shanghaiMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SHANGHAI_CONTRACT_SIZE_LIMIT + 1);
+    final UInt256 memoryLength = UInt256.fromHexString("0xc001");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     final MessageFrame messageFrame =
         testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
@@ -231,67 +232,9 @@ public class CreateOperationTest {
     when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.shandong(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
-    assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
-  }
-
-  @Test
-  public void shandongMaxInitCodeSizeCreate() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SHANDONG_CONTRACT_SIZE_LIMIT);
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
-
-    when(account.getMutable()).thenReturn(mutableAccount);
-    when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(worldUpdater.get(any())).thenReturn(account);
-    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getMutable()).thenReturn(newMutableAccount);
-    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
-    when(worldUpdater.updater()).thenReturn(worldUpdater);
-
-    final EVM evm = MainnetEVMs.shandong(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    final MessageFrame createFrame = messageFrameStack.peek();
-    final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
-    ccp.process(createFrame, OperationTracer.NO_TRACING);
-
-    final Log log = createFrame.getLogs().get(0);
-    final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
-    assertThat(calculatedTopic).isEqualTo(TOPIC);
-    assertThat(result.getGasCost()).isEqualTo(SHANDONG_CREATE_GAS);
-  }
-
-  @Test
-  public void shandongMaxInitCodeSizePlus1Create() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SHANDONG_CONTRACT_SIZE_LIMIT + 1);
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
-
-    when(account.getMutable()).thenReturn(mutableAccount);
-    when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(worldUpdater.get(any())).thenReturn(account);
-    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getMutable()).thenReturn(newMutableAccount);
-    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
-    when(worldUpdater.updater()).thenReturn(worldUpdater);
-
-    final EVM evm = MainnetEVMs.shandong(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
-    assertThat(result.getGasCost()).isEqualTo(SHANDONG_CREATE_GAS);
+    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 
   @NotNull
@@ -313,8 +256,8 @@ public class CreateOperationTest {
             .depth(depth)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
-            .blockHashLookup(mock(BlockHashLookup.class))
-            .blockValues(mock(ProcessableBlockHeader.class))
+            .blockHashLookup(n -> Hash.hash(Bytes.ofUnsignedLong(n)))
+            .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(messageFrameStack)
             .miningBeneficiary(Address.ZERO)
