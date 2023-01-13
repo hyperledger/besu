@@ -63,7 +63,12 @@ public class RollingImport {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
 
     int count = 0;
     while (!reader.isDone()) {

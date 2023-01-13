@@ -30,6 +30,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -47,6 +48,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -122,7 +124,8 @@ public class BesuControllerBuilderTest {
             any(), anyString(), anyString(), anyString()))
         .thenReturn(labels -> null);
 
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader))
+    when(storageProvider.createWorldStateStorage(
+            DataStorageFormat.FOREST, new CachedMerkleTrieLoader(new NoOpMetricsSystem())))
         .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
     when(storageProvider.isWorldStateIterable()).thenReturn(true);
@@ -161,7 +164,8 @@ public class BesuControllerBuilderTest {
 
   @Test
   public void shouldDisablePruningIfBonsaiIsEnabled() {
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI, cachedMerkleTrieLoader))
+    when(storageProvider.createWorldStateStorage(
+            DataStorageFormat.BONSAI, new CachedMerkleTrieLoader(new NoOpMetricsSystem())))
         .thenReturn(bonsaiWorldStateStorage);
     besuControllerBuilder
         .isPruningEnabled(true)

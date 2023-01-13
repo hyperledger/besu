@@ -87,7 +87,7 @@ public class BonsaiSnapshotWorldStateArchiveTest {
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            new BonsaiWorldStateKeyValueStorage(storageProvider, cachedMerkleTrieLoader),
             blockchain,
             Optional.of(1L),
             true,
@@ -101,7 +101,7 @@ public class BonsaiSnapshotWorldStateArchiveTest {
   public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            new BonsaiWorldStateKeyValueStorage(storageProvider, cachedMerkleTrieLoader),
             blockchain,
             Optional.of(512L),
             cachedMerkleTrieLoader);
@@ -133,7 +133,8 @@ public class BonsaiSnapshotWorldStateArchiveTest {
             2);
     worldStatesByHash.put(blockHeaderChainA.getHash(), mockCachedState);
     worldStatesByHash.put(blockHeaderChainB.getHash(), mockCachedState);
-    var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+    var worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(storageProvider, cachedMerkleTrieLoader);
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateArchive(

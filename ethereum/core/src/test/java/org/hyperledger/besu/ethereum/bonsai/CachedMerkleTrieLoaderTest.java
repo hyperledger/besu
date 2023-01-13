@@ -43,8 +43,8 @@ public class CachedMerkleTrieLoaderTest {
 
   private CachedMerkleTrieLoader merkleTrieLoader;
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
-  private final BonsaiWorldStateKeyValueStorage inMemoryWorldState =
-      Mockito.spy(new BonsaiWorldStateKeyValueStorage(storageProvider));
+
+  private BonsaiWorldStateKeyValueStorage inMemoryWorldState;
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));
@@ -57,6 +57,8 @@ public class CachedMerkleTrieLoaderTest {
         TrieGenerator.generateTrie(
             inMemoryWorldState, accounts.stream().map(Hash::hash).collect(Collectors.toList()));
     merkleTrieLoader = new CachedMerkleTrieLoader(new NoOpMetricsSystem());
+    inMemoryWorldState =
+        Mockito.spy(new BonsaiWorldStateKeyValueStorage(storageProvider, merkleTrieLoader));
   }
 
   @Test
@@ -65,11 +67,11 @@ public class CachedMerkleTrieLoaderTest {
         inMemoryWorldState, Hash.wrap(trie.getRootHash()), accounts.get(0));
 
     final BonsaiWorldStateKeyValueStorage emptyStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(), merkleTrieLoader);
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                merkleTrieLoader.getAccountStateTrieNode(emptyStorage, location, hash),
+            emptyStorage::getAccountStateTrieNode,
             trie.getRootHash(),
             Function.identity(),
             Function.identity());
@@ -101,12 +103,12 @@ public class CachedMerkleTrieLoaderTest {
 
     final List<Bytes> cachedSlots = new ArrayList<>();
     final BonsaiWorldStateKeyValueStorage emptyStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(), merkleTrieLoader);
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
-                merkleTrieLoader.getAccountStorageTrieNode(
-                    emptyStorage, hashAccountZero, location, hash),
+                emptyStorage.getAccountStorageTrieNode(hashAccountZero, location, hash),
             stateTrieAccountValue.getStorageRoot(),
             Function.identity(),
             Function.identity());
@@ -123,8 +125,7 @@ public class CachedMerkleTrieLoaderTest {
   public void shouldFallbackWhenAccountNodesIsNotInCache() {
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                merkleTrieLoader.getAccountStateTrieNode(inMemoryWorldState, location, hash),
+            (location, hash) -> inMemoryWorldState.getAccountStateTrieNode(location, hash),
             trie.getRootHash(),
             Function.identity(),
             Function.identity());
@@ -155,8 +156,7 @@ public class CachedMerkleTrieLoaderTest {
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
-                merkleTrieLoader.getAccountStorageTrieNode(
-                    inMemoryWorldState, hashAccountZero, location, hash),
+                inMemoryWorldState.getAccountStorageTrieNode(hashAccountZero, location, hash),
             stateTrieAccountValue.getStorageRoot(),
             Function.identity(),
             Function.identity());

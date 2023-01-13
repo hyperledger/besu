@@ -163,7 +163,12 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -181,7 +186,8 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
     final BonsaiWorldStateUpdater secondUpdater =
         (BonsaiWorldStateUpdater) secondWorldState.updater();
 
@@ -212,7 +218,12 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -238,7 +249,8 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
     final BonsaiWorldStateUpdater secondUpdater =
         (BonsaiWorldStateUpdater) secondWorldState.updater();
 
@@ -270,7 +282,12 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -303,7 +320,8 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =

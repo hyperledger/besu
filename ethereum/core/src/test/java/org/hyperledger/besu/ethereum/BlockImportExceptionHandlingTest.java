@@ -73,9 +73,7 @@ public class BlockImportExceptionHandlingTest {
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
-
-  private final WorldStateStorage worldStateStorage =
-      new BonsaiWorldStateKeyValueStorage(storageProvider);
+  private WorldStateStorage worldStateStorage;
 
   private CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
@@ -84,12 +82,7 @@ public class BlockImportExceptionHandlingTest {
       // do we need to also test with a DefaultWorldStateArchive?
       spy(new BonsaiWorldStateArchive(storageProvider, blockchain, cachedMerkleTrieLoader));
 
-  private final BonsaiPersistedWorldState persisted =
-      spy(
-          new BonsaiPersistedWorldState(
-              (BonsaiWorldStateArchive) worldStateArchive,
-              (BonsaiWorldStateKeyValueStorage) worldStateStorage));
-
+  private BonsaiPersistedWorldState persisted;
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private MainnetBlockValidator mainnetBlockValidator;
@@ -103,6 +96,13 @@ public class BlockImportExceptionHandlingTest {
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
     cachedMerkleTrieLoader = new CachedMerkleTrieLoader(new NoOpMetricsSystem());
+    worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(storageProvider, cachedMerkleTrieLoader);
+    persisted =
+        spy(
+            new BonsaiPersistedWorldState(
+                (BonsaiWorldStateArchive) worldStateArchive,
+                (BonsaiWorldStateKeyValueStorage) worldStateStorage));
   }
 
   @Test

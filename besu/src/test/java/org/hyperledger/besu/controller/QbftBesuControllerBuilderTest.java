@@ -37,6 +37,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -51,6 +52,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -105,7 +107,8 @@ public class QbftBesuControllerBuilderTest {
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()));
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader))
+    when(storageProvider.createWorldStateStorage(
+            DataStorageFormat.FOREST, new CachedMerkleTrieLoader(new NoOpMetricsSystem())))
         .thenReturn(worldStateStorage);
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));

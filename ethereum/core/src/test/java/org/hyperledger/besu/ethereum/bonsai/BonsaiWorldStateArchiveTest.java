@@ -85,7 +85,8 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            new BonsaiWorldStateKeyValueStorage(
+                storageProvider, new CachedMerkleTrieLoader(new NoOpMetricsSystem())),
             blockchain,
             Optional.of(1L),
             false,
@@ -99,7 +100,8 @@ public class BonsaiWorldStateArchiveTest {
   public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            new BonsaiWorldStateKeyValueStorage(
+                storageProvider, new CachedMerkleTrieLoader(new NoOpMetricsSystem())),
             blockchain,
             Optional.of(512L),
             false,
@@ -115,7 +117,8 @@ public class BonsaiWorldStateArchiveTest {
   public void testGetMutableWhenLoadLessThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            new BonsaiWorldStateKeyValueStorage(
+                storageProvider, new CachedMerkleTrieLoader(new NoOpMetricsSystem())),
             blockchain,
             Optional.of(512L),
             false,
@@ -143,7 +146,9 @@ public class BonsaiWorldStateArchiveTest {
     when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
     final Map layeredWorldStatesByHash = mock(HashMap.class);
 
-    var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+    var worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateArchive(
@@ -171,7 +176,9 @@ public class BonsaiWorldStateArchiveTest {
     when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
     final Map layeredWorldStatesByHash = mock(HashMap.class);
 
-    var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+    var worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateArchive(
@@ -219,7 +226,9 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(
             new LayeredWorldStateCache(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS)));
 
-    var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+    var worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
 
     bonsaiWorldStateArchive =
         spy(
@@ -273,7 +282,9 @@ public class BonsaiWorldStateArchiveTest {
     when(layeredWorldStatesByHash.get(eq(blockHeaderChainB.getHash())))
         .thenReturn(
             new LayeredWorldStateCache(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS)));
-    var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+    var worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateArchive(

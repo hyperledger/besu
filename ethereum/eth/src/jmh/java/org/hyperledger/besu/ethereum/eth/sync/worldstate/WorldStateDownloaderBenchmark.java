@@ -22,6 +22,7 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -107,7 +108,8 @@ public class WorldStateDownloaderBenchmark {
     final StorageProvider storageProvider =
         createKeyValueStorageProvider(tempDir, tempDir.resolve("database"));
     worldStateStorage =
-        storageProvider.createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader);
+        storageProvider.createWorldStateStorage(
+            DataStorageFormat.FOREST, new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
 
     pendingRequests = new InMemoryTasksPriorityQueues<>();
     worldStateDownloader =
