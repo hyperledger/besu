@@ -51,10 +51,4 @@ public class EthGetStorageAt extends AbstractBlockParameterOrBlockHashMethod {
         .map(UInt256::toHexString)
         .orElse(null);
   }
-
-  @Override
-  protected Object resultByBlockHeader(
-      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
-    return resultByBlockHash(request, blockHeader.getBlockHash());
-  }
 }

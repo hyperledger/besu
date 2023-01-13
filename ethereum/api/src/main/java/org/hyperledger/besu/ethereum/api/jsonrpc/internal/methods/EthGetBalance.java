@@ -54,10 +54,4 @@ public class EthGetBalance extends AbstractBlockParameterOrBlockHashMethod {
         .map(Quantity::create)
         .orElse(null);
   }
-
-  @Override
-  protected Object resultByBlockHeader(
-      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
-    return resultByBlockHash(request, blockHeader.getBlockHash());
-  }
 }

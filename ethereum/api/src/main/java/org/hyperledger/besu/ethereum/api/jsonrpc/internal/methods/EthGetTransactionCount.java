@@ -78,10 +78,4 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
 
     return Quantity.create(transactionCount);
   }
-
-  @Override
-  protected Object resultByBlockHeader(
-      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
-    return resultByBlockHash(request, blockHeader.getBlockHash());
-  }
 }

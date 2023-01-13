@@ -135,10 +135,4 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
         .codehash(codeHash)
         .build();
   }
-
-  @Override
-  protected Object resultByBlockHeader(
-      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
-    return resultByBlockHash(request, blockHeader.getBlockHash());
-  }
 }

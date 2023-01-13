@@ -49,8 +49,10 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
 
   protected abstract Object resultByBlockHash(JsonRpcRequestContext request, Hash blockHash);
 
-  protected abstract Object resultByBlockHeader(
-      JsonRpcRequestContext request, BlockHeader blockHeader);
+  protected Object resultByBlockHeader(
+          final JsonRpcRequestContext request, final BlockHeader blockHeader) {
+    return resultByBlockHash(request, blockHeader.getBlockHash());
+  }
 
   protected BlockchainQueries getBlockchainQueries() {
     return blockchainQueries.get();

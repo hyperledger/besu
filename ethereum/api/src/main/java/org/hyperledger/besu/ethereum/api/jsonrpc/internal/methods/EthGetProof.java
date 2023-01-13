@@ -92,10 +92,4 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
         .map(UInt256::fromHexString)
         .collect(Collectors.toList());
   }
-
-  @Override
-  protected Object resultByBlockHeader(
-      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
-    return resultByBlockHash(request, blockHeader.getBlockHash());
-  }
 }
