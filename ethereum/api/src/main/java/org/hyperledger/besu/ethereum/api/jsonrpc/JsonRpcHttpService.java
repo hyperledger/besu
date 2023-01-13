@@ -352,7 +352,7 @@ public class JsonRpcHttpService {
         (NonBlockingJsonRpcExecutorHandler)
             HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(4));
 
-    mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
+    mainRoute.blockingHandler(nonBlockingJsonRpcExecutorHandler, false);
 
     if (maybeAuthenticationService.isPresent()) {
       router
