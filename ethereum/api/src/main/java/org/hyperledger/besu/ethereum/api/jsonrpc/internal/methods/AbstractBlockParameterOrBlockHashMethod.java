@@ -50,7 +50,7 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
   protected abstract Object resultByBlockHash(JsonRpcRequestContext request, Hash blockHash);
 
   protected Object resultByBlockHeader(
-          final JsonRpcRequestContext request, final BlockHeader blockHeader) {
+      final JsonRpcRequestContext request, final BlockHeader blockHeader) {
     return resultByBlockHash(request, blockHeader.getBlockHash());
   }
 
