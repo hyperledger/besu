@@ -113,6 +113,7 @@ public interface BlockProcessor {
    * @param blockHeader the block header for the block
    * @param transactions the transactions in the block
    * @param ommers the block ommers
+   * @param withdrawals the withdrawals for the block
    * @param privateMetadataUpdater the updater used to update the private metadata for the block
    * @return the block processing result
    */
