@@ -139,6 +139,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       receipts.add(transactionReceipt);
     }
 
+    final WithdrawalsProcessor withdrawalsProcessor =
+        protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
+    maybeWithdrawals.ifPresent(
+        withdrawals -> withdrawalsProcessor.processWithdrawals(withdrawals, worldState.updater()));
+
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
       if (worldState instanceof BonsaiPersistedWorldState) {
@@ -146,11 +151,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
-
-    final WithdrawalsProcessor withdrawalsProcessor =
-        protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
-    maybeWithdrawals.ifPresent(
-        withdrawals -> withdrawalsProcessor.processWithdrawals(withdrawals, worldState.updater()));
 
     try {
       worldState.persist(blockHeader);

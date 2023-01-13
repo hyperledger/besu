@@ -174,6 +174,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getByBlockHeader(processableBlockHeader);
 
+      final WithdrawalsProcessor withdrawalsProcessor = newProtocolSpec.getWithdrawalsProcessor();
+      maybeWithdrawals.ifPresent(
+          withdrawals ->
+              withdrawalsProcessor.processWithdrawals(withdrawals, disposableWorldState.updater()));
+
+      throwIfStopped();
+
       if (rewardCoinbase
           && !rewardBeneficiary(
               disposableWorldState,
@@ -185,13 +192,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         LOG.trace("Failed to apply mining reward, exiting.");
         throw new RuntimeException("Failed to apply mining reward.");
       }
-
-      throwIfStopped();
-
-      final WithdrawalsProcessor withdrawalsProcessor = newProtocolSpec.getWithdrawalsProcessor();
-      maybeWithdrawals.ifPresent(
-          withdrawals ->
-              withdrawalsProcessor.processWithdrawals(withdrawals, disposableWorldState.updater()));
 
       throwIfStopped();
 
