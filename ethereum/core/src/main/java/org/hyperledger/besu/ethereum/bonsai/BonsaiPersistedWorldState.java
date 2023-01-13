@@ -139,7 +139,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // TODO write to a cache and then generate a layer update from that and the
     // DB tx updates.  Right now it is just DB updates.
     accountTrie.commit(
-        (location, hash, value) -> writeAccountTrieNode(stateUpdater, location, hash, value));
+        (location, hash, value) -> writeAccountTrieNode(stateUpdater, location, value));
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
@@ -385,12 +385,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private void writeAccountTrieNode(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final Bytes location,
-      final Bytes32 nodeHash,
       final Bytes value) {
     stateUpdater
         .getTrieBranchStorageTransaction()
         .put(location.toArrayUnsafe(), value.toArrayUnsafe());
-    archive.getCachedMerkleTrieLoader().cacheAccountStateTrieNode(nodeHash, value);
   }
 
   private void writeStorageTrieNode(
@@ -400,7 +398,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Bytes32 nodeHash,
       final Bytes value) {
     stateUpdater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
-    archive.getCachedMerkleTrieLoader().cacheAccountStorageTrieNode(nodeHash, value);
   }
 
   @Override
