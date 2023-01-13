@@ -209,7 +209,7 @@ public class Create2OperationTest {
     assertThat(result.getGasCost()).isEqualTo(expectedGas);
   }
 
-  @org.junit.Test
+  @Test
   public void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
