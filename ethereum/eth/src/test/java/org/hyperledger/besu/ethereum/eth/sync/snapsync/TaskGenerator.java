@@ -44,7 +44,8 @@ public class TaskGenerator {
   public static List<Task<SnapDataRequest>> createAccountRequest(final boolean withData) {
 
     final WorldStateStorage worldStateStorage =
-        new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+        new InMemoryKeyValueStorageProvider()
+            .createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader);
 
     final WorldStateProofProvider worldStateProofProvider =
         new WorldStateProofProvider(worldStateStorage);

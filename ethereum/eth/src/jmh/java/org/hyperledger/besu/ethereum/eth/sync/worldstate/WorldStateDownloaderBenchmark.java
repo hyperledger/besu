@@ -106,7 +106,8 @@ public class WorldStateDownloaderBenchmark {
 
     final StorageProvider storageProvider =
         createKeyValueStorageProvider(tempDir, tempDir.resolve("database"));
-    worldStateStorage = storageProvider.createWorldStateStorage(DataStorageFormat.FOREST);
+    worldStateStorage =
+        storageProvider.createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader);
 
     pendingRequests = new InMemoryTasksPriorityQueues<>();
     worldStateDownloader =

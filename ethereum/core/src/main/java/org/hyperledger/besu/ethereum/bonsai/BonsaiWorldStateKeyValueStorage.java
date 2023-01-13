@@ -52,30 +52,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final KeyValueStorage trieLogStorage;
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
+  protected CachedMerkleTrieLoader cachedMerkleTrieLoader;
+
   private Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder;
 
-  public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
+  public BonsaiWorldStateKeyValueStorage(
+      final StorageProvider provider, final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     this(
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
-        Optional.empty());
-  }
-
-  public BonsaiWorldStateKeyValueStorage(
-      final KeyValueStorage accountStorage,
-      final KeyValueStorage codeStorage,
-      final KeyValueStorage storageStorage,
-      final KeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage) {
-    this(
-        accountStorage,
-        codeStorage,
-        storageStorage,
-        trieBranchStorage,
-        trieLogStorage,
+        cachedMerkleTrieLoader,
         Optional.empty());
   }
 
@@ -85,12 +74,31 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage,
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+    this(
+        accountStorage,
+        codeStorage,
+        storageStorage,
+        trieBranchStorage,
+        trieLogStorage,
+        cachedMerkleTrieLoader,
+        Optional.empty());
+  }
+
+  public BonsaiWorldStateKeyValueStorage(
+      final KeyValueStorage accountStorage,
+      final KeyValueStorage codeStorage,
+      final KeyValueStorage storageStorage,
+      final KeyValueStorage trieBranchStorage,
+      final KeyValueStorage trieLogStorage,
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
+    this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     this.maybeFallbackNodeFinder = fallbackNodeFinder;
   }
 
@@ -128,7 +136,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
       final Optional<Bytes> value =
-          trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+          cachedMerkleTrieLoader
+              .getAccountStateTrieNode(nodeHash)
+              .or(() -> trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap));
       if (value.isPresent()) {
         return value
             .filter(b -> Hash.hash(b).equals(nodeHash))
@@ -148,9 +158,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
       final Optional<Bytes> value =
-          trieBranchStorage
-              .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-              .map(Bytes::wrap);
+          cachedMerkleTrieLoader
+              .getAccountStorageTrieNode(nodeHash)
+              .or(
+                  () ->
+                      trieBranchStorage
+                          .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+                          .map(Bytes::wrap));
       if (value.isPresent()) {
         return value
             .filter(b -> Hash.hash(b).equals(nodeHash))

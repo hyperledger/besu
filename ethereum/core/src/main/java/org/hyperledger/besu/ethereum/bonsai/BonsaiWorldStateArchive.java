@@ -65,7 +65,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     this(
         (BonsaiWorldStateKeyValueStorage)
-            provider.createWorldStateStorage(DataStorageFormat.BONSAI),
+            provider.createWorldStateStorage(DataStorageFormat.BONSAI, cachedMerkleTrieLoader),
         blockchain,
         Optional.empty(),
         provider.isWorldStateSnappable(),

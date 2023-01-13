@@ -130,7 +130,7 @@ public class MergeBesuControllerBuilderTest {
             any(), anyString(), anyString(), anyString()))
         .thenReturn(labels -> null);
 
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
+    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader))
         .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
 

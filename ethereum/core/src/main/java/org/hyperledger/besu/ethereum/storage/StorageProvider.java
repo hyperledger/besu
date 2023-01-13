@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.storage;
 
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -30,7 +31,8 @@ public interface StorageProvider extends Closeable {
 
   BlockchainStorage createBlockchainStorage(ProtocolSchedule protocolSchedule);
 
-  WorldStateStorage createWorldStateStorage(DataStorageFormat dataStorageFormat);
+  WorldStateStorage createWorldStateStorage(
+      DataStorageFormat dataStorageFormat, CachedMerkleTrieLoader cachedMerkleTrieLoader);
 
   WorldStatePreimageStorage createWorldStatePreimageStorage();
 

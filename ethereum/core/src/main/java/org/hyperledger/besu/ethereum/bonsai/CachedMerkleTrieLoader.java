@@ -73,7 +73,8 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               (location, hash) -> {
-                Optional<Bytes> node = getAccountStateTrieNode(worldStateStorage, location, hash);
+                Optional<Bytes> node = worldStateStorage.getAccountStateTrieNode(location, hash);
+                ;
                 node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
                 return node;
               },
@@ -112,8 +113,8 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
                       new StoredMerklePatriciaTrie<>(
                           (location, hash) -> {
                             Optional<Bytes> node =
-                                getAccountStorageTrieNode(
-                                    worldStateStorage, accountHash, location, hash);
+                                worldStateStorage.getAccountStorageTrieNode(
+                                    accountHash, location, hash);
                             node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
                             return node;
                           },
@@ -130,31 +131,31 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
     }
   }
 
-  public Optional<Bytes> getAccountStateTrieNode(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Bytes location,
-      final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStateTrieNode(final Bytes32 nodeHash) {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return Optional.ofNullable(accountNodes.getIfPresent(nodeHash))
-          .or(() -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));
+      return Optional.ofNullable(accountNodes.getIfPresent(nodeHash));
     }
   }
 
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Hash accountHash,
-      final Bytes location,
-      final Bytes32 nodeHash) {
+  public void cacheAccountStateTrieNode(final Bytes32 nodeHash, final Bytes value) {
+    if (!nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      accountNodes.put(nodeHash, value);
+    }
+  }
+
+  public Optional<Bytes> getAccountStorageTrieNode(final Bytes32 nodeHash) {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return Optional.ofNullable(storageNodes.getIfPresent(nodeHash))
-          .or(
-              () ->
-                  worldStateKeyValueStorage.getAccountStorageTrieNode(
-                      accountHash, location, nodeHash));
+      return Optional.ofNullable(storageNodes.getIfPresent(nodeHash));
+    }
+  }
+
+  public void cacheAccountStorageTrieNode(final Bytes32 nodeHash, final Bytes value) {
+    if (!nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      storageNodes.put(nodeHash, value);
     }
   }
 }

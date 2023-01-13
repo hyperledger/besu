@@ -39,7 +39,8 @@ import org.junit.Test;
 public class PersistDataStepTest {
 
   private final WorldStateStorage worldStateStorage =
-      new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+      new InMemoryKeyValueStorageProvider()
+          .createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader);
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 

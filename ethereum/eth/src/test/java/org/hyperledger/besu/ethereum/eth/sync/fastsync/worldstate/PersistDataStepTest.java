@@ -40,7 +40,8 @@ import org.junit.Test;
 public class PersistDataStepTest {
 
   private final WorldStateStorage worldStateStorage =
-      new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+      new InMemoryKeyValueStorageProvider()
+          .createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader);
   private final FastWorldDownloadState downloadState = mock(FastWorldDownloadState.class);
 
   private final Bytes rootNodeData = Bytes.of(1, 1, 1, 1);

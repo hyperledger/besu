@@ -110,7 +110,8 @@ public abstract class AbstractIsolationTests {
   public void createStorage() {
     bonsaiWorldStateStorage =
         (BonsaiWorldStateKeyValueStorage)
-            createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
+            createKeyValueStorageProvider()
+                .createWorldStateStorage(DataStorageFormat.BONSAI, cachedMerkleTrieLoader);
     archive =
         new BonsaiWorldStateArchive(
             bonsaiWorldStateStorage,

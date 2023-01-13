@@ -60,7 +60,8 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
                 ((SnappableKeyValueStorage) parentWorldStateStorage.storageStorage).takeSnapshot(),
                 ((SnappableKeyValueStorage) parentWorldStateStorage.trieBranchStorage)
                     .takeSnapshot(),
-                parentWorldStateStorage.trieLogStorage),
+                parentWorldStateStorage.trieLogStorage,
+                parentWorldStateStorage.cachedMerkleTrieLoader),
             parentWorldStateStorage)
         .subscribeToParentStorage();
   }
@@ -83,7 +84,8 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
                 codeSnap.cloneFromSnapshot(),
                 storageSnap.cloneFromSnapshot(),
                 trieBranchSnap.cloneFromSnapshot(),
-                worldStateStorage.trieLogStorage),
+                worldStateStorage.trieLogStorage,
+                worldStateStorage.cachedMerkleTrieLoader),
             parentWorldStateStorage)
         .subscribeToParentStorage();
   }

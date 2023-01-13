@@ -92,6 +92,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateStorage.storageStorage,
             worldStateStorage.trieBranchStorage,
             worldStateStorage.trieLogStorage,
+            worldStateStorage.cachedMerkleTrieLoader,
             getWorldStateStorage().getMaybeFallbackNodeFinder());
 
     return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
@@ -126,10 +127,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .getAccountStateTrieNode(worldStateStorage, location, hash),
+            worldStateStorage::getAccountStateTrieNode,
             worldStateRootHash,
             Function.identity(),
             Function.identity());
@@ -141,13 +139,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // TODO write to a cache and then generate a layer update from that and the
     // DB tx updates.  Right now it is just DB updates.
     accountTrie.commit(
-        (location, hash, value) ->
-            writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
+        (location, hash, value) -> writeAccountTrieNode(stateUpdater, location, hash, value));
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
 
-  private static void addTheAccounts(
+  private void addTheAccounts(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater,
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie) {
@@ -169,7 +166,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     }
   }
 
-  private static void updateCode(
+  private void updateCode(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater) {
     for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate :
@@ -200,10 +197,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
             new StoredMerklePatriciaTrie<>(
                 (location, key) ->
-                    archive
-                        .getCachedMerkleTrieLoader()
-                        .getAccountStorageTrieNode(
-                            worldStateStorage, updatedAddressHash, location, key),
+                    worldStateStorage.getAccountStorageTrieNode(updatedAddressHash, location, key),
                 storageRoot,
                 Function.identity(),
                 Function.identity());
@@ -254,7 +248,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Hash addressHash = Hash.hash(address);
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, key) -> getStorageTrieNode(addressHash, location, key),
+              (location, key) ->
+                  worldStateStorage.getAccountStorageTrieNode(addressHash, location, key),
               oldAccount.getStorageRoot(),
               Function.identity(),
               Function.identity());
@@ -387,18 +382,15 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         .orElse(null);
   }
 
-  protected Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    return worldStateStorage.getAccountStateTrieNode(location, nodeHash);
-  }
-
-  private void writeTrieNode(
-      final KeyValueStorageTransaction tx, final Bytes location, final Bytes value) {
-    tx.put(location.toArrayUnsafe(), value.toArrayUnsafe());
-  }
-
-  protected Optional<Bytes> getStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return worldStateStorage.getAccountStorageTrieNode(accountHash, location, nodeHash);
+  private void writeAccountTrieNode(
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final Bytes value) {
+    stateUpdater
+        .getTrieBranchStorageTransaction()
+        .put(location.toArrayUnsafe(), value.toArrayUnsafe());
+    archive.getCachedMerkleTrieLoader().cacheAccountStateTrieNode(nodeHash, value);
   }
 
   private void writeStorageTrieNode(
@@ -408,6 +400,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Bytes32 nodeHash,
       final Bytes value) {
     stateUpdater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
+    archive.getCachedMerkleTrieLoader().cacheAccountStorageTrieNode(nodeHash, value);
   }
 
   @Override
@@ -436,7 +429,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, key) -> getStorageTrieNode(Hash.hash(address), location, key),
+            (location, key) ->
+                worldStateStorage.getAccountStorageTrieNode(Hash.hash(address), location, key),
             rootHash,
             Function.identity(),
             Function.identity());

@@ -68,10 +68,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .getAccountStateTrieNode(worldStateStorage, location, hash),
+            worldStateStorage::getAccountStateTrieNode,
             worldStateRootHash,
             Function.identity(),
             Function.identity());
@@ -115,10 +112,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
               (location, key) ->
-                  archive
-                      .getCachedMerkleTrieLoader()
-                      .getAccountStorageTrieNode(
-                          worldStateStorage, updatedAddressHash, location, key),
+                  worldStateStorage.getAccountStorageTrieNode(updatedAddressHash, location, key),
               storageRoot,
               Function.identity(),
               Function.identity());

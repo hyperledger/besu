@@ -122,7 +122,7 @@ public class BesuControllerBuilderTest {
             any(), anyString(), anyString(), anyString()))
         .thenReturn(labels -> null);
 
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
+    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST, cachedMerkleTrieLoader))
         .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
     when(storageProvider.isWorldStateIterable()).thenReturn(true);
@@ -161,7 +161,7 @@ public class BesuControllerBuilderTest {
 
   @Test
   public void shouldDisablePruningIfBonsaiIsEnabled() {
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI))
+    when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI, cachedMerkleTrieLoader))
         .thenReturn(bonsaiWorldStateStorage);
     besuControllerBuilder
         .isPruningEnabled(true)

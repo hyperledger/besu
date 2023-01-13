@@ -36,6 +36,7 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage,
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
     super(
         accountStorage,
@@ -43,6 +44,7 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         storageStorage,
         trieBranchStorage,
         trieLogStorage,
+        cachedMerkleTrieLoader,
         fallbackNodeFinder);
   }
 

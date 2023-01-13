@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateKeyValueStorage;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
@@ -77,9 +78,11 @@ public class KeyValueStorageProvider implements StorageProvider {
   }
 
   @Override
-  public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
+  public WorldStateStorage createWorldStateStorage(
+      final DataStorageFormat dataStorageFormat,
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(this);
+      return new BonsaiWorldStateKeyValueStorage(this, cachedMerkleTrieLoader);
     } else {
       return new WorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
