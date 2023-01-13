@@ -522,6 +522,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     for (int i = 0; i < retries.intValue(); i++) {
       assertThat(blockWithReceipts.getAllValues().get(i).getBlock().getBody().getTransactions())
           .hasSize(i);
+      assertThat(blockWithReceipts.getAllValues().get(i).getReceipts()).hasSize(i);
     }
   }
 
