@@ -36,7 +36,6 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
@@ -260,93 +259,6 @@ public class BackwardSyncAlgSpec {
 
     algorithm.pickNextStep();
     verify(algorithm).executeBackwardAsync(any());
-  }
-
-  @Test
-  public void successionShouldIgnoreEmptyFinalized() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
-        new BackwardsSyncAlgorithm(context, firstHeader -> false);
-
-    Optional<Hash> finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isEmpty();
-
-    backwardsSyncAlgorithm.runFinalizedSuccessionRule(localBlockchain, Optional.empty());
-
-    finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isEmpty();
-  }
-
-  @Test
-  public void successionShouldSetFinalizedFromEmpty() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
-        new BackwardsSyncAlgorithm(context, firstHeader -> false);
-
-    Optional<Hash> finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isEmpty();
-
-    backwardsSyncAlgorithm.runFinalizedSuccessionRule(
-        localBlockchain, Optional.of(localBlockchain.getChainHead().getHash()));
-
-    finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isPresent();
-    assertThat(finalized).contains(localBlockchain.getChainHead().getHash());
-  }
-
-  @Test
-  public void successionShouldIgnoreFinalisedWhenNotImportedYet() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
-        new BackwardsSyncAlgorithm(context, firstHeader -> false);
-
-    Optional<Hash> finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isEmpty();
-
-    backwardsSyncAlgorithm.runFinalizedSuccessionRule(
-        localBlockchain, Optional.of(remoteBlockchain.getChainHead().getHash()));
-
-    finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isEmpty();
-  }
-
-  @Test
-  public void successionShouldKeepFinalizedWhenNotChanged() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
-        new BackwardsSyncAlgorithm(context, firstHeader -> false);
-
-    Optional<Hash> finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isEmpty();
-
-    backwardsSyncAlgorithm.runFinalizedSuccessionRule(
-        localBlockchain, Optional.of(localBlockchain.getChainHead().getHash()));
-    backwardsSyncAlgorithm.runFinalizedSuccessionRule(
-        localBlockchain, Optional.of(localBlockchain.getChainHead().getHash()));
-
-    finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isPresent();
-    assertThat(finalized).contains(localBlockchain.getChainHead().getHash());
-  }
-
-  @Test
-  public void successionShouldUpdateOldFinalizedToNewFinalized() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
-        new BackwardsSyncAlgorithm(context, firstHeader -> false);
-
-    Optional<Hash> finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isEmpty();
-
-    final Hash fin1 = localBlockchain.getBlockByNumber(LOCAL_HEIGHT - 5).orElseThrow().getHash();
-    backwardsSyncAlgorithm.runFinalizedSuccessionRule(localBlockchain, Optional.of(fin1));
-
-    finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isPresent();
-    assertThat(finalized).contains(fin1);
-
-    final Hash fin2 = localBlockchain.getBlockByNumber(LOCAL_HEIGHT - 3).orElseThrow().getHash();
-
-    backwardsSyncAlgorithm.runFinalizedSuccessionRule(localBlockchain, Optional.of(fin2));
-
-    finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isPresent();
-    assertThat(finalized).contains(fin2);
   }
 
   @Test

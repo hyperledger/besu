@@ -92,7 +92,9 @@ public class CachingTaskCollection<T> implements TaskCollection<T> {
     return size() == 0;
   }
 
-  /** @return True if all tasks have been removed and processed. */
+  /**
+   * @return True if all tasks have been removed and processed.
+   */
   @Override
   public synchronized boolean allTasksCompleted() {
     return cacheSize() == 0 && wrappedCollection.allTasksCompleted();

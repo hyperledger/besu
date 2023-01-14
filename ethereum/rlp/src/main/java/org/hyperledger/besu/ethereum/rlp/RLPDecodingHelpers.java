@@ -181,7 +181,9 @@ class RLPDecodingHelpers {
       this.payloadSize = payloadSize;
     }
 
-    /** @return the size of the byte string holding the rlp-encoded value and metadata */
+    /**
+     * @return the size of the byte string holding the rlp-encoded value and metadata
+     */
     int getEncodedSize() {
       final long encodedSize = elementEnd() - elementStart + 1;
       try {

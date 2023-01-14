@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
 
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -41,8 +43,9 @@ class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCal
 
   @Override
   public void exec(final EthMessage message) {
+    final Capability capability = message.getPeer().getConnection().capability(EthProtocol.NAME);
     final NewPooledTransactionHashesMessage transactionsMessage =
-        NewPooledTransactionHashesMessage.readFrom(message.getData());
+        NewPooledTransactionHashesMessage.readFrom(message.getData(), capability);
     final Instant startedAt = now();
     scheduler.scheduleTxWorkerTask(
         () ->
