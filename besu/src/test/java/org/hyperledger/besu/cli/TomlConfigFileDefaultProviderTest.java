@@ -149,7 +149,6 @@ public class TomlConfigFileDefaultProviderTest {
           "a-nested-multi-value-option=[ [\"value1\", \"value2\"], [\"value3\", \"value4\"] ]");
       fileWriter.newLine();
       fileWriter.write("a-double-value-option=0.01");
-      fileWriter.newLine();
       fileWriter.flush();
 
       final TomlConfigFileDefaultProvider providerUnderTest =
