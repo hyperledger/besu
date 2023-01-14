@@ -79,6 +79,7 @@ import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
 import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
+import org.hyperledger.besu.cli.subcommands.bonsai.BonsaiConsistencyCheckSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
@@ -295,7 +296,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
 
   // stable CLI options
-  private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
+  public final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
@@ -1218,7 +1219,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--key-value-storage"},
       description = "Identity for the key-value storage to be used.",
       arity = "1")
-  private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
+  public String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
@@ -1475,6 +1476,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(commandLine.getOut()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
+    commandLine.addSubcommand(
+        BonsaiConsistencyCheckSubCommand.COMMAND_NAME, new BonsaiConsistencyCheckSubCommand());
     commandLine.addSubcommand(
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(commandLine.getOut(), in));
     commandLine.addSubcommand(
@@ -2828,7 +2831,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
-  private KeyValueStorageProvider keyValueStorageProvider(final String name) {
+  public KeyValueStorageProvider keyValueStorageProvider(final String name) {
     if (this.keyValueStorageProvider == null) {
       this.keyValueStorageProvider =
           new KeyValueStorageProviderBuilder()
