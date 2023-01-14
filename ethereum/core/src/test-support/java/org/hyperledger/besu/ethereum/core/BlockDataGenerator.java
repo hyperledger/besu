@@ -443,7 +443,11 @@ public class BlockDataGenerator {
   }
 
   public Set<Transaction> transactions(final int n) {
-    return transactions(n, new TransactionType[]{TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559});
+    return transactions(
+        n,
+        new TransactionType[] {
+          TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+        });
   }
 
   public Set<Transaction> transactionsWithAllTypes() {
@@ -453,7 +457,11 @@ public class BlockDataGenerator {
   public Set<Transaction> transactionsWithAllTypes(final int atLeast) {
     checkArgument(atLeast >= 0);
     final HashSet<TransactionType> remainingTransactionTypes =
-        new HashSet<>(Set.of(new TransactionType[]{TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559}));
+        new HashSet<>(
+            Set.of(
+                new TransactionType[] {
+                  TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+                }));
     final HashSet<Transaction> transactions = new HashSet<>();
     while (transactions.size() < atLeast || !remainingTransactionTypes.isEmpty()) {
       final Transaction newTransaction = transaction();

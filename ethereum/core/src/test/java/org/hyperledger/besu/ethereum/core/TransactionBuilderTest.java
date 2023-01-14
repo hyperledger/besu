@@ -44,6 +44,10 @@ public class TransactionBuilderTest {
             .map(transactionBuilder -> transactionBuilder.guessType().getTransactionType())
             .collect(toUnmodifiableSet());
 
-    assertThat(guessedTypes).containsExactlyInAnyOrder(new TransactionType[]{TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559});
+    assertThat(guessedTypes)
+        .containsExactlyInAnyOrder(
+            new TransactionType[] {
+              TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+            });
   }
 }
