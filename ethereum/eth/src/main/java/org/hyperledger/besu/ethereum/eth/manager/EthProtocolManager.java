@@ -45,7 +45,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,7 +56,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +109,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
-    supportedCapabilities = calculateCapabilities(synchronizerConfiguration);
+    supportedCapabilities =
+        calculateCapabilities(synchronizerConfiguration, ethereumWireProtocolConfiguration);
 
     // Run validators
     for (final PeerValidator peerValidator : this.peerValidators) {
@@ -202,8 +204,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   private List<Capability> calculateCapabilities(
-      final SynchronizerConfiguration synchronizerConfiguration) {
-    final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final EthProtocolConfiguration ethProtocolConfiguration) {
+    final List<Capability> capabilities = new ArrayList<>();
 
     if (SyncMode.isFullSync(synchronizerConfiguration.getSyncMode())) {
       capabilities.add(EthProtocol.ETH62);
@@ -215,13 +218,24 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     // Version 67 removes the GetNodeData and NodeData
     // Fast sync depends on GetNodeData and NodeData
-    // Do not add eth/67 if fast sync is enabled
     // see https://eips.ethereum.org/EIPS/eip-4938
     if (!Objects.equals(SyncMode.FAST, synchronizerConfiguration.getSyncMode())) {
       capabilities.add(EthProtocol.ETH67);
+      capabilities.add(EthProtocol.ETH68);
     }
 
-    return capabilities.build();
+    capabilities.removeIf(cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapability());
+    capabilities.removeIf(cap -> cap.getVersion() < ethProtocolConfiguration.getMinEthCapability());
+
+    return Collections.unmodifiableList(capabilities);
+  }
+
+  @Override
+  public int getHighestProtocolVersion() {
+    return getSupportedCapabilities().stream()
+        .max(Comparator.comparing(Capability::getVersion))
+        .map(Capability::getVersion)
+        .orElse(0);
   }
 
   @Override

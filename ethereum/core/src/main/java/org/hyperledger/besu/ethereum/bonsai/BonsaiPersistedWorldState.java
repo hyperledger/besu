@@ -66,7 +66,17 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
     worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
-    updater = new BonsaiWorldStateUpdater(this);
+    updater =
+        new BonsaiWorldStateUpdater(
+            this,
+            (addr, value) ->
+                archive
+                    .getCachedMerkleTrieLoader()
+                    .preLoadAccount(worldStateStorage, worldStateRootHash, addr),
+            (addr, value) ->
+                archive
+                    .getCachedMerkleTrieLoader()
+                    .preLoadStorageSlot(worldStateStorage, addr, value));
   }
 
   public BonsaiWorldStateArchive getArchive() {
@@ -116,7 +126,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            this::getAccountStateTrieNode,
+            (location, hash) ->
+                archive
+                    .getCachedMerkleTrieLoader()
+                    .getAccountStateTrieNode(worldStateStorage, location, hash),
             worldStateRootHash,
             Function.identity(),
             Function.identity());
@@ -174,8 +187,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private void updateAccountStorageState(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater) {
-    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
-        worldStateUpdater.getStorageToUpdate().entrySet()) {
+    for (final Map.Entry<Address, BonsaiWorldStateUpdater.StorageConsumingMap<BonsaiValue<UInt256>>>
+        storageAccountUpdate : worldStateUpdater.getStorageToUpdate().entrySet()) {
       final Address updatedAddress = storageAccountUpdate.getKey();
       final Hash updatedAddressHash = Hash.hash(updatedAddress);
       if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
@@ -186,7 +199,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
         final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
             new StoredMerklePatriciaTrie<>(
-                (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
+                (location, key) ->
+                    archive
+                        .getCachedMerkleTrieLoader()
+                        .getAccountStorageTrieNode(
+                            worldStateStorage, updatedAddressHash, location, key),
                 storageRoot,
                 Function.identity(),
                 Function.identity());
