@@ -337,7 +337,7 @@ public class BlockDataGenerator {
   private TransactionType transactionType() {
     // TODO: when TransactionType.EIP4844 is fully supported, revert this.
     return transactionType(
-        TransactionType.EIP1559, TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
+        TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559 );
   }
 
   private TransactionType transactionType(final TransactionType... transactionTypes) {
@@ -638,7 +638,7 @@ public class BlockDataGenerator {
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
     private TransactionType[] transactionTypes = {
-      TransactionType.EIP1559, TransactionType.FRONTIER, TransactionType.ACCESS_LIST
+      TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
     };
     private Optional<Address> coinbase = Optional.empty();
     private Optional<Optional<Wei>> maybeBaseFee = Optional.empty();
