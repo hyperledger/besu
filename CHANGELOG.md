@@ -1,4 +1,25 @@
 # Changelog
+
+## 22.10.4
+
+### Breaking Changes
+
+### Additions and Improvements
+- Use safe block as snap sync pivot block [#4819](https://github.com/hyperledger/besu/pull/4912)
+- Disconnect worst peer when retrying p2p tasks fails [#4888](https://github.com/hyperledger/besu/pull/4888)
+
+### Bug Fixes
+- Fix for segmentation faults on worldstate truncation, snap-sync starts [#4786](https://github.com/hyperledger/besu/pull/4786)
+- Fix for worldstate mismatch on failed forkchoiceUpdate [#4862](https://github.com/hyperledger/besu/pull/4862)
+- Fix for cpu spikes on peer disconnect [#4867](https://github.com/hyperledger/besu/pull/4867)
+- Fix for performance regression in CachedMerkleTrieLoader [#4912](https://github.com/hyperledger/besu/pull/4912)
+- fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.4/besu-22.10.4.tar.gz / sha256: TBD
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.4/besu-22.10.4.zip / sha256: TBD
+
+
 ## 22.10.3
 
 ### Breaking Changes
@@ -15,6 +36,9 @@
 - Fix storage key format for eth_getProof so that it follows the EIP-1474 spec [#4564](https://github.com/hyperledger/besu/pull/4564)
 
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.tar.gz / sha256: 7213f9445a84a196e94ae1877c6fdb1e51d37bfb19615da02ef5121d4f40e38c
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.3/besu-22.10.3.zip / sha256: 0bf6bc98e01b0c1045f1b7d841a390c575bc5203c2a4e543d922fbc1ea0d3d5d
+
 
 ## 22.10.2
 This is a hotfix release to resolve a race condition that results in segfaults, introduced in 22.10.1 release.

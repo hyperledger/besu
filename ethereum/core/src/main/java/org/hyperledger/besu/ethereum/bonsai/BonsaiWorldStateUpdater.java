@@ -43,9 +43,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateUpdater.class);
 
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
@@ -591,10 +594,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if ((expectedCode == null || expectedCode.isEmpty())
           && existingCode != null
           && !existingCode.isEmpty()) {
-        throw new IllegalStateException(
-            String.format("Expected to create code, but the code exists.  Address=%s", address));
-      }
-      if (!Objects.equals(expectedCode, existingCode)) {
+        LOG.warn("At Address={}, expected to create code, but code exists. Overwriting.", address);
+      } else if (!Objects.equals(expectedCode, existingCode)) {
         throw new IllegalStateException(
             String.format(
                 "Old value of code does not match expected value.  Address=%s ExpectedHash=%s ActualHash=%s",
