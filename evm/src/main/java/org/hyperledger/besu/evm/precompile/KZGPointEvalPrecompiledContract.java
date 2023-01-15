@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.BufferedReader;
@@ -104,7 +105,10 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
     if (input.size() != 192) {
       return new PrecompileContractResult(
-          Bytes.EMPTY, false, MessageFrame.State.COMPLETED_FAILED, Optional.empty());
+          Bytes.EMPTY,
+          false,
+          MessageFrame.State.COMPLETED_FAILED,
+          Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
     // Bytes versionedHash = input.slice(0, 32);
     Bytes z = input.slice(32, 32);
@@ -123,18 +127,27 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       //    return Bytes(U256(FIELD_ELEMENTS_PER_BLOB).to_be_bytes32() +
       // U256(BLS_MODULUS).to_be_bytes32())
 
-      result =
-          new PrecompileContractResult(
-              output,
-              false,
-              proved ? MessageFrame.State.COMPLETED_SUCCESS : MessageFrame.State.COMPLETED_FAILED,
-              Optional.empty());
+      if (proved) {
+        result =
+            new PrecompileContractResult(
+                output, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
+      } else {
+        result =
+            new PrecompileContractResult(
+                output,
+                false,
+                MessageFrame.State.COMPLETED_FAILED,
+                Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      }
       return result;
     } catch (RuntimeException kzgFailed) {
       System.out.println(kzgFailed.getMessage());
       result =
           new PrecompileContractResult(
-              output, false, MessageFrame.State.COMPLETED_FAILED, Optional.empty());
+              output,
+              false,
+              MessageFrame.State.COMPLETED_FAILED,
+              Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
     return result;
   }
