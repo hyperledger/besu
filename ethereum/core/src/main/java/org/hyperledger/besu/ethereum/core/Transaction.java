@@ -303,7 +303,7 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<List<Hash>> versionedHashes ) {
+      final Optional<List<Hash>> versionedHashes) {
     this(
         nonce,
         Optional.of(gasPrice),
@@ -768,7 +768,7 @@ public class Transaction
         preimage = frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
         break;
       case EIP1559:
-      case BLOB_TX_TYPE:
+      case EIP4844:
         preimage =
             eip1559Preimage(
                 nonce,
@@ -1074,7 +1074,7 @@ public class Transaction
 
     public Builder guessType() {
       if (versionedHashes != null && versionedHashes.isPresent()) {
-        transactionType = TransactionType.BLOB_TX_TYPE;
+        transactionType = TransactionType.EIP4844;
       } else if (maxPriorityFeePerGas != null || maxFeePerGas != null) {
         transactionType = TransactionType.EIP1559;
       } else if (accessList.isPresent()) {
