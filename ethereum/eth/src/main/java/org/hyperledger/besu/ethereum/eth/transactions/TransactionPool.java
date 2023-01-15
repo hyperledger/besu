@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -204,12 +205,12 @@ public class TransactionPool implements BlockAddedObserver {
 
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
-      traceLambda(
+      debugLambda(
           LOG,
-          "Added {} transactions to the pool, current pool stats {}, content {}",
+          "Added {} transactions to the pool, current pool stats {}",
           addedTransactions::size,
-          pendingTransactions::logStats,
-          () -> pendingTransactions.toTraceLog());
+          pendingTransactions::logStats);
+      traceLambda(LOG, "Transaction pool content {}", () -> pendingTransactions.toTraceLog());
     }
   }
 

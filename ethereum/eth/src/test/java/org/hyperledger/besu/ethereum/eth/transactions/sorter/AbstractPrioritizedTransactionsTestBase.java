@@ -277,7 +277,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
                   final var senderTxs = new TreeMap<Long, PendingTransaction>();
                   senderTxs.put(lowPriceTx.getNonce(), lowPriceTx);
                   final var prioritizeResult =
-                      transactions.maybePrioritizeAddedTransaction(
+                      transactions.prioritizeTransaction(
                           senderTxs, lowPriceTx, 0, TransactionAddedResult.ADDED);
 
                   assertThat(prioritizeResult.isPrioritized()).isTrue();
@@ -292,7 +292,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     highValueSenderTxs.put(highValueTx.getNonce(), highValueTx);
 
     final var highValuePrioRes =
-        transactions.maybePrioritizeAddedTransaction(
+        transactions.prioritizeTransaction(
             highValueSenderTxs, highValueTx, 0, TransactionAddedResult.ADDED);
     assertThat(highValuePrioRes.isPrioritized()).isTrue();
     assertThat(highValuePrioRes.maybeDemotedTransaction())
@@ -385,8 +385,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     final var senderTxs = new TreeMap<Long, PendingTransaction>();
     senderTxs.put(tx.getNonce(), tx);
 
-    return transactions.maybePrioritizeAddedTransaction(
-        senderTxs, tx, 0, TransactionAddedResult.ADDED);
+    return transactions.prioritizeTransaction(senderTxs, tx, 0, TransactionAddedResult.ADDED);
   }
 
   protected void assertTransactionPrioritized(final PendingTransaction tx) {

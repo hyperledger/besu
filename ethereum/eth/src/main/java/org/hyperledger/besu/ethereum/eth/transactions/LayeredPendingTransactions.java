@@ -186,7 +186,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         pendingTransactions.put(pendingTransaction.getHash(), pendingTransaction);
         increaseTotalSize(pendingTransaction);
         if (addStatus.isPrioritizable()) {
-          maybePrioritizeReadyTransaction(pendingTransaction, senderNonce, addStatus);
+          prioritizeReadyTransaction(pendingTransaction, senderNonce, addStatus);
         }
 
         var cacheFreeSpace = cacheFreeSpace();
@@ -218,13 +218,13 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
   }
 
-  private void maybePrioritizeReadyTransaction(
+  private void prioritizeReadyTransaction(
       final PendingTransaction addedReadyTransaction,
       final long senderNonce,
       final TransactionAddedResult addResult) {
 
     final var prioritizeResult =
-        prioritizedTransactions.maybePrioritizeAddedTransaction(
+        prioritizedTransactions.prioritizeTransaction(
             readyBySender.get(addedReadyTransaction.getSender()),
             addedReadyTransaction,
             senderNonce,
@@ -234,12 +234,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
       // try to see if we can prioritize any transactions that moved from sparse to ready for this
       // sender
       getReady(addedReadyTransaction.getSender(), addedReadyTransaction.getNonce() + 1)
-          .ifPresent(
-              nextReadyTx -> maybePrioritizeReadyTransaction(nextReadyTx, senderNonce, ADDED));
+          .ifPresent(nextReadyTx -> prioritizeReadyTransaction(nextReadyTx, senderNonce, ADDED));
     }
   }
 
-  public Optional<PendingTransaction> getReady(final Address sender, final long nonce) {
+  Optional<PendingTransaction> getReady(final Address sender, final long nonce) {
     var senderTxs = readyBySender.get(sender);
     if (senderTxs != null) {
       return Optional.ofNullable(senderTxs.get(nonce));
@@ -253,15 +252,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     pendingTransactions.remove(transaction.getHash());
   }
 
-  private OptionalLong getNextReadyNonce(final Address sender) {
-    var senderTxs = readyBySender.get(sender);
-    if (senderTxs != null) {
-      return OptionalLong.of(senderTxs.lastKey() + 1);
-    }
-    return OptionalLong.empty();
-  }
-
-  public List<PendingTransaction> removeConfirmedTransactions(
+  private List<PendingTransaction> removeConfirmedTransactions(
       final Map<Address, Optional<Long>> orderedConfirmedNonceBySender) {
 
     final List<PendingTransaction> removed = new ArrayList<>();
@@ -285,7 +276,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
    * @return a list of transactions that could be prioritized, for each sender the transactions are
    *     in asc nonce order
    */
-  public List<PendingTransaction> getPromotableTransactions(
+  private List<PendingTransaction> getPromotableTransactions(
       final int maxPromotable, final Predicate<PendingTransaction> promotionFilter) {
 
     List<PendingTransaction> promotableTxs = new ArrayList<>(maxPromotable);
@@ -311,7 +302,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return Stream.empty();
   }
 
-  private synchronized <R> R modifySenderReadyTxsWrapper(
+  private <R> R modifySenderReadyTxsWrapper(
       final Address sender,
       final Function<NavigableMap<Long, PendingTransaction>, R> modifySenderTxs) {
 
@@ -611,12 +602,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
   // This seems like it would be very rare but worth it to document that we don't handle that case
   // right now.
   public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
+    final List<PendingTransaction> transactionsToRemove = new ArrayList<>();
+    final Set<Hash> alreadyChecked = new HashSet<>();
     synchronized (lock) {
-      final List<PendingTransaction> transactionsToRemove = new ArrayList<>();
-      final Set<Hash> alreadyChecked = new HashSet<>();
       final Iterator<PendingTransaction> itPrioritizedTransactions =
           prioritizedTransactions.prioritizedTransactions();
-      outerloop:
+      outerLoop:
       while (itPrioritizedTransactions.hasNext()) {
         final PendingTransaction highestPriorityPendingTransaction =
             itPrioritizedTransactions.next();
@@ -638,7 +629,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
                 alreadyChecked.add(candidateTx.getHash());
                 break;
               case COMPLETE_OPERATION:
-                break outerloop;
+                break outerLoop;
               default:
                 throw new RuntimeException("Illegal value for TransactionSelectionResult.");
             }
@@ -671,33 +662,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     followingTxs.add(0, invalidTransaction);
 
-    prioritizedTransactions.demoteInvalidTransactions(
-        sender, followingTxs, maybeLastValidSenderNonce);
+    prioritizedTransactions.demoteTransactions(sender, followingTxs, maybeLastValidSenderNonce);
 
     notifyTransactionDropped(invalidTransaction.getTransaction());
-    //
-    //
-    //    List<PendingTransaction> allSenderTxs =
-    //            prioritizedPendingTransactions.values().stream()
-    //                    .filter(pt -> pt.getSender().equals(transaction.getSender()))
-    //                    .collect(Collectors.toUnmodifiableList());
-    //
-    //    Transaction lastGoodTx = null;
-    //    for (final var pendingTransaction : allSenderTxs) {
-    //      if (pendingTransaction.getNonce() < transaction.getNonce()) {
-    //        lastGoodTx = pendingTransaction.getTransaction();
-    //      }
-    //      prioritizedPendingTransactions.remove(pendingTransaction.getHash());
-    //      removeFromOrderedTransactions(pendingTransaction, false);
-    //      readyTransactionsCache.remove(pendingTransaction.getTransaction());
-    //      notifyTransactionDropped(pendingTransaction.getTransaction());
-    //    }
-    //
-    //    if (lastGoodTx == null) {
-    //      expectedNonceForSender.remove(transaction.getSender());
-    //    } else {
-    //      expectedNonceForSender.put(transaction.getSender(), lastGoodTx.getNonce());
-    //    }
   }
 
   @Override
@@ -722,7 +689,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  // ToDo: rename to pending transactions
   public Set<PendingTransaction> getPendingTransactions() {
     return new HashSet<>(pendingTransactions.values());
   }
@@ -749,7 +715,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public OptionalLong getNextNonceForSender(final Address sender) {
-    return getNextReadyNonce(sender);
+    final var senderTxs = readyBySender.get(sender);
+    if (senderTxs != null) {
+      return OptionalLong.of(senderTxs.lastKey() + 1);
+    }
+
+    return OptionalLong.empty();
   }
 
   @Override
@@ -760,7 +731,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     synchronized (lock) {
       transactionsAddedToBlock(confirmedTransactions);
       prioritizedTransactions.manageBlockAdded(blockHeader, feeMarket);
-      promoteFromReady();
+      prioritizeReadyTransactions();
     }
   }
 
@@ -782,19 +753,19 @@ public class LayeredPendingTransactions implements PendingTransactions {
                 Transaction::getSender, mapping(Transaction::getNonce, maxBy(Long::compare))));
   }
 
-  protected void promoteFromReady() {
+  private void prioritizeReadyTransactions() {
     final int maxPromotable = poolConfig.getTxPoolMaxSize() - prioritizedTransactions.size();
 
     if (maxPromotable > 0) {
       final Predicate<PendingTransaction> notAlreadyPrioritized =
           pt -> prioritizedTransactions.containsTransaction(pt.getTransaction());
 
-      final List<PendingTransaction> promoteTransactions =
+      final List<PendingTransaction> prioritizeTransactions =
           getPromotableTransactions(
               maxPromotable,
               notAlreadyPrioritized.and(prioritizedTransactions.getPromotionFilter()));
 
-      promoteTransactions.forEach(prioritizedTransactions::addPrioritizedTransaction);
+      prioritizeTransactions.forEach(prioritizedTransactions::addPrioritizedTransaction);
     }
   }
 
@@ -809,7 +780,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
   @Override
   public String toTraceLog() {
     synchronized (lock) {
-      return "Ready by sender " + readyBySender + ", Sparse by sender " + sparseBySender;
+      return "Ready by sender "
+          + readyBySender
+          + ", Sparse by sender "
+          + sparseBySender
+          + "; "
+          + prioritizedTransactions.toTraceLog();
     }
   }
 
