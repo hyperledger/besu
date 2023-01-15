@@ -68,14 +68,16 @@ public class EngineGetPayloadV2 extends ExecutionEngineJsonRpcMethod {
     if (block.isPresent()) {
       var proposal = block.get();
       var proposalHeader = proposal.getHeader();
+      var maybeWithdrawals = proposal.getBody().getWithdrawals();
       infoLambda(
           LOG,
-          "Fetch block proposal by identifier: {}, hash: {}, number: {}, coinbase: {}, transaction count: {}",
+          "Fetch block proposal by identifier: {}, hash: {}, number: {}, coinbase: {}, transaction count: {}, withdrawals count: {}",
           () -> payloadId.toHexString(),
           () -> proposalHeader.getHash(),
           () -> proposalHeader.getNumber(),
           () -> proposalHeader.getCoinbase(),
-          () -> proposal.getBody().getTransactions().size());
+          () -> proposal.getBody().getTransactions().size(),
+          () -> maybeWithdrawals.isEmpty() ? "No withdraws" : maybeWithdrawals.get().size());
       debugLambda(LOG, "assembledBlock {}", () -> block.map(Block::toString).get());
       return new JsonRpcSuccessResponse(
           request.getRequest().getId(),
