@@ -245,7 +245,6 @@ allprojects {
       '--add-exports',
       'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'
     ]
-    
     Set toImport = [
       'test.ethereum.include',
       'test.ethereum.state.eip',
