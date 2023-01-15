@@ -48,7 +48,6 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
     return new GasPricePrioritizedTransactions(
         poolConfig,
         clock.orElse(TestClock.system(ZoneId.systemDefault())),
-        metricsSystem,
         transactionReplacementTester);
   }
 

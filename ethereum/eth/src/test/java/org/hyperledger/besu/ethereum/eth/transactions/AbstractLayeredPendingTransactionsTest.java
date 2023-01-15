@@ -196,7 +196,7 @@ public abstract class AbstractLayeredPendingTransactionsTest {
         transactionBroadcaster,
         ethContext,
         miningParameters,
-        metricsSystem,
+        new TransactionPoolMetrics(metricsSystem),
         poolConfig);
   }
 

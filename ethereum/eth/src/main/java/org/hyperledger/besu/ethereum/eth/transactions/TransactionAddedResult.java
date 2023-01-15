@@ -41,7 +41,7 @@ public final class TransactionAddedResult {
       new TransactionAddedResult(Status.ADDED, false);
   public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED, true);
 
-  private final Optional<TransactionInvalidReason> invalidReason;
+  private final Optional<TransactionInvalidReason> rejectReason;
 
   private final Optional<PendingTransaction> replacedTransaction;
 
@@ -52,30 +52,30 @@ public final class TransactionAddedResult {
   private TransactionAddedResult(
       final PendingTransaction replacedTransaction, final boolean prioritizable) {
     this.replacedTransaction = Optional.of(replacedTransaction);
-    this.invalidReason = Optional.empty();
+    this.rejectReason = Optional.empty();
     this.status = Status.REPLACED;
     this.prioritizable = prioritizable;
   }
 
-  private TransactionAddedResult(final TransactionInvalidReason invalidReason) {
+  private TransactionAddedResult(final TransactionInvalidReason rejectReason) {
     this.replacedTransaction = Optional.empty();
-    this.invalidReason = Optional.of(invalidReason);
+    this.rejectReason = Optional.of(rejectReason);
     this.status = Status.INVALID;
     this.prioritizable = false;
   }
 
   private TransactionAddedResult(final Status status, final boolean prioritizable) {
     this.replacedTransaction = Optional.empty();
-    this.invalidReason = Optional.empty();
+    this.rejectReason = Optional.empty();
     this.status = status;
     this.prioritizable = prioritizable;
   }
 
   public boolean isSuccess() {
-    return !isInvalid();
+    return !isRejected();
   }
 
-  public boolean isInvalid() {
+  public boolean isRejected() {
     return status == Status.INVALID;
   }
 
@@ -88,7 +88,7 @@ public final class TransactionAddedResult {
   }
 
   public Optional<TransactionInvalidReason> maybeInvalidReason() {
-    return invalidReason;
+    return rejectReason;
   }
 
   public Optional<PendingTransaction> maybeReplacedTransaction() {
@@ -106,21 +106,21 @@ public final class TransactionAddedResult {
     if (o == null || getClass() != o.getClass()) return false;
     TransactionAddedResult that = (TransactionAddedResult) o;
     return prioritizable == that.prioritizable
-        && Objects.equals(invalidReason, that.invalidReason)
+        && Objects.equals(rejectReason, that.rejectReason)
         && Objects.equals(replacedTransaction, that.replacedTransaction)
         && status == that.status;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(invalidReason, replacedTransaction, status, prioritizable);
+    return Objects.hash(rejectReason, replacedTransaction, status, prioritizable);
   }
 
   @Override
   public String toString() {
     return "TransactionAddedResult{"
-        + "invalidReason="
-        + invalidReason
+        + "rejectReason="
+        + rejectReason
         + ", replacedTransaction="
         + replacedTransaction
         + ", status="

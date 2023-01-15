@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TX_POOL_FULL;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -83,25 +84,35 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   private final AtomicLong readyTotalSize = new AtomicLong();
 
-  protected final Object lock = new Object();
+  private final Object lock = new Object();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
 
-  protected final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
+  private final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
       Subscribers.create();
 
-  protected final Subscribers<PendingTransactionDroppedListener> transactionDroppedListeners =
+  private final Subscribers<PendingTransactionDroppedListener> transactionDroppedListeners =
       Subscribers.create();
 
-  protected final AbstractPrioritizedTransactions prioritizedTransactions;
+  private final AbstractPrioritizedTransactions prioritizedTransactions;
+
+  final TransactionPoolMetrics metrics;
 
   public LayeredPendingTransactions(
       final TransactionPoolConfiguration poolConfig,
       final AbstractPrioritizedTransactions prioritizedTransactions,
+      final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
     this.poolConfig = poolConfig;
     this.prioritizedTransactions = prioritizedTransactions;
     this.transactionReplacementTester = transactionReplacementTester;
+    this.metrics = metrics;
+    metrics.initPendingTransactionCount(pendingTransactions::size);
+    metrics.initPendingTransactionSpace(this::getUsedSpace);
+    metrics.initReadyTransactionCount(
+        () -> pendingTransactions.size() - sparseEvictionOrder.size());
+    metrics.initSparseTransactionCount(sparseEvictionOrder::size);
+    metrics.initPrioritizedTransactionSize(prioritizedTransactions::size);
   }
 
   @Override
@@ -161,7 +172,41 @@ public class LayeredPendingTransactions implements PendingTransactions {
       return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
     }
 
-    return addAndPrioritize(pendingTransaction, senderNonce);
+    final var result = addAndPrioritize(pendingTransaction, senderNonce);
+    updateMetrics(pendingTransaction, result);
+
+    return result;
+  }
+
+  private void updateMetrics(
+      final PendingTransaction pendingTransaction, final TransactionAddedResult result) {
+    if (result.isSuccess()) {
+      result
+          .maybeReplacedTransaction()
+          .ifPresent(
+              replacedTx -> {
+                metrics.incrementReplaced(
+                    replacedTx.isReceivedFromLocalSource(),
+                    result.isPrioritizable() ? "ready" : "sparse");
+                metrics.incrementRemoved(replacedTx.isReceivedFromLocalSource(), "replaced");
+              });
+      metrics.incrementAdded(pendingTransaction.isReceivedFromLocalSource());
+    } else {
+      final var rejectReason =
+          result
+              .maybeInvalidReason()
+              .orElseGet(
+                  () -> {
+                    LOG.warn("Missing invalid reason for status {}", result);
+                    return INTERNAL_ERROR;
+                  });
+      metrics.incrementRejected(false, rejectReason);
+      traceLambda(
+          LOG,
+          "Transaction {} rejected reason {}",
+          pendingTransaction::toTraceLog,
+          rejectReason::toString);
+    }
   }
 
   private TransactionAddedResult addAndPrioritize(
@@ -195,6 +240,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
           // free some space moving trying first to evict older sparse txs,
           // then less valuable ready to postponed
           final var evictedSparseTxs = evictSparseTransactions(-cacheFreeSpace);
+          metrics.incrementEvicted("sparse", evictedSparseTxs.size());
           if (evictedSparseTxs.contains(pendingTransaction)) {
             // in case the just added transaction is postponed to free space change the returned
             // result
@@ -203,8 +249,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
           cacheFreeSpace = cacheFreeSpace();
           if (cacheFreeSpace < 0) {
-            final var evictedTransactions = evictReadyTransactions(-cacheFreeSpace);
-            if (evictedTransactions.contains(pendingTransaction)) {
+            final var evictedReadyTxs = evictReadyTransactions(-cacheFreeSpace);
+            metrics.incrementEvicted("ready", evictedReadyTxs.size());
+            if (evictedReadyTxs.contains(pendingTransaction)) {
               // in case the just added transaction is postponed to free space change the returned
               // result
               return TX_POOL_FULL;
@@ -230,6 +277,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
             senderNonce,
             addResult);
 
+    metrics.incrementPrioritized(
+        addedReadyTransaction.isReceivedFromLocalSource(), prioritizeResult);
+
     if (prioritizeResult.isPrioritized() && !prioritizeResult.isReplacement()) {
       // try to see if we can prioritize any transactions that moved from sparse to ready for this
       // sender
@@ -246,10 +296,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return Optional.empty();
   }
 
-  private void remove(final Transaction transaction) {
+  private void removeFromReady(final Transaction transaction) {
     modifySenderReadyTxsWrapper(
-        transaction.getSender(), senderTxs -> remove(senderTxs, transaction));
-    pendingTransactions.remove(transaction.getHash());
+        transaction.getSender(), senderTxs -> removeFromReady(senderTxs, transaction));
   }
 
   private List<PendingTransaction> removeConfirmedTransactions(
@@ -515,7 +564,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     readyTotalSize.addAndGet(-transaction.getSize());
   }
 
-  private Void remove(
+  private Void removeFromReady(
       final NavigableMap<Long, PendingTransaction> senderTxs, final Transaction transaction) {
 
     if (senderTxs != null && senderTxs.remove(transaction.getNonce()) != null) {
@@ -646,11 +695,13 @@ public class LayeredPendingTransactions implements PendingTransactions {
     final var followingTxs =
         streamReadyTransactions(sender, invalidTransaction.getNonce()).collect(Collectors.toList());
 
-    remove(invalidTransaction.getTransaction());
+    removeFromReady(invalidTransaction.getTransaction());
+    pendingTransactions.remove(invalidTransaction.getHash());
+    metrics.incrementRemoved(invalidTransaction.isReceivedFromLocalSource(), "invalid");
 
     followingTxs.forEach(
         followingTx -> {
-          remove(followingTx.getTransaction());
+          removeFromReady(followingTx.getTransaction());
           sparseBySender
               .computeIfAbsent(sender, unused -> new TreeMap<>())
               .put(followingTx.getNonce(), followingTx);
@@ -739,6 +790,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     final var orderedConfirmedNonceBySender = maxConfirmedNonceBySender(confirmedTransactions);
     final var removedTransactions = removeConfirmedTransactions(orderedConfirmedNonceBySender);
     removedTransactions.stream()
+        .peek(pt -> metrics.incrementRemoved(pt.isReceivedFromLocalSource(), "confirmed"))
         .map(PendingTransaction::getHash)
         .forEach(pendingTransactions::remove);
     prioritizedTransactions.removeConfirmedTransactions(

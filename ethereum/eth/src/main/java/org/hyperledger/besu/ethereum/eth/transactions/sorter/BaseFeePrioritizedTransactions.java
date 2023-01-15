@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
 import java.util.Comparator;
@@ -49,12 +48,11 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   public BaseFeePrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
       final Clock clock,
-      final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BaseFeeMarket baseFeeMarket) {
-    super(poolConfig, clock, metricsSystem, transactionReplacementTester);
+    super(poolConfig, clock, transactionReplacementTester);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(baseFeeMarket, chainHeadHeaderSupplier.get()));
   }

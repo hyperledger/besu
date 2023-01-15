@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -117,7 +118,7 @@ public class EthGetFilterChangesIntegrationTest {
             batchAddedListener,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
-            metricsSystem,
+            new TransactionPoolMetrics(metricsSystem),
             TransactionPoolConfiguration.DEFAULT);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());

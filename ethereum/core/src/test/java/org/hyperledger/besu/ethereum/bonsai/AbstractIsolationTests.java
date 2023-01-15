@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.LayeredPendingTransactions
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -108,10 +109,8 @@ public abstract class AbstractIsolationTests {
       new LayeredPendingTransactions(
           poolConfiguration,
           new GasPricePrioritizedTransactions(
-              poolConfiguration,
-              Clock.systemUTC(),
-              new NoOpMetricsSystem(),
-              transactionReplacementTester),
+              poolConfiguration, Clock.systemUTC(), transactionReplacementTester),
+          new TransactionPoolMetrics(new NoOpMetricsSystem()),
           transactionReplacementTester);
 
   protected final List<GenesisAllocation> accounts =

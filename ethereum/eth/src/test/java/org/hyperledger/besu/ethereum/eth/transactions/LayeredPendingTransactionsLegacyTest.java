@@ -61,10 +61,8 @@ public class LayeredPendingTransactionsLegacyTest extends AbstractLayeredPending
     return new LayeredPendingTransactions(
         poolConfig,
         new GasPricePrioritizedTransactions(
-            poolConfig,
-            TestClock.system(ZoneId.systemDefault()),
-            metricsSystem,
-            transactionReplacementTester),
+            poolConfig, TestClock.system(ZoneId.systemDefault()), transactionReplacementTester),
+        new TransactionPoolMetrics(metricsSystem),
         transactionReplacementTester);
   }
 

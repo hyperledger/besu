@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
 import java.util.function.BiFunction;
@@ -37,10 +36,9 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   public GasPricePrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
       final Clock clock,
-      final MetricsSystem metricsSystem,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
-    super(poolConfig, clock, metricsSystem, transactionReplacementTester);
+    super(poolConfig, clock, transactionReplacementTester);
   }
 
   @Override

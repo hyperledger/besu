@@ -81,14 +81,16 @@ public class PendingMultiTypesTransactionsTest {
       new BaseFeePrioritizedTransactions(
           transactionPoolConfiguration,
           TestClock.system(ZoneId.systemDefault()),
-          metricsSystem,
           () -> mockBlockHeader(Wei.of(7L)),
           transactionReplacementTester,
           FeeMarket.london(0L));
 
   private final LayeredPendingTransactions transactions =
       new LayeredPendingTransactions(
-          transactionPoolConfiguration, sorter, transactionReplacementTester);
+          transactionPoolConfiguration,
+          sorter,
+          new TransactionPoolMetrics(metricsSystem),
+          transactionReplacementTester);
 
   @Test
   public void shouldReturnExclusivelyLocal1559TransactionsWhenAppropriate() {
@@ -379,7 +381,7 @@ public class PendingMultiTypesTransactionsTest {
   }
 
   @Test
-  public void shouldNotIncrementAddedCounterWhenRemote1559TransactionAlreadyPresent() {
+  public void shouldAddEip1559TransactionIfAlreadyPresent() {
     final Transaction localTransaction0 = create1559Transaction(0, 19, 20, KEYS1);
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);

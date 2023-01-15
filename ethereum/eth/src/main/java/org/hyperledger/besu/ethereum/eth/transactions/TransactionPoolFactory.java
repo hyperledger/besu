@@ -52,9 +52,11 @@ public class TransactionPoolFactory {
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
+    final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
+
     final PendingTransactions pendingTransactions =
         createPendingTransactionsSorter(
-            protocolSchedule, protocolContext, clock, metricsSystem, transactionPoolConfiguration);
+            protocolSchedule, protocolContext, clock, metrics, transactionPoolConfiguration);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =
@@ -67,7 +69,7 @@ public class TransactionPoolFactory {
         protocolSchedule,
         protocolContext,
         ethContext,
-        metricsSystem,
+        metrics,
         syncState,
         miningParameters,
         transactionPoolConfiguration,
@@ -81,7 +83,7 @@ public class TransactionPoolFactory {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem,
+      final TransactionPoolMetrics metrics,
       final SyncState syncState,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
@@ -89,6 +91,7 @@ public class TransactionPoolFactory {
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
+
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
@@ -102,13 +105,13 @@ public class TransactionPoolFactory {
                 newPooledTransactionHashesMessageSender),
             ethContext,
             miningParameters,
-            metricsSystem,
+            metrics,
             transactionPoolConfiguration);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
-            new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem),
+            new TransactionsMessageProcessor(transactionTracker, transactionPool, metrics),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
 
     final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
@@ -119,7 +122,7 @@ public class TransactionPoolFactory {
                 transactionPool,
                 transactionPoolConfiguration,
                 ethContext,
-                metricsSystem),
+                metrics),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
 
     subscribeTransactionHandlers(
@@ -181,7 +184,7 @@ public class TransactionPoolFactory {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
-      final MetricsSystem metricsSystem,
+      final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
     boolean isFeeMarketImplementBaseFee =
@@ -193,18 +196,18 @@ public class TransactionPoolFactory {
 
     if (transactionPoolConfiguration.getEnableLayeredTxPool()) {
       LOG.info("Using layered transaction pool");
-      return createPrioritizedTransactionSorted(
+      return createLayeredPendingTransactions(
           protocolSchedule,
           protocolContext,
           clock,
-          metricsSystem,
+          metrics,
           transactionPoolConfiguration,
           isFeeMarketImplementBaseFee);
     } else {
       return createPendingTransactionSorter(
           protocolContext,
           clock,
-          metricsSystem,
+          metrics.getMetricsSystem(),
           transactionPoolConfiguration,
           isFeeMarketImplementBaseFee);
     }
@@ -231,11 +234,11 @@ public class TransactionPoolFactory {
     }
   }
 
-  private static PendingTransactions createPrioritizedTransactionSorted(
+  private static PendingTransactions createLayeredPendingTransactions(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
-      final MetricsSystem metricsSystem,
+      final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final boolean isFeeMarketImplementBaseFee) {
 
@@ -263,17 +266,19 @@ public class TransactionPoolFactory {
           new BaseFeePrioritizedTransactions(
               transactionPoolConfiguration,
               clock,
-              metricsSystem,
               protocolContext.getBlockchain()::getChainHeadHeader,
               transactionReplacementTester,
               baseFeeMarket);
     } else {
       pendingTransactionsSorter =
           new GasPricePrioritizedTransactions(
-              transactionPoolConfiguration, clock, metricsSystem, transactionReplacementTester);
+              transactionPoolConfiguration, clock, transactionReplacementTester);
     }
 
     return new LayeredPendingTransactions(
-        transactionPoolConfiguration, pendingTransactionsSorter, transactionReplacementTester);
+        transactionPoolConfiguration,
+        pendingTransactionsSorter,
+        metrics,
+        transactionReplacementTester);
   }
 }

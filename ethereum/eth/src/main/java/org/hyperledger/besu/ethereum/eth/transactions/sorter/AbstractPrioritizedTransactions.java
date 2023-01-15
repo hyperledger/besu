@@ -24,10 +24,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.time.Clock;
 import java.util.HashMap;
@@ -60,17 +56,12 @@ public abstract class AbstractPrioritizedTransactions {
   protected final TreeSet<PendingTransaction> orderByFee;
   protected final Map<Address, Long> expectedNonceForSender;
 
-  protected final LabelledMetric<Counter> transactionAddedCounter;
-  protected final LabelledMetric<Counter> transactionRemovedCounter;
-  protected final LabelledMetric<Counter> transactionReplacedCounter;
-
   protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
       transactionReplacementTester;
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
       final Clock clock,
-      final MetricsSystem metricsSystem,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
     this.poolConfig = poolConfig;
@@ -78,33 +69,6 @@ public abstract class AbstractPrioritizedTransactions {
     this.expectedNonceForSender = new HashMap<>();
     this.clock = clock;
     this.transactionReplacementTester = transactionReplacementTester;
-    this.transactionAddedCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_added_total",
-            "Count of transactions added to the transaction pool",
-            "source");
-
-    transactionRemovedCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_removed_total",
-            "Count of transactions removed from the transaction pool",
-            "source",
-            "operation");
-    transactionReplacedCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_replaced_total",
-            "Count of transactions replaced in the transaction pool",
-            "source",
-            "list");
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.TRANSACTION_POOL,
-        "transactions",
-        "Current size of the transaction pool",
-        prioritizedPendingTransactions::size);
-
     this.orderByFee = new TreeSet<>(this::compareByFee);
   }
 
@@ -208,23 +172,6 @@ public abstract class AbstractPrioritizedTransactions {
         () -> expectedNonceForSender.remove(sender));
   }
 
-  protected void incrementTransactionAddedCounter(final boolean receivedFromLocalSource) {
-    final String location = receivedFromLocalSource ? "local" : "remote";
-    transactionAddedCounter.labels(location).inc();
-  }
-
-  protected void incrementTransactionRemovedCounter(
-      final boolean receivedFromLocalSource, final boolean addedToBlock) {
-    final String location = receivedFromLocalSource ? "local" : "remote";
-    final String operation = addedToBlock ? "addedToBlock" : "dropped";
-    transactionRemovedCounter.labels(location, operation).inc();
-  }
-
-  protected void incrementTransactionReplacedCounter(final boolean receivedFromLocalSource) {
-    final String location = receivedFromLocalSource ? "local" : "remote";
-    transactionReplacedCounter.labels(location, "priority").inc();
-  }
-
   public int size() {
     return prioritizedPendingTransactions.size();
   }
@@ -242,8 +189,6 @@ public abstract class AbstractPrioritizedTransactions {
     final PendingTransaction removedPendingTransaction =
         prioritizedPendingTransactions.remove(replacedTx.getHash());
     removeFromOrderedTransactions(removedPendingTransaction, false);
-    incrementTransactionRemovedCounter(replacedTx.isReceivedFromLocalSource(), false);
-    incrementTransactionReplacedCounter(replacedTx.isReceivedFromLocalSource());
   }
 
   protected abstract void removeFromOrderedTransactions(
@@ -253,7 +198,7 @@ public abstract class AbstractPrioritizedTransactions {
     return orderByFee.descendingIterator();
   }
 
-  public void demoteLastPrioritizedForSender(
+  private void demoteLastPrioritizedForSender(
       final PendingTransaction firstDemotedTx,
       final NavigableMap<Long, PendingTransaction> senderReadyTxs) {
     final var demotableSenderTxs =
@@ -305,7 +250,6 @@ public abstract class AbstractPrioritizedTransactions {
     if (!isReplacement) {
       expectedNonceForSender.put(prioritizedTx.getSender(), prioritizedTx.getNonce() + 1);
     }
-    incrementTransactionAddedCounter(prioritizedTx.isReceivedFromLocalSource());
   }
 
   public void removeConfirmedTransactions(
@@ -389,6 +333,18 @@ public abstract class AbstractPrioritizedTransactions {
 
     public Optional<PendingTransaction> maybeDemotedTransaction() {
       return maybeDemotedTransaction;
+    }
+
+    public String toMetricLabel() {
+      if (replacement) {
+        return "replaced";
+      }
+      if (prioritized) {
+        return maybeDemotedTransaction
+            .map(unused -> "prioritized_with_demoting")
+            .orElse("prioritized");
+      }
+      return "not_prioritized";
     }
   }
 }

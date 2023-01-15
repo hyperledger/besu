@@ -24,10 +24,6 @@ import org.hyperledger.besu.ethereum.eth.manager.task.BufferedGetPooledTransacti
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.RunnableCounter;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -41,8 +37,6 @@ import org.slf4j.LoggerFactory;
 
 public class NewPooledTransactionHashesMessageProcessor {
 
-  private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
-
   private static final Logger LOG =
       LoggerFactory.getLogger(NewPooledTransactionHashesMessageProcessor.class);
 
@@ -50,34 +44,22 @@ public class NewPooledTransactionHashesMessageProcessor {
       scheduledTasks;
 
   private final PeerTransactionTracker transactionTracker;
-  private final Counter totalSkippedNewPooledTransactionHashesMessageCounter;
   private final TransactionPool transactionPool;
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
-  private final MetricsSystem metricsSystem;
+  private final TransactionPoolMetrics metrics;
 
   public NewPooledTransactionHashesMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem) {
+      final TransactionPoolMetrics metrics) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.ethContext = ethContext;
-    this.metricsSystem = metricsSystem;
-    this.totalSkippedNewPooledTransactionHashesMessageCounter =
-        new RunnableCounter(
-            metricsSystem.createCounter(
-                BesuMetricCategory.TRANSACTION_POOL,
-                "new_pooled_transaction_hashes_messages_skipped_total",
-                "Total number of new pooled transaction hashes messages skipped by the processor."),
-            () ->
-                LOG.warn(
-                    "{} expired new pooled transaction hashes messages have been skipped.",
-                    SKIPPED_MESSAGES_LOGGING_THRESHOLD),
-            SKIPPED_MESSAGES_LOGGING_THRESHOLD);
+    this.metrics = metrics;
     this.scheduledTasks = new ConcurrentHashMap<>();
   }
 
@@ -90,7 +72,7 @@ public class NewPooledTransactionHashesMessageProcessor {
     if (startedAt.plus(keepAlive).isAfter(now())) {
       this.processNewPooledTransactionHashesMessage(peer, transactionsMessage);
     } else {
-      totalSkippedNewPooledTransactionHashesMessageCounter.inc();
+      metrics.incrementExpiredNewPooledTransactionHashesMessage();
     }
   }
 
@@ -125,7 +107,7 @@ public class NewPooledTransactionHashesMessageProcessor {
                     peer,
                     transactionPool,
                     transactionTracker,
-                    metricsSystem);
+                    metrics);
               });
 
       bufferedTask.addHashes(

@@ -212,7 +212,7 @@ public class TransactionPoolFactoryTest {
             schedule,
             context,
             ethContext,
-            new NoOpMetricsSystem(),
+            new TransactionPoolMetrics(new NoOpMetricsSystem()),
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()

@@ -66,10 +66,10 @@ public class LayeredPendingTransactionsLondonTest extends AbstractLayeredPending
         new BaseFeePrioritizedTransactions(
             poolConfig,
             TestClock.system(ZoneId.systemDefault()),
-            metricsSystem,
             protocolContext.getBlockchain()::getChainHeadHeader,
             transactionReplacementTester,
             FeeMarket.london(0L)),
+        new TransactionPoolMetrics(metricsSystem),
         transactionReplacementTester);
   }
 

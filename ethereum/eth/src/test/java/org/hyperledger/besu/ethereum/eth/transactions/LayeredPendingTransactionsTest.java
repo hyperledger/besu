@@ -58,10 +58,12 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   protected static final String ADDED_COUNTER = "transactions_added_total";
   protected static final String REMOVED_COUNTER = "transactions_removed_total";
   protected static final String REPLACED_COUNTER = "transactions_replaced_total";
+  protected static final String PRIORITIZED_COUNTER = "transactions_prioritized_total";
+
   protected static final String REMOTE = "remote";
   protected static final String LOCAL = "local";
-  protected static final String DROPPED = "dropped";
-  protected static final String PRIORITY_LIST = "priority";
+  protected static final String REPLACED = "replaced";
+  protected static final String READY = "ready";
 
   protected final PendingTransactionListener listener = mock(PendingTransactionListener.class);
   protected final PendingTransactionDroppedListener droppedListener =
@@ -103,13 +105,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
         new BaseFeePrioritizedTransactions(
             poolConf,
             clock,
-            metricsSystem,
             LayeredPendingTransactionsTest::mockBlockHeader,
             transactionReplacementTester,
             FeeMarket.london(0));
     pendingTransactions =
         new LayeredPendingTransactions(
-            poolConf, pendingTransactionsSorter, transactionReplacementTester);
+            poolConf,
+            pendingTransactionsSorter,
+            new TransactionPoolMetrics(metricsSystem),
+            transactionReplacementTester);
 
     senderLimitedTransactions =
         new LayeredPendingTransactions(
@@ -117,10 +121,10 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             new BaseFeePrioritizedTransactions(
                 senderLimitedConfig,
                 clock,
-                metricsSystem,
                 LayeredPendingTransactionsTest::mockBlockHeader,
                 transactionReplacementTester,
                 FeeMarket.london(0)),
+            new TransactionPoolMetrics(metricsSystem),
             transactionReplacementTester);
   }
 
@@ -176,7 +180,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     }
 
     assertThat(pendingTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, REPLACED)).isZero();
 
     final int freeSpace =
         (int)
@@ -429,8 +433,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertTransactionPending(pendingTransactions, transaction2);
     assertThat(pendingTransactions.size()).isEqualTo(2);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(3);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
-    assertThat(metricsSystem.getCounterValue(REPLACED_COUNTER, REMOTE, PRIORITY_LIST)).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, REPLACED)).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(REPLACED_COUNTER, REMOTE, READY)).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(PRIORITIZED_COUNTER, REMOTE, REPLACED)).isEqualTo(1);
   }
 
   @Test
@@ -459,9 +464,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     assertThat(pendingTransactions.size()).isEqualTo(2);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(replacedTxCount + 2);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED))
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, REPLACED))
         .isEqualTo(replacedTxCount);
-    assertThat(metricsSystem.getCounterValue(REPLACED_COUNTER, REMOTE, PRIORITY_LIST))
+    assertThat(metricsSystem.getCounterValue(REPLACED_COUNTER, REMOTE, READY))
         .isEqualTo(replacedTxCount);
   }
 
@@ -503,9 +508,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
         .isEqualTo(remoteDuplicateCount + 1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL))
         .isEqualTo(localDuplicateCount + 1);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED))
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, REPLACED))
         .isEqualTo(remoteDuplicateCount);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, LOCAL, DROPPED))
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, LOCAL, REPLACED))
         .isEqualTo(localDuplicateCount);
   }
 

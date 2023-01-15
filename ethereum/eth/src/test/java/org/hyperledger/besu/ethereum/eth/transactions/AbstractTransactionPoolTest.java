@@ -180,7 +180,7 @@ public abstract class AbstractTransactionPoolTest {
         transactionBroadcaster,
         ethContext,
         miningParameters,
-        metricsSystem,
+        new TransactionPoolMetrics(metricsSystem),
         config);
   }
 

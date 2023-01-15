@@ -55,7 +55,6 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
     return new BaseFeePrioritizedTransactions(
         poolConfig,
         clock.orElse(TestClock.system(ZoneId.systemDefault())),
-        metricsSystem,
         this::mockBlockHeader,
         transactionReplacementTester,
         FeeMarket.london(0L));

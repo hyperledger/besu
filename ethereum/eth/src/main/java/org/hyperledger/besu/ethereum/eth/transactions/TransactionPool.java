@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
@@ -43,11 +42,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,15 +66,12 @@ import org.slf4j.LoggerFactory;
 public class TransactionPool implements BlockAddedObserver {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
-
-  private static final String REMOTE = "remote";
-  private static final String LOCAL = "local";
   private final PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBroadcaster transactionBroadcaster;
   private final MiningParameters miningParameters;
-  private final LabelledMetric<Counter> duplicateTransactionCounter;
+  private final TransactionPoolMetrics metrics;
   private final TransactionPoolConfiguration configuration;
   private final AtomicBoolean isPoolEnabled = new AtomicBoolean(true);
 
@@ -90,22 +82,15 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
       final MiningParameters miningParameters,
-      final MetricsSystem metricsSystem,
+      final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration configuration) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.transactionBroadcaster = transactionBroadcaster;
     this.miningParameters = miningParameters;
+    this.metrics = metrics;
     this.configuration = configuration;
-
-    duplicateTransactionCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_duplicates_total",
-            "Total number of duplicate transactions received",
-            "source");
-
     ethContext.getEthPeers().subscribeConnect(this::handleConnect);
   }
 
@@ -126,22 +111,21 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionAddedResult transactionAddedResult =
           pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
 
-      if (transactionAddedResult.isInvalid()) {
-        if (transactionAddedResult.equals(TransactionAddedResult.ALREADY_KNOWN)) {
-          duplicateTransactionCounter.labels(LOCAL).inc();
-        }
-        return ValidationResult.invalid(
+      if (transactionAddedResult.isRejected()) {
+        final var rejectReason =
             transactionAddedResult
                 .maybeInvalidReason()
                 .orElseGet(
                     () -> {
                       LOG.warn("Missing invalid reason for status {}", transactionAddedResult);
                       return INTERNAL_ERROR;
-                    }));
+                    });
+        return ValidationResult.invalid(rejectReason);
       }
 
-      final Collection<Transaction> txs = singletonList(transaction);
-      transactionBroadcaster.onTransactionsAdded(txs);
+      transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+    } else {
+      metrics.incrementInvalid(true, validationResult.result.getInvalidReason());
     }
 
     return validationResult.result;
@@ -172,7 +156,7 @@ public class TransactionPool implements BlockAddedObserver {
               if (pendingTransactions.containsTransaction(transaction)) {
                 traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
                 // We already have this transaction, don't even validate it.
-                duplicateTransactionCounter.labels(REMOTE).inc();
+                metrics.incrementRejected(false, TRANSACTION_ALREADY_KNOWN);
 
               } else {
                 final ValidationResultAndAccount validationResult =
@@ -185,12 +169,20 @@ public class TransactionPool implements BlockAddedObserver {
                   if (status.isSuccess()) {
                     traceLambda(LOG, "Added remote transaction {}", transaction::toTraceLog);
                     addedTransactions.add(transaction);
-                  } else if (status.equals(ALREADY_KNOWN)) {
-
-                    traceLambda(LOG, "Duplicate remote transaction {}", transaction::toTraceLog);
-                    duplicateTransactionCounter.labels(REMOTE).inc();
                   } else {
-                    LOG.trace("Transaction added result {}", status);
+                    final var rejectReason =
+                        status
+                            .maybeInvalidReason()
+                            .orElseGet(
+                                () -> {
+                                  LOG.warn("Missing invalid reason for status {}", status);
+                                  return INTERNAL_ERROR;
+                                });
+                    traceLambda(
+                        LOG,
+                        "Transaction {} rejected reason {}",
+                        transaction::toTraceLog,
+                        rejectReason::toString);
                   }
                 } else {
                   traceLambda(
@@ -198,6 +190,7 @@ public class TransactionPool implements BlockAddedObserver {
                       "Discard invalid transaction {}, reason {}",
                       transaction::toTraceLog,
                       validationResult.result::getInvalidReason);
+                  metrics.incrementInvalid(false, validationResult.result.getInvalidReason());
                   pendingTransactions.signalInvalidTransaction(transaction);
                 }
               }
