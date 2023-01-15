@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,13 +21,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class LogUtil {
+  static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
   public static void throttledLog(
       final Consumer<String> logger,
       final String logMessage,
       final AtomicBoolean shouldLog,
       final int logRepeatDelay) {
-
-    final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     if (shouldLog.compareAndSet(true, false)) {
       logger.accept(logMessage);
