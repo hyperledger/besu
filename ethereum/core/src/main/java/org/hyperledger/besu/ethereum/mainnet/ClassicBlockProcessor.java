@@ -41,13 +41,15 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final OptionalLong eraLen) {
+      final OptionalLong eraLen,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
-        skipZeroBlockRewards);
+        skipZeroBlockRewards,
+        protocolSchedule);
     eraLength = eraLen.orElse(DEFAULT_ERA_LENGTH);
   }
 
