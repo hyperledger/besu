@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.List;
 import java.util.Optional;
@@ -222,7 +223,13 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
         .getByTimestamp(payloadAttributes.getTimestamp())
         .map(
             protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
-        .orElse(false);
+        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
+        // previous fork. This might be resolved when
+        // https://github.com/hyperledger/besu/issues/4789 is played
+        // and if we can combine protocolSchedule and timestampSchedule.
+        .orElseGet(
+            () ->
+                new WithdrawalsValidator.ProhibitedWithdrawals().validateWithdrawals(withdrawals));
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
