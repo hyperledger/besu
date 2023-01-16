@@ -113,4 +113,41 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
                         .greaterOrEqualThan(baseFee))
             .orElse(false);
   }
+
+  @Override
+  public String logStats() {
+    int aboveBaseFee = 0;
+    int belowBaseFee = 0;
+    final var txs = prioritizedTransactions();
+    while (txs.hasNext()) {
+      if (txs.next().getTransaction().getMaxGasFee().greaterOrEqualThan(nextBlockBaseFee.get())) {
+        aboveBaseFee++;
+      } else {
+        belowBaseFee++;
+      }
+    }
+
+    return "Highest priority tx: [max fee: "
+        + orderByFee.last().getTransaction().getMaxGasFee().toHumanReadableString()
+        + ", curr prio fee: "
+        + orderByFee
+            .last()
+            .getTransaction()
+            .getEffectivePriorityFeePerGas(nextBlockBaseFee)
+            .toHumanReadableString()
+        + "], Lowest priority tx: [max fee: "
+        + orderByFee.first().getTransaction().getMaxGasFee().toHumanReadableString()
+        + ", curr prio fee: "
+        + orderByFee
+            .first()
+            .getTransaction()
+            .getEffectivePriorityFeePerGas(nextBlockBaseFee)
+            .toHumanReadableString()
+        + "], Next block base fee: "
+        + nextBlockBaseFee.get().toHumanReadableString()
+        + ", Above next base fee: "
+        + aboveBaseFee
+        + ", Below next base fee: "
+        + belowBaseFee;
+  }
 }

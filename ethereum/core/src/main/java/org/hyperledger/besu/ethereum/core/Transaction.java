@@ -930,7 +930,7 @@ public class Transaction
 
   public String toTraceLog() {
     final StringBuilder sb = new StringBuilder();
-    sb.append(getHash()).append(":{");
+    sb.append(getHash()).append("={");
     sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append(", ");
     sb.append(getNonce()).append(", ");
     sb.append(getSender()).append(", ");

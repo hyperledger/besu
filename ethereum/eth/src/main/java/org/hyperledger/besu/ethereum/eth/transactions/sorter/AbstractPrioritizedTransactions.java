@@ -295,6 +295,8 @@ public abstract class AbstractPrioritizedTransactions {
         + expectedNonceForSender;
   }
 
+  public abstract String logStats();
+
   public void reset() {
     prioritizedPendingTransactions.clear();
     orderByFee.clear();

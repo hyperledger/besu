@@ -64,4 +64,12 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   public Predicate<PendingTransaction> getPromotionFilter() {
     return pt -> true;
   }
+
+  @Override
+  public String logStats() {
+    return "Highest fee tx: "
+        + orderByFee.last().getTransaction().getGasPrice().get().toHumanReadableString()
+        + ", Lowest fee tx: "
+        + orderByFee.first().getTransaction().getGasPrice().get().toHumanReadableString();
+  }
 }

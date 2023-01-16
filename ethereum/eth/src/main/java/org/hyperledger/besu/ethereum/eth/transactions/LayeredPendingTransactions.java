@@ -82,7 +82,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
       new TreeSet<>(Comparator.comparing(PendingTransaction::getSequence));
 
-  private final AtomicLong readyTotalSize = new AtomicLong();
+  private final AtomicLong spaceUsed = new AtomicLong();
 
   private final Object lock = new Object();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
@@ -122,7 +122,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       orderByMaxFee.clear();
       sparseBySender.clear();
       sparseEvictionOrder.clear();
-      readyTotalSize.set(0);
+      spaceUsed.set(0);
       prioritizedTransactions.reset();
     }
   }
@@ -224,11 +224,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
             .ifPresent(
                 replacedTx -> {
                   pendingTransactions.remove(replacedTx.getHash());
-                  decreaseTotalSize(replacedTx);
+                  decreaseSpaceUsed(replacedTx);
                 });
 
         pendingTransactions.put(pendingTransaction.getHash(), pendingTransaction);
-        increaseTotalSize(pendingTransaction);
+        increaseSpaceUsed(pendingTransaction);
         if (addStatus.isPrioritizable()) {
           prioritizeReadyTransaction(pendingTransaction, senderNonce, addStatus);
         }
@@ -398,7 +398,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       lastTx = lessReadySenderTxs.pollLastEntry().getValue();
       pendingTransactions.remove(lastTx.getHash());
       evictedTxs.add(lastTx);
-      decreaseTotalSize(lastTx);
+      decreaseSpaceUsed(lastTx);
       postponedSize += lastTx.getTransaction().getSize();
     }
 
@@ -421,7 +421,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final var oldestSparse = sparseEvictionOrder.pollFirst();
       pendingTransactions.remove(oldestSparse.getHash());
       evictedTxs.add(oldestSparse);
-      decreaseTotalSize(oldestSparse);
+      decreaseSpaceUsed(oldestSparse);
       postponedSize += oldestSparse.getTransaction().getSize();
 
       sparseBySender.compute(
@@ -435,11 +435,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   private long cacheFreeSpace() {
-    return poolConfig.getPendingTransactionsCacheSizeBytes() - readyTotalSize.get();
+    return poolConfig.getPendingTransactionsCacheSizeBytes() - spaceUsed.get();
   }
 
   public long getUsedSpace() {
-    return readyTotalSize.get();
+    return spaceUsed.get();
   }
 
   private void sparseToReady(
@@ -548,28 +548,28 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return null;
   }
 
-  private void increaseTotalSize(final PendingTransaction pendingTransaction) {
-    readyTotalSize.addAndGet(pendingTransaction.getTransaction().getSize());
+  private void increaseSpaceUsed(final PendingTransaction pendingTransaction) {
+    spaceUsed.addAndGet(pendingTransaction.getTransaction().getSize());
   }
 
   private boolean fitsInCache(final PendingTransaction pendingTransaction) {
-    return readyTotalSize.get() + pendingTransaction.getTransaction().getSize()
+    return spaceUsed.get() + pendingTransaction.getTransaction().getSize()
         <= poolConfig.getPendingTransactionsCacheSizeBytes();
   }
 
-  private void decreaseTotalSize(final PendingTransaction pendingTransaction) {
-    decreaseTotalSize(pendingTransaction.getTransaction());
+  private void decreaseSpaceUsed(final PendingTransaction pendingTransaction) {
+    decreaseSpaceUsed(pendingTransaction.getTransaction());
   }
 
-  private void decreaseTotalSize(final Transaction transaction) {
-    readyTotalSize.addAndGet(-transaction.getSize());
+  private void decreaseSpaceUsed(final Transaction transaction) {
+    spaceUsed.addAndGet(-transaction.getSize());
   }
 
   private Void removeFromReady(
       final NavigableMap<Long, PendingTransaction> senderTxs, final Transaction transaction) {
 
     if (senderTxs != null && senderTxs.remove(transaction.getNonce()) != null) {
-      decreaseTotalSize(transaction);
+      decreaseSpaceUsed(transaction);
     }
 
     return null;
@@ -581,7 +581,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final var confirmedTxsToRemove = senderTxs.headMap(maxConfirmedNonce, true);
       final List<PendingTransaction> removed =
           confirmedTxsToRemove.values().stream()
-              .peek(this::decreaseTotalSize)
+              .peek(this::decreaseSpaceUsed)
               .collect(Collectors.toUnmodifiableList());
       confirmedTxsToRemove.clear();
 
@@ -863,14 +863,18 @@ public class LayeredPendingTransactions implements PendingTransactions {
   @Override
   public String logStats() {
     synchronized (lock) {
-      return "Pending "
+      return "Pending: "
           + pendingTransactions.size()
-          + ", Ready "
+          + ", Ready: "
           + getReadyCount()
-          + ", Prioritized "
+          + ", Prioritized: "
           + prioritizedTransactions.size()
-          + ", Sparse "
-          + sparseEvictionOrder.size();
+          + ", Sparse: "
+          + sparseEvictionOrder.size()
+          + ", Space used: "
+          + spaceUsed.get()
+          + ", Prioritized stats: "
+          + prioritizedTransactions.logStats();
     }
   }
 }
