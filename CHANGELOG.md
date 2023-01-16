@@ -6,6 +6,7 @@
 
 ### Additions and Improvements
 - Added option to evm CLI tool to allow code execution at specific forks [#4913](https://github.com/hyperledger/besu/pull/4913)
+- Add implementation for eth_createAccessList RPC method [#4942](https://github.com/hyperledger/besu/pull/4942)
 
 ### Bug Fixes
 
