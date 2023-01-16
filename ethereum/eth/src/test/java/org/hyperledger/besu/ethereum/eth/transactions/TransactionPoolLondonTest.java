@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
