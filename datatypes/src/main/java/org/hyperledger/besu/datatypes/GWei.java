@@ -115,14 +115,8 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
     return new GWei(str);
   }
 
-  /**
-   * From Eth to GWei.
-   *
-   * @param eth the eth
-   * @return the GWei
-   */
-  public static GWei fromEth(final long eth) {
-    return GWei.of(BigInteger.valueOf(eth).multiply(BigInteger.TEN.pow(9)));
+  public Wei getAsWei() {
+    return Wei.of(getAsBigInteger().multiply(BigInteger.TEN.pow(9)));
   }
 
   @Override
