@@ -33,12 +33,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Enclave {
-
-  private static final Logger LOG = LoggerFactory.getLogger(Enclave.class);
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final String ORION = "application/vnd.orion.v1+json";
@@ -114,7 +110,6 @@ public class Enclave {
 
   public String deletePrivacyGroup(final String privacyGroupId, final String from) {
     final DeletePrivacyGroupRequest request = new DeletePrivacyGroupRequest(privacyGroupId, from);
-    LOG.info("post deletePrivacyGroup to enclave");
     return post(
         JSON,
         request,
@@ -152,15 +147,11 @@ public class Enclave {
       throw new EnclaveClientException(400, "Unable to serialize request.");
     }
 
-    LOG.info("post: before sending request to {}, ", endpoint);
     return requestTransmitter.post(mediaType, bodyText, endpoint, responseBodyHandler);
   }
 
   private <T> T handleJsonResponse(
       final int statusCode, final byte[] body, final Class<T> responseType) {
-
-    LOG.info("handleJsonResponse: statusCode {}, ", statusCode);
-    LOG.info("handleJsonResponse: body {}, ", new String(body, StandardCharsets.UTF_8));
 
     if (isSuccess(statusCode)) {
       return parseResponse(statusCode, body, responseType);

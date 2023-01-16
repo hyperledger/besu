@@ -222,7 +222,8 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    executor: besu_executor_small
+    parallelism: 6
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
@@ -231,7 +232,7 @@ jobs:
           name: AcceptanceTests
           no_output_timeout: 30m
           command: |
-            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/MultiTenancyAcceptanceTest.java" \
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
               | sed 's@/@.@g' \
               | sed 's/.\{5\}$//' \
@@ -356,80 +357,80 @@ workflows:
   default:
     jobs:
       - assemble
-#      - unitTests:
-#           requires:
-#            - assemble
-#      - testWindows:
-#          requires:
-#            - assemble
-#      - referenceTests:
-#          requires:
-#            - assemble
-#      - integrationTests:
-#          requires:
-#            - assemble
+      - unitTests:
+           requires:
+            - assemble
+      - testWindows:
+          requires:
+            - assemble
+      - referenceTests:
+          requires:
+            - assemble
+      - integrationTests:
+          requires:
+            - assemble
       - acceptanceTests:
           requires:
             - assemble
-#      - buildDocker:
-#          requires:
-#            - assemble
-#      - buildArm64Docker:
-#          requires:
-#            - assemble
-#      - publish:
-#          filters:
-#            branches:
-#              only:
-#                - main
-#                - /^release-.*/
-#          requires:
-#            - assemble
-#            - integrationTests
-#            - unitTests
-#            - acceptanceTests
-#            - referenceTests
-#            - buildDocker
-#      - publishDocker:
-#          filters:
-#            branches:
-#              only:
-#                - main
-#                - /^release-.*/
-#          requires:
-#            - assemble
-#            - integrationTests
-#            - unitTests
-#            - acceptanceTests
-#            - referenceTests
-#            - buildDocker
-#          context:
-#            - besu-dockerhub-rw
-#      - publishArm64Docker:
-#          filters:
-#            branches:
-#              only:
-#                - main
-#                - /^release-.*/
-#          requires:
-#            - integrationTests
-#            - unitTests
-#            - acceptanceTests
-#            - referenceTests
-#            - buildArm64Docker
-#          context:
-#            - besu-dockerhub-rw
-#      - manifestDocker:
-#          filters:
-#            branches:
-#              only:
-#                - main
-#                - /^release-.*/
-#          requires:
-#            - publishDocker
-#            - publishArm64Docker
-#          context:
-#            - besu-dockerhub-rw
+      - buildDocker:
+          requires:
+            - assemble
+      - buildArm64Docker:
+          requires:
+            - assemble
+      - publish:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - assemble
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildDocker
+      - publishDocker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - assemble
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildDocker
+          context:
+            - besu-dockerhub-rw
+      - publishArm64Docker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildArm64Docker
+          context:
+            - besu-dockerhub-rw
+      - manifestDocker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - publishDocker
+            - publishArm64Docker
+          context:
+            - besu-dockerhub-rw
 
   nightly:
     triggers:

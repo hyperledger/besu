@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN" monitorInterval="30">
   <Properties>
-    <Property name="root.log.level">DEBUG</Property>
+    <Property name="root.log.level">INFO</Property>
   </Properties>
 
   <Appenders>
@@ -77,7 +77,7 @@
 
   </Appenders>
   <Loggers>
-    <Logger name="org.hyperledger.besu.SubProcessLog" level="DEBUG" additivity="false">
+    <Logger name="org.hyperledger.besu.SubProcessLog" level="INFO" additivity="false">
       <AppenderRef ref="SubProcessConsole" />
       <AppenderRef ref="PerTestSubprocessFile" />
     </Logger>
