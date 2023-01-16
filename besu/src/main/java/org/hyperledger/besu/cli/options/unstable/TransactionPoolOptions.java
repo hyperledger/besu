@@ -111,7 +111,7 @@ public class TransactionPoolOptions
 
   @Override
   public ImmutableTransactionPoolConfiguration.Builder toDomainObject() {
-    if (maxFutureTransactionsByAccount != null) {
+    if (maxFutureTransactionsByAccount > 0) {
       LOG.warn(
           DEPRECATION_WARNING_MSG,
           "--tx-pool-future-max-by-account",
