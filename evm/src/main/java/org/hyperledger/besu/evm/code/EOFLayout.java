@@ -209,6 +209,12 @@ public class EOFLayout {
     return new EOFLayout(container, version, codeSections);
   }
 
+  /**
+   * Read unsigned short int.
+   *
+   * @param inputStream the input stream
+   * @return the int
+   */
   static int readUnsignedShort(final ByteArrayInputStream inputStream) {
     if (inputStream.available() < 2) {
       return -1;
@@ -237,6 +243,7 @@ public class EOFLayout {
 
   /**
    * Get code section count.
+   *
    * @return the code section count
    */
   public int getCodeSectionCount() {
@@ -246,7 +253,8 @@ public class EOFLayout {
   /**
    * Get code sections.
    *
-   * @return the bytes [ ]
+   * @param i the index
+   * @return the Code section
    */
   public CodeSection getCodeSection(final int i) {
     return codeSections[i];

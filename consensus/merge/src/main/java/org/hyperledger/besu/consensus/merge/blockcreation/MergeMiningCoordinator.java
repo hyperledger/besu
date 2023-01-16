@@ -73,7 +73,6 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param newHead the new head
    * @param finalizedBlockHash the finalized block hash
    * @param safeBlockHash the safe block hash
-   * @param maybePayloadAttributes the maybe payload attributes
    * @return the forkchoice result
    */
   ForkchoiceResult updateForkChoice(

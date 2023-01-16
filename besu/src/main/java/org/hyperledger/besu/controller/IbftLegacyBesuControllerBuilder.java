@@ -59,6 +59,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   private final BlockInterface blockInterface = new IbftLegacyBlockInterface();
 
   // TODO remove this warning once IBFT1 has been deprecated
+  /** Default constructor */
   public IbftLegacyBesuControllerBuilder() {
     LOG.warn(
         "IBFT1 is being deprecated and will be removed in a future release. Consider using QBFT instead of IBFT1 or using GoQuorum instead of Besu if you need to use IBFT1");

@@ -38,6 +38,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  /** The maximum init code size */
   protected int maxInitcodeSize;
 
   /**

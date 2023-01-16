@@ -124,7 +124,9 @@ public class MainnetEVMs {
   /** The constant DEV_NET_CHAIN_ID. */
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
+  /** The constant SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT. */
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 0x6000;
+  /** The constant SHANGHAI_INIT_CODE_SIZE_LIMIT. */
   public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
 
   private MainnetEVMs() {
