@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -53,7 +54,9 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
@@ -579,12 +582,20 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
         blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
     setupValidForkchoiceUpdate(mockHeader);
 
+    var withdrawals =
+        List.of(
+            new WithdrawalParameter(
+                "0x1",
+                "0x10000",
+                "0x0100000000000000000000000000000000000000",
+                "0x100000000000000000000000000000000000000000000000000000000000000"));
+
     var payloadParams =
         new EnginePayloadAttributesParameter(
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
-            emptyList());
+            withdrawals);
 
     var mockPayloadId =
         PayloadIdentifier.forPayloadParams(
@@ -598,7 +609,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getTimestamp(),
             payloadParams.getPrevRandao(),
             Address.ECREC,
-            Optional.empty()))
+            Optional.of(
+                withdrawals.stream()
+                    .map(WithdrawalParameter::toWithdrawal)
+                    .collect(Collectors.toList()))))
         .thenReturn(mockPayloadId);
 
     assertSuccessWithPayloadForForkchoiceResult(
