@@ -31,8 +31,24 @@ import org.junit.Test;
 public class BlockValueCalculatorTest {
 
   @Test
+  public void shouldCalculateZeroBlockValueForEmptyTransactions() {
+    final long baseFee = 15;
+    final BlockHeader blockHeader =
+        new BlockHeaderTestFixture()
+            .prevRandao(Bytes32.random())
+            .baseFeePerGas(Wei.of(baseFee))
+            .buildHeader();
+    final Block block =
+        new Block(blockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+    long blockValue =
+        BlockValueCalculator.calculateBlockValue(
+            new BlockWithReceipts(block, Collections.emptyList()));
+    assertThat(blockValue).isEqualTo(0);
+  }
+
+  @Test
   public void shouldCalculateCorrectBlockValue() {
-    // Generate block with two transactions
+    // Generate block with three transactions
     final long baseFee = 15;
     final long maxFee = 20;
     final Transaction tx1 =
