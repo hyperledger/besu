@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
@@ -62,9 +62,9 @@ public interface MergeContext extends ConsensusContext {
 
   boolean validateCandidateHead(final BlockHeader candidateHeader);
 
-  void putPayloadById(final PayloadIdentifier payloadId, final Block block);
+  void putPayloadById(final PayloadIdentifier payloadId, final BlockWithReceipts blockWithReceipts);
 
-  Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
+  Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId);
 
   default void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {}
 
