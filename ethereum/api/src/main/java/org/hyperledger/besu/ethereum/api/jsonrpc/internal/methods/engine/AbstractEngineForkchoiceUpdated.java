@@ -135,8 +135,16 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
+    final Optional<List<Withdrawal>> withdrawals =
+        maybePayloadAttributes.flatMap(
+            payloadAttributes ->
+                Optional.ofNullable(payloadAttributes.getWithdrawals())
+                    .map(
+                        ws ->
+                            ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList())));
+
     if (maybePayloadAttributes.isPresent()
-        && !isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
+        && !isPayloadAttributesValid(maybePayloadAttributes.get(), withdrawals, newHead)) {
       warnLambda(
           LOG,
           "Invalid payload attributes: {}",
@@ -162,7 +170,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     newHead,
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
-                    payloadAttributes.getSuggestedFeeRecipient()));
+                    payloadAttributes.getSuggestedFeeRecipient(),
+                    withdrawals));
 
     payloadId.ifPresent(
         pid ->
@@ -183,19 +192,19 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   private boolean isPayloadAttributesValid(
-      final EnginePayloadAttributesParameter payloadAttributes, final BlockHeader headBlockHeader) {
+      final EnginePayloadAttributesParameter payloadAttributes,
+      final Optional<List<Withdrawal>> withdrawals,
+      final BlockHeader headBlockHeader) {
 
     final boolean newTimestampGreaterThanHead =
         payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
-    return newTimestampGreaterThanHead && isWithdrawalsValid(payloadAttributes);
+    return newTimestampGreaterThanHead && isWithdrawalsValid(payloadAttributes, withdrawals);
   }
 
-  private boolean isWithdrawalsValid(final EnginePayloadAttributesParameter payloadAttributes) {
-    final List<Withdrawal> withdrawals =
-        Optional.ofNullable(payloadAttributes.getWithdrawals())
-            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
-            .orElse(null);
-
+  private boolean isWithdrawalsValid(
+      final EnginePayloadAttributesParameter payloadAttributes,
+      final Optional<List<Withdrawal>> maybeWithdrawals) {
+    final List<Withdrawal> withdrawals = maybeWithdrawals.orElse(null);
     return timestampSchedule
         .getByTimestamp(payloadAttributes.getTimestamp())
         .map(

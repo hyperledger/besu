@@ -23,7 +23,9 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -34,7 +36,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final BlockHeader parentHeader,
       final Long timestamp,
       final Bytes32 prevRandao,
-      final Address feeRecipient);
+      final Address feeRecipient,
+      final Optional<List<Withdrawal>> withdrawals);
 
   @Override
   default boolean isCompatibleWithEngineApi() {
