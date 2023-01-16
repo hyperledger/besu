@@ -154,5 +154,4 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
   public static GWei fromQuantity(final Quantity quantity) {
     return GWei.wrap((Bytes) quantity);
   }
-
 }
