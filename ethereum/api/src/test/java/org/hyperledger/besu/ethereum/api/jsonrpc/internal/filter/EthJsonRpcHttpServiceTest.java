@@ -125,14 +125,14 @@ public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
       throws Exception {
     final RequestBody body =
         RequestBody.create(
-            JSON,
             "{\"jsonrpc\":\"2.0\",\"id\":"
                 + Json.encode(id)
                 + ",\"params\": "
                 + params
                 + ",\"method\":\""
                 + method
-                + "\"}");
+                + "\"}",
+            JSON);
     final Request request = new Request.Builder().post(body).url(baseUrl).build();
     return client.newCall(request).execute();
   }
