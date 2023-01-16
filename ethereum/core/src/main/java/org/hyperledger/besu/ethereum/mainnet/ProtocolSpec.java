@@ -75,6 +75,7 @@ public class ProtocolSpec {
   private final BadBlockManager badBlockManager;
 
   private final Optional<PoWHasher> powHasher;
+  private final WithdrawalsValidator withdrawalsValidator;
 
   /**
    * Creates a new protocol specification instance.
@@ -102,6 +103,7 @@ public class ProtocolSpec {
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param powHasher the proof-of-work hasher
+   * @param withdrawalsValidator the withdrawals validator to use
    */
   public ProtocolSpec(
       final String name,
@@ -126,7 +128,8 @@ public class ProtocolSpec {
       final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
       final BadBlockManager badBlockManager,
-      final Optional<PoWHasher> powHasher) {
+      final Optional<PoWHasher> powHasher,
+      final WithdrawalsValidator withdrawalsValidator) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -150,6 +153,7 @@ public class ProtocolSpec {
     this.feeMarket = feeMarket;
     this.badBlockManager = badBlockManager;
     this.powHasher = powHasher;
+    this.withdrawalsValidator = withdrawalsValidator;
   }
 
   /**
@@ -348,5 +352,9 @@ public class ProtocolSpec {
    */
   public Optional<PoWHasher> getPoWHasher() {
     return powHasher;
+  }
+
+  public WithdrawalsValidator getWithdrawalsValidator() {
+    return withdrawalsValidator;
   }
 }
