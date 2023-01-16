@@ -350,9 +350,12 @@ public class JsonRpcHttpService {
 
     nonBlockingJsonRpcExecutorHandler =
         (NonBlockingJsonRpcExecutorHandler)
-            HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(1));
+            HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(4));
 
-    mainRoute.blockingHandler(nonBlockingJsonRpcExecutorHandler, false);
+    mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
+
+    mainRoute.blockingHandler(
+        HandlerFactory.jsonRpcExecutor(createJsonRpcExecutor(), tracer), false);
 
     if (maybeAuthenticationService.isPresent()) {
       router
@@ -374,31 +377,28 @@ public class JsonRpcHttpService {
     final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles = new ArrayList<>(noOfInstances);
 
     for (int i = 0; i < noOfInstances; i++) {
-      jsonRpcExecutorVerticles.add(
-          maybeAuthenticationService
-              .map(
-                  service ->
-                      new JsonRpcExecutorVerticle(
-                          new JsonRpcExecutor(
-                              new AuthenticatedJsonRpcProcessor(
-                                  new TimedJsonRpcProcessor(
-                                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
-                                      requestTimer),
-                                  service,
-                                  config.getNoAuthRpcApis()),
-                              rpcMethods),
-                          tracer))
-              .orElseGet(
-                  () ->
-                      new JsonRpcExecutorVerticle(
-                          new JsonRpcExecutor(
-                              new TimedJsonRpcProcessor(
-                                  new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()),
-                                  requestTimer),
-                              rpcMethods),
-                          tracer)));
+      jsonRpcExecutorVerticles.add(new JsonRpcExecutorVerticle(createJsonRpcExecutor(), tracer));
     }
     return jsonRpcExecutorVerticles;
+  }
+
+  private JsonRpcExecutor createJsonRpcExecutor() {
+    return maybeAuthenticationService
+        .map(
+            service ->
+                new JsonRpcExecutor(
+                    new AuthenticatedJsonRpcProcessor(
+                        new TimedJsonRpcProcessor(
+                            new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                        service,
+                        config.getNoAuthRpcApis()),
+                    rpcMethods))
+        .orElseGet(
+            () ->
+                new JsonRpcExecutor(
+                    new TimedJsonRpcProcessor(
+                        new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                    rpcMethods));
   }
 
   private void createSpan(final RoutingContext routingContext) {
