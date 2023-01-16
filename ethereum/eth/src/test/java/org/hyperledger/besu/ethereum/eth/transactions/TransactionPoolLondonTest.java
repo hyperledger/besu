@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -58,7 +57,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   private static final Wei BASE_FEE_FLOOR = Wei.of(7L);
 
   @Override
-  protected AbstractPendingTransactionsSorter createPendingTransactionsSorter() {
+  protected PendingTransactions createPendingTransactionsSorter() {
 
     return new BaseFeePendingTransactionsSorter(
         ImmutableTransactionPoolConfiguration.builder()
@@ -267,13 +266,6 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     }
 
     return transactions.size();
-  }
-
-  @Test
-  @Override
-  @Ignore
-  public void shouldRejectLocalTransactionIfFeeCapExceeded() {
-    // ignore since this is going to fail until the branch with the fix is released
   }
 
   private void whenBlockBaseFeeIs(final Wei baseFee) {
