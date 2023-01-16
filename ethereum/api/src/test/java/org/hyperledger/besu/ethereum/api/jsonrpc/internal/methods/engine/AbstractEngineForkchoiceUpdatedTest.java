@@ -527,7 +527,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getSuggestedFeeRecipient());
 
     when(mergeCoordinator.preparePayload(
-            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
+            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC, Optional.empty()))
         .thenReturn(mockPayloadId);
 
     assertSuccessWithPayloadForForkchoiceResult(
@@ -590,7 +590,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getSuggestedFeeRecipient());
 
     when(mergeCoordinator.preparePayload(
-            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
+            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC, Optional.empty()))
         .thenReturn(mockPayloadId);
 
     assertSuccessWithPayloadForForkchoiceResult(
@@ -625,7 +625,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getSuggestedFeeRecipient());
 
     when(mergeCoordinator.preparePayload(
-            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
+            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC, Optional.empty()))
         .thenReturn(mockPayloadId);
 
     assertSuccessWithPayloadForForkchoiceResult(
