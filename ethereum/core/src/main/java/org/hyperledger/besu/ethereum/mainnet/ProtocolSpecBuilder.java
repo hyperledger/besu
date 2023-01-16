@@ -72,9 +72,9 @@ public class ProtocolSpecBuilder {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
-
-  private WithdrawalsProcessor withdrawalsProcessor =
-      new WithdrawalsProcessor.NoOpWithdrawalsProcessor();
+  private WithdrawalsValidator withdrawalsValidator =
+      new WithdrawalsValidator.ProhibitedWithdrawals();
+  private WithdrawalsProcessor withdrawalsProcessor;
 
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
@@ -252,6 +252,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder withdrawalsValidator(final WithdrawalsValidator withdrawalsValidator) {
+    this.withdrawalsValidator = withdrawalsValidator;
+    return this;
+  }
+
   public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
@@ -357,6 +362,7 @@ public class ProtocolSpecBuilder {
         feeMarket,
         badBlockManager,
         Optional.ofNullable(powHasher),
+        withdrawalsValidator,
         withdrawalsProcessor);
   }
 

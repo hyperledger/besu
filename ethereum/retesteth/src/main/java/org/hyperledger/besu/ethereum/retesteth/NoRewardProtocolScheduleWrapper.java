@@ -81,6 +81,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getFeeMarket(),
         original.getBadBlocksManager(),
         Optional.empty(),
+        original.getWithdrawalsValidator());
         original.getWithdrawalsProcessor());
   }
 
