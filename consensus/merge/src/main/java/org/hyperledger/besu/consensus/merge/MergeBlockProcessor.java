@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -34,14 +35,16 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        goQuorumPrivacyParameters);
+        goQuorumPrivacyParameters,
+        protocolSchedule);
     this.mergeContext = PostMergeContext.get();
   }
 
