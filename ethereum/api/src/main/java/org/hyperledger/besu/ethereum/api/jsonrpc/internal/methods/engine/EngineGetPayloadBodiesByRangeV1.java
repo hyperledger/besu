@@ -47,7 +47,7 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_GET_PAYLOAD_BODIES_BY_Range_V1.getMethodName();
+    return RpcMethod.ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1.getMethodName();
   }
 
   @Override

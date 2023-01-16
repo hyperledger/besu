@@ -156,7 +156,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 "2.0",
-                RpcMethod.ENGINE_GET_PAYLOAD_BODIES_BY_Range_V1.getMethodName(),
+                RpcMethod.ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1.getMethodName(),
                 new Object[] {startBlockNumber, range})));
   }
 
