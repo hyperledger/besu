@@ -18,7 +18,7 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -28,15 +28,15 @@ import org.apache.tuweni.units.bigints.UInt64;
 
 public class WithdrawalDecoder {
 
-  public static Withdrawal decode(final RLPInput input) {
-    input.enterList();
-    final long index = input.readLongScalar();
-    final long validatorIndex = input.readLongScalar();
-    final Address address = Address.readFrom(input);
-    final Wei amount = Wei.of(input.readUInt256Scalar());
-    input.leaveList();
+  public static Withdrawal decode(final RLPInput rlpInput) {
+    rlpInput.enterList();
+    final UInt64 index = UInt64.valueOf(rlpInput.readBigIntegerScalar());
+    final UInt64 validatorIndex = UInt64.valueOf(rlpInput.readBigIntegerScalar());
+    final Address address = Address.readFrom(rlpInput);
+    final GWei amount = GWei.of(rlpInput.readUInt64Scalar());
+    rlpInput.leaveList();
 
-    return new Withdrawal(UInt64.valueOf(index), UInt64.valueOf(validatorIndex), address, amount);
+    return new Withdrawal(index, validatorIndex, address, amount);
   }
 
   public static Withdrawal decodeOpaqueBytes(final Bytes input) {

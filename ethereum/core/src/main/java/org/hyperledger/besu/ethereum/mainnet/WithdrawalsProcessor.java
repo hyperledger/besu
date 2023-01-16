@@ -42,7 +42,7 @@ public interface WithdrawalsProcessor {
     public void processWithdrawal(final Withdrawal withdrawal, final WorldUpdater worldUpdater) {
       try {
         final EvmAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
-        account.getMutable().setBalance(account.getBalance().add(withdrawal.getAmount()));
+        account.getMutable().setBalance(account.getBalance().add(withdrawal.getAmount().getAsWei()));
         worldUpdater.commit();
       } catch (Exception e) {
         final String message =

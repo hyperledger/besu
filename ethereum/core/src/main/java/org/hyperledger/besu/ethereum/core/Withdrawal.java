@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.datatypes.GWei;
 
 import java.util.StringJoiner;
 
@@ -34,10 +35,10 @@ public class Withdrawal {
   private final UInt64 index;
   private final UInt64 validatorIndex;
   private final Address address;
-  private final Wei amount;
+  private final GWei amount;
 
   public Withdrawal(
-      final UInt64 index, final UInt64 validatorIndex, final Address address, final Wei amount) {
+      final UInt64 index, final UInt64 validatorIndex, final Address address, final GWei amount) {
     this.index = index;
     this.validatorIndex = validatorIndex;
     this.address = address;
@@ -60,7 +61,7 @@ public class Withdrawal {
     return address;
   }
 
-  public Wei getAmount() {
+  public GWei getAmount() {
     return amount;
   }
 
