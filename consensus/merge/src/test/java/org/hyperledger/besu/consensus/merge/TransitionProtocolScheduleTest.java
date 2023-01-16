@@ -162,8 +162,7 @@ public class TransitionProtocolScheduleTest {
 
   @Test
   public void getByBlockNumber_returnsTimestampScheduleIfPresent() {
-    final Block block = new Block(blockHeader, BlockBody.empty());
-    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.of(block));
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
     when(timestampSchedule.getByBlockHeader(blockHeader)).thenReturn(mock(ProtocolSpec.class));
 
     assertThat(transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER)).isNotNull();
