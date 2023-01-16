@@ -105,7 +105,7 @@ public class BlockResultFactory {
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    final long blockValue = BlockValueCalculator.calculateBlockValue(blockWithReceipts);
+    final long blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
     return new EngineGetPayloadResultV2(
         blockWithReceipts.getHeader(), txs, Quantity.create(blockValue));
   }

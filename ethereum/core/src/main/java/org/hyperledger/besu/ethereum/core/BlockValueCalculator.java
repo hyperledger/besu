@@ -20,7 +20,7 @@ import java.util.List;
 
 public class BlockValueCalculator {
 
-  public static long calculateBlockValue(final BlockWithReceipts blockWithReceipts) {
+  public long calculateBlockValue(final BlockWithReceipts blockWithReceipts) {
     final Block block = blockWithReceipts.getBlock();
     final List<Transaction> txs = block.getBody().getTransactions();
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();

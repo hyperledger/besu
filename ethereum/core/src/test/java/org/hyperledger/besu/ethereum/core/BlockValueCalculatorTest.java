@@ -41,8 +41,8 @@ public class BlockValueCalculatorTest {
     final Block block =
         new Block(blockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
     long blockValue =
-        BlockValueCalculator.calculateBlockValue(
-            new BlockWithReceipts(block, Collections.emptyList()));
+        new BlockValueCalculator()
+            .calculateBlockValue(new BlockWithReceipts(block, Collections.emptyList()));
     assertThat(blockValue).isEqualTo(0);
   }
 
@@ -85,8 +85,9 @@ public class BlockValueCalculatorTest {
     final Block block =
         new Block(blockHeader, new BlockBody(List.of(tx1, tx2, tx3), Collections.emptyList()));
     long blockValue =
-        BlockValueCalculator.calculateBlockValue(
-            new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3)));
+        new BlockValueCalculator()
+            .calculateBlockValue(
+                new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3)));
     // Block value = 71 * 1 + 143 * 2 + 214 * 5 = 1427
     assertThat(blockValue).isEqualTo(1427);
   }
