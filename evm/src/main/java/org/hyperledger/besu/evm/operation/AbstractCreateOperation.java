@@ -36,13 +36,17 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  protected int maxInitcodeSize;
+
   protected AbstractCreateOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final GasCalculator gasCalculator) {
+      final GasCalculator gasCalculator,
+      final int maxInitcodeSize) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
+    this.maxInitcodeSize = maxInitcodeSize;
   }
 
   @Override
@@ -74,6 +78,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
       final long inputOffset = clampedToLong(frame.getStackItem(1));
       final long inputSize = clampedToLong(frame.getStackItem(2));
+      if (inputSize > maxInitcodeSize) {
+        frame.popStackItems(getStackItemsConsumed());
+        return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+      }
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
       Code code = evm.getCode(Hash.hash(inputData), inputData);
 

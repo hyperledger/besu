@@ -38,9 +38,9 @@ class CallFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b0" + "0001" + "00");
-    when(mockCode.getCodeBytes(0)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 1, 2, 3);
+    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =
@@ -68,9 +68,9 @@ class CallFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b0" + "03ff" + "00");
-    when(mockCode.getCodeBytes(0)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 1, 2, 3);
+    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =
@@ -98,9 +98,9 @@ class CallFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b0" + "0001" + "00");
-    when(mockCode.getCodeBytes(0)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 1, 2, 1023);
+    final CodeSection codeSection = new CodeSection(0, 1, 2, 1023, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =
@@ -128,9 +128,9 @@ class CallFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b0" + "0001" + "00");
-    when(mockCode.getCodeBytes(0)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 5, 2, 5);
+    final CodeSection codeSection = new CodeSection(0, 5, 2, 5, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =

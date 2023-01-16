@@ -15,7 +15,8 @@
  */
 package org.hyperledger.besu.evmtool;
 
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.function.Function;
@@ -30,7 +31,8 @@ public class ProtocolModule {
 
   @Provides
   @Singleton
-  Function<Integer, ProtocolSpec> getProtocolSpec(final ProtocolSchedule protocolSchedule) {
-    return protocolSchedule::getByBlockNumber;
+  Function<BlockHeader, ProtocolSpec> getProtocolSpec(
+      final HeaderBasedProtocolSchedule protocolSchedule) {
+    return protocolSchedule::getByBlockHeader;
   }
 }

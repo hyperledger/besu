@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -100,11 +101,17 @@ public class JsonRpcMethodsFactory {
                   protocolSchedule,
                   metricsSystem,
                   transactionPool,
+                  synchronizer,
                   dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
-                  miningCoordinator, protocolContext, ethPeers, consensusEngineServer),
+                  miningCoordinator,
+                  MergeProtocolSchedule.createTimestamp(
+                      genesisConfigOptions, privacyParameters, false),
+                  protocolContext,
+                  ethPeers,
+                  consensusEngineServer),
               new GoQuorumJsonRpcPrivacyMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(

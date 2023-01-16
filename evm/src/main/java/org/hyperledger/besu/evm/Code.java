@@ -31,21 +31,12 @@ public interface Code {
   int getSize();
 
   /**
-   * Gets the code bytes. For legacy code only section 0 exists at address `0`. For V1/EOF it is the
-   * corresponding code section from the container header.
-   *
-   * @param section the section number to retrieve.
-   * @return the code bytes, or null of there is no code for that section number.
-   */
-  Bytes getCodeBytes(final int section);
-
-  /**
    * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
    * the same as getCodeBytes, for V1 it is the entire container, not just the data section.
    *
    * @return container bytes.
    */
-  Bytes getContainerBytes();
+  Bytes getBytes();
 
   /**
    * Hash of the entire container
@@ -77,4 +68,11 @@ public interface Code {
    * @return The code section, or null of there is no associated section
    */
   CodeSection getCodeSection(final int section);
+
+  /**
+   * The number of code sections in this container.
+   *
+   * @return 1 for legacy, count for valid, zero for invalid.
+   */
+  int getCodeSectionCount();
 }

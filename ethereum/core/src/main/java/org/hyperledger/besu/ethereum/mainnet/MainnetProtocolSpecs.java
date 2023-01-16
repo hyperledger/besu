@@ -36,10 +36,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.contractvalidation.CachedInvalidCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -532,7 +530,8 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    quorumCompatibilityMode))
+                    quorumCompatibilityMode,
+                    Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -655,9 +654,6 @@ public abstract class MainnetProtocolSpecs {
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
             : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
 
-    // constant for max initcode size for EIP-3860 limit and meter initcode
-    final int contractSizeLimit = configContractSizeLimit.orElse(SHANGHAI_INIT_CODE_SIZE_LIMIT);
-
     return parisDefinition(
             chainId,
             configContractSizeLimit,
@@ -690,17 +686,20 @@ public abstract class MainnetProtocolSpecs {
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
-        .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
-                new ContractCreationProcessor(
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
                     gasCalculator,
-                    evm,
+                    londonFeeMarket,
                     true,
-                    List.of(
-                        MaxCodeSizeRule.of(contractSizeLimit),
-                        CachedInvalidCodeRule.of(EvmSpecVersion.SHANGHAI)),
-                    1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
+                    quorumCompatibilityMode,
+                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
+        .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .name("Shanghai");
   }
 
