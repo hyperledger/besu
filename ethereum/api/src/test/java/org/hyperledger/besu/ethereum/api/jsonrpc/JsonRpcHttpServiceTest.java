@@ -513,9 +513,12 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Address address = gen.address();
     final String mockBalance = "0x35";
+
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
     when(blockchainQueries.accountBalance(eq(address), eq(Hash.ZERO)))
         .thenReturn(Optional.of(Wei.fromHexString(mockBalance)));
 
@@ -537,7 +540,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(mockBalance).isEqualTo(result);
+      assertThat(result).isEqualTo(mockBalance);
     }
   }
 
@@ -549,7 +552,9 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final Wei mockBalance = Wei.of(0);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
     when(blockchainQueries.accountBalance(eq(address), eq(Hash.ZERO)))
         .thenReturn(Optional.of(mockBalance));
 
@@ -604,7 +609,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(mockBalance).isEqualTo(result);
+      assertThat(result).isEqualTo(mockBalance);
     }
   }
 
@@ -641,7 +646,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(mockBalance).isEqualTo(result);
+      assertThat(result).isEqualTo(mockBalance);
     }
   }
 
@@ -1866,7 +1871,9 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final String mockStorage = "0x0000000000000000000000000000000000000000000000000000000000000001";
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
     when(blockchainQueries.storageAt(eq(address), eq(UInt256.ZERO), eq(Hash.ZERO)))
         .thenReturn(Optional.of(UInt256.fromHexString(mockStorage)));
 
@@ -1890,8 +1897,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat("0x0000000000000000000000000000000000000000000000000000000000000001")
-          .isEqualTo(result);
+      assertThat(result)
+          .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000001");
     }
   }
 
@@ -1903,7 +1910,9 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final String mockStorage = "0x0000000000000000000000000000000000000000000000000000000000000006";
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
     when(blockchainQueries.storageAt(eq(address), eq(UInt256.ONE), eq(Hash.ZERO)))
         .thenReturn(Optional.of(UInt256.fromHexString(mockStorage)));
 
@@ -1927,8 +1936,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat("0x0000000000000000000000000000000000000000000000000000000000000006")
-          .isEqualTo(result);
+      assertThat(result)
+          .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000006");
     }
   }
 
@@ -1963,8 +1972,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat("0x0000000000000000000000000000000000000000000000000000000000000006")
-          .isEqualTo(result);
+      assertThat(result)
+          .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000006");
     }
   }
 
@@ -2002,8 +2011,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
       // Check result
       final Object result = json.getString("result");
-      assertThat("0x0000000000000000000000000000000000000000000000000000000000000002")
-          .isEqualTo(result);
+      assertThat(result)
+          .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000002");
     }
   }
 
