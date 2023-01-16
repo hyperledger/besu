@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
-import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -239,7 +239,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     BlockProcessingResult result = validateBlock(emptyBlock);
     if (result.isSuccessful()) {
-      mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+      mergeContext.putPayloadById(
+          payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
       debugLambda(
           LOG,
           "Built empty block proposal {} for payload {}",
@@ -361,7 +362,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-      mergeContext.putPayloadById(payloadIdentifier, bestBlock);
+      mergeContext.putPayloadById(
+          payloadIdentifier, new BlockWithReceipts(bestBlock, resultBest.getReceipts()));
       debugLambda(
           LOG,
           "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms",
@@ -463,10 +465,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead,
-      final Hash finalizedBlockHash,
-      final Hash safeBlockHash,
-      final Optional<PayloadAttributes> maybePayloadAttributes) {
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
 
@@ -501,11 +500,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               blockchain.setSafeBlock(safeBlockHash);
               mergeContext.setSafeBlock(newSafeBlock);
             });
-
-    if (maybePayloadAttributes.isPresent()
-        && !isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
-      return ForkchoiceResult.withFailure(INVALID_PAYLOAD_ATTRIBUTES, null, Optional.empty());
-    }
 
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
@@ -736,11 +730,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           newBlock::toLogString);
       return false;
     }
-  }
-
-  private boolean isPayloadAttributesValid(
-      final PayloadAttributes payloadAttributes, final BlockHeader headBlockHeader) {
-    return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
   @Override

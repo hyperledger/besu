@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -38,6 +40,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
@@ -46,6 +49,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -66,6 +72,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   interface MethodFactory {
     AbstractEngineForkchoiceUpdated create(
         final Vertx vertx,
+        final TimestampSchedule timestampSchedule,
         final ProtocolContext protocolContext,
         final MergeMiningCoordinator mergeCoordinator,
         final EngineCallListener engineCallListener);
@@ -84,6 +91,11 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   private static final EngineForkchoiceUpdatedParameter mockFcuParam =
       new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash);
 
+  private static final BlockHeaderTestFixture blockHeaderBuilder =
+      new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
+
+  @Mock private ProtocolSpec protocolSpec;
+  @Mock private TimestampSchedule timestampSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
@@ -98,8 +110,12 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   public void before() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
+    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.of(protocolSpec));
     this.method =
-        methodFactory.create(vertx, protocolContext, mergeCoordinator, engineCallListener);
+        methodFactory.create(
+            vertx, timestampSchedule, protocolContext, mergeCoordinator, engineCallListener);
   }
 
   @Test
@@ -120,7 +136,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidOnBadTerminalBlock() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
 
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
@@ -135,7 +151,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidWithLatestValidHashOnBadBlock() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
     when(mergeCoordinator.isBadBlock(mockHeader.getHash())).thenReturn(true);
     when(mergeCoordinator.getLatestValidHashOfBadBlock(mockHeader.getHash()))
@@ -158,7 +174,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidWithoutFinalizedOrPayload() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
@@ -172,10 +188,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidOnOldTimestamp() {
-    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader parent = blockHeaderBuilder.buildHeader();
     BlockHeader mockHeader =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
+        blockHeaderBuilder
             .parentHash(parent.getHash())
             .timestamp(parent.getTimestamp())
             .buildHeader();
@@ -185,8 +200,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(mergeContext.isSyncing()).thenReturn(false);
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), parent.getHash()))
         .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.updateForkChoice(
-            mockHeader, parent.getHash(), parent.getHash(), Optional.empty()))
+    when(mergeCoordinator.updateForkChoice(mockHeader, parent.getHash(), parent.getHash()))
         .thenReturn(
             ForkchoiceResult.withFailure(
                 ForkchoiceResult.Status.INVALID,
@@ -209,14 +223,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidWithNewHeadAndFinalizedNoPayload() {
-    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    BlockHeader mockParent = builder.number(9L).buildHeader();
-    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
 
     assertSuccessWithPayloadForForkchoiceResult(
         new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
@@ -227,7 +237,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidWithoutFinalizedWithPayload() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
@@ -236,7 +246,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
         new EnginePayloadAttributesParameter(
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
-            Address.ECREC.toString());
+            Address.ECREC.toString(),
+            null);
     var mockPayloadId =
         PayloadIdentifier.forPayloadParams(
             mockHeader.getHash(),
@@ -260,7 +271,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfFinalizedBlockIsUnknown() {
-    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader newHead = blockHeaderBuilder.buildHeader();
     Hash finalizedBlockHash = Hash.hash(Bytes32.fromHexStringLenient("0x424abcdef"));
 
     when(blockchain.getBlockHeader(finalizedBlockHash)).thenReturn(Optional.empty());
@@ -280,8 +291,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfFinalizedBlockIsNotAnAncestorOfNewHead() {
-    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader finalized = blockHeaderBuilder.buildHeader();
+    BlockHeader newHead = blockHeaderBuilder.buildHeader();
 
     when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
@@ -302,10 +313,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfSafeHeadZeroWithFinalizedBlock() {
-    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader parent = blockHeaderBuilder.buildHeader();
     BlockHeader newHead =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
+        blockHeaderBuilder
             .parentHash(parent.getHash())
             .timestamp(parent.getTimestamp())
             .buildHeader();
@@ -327,10 +337,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsUnknown() {
-    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader finalized = blockHeaderBuilder.buildHeader();
     BlockHeader newHead =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
+        blockHeaderBuilder
             .parentHash(finalized.getHash())
             .timestamp(finalized.getTimestamp())
             .buildHeader();
@@ -355,9 +364,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsNotADescendantOfFinalized() {
-    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader safeBlock = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader finalized = blockHeaderBuilder.buildHeader();
+    BlockHeader newHead = blockHeaderBuilder.buildHeader();
+    BlockHeader safeBlock = blockHeaderBuilder.buildHeader();
 
     when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
@@ -380,9 +389,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsNotAnAncestorOfNewHead() {
-    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader safeBlock = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader finalized = blockHeaderBuilder.buildHeader();
+    BlockHeader newHead = blockHeaderBuilder.buildHeader();
+    BlockHeader safeBlock = blockHeaderBuilder.buildHeader();
 
     when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
     when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
@@ -406,21 +415,21 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldIgnoreUpdateToOldHeadAndNotPreparePayload() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
 
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
     var ignoreOldHeadUpdateRes = ForkchoiceResult.withIgnoreUpdateToOldHead(mockHeader);
-    when(mergeCoordinator.updateForkChoice(any(), any(), any(), any()))
-        .thenReturn(ignoreOldHeadUpdateRes);
+    when(mergeCoordinator.updateForkChoice(any(), any(), any())).thenReturn(ignoreOldHeadUpdateRes);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
-            Address.ECREC.toString());
+            Address.ECREC.toString(),
+            null);
 
     var resp =
         (JsonRpcSuccessResponse)
@@ -442,7 +451,196 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
-  private EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
+  @Test
+  public void shouldReturnInvalidIfPayloadTimestampNotGreaterThanHead() {
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
+
+    final long timestampNotGreaterThanHead = mockHeader.getTimestamp();
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(timestampNotGreaterThanHead),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            emptyList());
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+            Optional.of(payloadParams));
+
+    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidIfWithdrawalsIsNotNull_WhenWithdrawalsProhibited() {
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            emptyList());
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+            Optional.of(payloadParams));
+
+    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnValidIfWithdrawalsIsNull_WhenWithdrawalsProhibited() {
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            null);
+
+    var mockPayloadId =
+        PayloadIdentifier.forPayloadParams(
+            mockHeader.getHash(),
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            payloadParams.getSuggestedFeeRecipient());
+
+    when(mergeCoordinator.preparePayload(
+            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
+        .thenReturn(mockPayloadId);
+
+    assertSuccessWithPayloadForForkchoiceResult(
+        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+        Optional.of(payloadParams),
+        ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
+        VALID);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidIfWithdrawalsIsNull_WhenWithdrawalsAllowed() {
+    when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
+
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            null);
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+            Optional.of(payloadParams));
+
+    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnValidIfWithdrawalsIsNotNull_WhenWithdrawalsAllowed() {
+    when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
+
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            emptyList());
+
+    var mockPayloadId =
+        PayloadIdentifier.forPayloadParams(
+            mockHeader.getHash(),
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            payloadParams.getSuggestedFeeRecipient());
+
+    when(mergeCoordinator.preparePayload(
+            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
+        .thenReturn(mockPayloadId);
+
+    assertSuccessWithPayloadForForkchoiceResult(
+        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+        Optional.of(payloadParams),
+        ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
+        VALID);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnValidIfTimestampScheduleIsEmpty() {
+    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.empty());
+
+    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockHeader =
+        blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    setupValidForkchoiceUpdate(mockHeader);
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString(),
+            null);
+
+    var mockPayloadId =
+        PayloadIdentifier.forPayloadParams(
+            mockHeader.getHash(),
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            payloadParams.getSuggestedFeeRecipient());
+
+    when(mergeCoordinator.preparePayload(
+            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
+        .thenReturn(mockPayloadId);
+
+    assertSuccessWithPayloadForForkchoiceResult(
+        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+        Optional.of(payloadParams),
+        ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
+        VALID);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  private void setupValidForkchoiceUpdate(final BlockHeader mockHeader) {
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
+        .thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
+  }
+
+  protected EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
       final EngineForkchoiceUpdatedParameter fcuParam,
       final Optional<EnginePayloadAttributesParameter> payloadParam,
       final ForkchoiceResult forkchoiceResult,
@@ -460,7 +658,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     // result from mergeCoordinator has no new finalized, new head:
     when(mergeCoordinator.updateForkChoice(
-            any(BlockHeader.class), any(Hash.class), any(Hash.class), any()))
+            any(BlockHeader.class), any(Hash.class), any(Hash.class)))
         .thenReturn(forkchoiceResult);
     var resp = resp(fcuParam, payloadParam);
     var res = fromSuccessResp(resp);
@@ -518,10 +716,15 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   }
 
   private void assertInvalidForkchoiceState(final JsonRpcResponse resp) {
+    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_FORKCHOICE_STATE);
+  }
+
+  private void assertInvalidForkchoiceState(
+      final JsonRpcResponse resp, final JsonRpcError jsonRpcError) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
 
     var errorResp = (JsonRpcErrorResponse) resp;
-    assertThat(errorResp.getError().getCode()).isEqualTo(-38002);
-    assertThat(errorResp.getError().getMessage()).isEqualTo("Invalid forkchoice state");
+    assertThat(errorResp.getError()).isEqualTo(jsonRpcError);
+    assertThat(errorResp.getError().getMessage()).isEqualTo(jsonRpcError.getMessage());
   }
 }

@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -48,6 +49,18 @@ public class EvmToolCommandOptionsModule {
   @Named("RevertReasonEnabled")
   boolean provideRevertReasonEnabled() {
     return revertReasonEnabled;
+  }
+
+  @Option(
+      names = {"--fork"},
+      paramLabel = "<String>",
+      description = "Fork to evaluate, overriding network setting.")
+  String fork = null;
+
+  @Provides
+  @Named("Fork")
+  Optional<String> provideFork() {
+    return Optional.ofNullable(fork);
   }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
