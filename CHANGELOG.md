@@ -14,6 +14,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Send only hash announcement for blob transaction type [#4940](https://github.com/hyperledger/besu/pull/4940)
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
