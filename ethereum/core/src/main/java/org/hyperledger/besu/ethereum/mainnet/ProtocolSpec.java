@@ -75,8 +75,10 @@ public class ProtocolSpec {
   private final BadBlockManager badBlockManager;
 
   private final Optional<PoWHasher> powHasher;
+
   private final WithdrawalsValidator withdrawalsValidator;
-  private final WithdrawalsProcessor withdrawalsProcessor;
+
+  private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
 
   /**
    * Creates a new protocol specification instance.
@@ -132,7 +134,7 @@ public class ProtocolSpec {
       final BadBlockManager badBlockManager,
       final Optional<PoWHasher> powHasher,
       final WithdrawalsValidator withdrawalsValidator,
-      final WithdrawalsProcessor withdrawalsProcessor) {
+      final Optional<WithdrawalsProcessor> withdrawalsProcessor) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -362,7 +364,7 @@ public class ProtocolSpec {
     return withdrawalsValidator;
   }
 
-  public WithdrawalsProcessor getWithdrawalsProcessor() {
+  public Optional<WithdrawalsProcessor> getWithdrawalsProcessor() {
     return withdrawalsProcessor;
   }
 }

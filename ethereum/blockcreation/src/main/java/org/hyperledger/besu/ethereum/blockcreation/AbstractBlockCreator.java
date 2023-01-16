@@ -174,10 +174,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getByBlockHeader(processableBlockHeader);
 
-      final WithdrawalsProcessor withdrawalsProcessor = newProtocolSpec.getWithdrawalsProcessor();
-      maybeWithdrawals.ifPresent(
-          withdrawals ->
-              withdrawalsProcessor.processWithdrawals(withdrawals, disposableWorldState.updater()));
+      final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
+          newProtocolSpec.getWithdrawalsProcessor();
+      if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
+        maybeWithdrawalsProcessor
+            .get()
+            .processWithdrawals(maybeWithdrawals.get(), disposableWorldState.updater());
+      }
 
       throwIfStopped();
 

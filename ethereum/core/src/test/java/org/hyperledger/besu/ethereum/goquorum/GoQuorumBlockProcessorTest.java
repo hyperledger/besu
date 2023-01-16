@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
@@ -69,8 +68,6 @@ public class GoQuorumBlockProcessorTest {
   @Before
   public void setup() {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getWithdrawalsProcessor())
-        .thenReturn(new WithdrawalsProcessor.NoOpWithdrawalsProcessor());
     goQuorumPrivacyParameters =
         new GoQuorumPrivacyParameters(goQuorumEnclave, "123", goQuorumPrivateStorage, null);
   }

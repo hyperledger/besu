@@ -247,13 +247,13 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder withdrawalsProcessor(final WithdrawalsProcessor withdrawalsProcessor) {
-    this.withdrawalsProcessor = withdrawalsProcessor;
+  public ProtocolSpecBuilder withdrawalsValidator(final WithdrawalsValidator withdrawalsValidator) {
+    this.withdrawalsValidator = withdrawalsValidator;
     return this;
   }
 
-  public ProtocolSpecBuilder withdrawalsValidator(final WithdrawalsValidator withdrawalsValidator) {
-    this.withdrawalsValidator = withdrawalsValidator;
+  public ProtocolSpecBuilder withdrawalsProcessor(final WithdrawalsProcessor withdrawalsProcessor) {
+    this.withdrawalsProcessor = withdrawalsProcessor;
     return this;
   }
 
@@ -363,7 +363,7 @@ public class ProtocolSpecBuilder {
         badBlockManager,
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
-        withdrawalsProcessor);
+        Optional.ofNullable(withdrawalsProcessor));
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(

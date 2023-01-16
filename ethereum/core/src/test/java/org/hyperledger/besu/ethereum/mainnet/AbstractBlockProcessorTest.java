@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -64,7 +65,6 @@ abstract class AbstractBlockProcessorTest {
   @BeforeEach
   void baseSetup() {
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    lenient().when(protocolSpec.getWithdrawalsProcessor()).thenReturn(withdrawalsProcessor);
     blockProcessor =
         new TestBlockProcessor(
             transactionProcessor,
@@ -76,14 +76,24 @@ abstract class AbstractBlockProcessorTest {
   }
 
   @Test
-  void emptyWithdrawalsAreNotProcessedWhenProcessingBlock() {
+  void withProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
+    when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
         blockchain, worldState, emptyBlockHeader, emptyList(), emptyList(), Optional.empty(), null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
   @Test
-  void nonEmptyWithdrawalsAreProcessedWhenProcessingBlock() {
+  void withNoProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
+    when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
+    blockProcessor.processBlock(
+        blockchain, worldState, emptyBlockHeader, emptyList(), emptyList(), Optional.empty(), null);
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+  }
+
+  @Test
+  void withProcessorAndWithdrawals_WithdrawalsAreProcessed() {
+    when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.of(withdrawalsProcessor));
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
     blockProcessor.processBlock(
@@ -95,6 +105,23 @@ abstract class AbstractBlockProcessorTest {
         Optional.of(withdrawals),
         null);
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
+  }
+
+  @Test
+  void withNoProcessorAndWithdrawals_WithdrawalsAreNotProcessed() {
+    when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
+
+    final List<Withdrawal> withdrawals =
+        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
+    blockProcessor.processBlock(
+        blockchain,
+        worldState,
+        emptyBlockHeader,
+        emptyList(),
+        emptyList(),
+        Optional.of(withdrawals),
+        null);
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
   private static class TestBlockProcessor extends AbstractBlockProcessor {

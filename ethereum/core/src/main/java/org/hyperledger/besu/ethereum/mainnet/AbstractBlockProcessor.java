@@ -139,10 +139,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       receipts.add(transactionReceipt);
     }
 
-    final WithdrawalsProcessor withdrawalsProcessor =
+    final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
-    maybeWithdrawals.ifPresent(
-        withdrawals -> withdrawalsProcessor.processWithdrawals(withdrawals, worldState.updater()));
+    if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
+      maybeWithdrawalsProcessor
+          .get()
+          .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
+    }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.

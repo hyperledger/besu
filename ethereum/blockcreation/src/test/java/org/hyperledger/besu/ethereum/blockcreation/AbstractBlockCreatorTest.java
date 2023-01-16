@@ -46,12 +46,12 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.math.BigInteger;
 import java.time.Clock;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -60,10 +60,55 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractBlockCreatorTest {
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
-  private TestBlockCreator blockCreator;
 
-  @BeforeEach
-  void setup() {
+  @Test
+  void withProcessorAndEmptyWithdrawals_NoWithdrawalsAreProcessed() {
+    final AbstractBlockCreator blockCreator = createBlockCreatorWithWithdrawalsProcessor();
+    blockCreator.createBlock(
+        Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+  }
+
+  @Test
+  void withNoProcessorAndEmptyWithdrawals_NoWithdrawalsAreNotProcessed() {
+    final AbstractBlockCreator blockCreator = createBlockCreatorWithoutWithdrawalsProcessor();
+    blockCreator.createBlock(
+        Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+  }
+
+  @Test
+  void withProcessorAndWithdrawals_WithdrawalsAreProcessed() {
+    final AbstractBlockCreator blockCreator = createBlockCreatorWithWithdrawalsProcessor();
+    final List<Withdrawal> withdrawals =
+        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
+    blockCreator.createBlock(
+        Optional.empty(), Optional.empty(), Optional.of(withdrawals), Optional.empty(), 1L, false);
+    verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
+  }
+
+  @Test
+  void withNoProcessorAndWithdrawals_WithdrawalsAreNotProcessed() {
+    final AbstractBlockCreator blockCreator = createBlockCreatorWithoutWithdrawalsProcessor();
+    final List<Withdrawal> withdrawals =
+        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
+    blockCreator.createBlock(
+        Optional.empty(), Optional.empty(), Optional.of(withdrawals), Optional.empty(), 1L, false);
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+  }
+
+  private AbstractBlockCreator createBlockCreatorWithWithdrawalsProcessor() {
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(
+            0, specBuilder -> specBuilder.withdrawalsProcessor(withdrawalsProcessor));
+    return createBlockCreator(protocolSpecAdapters);
+  }
+
+  private AbstractBlockCreator createBlockCreatorWithoutWithdrawalsProcessor() {
+    return createBlockCreator(new ProtocolSpecAdapters(Map.of()));
+  }
+
+  private AbstractBlockCreator createBlockCreator(final ProtocolSpecAdapters protocolSpecAdapters) {
     final GenesisConfigOptions genesisConfigOptions = GenesisConfigFile.DEFAULT.getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
@@ -71,9 +116,7 @@ abstract class AbstractBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        ProtocolSpecAdapters.create(
-                            0,
-                            specBuilder -> specBuilder.withdrawalsProcessor(withdrawalsProcessor)),
+                        protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
@@ -89,34 +132,17 @@ abstract class AbstractBlockCreatorTest {
             new NoOpMetricsSystem(),
             blockchain::getChainHeadHeader);
 
-    blockCreator =
-        new TestBlockCreator(
-            Address.ZERO,
-            __ -> Address.ZERO,
-            () -> Optional.of(30_000_000L),
-            __ -> Bytes.fromHexString("deadbeef"),
-            sorter,
-            executionContextTestFixture.getProtocolContext(),
-            executionContextTestFixture.getProtocolSchedule(),
-            Wei.of(1L),
-            0d,
-            blockchain.getChainHeadHeader());
-  }
-
-  @Test
-  void emptyWithdrawalsAreNotProcessedWhenCreatingBlock() {
-    blockCreator.createBlock(
-        Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
-  }
-
-  @Test
-  void nonEmptyWithdrawalsAreProcessedWhenCreatingBlock() {
-    final List<Withdrawal> withdrawals =
-        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
-    blockCreator.createBlock(
-        Optional.empty(), Optional.empty(), Optional.of(withdrawals), Optional.empty(), 1L, false);
-    verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
+    return new TestBlockCreator(
+        Address.ZERO,
+        __ -> Address.ZERO,
+        () -> Optional.of(30_000_000L),
+        __ -> Bytes.fromHexString("deadbeef"),
+        sorter,
+        executionContextTestFixture.getProtocolContext(),
+        executionContextTestFixture.getProtocolSchedule(),
+        Wei.of(1L),
+        0d,
+        blockchain.getChainHeadHeader());
   }
 
   static class TestBlockCreator extends AbstractBlockCreator {

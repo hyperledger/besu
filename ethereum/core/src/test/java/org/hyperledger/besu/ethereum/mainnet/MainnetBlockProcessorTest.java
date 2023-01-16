@@ -51,8 +51,6 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
   @BeforeEach
   public void setup() {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getWithdrawalsProcessor())
-        .thenReturn(new WithdrawalsProcessor.NoOpWithdrawalsProcessor());
   }
 
   @Test
