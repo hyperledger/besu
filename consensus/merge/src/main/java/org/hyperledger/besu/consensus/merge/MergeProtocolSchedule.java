@@ -93,14 +93,24 @@ public class MergeProtocolSchedule {
             DEFAULT_CHAIN_ID,
             ProtocolSpecAdapters.create(
                 config.getShanghaiTime().orElse(0),
-                (specBuilder) ->
-                    MergeProtocolSchedule.applyMergeSpecificModifications(
-                        specBuilder, config.getChainId())),
+                MergeProtocolSchedule::applyMergeSpecificModificationsForShanghai),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
             EvmConfiguration.DEFAULT)
         .createTimestampSchedule();
+  }
+
+  // TODO Withdrawals remove this as part of https://github.com/hyperledger/besu/issues/4788
+  private static ProtocolSpecBuilder applyMergeSpecificModificationsForShanghai(
+      final ProtocolSpecBuilder specBuilder) {
+
+    return specBuilder
+        .blockProcessorBuilder(MergeBlockProcessor::new)
+        .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
+        .blockReward(Wei.ZERO)
+        .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
+        .skipZeroBlockRewards(true);
   }
 
   private static ProtocolSpecBuilder applyMergeSpecificModifications(

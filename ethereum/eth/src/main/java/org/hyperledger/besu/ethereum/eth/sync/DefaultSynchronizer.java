@@ -50,6 +50,7 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +63,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final Optional<BlockPropagationManager> blockPropagationManager;
-  private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
+  private final Function<Boolean, Optional<FastSyncDownloader<?>>> fastSyncFactory;
+  private Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
   private final EthContext ethContext;
   private final ProtocolContext protocolContext;
@@ -133,47 +135,56 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                     terminationCondition));
 
     if (SyncMode.FAST.equals(syncConfig.getSyncMode())) {
-      this.fastSyncDownloader =
-          FastDownloaderFactory.create(
-              pivotBlockSelector,
-              syncConfig,
-              dataDirectory,
-              protocolSchedule,
-              protocolContext,
-              metricsSystem,
-              ethContext,
-              worldStateStorage,
-              syncState,
-              clock);
+      this.fastSyncFactory =
+          (isResync) ->
+              FastDownloaderFactory.create(
+                  pivotBlockSelector,
+                  syncConfig,
+                  dataDirectory,
+                  protocolSchedule,
+                  protocolContext,
+                  metricsSystem,
+                  ethContext,
+                  worldStateStorage,
+                  syncState,
+                  clock,
+                  isResync);
     } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
-      this.fastSyncDownloader =
-          CheckpointDownloaderFactory.createCheckpointDownloader(
-              new SnapPersistedContext(storageProvider),
-              pivotBlockSelector,
-              syncConfig,
-              dataDirectory,
-              protocolSchedule,
-              protocolContext,
-              metricsSystem,
-              ethContext,
-              worldStateStorage,
-              syncState,
-              clock);
+      this.fastSyncFactory =
+          (isResync) ->
+              CheckpointDownloaderFactory.createCheckpointDownloader(
+                  new SnapPersistedContext(storageProvider),
+                  pivotBlockSelector,
+                  syncConfig,
+                  dataDirectory,
+                  protocolSchedule,
+                  protocolContext,
+                  metricsSystem,
+                  ethContext,
+                  worldStateStorage,
+                  syncState,
+                  clock,
+                  isResync);
     } else {
-      this.fastSyncDownloader =
-          SnapDownloaderFactory.createSnapDownloader(
-              new SnapPersistedContext(storageProvider),
-              pivotBlockSelector,
-              syncConfig,
-              dataDirectory,
-              protocolSchedule,
-              protocolContext,
-              metricsSystem,
-              ethContext,
-              worldStateStorage,
-              syncState,
-              clock);
+      this.fastSyncFactory =
+          (isResync) ->
+              SnapDownloaderFactory.createSnapDownloader(
+                  new SnapPersistedContext(storageProvider),
+                  pivotBlockSelector,
+                  syncConfig,
+                  dataDirectory,
+                  protocolSchedule,
+                  protocolContext,
+                  metricsSystem,
+                  ethContext,
+                  worldStateStorage,
+                  syncState,
+                  clock,
+                  isResync);
     }
+
+    // create a non-resync fast sync downloader:
+    this.fastSyncDownloader = this.fastSyncFactory.apply(false);
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,
@@ -209,7 +220,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
         future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);
-
       } else {
         syncState.markInitialSyncPhaseAsDone();
         enableFallbackNodeFinder();
@@ -303,6 +313,21 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       return Optional.empty();
     }
     return syncState.syncStatus();
+  }
+
+  @Override
+  public boolean resyncWorldState() {
+    // if sync is running currently, stop it and delete the fast sync state
+    if (fastSyncDownloader.isPresent() && running.get()) {
+      stop();
+      fastSyncDownloader.get().deleteFastSyncState();
+    }
+
+    // recreate fast sync with resync and start
+    this.syncState.markInitialSyncRestart();
+    this.fastSyncDownloader = this.fastSyncFactory.apply(true);
+    start();
+    return true;
   }
 
   @Override

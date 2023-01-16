@@ -18,19 +18,19 @@ package org.hyperledger.besu.evm.code;
 
 import java.util.Objects;
 
-import org.apache.tuweni.bytes.Bytes;
-
-/** The Code section. */
 //// java17 convert to record
 public final class CodeSection {
-  /** The Code. */
-  final Bytes code;
+
+  /** The length. */
+  final int length;
   /** The Inputs. */
   final int inputs;
   /** The Outputs. */
   final int outputs;
   /** The Max stack height. */
   final int maxStackHeight;
+  /** The byte offset from the begining of the container that the section starts at */
+  final int entryPoint;
 
   /**
    * Instantiates a new Code section.
@@ -41,20 +41,24 @@ public final class CodeSection {
    * @param maxStackHeight the max stack height
    */
   public CodeSection(
-      final Bytes code, final int inputs, final int outputs, final int maxStackHeight) {
-    this.code = code;
+      final int length,
+      final int inputs,
+      final int outputs,
+      final int maxStackHeight,
+      final int entryPoint) {
+    this.length = length;
     this.inputs = inputs;
     this.outputs = outputs;
     this.maxStackHeight = maxStackHeight;
+    this.entryPoint = entryPoint;
   }
 
   /**
-   * Gets code.
-   *
-   * @return the code
+   * Gets Length.
+   * @return the length
    */
-  public Bytes getCode() {
-    return code;
+  public int getLength() {
+    return length;
   }
 
   /**
@@ -84,19 +88,23 @@ public final class CodeSection {
     return maxStackHeight;
   }
 
+  public int getEntryPoint() {
+    return entryPoint;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     CodeSection that = (CodeSection) o;
-    return inputs == that.inputs
+    return length == that.length
+        && inputs == that.inputs
         && outputs == that.outputs
-        && maxStackHeight == that.maxStackHeight
-        && code.equals(that.code);
+        && maxStackHeight == that.maxStackHeight;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(code, inputs, outputs, maxStackHeight);
+    return Objects.hash(length, inputs, outputs, maxStackHeight);
   }
 }

@@ -59,7 +59,7 @@ public class RelativeJumpOperation extends AbstractFixedCostOperation {
 
   @Override
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes code = frame.getCode().getCodeBytes(frame.getSection());
+    final Bytes code = frame.getCode().getBytes();
     final int pcPostInstruction = frame.getPC() + 1;
     return new OperationResult(
         gasCost, null, 2 + Words.readBigEndianI16(pcPostInstruction, code.toArrayUnsafe()) + 1);

@@ -255,5 +255,8 @@ public interface BesuEvents extends BesuService {
 
     /** Emitted when initial sync finishes */
     void onInitialSyncCompleted();
+
+    /** Emitted when initial sync restarts */
+    void onInitialSyncRestart();
   }
 }

@@ -26,9 +26,10 @@ public class CreateOperation extends AbstractCreateOperation {
    * Instantiates a new Create operation.
    *
    * @param gasCalculator the gas calculator
+   * @param maxInitcodeSize Maximum init code size
    */
-  public CreateOperation(final GasCalculator gasCalculator) {
-    super(0xF0, "CREATE", 3, 1, gasCalculator);
+  public CreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
+    super(0xF0, "CREATE", 3, 1, gasCalculator, maxInitcodeSize);
   }
 
   @Override

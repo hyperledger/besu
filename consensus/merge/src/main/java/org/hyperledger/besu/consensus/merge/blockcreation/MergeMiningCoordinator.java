@@ -77,10 +77,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @return the forkchoice result
    */
   ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead,
-      final Hash finalizedBlockHash,
-      final Hash safeBlockHash,
-      final Optional<PayloadAttributes> maybePayloadAttributes);
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash);
 
   /**
    * Gets latest valid ancestor.

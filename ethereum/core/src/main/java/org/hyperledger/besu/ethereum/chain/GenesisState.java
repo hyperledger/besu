@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -81,7 +82,7 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
+      final GenesisConfigFile config, final HeaderBasedProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts =
         parseAllocations(config).collect(Collectors.toList());
     final Block block =
@@ -135,7 +136,7 @@ public final class GenesisState {
   private static BlockHeader buildHeader(
       final GenesisConfigFile genesis,
       final Hash genesisRootHash,
-      final ProtocolSchedule protocolSchedule) {
+      final HeaderBasedProtocolSchedule protocolSchedule) {
 
     return BlockHeaderBuilder.create()
         .parentHash(parseParentHash(genesis))
@@ -263,16 +264,13 @@ public final class GenesisState {
 
     private Map<UInt256, UInt256> parseStorage(final Map<String, String> storage) {
       final Map<UInt256, UInt256> parsedStorage = new HashMap<>();
-      storage
-          .entrySet()
-          .forEach(
-              entry -> {
-                final UInt256 key =
-                    withNiceErrorMessage("storage key", entry.getKey(), UInt256::fromHexString);
-                final UInt256 value =
-                    withNiceErrorMessage("storage value", entry.getValue(), UInt256::fromHexString);
-                parsedStorage.put(key, value);
-              });
+      storage.forEach(
+          (key1, value1) -> {
+            final UInt256 key = withNiceErrorMessage("storage key", key1, UInt256::fromHexString);
+            final UInt256 value =
+                withNiceErrorMessage("storage value", value1, UInt256::fromHexString);
+            parsedStorage.put(key, value);
+          });
 
       return parsedStorage;
     }

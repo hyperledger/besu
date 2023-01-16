@@ -163,10 +163,17 @@ public class EOFLayout {
           container, version, "Code section does not have zero inputs and outputs");
     }
     CodeSection[] codeSections = new CodeSection[codeSectionCount];
+    int pos = // calculate pos in stream...
+        3 // header and version
+            + 3 // type header
+            + 3
+            + (codeSectionCount * 2) // code section size
+            + 3 // data section header
+            + 1 // padding
+            + (codeSectionCount * 4); // type data
     for (int i = 0; i < codeSectionCount; i++) {
       int codeSectionSize = codeSectionSizes[i];
-      byte[] code = new byte[codeSectionSize];
-      if (inputStream.read(code, 0, codeSectionSize) != codeSectionSize) {
+      if (inputStream.skip(codeSectionSize) != codeSectionSize) {
         return invalidLayout(container, version, "Incomplete code section " + i);
       }
       if (typeData[i][0] > 0x7f) {
@@ -188,7 +195,8 @@ public class EOFLayout {
             "Type data max stack too large - 0x" + Integer.toHexString(typeData[i][2]));
       }
       codeSections[i] =
-          new CodeSection(Bytes.wrap(code), typeData[i][0], typeData[i][1], typeData[i][2]);
+          new CodeSection(codeSectionSize, typeData[i][0], typeData[i][1], typeData[i][2], pos);
+      pos += codeSectionSize;
     }
 
     if (inputStream.skip(dataSize) != dataSize) {
@@ -228,12 +236,20 @@ public class EOFLayout {
   }
 
   /**
+   * Get code section count.
+   * @return the code section count
+   */
+  public int getCodeSectionCount() {
+    return codeSections == null ? 0 : codeSections.length;
+  }
+
+  /**
    * Get code sections.
    *
    * @return the bytes [ ]
    */
-  public CodeSection[] getCodeSections() {
-    return codeSections;
+  public CodeSection getCodeSection(final int i) {
+    return codeSections[i];
   }
 
   /**

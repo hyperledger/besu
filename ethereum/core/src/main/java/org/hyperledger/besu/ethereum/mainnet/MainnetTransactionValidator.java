@@ -53,6 +53,8 @@ public class MainnetTransactionValidator {
   private final Set<TransactionType> acceptedTransactionTypes;
   private final boolean goQuorumCompatibilityMode;
 
+  private final int maxInitcodeSize;
+
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
@@ -78,7 +80,8 @@ public class MainnetTransactionValidator {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        quorumCompatibilityMode);
+        quorumCompatibilityMode,
+        Integer.MAX_VALUE);
   }
 
   public MainnetTransactionValidator(
@@ -87,13 +90,15 @@ public class MainnetTransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
-      final boolean goQuorumCompatibilityMode) {
+      final boolean goQuorumCompatibilityMode,
+      final int maxInitcodeSize) {
     this.gasCalculator = gasCalculator;
     this.feeMarket = feeMarket;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
     this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
+    this.maxInitcodeSize = maxInitcodeSize;
   }
 
   /**
@@ -182,6 +187,14 @@ public class MainnetTransactionValidator {
           String.format(
               "intrinsic gas cost %s exceeds gas limit %s",
               intrinsicGasCost, transaction.getGasLimit()));
+    }
+
+    if (transaction.isContractCreation() && transaction.getPayload().size() > maxInitcodeSize) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INITCODE_TOO_LARGE,
+          String.format(
+              "Initcode size of %d exceeds maximum size of %s",
+              transaction.getPayload().size(), maxInitcodeSize));
     }
 
     return ValidationResult.valid();
