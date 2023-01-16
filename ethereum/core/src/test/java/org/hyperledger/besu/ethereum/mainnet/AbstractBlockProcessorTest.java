@@ -44,7 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class AbstractBlockProcessorTest {
+abstract class AbstractBlockProcessorTest {
 
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;

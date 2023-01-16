@@ -60,6 +60,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
@@ -73,6 +74,7 @@ import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -110,6 +112,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
+  private static final Optional<List<Withdrawal>> EMPTY_WITHDRAWALS = Optional.empty();
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
 
@@ -214,7 +217,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
-            Optional.empty());
+            EMPTY_WITHDRAWALS);
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
