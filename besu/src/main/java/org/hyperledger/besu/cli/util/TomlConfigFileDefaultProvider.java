@@ -76,6 +76,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
       defaultValue = getIntegerEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(BigInteger.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Double.class) || optionSpec.type().equals(double.class)) {
+      defaultValue = getDoubleEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);
     }
@@ -132,6 +134,13 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     // file
     // or null if not present in the config
     return getKeyName(spec).map(result::get).map(String::valueOf).orElse(null);
+  }
+
+  private String getDoubleEntryAsString(final OptionSpec spec) {
+    // return the string representation of the double value corresponding to the option in toml
+    // file
+    // or null if not present in the config
+    return getKeyName(spec).map(result::getDouble).map(String::valueOf).orElse(null);
   }
 
   private void checkConfigurationValidity() {

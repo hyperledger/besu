@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
-import org.hyperledger.besu.consensus.merge.blockcreation.PayloadAttributes;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -29,13 +30,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
@@ -45,14 +51,17 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
+  private final TimestampSchedule timestampSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
+      final TimestampSchedule timestampSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
+    this.timestampSchedule = timestampSchedule;
     this.mergeCoordinator = mergeCoordinator;
   }
 
@@ -103,9 +112,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     final BlockHeader newHead = maybeNewHead.get();
 
-    maybePayloadAttributes.ifPresentOrElse(
-        this::logPayload, () -> LOG.debug("Payload attributes are null"));
-
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -126,17 +132,22 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
               Optional.of(newHead + " did not descend from terminal block")));
     }
 
+    maybePayloadAttributes.ifPresentOrElse(
+        this::logPayload, () -> LOG.debug("Payload attributes are null"));
+
+    if (maybePayloadAttributes.isPresent()
+        && !isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
+      warnLambda(
+          LOG,
+          "Invalid payload attributes: {}",
+          () ->
+              maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize).orElse(null));
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    }
+
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
-            newHead,
-            forkChoice.getFinalizedBlockHash(),
-            forkChoice.getSafeBlockHash(),
-            maybePayloadAttributes.map(
-                payloadAttributes ->
-                    new PayloadAttributes(
-                        payloadAttributes.getTimestamp(),
-                        payloadAttributes.getPrevRandao(),
-                        payloadAttributes.getSuggestedFeeRecipient())));
+            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -169,6 +180,33 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             result.getNewHead().map(BlockHeader::getHash).orElse(null),
             payloadId.orElse(null),
             Optional.empty()));
+  }
+
+  private boolean isPayloadAttributesValid(
+      final EnginePayloadAttributesParameter payloadAttributes, final BlockHeader headBlockHeader) {
+
+    final boolean newTimestampGreaterThanHead =
+        payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
+    return newTimestampGreaterThanHead && isWithdrawalsValid(payloadAttributes);
+  }
+
+  private boolean isWithdrawalsValid(final EnginePayloadAttributesParameter payloadAttributes) {
+    final List<Withdrawal> withdrawals =
+        Optional.ofNullable(payloadAttributes.getWithdrawals())
+            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
+            .orElse(null);
+
+    return timestampSchedule
+        .getByTimestamp(payloadAttributes.getTimestamp())
+        .map(
+            protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
+        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
+        // previous fork. This might be resolved when
+        // https://github.com/hyperledger/besu/issues/4789 is played
+        // and if we can combine protocolSchedule and timestampSchedule.
+        .orElseGet(
+            () ->
+                new WithdrawalsValidator.ProhibitedWithdrawals().validateWithdrawals(withdrawals));
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(

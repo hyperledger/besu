@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
+import java.util.Objects;
+
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class Withdrawal {
@@ -61,5 +63,21 @@ public class Withdrawal {
         + ", amount="
         + amount
         + '}';
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final Withdrawal that = (Withdrawal) o;
+    return Objects.equals(index, that.index)
+        && Objects.equals(validatorIndex, that.validatorIndex)
+        && Objects.equals(address, that.address)
+        && Objects.equals(amount, that.amount);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(index, validatorIndex, address, amount);
   }
 }

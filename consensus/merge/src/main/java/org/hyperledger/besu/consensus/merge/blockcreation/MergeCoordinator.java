@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
-import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -463,10 +462,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead,
-      final Hash finalizedBlockHash,
-      final Hash safeBlockHash,
-      final Optional<PayloadAttributes> maybePayloadAttributes) {
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
 
@@ -501,11 +497,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               blockchain.setSafeBlock(safeBlockHash);
               mergeContext.setSafeBlock(newSafeBlock);
             });
-
-    if (maybePayloadAttributes.isPresent()
-        && !isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
-      return ForkchoiceResult.withFailure(INVALID_PAYLOAD_ATTRIBUTES, null, Optional.empty());
-    }
 
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
@@ -736,11 +727,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           newBlock::toLogString);
       return false;
     }
-  }
-
-  private boolean isPayloadAttributesValid(
-      final PayloadAttributes payloadAttributes, final BlockHeader headBlockHeader) {
-    return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
   @Override
