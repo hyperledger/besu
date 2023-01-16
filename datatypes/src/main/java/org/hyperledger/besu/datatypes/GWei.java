@@ -86,16 +86,6 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
   }
 
   /**
-   * Returns GWei of Number value.
-   *
-   * @param value the value
-   * @return the GWei
-   */
-  public static GWei ofNumber(final Number value) {
-    return new GWei((BigInteger) value);
-  }
-
-  /**
    * Wrap Bytes into GWei.
    *
    * @param value the value
@@ -115,6 +105,11 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
     return new GWei(str);
   }
 
+  /**
+   * Convert GWei to Wei
+   *
+   * @return Wei
+   */
   public Wei getAsWei() {
     return Wei.of(getAsBigInteger().multiply(BigInteger.TEN.pow(9)));
   }
@@ -137,15 +132,5 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
   @Override
   public String toShortHexString() {
     return super.isZero() ? "0x0" : super.toShortHexString();
-  }
-
-  /**
-   * From quantity to GWei.
-   *
-   * @param quantity the quantity
-   * @return the GWei
-   */
-  public static GWei fromQuantity(final Quantity quantity) {
-    return GWei.wrap((Bytes) quantity);
   }
 }

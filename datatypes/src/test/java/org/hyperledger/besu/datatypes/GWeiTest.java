@@ -16,6 +16,9 @@ package org.hyperledger.besu.datatypes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigInteger;
+
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
 class GWeiTest {
@@ -25,5 +28,35 @@ class GWeiTest {
     final GWei oneGwei = GWei.of(1);
     final Wei wei = oneGwei.getAsWei();
     assertThat(wei.getAsBigInteger()).isEqualTo(1_000_000_000L);
+  }
+
+  @Test
+  void gWeiFromLongValue() {
+    final GWei oneGwei = GWei.of(1);
+    assertThat(oneGwei.getValue()).isEqualTo(BigInteger.ONE);
+  }
+
+  @Test
+  void gWeiFromBigIntegerValue() {
+    final GWei oneGwei = GWei.of(BigInteger.TWO);
+    assertThat(oneGwei.getValue()).isEqualTo(BigInteger.TWO);
+  }
+
+  @Test
+  void gWeiFromUInt64Value() {
+    final GWei oneGwei = GWei.of(UInt64.valueOf(2));
+    assertThat(oneGwei.getValue()).isEqualTo(BigInteger.TWO);
+  }
+
+  @Test
+  void gWeiFromHexStringValue() {
+    final GWei oneGwei = GWei.fromHexString("0x0000000000000002");
+    assertThat(oneGwei.getValue()).isEqualTo(BigInteger.TWO);
+  }
+
+  @Test
+  void gWeiToHexString() {
+    final GWei oneGwei = GWei.of(UInt64.valueOf(2));
+    assertThat(oneGwei.toHexString()).isEqualTo("0x0000000000000002");
   }
 }
