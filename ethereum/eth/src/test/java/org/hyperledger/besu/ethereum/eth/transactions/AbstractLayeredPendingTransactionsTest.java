@@ -90,7 +90,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractLayeredPendingTransactionsTest {
 
-  protected static final int MAX_TRANSACTIONS = 5;
   protected static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
 

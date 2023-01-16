@@ -109,8 +109,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     this.metrics = metrics;
     metrics.initPendingTransactionCount(pendingTransactions::size);
     metrics.initPendingTransactionSpace(this::getUsedSpace);
-    metrics.initReadyTransactionCount(
-        this::getReadyCount);
+    metrics.initReadyTransactionCount(this::getReadyCount);
     metrics.initSparseTransactionCount(sparseEvictionOrder::size);
     metrics.initPrioritizedTransactionSize(prioritizedTransactions::size);
   }
@@ -241,6 +240,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
           // then less valuable ready to postponed
           final var evictedSparseTxs = evictSparseTransactions(-cacheFreeSpace);
           metrics.incrementEvicted("sparse", evictedSparseTxs.size());
+          evictedSparseTxs.forEach(this::notifyTransactionDropped);
           if (evictedSparseTxs.contains(pendingTransaction)) {
             // in case the just added transaction is postponed to free space change the returned
             // result
@@ -251,6 +251,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
           if (cacheFreeSpace < 0) {
             final var evictedReadyTxs = evictReadyTransactions(-cacheFreeSpace);
             metrics.incrementEvicted("ready", evictedReadyTxs.size());
+            evictedReadyTxs.forEach(this::notifyTransactionDropped);
             if (evictedReadyTxs.contains(pendingTransaction)) {
               // in case the just added transaction is postponed to free space change the returned
               // result
@@ -258,7 +259,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
             }
           }
         }
-        notifyTransactionAdded(pendingTransaction.getTransaction());
+        notifyTransactionAdded(pendingTransaction);
       }
 
       return addStatus;
@@ -715,7 +716,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     prioritizedTransactions.demoteTransactions(sender, followingTxs, maybeLastValidSenderNonce);
 
-    notifyTransactionDropped(invalidTransaction.getTransaction());
+    notifyTransactionDropped(invalidTransaction);
   }
 
   @Override
@@ -821,12 +822,14 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
   }
 
-  private void notifyTransactionAdded(final Transaction transaction) {
-    pendingTransactionSubscribers.forEach(listener -> listener.onTransactionAdded(transaction));
+  private void notifyTransactionAdded(final PendingTransaction pendingTransaction) {
+    pendingTransactionSubscribers.forEach(
+        listener -> listener.onTransactionAdded(pendingTransaction.getTransaction()));
   }
 
-  private void notifyTransactionDropped(final Transaction transaction) {
-    transactionDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
+  private void notifyTransactionDropped(final PendingTransaction pendingTransaction) {
+    transactionDroppedListeners.forEach(
+        listener -> listener.onTransactionDropped(pendingTransaction.getTransaction()));
   }
 
   @Override
@@ -845,7 +848,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return senderTxs.entrySet().stream()
         .map(
             e ->
-                e.getKey() + "="
+                e.getKey()
+                    + "="
                     + e.getValue().entrySet().stream()
                         .map(etx -> etx.getKey() + ":" + etx.getValue().toTraceLog())
                         .collect(Collectors.joining(",", "[", "]")))

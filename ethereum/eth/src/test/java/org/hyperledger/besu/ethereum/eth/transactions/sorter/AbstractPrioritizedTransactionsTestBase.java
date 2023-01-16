@@ -43,24 +43,8 @@ import org.junit.jupiter.api.Test;
 
 public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
-  //
-  //  protected static final int MAX_TRANSACTIONS = 5;
-  //  private static final float LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
-  //  protected static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-  //      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  //  protected static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
-  //  protected static final KeyPair KEYS2 = SIGNATURE_ALGORITHM.get().generateKeyPair();
-  //  protected static final String ADDED_COUNTER = "transactions_added_total";
-  //  protected static final String REMOVED_COUNTER = "transactions_removed_total";
-  //  protected static final String REPLACED_COUNTER = "transactions_replaced_total";
-  //  protected static final String REMOTE = "remote";
-  //  protected static final String LOCAL = "local";
-  //  protected static final String DROPPED = "dropped";
-  //  protected static final String PRIORITY_LIST = "priority";
-  //
-  //  protected final TestClock clock = new TestClock();
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
-  //
+
   protected AbstractPrioritizedTransactions transactions =
       getSorter(
           ImmutableTransactionPoolConfiguration.builder()
@@ -68,29 +52,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
               .txPoolLimitByAccountPercentage(1.0f)
               .build(),
           Optional.empty());
-  //  private final TransactionPoolConfiguration senderLimitedConfig =
-  //      ImmutableTransactionPoolConfiguration.builder()
-  //          .txPoolMaxSize(MAX_TRANSACTIONS)
-  //          .txPoolLimitByAccountPercentage(LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE)
-  //          .build();
-  //  protected AbstractPrioritizedTransactions senderLimitedTransactions =
-  //      getSorter(senderLimitedConfig, Optional.empty());
-  //
-  //  private final TransactionPoolConfiguration largePoolConfig =
-  //      ImmutableTransactionPoolConfiguration.builder()
-  //          .txPoolMaxSize(MAX_TRANSACTIONS * 10)
-  //          .txPoolLimitByAccountPercentage(1.0f)
-  //          .build();
-  //  protected AbstractPrioritizedTransactions largePoolTransactions =
-  //      getSorter(largePoolConfig, Optional.empty());
-  //
-  //
-  //  protected final PendingTransactionListener listener = mock(PendingTransactionListener.class);
-  //  protected final PendingTransactionDroppedListener droppedListener =
-  //      mock(PendingTransactionDroppedListener.class);
-  //  protected static final Address SENDER1 = Util.publicKeyToAddress(KEYS1.getPublicKey());
-  //  protected static final Address SENDER2 = Util.publicKeyToAddress(KEYS2.getPublicKey());
-  //
+
   private AbstractPrioritizedTransactions getSorter(
       final TransactionPoolConfiguration poolConfig, final Optional<Clock> clock) {
     return getSorter(
@@ -132,25 +94,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     assertTransactionPrioritized(transaction1);
     assertTransactionNotPrioritized(transaction3);
   }
-  //
-  //  @Test
-  //  public void
-  // shouldHandleMaximumTransactionLimitCorrectlyWhenSameTransactionAddedMultipleTimes() {
-  //    transactions.addRemoteTransaction(createTransaction(0), Optional.empty());
-  //    transactions.addRemoteTransaction(createTransaction(0), Optional.empty());
-  //
-  //    for (int i = 1; i < MAX_TRANSACTIONS; i++) {
-  //      transactions.addRemoteTransaction(createTransaction(i), Optional.empty());
-  //    }
-  //    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-  //
-  //    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1),
-  // Optional.empty());
-  //    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 2),
-  // Optional.empty());
-  //    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-  //  }
-  //
+
   @Test
   public void prioritizeLocalTransactionThenValue() {
     final PendingTransaction localTransaction =
@@ -199,70 +143,6 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     assertTransactionNotPrioritized(lastLocalTransaction);
   }
 
-  //
-  //  //  @Test
-  //  //  public void shouldNotifyDroppedListenerWhenRemoteTransactionDropped() {
-  //  //    transactions.addRemoteTransaction(transaction2, Optional.empty());
-  //  //
-  //  //    transactions.subscribeDroppedTransactions(droppedListener);
-  //  //
-  //  //    transactions.removeTransaction(transaction2);
-  //  //
-  //  //    verify(droppedListener).onTransactionDropped(transaction2);
-  //  //  }
-  //
-  //  //  @Test
-  //  //  public void shouldNotNotifyDroppedListenerAfterUnsubscribe() {
-  //  //    transactions.addRemoteTransaction(transaction2, Optional.empty());
-  //  //    transactions.addRemoteTransaction(transaction1, Optional.empty());
-  //  //
-  //  //    final long id = transactions.subscribeDroppedTransactions(droppedListener);
-  //  //
-  //  //    transactions.removeTransaction(transaction2);
-  //  //
-  //  //    verify(droppedListener).onTransactionDropped(transaction2);
-  //  //
-  //  //    transactions.unsubscribeDroppedTransactions(id);
-  //  //
-  //  //    transactions.removeTransaction(transaction1);
-  //  //
-  //  //    verifyNoMoreInteractions(droppedListener);
-  //  //  }
-  //
-  //  //  @Test
-  //  //  public void shouldNotifyDroppedListenerWhenLocalTransactionDropped() {
-  //  //    transactions.addLocalTransaction(transaction2, Optional.empty());
-  //  //
-  //  //    transactions.subscribeDroppedTransactions(droppedListener);
-  //  //
-  //  //    transactions.removeTransaction(transaction2);
-  //  //
-  //  //    verify(droppedListener).onTransactionDropped(transaction2);
-  //  //  }
-  //
-  //  @Test
-  //  public void shouldNotNotifyDroppedListenerWhenTransactionAddedToBlock() {
-  //    transactions.addRemoteTransaction(transaction2, Optional.empty());
-  //
-  //    transactions.subscribeDroppedTransactions(droppedListener);
-  //
-  //    final Block block = createBlock(transaction2);
-  //
-  //    transactions.manageBlockAdded(block.getHeader(), List.of(transaction2),
-  // FeeMarket.london(0));
-  //
-  //    verifyNoInteractions(droppedListener);
-  //  }
-
-  //  //  @Test
-  //  //  public void shouldReturnEmptyOptionalAsMaximumNonceWhenLastTransactionForSenderRemoved() {
-  //  //    final Transaction transaction = createTransaction(1, KEYS1);
-  //  //    transactions.addRemoteTransaction(transaction, Optional.empty());
-  //  //    transactions.removeTransaction(transaction);
-  //  //    assertThat(transactions.getNextNonceForSender(SENDER1)).isEmpty();
-  //  //  }
-  //
-  //
   protected void shouldPrioritizeValueThenTimeAddedToPool(
       final Iterator<PendingTransaction> lowValueTxSupplier,
       final PendingTransaction highValueTx,
@@ -307,75 +187,6 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
         .filter(tx -> !tx.equals(expectedDroppedTx))
         .forEach(tx -> assertThat(transactions.getTransactionByHash(tx.getHash())).isPresent());
   }
-  //
-  //  private void assertNoNextNonceForSender(final Address sender) {
-  //    assertThat(transactions.getNextNonceForSender(sender)).isEqualTo(OptionalLong.empty());
-  //  }
-  //
-  //  protected void assertNextNonceForSender(final Address sender1, final int i) {
-  //    assertThat(transactions.getNextNonceForSender(sender1)).isEqualTo(OptionalLong.of(i));
-  //  }
-  //
-  //  protected void assertTransactionPending(
-  //      final PendingTransactionsSorter transactions, final Transaction t) {
-  //    assertThat(transactions.getTransactionByHash(t.getHash())).contains(t);
-  //  }
-  //
-  //  protected void assertTransactionPending(final Transaction t) {
-  //    assertTransactionPending(transactions, t);
-  //  }
-  //
-  //  protected void assertTransactionNotPending(
-  //      final PendingTransactionsSorter transactions, final Transaction t) {
-  //    assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty();
-  //  }
-  //
-  //  protected void assertTransactionNotPending(final Transaction t) {
-  //    assertTransactionNotPending(transactions, t);
-  //  }
-  //
-  //  protected Transaction createTransaction(final long transactionNumber) {
-  //    return createTransaction(transactionNumber, Wei.of(5000L), KEYS1);
-  //  }
-  //
-  //  protected Transaction createTransaction(final long transactionNumber, final KeyPair keys) {
-  //    return createTransaction(transactionNumber, Wei.of(5000L), keys);
-  //  }
-  //
-  //  protected Transaction createTransaction(final long transactionNumber, final Wei maxGasPrice) {
-  //    return createTransaction(transactionNumber, maxGasPrice, KEYS1);
-  //  }
-  //
-  //  protected abstract Transaction createTransaction(
-  //      final long transactionNumber, final Wei maxGasPrice, final KeyPair keys);
-  //
-  //  protected abstract Transaction createTransactionReplacement(
-  //      final Transaction originalTransaction, final KeyPair keys);
-  //
-  //  protected void addLocalTransactions(final Account sender, final long... nonces) {
-  //    addLocalTransactions(transactions, sender, nonces);
-  //  }
-  //
-  //  protected void addLocalTransactions(
-  //      final PendingTransactionsSorter sorter, final Account sender, final long... nonces) {
-  //    for (final long nonce : nonces) {
-  //      sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
-  //    }
-  //  }
-  //
-  //  protected Block createBlock(final Transaction... transactionsToAdd) {
-  //    final List<Transaction> transactionList = asList(transactionsToAdd);
-  //    final Block block =
-  //        new Block(
-  //            new BlockHeaderTestFixture()
-  //                .baseFeePerGas(Wei.of(10L))
-  //                .gasLimit(300000)
-  //                .parentHash(Hash.ZERO)
-  //                .number(1)
-  //                .buildHeader(),
-  //            new BlockBody(transactionList, emptyList()));
-  //    return block;
-  //  }
 
   protected PrioritizeResult prioritizeTransaction(final Transaction tx) {
     return prioritizeTransaction(createRemotePendingTransaction(tx));
