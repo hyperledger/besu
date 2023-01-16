@@ -110,7 +110,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     metrics.initPendingTransactionCount(pendingTransactions::size);
     metrics.initPendingTransactionSpace(this::getUsedSpace);
     metrics.initReadyTransactionCount(
-        () -> pendingTransactions.size() - sparseEvictionOrder.size());
+        this::getReadyCount);
     metrics.initSparseTransactionCount(sparseEvictionOrder::size);
     metrics.initPrioritizedTransactionSize(prioritizedTransactions::size);
   }
@@ -832,13 +832,28 @@ public class LayeredPendingTransactions implements PendingTransactions {
   @Override
   public String toTraceLog() {
     synchronized (lock) {
-      return "Ready by sender "
-          + readyBySender
-          + ", Sparse by sender "
-          + sparseBySender
-          + "; "
+      return "Ready by sender ("
+          + toTraceLog(readyBySender)
+          + "), Sparse by sender ("
+          + toTraceLog(sparseBySender)
+          + "); "
           + prioritizedTransactions.toTraceLog();
     }
+  }
+
+  private String toTraceLog(final Map<Address, NavigableMap<Long, PendingTransaction>> senderTxs) {
+    return senderTxs.entrySet().stream()
+        .map(
+            e ->
+                e.getKey() + "="
+                    + e.getValue().entrySet().stream()
+                        .map(etx -> etx.getKey() + ":" + etx.getValue().toTraceLog())
+                        .collect(Collectors.joining(",", "[", "]")))
+        .collect(Collectors.joining(";"));
+  }
+
+  private int getReadyCount() {
+    return readyBySender.values().stream().mapToInt(Map::size).sum();
   }
 
   @Override
@@ -846,6 +861,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
     synchronized (lock) {
       return "Pending "
           + pendingTransactions.size()
+          + ", Ready "
+          + getReadyCount()
           + ", Prioritized "
           + prioritizedTransactions.size()
           + ", Sparse "
