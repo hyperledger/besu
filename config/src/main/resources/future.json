@@ -3,7 +3,12 @@
     "chainId": 2022,
     "futureEipsTime": 0,
     "ethash": {
-      "fixeddifficulty": 100
+    },
+    "terminalTotalDifficulty": 0,
+    "checkpoint": {
+      "hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "number": 0,
+      "totalDifficulty": "0x0"
     }
   },
   "nonce": "0x42",

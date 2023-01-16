@@ -1,5 +1,14 @@
 # Changelog
 
+## 23.1.1
+
+### Breaking Changes
+
+### Additions and Improvements
+- Added option to evm CLI tool to allow code execution at specific forks [#4913](https://github.com/hyperledger/besu/pull/4913)
+
+### Bug Fixes
+
 ## 23.1.0
 
 ### Breaking Changes
@@ -7,6 +16,8 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
+
 
 ## 23.1.0-RC1
 
