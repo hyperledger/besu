@@ -46,10 +46,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   BlockProcessingResult validateBlock(final Block block);
 
   ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead,
-      final Hash finalizedBlockHash,
-      final Hash safeBlockHash,
-      final Optional<PayloadAttributes> maybePayloadAttributes);
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash);
 
   Optional<Hash> getLatestValidAncestor(Hash blockHash);
 

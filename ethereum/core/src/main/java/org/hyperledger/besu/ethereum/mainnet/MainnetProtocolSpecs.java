@@ -699,6 +699,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.EIP1559),
                     quorumCompatibilityMode,
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
+        .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .name("Shanghai");
   }
 
