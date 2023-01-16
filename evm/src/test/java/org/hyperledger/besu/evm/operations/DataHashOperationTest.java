@@ -71,7 +71,7 @@ public class DataHashOperationTest {
     when(frame.getVersionedHashes()).thenReturn(Optional.of(new ArrayList<>()));
     Operation.OperationResult failed2 = getHash.execute(frame, fakeEVM);
     assertThat(failed2.getGasCost()).isEqualTo(3);
-    assertThat(failed2.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
+    verify(frame).pushStackItem(Bytes.EMPTY);
   }
 
   @Test
@@ -85,6 +85,6 @@ public class DataHashOperationTest {
     EVM fakeEVM = mock(EVM.class);
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
-    assertThat(r.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
+    verify(frame).pushStackItem(Bytes.EMPTY);
   }
 }

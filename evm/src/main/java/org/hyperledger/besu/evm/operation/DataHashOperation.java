@@ -23,6 +23,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class DataHashOperation extends AbstractOperation {
 
   public static final int OPCODE = 0x49;
@@ -36,13 +38,12 @@ public class DataHashOperation extends AbstractOperation {
     int blobIndex = frame.popStackItem().toInt();
     final Optional<List<Hash>> maybeHashes = frame.getVersionedHashes();
     if (frame.getVersionedHashes().isPresent()) {
-
       List<Hash> versionedHashes = maybeHashes.get();
       if (blobIndex < versionedHashes.size()) {
         Hash requested = versionedHashes.get(blobIndex);
         frame.pushStackItem(requested);
       } else {
-        return new OperationResult(3, ExceptionalHaltReason.INVALID_OPERATION);
+        frame.pushStackItem(Bytes.EMPTY);
       }
     } else {
       return new OperationResult(3, ExceptionalHaltReason.INVALID_OPERATION);

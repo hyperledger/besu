@@ -995,7 +995,7 @@ public class Transaction
     protected Optional<BigInteger> chainId = Optional.empty();
 
     protected Optional<BigInteger> v = Optional.empty();
-    protected Optional<List<Hash>> versionedHashes;
+    protected List<Hash> versionedHashes = null;
 
     public Builder type(final TransactionType transactionType) {
       this.transactionType = transactionType;
@@ -1067,13 +1067,13 @@ public class Transaction
       return this;
     }
 
-    public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
+    public Builder versionedHashes(final List<Hash> versionedHashes) {
       this.versionedHashes = versionedHashes;
       return this;
     }
 
     public Builder guessType() {
-      if (versionedHashes != null && versionedHashes.isPresent()) {
+      if (versionedHashes != null && !versionedHashes.isEmpty()) {
         transactionType = TransactionType.EIP4844;
       } else if (maxPriorityFeePerGas != null || maxFeePerGas != null) {
         transactionType = TransactionType.EIP1559;
@@ -1106,7 +1106,7 @@ public class Transaction
           sender,
           chainId,
           v,
-          versionedHashes);
+          Optional.ofNullable(versionedHashes));
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
