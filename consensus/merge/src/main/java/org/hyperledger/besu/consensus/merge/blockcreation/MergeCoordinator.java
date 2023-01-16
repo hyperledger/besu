@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -240,7 +241,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     BlockProcessingResult result = validateBlock(emptyBlock);
     if (result.isSuccessful()) {
-      mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+      mergeContext.putPayloadById(
+          payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
       debugLambda(
           LOG,
           "Built empty block proposal {} for payload {}",
@@ -363,7 +365,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-      mergeContext.putPayloadById(payloadIdentifier, bestBlock);
+      mergeContext.putPayloadById(
+          payloadIdentifier, new BlockWithReceipts(bestBlock, resultBest.getReceipts()));
       debugLambda(
           LOG,
           "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms",
