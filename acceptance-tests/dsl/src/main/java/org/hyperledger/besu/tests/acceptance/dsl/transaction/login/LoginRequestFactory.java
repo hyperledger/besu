@@ -74,7 +74,7 @@ public class LoginRequestFactory {
   private Request loginRequest(final String username, final String password) {
     final RequestBody requestBody =
         RequestBody.create(
-            JSON, String.format("{\"username\":\"%s\",\"password\":\"%s\"}", username, password));
+            String.format("{\"username\":\"%s\",\"password\":\"%s\"}", username, password), JSON);
     return new Request.Builder().post(requestBody).url(loginUri()).build();
   }
 

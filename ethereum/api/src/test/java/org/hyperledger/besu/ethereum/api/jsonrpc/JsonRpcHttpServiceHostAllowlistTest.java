@@ -189,8 +189,8 @@ public class JsonRpcHttpServiceHostAllowlistTest {
   private int doRequest(final String hostname) throws IOException {
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode("123") + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode("123") + ",\"method\":\"net_version\"}",
+            JSON);
 
     final Request build =
         new Request.Builder().post(body).url(baseUrl).addHeader("Host", hostname).build();

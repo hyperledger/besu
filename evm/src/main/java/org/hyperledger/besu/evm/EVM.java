@@ -52,10 +52,8 @@ import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
-import java.util.Objects;
 import java.util.Optional;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +105,7 @@ public class EVM {
     evmSpecVersion.maybeWarnVersion();
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
-    byte[] code = frame.getCode().getCodeBytes().toArrayUnsafe();
+    byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
@@ -307,17 +305,8 @@ public class EVM {
     }
   }
 
-  @VisibleForTesting
-  public Operation operationAtOffset(final Code code, final int offset) {
-    final Bytes bytecode = code.getCodeBytes();
-    // If the length of the program code is shorter than the required offset, halt execution.
-    if (offset >= bytecode.size()) {
-      return endOfScriptStop;
-    }
-
-    final byte opcode = bytecode.get(offset);
-    final Operation operation = operations.get(opcode);
-    return Objects.requireNonNullElseGet(operation, () -> new InvalidOperation(opcode, null));
+  public Operation[] getOperationsUnsafe() {
+    return operations.getOperations();
   }
 
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {

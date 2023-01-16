@@ -48,12 +48,7 @@ public class CodeInvalid implements Code {
   }
 
   @Override
-  public Bytes getCodeBytes() {
-    return getContainerBytes();
-  }
-
-  @Override
-  public Bytes getContainerBytes() {
+  public Bytes getBytes() {
     return codeBytes;
   }
 
@@ -70,5 +65,15 @@ public class CodeInvalid implements Code {
   @Override
   public boolean isValid() {
     return false;
+  }
+
+  @Override
+  public CodeSection getCodeSection(final int section) {
+    return null;
+  }
+
+  @Override
+  public int getCodeSectionCount() {
+    return 0;
   }
 }

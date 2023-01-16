@@ -43,15 +43,19 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateUpdater.class);
 
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
   private final Consumer<Hash> storagePreloader;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
+  private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
@@ -87,6 +91,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
+    emptySlot.addAll(source.emptySlot);
   }
 
   @Override
@@ -349,26 +354,34 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         return Optional.ofNullable(value.getUpdated());
       }
     }
-    final Optional<UInt256> valueUInt =
-        wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
-    valueUInt.ifPresent(
-        v ->
-            storageToUpdate
-                .computeIfAbsent(
-                    address,
-                    key ->
-                        new StorageConsumingMap<>(
-                            address, new ConcurrentHashMap<>(), storagePreloader))
-                .put(slotHash, new BonsaiValue<>(v, v)));
-    return valueUInt;
+    final Bytes slot = Bytes.concatenate(Hash.hash(address), slotHash);
+    if (emptySlot.contains(slot)) {
+      return Optional.empty();
+    } else {
+      final Optional<UInt256> valueUInt =
+          wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
+      valueUInt.ifPresentOrElse(
+          v ->
+              storageToUpdate
+                  .computeIfAbsent(
+                      address,
+                      key ->
+                          new StorageConsumingMap<>(
+                              address, new ConcurrentHashMap<>(), storagePreloader))
+                  .put(slotHash, new BonsaiValue<>(v, v)),
+          () -> {
+            emptySlot.add(Bytes.concatenate(Hash.hash(address), slotHash));
+          });
+      return valueUInt;
+    }
   }
 
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
-    final Hash slotHash = Hash.hash(storageKey);
     if (localAccountStorage != null) {
+      final Hash slotHash = Hash.hash(storageKey);
       final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
       if (value != null) {
         if (value.isCleared()) {
@@ -591,10 +604,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if ((expectedCode == null || expectedCode.isEmpty())
           && existingCode != null
           && !existingCode.isEmpty()) {
-        throw new IllegalStateException(
-            String.format("Expected to create code, but the code exists.  Address=%s", address));
-      }
-      if (!Objects.equals(expectedCode, existingCode)) {
+        LOG.warn("At Address={}, expected to create code, but code exists. Overwriting.", address);
+      } else if (!Objects.equals(expectedCode, existingCode)) {
         throw new IllegalStateException(
             String.format(
                 "Old value of code does not match expected value.  Address=%s ExpectedHash=%s ActualHash=%s",
@@ -705,6 +716,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     storageToUpdate.clear();
     codeToUpdate.clear();
     accountsToUpdate.clear();
+    emptySlot.clear();
     super.reset();
   }
 

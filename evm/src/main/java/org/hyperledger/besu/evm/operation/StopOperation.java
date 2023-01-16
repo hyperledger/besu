@@ -25,7 +25,7 @@ public class StopOperation extends AbstractFixedCostOperation {
   static final OperationResult stopSuccess = new OperationResult(0, null);
 
   public StopOperation(final GasCalculator gasCalculator) {
-    super(0x00, "STOP", 0, 0, 1, gasCalculator, gasCalculator.getZeroTierGasCost());
+    super(0x00, "STOP", 0, 0, gasCalculator, gasCalculator.getZeroTierGasCost());
   }
 
   @Override

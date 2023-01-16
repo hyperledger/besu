@@ -50,6 +50,8 @@ public class SynchronizerConfiguration {
   public static final long DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS =
       TimeUnit.SECONDS.toMillis(60);
 
+  public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
+
   // Fast sync config
   private final int fastSyncPivotDistance;
   private final float fastSyncFullValidationRate;
@@ -67,6 +69,9 @@ public class SynchronizerConfiguration {
 
   // General config
   private final SyncMode syncMode;
+
+  // Near head Checkpoint sync
+  private final boolean checkpointPostMergeEnabled;
 
   // Downloader config
   private final long downloaderChangeTargetThresholdByHeight;
@@ -102,7 +107,8 @@ public class SynchronizerConfiguration {
       final int transactionsParallelism,
       final int computationParallelism,
       final int maxTrailingPeers,
-      final long propagationManagerGetBlockTimeoutMillis) {
+      final long propagationManagerGetBlockTimeoutMillis,
+      final boolean checkpointPostMergeEnabled) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -124,6 +130,7 @@ public class SynchronizerConfiguration {
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
     this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
+    this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
   }
 
   public static Builder builder() {
@@ -137,6 +144,10 @@ public class SynchronizerConfiguration {
    */
   public SyncMode getSyncMode() {
     return syncMode;
+  }
+
+  public boolean isCheckpointPostMergeEnabled() {
+    return checkpointPostMergeEnabled;
   }
 
   /**
@@ -271,6 +282,7 @@ public class SynchronizerConfiguration {
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
+    private boolean checkpointPostMergeEnabled = DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
@@ -389,6 +401,11 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder checkpointPostMergeEnabled(final boolean checkpointPostMergeEnabled) {
+      this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           fastSyncPivotDistance,
@@ -411,7 +428,8 @@ public class SynchronizerConfiguration {
           transactionsParallelism,
           computationParallelism,
           maxTrailingPeers,
-          propagationManagerGetBlockTimeoutMillis);
+          propagationManagerGetBlockTimeoutMillis,
+          checkpointPostMergeEnabled);
     }
   }
 }

@@ -19,6 +19,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
@@ -85,14 +87,27 @@ public class BlockResultFactory {
         block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
   }
 
-  public EngineGetPayloadResult enginePayloadTransactionComplete(final Block block) {
+  public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
             .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    return new EngineGetPayloadResult(block.getHeader(), txs);
+    return new EngineGetPayloadResultV1(block.getHeader(), txs);
+  }
+
+  public EngineGetPayloadResultV2 payloadTransactionCompleteV2(
+      final BlockWithReceipts blockWithReceipts) {
+    final List<String> txs =
+        blockWithReceipts.getBlock().getBody().getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+
+    final long blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
+    return new EngineGetPayloadResultV2(
+        blockWithReceipts.getHeader(), txs, Quantity.create(blockValue));
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

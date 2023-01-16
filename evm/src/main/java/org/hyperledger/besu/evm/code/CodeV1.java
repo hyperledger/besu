@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.evm.code;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 
@@ -24,47 +26,35 @@ import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes;
 
 public class CodeV1 implements Code {
+
   private final Hash codeHash;
-  private final Bytes container;
-  private final Bytes code;
+  EOFLayout eofLayout;
 
-  private final long[] validJumpDestinations;
-
-  CodeV1(final Hash codeHash, final EOFLayout layout, final long[] validJumpDestinations) {
+  CodeV1(final Hash codeHash, final EOFLayout layout) {
     this.codeHash = codeHash;
-    this.container = layout.getContainer();
-    this.code = layout.getSections()[EOFLayout.SECTION_CODE];
-    this.validJumpDestinations = validJumpDestinations;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    final CodeV1 codeV1 = (CodeV1) o;
-    return codeHash.equals(codeV1.codeHash)
-        && container.equals(codeV1.container)
-        && code.equals(codeV1.code);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(codeHash, container, code);
+    this.eofLayout = layout;
   }
 
   @Override
   public int getSize() {
-    return container.size();
+    return eofLayout.getContainer().size();
   }
 
   @Override
-  public Bytes getCodeBytes() {
-    return code;
+  public CodeSection getCodeSection(final int section) {
+    checkArgument(section >= 0, "Section number is positive");
+    checkArgument(section < eofLayout.getCodeSectionCount(), "Section index is valid");
+    return eofLayout.getCodeSection(section);
   }
 
   @Override
-  public Bytes getContainerBytes() {
-    return container;
+  public int getCodeSectionCount() {
+    return eofLayout.getCodeSectionCount();
+  }
+
+  @Override
+  public Bytes getBytes() {
+    return eofLayout.getContainer();
   }
 
   @Override
@@ -74,20 +64,24 @@ public class CodeV1 implements Code {
 
   @Override
   public boolean isJumpDestInvalid(final int jumpDestination) {
-    if (jumpDestination < 0 || jumpDestination >= getSize()) {
-      return true;
-    }
-    if (validJumpDestinations == null || validJumpDestinations.length == 0) {
-      return true;
-    }
-
-    final long targetLong = validJumpDestinations[jumpDestination >>> 6];
-    final long targetBit = 1L << (jumpDestination & 0x3F);
-    return (targetLong & targetBit) == 0L;
+    return true; // code validation ensures this
   }
 
   @Override
   public boolean isValid() {
     return true;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final CodeV1 codeV1 = (CodeV1) o;
+    return codeHash.equals(codeV1.codeHash) && Objects.equals(eofLayout, codeV1.eofLayout);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(codeHash, eofLayout);
   }
 }

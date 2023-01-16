@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
-import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -31,8 +30,10 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
@@ -238,7 +239,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     BlockProcessingResult result = validateBlock(emptyBlock);
     if (result.isSuccessful()) {
-      mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+      mergeContext.putPayloadById(
+          payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
       debugLambda(
           LOG,
           "Built empty block proposal {} for payload {}",
@@ -360,7 +362,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-      mergeContext.putPayloadById(payloadIdentifier, bestBlock);
+      mergeContext.putPayloadById(
+          payloadIdentifier, new BlockWithReceipts(bestBlock, resultBest.getReceipts()));
       debugLambda(
           LOG,
           "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms",
@@ -462,10 +465,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead,
-      final Hash finalizedBlockHash,
-      final Hash safeBlockHash,
-      final Optional<PayloadAttributes> maybePayloadAttributes) {
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
 
@@ -501,11 +501,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               mergeContext.setSafeBlock(newSafeBlock);
             });
 
-    if (maybePayloadAttributes.isPresent()
-        && !isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
-      return ForkchoiceResult.withFailure(INVALID_PAYLOAD_ATTRIBUTES, null, Optional.empty());
-    }
-
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
 
@@ -521,30 +516,42 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           LOG,
           "Forwarding chain head to the block {} saved from a previous newPayload invocation",
           newHead::toLogString);
-      forwardWorldStateTo(newHead);
-      return blockchain.forwardToBlock(newHead);
+
+      if (forwardWorldStateTo(newHead)) {
+        // move chain head forward:
+        return blockchain.forwardToBlock(newHead);
+      } else {
+        debugLambda(
+            LOG,
+            "Failed to move the worldstate forward to hash {}, not moving chain head",
+            newHead::toLogString);
+        return false;
+      }
     }
 
     debugLambda(LOG, "New head {} is a chain reorg, rewind chain head to it", newHead::toLogString);
     return blockchain.rewindToBlock(newHead.getHash());
   }
 
-  private void forwardWorldStateTo(final BlockHeader newHead) {
-    protocolContext
-        .getWorldStateArchive()
-        .getMutable(newHead.getStateRoot(), newHead.getHash())
-        .ifPresentOrElse(
-            mutableWorldState ->
-                debugLambda(
-                    LOG,
-                    "World state for state root hash {} and block hash {} persisted successfully",
-                    mutableWorldState::rootHash,
-                    newHead::getHash),
-            () ->
-                LOG.error(
-                    "Could not persist world for root hash {} and block hash {}",
-                    newHead.getStateRoot(),
-                    newHead.getHash()));
+  private boolean forwardWorldStateTo(final BlockHeader newHead) {
+    Optional<MutableWorldState> newWorldState =
+        protocolContext
+            .getWorldStateArchive()
+            .getMutable(newHead.getStateRoot(), newHead.getHash());
+
+    newWorldState.ifPresentOrElse(
+        mutableWorldState ->
+            debugLambda(
+                LOG,
+                "World state for state root hash {} and block hash {} persisted successfully",
+                mutableWorldState::rootHash,
+                newHead::getHash),
+        () ->
+            LOG.error(
+                "Could not persist world for root hash {} and block hash {}",
+                newHead.getStateRoot(),
+                newHead.getHash()));
+    return newWorldState.isPresent();
   }
 
   @Override
@@ -723,11 +730,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           newBlock::toLogString);
       return false;
     }
-  }
-
-  private boolean isPayloadAttributesValid(
-      final PayloadAttributes payloadAttributes, final BlockHeader headBlockHeader) {
-    return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
   @Override

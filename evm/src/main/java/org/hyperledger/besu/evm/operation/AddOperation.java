@@ -27,7 +27,7 @@ public class AddOperation extends AbstractFixedCostOperation {
   static final OperationResult addSuccess = new OperationResult(3, null);
 
   public AddOperation(final GasCalculator gasCalculator) {
-    super(0x01, "ADD", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x01, "ADD", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
