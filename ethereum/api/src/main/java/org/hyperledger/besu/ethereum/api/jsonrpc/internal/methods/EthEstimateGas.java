@@ -44,8 +44,8 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
 
-  private final BlockchainQueries blockchainQueries;
-  private final TransactionSimulator transactionSimulator;
+  protected final BlockchainQueries blockchainQueries;
+  protected final TransactionSimulator transactionSimulator;
 
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
@@ -90,12 +90,12 @@ public class EthEstimateGas implements JsonRpcMethod {
         .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
   }
 
-  private BlockHeader blockHeader() {
+  protected BlockHeader blockHeader() {
     final long headBlockNumber = blockchainQueries.headBlockNumber();
     return blockchainQueries.getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
   }
 
-  private CallParameter overrideGasLimitAndPrice(
+  protected CallParameter overrideGasLimitAndPrice(
       final JsonCallParameter callParams, final long gasLimit) {
     return new CallParameter(
         callParams.getFrom(),
@@ -127,7 +127,7 @@ public class EthEstimateGas implements JsonRpcMethod {
    * @param operationTracer estimate gas operation tracer
    * @return estimate gas
    */
-  private long processEstimateGas(
+  protected long processEstimateGas(
       final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
     // no more than 63/64s of the remaining gas can be passed to the sub calls
     final double subCallMultiplier =
@@ -138,7 +138,7 @@ public class EthEstimateGas implements JsonRpcMethod {
     return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
 
-  private JsonRpcErrorResponse errorResponse(
+  protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
     final JsonRpcError jsonRpcError;
 
@@ -160,12 +160,12 @@ public class EthEstimateGas implements JsonRpcMethod {
     return errorResponse(request, jsonRpcError);
   }
 
-  private JsonRpcErrorResponse errorResponse(
+  protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
   }
 
-  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
+  protected JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getGasPrice() != null
         && (callParams.getMaxFeePerGas().isPresent()
