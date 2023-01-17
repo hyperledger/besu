@@ -69,7 +69,9 @@ public class BonsaiConsistencyCheckSubCommandTest {
     when(chainStorage.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(chainStorage.getBlockHash(0L)).thenReturn(Optional.of(genesis.getHash()));
     when(chainStorage.getBlockBody(genesis.getHash()))
-        .thenReturn(Optional.of(new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty())));
+        .thenReturn(
+            Optional.of(
+                new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty())));
     blockchain =
         spy(DefaultBlockchain.create(chainStorage, new NoOpMetricsSystem(), Long.MAX_VALUE));
     doReturn(archive).when(cmdTest).getWorldStateArchive(chainStorage, bonsaiStorage);
