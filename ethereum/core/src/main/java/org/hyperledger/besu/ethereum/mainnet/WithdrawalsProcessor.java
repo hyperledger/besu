@@ -20,27 +20,14 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
 
-public interface WithdrawalsProcessor {
+public class WithdrawalsProcessor {
 
-  void processWithdrawals(final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater);
-
-  class NoOpWithdrawalsProcessor implements WithdrawalsProcessor {
-
-    @Override
-    public void processWithdrawals(
-        final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {}
-  }
-
-  class DefaultWithdrawalsProcessor implements WithdrawalsProcessor {
-
-    @Override
-    public void processWithdrawals(
-        final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {
-      for (final Withdrawal withdrawal : withdrawals) {
-        final EvmAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
-        account.getMutable().incrementBalance(withdrawal.getAmount().getAsWei());
-      }
-      worldUpdater.commit();
+  public void processWithdrawals(
+      final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {
+    for (final Withdrawal withdrawal : withdrawals) {
+      final EvmAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
+      account.getMutable().incrementBalance(withdrawal.getAmount().getAsWei());
     }
+    worldUpdater.commit();
   }
 }

@@ -34,38 +34,6 @@ import org.junit.jupiter.api.Test;
 
 class WithdrawalsProcessorTest {
 
-  private final WithdrawalsProcessor.DefaultWithdrawalsProcessor defaultWithdrawalsProcessor =
-      new WithdrawalsProcessor.DefaultWithdrawalsProcessor();
-
-  @Test
-  void noopProcessor_shouldNotProcessWithdrawals() {
-    final MutableWorldState worldState =
-        createWorldStateWithAccounts(List.of(entry("0x1", 1), entry("0x2", 2), entry("0x3", 3)));
-    final MutableWorldState originalState = worldState.copy();
-    final WorldUpdater updater = worldState.updater();
-
-    final List<Withdrawal> withdrawals =
-        List.of(
-            new Withdrawal(
-                UInt64.valueOf(100),
-                UInt64.valueOf(1000),
-                Address.fromHexString("0x1"),
-                GWei.of(100)),
-            new Withdrawal(
-                UInt64.valueOf(200),
-                UInt64.valueOf(2000),
-                Address.fromHexString("0x2"),
-                GWei.of(200)));
-    final WithdrawalsProcessor noopWithdrawalsProcessor =
-        new WithdrawalsProcessor.NoOpWithdrawalsProcessor();
-    noopWithdrawalsProcessor.processWithdrawals(withdrawals, updater);
-
-    assertThat(worldState.get(Address.fromHexString("0x1")).getBalance()).isEqualTo(Wei.of(1));
-    assertThat(worldState.get(Address.fromHexString("0x2")).getBalance()).isEqualTo(Wei.of(2));
-    assertThat(worldState.get(Address.fromHexString("0x3")).getBalance()).isEqualTo(Wei.of(3));
-    assertThat(originalState).isEqualTo(worldState);
-  }
-
   @Test
   void defaultProcessor_shouldProcessEmptyWithdrawalsWithoutChangingWorldState() {
     final MutableWorldState worldState =
@@ -73,7 +41,8 @@ class WithdrawalsProcessorTest {
     final MutableWorldState originalState = worldState.copy();
     final WorldUpdater updater = worldState.updater();
 
-    defaultWithdrawalsProcessor.processWithdrawals(Collections.emptyList(), updater);
+    final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+    withdrawalsProcessor.processWithdrawals(Collections.emptyList(), updater);
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance()).isEqualTo(Wei.of(1));
     assertThat(worldState.get(Address.fromHexString("0x2")).getBalance()).isEqualTo(Wei.of(2));
@@ -99,7 +68,8 @@ class WithdrawalsProcessorTest {
                 UInt64.valueOf(2000),
                 Address.fromHexString("0x2"),
                 GWei.of(200)));
-    defaultWithdrawalsProcessor.processWithdrawals(withdrawals, updater);
+    final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+    withdrawalsProcessor.processWithdrawals(withdrawals, updater);
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance())
         .isEqualTo(GWei.of(100).getAsWei().add(1));
@@ -125,7 +95,8 @@ class WithdrawalsProcessorTest {
                 UInt64.valueOf(2000),
                 Address.fromHexString("0x2"),
                 GWei.of(200)));
-    defaultWithdrawalsProcessor.processWithdrawals(withdrawals, updater);
+    final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+    withdrawalsProcessor.processWithdrawals(withdrawals, updater);
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance())
         .isEqualTo(GWei.of(100).getAsWei());
