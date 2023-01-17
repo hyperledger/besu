@@ -60,7 +60,11 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return ommers;
   }
 
-  /** Returns the list of withdrawals of the block. */
+  /**
+   * Returns the withdrawals of the block.
+   *
+   * @return The optional list of withdrawals included in the block.
+   */
   public Optional<List<Withdrawal>> getWithdrawals() {
     return withdrawals;
   }
