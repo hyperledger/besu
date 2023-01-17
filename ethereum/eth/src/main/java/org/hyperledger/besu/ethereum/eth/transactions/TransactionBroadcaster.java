@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.toTransactionList;
-import static org.hyperledger.besu.plugin.data.TransactionType.BLOB_TX_TYPE;
+import static org.hyperledger.besu.plugin.data.TransactionType.BLOB;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -41,8 +41,7 @@ import org.slf4j.LoggerFactory;
 public class TransactionBroadcaster implements TransactionBatchAddedListener {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionBroadcaster.class);
 
-  private static final EnumSet<TransactionType> ANNOUNCE_HASH_ONLY_TX_TYPES =
-      EnumSet.of(BLOB_TX_TYPE);
+  private static final EnumSet<TransactionType> ANNOUNCE_HASH_ONLY_TX_TYPES = EnumSet.of(BLOB);
 
   private static final Boolean HASH_ONLY_BROADCAST = Boolean.TRUE;
   private static final Boolean FULL_BROADCAST = Boolean.FALSE;

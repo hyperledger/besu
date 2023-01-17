@@ -245,8 +245,7 @@ public class TransactionBroadcasterTest {
     when(ethPeers.streamAvailablePeers())
         .thenReturn(Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65)));
 
-    List<Transaction> txs =
-        toTransactionList(setupTransactionPool(TransactionType.BLOB_TX_TYPE, 0, 1));
+    List<Transaction> txs = toTransactionList(setupTransactionPool(TransactionType.BLOB, 0, 1));
 
     txBroadcaster.onTransactionsAdded(txs);
 
@@ -279,7 +278,7 @@ public class TransactionBroadcasterTest {
     List<Transaction> fullBroadcastTxs =
         toTransactionList(setupTransactionPool(TransactionType.EIP1559, 0, 1));
     List<Transaction> hashBroadcastTxs =
-        toTransactionList(setupTransactionPool(TransactionType.BLOB_TX_TYPE, 0, 1));
+        toTransactionList(setupTransactionPool(TransactionType.BLOB, 0, 1));
 
     List<Transaction> mixedTxs = new ArrayList<>(fullBroadcastTxs);
     mixedTxs.addAll(hashBroadcastTxs);
