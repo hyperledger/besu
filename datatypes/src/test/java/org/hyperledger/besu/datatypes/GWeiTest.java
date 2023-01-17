@@ -25,38 +25,42 @@ class GWeiTest {
 
   @Test
   void getAsWei() {
-    final GWei oneGwei = GWei.of(1);
-    final Wei wei = oneGwei.getAsWei();
+    final GWei gwei = GWei.of(1);
+    final Wei wei = gwei.getAsWei();
     assertThat(wei.getAsBigInteger()).isEqualTo(1_000_000_000L);
   }
 
   @Test
   void gWeiFromLongValue() {
-    final GWei oneGwei = GWei.of(1);
-    assertThat(oneGwei.getValue()).isEqualTo(BigInteger.ONE);
+    final GWei gwei = GWei.of(1);
+    assertThat(gwei.getValue()).isEqualTo(BigInteger.ONE);
   }
 
   @Test
   void gWeiFromBigIntegerValue() {
-    final GWei oneGwei = GWei.of(BigInteger.TWO);
-    assertThat(oneGwei.getValue()).isEqualTo(BigInteger.TWO);
+    final GWei gwei = GWei.of(BigInteger.TWO);
+    assertThat(gwei.getValue()).isEqualTo(BigInteger.TWO);
   }
 
   @Test
   void gWeiFromUInt64Value() {
-    final GWei oneGwei = GWei.of(UInt64.valueOf(2));
-    assertThat(oneGwei.getValue()).isEqualTo(BigInteger.TWO);
+    final GWei gwei = GWei.of(UInt64.valueOf(2));
+    assertThat(gwei.getValue()).isEqualTo(BigInteger.TWO);
   }
 
   @Test
   void gWeiFromHexStringValue() {
-    final GWei oneGwei = GWei.fromHexString("0x0000000000000002");
-    assertThat(oneGwei.getValue()).isEqualTo(BigInteger.TWO);
+    final GWei gwei = GWei.fromHexString("0x0000000000000002");
+    assertThat(gwei.getValue()).isEqualTo(BigInteger.TWO);
   }
 
   @Test
   void gWeiToHexString() {
-    final GWei oneGwei = GWei.of(UInt64.valueOf(2));
-    assertThat(oneGwei.toHexString()).isEqualTo("0x0000000000000002");
+    final GWei gwei = GWei.of(UInt64.valueOf(2));
+    assertThat(gwei.toHexString()).isEqualTo("0x0000000000000002");
+
+    final GWei gwei0 = GWei.ZERO;
+    assertThat(gwei0.toHexString()).isEqualTo("0x0000000000000000");
+    assertThat(gwei0.toShortHexString()).isEqualTo("0x0");
   }
 }
