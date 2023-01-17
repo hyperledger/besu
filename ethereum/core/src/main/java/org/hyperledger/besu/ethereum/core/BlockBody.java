@@ -20,18 +20,24 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private static final BlockBody EMPTY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList());
+      new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
 
   private final List<Transaction> transactions;
   private final List<BlockHeader> ommers;
+  private final Optional<List<Withdrawal>> withdrawals;
 
-  public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
+  public BlockBody(
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final Optional<List<Withdrawal>> withdrawals) {
     this.transactions = transactions;
     this.ommers = ommers;
+    this.withdrawals = withdrawals;
   }
 
   public static BlockBody empty() {
@@ -55,6 +61,15 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   /**
+   * Returns the withdrawals of the block.
+   *
+   * @return The optional list of withdrawals included in the block.
+   */
+  public Optional<List<Withdrawal>> getWithdrawals() {
+    return withdrawals;
+  }
+
+  /**
    * Writes Block to {@link RLPOutput}.
    *
    * @param output Output to write to
@@ -75,34 +90,36 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     final BlockBody body =
         new BlockBody(
             input.readList(Transaction::readFrom),
-            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+            Optional.empty());
     input.leaveList();
     return body;
   }
 
   @Override
-  public boolean equals(final Object obj) {
-    if (obj == this) {
-      return true;
-    }
-    if (!(obj instanceof BlockBody)) {
-      return false;
-    }
-    final BlockBody other = (BlockBody) obj;
-    return transactions.equals(other.transactions) && ommers.equals(other.ommers);
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BlockBody blockBody = (BlockBody) o;
+    return Objects.equals(transactions, blockBody.transactions)
+        && Objects.equals(ommers, blockBody.ommers)
+        && Objects.equals(withdrawals, blockBody.withdrawals);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers);
+    return Objects.hash(transactions, ommers, withdrawals);
   }
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder();
-    sb.append("BlockBody{");
-    sb.append("transactions=").append(transactions).append(", ");
-    sb.append("ommers=").append(ommers);
-    return sb.append("}").toString();
+    return "BlockBody{"
+        + "transactions="
+        + transactions
+        + ", ommers="
+        + ommers
+        + ", withdrawals="
+        + withdrawals
+        + '}';
   }
 }

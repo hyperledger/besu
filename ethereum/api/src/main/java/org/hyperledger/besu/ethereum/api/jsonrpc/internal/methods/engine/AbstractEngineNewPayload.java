@@ -196,7 +196,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     final var block =
-        new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
+        new Block(
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), Optional.empty()));
 
     if (parentHeader.isEmpty()) {
       debugLambda(

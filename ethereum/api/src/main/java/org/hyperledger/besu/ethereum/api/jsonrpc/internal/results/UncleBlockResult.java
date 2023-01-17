@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Collections;
+import java.util.Optional;
 
 public class UncleBlockResult {
 
@@ -30,7 +31,8 @@ public class UncleBlockResult {
    * @return A BlockResult, generated from the header and empty body.
    */
   public static BlockResult build(final BlockHeader header) {
-    final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody body =
+        new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
     final int size = new Block(header, body).calculateSize();
     return new BlockResult(
         header, Collections.emptyList(), Collections.emptyList(), Difficulty.ZERO, size);
