@@ -22,10 +22,10 @@ public enum TransactionType {
   FRONTIER(0xf8 /* this is serialized as 0x0 in TransactionCompleteResult */),
   ACCESS_LIST(0x01),
   EIP1559(0x02),
-  EIP4844(0x03);
+  BLOB(0x03);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
-      Set.of(ACCESS_LIST, EIP1559, EIP4844);
+      Set.of(ACCESS_LIST, EIP1559, BLOB);
 
   private static final EnumSet<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
       EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
