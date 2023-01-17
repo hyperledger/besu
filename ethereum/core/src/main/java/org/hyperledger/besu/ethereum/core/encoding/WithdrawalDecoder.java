@@ -30,8 +30,8 @@ public class WithdrawalDecoder {
 
   public static Withdrawal decode(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final UInt64 index = UInt64.valueOf(rlpInput.readBigIntegerScalar());
-    final UInt64 validatorIndex = UInt64.valueOf(rlpInput.readBigIntegerScalar());
+    final UInt64 index = rlpInput.readUInt64Scalar();
+    final UInt64 validatorIndex = rlpInput.readUInt64Scalar();
     final Address address = Address.readFrom(rlpInput);
     final GWei amount = GWei.of(rlpInput.readUInt64Scalar());
     rlpInput.leaveList();
