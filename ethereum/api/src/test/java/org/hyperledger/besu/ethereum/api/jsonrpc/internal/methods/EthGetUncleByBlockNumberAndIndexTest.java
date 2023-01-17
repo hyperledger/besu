@@ -123,7 +123,9 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
   private BlockResult blockResult(final BlockHeader header) {
     final Block block =
-        new Block(header, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+        new Block(
+            header,
+            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
     return new BlockResult(
         header,
         Collections.emptyList(),

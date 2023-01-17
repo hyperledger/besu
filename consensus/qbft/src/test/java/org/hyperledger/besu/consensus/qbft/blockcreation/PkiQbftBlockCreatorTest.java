@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.pki.cms.CmsCreator;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -121,7 +122,7 @@ public class PkiQbftBlockCreatorTest {
     final Block block =
         new Block(
             blockHeaderWithExtraData,
-            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
     when(blockCreator.createBlock(eq(1L)))
         .thenReturn(new BlockCreationResult(block, new TransactionSelectionResults()));
 

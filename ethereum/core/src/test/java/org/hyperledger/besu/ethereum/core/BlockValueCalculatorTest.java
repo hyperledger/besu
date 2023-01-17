@@ -39,7 +39,9 @@ public class BlockValueCalculatorTest {
             .baseFeePerGas(Wei.of(baseFee))
             .buildHeader();
     final Block block =
-        new Block(blockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+        new Block(
+            blockHeader,
+            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
     long blockValue =
         new BlockValueCalculator()
             .calculateBlockValue(new BlockWithReceipts(block, Collections.emptyList()));
@@ -83,7 +85,9 @@ public class BlockValueCalculatorTest {
             .baseFeePerGas(Wei.of(baseFee))
             .buildHeader();
     final Block block =
-        new Block(blockHeader, new BlockBody(List.of(tx1, tx2, tx3), Collections.emptyList()));
+        new Block(
+            blockHeader,
+            new BlockBody(List.of(tx1, tx2, tx3), Collections.emptyList(), Optional.empty()));
     long blockValue =
         new BlockValueCalculator()
             .calculateBlockValue(

@@ -38,10 +38,12 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -60,6 +62,9 @@ public class BlockImportExceptionHandlingTest {
       mock(MainnetTransactionProcessor.class);
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
+
+  private final HeaderBasedProtocolSchedule protocolSchedule =
+      mock(HeaderBasedProtocolSchedule.class);
   private final BlockProcessor blockProcessor =
       new MainnetBlockProcessor(
           transactionProcessor,
@@ -67,10 +72,12 @@ public class BlockImportExceptionHandlingTest {
           Wei.ZERO,
           BlockHeader::getCoinbase,
           true,
-          Optional.empty());
+          Optional.empty(),
+          protocolSchedule);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
+  private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
@@ -97,8 +104,8 @@ public class BlockImportExceptionHandlingTest {
   @Before
   public void setup() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     mainnetBlockValidator =
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
