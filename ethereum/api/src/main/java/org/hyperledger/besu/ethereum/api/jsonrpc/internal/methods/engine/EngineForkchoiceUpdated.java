@@ -18,10 +18,10 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
-import org.hyperledger.besu.consensus.merge.blockcreation.PayloadAttributes;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
@@ -133,16 +132,21 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
-            newHead,
-            forkChoice.getFinalizedBlockHash(),
-            forkChoice.getSafeBlockHash(),
-            maybePayloadAttributes.map(
-                payloadAttributes ->
-                    new PayloadAttributes(
-                        payloadAttributes.getTimestamp(),
-                        payloadAttributes.getPrevRandao(),
-                        payloadAttributes.getSuggestedFeeRecipient(),
-                        Collections.emptyList())));
+            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
+
+    if (maybePayloadAttributes.isPresent()) {
+
+      if (!isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
+        warnLambda(
+            LOG,
+            "Invalid payload attributes: {}",
+            () ->
+                maybePayloadAttributes
+                    .map(EnginePayloadAttributesParameter::serialize)
+                    .orElse(null));
+        return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+      }
+    }
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -176,6 +180,11 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             result.getNewHead().map(BlockHeader::getHash).orElse(null),
             payloadId.orElse(null),
             Optional.empty()));
+  }
+
+  private boolean isPayloadAttributesValid(
+      final EnginePayloadAttributesParameter payloadAttributes, final BlockHeader headBlockHeader) {
+    return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(

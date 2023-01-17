@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
@@ -23,7 +24,6 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
-import org.hyperledger.besu.consensus.merge.blockcreation.PayloadAttributes;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -130,34 +130,42 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
 
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
-            newHead,
-            forkChoice.getFinalizedBlockHash(),
-            forkChoice.getSafeBlockHash(),
-            maybePayloadAttributes.map(
-                payloadAttributes ->
-                    new PayloadAttributes(
-                        payloadAttributes.getTimestamp(),
-                        payloadAttributes.getPrevRandao(),
-                        payloadAttributes.getSuggestedFeeRecipient(),
-                        // TODO Withdrawals should be null -> emptyList? or
-                        // Optional<List<Withdrawals>>?
-                        payloadAttributes.getWithdrawals() == null
-                            ? null
-                            : payloadAttributes.getWithdrawals().stream()
-                                .map(WithdrawalParameter::toWithdrawal)
-                                .collect(toList()))));
+            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
 
-    boolean payloadAttributesAreValid =
-        maybePayloadAttributes.map(this::validatePayloadAttributes).orElse(true);
-    if (!payloadAttributesAreValid) {
-      warnLambda(
-          LOG,
-          "Invalid payload attributes: {}",
-          () ->
-              maybePayloadAttributes
-                  .map(EnginePayloadAttributesParameterV2::serialize)
-                  .orElse(null));
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    if (maybePayloadAttributes.isPresent()) {
+      EnginePayloadAttributesParameterV2 enginePayloadAttributesParameterV2 =
+          maybePayloadAttributes.get();
+      List<Withdrawal> withdrawals =
+          Optional.ofNullable(enginePayloadAttributesParameterV2.getWithdrawals())
+              .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
+              .orElse(null);
+
+      Boolean isWithdrawalsValid =
+          timestampSchedule
+              .getByTimestamp(enginePayloadAttributesParameterV2.getTimestamp())
+              .map(
+                  protocolSpec ->
+                      protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
+              // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to
+              // the
+              // previous fork. This might be resolved when
+              // https://github.com/hyperledger/besu/issues/4789 is played
+              // and if we can combine protocolSchedule and timestampSchedule.
+              .orElseGet(
+                  () ->
+                      new WithdrawalsValidator.ProhibitedWithdrawals()
+                          .validateWithdrawals(withdrawals));
+      if (!isPayloadAttributesValid(enginePayloadAttributesParameterV2, newHead)
+          || !isWithdrawalsValid) {
+        warnLambda(
+            LOG,
+            "Invalid payload attributes: {}",
+            () ->
+                maybePayloadAttributes
+                    .map(EnginePayloadAttributesParameterV2::serialize)
+                    .orElse(null));
+        return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS);
+      }
     }
 
     if (!result.isValid()) {
@@ -199,25 +207,10 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
             Optional.empty()));
   }
 
-  private boolean validatePayloadAttributes(
-      final EnginePayloadAttributesParameterV2 payloadAttributes) {
-    // TODO Withdrawals move this into mergeCoordinator.updateForkChoice with the other
-    // payloadAttributes validation?
-    final List<Withdrawal> withdrawals =
-        Optional.ofNullable(payloadAttributes.getWithdrawals())
-            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
-            .orElse(null);
-    return timestampSchedule
-        .getByTimestamp(payloadAttributes.getTimestamp())
-        .map(
-            protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
-        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
-        // previous fork. This might be resolved when
-        // https://github.com/hyperledger/besu/issues/4789 is played
-        // and if we can combine protocolSchedule and timestampSchedule.
-        .orElseGet(
-            () ->
-                new WithdrawalsValidator.ProhibitedWithdrawals().validateWithdrawals(withdrawals));
+  private boolean isPayloadAttributesValid(
+      final EnginePayloadAttributesParameterV2 payloadAttributes,
+      final BlockHeader headBlockHeader) {
+    return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
