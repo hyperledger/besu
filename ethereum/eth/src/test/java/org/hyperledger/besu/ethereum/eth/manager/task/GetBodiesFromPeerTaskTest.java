@@ -18,7 +18,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -68,7 +68,7 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
   @Test
   public void assertBodyIdentifierUsesWithdrawalsToGenerateBodyIdentifiers() {
     final Withdrawal withdrawal =
-        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE);
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
 
     // Empty body block
     final BlockBody emptyBodyBlock = BlockBody.empty();
