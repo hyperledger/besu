@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
@@ -139,12 +141,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
-    return createBlock(maybeTransactions, maybeOmmers, Optional.empty(), timestamp, true);
+    return createBlock(
+        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), timestamp, true);
   }
 
   protected BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
@@ -169,6 +173,16 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getByBlockHeader(processableBlockHeader);
+
+      final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
+          newProtocolSpec.getWithdrawalsProcessor();
+      if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
+        maybeWithdrawalsProcessor
+            .get()
+            .processWithdrawals(maybeWithdrawals.get(), disposableWorldState.updater());
+      }
+
+      throwIfStopped();
 
       if (rewardCoinbase
           && !rewardBeneficiary(
@@ -200,7 +214,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
       final Block block =
-          new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
+          new Block(
+              blockHeader,
+              new BlockBody(transactionResults.getTransactions(), ommers, Optional.empty()));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);

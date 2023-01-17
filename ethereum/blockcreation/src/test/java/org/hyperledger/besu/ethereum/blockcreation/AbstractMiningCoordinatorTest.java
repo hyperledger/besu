@@ -42,7 +42,7 @@ public class AbstractMiningCoordinatorTest {
   private static final Block BLOCK =
       new Block(
           new BlockHeaderTestFixture().buildHeader(),
-          new BlockBody(Collections.emptyList(), Collections.emptyList()));
+          new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
   private final Blockchain blockchain = mock(Blockchain.class);
   private final PoWMinerExecutor minerExecutor = mock(PoWMinerExecutor.class);
   private final SyncState syncState = mock(SyncState.class);
