@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidator.isWithdrawalsValid;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
@@ -39,7 +40,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.List;
 import java.util.Optional;
@@ -196,26 +196,10 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       final Optional<List<Withdrawal>> withdrawals,
       final BlockHeader headBlockHeader) {
 
-    final boolean newTimestampGreaterThanHead =
-        payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
-    return newTimestampGreaterThanHead && isWithdrawalsValid(payloadAttributes, withdrawals);
-  }
-
-  private boolean isWithdrawalsValid(
-      final EnginePayloadAttributesParameter payloadAttributes,
-      final Optional<List<Withdrawal>> maybeWithdrawals) {
-    final List<Withdrawal> withdrawals = maybeWithdrawals.orElse(null);
-    return timestampSchedule
-        .getByTimestamp(payloadAttributes.getTimestamp())
-        .map(
-            protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
-        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
-        // previous fork. This might be resolved when
-        // https://github.com/hyperledger/besu/issues/4789 is played
-        // and if we can combine protocolSchedule and timestampSchedule.
-        .orElseGet(
-            () ->
-                new WithdrawalsValidator.ProhibitedWithdrawals().validateWithdrawals(withdrawals));
+    final long newTimestamp = payloadAttributes.getTimestamp();
+    final boolean newTimestampGreaterThanHead = newTimestamp > headBlockHeader.getTimestamp();
+    return newTimestampGreaterThanHead
+        && isWithdrawalsValid(timestampSchedule, newTimestamp, withdrawals);
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(

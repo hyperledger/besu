@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidator.isWithdrawalsValid;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
@@ -50,7 +51,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -99,7 +99,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     traceLambda(LOG, "blockparam: {}", () -> Json.encodePrettily(blockParam));
 
-    if (!isWithdrawalsValid(blockParam)) {
+    final Optional<List<Withdrawal>> maybeWithdrawals =
+        Optional.ofNullable(blockParam.getWithdrawals())
+            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
+    if (!isWithdrawalsValid(timestampSchedule, blockParam.getTimestamp(), maybeWithdrawals)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
 
@@ -245,25 +248,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           INVALID,
           executionResult.errorMessage.get());
     }
-  }
-
-  private boolean isWithdrawalsValid(final EnginePayloadParameter blockParam) {
-    final List<Withdrawal> withdrawals =
-        Optional.ofNullable(blockParam.getWithdrawals())
-            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
-            .orElse(null);
-
-    return timestampSchedule
-        .getByTimestamp(blockParam.getTimestamp())
-        .map(
-            protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
-        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
-        // previous fork. This might be resolved when
-        // https://github.com/hyperledger/besu/issues/4789 is played
-        // and if we can combine protocolSchedule and timestampSchedule.
-        .orElseGet(
-            () ->
-                new WithdrawalsValidator.ProhibitedWithdrawals().validateWithdrawals(withdrawals));
   }
 
   JsonRpcResponse respondWith(
