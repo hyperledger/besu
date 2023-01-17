@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 public class WithdrawalParameterTestFixture {
 
-  static final WithdrawalParameter WITHDRAWAL_PARAM_1 =
+  public static final WithdrawalParameter WITHDRAWAL_PARAM_1 =
       createWithdrawal("0x0", "0xFFFF", "0x0000000000000000000000000000000000000000", "0x0");
   static final WithdrawalParameter WITHDRAWAL_PARAM_2 =
       createWithdrawal(

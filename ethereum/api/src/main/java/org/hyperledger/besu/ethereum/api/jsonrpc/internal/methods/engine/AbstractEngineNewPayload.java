@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
@@ -30,6 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -41,10 +44,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -65,16 +71,19 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
+  private final TimestampSchedule timestampSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
 
   public AbstractEngineNewPayload(
       final Vertx vertx,
+      final TimestampSchedule timestampSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
+    this.timestampSchedule = timestampSchedule;
     this.mergeCoordinator = mergeCoordinator;
     this.ethPeers = ethPeers;
   }
@@ -89,6 +98,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     Object reqId = requestContext.getRequest().getId();
 
     traceLambda(LOG, "blockparam: {}", () -> Json.encodePrettily(blockParam));
+
+    if (!isWithdrawalsValid(blockParam)) {
+      return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
+    }
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");
@@ -232,6 +245,25 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           INVALID,
           executionResult.errorMessage.get());
     }
+  }
+
+  private boolean isWithdrawalsValid(final EnginePayloadParameter blockParam) {
+    final List<Withdrawal> withdrawals =
+        Optional.ofNullable(blockParam.getWithdrawals())
+            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
+            .orElse(null);
+
+    return timestampSchedule
+        .getByTimestamp(blockParam.getTimestamp())
+        .map(
+            protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
+        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
+        // previous fork. This might be resolved when
+        // https://github.com/hyperledger/besu/issues/4789 is played
+        // and if we can combine protocolSchedule and timestampSchedule.
+        .orElseGet(
+            () ->
+                new WithdrawalsValidator.ProhibitedWithdrawals().validateWithdrawals(withdrawals));
   }
 
   JsonRpcResponse respondWith(
