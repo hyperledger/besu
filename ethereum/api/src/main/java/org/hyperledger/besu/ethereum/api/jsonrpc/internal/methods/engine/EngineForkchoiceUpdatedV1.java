@@ -36,4 +36,9 @@ public class EngineForkchoiceUpdatedV1 extends AbstractEngineForkchoiceUpdated {
   public String getName() {
     return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V1.getMethodName();
   }
+
+  @Override
+  protected boolean requireTerminalPoWBlockValidation() {
+    return true;
+  }
 }

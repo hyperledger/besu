@@ -119,7 +119,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
-    if (!mergeContext.get().isCheckpointPostMergeSync()
+    if (requireTerminalPoWBlockValidation()
+        && !mergeContext.get().isCheckpointPostMergeSync()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)
         && !mergeContext.get().isChainPruningEnabled()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -313,6 +314,10 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     logForkchoiceUpdatedCall(this::logAtDebug, SYNCING, forkChoice);
     return new JsonRpcSuccessResponse(
         requestId, new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
+  }
+
+  protected boolean requireTerminalPoWBlockValidation() {
+    return false;
   }
 
   // fcU calls are synchronous, no need to make volatile
