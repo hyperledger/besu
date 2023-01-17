@@ -144,8 +144,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                             ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList())));
 
     ForkchoiceResult result =
-            mergeCoordinator.updateForkChoice(
-                    newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
+        mergeCoordinator.updateForkChoice(
+            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
 
     if (maybePayloadAttributes.isPresent()
         && !isPayloadAttributesValid(maybePayloadAttributes.get(), withdrawals, newHead)) {
