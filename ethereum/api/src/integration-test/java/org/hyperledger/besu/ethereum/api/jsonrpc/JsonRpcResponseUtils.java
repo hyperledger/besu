@@ -189,7 +189,8 @@ public class JsonRpcResponseUtils {
             Optional.empty(),
             address(fromAddress),
             Optional.empty(),
-            Optional.of(bigInteger(v)));
+            Optional.of(bigInteger(v)),
+            Optional.empty());
 
     return new TransactionCompleteResult(
         new TransactionWithMetadata(
