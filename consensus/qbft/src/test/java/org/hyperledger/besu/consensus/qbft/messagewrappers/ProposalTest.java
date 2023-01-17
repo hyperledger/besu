@@ -51,7 +51,7 @@ public class ProposalTest {
   private static final Block BLOCK =
       new Block(
           new BlockHeaderTestFixture().extraData(bftExtraDataCodec.encode(extraData)).buildHeader(),
-          new BlockBody(Collections.emptyList(), Collections.emptyList()));
+          new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
 
   @Test
   public void canRoundTripProposalMessage() {

@@ -214,7 +214,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
       final Block block =
-          new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
+          new Block(
+              blockHeader,
+              new BlockBody(transactionResults.getTransactions(), ommers, Optional.empty()));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
