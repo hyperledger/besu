@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -71,7 +72,7 @@ public class Block {
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers));
+    return new Block(header, new BlockBody(transactions, ommers, Optional.empty()));
   }
 
   @Override
