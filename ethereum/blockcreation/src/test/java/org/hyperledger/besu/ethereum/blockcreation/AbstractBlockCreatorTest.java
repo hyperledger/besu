@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -81,7 +82,7 @@ abstract class AbstractBlockCreatorTest {
   void withProcessorAndWithdrawals_WithdrawalsAreProcessed() {
     final AbstractBlockCreator blockCreator = createBlockCreatorWithWithdrawalsProcessor();
     final List<Withdrawal> withdrawals =
-        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
+        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockCreator.createBlock(
         Optional.empty(), Optional.empty(), Optional.of(withdrawals), Optional.empty(), 1L, false);
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
@@ -91,7 +92,7 @@ abstract class AbstractBlockCreatorTest {
   void withNoProcessorAndWithdrawals_WithdrawalsAreNotProcessed() {
     final AbstractBlockCreator blockCreator = createBlockCreatorWithoutWithdrawalsProcessor();
     final List<Withdrawal> withdrawals =
-        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
+        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockCreator.createBlock(
         Optional.empty(), Optional.empty(), Optional.of(withdrawals), Optional.empty(), 1L, false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
