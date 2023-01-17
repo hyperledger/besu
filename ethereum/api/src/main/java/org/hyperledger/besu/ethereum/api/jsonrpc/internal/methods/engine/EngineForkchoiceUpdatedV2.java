@@ -122,19 +122,6 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
-    boolean payloadAttributesAreValid =
-        maybePayloadAttributes.map(this::validatePayloadAttributes).orElse(true);
-    if (!payloadAttributesAreValid) {
-      warnLambda(
-          LOG,
-          "Invalid payload attributes: {}",
-          () ->
-              maybePayloadAttributes
-                  .map(EnginePayloadAttributesParameterV2::serialize)
-                  .orElse(null));
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
-    }
-
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -159,6 +146,19 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                             : payloadAttributes.getWithdrawals().stream()
                                 .map(WithdrawalParameter::toWithdrawal)
                                 .collect(toList()))));
+
+    boolean payloadAttributesAreValid =
+        maybePayloadAttributes.map(this::validatePayloadAttributes).orElse(true);
+    if (!payloadAttributesAreValid) {
+      warnLambda(
+          LOG,
+          "Invalid payload attributes: {}",
+          () ->
+              maybePayloadAttributes
+                  .map(EnginePayloadAttributesParameterV2::serialize)
+                  .orElse(null));
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    }
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
