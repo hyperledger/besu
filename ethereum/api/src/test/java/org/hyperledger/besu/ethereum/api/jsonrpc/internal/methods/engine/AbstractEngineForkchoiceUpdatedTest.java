@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -588,7 +589,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
                 "0x1",
                 "0x10000",
                 "0x0100000000000000000000000000000000000000",
-                "0x100000000000000000000000000000000000000000000000000000000000000"));
+                GWei.ONE.toHexString()));
 
     var payloadParams =
         new EnginePayloadAttributesParameter(

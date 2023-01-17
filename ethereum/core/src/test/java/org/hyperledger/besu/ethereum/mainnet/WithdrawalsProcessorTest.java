@@ -18,6 +18,7 @@ import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -61,17 +62,19 @@ class WithdrawalsProcessorTest {
                 UInt64.valueOf(100),
                 UInt64.valueOf(1000),
                 Address.fromHexString("0x1"),
-                Wei.of(100)),
+                GWei.of(100)),
             new Withdrawal(
                 UInt64.valueOf(200),
                 UInt64.valueOf(2000),
                 Address.fromHexString("0x2"),
-                Wei.of(200)));
+                GWei.of(200)));
     final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
     withdrawalsProcessor.processWithdrawals(withdrawals, updater);
 
-    assertThat(worldState.get(Address.fromHexString("0x1")).getBalance()).isEqualTo(Wei.of(101));
-    assertThat(worldState.get(Address.fromHexString("0x2")).getBalance()).isEqualTo(Wei.of(202));
+    assertThat(worldState.get(Address.fromHexString("0x1")).getBalance())
+        .isEqualTo(GWei.of(100).getAsWei().add(1));
+    assertThat(worldState.get(Address.fromHexString("0x2")).getBalance())
+        .isEqualTo(GWei.of(200).getAsWei().add(2));
     assertThat(worldState.get(Address.fromHexString("0x3")).getBalance()).isEqualTo(Wei.of(3));
   }
 
@@ -86,17 +89,19 @@ class WithdrawalsProcessorTest {
                 UInt64.valueOf(100),
                 UInt64.valueOf(1000),
                 Address.fromHexString("0x1"),
-                Wei.of(100)),
+                GWei.of(100)),
             new Withdrawal(
                 UInt64.valueOf(200),
                 UInt64.valueOf(2000),
                 Address.fromHexString("0x2"),
-                Wei.of(200)));
+                GWei.of(200)));
     final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
     withdrawalsProcessor.processWithdrawals(withdrawals, updater);
 
-    assertThat(worldState.get(Address.fromHexString("0x1")).getBalance()).isEqualTo(Wei.of(100));
-    assertThat(worldState.get(Address.fromHexString("0x2")).getBalance()).isEqualTo(Wei.of(200));
+    assertThat(worldState.get(Address.fromHexString("0x1")).getBalance())
+        .isEqualTo(GWei.of(100).getAsWei());
+    assertThat(worldState.get(Address.fromHexString("0x2")).getBalance())
+        .isEqualTo(GWei.of(200).getAsWei());
   }
 
   private MutableWorldState createWorldStateWithAccounts(

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -48,7 +48,7 @@ public class WithdrawalParameter {
         UInt64.fromHexString(index),
         UInt64.fromHexString(validatorIndex),
         Address.fromHexString(address),
-        Wei.fromHexString(amount));
+        GWei.fromHexString(amount));
   }
 
   public JsonObject asJsonObject() {
