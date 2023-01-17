@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -50,7 +51,7 @@ public class GeneralStateReferenceTestTools {
   private static MainnetTransactionProcessor transactionProcessor(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
         .getByName(name)
-        .getByBlockNumber(0)
+        .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
         .getTransactionProcessor();
   }
 

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
 import java.util.Optional;
@@ -133,8 +134,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
       final BlockHeader parentHeader,
       final Long timestamp,
       final Bytes32 prevRandao,
-      final Address feeRecipient) {
-    return mergeCoordinator.preparePayload(parentHeader, timestamp, prevRandao, feeRecipient);
+      final Address feeRecipient,
+      final Optional<List<Withdrawal>> withdrawals) {
+    return mergeCoordinator.preparePayload(
+        parentHeader, timestamp, prevRandao, feeRecipient, withdrawals);
   }
 
   @Override
@@ -149,12 +152,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead,
-      final Hash finalizedBlockHash,
-      final Hash safeBlockHash,
-      final Optional<PayloadAttributes> maybePayloadAttributes) {
-    return mergeCoordinator.updateForkChoice(
-        newHead, finalizedBlockHash, safeBlockHash, maybePayloadAttributes);
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
+    return mergeCoordinator.updateForkChoice(newHead, finalizedBlockHash, safeBlockHash);
   }
 
   @Override

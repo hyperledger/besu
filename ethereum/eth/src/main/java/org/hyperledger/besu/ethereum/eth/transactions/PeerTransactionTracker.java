@@ -33,6 +33,11 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Transaction>> transactionsToSend = new ConcurrentHashMap<>();
 
+  public void reset() {
+    seenTransactions.clear();
+    transactionsToSend.clear();
+  }
+
   public synchronized void markTransactionsAsSeen(
       final EthPeer peer, final Collection<Transaction> transactions) {
     markTransactionHashesAsSeen(peer, toHashList(transactions));

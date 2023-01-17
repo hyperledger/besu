@@ -52,9 +52,9 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class PoWBlockCreatorTest {
+public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
   private final Address BLOCK_1_COINBASE =
       Address.fromHexString("0x05a56e2d52c817161883f50c441c3228cfe54d9f");

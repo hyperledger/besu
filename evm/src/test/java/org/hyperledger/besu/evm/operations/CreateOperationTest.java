@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
+import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.CODE_TOO_LARGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -54,7 +55,11 @@ public class CreateOperationTest {
   private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final MutableAccount newMutableAccount = mock(MutableAccount.class);
-  private final CreateOperation operation = new CreateOperation(new ConstantinopleGasCalculator());
+  private final CreateOperation operation =
+      new CreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
+  private final CreateOperation maxInitCodeOperation =
+      new CreateOperation(
+          new ConstantinopleGasCalculator(), MainnetEVMs.SHANGHAI_INIT_CODE_SIZE_LIMIT);
 
   private static final String TOPIC =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
@@ -196,7 +201,7 @@ public class CreateOperationTest {
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
+    var result = maxInitCodeOperation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrameStack.peek();
     final ContractCreationProcessor ccp =
         new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
@@ -228,9 +233,8 @@ public class CreateOperationTest {
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
-    assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
+    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 
   @NotNull

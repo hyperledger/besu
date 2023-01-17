@@ -56,10 +56,12 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
@@ -73,6 +75,7 @@ import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -110,6 +113,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
+  private static final Optional<List<Withdrawal>> EMPTY_WITHDRAWALS = Optional.empty();
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
 
@@ -213,13 +217,16 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            EMPTY_WITHDRAWALS);
 
-    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
+        ArgumentCaptor.forClass(BlockWithReceipts.class);
 
-    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), blockWithReceipts.capture());
 
-    assertThat(block.getValue().getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
+    assertThat(blockWithReceipts.getValue().getHeader().getCoinbase())
+        .isEqualTo(suggestedFeeRecipient);
   }
 
   @Test
@@ -249,7 +256,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doThrow(new MerkleTrieException("missing leaf"))
               .doCallRealMethod()
               .when(beingSpiedOn)
-              .createBlock(any(), any(Bytes32.class), anyLong());
+              .createBlock(any(), any(Bytes32.class), anyLong(), eq(Optional.empty()));
           return beingSpiedOn;
         };
 
@@ -284,16 +291,19 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.random(),
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     verify(willThrow, never()).addBadBlock(any(), any());
     blockCreationTask.get();
 
-    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
+        ArgumentCaptor.forClass(BlockWithReceipts.class);
 
     verify(mergeContext, times(txPerBlock + 1))
-        .putPayloadById(eq(payloadId), block.capture()); // +1 for the empty
-    assertThat(block.getValue().getBody().getTransactions().size()).isEqualTo(txPerBlock);
+        .putPayloadById(eq(payloadId), blockWithReceipts.capture()); // +1 for the empty
+    assertThat(blockWithReceipts.getValue().getBlock().getBody().getTransactions().size())
+        .isEqualTo(txPerBlock);
     // this only verifies that adding the bad block didn't happen through the mergeCoordinator, it
     // still may be called directly.
     verify(badBlockManager, never()).addBadBlock(any(), any());
@@ -325,17 +335,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     blockCreationTask.get();
 
-    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
+        ArgumentCaptor.forClass(BlockWithReceipts.class);
 
-    verify(mergeContext, times(retries.intValue())).putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, times(retries.intValue()))
+        .putPayloadById(eq(payloadId), blockWithReceipts.capture());
 
-    assertThat(block.getAllValues().size()).isEqualTo(retries.intValue());
+    assertThat(blockWithReceipts.getAllValues().size()).isEqualTo(retries.intValue());
     for (int i = 0; i < retries.intValue(); i++) {
-      assertThat(block.getAllValues().get(i).getBody().getTransactions()).hasSize(i);
+      assertThat(blockWithReceipts.getAllValues().get(i).getBlock().getBody().getTransactions())
+          .hasSize(i);
     }
   }
 
@@ -344,7 +358,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       throws InterruptedException, ExecutionException {
     doAnswer(
             invocation -> {
-              if (invocation.getArgument(1, Block.class).getBody().getTransactions().isEmpty()) {
+              if (invocation
+                  .getArgument(1, BlockWithReceipts.class)
+                  .getBlock()
+                  .getBody()
+                  .getTransactions()
+                  .isEmpty()) {
                 // this is called by the first empty block
                 doThrow(new MerkleTrieException("lock")) // first fail
                     .doCallRealMethod() // then work
@@ -367,17 +386,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     blockCreationTask.get();
 
-    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
+        ArgumentCaptor.forClass(BlockWithReceipts.class);
 
-    verify(mergeContext, times(2)).putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, times(2)).putPayloadById(eq(payloadId), blockWithReceipts.capture());
 
-    assertThat(block.getAllValues().size()).isEqualTo(2);
-    assertThat(block.getAllValues().get(0).getBody().getTransactions()).hasSize(0);
-    assertThat(block.getAllValues().get(1).getBody().getTransactions()).hasSize(1);
+    assertThat(blockWithReceipts.getAllValues().size()).isEqualTo(2);
+    assertThat(blockWithReceipts.getAllValues().get(0).getBlock().getBody().getTransactions())
+        .hasSize(0);
+    assertThat(blockWithReceipts.getAllValues().get(1).getBlock().getBody().getTransactions())
+        .hasSize(1);
   }
 
   @Test
@@ -397,7 +420,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     try {
       blockCreationTask.get();
@@ -438,7 +462,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            Optional.empty());
 
     waitForBlockCreationInProgress.await();
     coordinator.finalizeProposalById(payloadId);
@@ -446,12 +471,14 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     blockCreationTask.get();
 
     // check that we only the empty block has been built
-    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
+        ArgumentCaptor.forClass(BlockWithReceipts.class);
 
-    verify(mergeContext, times(1)).putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, times(1)).putPayloadById(eq(payloadId), blockWithReceipts.capture());
 
-    assertThat(block.getAllValues().size()).isEqualTo(1);
-    assertThat(block.getAllValues().get(0).getBody().getTransactions()).hasSize(0);
+    assertThat(blockWithReceipts.getAllValues().size()).isEqualTo(1);
+    assertThat(blockWithReceipts.getAllValues().get(0).getBlock().getBody().getTransactions())
+        .hasSize(0);
   }
 
   @Test
@@ -478,13 +505,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     var payloadId1 =
         coordinator.preparePayload(
-            genesisState.getBlock().getHeader(), timestamp, Bytes32.ZERO, suggestedFeeRecipient);
+            genesisState.getBlock().getHeader(),
+            timestamp,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
 
     final CompletableFuture<Void> task1 = blockCreationTask;
 
     var payloadId2 =
         coordinator.preparePayload(
-            genesisState.getBlock().getHeader(), timestamp, Bytes32.ZERO, suggestedFeeRecipient);
+            genesisState.getBlock().getHeader(),
+            timestamp,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
 
     assertThat(payloadId1).isEqualTo(payloadId2);
 
@@ -494,13 +529,17 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     blockCreationTask.get();
 
-    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
+        ArgumentCaptor.forClass(BlockWithReceipts.class);
 
-    verify(mergeContext, times(retries.intValue())).putPayloadById(eq(payloadId1), block.capture());
+    verify(mergeContext, times(retries.intValue()))
+        .putPayloadById(eq(payloadId1), blockWithReceipts.capture());
 
-    assertThat(block.getAllValues().size()).isEqualTo(retries.intValue());
+    assertThat(blockWithReceipts.getAllValues().size()).isEqualTo(retries.intValue());
     for (int i = 0; i < retries.intValue(); i++) {
-      assertThat(block.getAllValues().get(i).getBody().getTransactions()).hasSize(i);
+      assertThat(blockWithReceipts.getAllValues().get(i).getBlock().getBody().getTransactions())
+          .hasSize(i);
+      assertThat(blockWithReceipts.getAllValues().get(i).getReceipts()).hasSize(i);
     }
   }
 
@@ -520,7 +559,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     ForkchoiceResult result =
         coordinator.updateForkChoice(
-            childHeader, terminalHeader.getHash(), terminalHeader.getHash(), Optional.empty());
+            childHeader, terminalHeader.getHash(), terminalHeader.getHash());
 
     assertThat(result.isValid()).isFalse();
     assertThat(result.getErrorMessage()).isPresent();
@@ -640,10 +679,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     }
 
     coordinator.updateForkChoice(
-        prevParent,
-        genesisState.getBlock().getHash(),
-        genesisState.getBlock().getHash(),
-        Optional.empty());
+        prevParent, genesisState.getBlock().getHash(), genesisState.getBlock().getHash());
     Hash expectedCommonAncestor = blockchain.getBlockHeader(2).get().getBlockHash();
 
     // generate from 3' down to some other head. Remeber those.
@@ -657,10 +693,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       prevParent = nextPrime;
     }
     coordinator.updateForkChoice(
-        prevParent,
-        genesisState.getBlock().getHash(),
-        genesisState.getBlock().getHash(),
-        Optional.empty());
+        prevParent, genesisState.getBlock().getHash(), genesisState.getBlock().getHash());
     assertThat(lastBlockAddedEvent.get().getCommonAncestorHash()).isEqualTo(expectedCommonAncestor);
     assertThat(lastBlockAddedEvent.get().getEventType()).isEqualTo(EventType.CHAIN_REORG);
     assertThat(lastBlockAddedEvent.get().getBlock().getHash()).isEqualTo(prevParent.getBlockHash());
@@ -860,45 +893,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
-  public void invalidPayloadShouldReturnErrorAndUpdateForkchoiceState() {
-    BlockHeader terminalHeader = terminalPowBlock();
-    sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
-
-    BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
-    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
-    sendNewPayloadAndForkchoiceUpdate(
-        prevFinalizedBlock, Optional.empty(), terminalHeader.getHash());
-
-    BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
-    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
-
-    sendNewPayloadAndForkchoiceUpdate(
-        lastFinalizedBlock, Optional.of(prevFinalizedHeader), prevFinalizedHeader.getHash());
-
-    BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
-    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
-    assertThat(coordinator.rememberBlock(headBlock).getYield()).isPresent();
-
-    var res =
-        coordinator.updateForkChoice(
-            headBlockHeader,
-            lastFinalizedBlock.getHash(),
-            lastFinalizedBlock.getHash(),
-            Optional.of(
-                new PayloadAttributes(
-                    headBlockHeader.getTimestamp() - 1, Hash.ZERO, Address.ZERO)));
-
-    assertThat(res.isValid()).isFalse();
-    assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES);
-
-    verify(blockchain).setFinalized(lastFinalizedBlock.getHash());
-    verify(mergeContext).setFinalized(lastFinalizedHeader);
-    verify(blockchain).setSafeBlock(lastFinalizedBlock.getHash());
-    verify(mergeContext).setSafeBlock(lastFinalizedHeader);
-  }
-
-  @Test
   public void forkchoiceUpdateShouldIgnoreAncestorOfChainHead() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
@@ -913,12 +907,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     sendNewPayloadAndForkchoiceUpdate(child, Optional.empty(), parent.getHash());
 
     ForkchoiceResult res =
-        coordinator.updateForkChoice(
-            parentHeader,
-            Hash.ZERO,
-            terminalHeader.getHash(),
-            Optional.of(
-                new PayloadAttributes(parentHeader.getTimestamp() + 1, Hash.ZERO, Address.ZERO)));
+        coordinator.updateForkChoice(parentHeader, Hash.ZERO, terminalHeader.getHash());
 
     assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD);
     assertThat(res.getNewHead().isEmpty()).isTrue();
@@ -938,8 +927,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 .updateForkChoice(
                     block.getHeader(),
                     finalizedHeader.map(BlockHeader::getHash).orElse(Hash.ZERO),
-                    safeHash,
-                    Optional.empty())
+                    safeHash)
                 .isValid())
         .isTrue();
 

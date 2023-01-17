@@ -39,6 +39,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -157,6 +158,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("baseFeePerGas") final String baseFee,
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
+        @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
@@ -175,6 +177,7 @@ public class BlockchainReferenceTestCaseSpec {
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
+          // withdrawalsRoot == null ? Hash.EMPTY : Hash.fromHexString(withdrawalsRoot),
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -216,7 +219,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("rlp") final String rlp,
         @JsonProperty("blockHeader") final Object blockHeader,
         @JsonProperty("transactions") final Object transactions,
-        @JsonProperty("uncleHeaders") final Object uncleHeaders) {
+        @JsonProperty("uncleHeaders") final Object uncleHeaders,
+        @JsonProperty("withdrawals") final Object withdrawals) {
       boolean blockVaid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
@@ -227,7 +231,10 @@ public class BlockchainReferenceTestCaseSpec {
       }
       this.rlp = rlpAttempt;
 
-      if (blockHeader == null && transactions == null && uncleHeaders == null) {
+      if (blockHeader == null
+          && transactions == null
+          && uncleHeaders == null
+          && withdrawals == null) {
         blockVaid = false;
       }
 
@@ -250,7 +257,12 @@ public class BlockchainReferenceTestCaseSpec {
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)));
+              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
+              Optional.empty());
+      // input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions),
+      // input.isEndOfCurrentList()
+      //         ? Optional.empty()
+      //           : Optional.of(input.readList(Withdrawal::readFrom))));
       return new Block(header, body);
     }
   }

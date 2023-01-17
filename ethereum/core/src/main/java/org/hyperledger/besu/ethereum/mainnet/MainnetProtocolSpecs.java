@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
@@ -36,10 +37,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.contractvalidation.CachedInvalidCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -249,7 +248,8 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                goQuorumPrivacyParameters) ->
+                goQuorumPrivacyParameters,
+                protocolSchedule) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
                         transactionProcessor,
@@ -257,7 +257,8 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        Optional.empty())))
+                        Optional.empty(),
+                        protocolSchedule)))
         .name("DaoRecoveryInit");
   }
 
@@ -532,7 +533,8 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    quorumCompatibilityMode))
+                    quorumCompatibilityMode,
+                    Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -655,9 +657,6 @@ public abstract class MainnetProtocolSpecs {
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
             : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
 
-    // constant for max initcode size for EIP-3860 limit and meter initcode
-    final int contractSizeLimit = configContractSizeLimit.orElse(SHANGHAI_INIT_CODE_SIZE_LIMIT);
-
     return parisDefinition(
             chainId,
             configContractSizeLimit,
@@ -690,17 +689,21 @@ public abstract class MainnetProtocolSpecs {
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
-        .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
-                new ContractCreationProcessor(
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
                     gasCalculator,
-                    evm,
+                    londonFeeMarket,
                     true,
-                    List.of(
-                        MaxCodeSizeRule.of(contractSizeLimit),
-                        CachedInvalidCodeRule.of(EvmSpecVersion.SHANGHAI)),
-                    1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
+                    quorumCompatibilityMode,
+                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
+        .withdrawalsProcessor(new WithdrawalsProcessor())
+        .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .name("Shanghai");
   }
 
@@ -851,10 +854,17 @@ public abstract class MainnetProtocolSpecs {
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
+        final Optional<List<Withdrawal>> withdrawals,
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
-          blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
+          blockchain,
+          worldState,
+          blockHeader,
+          transactions,
+          ommers,
+          withdrawals,
+          privateMetadataUpdater);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

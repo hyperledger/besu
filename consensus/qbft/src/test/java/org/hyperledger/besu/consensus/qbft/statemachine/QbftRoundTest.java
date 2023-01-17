@@ -127,7 +127,7 @@ public class QbftRoundTest {
     headerTestFixture.number(1);
 
     final BlockHeader header = headerTestFixture.buildHeader();
-    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
+    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList(), Optional.empty()));
 
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(proposedBlock, new TransactionSelectionResults()));

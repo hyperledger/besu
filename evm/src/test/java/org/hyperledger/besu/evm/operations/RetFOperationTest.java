@@ -38,10 +38,9 @@ class RetFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b1" + "00");
-    when(mockCode.getCodeBytes(2)).thenReturn(code);
-    when(mockCode.getCodeBytes(1)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 1, 2, 3);
+    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =
@@ -71,10 +70,9 @@ class RetFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b1" + "00");
-    when(mockCode.getCodeBytes(2)).thenReturn(code);
-    when(mockCode.getCodeBytes(1)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 1, 2, 3);
+    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =
@@ -101,9 +99,9 @@ class RetFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mock(Code.class);
     final Bytes code = Bytes.fromHexString("00" + "b1" + "00");
-    when(mockCode.getCodeBytes(0)).thenReturn(code);
+    when(mockCode.getBytes()).thenReturn(code);
 
-    final CodeSection codeSection = new CodeSection(Bytes.EMPTY, 1, 2, 3);
+    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =
