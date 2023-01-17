@@ -163,7 +163,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       } else {
         final Hash addressHash = updatedAccount.getAddressHash();
         final Bytes accountValue = updatedAccount.serializeAccount();
-        stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
+        stateUpdater.putAccountInfoState(addressHash, accountValue);
         accountTrie.put(addressHash, accountValue);
       }
     }
@@ -241,17 +241,19 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final BonsaiWorldStateUpdater worldStateUpdater) {
     for (final Address address : worldStateUpdater.getStorageToClear()) {
       // because we are clearing persisted values we need the account root as persisted
+      final Hash addressHash = Hash.hash(address);
       final BonsaiAccount oldAccount =
           worldStateStorage
-              .getAccount(Hash.hash(address))
-              .map(bytes -> fromRLP(BonsaiPersistedWorldState.this, address, bytes, true))
+              .getAccount(addressHash)
+              .map(
+                  bytes ->
+                      fromRLP(BonsaiPersistedWorldState.this, address, addressHash, bytes, true))
               .orElse(null);
       if (oldAccount == null) {
         // This is when an account is both created and deleted within the scope of the same
         // block.  A not-uncommon DeFi bot pattern.
         continue;
       }
-      final Hash addressHash = Hash.hash(address);
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
               (location, key) -> getStorageTrieNode(addressHash, location, key),
@@ -262,8 +264,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       while (!entriesToDelete.isEmpty()) {
         entriesToDelete
             .keySet()
-            .forEach(
-                k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
+            .forEach(k -> stateUpdater.removeStorageValueBySlotHash(addressHash, Hash.wrap(k)));
         entriesToDelete.keySet().forEach(storageTrie::remove);
         if (entriesToDelete.size() == 256) {
           entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
@@ -381,9 +382,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Account get(final Address address) {
+    final Hash addressHash = Hash.hash(address);
     return worldStateStorage
-        .getAccount(Hash.hash(address))
-        .map(bytes -> fromRLP(updater, address, bytes, true))
+        .getAccount(addressHash)
+        .map(bytes -> fromRLP(updater, address, addressHash, bytes, true))
         .orElse(null);
   }
 

@@ -124,6 +124,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   static BonsaiAccount fromRLP(
       final BonsaiWorldView context,
       final Address address,
+      final Hash addressHash,
       final Bytes encoded,
       final boolean mutable)
       throws RLPException {
@@ -138,7 +139,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     in.leaveList();
 
     return new BonsaiAccount(
-        context, address, Hash.hash(address), nonce, balance, storageRoot, codeHash, mutable);
+        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable);
   }
 
   @Override
