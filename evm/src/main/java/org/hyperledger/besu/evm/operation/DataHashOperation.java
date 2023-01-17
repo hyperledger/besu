@@ -46,7 +46,7 @@ public class DataHashOperation extends AbstractOperation {
         frame.pushStackItem(Bytes.EMPTY);
       }
     } else {
-      return new OperationResult(3, ExceptionalHaltReason.INVALID_OPERATION);
+      frame.pushStackItem(Bytes.EMPTY);
     }
     return new OperationResult(3, ExceptionalHaltReason.NONE);
   }
