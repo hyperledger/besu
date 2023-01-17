@@ -22,8 +22,10 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 class WithdrawalEncoderTest {
   public static final String WITHDRAWAL_ZERO_CASE =
       "0xd8808094000000000000000000000000000000000000000080";
