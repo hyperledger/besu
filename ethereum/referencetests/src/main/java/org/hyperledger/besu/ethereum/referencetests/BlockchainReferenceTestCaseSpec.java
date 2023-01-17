@@ -39,6 +39,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -256,7 +257,8 @@ public class BlockchainReferenceTestCaseSpec {
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)));
+              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
+              Optional.empty());
       // input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions),
       // input.isEndOfCurrentList()
       //         ? Optional.empty()
