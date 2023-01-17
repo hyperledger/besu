@@ -26,7 +26,7 @@ public class WithdrawalsProcessor {
       final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {
     for (final Withdrawal withdrawal : withdrawals) {
       final EvmAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
-      account.getMutable().incrementBalance(withdrawal.getAmount());
+      account.getMutable().incrementBalance(withdrawal.getAmount().getAsWei());
     }
     worldUpdater.commit();
   }

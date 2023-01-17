@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.With
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_2;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 
 import java.util.List;
 
@@ -89,7 +90,9 @@ public class EnginePayloadAttributesParameterTest {
                 + "\"index\":\"0x1\","
                 + "\"validatorIndex\":\"0x10000\","
                 + "\"address\":\"0x0100000000000000000000000000000000000000\","
-                + "\"amount\":\"0x100000000000000000000000000000000000000000000000000000000000000\""
+                + "\"amount\":\""
+                + GWei.ONE.toHexString()
+                + "\""
                 + "}]"
                 + "}");
   }
