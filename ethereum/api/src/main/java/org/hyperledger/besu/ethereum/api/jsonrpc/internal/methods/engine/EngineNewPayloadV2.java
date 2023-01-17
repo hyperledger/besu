@@ -157,7 +157,7 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      return respondWithInvalid(reqId, blockParam, null, INVALID_BLOCK_HASH, errorMessage);
+      return respondWithInvalid(reqId, blockParam, null, INVALID, errorMessage);
     }
     // do we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
@@ -206,17 +206,6 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
                 return null;
               });
       return respondWith(reqId, blockParam, null, SYNCING);
-    }
-
-    // TODO: post-merge cleanup
-    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
-      mergeCoordinator.addBadBlock(block, Optional.empty());
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          Hash.ZERO,
-          INVALID,
-          newBlockHeader.getHash() + " did not descend from terminal block");
     }
 
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);

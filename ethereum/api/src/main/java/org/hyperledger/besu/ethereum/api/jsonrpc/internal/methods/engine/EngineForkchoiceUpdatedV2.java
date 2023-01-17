@@ -141,18 +141,6 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
     }
 
-    // TODO: post-merge cleanup, this should be unnecessary after merge
-    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)) {
-      logForkchoiceUpdatedCall(INVALID, forkChoice);
-      return new JsonRpcSuccessResponse(
-          requestId,
-          new EngineUpdateForkchoiceResult(
-              INVALID,
-              Hash.ZERO,
-              null,
-              Optional.of(newHead + " did not descend from terminal block")));
-    }
-
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
             newHead,
