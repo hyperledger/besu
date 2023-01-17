@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -95,7 +96,7 @@ abstract class AbstractBlockProcessorTest {
   void withProcessorAndWithdrawals_WithdrawalsAreProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.of(withdrawalsProcessor));
     final List<Withdrawal> withdrawals =
-        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
+        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
         blockchain,
         worldState,
@@ -112,7 +113,7 @@ abstract class AbstractBlockProcessorTest {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
 
     final List<Withdrawal> withdrawals =
-        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), Wei.ONE));
+        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
         blockchain,
         worldState,
