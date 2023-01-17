@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
+
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,5 +34,15 @@ public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
   @Test
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_newPayloadV1");
+  }
+
+  @Override
+  protected boolean validateTerminalPoWBlock() {
+    return true;
+  }
+
+  @Override
+  protected ExecutionEngineJsonRpcMethod.EngineStatus getCorrectInvalidBlockHashStatus() {
+    return INVALID_BLOCK_HASH;
   }
 }
