@@ -68,7 +68,8 @@ public class RewardTraceGeneratorTest {
 
   @Before
   public void setUp() {
-    final BlockBody blockBody = new BlockBody(Collections.emptyList(), List.of(ommerHeader));
+    final BlockBody blockBody =
+        new BlockBody(Collections.emptyList(), List.of(ommerHeader), Optional.empty());
     final BlockHeader blockHeader =
         gen.header(0x0A, blockBody, new BlockDataGenerator.BlockOptions());
     block = new Block(blockHeader, blockBody);
@@ -92,7 +93,8 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            Optional.empty());
+            Optional.empty(),
+            protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =
@@ -151,7 +153,8 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            eraRounds);
+            eraRounds,
+            protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =

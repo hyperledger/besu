@@ -48,7 +48,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
             Wei.ZERO,
             original.getMiningBeneficiaryCalculator(),
             original.isSkipZeroBlockRewards(),
-            Optional.empty());
+            Optional.empty(),
+            delegate);
     final BlockValidator noRewardBlockValidator =
         new MainnetBlockValidator(
             original.getBlockHeaderValidator(),
@@ -80,7 +81,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getFeeMarket(),
         original.getBadBlocksManager(),
         Optional.empty(),
-        original.getWithdrawalsValidator());
+        original.getWithdrawalsValidator(),
+        original.getWithdrawalsProcessor());
   }
 
   @Override
