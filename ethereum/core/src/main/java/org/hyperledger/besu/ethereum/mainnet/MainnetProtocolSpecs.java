@@ -534,7 +534,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
                     quorumCompatibilityMode,
-                    Integer.MAX_VALUE))
+                    contractSizeLimit))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -648,8 +648,8 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
-
-    // extra vaiables need to support flipping the warm coinbase flag.
+    final int contractSizeLimit = configContractSizeLimit.orElse(SHANGHAI_INIT_CODE_SIZE_LIMIT);
+    // extra variables need to support flipping the warm coinbase flag.
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
     final BaseFeeMarket londonFeeMarket =
@@ -701,7 +701,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
                     quorumCompatibilityMode,
-                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
+                    contractSizeLimit))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .name("Shanghai");
