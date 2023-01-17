@@ -60,9 +60,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return ommers;
   }
 
-  /**
-   * @return The list of transactions of the block.
-   */
+  /** Returns the list of withdrawals of the block. */
   public Optional<List<Withdrawal>> getWithdrawals() {
     return withdrawals;
   }
@@ -95,7 +93,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     BlockBody blockBody = (BlockBody) o;
