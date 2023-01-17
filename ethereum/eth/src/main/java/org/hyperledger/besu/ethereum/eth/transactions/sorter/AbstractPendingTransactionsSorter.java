@@ -66,6 +66,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
  * for mining or look-up by hash.
+ *
+ * <p>This class is safe for use across multiple threads.
  */
 public abstract class AbstractPendingTransactionsSorter implements PendingTransactions {
   private static final int DEFAULT_LOWEST_INVALID_KNOWN_NONCE_CACHE = 10_000;

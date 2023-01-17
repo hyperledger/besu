@@ -56,7 +56,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MergeReorgTest implements MergeGenesisConfigHelper {
 
-  @Mock PendingTransactions mockSorter;
+  @Mock PendingTransactions mockPeningTransactions;
 
   private MergeCoordinator coordinator;
 
@@ -88,7 +88,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             protocolContext,
             mockProtocolSchedule,
             CompletableFuture::runAsync,
-            mockSorter,
+            mockPeningTransactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardSyncContext.class));
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());

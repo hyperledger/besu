@@ -47,7 +47,7 @@ public class TransactionPoolFactory {
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
     final PendingTransactions pendingTransactions =
-        createPendingTransactionsSorter(
+        createPendingTransactions(
             protocolSchedule, protocolContext, clock, metricsSystem, transactionPoolConfiguration);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
@@ -171,7 +171,7 @@ public class TransactionPoolFactory {
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
   }
 
-  private static PendingTransactions createPendingTransactionsSorter(
+  private static PendingTransactions createPendingTransactions(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,

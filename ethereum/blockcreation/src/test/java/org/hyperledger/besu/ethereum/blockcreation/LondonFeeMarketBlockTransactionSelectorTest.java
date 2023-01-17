@@ -42,7 +42,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
-  protected PendingTransactions createPendingTransactionsSorter() {
+  protected PendingTransactions createPendingTransactions() {
     return new BaseFeePendingTransactionsSorter(
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(5)

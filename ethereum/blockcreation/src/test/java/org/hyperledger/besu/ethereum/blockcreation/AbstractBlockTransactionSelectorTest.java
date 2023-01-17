@@ -89,12 +89,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
   @Before
   public void setup() {
     worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
-    pendingTransactions = createPendingTransactionsSorter();
+    pendingTransactions = createPendingTransactions();
     when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
     when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
   }
 
-  protected abstract PendingTransactions createPendingTransactionsSorter();
+  protected abstract PendingTransactions createPendingTransactions();
 
   private Boolean isCancelled() {
     return false;
