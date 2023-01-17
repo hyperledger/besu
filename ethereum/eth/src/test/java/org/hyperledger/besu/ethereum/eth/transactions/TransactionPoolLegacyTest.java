@@ -111,7 +111,7 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
                 .parentHash(parentBlock.getHash())
                 .number(parentBlock.getNumber() + 1)
                 .buildHeader(),
-            new BlockBody(transactionList, emptyList()));
+            new BlockBody(transactionList, emptyList(), Optional.empty()));
     final List<TransactionReceipt> transactionReceipts =
         transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))
