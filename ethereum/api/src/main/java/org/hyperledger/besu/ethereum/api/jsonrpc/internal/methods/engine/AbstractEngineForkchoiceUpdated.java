@@ -18,7 +18,7 @@ import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidator.isWithdrawalsValid;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
@@ -193,13 +193,14 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
   private boolean isPayloadAttributesValid(
       final EnginePayloadAttributesParameter payloadAttributes,
-      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
 
     final boolean newTimestampGreaterThanHead =
         payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
     return newTimestampGreaterThanHead
-        && isWithdrawalsValid(timestampSchedule, payloadAttributes.getTimestamp(), withdrawals);
+        && getWithdrawalsValidator(timestampSchedule, payloadAttributes.getTimestamp())
+            .validateWithdrawals(maybeWithdrawals.orElse(null));
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(

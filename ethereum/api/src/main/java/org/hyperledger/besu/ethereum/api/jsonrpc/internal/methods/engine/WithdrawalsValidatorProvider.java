@@ -15,32 +15,22 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
-import java.util.List;
-import java.util.Optional;
+public class WithdrawalsValidatorProvider {
 
-public class WithdrawalsValidator {
-
-  static boolean isWithdrawalsValid(
-      final TimestampSchedule timestampSchedule,
-      final long newPayloadTimestamp,
-      final Optional<List<Withdrawal>> maybeWithdrawals) {
-    final List<Withdrawal> withdrawals = maybeWithdrawals.orElse(null);
+  static WithdrawalsValidator getWithdrawalsValidator(
+      final TimestampSchedule timestampSchedule, final long newPayloadTimestamp) {
 
     return timestampSchedule
         .getByTimestamp(newPayloadTimestamp)
-        .map(
-            protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
+        .map(ProtocolSpec::getWithdrawalsValidator)
         // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
         // previous fork. This might be resolved when
         // https://github.com/hyperledger/besu/issues/4789 is played
         // and if we can combine protocolSchedule and timestampSchedule.
-        .orElseGet(
-            () ->
-                new org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator
-                        .ProhibitedWithdrawals()
-                    .validateWithdrawals(withdrawals));
+        .orElseGet(WithdrawalsValidator.ProhibitedWithdrawals::new);
   }
 }
