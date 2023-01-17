@@ -25,12 +25,12 @@ public class WithdrawalsValidator {
 
   static boolean isWithdrawalsValid(
       final TimestampSchedule timestampSchedule,
-      final long timestamp,
+      final long newPayloadTimestamp,
       final Optional<List<Withdrawal>> maybeWithdrawals) {
     final List<Withdrawal> withdrawals = maybeWithdrawals.orElse(null);
 
     return timestampSchedule
-        .getByTimestamp(timestamp)
+        .getByTimestamp(newPayloadTimestamp)
         .map(
             protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
         // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
