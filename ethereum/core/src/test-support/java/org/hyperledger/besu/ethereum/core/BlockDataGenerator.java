@@ -327,7 +327,7 @@ public class BlockDataGenerator {
       defaultTxs.add(transaction(options.getTransactionTypes()));
     }
 
-    return new BlockBody(options.getTransactions(defaultTxs), ommers);
+    return new BlockBody(options.getTransactions(defaultTxs), ommers, Optional.empty());
   }
 
   private BlockHeader ommer() {
