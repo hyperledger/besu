@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * The minimum set of data for a BlockHeader, as defined in the <a href=
@@ -178,4 +179,12 @@ public interface BlockHeader {
   default Optional<Bytes32> getPrevRandao() {
     return Optional.empty();
   }
+
+  /**
+   * The excess_data_gas of this header.
+   *
+   * @return The excess_data_gas of this header.
+   */
+  @Unstable
+  UInt256 getExcessDataGas();
 }

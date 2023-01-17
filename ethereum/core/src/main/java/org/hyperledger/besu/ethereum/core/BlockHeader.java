@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -62,6 +63,7 @@ public class BlockHeader extends SealableBlockHeader
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
+      final UInt256 excessDataGas,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<LogsBloomFilter> privateLogsBloom) {
     super(
@@ -79,7 +81,8 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        excessDataGas);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -103,6 +106,7 @@ public class BlockHeader extends SealableBlockHeader
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
+      final UInt256 excessDataGas,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -119,7 +123,8 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        excessDataGas);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -225,6 +230,7 @@ public class BlockHeader extends SealableBlockHeader
     if (baseFee != null) {
       out.writeUInt256Scalar(baseFee);
     }
+    out.writeUInt256Scalar(excessDataGas);
     out.endList();
   }
 
@@ -247,6 +253,7 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes32 mixHashOrPrevRandao = input.readBytes32();
     final long nonce = input.readLong();
     final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
+    final UInt256 excessDataGas = input.readUInt256Scalar();
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -265,6 +272,7 @@ public class BlockHeader extends SealableBlockHeader
         baseFee,
         mixHashOrPrevRandao,
         nonce,
+        excessDataGas,
         blockHeaderFunctions);
   }
 
@@ -305,6 +313,7 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("extraData=").append(extraData).append(", ");
     sb.append("baseFee=").append(baseFee).append(", ");
     sb.append("mixHashOrPrevRandao=").append(mixHashOrPrevRandao).append(", ");
+    sb.append("excessDataGas=").append(excessDataGas).append(", ");
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
   }
@@ -329,6 +338,7 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getBaseFee().map(Wei::fromQuantity).orElse(null),
         pluginBlockHeader.getPrevRandao().orElse(null),
         pluginBlockHeader.getNonce(),
+        pluginBlockHeader.getExcessDataGas(),
         blockHeaderFunctions);
   }
 

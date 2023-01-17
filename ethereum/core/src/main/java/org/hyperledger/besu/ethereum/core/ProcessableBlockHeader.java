@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader implements BlockValues {
@@ -43,6 +44,7 @@ public class ProcessableBlockHeader implements BlockValues {
   protected final Wei baseFee;
   // prevRandao is included for post-merge blocks
   protected final Bytes32 mixHashOrPrevRandao;
+  protected final UInt256 excessDataGas;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -52,7 +54,8 @@ public class ProcessableBlockHeader implements BlockValues {
       final long gasLimit,
       final long timestamp,
       final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao) {
+      final Bytes32 mixHashOrPrevRandao,
+      final UInt256 excessDataGas) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -61,6 +64,7 @@ public class ProcessableBlockHeader implements BlockValues {
     this.timestamp = timestamp;
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
+    this.excessDataGas = excessDataGas;
   }
 
   /**
@@ -157,6 +161,10 @@ public class ProcessableBlockHeader implements BlockValues {
    */
   public Optional<Bytes32> getPrevRandao() {
     return Optional.ofNullable(mixHashOrPrevRandao);
+  }
+
+  public UInt256 getExcessDataGas() {
+    return excessDataGas;
   }
 
   public String toLogString() {

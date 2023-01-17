@@ -31,6 +31,7 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ChainForTestCreator {
 
@@ -56,6 +57,7 @@ public class ChainForTestCreator {
         null,
         Hash.EMPTY,
         0,
+        UInt256.ZERO,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -79,6 +81,7 @@ public class ChainForTestCreator {
         blockHeader.getBaseFee().orElse(null),
         blockHeader.getMixHash(),
         blockHeader.getNonce(),
+        blockHeader.getExcessDataGas(),
         new MainnetBlockHeaderFunctions());
   }
 
@@ -124,6 +127,7 @@ public class ChainForTestCreator {
         Wei.ZERO,
         Hash.EMPTY,
         0,
+        UInt256.ZERO,
         new MainnetBlockHeaderFunctions());
   }
 }

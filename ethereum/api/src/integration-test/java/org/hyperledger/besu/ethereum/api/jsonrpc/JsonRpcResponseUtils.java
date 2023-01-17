@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.BASEFEE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.COINBASE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.DIFFICULTY;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.EXCESS_DATA_GAS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.EXTRA_DATA;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.GAS_USED;
@@ -100,6 +101,7 @@ public class JsonRpcResponseUtils {
         values.containsKey(BASEFEE) ? Wei.of(unsignedInt256(values.get(BASEFEE))) : null;
     final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
+    final UInt256 excessDataGas = unsignedInt256(values.get(EXCESS_DATA_GAS));
 
     final List<JsonNode> ommers = new ArrayList<>();
 
@@ -121,6 +123,7 @@ public class JsonRpcResponseUtils {
             baseFee,
             mixHash,
             nonce,
+            excessDataGas,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

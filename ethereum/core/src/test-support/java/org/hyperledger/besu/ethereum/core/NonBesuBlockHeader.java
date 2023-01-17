@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.data.Quantity;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class NonBesuBlockHeader implements BlockHeader {
 
@@ -109,5 +110,10 @@ public class NonBesuBlockHeader implements BlockHeader {
   @Override
   public Hash getBlockHash() {
     return blockHash;
+  }
+
+  @Override
+  public UInt256 getExcessDataGas() {
+    return null;
   }
 }

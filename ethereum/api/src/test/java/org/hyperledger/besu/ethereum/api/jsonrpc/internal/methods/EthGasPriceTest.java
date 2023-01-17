@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -161,6 +162,7 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                UInt256.ZERO,
                 null),
             new BlockBody(
                 List.of(
@@ -197,6 +199,7 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                UInt256.ZERO,
                 null),
             new BlockBody(List.of(), List.of())));
   }

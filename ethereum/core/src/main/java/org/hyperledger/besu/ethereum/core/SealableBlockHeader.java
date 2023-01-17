@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
@@ -53,7 +54,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long timestamp,
       final Bytes extraData,
       final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao) {
+      final Bytes32 mixHashOrPrevRandao,
+      final UInt256 excessDataGas) {
     super(
         parentHash,
         coinbase,
@@ -62,7 +64,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         gasLimit,
         timestamp,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        excessDataGas);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;

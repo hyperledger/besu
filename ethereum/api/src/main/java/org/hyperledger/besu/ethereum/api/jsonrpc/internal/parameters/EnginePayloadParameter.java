@@ -24,6 +24,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * parentHash: DATA, 32 Bytes feeRecipient: DATA, 20 Bytes stateRoot: DATA, 32 Bytes receiptsRoot:
@@ -47,6 +48,7 @@ public class EnginePayloadParameter {
   private final LogsBloomFilter logsBloom;
   private final List<String> transactions;
   private final List<WithdrawalParameter> withdrawals;
+  private final UInt256 excessDataGas;
 
   @JsonCreator
   public EnginePayloadParameter(
@@ -64,7 +66,8 @@ public class EnginePayloadParameter {
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("transactions") final List<String> transactions,
-      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals) {
+      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
+      @JsonProperty("excessDataGas") final String excessDataGas) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -80,6 +83,7 @@ public class EnginePayloadParameter {
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.transactions = transactions;
     this.withdrawals = withdrawals;
+    this.excessDataGas = UInt256.fromHexString(excessDataGas);
   }
 
   public Hash getBlockHash() {
@@ -140,5 +144,9 @@ public class EnginePayloadParameter {
 
   public List<WithdrawalParameter> getWithdrawals() {
     return withdrawals;
+  }
+
+  public UInt256 getExcessDataGas() {
+    return excessDataGas;
   }
 }

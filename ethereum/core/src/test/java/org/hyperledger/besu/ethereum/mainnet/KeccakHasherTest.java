@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class KeccakHasherTest {
@@ -46,7 +47,8 @@ public class KeccakHasherTest {
         final long timestamp,
         final Bytes extraData,
         final Wei baseFee,
-        final Bytes32 random) {
+        final Bytes32 random,
+        final UInt256 excessDataGas) {
       super(
           parentHash,
           ommersHash,
@@ -62,7 +64,8 @@ public class KeccakHasherTest {
           timestamp,
           extraData,
           baseFee,
-          random);
+          random,
+          excessDataGas);
     }
   }
 
@@ -107,6 +110,7 @@ public class KeccakHasherTest {
             7987824L,
             1538483791L,
             Bytes.fromHexString("0xd88301080f846765746888676f312e31302e31856c696e7578"),
+            null,
             null,
             null);
 

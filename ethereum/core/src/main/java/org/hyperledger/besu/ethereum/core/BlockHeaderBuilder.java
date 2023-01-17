@@ -29,6 +29,7 @@ import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -68,6 +69,8 @@ public class BlockHeaderBuilder {
   // A nonce can be any value so we use the OptionalLong
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
+
+  private UInt256 excessDataGas = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -111,7 +114,8 @@ public class BlockHeaderBuilder {
         .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
         .nonce(header.getNonce())
-        .prevRandao(header.getPrevRandao().orElse(null));
+        .prevRandao(header.getPrevRandao().orElse(null))
+        .excessDataGas(header.getExcessDataGas());
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -132,6 +136,7 @@ public class BlockHeaderBuilder {
             .extraData(fromBuilder.extraData)
             .baseFee(fromBuilder.baseFee)
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
+            .excessDataGas(fromBuilder.excessDataGas)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -157,6 +162,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         nonce.getAsLong(),
+        excessDataGas,
         blockHeaderFunctions);
   }
 
@@ -171,7 +177,8 @@ public class BlockHeaderBuilder {
         gasLimit,
         timestamp,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        excessDataGas);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -192,7 +199,8 @@ public class BlockHeaderBuilder {
         timestamp,
         extraData,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        excessDataGas);
   }
 
   private void validateBlockHeader() {
@@ -359,6 +367,12 @@ public class BlockHeaderBuilder {
     if (prevRandao != null) {
       this.mixHashOrPrevRandao = prevRandao;
     }
+    return this;
+  }
+
+  public BlockHeaderBuilder excessDataGas(final UInt256 excessDataGas) {
+    checkArgument(gasLimit >= 0L);
+    this.excessDataGas = excessDataGas;
     return this;
   }
 }
