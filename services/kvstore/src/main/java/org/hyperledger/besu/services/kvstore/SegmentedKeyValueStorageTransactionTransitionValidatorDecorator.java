@@ -19,12 +19,22 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transaction;
 
+/**
+ * The Segmented key value storage transaction transition validator decorator.
+ *
+ * @param <S> the type parameter
+ */
 public class SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<S>
     implements Transaction<S> {
 
   private final Transaction<S> transaction;
   private boolean active = true;
 
+  /**
+   * Instantiates a new Segmented key value storage transaction transition validator decorator.
+   *
+   * @param toDecorate the to decorate
+   */
   public SegmentedKeyValueStorageTransactionTransitionValidatorDecorator(
       final Transaction<S> toDecorate) {
     this.transaction = toDecorate;

@@ -25,8 +25,14 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
+/** The Call operation. */
 public class CallOperation extends AbstractCallOperation {
 
+  /**
+   * Instantiates a new Call operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CallOperation(final GasCalculator gasCalculator) {
     super(0xF1, "CALL", 7, 1, gasCalculator);
   }

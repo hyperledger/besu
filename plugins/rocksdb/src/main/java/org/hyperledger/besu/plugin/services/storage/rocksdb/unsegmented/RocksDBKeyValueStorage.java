@@ -47,6 +47,7 @@ import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Rocks db key value storage. */
 public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   static {
@@ -62,6 +63,13 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
 
+  /**
+   * Instantiates a new Rocks db key value storage.
+   *
+   * @param configuration the configuration
+   * @param metricsSystem the metrics system
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   */
   public RocksDBKeyValueStorage(
       final RocksDBConfiguration configuration,
       final MetricsSystem metricsSystem,

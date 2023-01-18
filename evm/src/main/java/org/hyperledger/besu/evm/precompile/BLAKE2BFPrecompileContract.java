@@ -30,11 +30,17 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The BLAKE2BF precompile contract. */
 // https://github.com/keep-network/go-ethereum/pull/4
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(BLAKE2BFPrecompileContract.class);
 
+  /**
+   * Instantiates a new BLAKE2BF precompile contract.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
     super("BLAKE2f", gasCalculator);
   }

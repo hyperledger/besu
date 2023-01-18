@@ -20,8 +20,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The M size operation. */
 public class MSizeOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new M size operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public MSizeOperation(final GasCalculator gasCalculator) {
     super(0x59, "MSIZE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }

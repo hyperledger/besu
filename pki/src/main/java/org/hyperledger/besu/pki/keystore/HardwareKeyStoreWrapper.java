@@ -50,6 +50,13 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
 
   private final java.security.Provider provider;
 
+  /**
+   * Instantiates a new Hardware key store wrapper.
+   *
+   * @param keystorePassword the keystore password
+   * @param provider the provider
+   * @param crlLocation the crl location
+   */
   public HardwareKeyStoreWrapper(
       final String keystorePassword, final Provider provider, final Path crlLocation) {
     super(crlLocation);
@@ -72,6 +79,13 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     }
   }
 
+  /**
+   * Instantiates a new Hardware key store wrapper.
+   *
+   * @param keystorePassword the keystore password
+   * @param config the config
+   * @param crlLocation the CRL location
+   */
   public HardwareKeyStoreWrapper(
       final String keystorePassword, final Path config, final Path crlLocation) {
     super(crlLocation);
@@ -105,6 +119,12 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     }
   }
 
+  /**
+   * Instantiates a new Hardware key store wrapper.
+   *
+   * @param keystore the keystore
+   * @param password the password
+   */
   @VisibleForTesting
   HardwareKeyStoreWrapper(final KeyStore keystore, final String password) {
     super(null);
@@ -173,6 +193,12 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     }
   }
 
+  /**
+   * Gets PKCS11 provider.
+   *
+   * @param config the config
+   * @return the PKCS11 provider
+   */
   @VisibleForTesting
   public Provider getPkcs11ProviderForConfig(final String config) {
     return getPkcs11Provider(config);

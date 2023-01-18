@@ -14,6 +14,12 @@
  */
 package org.hyperledger.besu.plugin.services.rpc;
 
+/** The interface Plugin rpc request. */
 public interface PluginRpcRequest {
+  /**
+   * Get params.
+   *
+   * @return the object [ ]
+   */
   Object[] getParams();
 }

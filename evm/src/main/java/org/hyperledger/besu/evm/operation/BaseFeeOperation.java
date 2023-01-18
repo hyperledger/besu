@@ -22,8 +22,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
+/** The Base fee operation. */
 public class BaseFeeOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Base fee operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public BaseFeeOperation(final GasCalculator gasCalculator) {
     super(0x48, "BASEFEE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }

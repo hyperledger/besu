@@ -27,12 +27,27 @@ import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Ext code copy operation. */
 public class ExtCodeCopyOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Ext code copy operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public ExtCodeCopyOperation(final GasCalculator gasCalculator) {
     super(0x3C, "EXTCODECOPY", 4, 0, gasCalculator);
   }
 
+  /**
+   * Cost of Ext Code Copy operation.
+   *
+   * @param frame the frame
+   * @param memOffset the mem offset
+   * @param length the length
+   * @param accountIsWarm the account is warm
+   * @return the long
+   */
   protected long cost(
       final MessageFrame frame,
       final long memOffset,

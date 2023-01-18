@@ -23,16 +23,33 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Prepare message. */
 public class Prepare extends BftMessage<PreparePayload> {
 
+  /**
+   * Instantiates a new Prepare.
+   *
+   * @param payload the payload
+   */
   public Prepare(final SignedData<PreparePayload> payload) {
     super(payload);
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return getPayload().getDigest();
   }
 
+  /**
+   * Decode data.
+   *
+   * @param data the data
+   * @return the Prepare payload
+   */
   public static Prepare decode(final Bytes data) {
     return new Prepare(PayloadDeserializers.readSignedPreparePayloadFrom(RLP.input(data)));
   }

@@ -14,12 +14,24 @@
  */
 package org.hyperledger.besu.nat.core.exception;
 
+/** The Nat initialization exception. */
 public class NatInitializationException extends Exception {
 
+  /**
+   * Instantiates a new Nat initialization exception.
+   *
+   * @param message the message
+   */
   public NatInitializationException(final String message) {
     super(message);
   }
 
+  /**
+   * Instantiates a new Nat initialization exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
   public NatInitializationException(final String message, final Throwable cause) {
     super(message, cause);
   }

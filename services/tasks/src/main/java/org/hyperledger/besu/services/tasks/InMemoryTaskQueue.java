@@ -22,6 +22,11 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * The InMemory task queue.
+ *
+ * @param <T> the type parameter
+ */
 public class InMemoryTaskQueue<T> implements TaskCollection<T> {
   private final Queue<T> internalQueue = new ArrayDeque<>();
   private final Set<InMemoryTask<T>> unfinishedOutstandingTasks = new HashSet<>();
@@ -65,6 +70,7 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
     internalQueue.clear();
   }
 
+  /** Clear internal queue. */
   public void clearInternalQueue() {
     internalQueue.clear();
   }
@@ -87,6 +93,11 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
     }
   }
 
+  /**
+   * Return task queue as list.
+   *
+   * @return the list
+   */
   public synchronized List<T> asList() {
     return new ArrayList<>(internalQueue);
   }
@@ -106,6 +117,12 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
     private final InMemoryTaskQueue<T> queue;
     private final AtomicBoolean completed = new AtomicBoolean(false);
 
+    /**
+     * Instantiates a new InMemory task.
+     *
+     * @param queue the queue
+     * @param data the data
+     */
     public InMemoryTask(final InMemoryTaskQueue<T> queue, final T data) {
       this.queue = queue;
       this.data = data;

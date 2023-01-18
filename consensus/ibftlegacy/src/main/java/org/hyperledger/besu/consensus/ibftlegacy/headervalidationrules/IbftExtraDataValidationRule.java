@@ -46,6 +46,12 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
   private final boolean validateCommitSeals;
   private final long ceil2nBy3Block;
 
+  /**
+   * Instantiates a new Ibft extra data validation rule.
+   *
+   * @param validateCommitSeals the validate commit seals
+   * @param ceil2nBy3Block the ceil 2 n by 3 block
+   */
   public IbftExtraDataValidationRule(final boolean validateCommitSeals, final long ceil2nBy3Block) {
     this.validateCommitSeals = validateCommitSeals;
     this.ceil2nBy3Block = ceil2nBy3Block;

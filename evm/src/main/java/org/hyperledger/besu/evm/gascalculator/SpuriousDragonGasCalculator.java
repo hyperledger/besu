@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+/** The Spurious dragon gas calculator. */
 public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
 
   private static final long EXP_OPERATION_BYTE_GAS_COST = 50L;

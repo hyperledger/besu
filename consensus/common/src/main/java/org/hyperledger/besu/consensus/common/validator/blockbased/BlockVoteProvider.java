@@ -23,11 +23,18 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Map;
 import java.util.Optional;
 
+/** The Block vote provider. */
 public class BlockVoteProvider implements VoteProvider {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
 
+  /**
+   * Instantiates a new Block vote provider.
+   *
+   * @param voteTallyCache the vote tally cache
+   * @param voteProposer the vote proposer
+   */
   public BlockVoteProvider(final VoteTallyCache voteTallyCache, final VoteProposer voteProposer) {
     this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;

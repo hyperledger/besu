@@ -19,12 +19,18 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+/** The Key value storage transaction transition validator decorator. */
 public class KeyValueStorageTransactionTransitionValidatorDecorator
     implements KeyValueStorageTransaction {
 
   private final KeyValueStorageTransaction transaction;
   private boolean active = true;
 
+  /**
+   * Instantiates a new Key value storage transaction transition validator decorator.
+   *
+   * @param toDecorate the to decorate
+   */
   public KeyValueStorageTransactionTransitionValidatorDecorator(
       final KeyValueStorageTransaction toDecorate) {
     this.transaction = toDecorate;

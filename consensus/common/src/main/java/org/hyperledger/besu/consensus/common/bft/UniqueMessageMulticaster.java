@@ -23,6 +23,7 @@ import java.util.Collections;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The Unique message multicaster. */
 public class UniqueMessageMulticaster implements ValidatorMulticaster {
   private final ValidatorMulticaster multicaster;
   private final MessageTracker gossipedMessageTracker;
@@ -39,6 +40,12 @@ public class UniqueMessageMulticaster implements ValidatorMulticaster {
     this.gossipedMessageTracker = new MessageTracker(gossipHistoryLimit);
   }
 
+  /**
+   * Instantiates a new Unique message multicaster.
+   *
+   * @param multicaster the multicaster
+   * @param gossipedMessageTracker the gossiped message tracker
+   */
   @VisibleForTesting
   public UniqueMessageMulticaster(
       final ValidatorMulticaster multicaster, final MessageTracker gossipedMessageTracker) {

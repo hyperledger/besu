@@ -23,6 +23,7 @@ import java.util.Map;
 import com.google.common.annotations.VisibleForTesting;
 import picocli.CommandLine;
 
+/** The Metric category converter for CLI options. */
 public class MetricCategoryConverter implements CommandLine.ITypeConverter<MetricCategory> {
 
   private final Map<String, MetricCategory> metricCategories = new HashMap<>();
@@ -36,15 +37,31 @@ public class MetricCategoryConverter implements CommandLine.ITypeConverter<Metri
     return category;
   }
 
+  /**
+   * Add Metrics categories.
+   *
+   * @param <T> the type parameter
+   * @param categoryEnum the category enum
+   */
   public <T extends Enum<T> & MetricCategory> void addCategories(final Class<T> categoryEnum) {
     EnumSet.allOf(categoryEnum)
         .forEach(category -> metricCategories.put(category.name(), category));
   }
 
+  /**
+   * Add registry category.
+   *
+   * @param metricCategory the metric category
+   */
   public void addRegistryCategory(final MetricCategory metricCategory) {
     metricCategories.put(metricCategory.getName().toUpperCase(), metricCategory);
   }
 
+  /**
+   * Gets metric categories.
+   *
+   * @return the metric categories
+   */
   @VisibleForTesting
   Map<String, MetricCategory> getMetricCategories() {
     return metricCategories;

@@ -18,11 +18,19 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The type Ret F operation. */
 public class RetFOperation extends AbstractOperation {
 
+  /** The Opcode. */
   public static final int OPCODE = 0xb1;
+  /** The Ret F success. */
   static final OperationResult retfSuccess = new OperationResult(4, null);
 
+  /**
+   * Instantiates a new Ret F operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public RetFOperation(final GasCalculator gasCalculator) {
     super(OPCODE, "RETF", 0, 0, gasCalculator);
   }

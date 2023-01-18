@@ -26,15 +26,23 @@ import java.nio.file.Path;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The Default key store wrapper provider. */
 public class DefaultKeyStoreWrapperProvider implements KeyStoreWrapperProvider {
 
   private final HardwareKeyStoreWrapperProvider hardwareKeyStoreWrapperProvider;
   private final SoftwareKeyStoreWrapperProvider softwareKeyStoreWrapperProvider;
 
+  /** Instantiates a new Default key store wrapper provider. */
   DefaultKeyStoreWrapperProvider() {
     this(HardwareKeyStoreWrapper::new, SoftwareKeyStoreWrapper::new);
   }
 
+  /**
+   * Instantiates a new Default key store wrapper provider.
+   *
+   * @param hardwareKeyStoreWrapperProvider the hardware key store wrapper provider
+   * @param softwareKeyStoreWrapperProvider the software key store wrapper provider
+   */
   @VisibleForTesting
   DefaultKeyStoreWrapperProvider(
       final HardwareKeyStoreWrapperProvider hardwareKeyStoreWrapperProvider,
@@ -56,14 +64,33 @@ public class DefaultKeyStoreWrapperProvider implements KeyStoreWrapperProvider {
     }
   }
 
+  /** The interface Hardware key store wrapper provider. */
   interface HardwareKeyStoreWrapperProvider {
 
+    /**
+     * Get hardware key store wrapper.
+     *
+     * @param keystorePassword the keystore password
+     * @param config the config
+     * @param crlLocation the crl location
+     * @return the hardware key store wrapper
+     */
     HardwareKeyStoreWrapper get(
         final String keystorePassword, final Path config, final Path crlLocation);
   }
 
+  /** The interface Software key store wrapper provider. */
   interface SoftwareKeyStoreWrapperProvider {
 
+    /**
+     * Get software key store wrapper.
+     *
+     * @param keystoreType the keystore type
+     * @param keystoreLocation the keystore location
+     * @param keystorePassword the keystore password
+     * @param crlLocation the crl location
+     * @return the software key store wrapper
+     */
     SoftwareKeyStoreWrapper get(
         final String keystoreType,
         final Path keystoreLocation,

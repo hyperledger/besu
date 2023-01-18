@@ -21,18 +21,35 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.Set;
 
+/** The Message tracker. */
 public class MessageTracker {
   private final Set<Hash> seenMessages;
 
+  /**
+   * Instantiates a new Message tracker.
+   *
+   * @param messageTrackingLimit the message tracking limit
+   */
   public MessageTracker(final int messageTrackingLimit) {
     this.seenMessages = newSetFromMap(new SizeLimitedMap<>(messageTrackingLimit));
   }
 
+  /**
+   * Add seen message.
+   *
+   * @param message the message
+   */
   public void addSeenMessage(final MessageData message) {
     final Hash uniqueID = Hash.hash(message.getData());
     seenMessages.add(uniqueID);
   }
 
+  /**
+   * Has seen message.
+   *
+   * @param message the message
+   * @return the boolean
+   */
   public boolean hasSeenMessage(final MessageData message) {
     final Hash uniqueID = Hash.hash(message.getData());
     return seenMessages.contains(uniqueID);

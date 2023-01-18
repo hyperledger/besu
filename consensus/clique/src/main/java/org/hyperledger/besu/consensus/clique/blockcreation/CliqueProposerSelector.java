@@ -33,6 +33,11 @@ public class CliqueProposerSelector {
 
   private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Clique proposer selector.
+   *
+   * @param validatorProvider the validator provider
+   */
   public CliqueProposerSelector(final ValidatorProvider validatorProvider) {
     checkNotNull(validatorProvider);
     this.validatorProvider = validatorProvider;

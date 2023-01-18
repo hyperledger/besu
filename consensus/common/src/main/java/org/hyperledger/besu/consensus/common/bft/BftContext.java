@@ -26,6 +26,13 @@ public class BftContext implements PoaContext {
   private final EpochManager epochManager;
   private final BftBlockInterface blockInterface;
 
+  /**
+   * Instantiates a new Bft context.
+   *
+   * @param validatorProvider the validator provider
+   * @param epochManager the epoch manager
+   * @param blockInterface the block interface
+   */
   public BftContext(
       final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
@@ -35,10 +42,20 @@ public class BftContext implements PoaContext {
     this.blockInterface = blockInterface;
   }
 
+  /**
+   * Gets validator provider.
+   *
+   * @return the validator provider
+   */
   public ValidatorProvider getValidatorProvider() {
     return validatorProvider;
   }
 
+  /**
+   * Gets epoch manager.
+   *
+   * @return the epoch manager
+   */
   public EpochManager getEpochManager() {
     return epochManager;
   }

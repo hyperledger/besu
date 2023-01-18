@@ -19,15 +19,37 @@ import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
+/** The interface Bft event handler. */
 public interface BftEventHandler {
 
+  /** Start. */
   void start();
 
+  /**
+   * Handle message event.
+   *
+   * @param msg the msg
+   */
   void handleMessageEvent(BftReceivedMessageEvent msg);
 
+  /**
+   * Handle new block event.
+   *
+   * @param newChainHead the new chain head
+   */
   void handleNewBlockEvent(NewChainHead newChainHead);
 
+  /**
+   * Handle block timer expiry.
+   *
+   * @param blockTimerExpiry the block timer expiry
+   */
   void handleBlockTimerExpiry(BlockTimerExpiry blockTimerExpiry);
 
+  /**
+   * Handle round expiry.
+   *
+   * @param roundExpiry the round expiry
+   */
   void handleRoundExpiry(RoundExpiry roundExpiry);
 }

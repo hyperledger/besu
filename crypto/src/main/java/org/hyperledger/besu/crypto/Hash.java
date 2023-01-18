@@ -26,7 +26,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public abstract class Hash {
   private Hash() {}
 
+  /** The constant KECCAK256_ALG. */
   public static final String KECCAK256_ALG = "KECCAK-256";
+
   private static final String SHA256_ALG = "SHA-256";
   private static final String RIPEMD160_ALG = "RIPEMD160";
   private static final String BLAKE2BF_ALG = "BLAKE2BF";

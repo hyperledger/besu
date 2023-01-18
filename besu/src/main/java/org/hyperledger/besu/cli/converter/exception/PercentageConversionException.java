@@ -16,8 +16,14 @@ package org.hyperledger.besu.cli.converter.exception;
 
 import static java.lang.String.format;
 
+/** The custom Percentage conversion exception. */
 public final class PercentageConversionException extends Exception {
 
+  /**
+   * Instantiates a new Percentage conversion exception.
+   *
+   * @param value the invalid value to add in exception message
+   */
   public PercentageConversionException(final String value) {
     super(format("Invalid value: %s, should be a number between 0 and 100 inclusive.", value));
   }
