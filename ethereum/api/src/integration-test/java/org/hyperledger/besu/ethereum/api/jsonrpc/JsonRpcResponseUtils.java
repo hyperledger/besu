@@ -101,7 +101,8 @@ public class JsonRpcResponseUtils {
         values.containsKey(BASEFEE) ? Wei.of(unsignedInt256(values.get(BASEFEE))) : null;
     final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
-    final UInt256 excessDataGas = unsignedInt256(values.get(EXCESS_DATA_GAS));
+    final UInt256 excessDataGas =
+        values.containsKey(EXCESS_DATA_GAS) ? unsignedInt256(values.get(EXCESS_DATA_GAS)) : null;
 
     final List<JsonNode> ommers = new ArrayList<>();
 
