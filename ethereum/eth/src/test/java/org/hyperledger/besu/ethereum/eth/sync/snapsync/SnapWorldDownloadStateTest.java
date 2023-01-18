@@ -329,7 +329,7 @@ public class SnapWorldDownloadStateTest {
         BlockAddedEvent.createForHeadAdvancement(
             new Block(
                 new BlockHeaderTestFixture().number(500).buildHeader(),
-                new BlockBody(emptyList(), emptyList(), Optional.empty())),
+                new BlockBody(emptyList(), emptyList())),
             Collections.emptyList(),
             Collections.emptyList()));
 
@@ -355,7 +355,7 @@ public class SnapWorldDownloadStateTest {
         BlockAddedEvent.createForHeadAdvancement(
             new Block(
                 new BlockHeaderTestFixture().number(500).buildHeader(),
-                new BlockBody(emptyList(), emptyList(), Optional.empty())),
+                new BlockBody(emptyList(), emptyList())),
             Collections.emptyList(),
             Collections.emptyList()));
 

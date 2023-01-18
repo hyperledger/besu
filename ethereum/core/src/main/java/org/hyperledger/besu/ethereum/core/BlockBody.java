@@ -25,11 +25,17 @@ import java.util.Optional;
 public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private static final BlockBody EMPTY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
+      new BlockBody(Collections.emptyList(), Collections.emptyList());
 
   private final List<Transaction> transactions;
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
+
+  public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
+    this.transactions = transactions;
+    this.ommers = ommers;
+    this.withdrawals = Optional.empty();
+  }
 
   public BlockBody(
       final List<Transaction> transactions,
@@ -90,8 +96,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     final BlockBody body =
         new BlockBody(
             input.readList(Transaction::readFrom),
-            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
-            Optional.empty());
+            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
     input.leaveList();
     return body;
   }
