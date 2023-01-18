@@ -15,44 +15,29 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.LayeredPendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.OptionalLong;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(Parameterized.class)
+@RunWith(MockitoJUnitRunner.class)
 public class LatestNonceProviderTest {
 
   private final Address senderAddress = Address.fromHexString("1");
 
-  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+  @Mock private BlockchainQueries blockchainQueries;
   private LatestNonceProvider nonceProvider;
 
-  @Parameterized.Parameter public PendingTransactions pendingTransactions;
-
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {mock(GasPricePendingTransactionsSorter.class)},
-          {mock(BaseFeePendingTransactionsSorter.class)},
-          {mock(LayeredPendingTransactions.class)}
-        });
-  }
+  @Mock private PendingTransactions pendingTransactions;
 
   @Before
   public void setUp() {
