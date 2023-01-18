@@ -17,14 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -42,6 +40,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
@@ -108,13 +107,13 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Mock private MergeContext mergeContext;
 
-  @Mock private MergeMiningCoordinator mergeCoordinator;
+  @Mock protected MergeMiningCoordinator mergeCoordinator;
 
-  @Mock private MutableBlockchain blockchain;
+  @Mock protected MutableBlockchain blockchain;
 
   @Mock private EthPeers ethPeers;
 
-  @Mock private EngineCallListener engineCallListener;
+  @Mock protected EngineCallListener engineCallListener;
 
   @Before
   public void before() {
@@ -169,8 +168,10 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.empty());
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-        .thenReturn(true);
+    if (validateTerminalPoWBlock()) {
+      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+          .thenReturn(true);
+    }
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -185,33 +186,13 @@ public abstract class AbstractEngineNewPayloadTest {
   public void shouldReturnSuccessOnAlreadyPresent() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     Block mockBlock =
-        new Block(
-            mockHeader,
-            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
+        new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(mockBlock));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     assertValidResponse(mockHeader, resp);
-  }
-
-  @Test
-  public void shouldReturnInvalidOnBadTerminalBlock() {
-    BlockHeader mockHeader = createBlockHeader();
-    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
-        .thenReturn(Optional.of(mock(BlockHeader.class)));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-        .thenReturn(false);
-
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
-
-    EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));
-    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
-    verify(mergeCoordinator, atLeastOnce()).addBadBlock(any(), any());
-    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -268,8 +249,10 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-        .thenReturn(true);
+    if (validateTerminalPoWBlock()) {
+      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+          .thenReturn(true);
+    }
     when(mergeCoordinator.rememberBlock(any())).thenThrow(new MerkleTrieException("missing leaf"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -288,7 +271,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
-    assertThat(res.getStatusAsString()).isEqualTo(INVALID_BLOCK_HASH.name());
+    assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -302,7 +285,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
-    assertThat(res.getStatusAsString()).isEqualTo(INVALID_BLOCK_HASH.name());
+    assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -470,14 +453,14 @@ public abstract class AbstractEngineNewPayloadTest {
     assertValidResponse(mockHeader, resp);
   }
 
-  private JsonRpcResponse resp(final EnginePayloadParameter payload) {
+  protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 "2.0", RpcMethod.ENGINE_EXECUTE_PAYLOAD.getMethodName(), new Object[] {payload})));
   }
 
-  private EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
+  protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -526,13 +509,23 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-        .thenReturn(true);
+    if (validateTerminalPoWBlock()) {
+      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+          .thenReturn(true);
+    }
     when(mergeCoordinator.rememberBlock(any())).thenReturn(value);
     return mockHeader;
   }
 
-  private EnginePayloadStatusResult fromSuccessResp(final JsonRpcResponse resp) {
+  protected boolean validateTerminalPoWBlock() {
+    return false;
+  }
+
+  protected ExecutionEngineJsonRpcMethod.EngineStatus getExpectedInvalidBlockHashStatus() {
+    return INVALID;
+  }
+
+  protected EnginePayloadStatusResult fromSuccessResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     return Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
@@ -549,7 +542,7 @@ public abstract class AbstractEngineNewPayloadTest {
         .get();
   }
 
-  private BlockHeader createBlockHeader() {
+  protected BlockHeader createBlockHeader() {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     BlockHeader mockHeader =
