@@ -124,7 +124,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
                 .parentHash(executionContextTestFixture.getBlockchain().getChainHeadHash())
                 .number(executionContextTestFixture.getBlockchain().getChainHeadBlockNumber() + 1)
                 .buildHeader(),
-            new BlockBody(List.of(), List.of(), Optional.empty()));
+            new BlockBody(List.of(), List.of()));
     executionContextTestFixture.getBlockchain().appendBlock(block, List.of());
 
     return executionContextTestFixture;
@@ -150,7 +150,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
                 .parentHash(parentBlock.getHash())
                 .number(parentBlock.getNumber() + 1)
                 .buildHeader(),
-            new BlockBody(transactionList, emptyList(), Optional.empty()));
+            new BlockBody(transactionList, emptyList()));
     final List<TransactionReceipt> transactionReceipts =
         transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))

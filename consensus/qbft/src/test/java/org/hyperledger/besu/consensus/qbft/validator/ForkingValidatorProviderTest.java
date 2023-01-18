@@ -92,8 +92,7 @@ public class ForkingValidatorProviderTest {
 
   private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
-    return new Block(
-        headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList(), Optional.empty()));
+    return new Block(headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList()));
   }
 
   @Test

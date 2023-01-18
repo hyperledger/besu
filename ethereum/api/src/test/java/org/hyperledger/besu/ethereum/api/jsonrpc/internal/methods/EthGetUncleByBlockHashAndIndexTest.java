@@ -146,9 +146,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
   private BlockResult blockResult(final BlockHeader header) {
     final Block block =
-        new Block(
-            header,
-            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
+        new Block(header, new BlockBody(Collections.emptyList(), Collections.emptyList()));
     return new BlockResult(
         header,
         Collections.emptyList(),

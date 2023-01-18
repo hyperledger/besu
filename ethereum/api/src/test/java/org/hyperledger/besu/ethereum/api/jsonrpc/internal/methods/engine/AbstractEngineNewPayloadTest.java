@@ -185,9 +185,7 @@ public abstract class AbstractEngineNewPayloadTest {
   public void shouldReturnSuccessOnAlreadyPresent() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     Block mockBlock =
-        new Block(
-            mockHeader,
-            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
+        new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(mockBlock));
 
