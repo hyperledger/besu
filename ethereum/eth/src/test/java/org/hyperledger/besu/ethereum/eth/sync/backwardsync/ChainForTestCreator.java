@@ -81,7 +81,7 @@ public class ChainForTestCreator {
         blockHeader.getBaseFee().orElse(null),
         blockHeader.getMixHash(),
         blockHeader.getNonce(),
-        blockHeader.getExcessDataGas(),
+        blockHeader.getExcessDataGas().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
 

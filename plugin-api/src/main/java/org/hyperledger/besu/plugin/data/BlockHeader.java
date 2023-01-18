@@ -186,5 +186,5 @@ public interface BlockHeader {
    * @return The excess_data_gas of this header.
    */
   @Unstable
-  UInt256 getExcessDataGas();
+  Optional<UInt256> getExcessDataGas();
 }

@@ -163,8 +163,8 @@ public class ProcessableBlockHeader implements BlockValues {
     return Optional.ofNullable(mixHashOrPrevRandao);
   }
 
-  public UInt256 getExcessDataGas() {
-    return excessDataGas;
+  public Optional<UInt256> getExcessDataGas() {
+    return Optional.ofNullable(excessDataGas);
   }
 
   public String toLogString() {

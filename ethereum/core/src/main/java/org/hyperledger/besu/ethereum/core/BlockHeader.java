@@ -230,7 +230,9 @@ public class BlockHeader extends SealableBlockHeader
     if (baseFee != null) {
       out.writeUInt256Scalar(baseFee);
     }
-    out.writeUInt256Scalar(excessDataGas);
+    if(excessDataGas != null) {
+      out.writeUInt256Scalar(excessDataGas);
+    }
     out.endList();
   }
 
@@ -253,7 +255,7 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes32 mixHashOrPrevRandao = input.readBytes32();
     final long nonce = input.readLong();
     final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
-    final UInt256 excessDataGas = input.readUInt256Scalar();
+    final UInt256 excessDataGas = !input.isEndOfCurrentList() ? input.readUInt256Scalar() : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -338,7 +340,7 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getBaseFee().map(Wei::fromQuantity).orElse(null),
         pluginBlockHeader.getPrevRandao().orElse(null),
         pluginBlockHeader.getNonce(),
-        pluginBlockHeader.getExcessDataGas(),
+        pluginBlockHeader.getExcessDataGas().orElse(null),
         blockHeaderFunctions);
   }
 

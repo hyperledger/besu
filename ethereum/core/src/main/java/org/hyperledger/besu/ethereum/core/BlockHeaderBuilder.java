@@ -115,7 +115,7 @@ public class BlockHeaderBuilder {
         .mixHash(header.getMixHash())
         .nonce(header.getNonce())
         .prevRandao(header.getPrevRandao().orElse(null))
-        .excessDataGas(header.getExcessDataGas());
+        .excessDataGas(header.getExcessDataGas().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -240,6 +240,7 @@ public class BlockHeaderBuilder {
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    processableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     return this;
   }
 
@@ -260,6 +261,7 @@ public class BlockHeaderBuilder {
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     return this;
   }
 
