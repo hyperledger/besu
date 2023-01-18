@@ -21,22 +21,47 @@ public class OperationRegistry {
 
   private final Operation[] operations;
 
+  /** Instantiates a new Operation registry. */
   public OperationRegistry() {
     this.operations = new Operation[NUM_OPERATIONS];
   }
 
+  /**
+   * Get operation.
+   *
+   * @param opcode the opcode
+   * @return the operation
+   */
   public Operation get(final byte opcode) {
     return get(opcode & 0xff);
   }
 
+  /**
+   * Get operation.
+   *
+   * @param opcode the opcode
+   * @return the operation
+   */
   public Operation get(final int opcode) {
     return operations[opcode];
   }
 
+  /**
+   * Put.
+   *
+   * @param operation the operation
+   */
   public void put(final Operation operation) {
     operations[operation.getOpcode()] = operation;
   }
 
+  /**
+   * Gets or default.
+   *
+   * @param opcode the opcode
+   * @param defaultOperation the default operation
+   * @return the or default
+   */
   public Operation getOrDefault(final byte opcode, final Operation defaultOperation) {
     final Operation operation = get(opcode);
 
@@ -47,6 +72,11 @@ public class OperationRegistry {
     return operation;
   }
 
+  /**
+   * Get operations.
+   *
+   * @return the operation [ ]
+   */
   public Operation[] getOperations() {
     return operations;
   }

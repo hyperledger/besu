@@ -27,11 +27,15 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableBiMap;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Clique block interface. */
 public class CliqueBlockInterface implements BlockInterface {
 
+  /** The constant NO_VOTE_SUBJECT. */
   public static final Address NO_VOTE_SUBJECT = Address.wrap(Bytes.wrap(new byte[Address.SIZE]));
 
+  /** The constant ADD_NONCE. */
   public static final long ADD_NONCE = 0xFFFFFFFFFFFFFFFFL;
+  /** The constant DROP_NONCE. */
   public static final long DROP_NONCE = 0x0L;
 
   private static final ImmutableBiMap<VoteType, Long> voteToValue =
@@ -63,6 +67,13 @@ public class CliqueBlockInterface implements BlockInterface {
     return Optional.empty();
   }
 
+  /**
+   * Create header builder with vote headers.
+   *
+   * @param builder the builder
+   * @param vote the vote
+   * @return the block header builder
+   */
   public static BlockHeaderBuilder createHeaderBuilderWithVoteHeaders(
       final BlockHeaderBuilder builder, final Optional<ValidatorVote> vote) {
     final BlockHeaderBuilder voteHeaderBuilder = BlockHeaderBuilder.fromBuilder(builder);
@@ -82,6 +93,12 @@ public class CliqueBlockInterface implements BlockInterface {
     return CliqueExtraData.decode(header).getValidators();
   }
 
+  /**
+   * Is valid vote value.
+   *
+   * @param value the value
+   * @return the boolean
+   */
   public static boolean isValidVoteValue(final long value) {
     return voteToValue.values().contains(value);
   }

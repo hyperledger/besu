@@ -14,8 +14,14 @@
  */
 package org.hyperledger.besu.enclave;
 
+/** The Enclave configuration custom exception. */
 public class EnclaveConfigurationException extends IllegalStateException {
 
+  /**
+   * Instantiates a new Enclave configuration exception.
+   *
+   * @param message the message
+   */
   public EnclaveConfigurationException(final String message) {
     super(message);
   }

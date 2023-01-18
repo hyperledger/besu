@@ -22,12 +22,18 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Max code size rule. */
 public class MaxCodeSizeRule implements ContractValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(MaxCodeSizeRule.class);
 
   private final int maxCodeSize;
 
+  /**
+   * Instantiates a new Max code size rule.
+   *
+   * @param maxCodeSize the max code size
+   */
   MaxCodeSizeRule(final int maxCodeSize) {
     this.maxCodeSize = maxCodeSize;
   }
@@ -46,6 +52,12 @@ public class MaxCodeSizeRule implements ContractValidationRule {
     }
   }
 
+  /**
+   * Instantiate ContractValidationRule.
+   *
+   * @param maxCodeSize the max code size
+   * @return the contract validation rule
+   */
   public static ContractValidationRule of(final int maxCodeSize) {
     return new MaxCodeSizeRule(maxCodeSize);
   }

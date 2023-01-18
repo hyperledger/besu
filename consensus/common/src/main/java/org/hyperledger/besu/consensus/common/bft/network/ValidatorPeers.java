@@ -45,6 +45,12 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
   private final ValidatorProvider validatorProvider;
   private final String protocolName;
 
+  /**
+   * Instantiates a new Validator peers.
+   *
+   * @param validatorProvider the validator provider
+   * @param protocolName the protocol name
+   */
   public ValidatorPeers(final ValidatorProvider validatorProvider, final String protocolName) {
     this.validatorProvider = validatorProvider;
     this.protocolName = protocolName;

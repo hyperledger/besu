@@ -72,6 +72,7 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Transition besu controller builder. */
 public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   private final BesuControllerBuilder preMergeBesuControllerBuilder;
   private final MergeBesuControllerBuilder mergeBesuControllerBuilder;
@@ -79,6 +80,12 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionBesuControllerBuilder.class);
   private TransitionProtocolSchedule transitionProtocolSchedule;
 
+  /**
+   * Instantiates a new Transition besu controller builder.
+   *
+   * @param preMergeBesuControllerBuilder the pre merge besu controller builder
+   * @param mergeBesuControllerBuilder the merge besu controller builder
+   */
   public TransitionBesuControllerBuilder(
       final BesuControllerBuilder preMergeBesuControllerBuilder,
       final MergeBesuControllerBuilder mergeBesuControllerBuilder) {

@@ -20,26 +20,54 @@ package org.hyperledger.besu.crypto.altbn128;
  */
 public class AltBn128Point extends AbstractFieldPoint<AltBn128Point> {
 
+  /** The B. */
   static final Fq B = Fq.create(3);
 
+  /**
+   * G 1 alt bn 128 point.
+   *
+   * @return the alt bn 128 point
+   */
   public static final AltBn128Point g1() {
     return new AltBn128Point(Fq.create(1), Fq.create(2));
   }
 
+  /** The Infinity. */
   static final AltBn128Point INFINITY = new AltBn128Point(Fq.zero(), Fq.zero());
 
+  /**
+   * Instantiates a new Alt bn 128 point.
+   *
+   * @param x the x
+   * @param y the y
+   */
   public AltBn128Point(final Fq x, final Fq y) {
     super(x, y);
   }
 
+  /**
+   * Gets x.
+   *
+   * @return the x
+   */
   public Fq getX() {
     return (Fq) x;
   }
 
+  /**
+   * Gets y.
+   *
+   * @return the y
+   */
   public Fq getY() {
     return (Fq) y;
   }
 
+  /**
+   * Is on curve boolean.
+   *
+   * @return the boolean
+   */
   @SuppressWarnings({"unchecked", "rawtypes"})
   public boolean isOnCurve() {
     if (!x.isValid() || !y.isValid()) {

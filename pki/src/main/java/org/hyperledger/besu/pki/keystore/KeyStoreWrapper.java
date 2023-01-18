@@ -21,23 +21,66 @@ import java.security.cert.Certificate;
 import java.security.cert.X509CRL;
 import java.util.Collection;
 
+/** The interface Key store wrapper. */
 public interface KeyStoreWrapper {
 
+  /** The constant KEYSTORE_TYPE_JKS. */
   String KEYSTORE_TYPE_JKS = "JKS";
+  /** The constant KEYSTORE_TYPE_PKCS11. */
   String KEYSTORE_TYPE_PKCS11 = "PKCS11";
+  /** The constant KEYSTORE_TYPE_PKCS12. */
   String KEYSTORE_TYPE_PKCS12 = "PKCS12";
 
+  /**
+   * Gets key store.
+   *
+   * @return the key store
+   */
   KeyStore getKeyStore();
 
+  /**
+   * Gets trust store.
+   *
+   * @return the trust store
+   */
   KeyStore getTrustStore();
 
+  /**
+   * Gets private key.
+   *
+   * @param keyAlias the key alias
+   * @return the private key
+   */
   PrivateKey getPrivateKey(String keyAlias);
 
+  /**
+   * Gets public key.
+   *
+   * @param keyAlias the key alias
+   * @return the public key
+   */
   PublicKey getPublicKey(String keyAlias);
 
+  /**
+   * Gets certificate.
+   *
+   * @param certificateAlias the certificate alias
+   * @return the certificate
+   */
   Certificate getCertificate(String certificateAlias);
 
+  /**
+   * Get certificate chain array.
+   *
+   * @param certificateAlias the certificate alias
+   * @return the certificate [ ]
+   */
   Certificate[] getCertificateChain(String certificateAlias);
 
+  /**
+   * Gets CRLs.
+   *
+   * @return the CRLs
+   */
   Collection<X509CRL> getCRLs();
 }

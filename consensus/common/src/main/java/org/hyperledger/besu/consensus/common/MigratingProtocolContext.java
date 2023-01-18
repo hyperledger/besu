@@ -21,10 +21,18 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+/** The Migrating protocol context. */
 public class MigratingProtocolContext extends ProtocolContext {
 
   private final ForksSchedule<ConsensusContext> consensusContextSchedule;
 
+  /**
+   * Instantiates a new Migrating protocol context.
+   *
+   * @param blockchain the blockchain
+   * @param worldStateArchive the world state archive
+   * @param consensusContextSchedule the consensus context schedule
+   */
   public MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
@@ -33,6 +41,15 @@ public class MigratingProtocolContext extends ProtocolContext {
     this.consensusContextSchedule = consensusContextSchedule;
   }
 
+  /**
+   * Init protocol context.
+   *
+   * @param blockchain the blockchain
+   * @param worldStateArchive the world state archive
+   * @param protocolSchedule the protocol schedule
+   * @param consensusContextFactory the consensus context factory
+   * @return the protocol context
+   */
   public static ProtocolContext init(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,

@@ -20,10 +20,16 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.core.spi.metrics.VertxMetrics;
 
+/** The Vertx metrics adapter factory. */
 public class VertxMetricsAdapterFactory implements VertxMetricsFactory {
 
   private final MetricsSystem metricsSystem;
 
+  /**
+   * Instantiates a new Vertx metrics adapter factory.
+   *
+   * @param metricsSystem the metrics system
+   */
   public VertxMetricsAdapterFactory(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
   }

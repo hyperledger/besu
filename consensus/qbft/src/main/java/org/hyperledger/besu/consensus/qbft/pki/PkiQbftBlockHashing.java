@@ -20,14 +20,26 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+/** The Pki qbft block hashing. */
 public class PkiQbftBlockHashing {
 
   private final PkiQbftExtraDataCodec extraDataCodec;
 
+  /**
+   * Instantiates a new Pki qbft block hashing.
+   *
+   * @param extraDataCodec the extra data codec
+   */
   public PkiQbftBlockHashing(final PkiQbftExtraDataCodec extraDataCodec) {
     this.extraDataCodec = extraDataCodec;
   }
 
+  /**
+   * Calculate hash of bft block for cms signature.
+   *
+   * @param header the header
+   * @return the hash
+   */
   public Hash calculateHashOfBftBlockForCmsSignature(final BlockHeader header) {
     final BftExtraData bftExtraData = extraDataCodec.decode(header);
     return Hash.hash(

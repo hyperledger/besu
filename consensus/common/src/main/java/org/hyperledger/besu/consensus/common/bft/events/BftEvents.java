@@ -18,14 +18,25 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
 /** Static helper functions for producing and working with BftEvent objects */
 public class BftEvents {
+  /**
+   * Instantiate BftEvent From message.
+   *
+   * @param message the message
+   * @return the bft event
+   */
   public static BftEvent fromMessage(final Message message) {
     return new BftReceivedMessageEvent(message);
   }
 
+  /** The enum Type. */
   public enum Type {
+    /** Round expiry type. */
     ROUND_EXPIRY,
+    /** New chain head type. */
     NEW_CHAIN_HEAD,
+    /** Block timer expiry type. */
     BLOCK_TIMER_EXPIRY,
+    /** Message type. */
     MESSAGE
   }
 }

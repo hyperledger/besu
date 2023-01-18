@@ -26,10 +26,22 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.function.Function;
 
+/** The Clique block miner. */
 public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
 
   private final Address localAddress;
 
+  /**
+   * Instantiates a new Clique block miner.
+   *
+   * @param blockCreator the block creator
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param observers the observers
+   * @param scheduler the scheduler
+   * @param parentHeader the parent header
+   * @param localAddress the local address
+   */
   public CliqueBlockMiner(
       final Function<BlockHeader, CliqueBlockCreator> blockCreator,
       final ProtocolSchedule protocolSchedule,

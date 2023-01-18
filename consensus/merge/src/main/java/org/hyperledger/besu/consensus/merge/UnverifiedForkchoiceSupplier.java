@@ -20,6 +20,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Unverified forkchoice supplier. */
 public class UnverifiedForkchoiceSupplier
     implements Supplier<Optional<ForkchoiceEvent>>, UnverifiedForkchoiceListener {
   private static final Logger LOG = LoggerFactory.getLogger(UnverifiedForkchoiceSupplier.class);

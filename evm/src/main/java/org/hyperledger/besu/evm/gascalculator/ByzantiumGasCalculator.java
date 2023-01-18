@@ -25,11 +25,13 @@ import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Byzantium gas calculator. */
 public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
   private static final int GQUADDIVISOR = 20;
   private static final int WORD_SIZE = 32;
   private static final int BITS_IN_BYTE = 8;
 
+  /** The constant MAX_FIRST_EXPONENT_BYTES. */
   public static final int MAX_FIRST_EXPONENT_BYTES = 32;
 
   @Override
@@ -53,6 +55,13 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
     return (numerator == Long.MAX_VALUE) ? Long.MAX_VALUE : numerator / GQUADDIVISOR;
   }
 
+  /**
+   * Adjusted exponent length.
+   *
+   * @param exponentLength the exponent length
+   * @param firstExpBytes the first exp bytes
+   * @return the long
+   */
   public static long adjustedExponentLength(
       final long exponentLength, final BigInteger firstExpBytes) {
     final int bitLength = bitLength(firstExpBytes);

@@ -37,9 +37,19 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
 
+  /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  /**
+   * Instantiates a new Abstract call operation.
+   *
+   * @param opcode the opcode
+   * @param name the name
+   * @param stackItemsConsumed the stack items consumed
+   * @param stackItemsProduced the stack items produced
+   * @param gasCalculator the gas calculator
+   */
   AbstractCallOperation(
       final int opcode,
       final String name,
@@ -219,8 +229,20 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
   }
 
+  /**
+   * Calculates Cost.
+   *
+   * @param frame the frame
+   * @return the long
+   */
   protected abstract long cost(final MessageFrame frame);
 
+  /**
+   * Complete.
+   *
+   * @param frame the frame
+   * @param childFrame the child frame
+   */
   public void complete(final MessageFrame frame, final MessageFrame childFrame) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 

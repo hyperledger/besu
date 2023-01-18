@@ -49,10 +49,25 @@ public class DockerNatManager extends AbstractNatManager {
   private String internalAdvertisedHost;
   private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
 
+  /**
+   * Instantiates a new Docker nat manager.
+   *
+   * @param advertisedHost the advertised host
+   * @param p2pPort the p 2 p port
+   * @param rpcHttpPort the rpc http port
+   */
   public DockerNatManager(final String advertisedHost, final int p2pPort, final int rpcHttpPort) {
     this(new HostBasedIpDetector(), advertisedHost, p2pPort, rpcHttpPort);
   }
 
+  /**
+   * Instantiates a new Docker nat manager.
+   *
+   * @param ipDetector the ip detector
+   * @param advertisedHost the advertised host
+   * @param p2pPort the p 2 p port
+   * @param rpcHttpPort the rpc http port
+   */
   public DockerNatManager(
       final IpDetector ipDetector,
       final String advertisedHost,

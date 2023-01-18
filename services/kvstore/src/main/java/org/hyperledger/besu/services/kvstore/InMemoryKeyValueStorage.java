@@ -36,15 +36,22 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The In memory key value storage. */
 public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   private final Map<Bytes, byte[]> hashValueStore;
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
+  /** Instantiates a new In memory key value storage. */
   public InMemoryKeyValueStorage() {
     this(new HashMap<>());
   }
 
+  /**
+   * Instantiates a new In memory key value storage.
+   *
+   * @param hashValueStore the hash value store
+   */
   protected InMemoryKeyValueStorage(final Map<Bytes, byte[]> hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
@@ -138,6 +145,11 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     return new KeyValueStorageTransactionTransitionValidatorDecorator(new InMemoryTransaction());
   }
 
+  /**
+   * Key set.
+   *
+   * @return the set of keys
+   */
   public Set<Bytes> keySet() {
     return Set.copyOf(hashValueStore.keySet());
   }
@@ -180,6 +192,11 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     }
   }
 
+  /**
+   * Dump.
+   *
+   * @param ps the PrintStream where to report the dump
+   */
   public void dump(final PrintStream ps) {
     final Lock lock = rwLock.readLock();
     lock.lock();

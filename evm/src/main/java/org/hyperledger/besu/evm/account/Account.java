@@ -26,8 +26,11 @@ import org.hyperledger.besu.datatypes.Wei;
  */
 public interface Account extends AccountState {
 
+  /** The constant DEFAULT_NONCE. */
   long DEFAULT_NONCE = 0L;
+  /** The constant MAX_NONCE. */
   long MAX_NONCE = -1; // per twos compliment rules -1 will be the unsigned max number
+  /** The constant DEFAULT_BALANCE. */
   Wei DEFAULT_BALANCE = Wei.ZERO;
 
   /**

@@ -31,6 +31,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Message validator. */
 public class MessageValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessageValidator.class);
@@ -41,6 +42,15 @@ public class MessageValidator {
   private final ProtocolContext protocolContext;
   private final RoundChangeCertificateValidator roundChangeCertificateValidator;
 
+  /**
+   * Instantiates a new Message validator.
+   *
+   * @param signedDataValidator the signed data validator
+   * @param proposalConsistencyValidator the proposal consistency validator
+   * @param blockValidator the block validator
+   * @param protocolContext the protocol context
+   * @param roundChangeCertificateValidator the round change certificate validator
+   */
   public MessageValidator(
       final SignedDataValidator signedDataValidator,
       final ProposalBlockConsistencyValidator proposalConsistencyValidator,
@@ -54,6 +64,12 @@ public class MessageValidator {
     this.roundChangeCertificateValidator = roundChangeCertificateValidator;
   }
 
+  /**
+   * Validate proposal.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateProposal(final Proposal msg) {
 
     if (!signedDataValidator.validateProposal(msg.getSignedPayload())) {
@@ -140,10 +156,22 @@ public class MessageValidator {
     return true;
   }
 
+  /**
+   * Validate prepare.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validatePrepare(final Prepare msg) {
     return signedDataValidator.validatePrepare(msg.getSignedPayload());
   }
 
+  /**
+   * Validate commit.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateCommit(final Commit msg) {
     return signedDataValidator.validateCommit(msg.getSignedPayload());
   }

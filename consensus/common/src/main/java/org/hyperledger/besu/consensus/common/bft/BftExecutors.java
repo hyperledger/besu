@@ -30,16 +30,23 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Bft executors. */
 public class BftExecutors {
 
   private enum State {
+    /** Idle state. */
     IDLE,
+    /** Running state. */
     RUNNING,
+    /** Stopped state. */
     STOPPED
   }
 
+  /** The enum Consensus type. */
   public enum ConsensusType {
+    /** Ibft consensus type. */
     IBFT,
+    /** Qbft consensus type. */
     QBFT
   }
 
@@ -58,11 +65,19 @@ public class BftExecutors {
     this.consensusType = consensusType;
   }
 
+  /**
+   * Create bft executors.
+   *
+   * @param metricsSystem the metrics system
+   * @param consensusType the consensus type
+   * @return the bft executors
+   */
   public static BftExecutors create(
       final MetricsSystem metricsSystem, final ConsensusType consensusType) {
     return new BftExecutors(metricsSystem, consensusType);
   }
 
+  /** Start. */
   public synchronized void start() {
     if (state != State.IDLE) {
       // Nothing to do
@@ -79,6 +94,7 @@ public class BftExecutors {
             "BftTimerExecutor-" + consensusType.name(), 1, metricsSystem);
   }
 
+  /** Stop. */
   public void stop() {
     synchronized (this) {
       if (state != State.RUNNING) {
@@ -90,6 +106,11 @@ public class BftExecutors {
     bftProcessorExecutor.shutdownNow();
   }
 
+  /**
+   * Await stop.
+   *
+   * @throws InterruptedException the interrupted exception
+   */
   public void awaitStop() throws InterruptedException {
     if (!timerExecutor.awaitTermination(shutdownTimeout.getSeconds(), TimeUnit.SECONDS)) {
       LOG.error("{} timer executor did not shutdown cleanly.", getClass().getSimpleName());
@@ -99,11 +120,24 @@ public class BftExecutors {
     }
   }
 
+  /**
+   * Execute bft processor.
+   *
+   * @param bftProcessor the bft processor
+   */
   public synchronized void executeBftProcessor(final BftProcessor bftProcessor) {
     assertRunning();
     bftProcessorExecutor.execute(bftProcessor);
   }
 
+  /**
+   * Schedule task.
+   *
+   * @param command the command
+   * @param delay the delay
+   * @param unit the unit
+   * @return the scheduled future
+   */
   public synchronized ScheduledFuture<?> scheduleTask(
       final Runnable command, final long delay, final TimeUnit unit) {
     assertRunning();

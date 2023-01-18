@@ -30,11 +30,18 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Qbft get validators by block number. */
 public class QbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
     implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(QbftGetValidatorsByBlockNumber.class);
   private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Qbft get validators by block number.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param validatorProvider the validator provider
+   */
   public QbftGetValidatorsByBlockNumber(
       final BlockchainQueries blockchainQueries, final ValidatorProvider validatorProvider) {
     super(blockchainQueries);

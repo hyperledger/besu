@@ -19,10 +19,16 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 
+/** The Vertx metrics adapter. */
 public class VertxMetricsAdapter implements VertxMetrics {
 
   private final MetricsSystem metricsSystem;
 
+  /**
+   * Instantiates a new Vertx metrics adapter.
+   *
+   * @param metricsSystem the metrics system
+   */
   public VertxMetricsAdapter(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
   }

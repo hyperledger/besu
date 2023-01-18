@@ -20,12 +20,16 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableMap;
 
+/** The Signature algorithm type. */
 public class SignatureAlgorithmType {
 
+  /** The constant DEFAULT_EC_CURVE_NAME. */
   public static final String DEFAULT_EC_CURVE_NAME = "secp256k1";
+
   private static final ImmutableMap<String, Supplier<SignatureAlgorithm>> SUPPORTED_ALGORITHMS =
       ImmutableMap.of(DEFAULT_EC_CURVE_NAME, SECP256K1::new, "secp256r1", SECP256R1::new);
 
+  /** The constant DEFAULT_SIGNATURE_ALGORITHM_TYPE. */
   public static final Supplier<SignatureAlgorithm> DEFAULT_SIGNATURE_ALGORITHM_TYPE =
       SUPPORTED_ALGORITHMS.get(DEFAULT_EC_CURVE_NAME);
 
@@ -35,6 +39,13 @@ public class SignatureAlgorithmType {
     this.instantiator = instantiator;
   }
 
+  /**
+   * Create signature algorithm type.
+   *
+   * @param ecCurve the ec curve
+   * @return the signature algorithm type
+   * @throws IllegalArgumentException the illegal argument exception
+   */
   public static SignatureAlgorithmType create(final String ecCurve)
       throws IllegalArgumentException {
     if (!isValidType(ecCurve)) {
@@ -44,18 +55,40 @@ public class SignatureAlgorithmType {
     return new SignatureAlgorithmType(SUPPORTED_ALGORITHMS.get(ecCurve));
   }
 
+  /**
+   * Create default signature algorithm type.
+   *
+   * @return the signature algorithm type
+   */
   public static SignatureAlgorithmType createDefault() {
     return new SignatureAlgorithmType(DEFAULT_SIGNATURE_ALGORITHM_TYPE);
   }
 
+  /**
+   * Gets instance.
+   *
+   * @return the instance
+   */
   public SignatureAlgorithm getInstance() {
     return instantiator.get();
   }
 
+  /**
+   * Is valid type boolean.
+   *
+   * @param ecCurve the ec curve
+   * @return the boolean
+   */
   public static boolean isValidType(final String ecCurve) {
     return SUPPORTED_ALGORITHMS.containsKey(ecCurve);
   }
 
+  /**
+   * Is default signature algorithm.
+   *
+   * @param signatureAlgorithm the signature algorithm
+   * @return the boolean
+   */
   public static boolean isDefault(final SignatureAlgorithm signatureAlgorithm) {
     return signatureAlgorithm.getCurveName().equals(DEFAULT_EC_CURVE_NAME);
   }

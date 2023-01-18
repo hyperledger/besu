@@ -19,10 +19,12 @@ import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The BLS12_G2 MultiExp precompiled contract. */
 public class BLS12G2MultiExpPrecompiledContract extends AbstractBLS12PrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 288;
 
+  /** Instantiates a new BLS12_G2 MultiExp precompiled contract. */
   public BLS12G2MultiExpPrecompiledContract() {
     super(
         "BLS12_G2MULTIEXP",

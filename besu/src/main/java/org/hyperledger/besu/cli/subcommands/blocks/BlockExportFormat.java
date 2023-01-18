@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.subcommands.blocks;
 
+/** The enum Block export format. */
 public enum BlockExportFormat {
+  /** Rlp block export format. */
   RLP
 }
