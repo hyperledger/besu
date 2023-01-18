@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
@@ -41,7 +41,7 @@ public class LatestNonceProviderTest {
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private LatestNonceProvider nonceProvider;
 
-  @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
+  @Parameterized.Parameter public PendingTransactions pendingTransactions;
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {

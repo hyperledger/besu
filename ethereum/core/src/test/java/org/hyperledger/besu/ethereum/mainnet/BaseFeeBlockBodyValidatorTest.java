@@ -76,7 +76,8 @@ public class BaseFeeBlockBodyValidatorTest {
                         .createTransaction(keyPair),
                     // frontier transaction
                     new TransactionTestFixture().gasPrice(Wei.of(10L)).createTransaction(keyPair)),
-                Collections.emptyList()));
+                Collections.emptyList(),
+                Optional.empty()));
 
     assertThat(blockBodyValidator.validateTransactionGasPrice(block)).isTrue();
   }
@@ -90,7 +91,8 @@ public class BaseFeeBlockBodyValidatorTest {
                 List.of(
                     // underpriced frontier transaction
                     new TransactionTestFixture().gasPrice(Wei.of(9L)).createTransaction(keyPair)),
-                Collections.emptyList()));
+                Collections.emptyList(),
+                Optional.empty()));
 
     assertThat(blockBodyValidator.validateTransactionGasPrice(block)).isFalse();
   }
@@ -108,7 +110,8 @@ public class BaseFeeBlockBodyValidatorTest {
                         .maxPriorityFeePerGas(Optional.of(Wei.of(10L)))
                         .type(TransactionType.EIP1559)
                         .createTransaction(keyPair)),
-                Collections.emptyList()));
+                Collections.emptyList(),
+                Optional.empty()));
 
     assertThat(blockBodyValidator.validateTransactionGasPrice(block)).isFalse();
   }

@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -63,7 +62,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
 
-  @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
+  @Parameterized.Parameter public PendingTransactions pendingTransactions;
 
   private PeerTransactionTracker transactionTracker;
   private NewPooledTransactionHashesMessageSender messageSender;
