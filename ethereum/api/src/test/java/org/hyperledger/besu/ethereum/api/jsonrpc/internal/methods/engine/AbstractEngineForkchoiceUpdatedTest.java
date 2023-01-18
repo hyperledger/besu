@@ -95,7 +95,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   private static final EngineForkchoiceUpdatedParameter mockFcuParam =
       new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash);
 
-  private static final BlockHeaderTestFixture blockHeaderBuilder =
+  protected static final BlockHeaderTestFixture blockHeaderBuilder =
       new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
 
   @Mock private ProtocolSpec protocolSpec;
@@ -104,7 +104,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Mock private MergeContext mergeContext;
 
-  @Mock private MergeMiningCoordinator mergeCoordinator;
+  @Mock protected MergeMiningCoordinator mergeCoordinator;
 
   @Mock private MutableBlockchain blockchain;
 
@@ -136,22 +136,6 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   public void shouldReturnSyncingIfMissingNewHead() {
     assertSuccessWithPayloadForForkchoiceResult(
         mockFcuParam, Optional.empty(), mock(ForkchoiceResult.class), SYNCING);
-  }
-
-  @Test
-  public void shouldReturnInvalidOnBadTerminalBlock() {
-    if (!validateTerminalPoWBlock()) return;
-    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
-
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(false);
-    assertSuccessWithPayloadForForkchoiceResult(
-        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, Hash.ZERO),
-        Optional.empty(),
-        mock(ForkchoiceResult.class),
-        INVALID,
-        Optional.of(Hash.ZERO));
   }
 
   @Test
@@ -691,7 +675,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
         fcuParam, payloadParam, forkchoiceResult, expectedStatus, Optional.empty());
   }
 
-  private EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
+  protected EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
       final EngineForkchoiceUpdatedParameter fcuParam,
       final Optional<EnginePayloadAttributesParameter> payloadParam,
       final ForkchoiceResult forkchoiceResult,
