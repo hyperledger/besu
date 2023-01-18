@@ -379,10 +379,7 @@ public class MainnetTransactionProcessor {
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
-                .versionedHashes(
-                    transaction.getType() == TransactionType.BLOB
-                        ? transaction.getVersionedHashes()
-                        : Optional.empty())
+                .versionedHashes(transaction.getVersionedHashes())
                 .code(
                     contractCreationProcessor.getCodeFromEVM(
                         Hash.hash(initCodeBytes), initCodeBytes))
@@ -397,10 +394,7 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .versionedHashes(
-                    transaction.getType() == TransactionType.BLOB
-                        ? transaction.getVersionedHashes()
-                        : Optional.empty())
+                .versionedHashes(transaction.getVersionedHashes())
                 .code(
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
