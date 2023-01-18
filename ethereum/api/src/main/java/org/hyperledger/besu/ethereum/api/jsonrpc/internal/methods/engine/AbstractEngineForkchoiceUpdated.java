@@ -144,6 +144,10 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                         ws ->
                             ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList())));
 
+    ForkchoiceResult result =
+        mergeCoordinator.updateForkChoice(
+            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
+
     if (maybePayloadAttributes.isPresent()
         && !isPayloadAttributesValid(maybePayloadAttributes.get(), withdrawals, newHead)) {
       warnLambda(
@@ -153,10 +157,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
               maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize).orElse(null));
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
     }
-
-    ForkchoiceResult result =
-        mergeCoordinator.updateForkChoice(
-            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
