@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -46,7 +46,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   protected final ForksSchedule<T> forksSchedule;
-  private final AbstractPendingTransactionsSorter pendingTransactions;
+  private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BftExtraDataCodec bftExtraDataCodec;
@@ -58,7 +58,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   private volatile Optional<AtomicLong> targetGasLimit;
 
   public BftBlockCreatorFactory(
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final ForksSchedule<T> forksSchedule,

@@ -21,24 +21,23 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
 public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
-  private final Supplier<AbstractPendingTransactionsSorter> pendingTransactions;
+  private final Supplier<PendingTransactions> pendingTransactions;
 
   public EthGetTransactionCount(
-      final BlockchainQueries blockchain,
-      final AbstractPendingTransactionsSorter pendingTransactions) {
+      final BlockchainQueries blockchain, final PendingTransactions pendingTransactions) {
     this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions));
   }
 
   public EthGetTransactionCount(
       final Supplier<BlockchainQueries> blockchain,
-      final Supplier<AbstractPendingTransactionsSorter> pendingTransactions) {
+      final Supplier<PendingTransactions> pendingTransactions) {
     super(blockchain);
     this.pendingTransactions = pendingTransactions;
   }

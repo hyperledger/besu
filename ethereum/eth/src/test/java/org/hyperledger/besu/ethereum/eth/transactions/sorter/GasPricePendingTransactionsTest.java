@@ -12,10 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions;
+package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Clock;
@@ -25,7 +25,7 @@ import java.util.Optional;
 public class GasPricePendingTransactionsTest extends AbstractPendingTransactionsTestBase {
 
   @Override
-  AbstractPendingTransactionsSorter getSorter(
+  PendingTransactions getPendingTransactions(
       final TransactionPoolConfiguration poolConfig, final Optional<Clock> clock) {
     return new BaseFeePendingTransactionsSorter(
         poolConfig,

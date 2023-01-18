@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
 
 import java.util.OptionalLong;
@@ -24,11 +24,10 @@ import java.util.OptionalLong;
 public class LatestNonceProvider implements NonceProvider {
 
   private final BlockchainQueries blockchainQueries;
-  private final AbstractPendingTransactionsSorter pendingTransactions;
+  private final PendingTransactions pendingTransactions;
 
   public LatestNonceProvider(
-      final BlockchainQueries blockchainQueries,
-      final AbstractPendingTransactionsSorter pendingTransactions) {
+      final BlockchainQueries blockchainQueries, final PendingTransactions pendingTransactions) {
     this.blockchainQueries = blockchainQueries;
     this.pendingTransactions = pendingTransactions;
   }
