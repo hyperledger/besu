@@ -39,6 +39,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
    * @param miningBeneficiaryCalculator the mining beneficiary calculator
    * @param skipZeroBlockRewards the skip zero block rewards
    * @param goQuorumPrivacyParameters the go quorum privacy parameters
+   * @param protocolSchedule the header based protocol scheduler
    */
   public MergeBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,

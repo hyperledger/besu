@@ -81,6 +81,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
    * @param maybeTransactions the maybe transactions
    * @param random the random
    * @param timestamp the timestamp
+   * @param withdrawals optional list of withdrawals
    * @return the block creation result
    */
   public BlockCreationResult createBlock(

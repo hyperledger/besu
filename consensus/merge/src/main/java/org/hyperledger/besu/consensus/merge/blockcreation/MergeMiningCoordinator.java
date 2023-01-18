@@ -40,6 +40,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param timestamp the timestamp
    * @param prevRandao the prev randao
    * @param feeRecipient the fee recipient
+   * @param withdrawals the optional list of withdrawals
    * @return the payload identifier
    */
   PayloadIdentifier preparePayload(
