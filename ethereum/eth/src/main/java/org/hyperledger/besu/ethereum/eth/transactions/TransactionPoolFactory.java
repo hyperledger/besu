@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -47,8 +46,8 @@ public class TransactionPoolFactory {
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
-    final AbstractPendingTransactionsSorter pendingTransactions =
-        createPendingTransactionsSorter(
+    final PendingTransactions pendingTransactions =
+        createPendingTransactions(
             protocolSchedule, protocolContext, clock, metricsSystem, transactionPoolConfiguration);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
@@ -80,7 +79,7 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
@@ -172,7 +171,7 @@ public class TransactionPoolFactory {
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
   }
 
-  private static AbstractPendingTransactionsSorter createPendingTransactionsSorter(
+  private static PendingTransactions createPendingTransactions(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
