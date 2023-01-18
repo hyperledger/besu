@@ -52,8 +52,7 @@ public class BlockMinerTest {
 
     final Block blockToCreate =
         new Block(
-            headerBuilder.buildHeader(),
-            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Optional.empty()));
+            headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
     final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 
@@ -94,8 +93,7 @@ public class BlockMinerTest {
 
     final Block blockToCreate =
         new Block(
-            headerBuilder.buildHeader(),
-            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Optional.empty()));
+            headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
     final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 

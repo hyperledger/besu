@@ -2005,13 +2005,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "--fast-sync-min-peers can't be used with FULL sync-mode",
-        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet(syncMode)),
+        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet()),
         singletonList("--fast-sync-min-peers"));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
-        SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet(syncMode)),
+        SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet()),
         singletonList("--Xcheckpoint-post-merge-enabled"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
@@ -2033,7 +2033,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void configure() throws Exception {
     checkPortClash();
     checkIfRequiredPortsAreAvailable();
-    syncMode = getDefaultSyncModeIfNotSet(syncMode);
+    syncMode = getDefaultSyncModeIfNotSet();
 
     ethNetworkConfig = updateNetworkConfig(network);
 
@@ -2167,7 +2167,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
-        .fromEthNetworkConfig(updateNetworkConfig(network), genesisConfigOverrides, syncMode)
+        .fromEthNetworkConfig(
+            updateNetworkConfig(network), genesisConfigOverrides, getDefaultSyncModeIfNotSet())
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
@@ -3436,7 +3437,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private SyncMode getDefaultSyncModeIfNotSet(final SyncMode syncMode) {
+  private SyncMode getDefaultSyncModeIfNotSet() {
     return Optional.ofNullable(syncMode)
         .orElse(
             genesisFile == null
