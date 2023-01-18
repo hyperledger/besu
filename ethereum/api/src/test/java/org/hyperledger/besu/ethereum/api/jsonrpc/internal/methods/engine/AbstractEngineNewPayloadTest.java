@@ -169,9 +169,10 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.empty());
-    if (validateTerminalPoWBlock())
+    if (validateTerminalPoWBlock()) {
       when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
           .thenReturn(true);
+    }
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -270,9 +271,10 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    if (validateTerminalPoWBlock())
+    if (validateTerminalPoWBlock()) {
       when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
           .thenReturn(true);
+    }
     when(mergeCoordinator.rememberBlock(any())).thenThrow(new MerkleTrieException("missing leaf"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -291,7 +293,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
-    assertThat(res.getStatusAsString()).isEqualTo(getCorrectInvalidBlockHashStatus().name());
+    assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -305,7 +307,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
-    assertThat(res.getStatusAsString()).isEqualTo(getCorrectInvalidBlockHashStatus().name());
+    assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -529,9 +531,10 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    if (validateTerminalPoWBlock())
+    if (validateTerminalPoWBlock()) {
       when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
           .thenReturn(true);
+    }
     when(mergeCoordinator.rememberBlock(any())).thenReturn(value);
     return mockHeader;
   }
@@ -540,7 +543,7 @@ public abstract class AbstractEngineNewPayloadTest {
     return false;
   }
 
-  protected ExecutionEngineJsonRpcMethod.EngineStatus getCorrectInvalidBlockHashStatus() {
+  protected ExecutionEngineJsonRpcMethod.EngineStatus getExpectedInvalidBlockHashStatus() {
     return INVALID;
   }
 
