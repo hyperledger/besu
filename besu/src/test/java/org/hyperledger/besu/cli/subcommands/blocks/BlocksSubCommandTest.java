@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -486,5 +487,14 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
       final boolean success = new File(dataFilePath.toString()).createNewFile();
       assertThat(success).isTrue();
     }
+  }
+
+  @Test
+  public void blocksImportWithNoSyncModeDoesNotRaiseNPE() throws IOException {
+    final File fileToImport = temp.newFile("blocks.file");
+    parseCommand(
+        BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(any(), any(), isNotNull());
   }
 }

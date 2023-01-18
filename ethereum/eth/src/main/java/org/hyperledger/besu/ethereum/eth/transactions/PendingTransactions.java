@@ -27,6 +27,9 @@ import java.util.OptionalLong;
 import java.util.Set;
 
 public interface PendingTransactions {
+
+  void reset();
+
   void evictOldTransactions();
 
   List<Transaction> getLocalTransactions();
@@ -36,8 +39,6 @@ public interface PendingTransactions {
 
   TransactionAddedResult addLocalTransaction(
       Transaction transaction, Optional<Account> maybeSenderAccount);
-
-  boolean isLocalSender(Address sender);
 
   void selectTransactions(TransactionSelector selector);
 
@@ -68,11 +69,11 @@ public interface PendingTransactions {
 
   String logStats();
 
-  void reset();
-
   default void signalInvalidTransaction(final Transaction transaction) {
     // ToDo: remove when the legacy tx pool is removed
   }
+
+  boolean isLocalSender(Address sender);
 
   enum TransactionSelectionResult {
     DELETE_TRANSACTION_AND_CONTINUE,
@@ -82,6 +83,6 @@ public interface PendingTransactions {
 
   @FunctionalInterface
   interface TransactionSelector {
-    TransactionSelectionResult evaluateTransaction(final Transaction transaction);
+    TransactionSelectionResult evaluateTransaction(Transaction transaction);
   }
 }

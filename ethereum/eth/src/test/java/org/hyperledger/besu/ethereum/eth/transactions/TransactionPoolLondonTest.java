@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -57,7 +56,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   private static final Wei BASE_FEE_FLOOR = Wei.of(7L);
 
   @Override
-  protected AbstractPendingTransactionsSorter createPendingTransactionsSorter() {
+  protected PendingTransactions createPendingTransactionsSorter() {
 
     return new BaseFeePendingTransactionsSorter(
         ImmutableTransactionPoolConfiguration.builder()
@@ -125,7 +124,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
                 .parentHash(executionContextTestFixture.getBlockchain().getChainHeadHash())
                 .number(executionContextTestFixture.getBlockchain().getChainHeadBlockNumber() + 1)
                 .buildHeader(),
-            new BlockBody(List.of(), List.of(), Optional.empty()));
+            new BlockBody(List.of(), List.of()));
     executionContextTestFixture.getBlockchain().appendBlock(block, List.of());
 
     return executionContextTestFixture;
@@ -151,7 +150,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
                 .parentHash(parentBlock.getHash())
                 .number(parentBlock.getNumber() + 1)
                 .buildHeader(),
-            new BlockBody(transactionList, emptyList(), Optional.empty()));
+            new BlockBody(transactionList, emptyList()));
     final List<TransactionReceipt> transactionReceipts =
         transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))

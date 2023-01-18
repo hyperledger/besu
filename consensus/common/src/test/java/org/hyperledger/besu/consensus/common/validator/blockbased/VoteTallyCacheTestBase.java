@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.util.Lists;
@@ -44,7 +43,7 @@ public class VoteTallyCacheTestBase {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
     return new Block(
         headerBuilder.buildHeader(),
-        new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
+        new BlockBody(Collections.emptyList(), Collections.emptyList()));
   }
 
   protected MutableBlockchain blockChain;

@@ -76,7 +76,7 @@ public abstract class AbstractPendingTransactionsTestBase {
   protected final TestClock clock = new TestClock();
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   protected AbstractPendingTransactionsSorter transactions =
-      getSorter(
+      getPendingTransactions(
           ImmutableTransactionPoolConfiguration.builder()
               .txPoolMaxSize(MAX_TRANSACTIONS)
               .txPoolLimitByAccountPercentage(1.0f)
@@ -87,8 +87,8 @@ public abstract class AbstractPendingTransactionsTestBase {
           .txPoolMaxSize(MAX_TRANSACTIONS)
           .txPoolLimitByAccountPercentage(LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE)
           .build();
-  protected AbstractPendingTransactionsSorter senderLimitedTransactions =
-      getSorter(senderLimitedConfig, Optional.empty());
+  protected PendingTransactions senderLimitedTransactions =
+      getPendingTransactions(senderLimitedConfig, Optional.empty());
 
   protected final Transaction transaction1 = createTransaction(2);
   protected final Transaction transaction2 = createTransaction(1);
@@ -99,7 +99,7 @@ public abstract class AbstractPendingTransactionsTestBase {
   protected static final Address SENDER1 = Util.publicKeyToAddress(KEYS1.getPublicKey());
   protected static final Address SENDER2 = Util.publicKeyToAddress(KEYS2.getPublicKey());
 
-  abstract AbstractPendingTransactionsSorter getSorter(
+  abstract AbstractPendingTransactionsSorter getPendingTransactions(
       final TransactionPoolConfiguration poolConfig, Optional<Clock> clock);
 
   @Test
@@ -614,8 +614,8 @@ public abstract class AbstractPendingTransactionsTestBase {
   @Test
   public void shouldEvictMultipleOldTransactions() {
     final int maxTransactionRetentionHours = 1;
-    final AbstractPendingTransactionsSorter transactions =
-        getSorter(
+    final PendingTransactions transactions =
+        getPendingTransactions(
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(maxTransactionRetentionHours)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
@@ -636,8 +636,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldEvictSingleOldTransaction() {
-    final AbstractPendingTransactionsSorter evictSingleTransactions =
-        getSorter(
+    final PendingTransactions evictSingleTransactions =
+        getPendingTransactions(
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(1)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
@@ -654,8 +654,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldEvictExclusivelyOldTransactions() {
-    final AbstractPendingTransactionsSorter twoHourEvictionTransactionPool =
-        getSorter(
+    final PendingTransactions twoHourEvictionTransactionPool =
+        getPendingTransactions(
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(2)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
@@ -765,8 +765,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     addLocalTransactions(transactions, nonces);
   }
 
-  protected void addLocalTransactions(
-      final AbstractPendingTransactionsSorter sorter, final long... nonces) {
+  protected void addLocalTransactions(final PendingTransactions sorter, final long... nonces) {
     for (final long nonce : nonces) {
       final Account sender = mock(Account.class);
       when(sender.getNonce()).thenReturn(1L);

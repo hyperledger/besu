@@ -31,7 +31,7 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
-  protected PendingTransactions createPendingTransactionsSorter() {
+  protected PendingTransactions createPendingTransactions() {
 
     return new GasPricePendingTransactionsSorter(
         ImmutableTransactionPoolConfiguration.builder()

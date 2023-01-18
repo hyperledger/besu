@@ -29,7 +29,7 @@ import java.util.Random;
 public class BaseFeePendingTransactionsTest extends AbstractPendingTransactionsTestBase {
 
   @Override
-  AbstractPendingTransactionsSorter getSorter(
+  AbstractPendingTransactionsSorter getPendingTransactions(
       final TransactionPoolConfiguration poolConfig, final Optional<Clock> clock) {
     return new BaseFeePendingTransactionsSorter(
         poolConfig,

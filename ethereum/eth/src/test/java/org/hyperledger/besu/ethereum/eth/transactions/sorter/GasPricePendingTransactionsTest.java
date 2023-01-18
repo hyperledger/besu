@@ -24,7 +24,7 @@ import java.util.Optional;
 public class GasPricePendingTransactionsTest extends AbstractPendingTransactionsTestBase {
 
   @Override
-  AbstractPendingTransactionsSorter getSorter(
+  AbstractPendingTransactionsSorter getPendingTransactions(
       final TransactionPoolConfiguration poolConfig, final Optional<Clock> clock) {
     return new BaseFeePendingTransactionsSorter(
         poolConfig,

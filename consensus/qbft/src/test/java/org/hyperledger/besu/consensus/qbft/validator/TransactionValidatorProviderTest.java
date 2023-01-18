@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -78,8 +77,7 @@ public class TransactionValidatorProviderTest {
 
   private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
-    return new Block(
-        headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList(), Optional.empty()));
+    return new Block(headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList()));
   }
 
   @Test
