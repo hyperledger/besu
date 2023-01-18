@@ -155,7 +155,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
-            blockParam.getExcessDataGas(),
+            blockParam.getExcessDataGas().orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash

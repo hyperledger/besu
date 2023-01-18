@@ -230,7 +230,7 @@ public class BlockHeader extends SealableBlockHeader
     if (baseFee != null) {
       out.writeUInt256Scalar(baseFee);
     }
-    if(excessDataGas != null) {
+    if (excessDataGas != null) {
       out.writeUInt256Scalar(excessDataGas);
     }
     out.endList();

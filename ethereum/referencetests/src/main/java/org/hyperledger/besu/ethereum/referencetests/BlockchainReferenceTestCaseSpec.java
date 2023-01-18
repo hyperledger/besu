@@ -179,7 +179,7 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           // withdrawalsRoot == null ? Hash.EMPTY : Hash.fromHexString(withdrawalsRoot),
-          UInt256.fromHexString(excessDataGas),
+          excessDataGas == null ? null : UInt256.fromHexString(excessDataGas),
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
