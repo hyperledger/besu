@@ -486,7 +486,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
                 mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
             Optional.of(payloadParams));
 
-    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    assertInvalidForkchoiceState(resp, expectedInvalidPayloadError());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -510,7 +510,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
                 mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
             Optional.of(payloadParams));
 
-    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    assertInvalidForkchoiceState(resp, expectedInvalidPayloadError());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -574,7 +574,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
                 mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
             Optional.of(payloadParams));
 
-    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    assertInvalidForkchoiceState(resp, expectedInvalidPayloadError());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -732,6 +732,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   protected boolean validateTerminalPoWBlock() {
     return false;
+  }
+
+  protected JsonRpcError expectedInvalidPayloadError() {
+    return JsonRpcError.INVALID_PARAMS;
   }
 
   private JsonRpcResponse resp(

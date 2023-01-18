@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,5 +44,10 @@ public class EngineForkchoiceUpdatedV1Test extends AbstractEngineForkchoiceUpdat
   @Override
   protected boolean validateTerminalPoWBlock() {
     return true;
+  }
+
+  @Override
+  protected JsonRpcError expectedInvalidPayloadError() {
+    return JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES;
   }
 }

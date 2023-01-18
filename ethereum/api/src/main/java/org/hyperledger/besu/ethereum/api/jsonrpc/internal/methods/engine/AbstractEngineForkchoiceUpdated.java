@@ -155,7 +155,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
           "Invalid payload attributes: {}",
           () ->
               maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize).orElse(null));
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+      return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
     }
 
     if (!result.isValid()) {
@@ -217,9 +217,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                 requestId,
                 new EngineUpdateForkchoiceResult(
                     INVALID, latestValid.orElse(null), null, result.getErrorMessage()));
-        break;
-      case INVALID_PAYLOAD_ATTRIBUTES:
-        response = new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
         break;
       case IGNORE_UPDATE_TO_OLD_HEAD:
         response =
@@ -303,6 +300,10 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
   protected boolean requireTerminalPoWBlockValidation() {
     return false;
+  }
+
+  protected JsonRpcError getInvalidPayloadError() {
+    return JsonRpcError.INVALID_PARAMS;
   }
 
   // fcU calls are synchronous, no need to make volatile
