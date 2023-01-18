@@ -69,15 +69,17 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     } else if (optionSpec.isMultiValue() || isArray) {
       defaultValue = getListEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Integer.class) || optionSpec.type().equals(int.class)) {
-      defaultValue = getIntegerEntryAsString(optionSpec);
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Long.class) || optionSpec.type().equals(long.class)) {
-      defaultValue = getIntegerEntryAsString(optionSpec);
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Wei.class)) {
-      defaultValue = getIntegerEntryAsString(optionSpec);
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(BigInteger.class)) {
-      defaultValue = getIntegerEntryAsString(optionSpec);
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Double.class) || optionSpec.type().equals(double.class)) {
-      defaultValue = getDoubleEntryAsString(optionSpec);
+      defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Float.class) || optionSpec.type().equals(float.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);
     }
@@ -129,18 +131,11 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     return getKeyName(spec).map(result::getBoolean).map(Object::toString).orElse(null);
   }
 
-  private String getIntegerEntryAsString(final OptionSpec spec) {
-    // return the string representation of the integer value corresponding to the option in toml
-    // file
+  private String getNumericEntryAsString(final OptionSpec spec) {
+    // return the string representation of the numeric value corresponding to the option in toml
+    // file - this works for integer, double, and float
     // or null if not present in the config
     return getKeyName(spec).map(result::get).map(String::valueOf).orElse(null);
-  }
-
-  private String getDoubleEntryAsString(final OptionSpec spec) {
-    // return the string representation of the double value corresponding to the option in toml
-    // file
-    // or null if not present in the config
-    return getKeyName(spec).map(result::getDouble).map(String::valueOf).orElse(null);
   }
 
   private void checkConfigurationValidity() {
