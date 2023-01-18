@@ -94,11 +94,14 @@ public class ChainForTestCreator {
   }
 
   public static Block createEmptyBlock(final Long height) {
-    return new Block(prepareEmptyHeader(height), new BlockBody(List.of(), List.of()));
+    return new Block(
+        prepareEmptyHeader(height), new BlockBody(List.of(), List.of(), Optional.empty()));
   }
 
   private static Block createEmptyBlock(final Block parent) {
-    return new Block(prepareEmptyHeader(parent.getHeader()), new BlockBody(List.of(), List.of()));
+    return new Block(
+        prepareEmptyHeader(parent.getHeader()),
+        new BlockBody(List.of(), List.of(), Optional.empty()));
   }
 
   private static BlockHeader prepareEmptyHeader(final Long number) {

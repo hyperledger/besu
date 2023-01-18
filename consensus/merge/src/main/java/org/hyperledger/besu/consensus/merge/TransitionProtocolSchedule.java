@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.merge;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
@@ -117,8 +116,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
     return Optional.ofNullable(protocolContext)
         .map(ProtocolContext::getBlockchain)
-        .flatMap(blockchain -> blockchain.getBlockByNumber(number))
-        .map(Block::getHeader)
+        .flatMap(blockchain -> blockchain.getBlockHeader(number))
         .map(timestampSchedule::getByBlockHeader)
         .orElseGet(
             () ->

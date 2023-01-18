@@ -51,7 +51,7 @@ public class RoundChangeTest {
           new BlockHeaderTestFixture()
               .extraData(new QbftExtraDataCodec().encode(extraData))
               .buildHeader(),
-          new BlockBody(Collections.emptyList(), Collections.emptyList()));
+          new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
 
   @Test
   public void canRoundTripARoundChangeMessage() {

@@ -258,7 +258,10 @@ public class MainnetTransactionValidatorTest {
             FeeMarket.london(0L),
             false,
             Optional.of(BigInteger.ONE),
-            Set.of(TransactionType.values()),
+            Set.of(
+                new TransactionType[] {
+                  TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+                }),
             defaultGoQuorumCompatibilityMode,
             Integer.MAX_VALUE);
     validator.setTransactionFilter(transactionFilter(true));

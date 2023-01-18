@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
@@ -60,7 +61,8 @@ public final class BlockBodiesMessageTest {
           new BlockBody(
               oneBlock.readList(Transaction::readFrom),
               oneBlock.readList(
-                  rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
+                  rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions())),
+              Optional.empty()));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
     final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
