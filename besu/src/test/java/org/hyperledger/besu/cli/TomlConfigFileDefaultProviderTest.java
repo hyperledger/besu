@@ -120,6 +120,7 @@ public class TomlConfigFileDefaultProviderTest {
     validOptionsMap.put("--a-string-value-option", null);
     validOptionsMap.put("--a-nested-multi-value-option", null);
     validOptionsMap.put("--a-double-value-option", null);
+    validOptionsMap.put("--a-double-value-option-int", null);
 
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
@@ -149,6 +150,8 @@ public class TomlConfigFileDefaultProviderTest {
           "a-nested-multi-value-option=[ [\"value1\", \"value2\"], [\"value3\", \"value4\"] ]");
       fileWriter.newLine();
       fileWriter.write("a-double-value-option=0.01");
+      fileWriter.newLine();
+      fileWriter.write("a-double-value-option-int=1"); // should be able to parse int as double
       fileWriter.flush();
 
       final TomlConfigFileDefaultProvider providerUnderTest =
@@ -205,6 +208,11 @@ public class TomlConfigFileDefaultProviderTest {
               providerUnderTest.defaultValue(
                   OptionSpec.builder("a-double-value-option").type(Double.class).build()))
           .isEqualTo("0.01");
+
+      assertThat(
+              providerUnderTest.defaultValue(
+                  OptionSpec.builder("a-double-value-option-int").type(Double.class).build()))
+          .isEqualTo("1");
 
       assertThat(
               providerUnderTest.defaultValue(

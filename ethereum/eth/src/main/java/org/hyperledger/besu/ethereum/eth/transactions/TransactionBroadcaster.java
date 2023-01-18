@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
   private static final Boolean HASH_ONLY_BROADCAST = Boolean.TRUE;
   private static final Boolean FULL_BROADCAST = Boolean.FALSE;
 
-  private final AbstractPendingTransactionsSorter pendingTransactions;
+  private final PendingTransactions pendingTransactions;
   private final PeerTransactionTracker transactionTracker;
   private final TransactionsMessageSender transactionsMessageSender;
   private final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -54,7 +53,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
 
   public TransactionBroadcaster(
       final EthContext ethContext,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {

@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -60,8 +59,7 @@ public class NodeCanProduceNextBlockTest {
   private Block createEmptyBlock(final KeyPair blockSigner) {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerBuilder, blockSigner, validatorList);
-    return new Block(
-        header, new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Optional.empty()));
+    return new Block(header, new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
   }
 
   @Before

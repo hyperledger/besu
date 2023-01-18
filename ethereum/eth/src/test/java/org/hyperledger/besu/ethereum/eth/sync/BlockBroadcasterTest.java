@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.Test;
@@ -83,8 +82,7 @@ public class BlockBroadcasterTest {
   }
 
   private Block generateBlock() {
-    final BlockBody body =
-        new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
+    final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
     return new Block(new BlockHeaderTestFixture().buildHeader(), body);
   }
 }

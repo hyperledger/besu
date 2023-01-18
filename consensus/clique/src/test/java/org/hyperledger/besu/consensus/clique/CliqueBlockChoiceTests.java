@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,8 +54,7 @@ public class CliqueBlockChoiceTests {
   private Block createEmptyBlock(final KeyPair blockSigner) {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerBuilder, blockSigner, addresses);
-    return new Block(
-        header, new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Optional.empty()));
+    return new Block(header, new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
   }
 
   @Before
