@@ -56,7 +56,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MergeReorgTest implements MergeGenesisConfigHelper {
 
-  @Mock PendingTransactions mockPeningTransactions;
+  @Mock PendingTransactions mockPendingTransactions;
 
   private MergeCoordinator coordinator;
 
