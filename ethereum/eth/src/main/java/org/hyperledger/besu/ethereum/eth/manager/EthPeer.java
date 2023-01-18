@@ -488,7 +488,7 @@ public class EthPeer implements Comparable<EthPeer> {
         && connectionWithSentStatusMessage.contains(hashCode)) {
       if (!this.connection.equals(newConnection)) {
         // figure out which connection to keep
-        if (compareDuplicateConnections(this.connection, newConnection) < 0) {
+        if (compareDuplicateConnections(this.connection, newConnection) > 0) {
           final PeerConnection oldConnection = this.connection;
           this.connection = newConnection;
           LOG.info("Changed connection from {} to {}", oldConnection, newConnection);
@@ -666,7 +666,7 @@ public class EthPeer implements Comparable<EthPeer> {
     }
     // Otherwise, keep older connection
     LOG.debug("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
-    return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
+    return a.getInitiatedAt() < b.getInitiatedAt() ? -1 : 1;
   }
 
   @FunctionalInterface
