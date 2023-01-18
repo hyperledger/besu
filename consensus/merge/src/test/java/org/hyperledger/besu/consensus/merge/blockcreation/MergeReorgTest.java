@@ -88,7 +88,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             protocolContext,
             mockProtocolSchedule,
             CompletableFuture::runAsync,
-            mockPeningTransactions,
+            mockPendingTransactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardSyncContext.class));
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
