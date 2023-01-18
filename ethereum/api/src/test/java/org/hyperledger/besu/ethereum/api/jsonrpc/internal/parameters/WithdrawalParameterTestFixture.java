@@ -15,16 +15,15 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.datatypes.GWei;
+
 public class WithdrawalParameterTestFixture {
 
-  static final WithdrawalParameter WITHDRAWAL_PARAM_1 =
+  public static final WithdrawalParameter WITHDRAWAL_PARAM_1 =
       createWithdrawal("0x0", "0xFFFF", "0x0000000000000000000000000000000000000000", "0x0");
   static final WithdrawalParameter WITHDRAWAL_PARAM_2 =
       createWithdrawal(
-          "0x1",
-          "0x10000",
-          "0x0100000000000000000000000000000000000000",
-          "0x100000000000000000000000000000000000000000000000000000000000000");
+          "0x1", "0x10000", "0x0100000000000000000000000000000000000000", GWei.ONE.toHexString());
 
   private static WithdrawalParameter createWithdrawal(
       final String index, final String validatorIndex, final String address, final String amount) {

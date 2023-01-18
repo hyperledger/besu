@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER;
+import static org.hyperledger.besu.ethereum.util.LogUtil.throttledLog;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,10 @@ public class FastSyncTargetManager extends SyncTargetManager {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final FastSyncState fastSyncState;
+  private final AtomicBoolean logDebug = new AtomicBoolean(true);
+  private final AtomicBoolean logInfo = new AtomicBoolean(true);
+  private final int logDebugRepeatDelay = 15;
+  private final int logInfoRepeatDelay = 120;
 
   public FastSyncTargetManager(
       final SynchronizerConfiguration config,
@@ -69,10 +75,21 @@ public class FastSyncTargetManager extends SyncTargetManager {
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
     final EthPeers ethPeers = ethContext.getEthPeers();
     final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeerWithHeightEstimate();
-    if (!maybeBestPeer.isPresent()) {
-      LOG.debug(
-          "No sync target, checking current peers for usefulness: {}",
-          ethContext.getEthPeers().peerCount());
+    if (maybeBestPeer.isEmpty()) {
+      throttledLog(
+          LOG::debug,
+          String.format(
+              "Unable to find sync target. Currently checking %d peers for usefulness. Pivot block: %d",
+              ethContext.getEthPeers().peerCount(), pivotBlockHeader.getNumber()),
+          logDebug,
+          logDebugRepeatDelay);
+      throttledLog(
+          LOG::info,
+          String.format(
+              "Unable to find sync target. Currently checking %d peers for usefulness.",
+              ethContext.getEthPeers().peerCount()),
+          logInfo,
+          logInfoRepeatDelay);
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();

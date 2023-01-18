@@ -25,10 +25,12 @@ public enum TransactionType {
   /** Access list transaction type. */
   ACCESS_LIST(0x01),
   /** Eip1559 transaction type. */
-  EIP1559(0x02);
+  EIP1559(0x02),
+  /** Blob transaction type. */
+  BLOB(0x03);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
-      Set.of(ACCESS_LIST, EIP1559);
+      Set.of(ACCESS_LIST, EIP1559, BLOB);
 
   private static final EnumSet<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
       EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
@@ -65,7 +67,10 @@ public enum TransactionType {
    * @return the transaction type
    */
   public static TransactionType of(final int serializedTypeValue) {
-    return Arrays.stream(TransactionType.values())
+    return Arrays.stream(
+            new TransactionType[] {
+              TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+            })
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
         .findFirst()
         .orElseThrow(
