@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.contractvalidation;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
@@ -39,7 +40,8 @@ public class MaxCodeSizeRule implements ContractValidationRule {
   }
 
   @Override
-  public Optional<ExceptionalHaltReason> validate(final Bytes contractCode) {
+  public Optional<ExceptionalHaltReason> validate(
+      final Bytes contractCode, final MessageFrame frame) {
     final int contractCodeSize = contractCode.size();
     if (contractCodeSize <= maxCodeSize) {
       return Optional.empty();

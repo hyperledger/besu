@@ -75,4 +75,13 @@ public interface Code {
    * @return 1 for legacy, count for valid, zero for invalid.
    */
   int getCodeSectionCount();
+
+  /**
+   * Returns the EOF version of the code. Legacy code is version 0, invalid code -1.
+   *
+   * @return The version of hte ode.
+   */
+  default int getEofVersion() {
+    return 0;
+  }
 }

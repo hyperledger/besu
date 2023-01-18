@@ -55,6 +55,9 @@ public interface ExceptionalHaltReason {
       DefaultExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
   /** The constant JUMPF_STACK_MISMATCH. */
   ExceptionalHaltReason JUMPF_STACK_MISMATCH = DefaultExceptionalHaltReason.JUMPF_STACK_MISMATCH;
+  /** The constant EOF_CREATE_VERSION_INCOMPATIBLE. */
+  ExceptionalHaltReason EOF_CREATE_VERSION_INCOMPATIBLE =
+      DefaultExceptionalHaltReason.EOF_CREATE_VERSION_INCOMPATIBLE;
 
   /**
    * Name string.
@@ -107,7 +110,10 @@ public interface ExceptionalHaltReason {
     TOO_FEW_INPUTS_FOR_CODE_SECTION("Not enough stack items for a function call"),
     /** The Jumpf stack mismatch. */
     JUMPF_STACK_MISMATCH(
-        "The stack height for a JUMPF does not match the requirements of the target section");
+        "The stack height for a JUMPF does not match the requirements of the target section"),
+    /** The Eof version incompatible. */
+    EOF_CREATE_VERSION_INCOMPATIBLE(
+        "EOF Code is attempting to create EOF code of an earlier version");
 
     /** The Description. */
     final String description;
