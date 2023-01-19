@@ -71,6 +71,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    *
    * @return The optional list of withdrawals included in the block.
    */
+  @Override
   public Optional<List<Withdrawal>> getWithdrawals() {
     return withdrawals;
   }
