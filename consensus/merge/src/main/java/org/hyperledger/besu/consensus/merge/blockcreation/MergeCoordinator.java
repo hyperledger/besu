@@ -357,7 +357,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-    final var resultBest = validateBlock(bestBlock);
+    final BlockProcessingResult resultBest = validateBlock(bestBlock);
     if (resultBest.isSuccessful()) {
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
@@ -379,6 +379,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       if (resultBest.causedBy().isPresent()) {
         LOG.warn("caused by", resultBest.cause.get());
       }
+      LOG.warn("Block {} yield: {}", bestBlock.getHash(), resultBest.getYield());
+      LOG.warn("Block {} receipts: {}", bestBlock.getHash(), resultBest.getReceipts());
     }
   }
 
