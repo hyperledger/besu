@@ -180,8 +180,8 @@ public interface BlockHeader {
   }
 
   /**
-   * The Keccak 256-bit hash of the root node of the trie structure populated with each withdrawal in
-   * the withdrawals list portion of the block.
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each withdrawal
+   * in the withdrawals list portion of the block.
    *
    * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
    *     withdrawal in the withdrawal list portion of the block.

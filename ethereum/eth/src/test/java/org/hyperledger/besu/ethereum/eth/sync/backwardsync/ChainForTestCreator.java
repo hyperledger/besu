@@ -56,7 +56,7 @@ public class ChainForTestCreator {
         null,
         Hash.EMPTY,
         0,
-        Hash.EMPTY,
+        null,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -126,7 +126,7 @@ public class ChainForTestCreator {
         Wei.ZERO,
         Hash.EMPTY,
         0,
-        Hash.EMPTY_TRIE_HASH,
+        null,
         new MainnetBlockHeaderFunctions());
   }
 }

@@ -316,7 +316,9 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("baseFee=").append(baseFee).append(", ");
     sb.append("mixHashOrPrevRandao=").append(mixHashOrPrevRandao).append(", ");
     sb.append("nonce=").append(nonce);
-    sb.append("withdrawalsRoot=").append(withdrawalsRoot).append(", ");
+    if (withdrawalsRoot != null) {
+      sb.append("withdrawalsRoot=").append(withdrawalsRoot).append(", ");
+    }
     return sb.append("}").toString();
   }
 
