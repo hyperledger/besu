@@ -50,7 +50,7 @@ public class DataHashOperationTest {
     EVM fakeEVM = mock(EVM.class);
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
-    assertThat(r.getHaltReason()).isEqualTo(ExceptionalHaltReason.NONE);
+    assertThat(r.getHaltReason()).isEqualTo(null);
     verify(frame).pushStackItem(version0Hash);
   }
 
