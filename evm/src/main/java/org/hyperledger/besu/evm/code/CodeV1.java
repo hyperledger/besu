@@ -80,6 +80,11 @@ public class CodeV1 implements Code {
   }
 
   @Override
+  public int getEofVersion() {
+    return eofLayout.getVersion();
+  }
+
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
