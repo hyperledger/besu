@@ -16,6 +16,10 @@ package org.hyperledger.besu.plugin.data;
 
 import org.apache.tuweni.units.bigints.UInt64;
 
+/**
+ * A withdrawal is a system-level operation to support validator withdrawals that are pushed from
+ * the beacon chain to EVM.
+ */
 public interface Withdrawal {
 
   /**
