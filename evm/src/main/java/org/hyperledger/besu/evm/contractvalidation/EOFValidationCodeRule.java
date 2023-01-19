@@ -48,7 +48,8 @@ public class EOFValidationCodeRule implements ContractValidationRule {
    *
    * @param contractCode the contract code to validate
    * @param frame the message frame to use for context
-   * @return Either an empty optional on success, or an optional containing one of the invalid reasons.
+   * @return Either an empty optional on success, or an optional containing one of the invalid
+   *     reasons.
    */
   @Override
   public Optional<ExceptionalHaltReason> validate(
@@ -74,9 +75,9 @@ public class EOFValidationCodeRule implements ContractValidationRule {
 
   /**
    * Create EOF validation.
+   *
    * @param maxEofVersion Maximum EOF version to validate
    * @param inCreateTransaction Is this inside a create transaction?
-   *
    * @return The EOF validation contract validation rule.
    */
   public static ContractValidationRule of(

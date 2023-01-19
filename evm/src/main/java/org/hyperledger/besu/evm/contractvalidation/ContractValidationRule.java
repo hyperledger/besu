@@ -29,7 +29,7 @@ public interface ContractValidationRule {
    * Validate.
    *
    * @param contractCode the contract code to validate
-   * @param frame the message frame to use for context                    
+   * @param frame the message frame to use for context
    * @return the optional halt reason
    */
   Optional<ExceptionalHaltReason> validate(Bytes contractCode, MessageFrame frame);
