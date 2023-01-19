@@ -71,6 +71,15 @@ public interface BlockHeader {
   Hash getTransactionsRoot();
 
   /**
+   * The Keccak 256-bit hash of theroot node of the trie structure populated with each withdrawal in
+   * the withdrawals list portion of the block.
+   *
+   * @return The Keccak 256-bit hash of theroot node of the trie structure populated with each
+   *     withdrawal in the withdrawal list portion of the block.
+   */
+  Optional<? extends Hash> getWithdrawalsRoot();
+
+  /**
    * The Keccak 256-bit hash of the root node of the trie structure populated with the receipts of
    * each transaction in the transactions list portion of the block.
    *
