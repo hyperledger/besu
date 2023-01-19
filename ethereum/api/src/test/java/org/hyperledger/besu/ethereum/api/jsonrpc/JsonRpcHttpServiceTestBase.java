@@ -88,7 +88,7 @@ public class JsonRpcHttpServiceTestBase {
           RpcApis.ETH.name(), RpcApis.NET.name(), RpcApis.WEB3.name(), RpcApis.ADMIN.name());
   protected static final NatService natService = new NatService(Optional.empty());
   protected static int maxConnections = 80;
-  protected static int maxBatchSize = JsonRpcConfiguration.DEFAULT_MAX_BATCH_SIZE;
+  protected static int maxBatchSize = 10;
 
   public static void initServerAndClient() throws Exception {
     peerDiscoveryMock = mock(P2PNetwork.class);
