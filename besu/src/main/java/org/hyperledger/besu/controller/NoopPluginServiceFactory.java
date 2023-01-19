@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
+/** The Noop plugin service factory. */
 public class NoopPluginServiceFactory implements PluginServiceFactory {
 
   @Override

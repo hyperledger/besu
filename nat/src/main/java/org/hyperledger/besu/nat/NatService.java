@@ -39,12 +39,23 @@ public class NatService {
   private Optional<NatManager> currentNatManager;
   private final boolean fallbackEnabled;
 
+  /**
+   * Instantiates a new Nat service.
+   *
+   * @param natManager the nat manager
+   * @param fallbackEnabled the fallback enabled
+   */
   public NatService(final Optional<NatManager> natManager, final boolean fallbackEnabled) {
     this.currentNatMethod = retrieveNatMethod(natManager);
     this.currentNatManager = natManager;
     this.fallbackEnabled = fallbackEnabled;
   }
 
+  /**
+   * Instantiates a new Nat service.
+   *
+   * @param natManager the nat manager
+   */
   public NatService(final Optional<NatManager> natManager) {
     this(natManager, DEFAULT_FALLBACK_STATUS);
   }
@@ -160,6 +171,7 @@ public class NatService {
    *
    * @param fallbackValue the advertised IP address fallback value
    * @return The local IP address wrapped in a {@link Optional}.
+   * @throws RuntimeException the runtime exception
    */
   public String queryLocalIPAddress(final String fallbackValue) throws RuntimeException {
     if (isNatEnvironment()) {

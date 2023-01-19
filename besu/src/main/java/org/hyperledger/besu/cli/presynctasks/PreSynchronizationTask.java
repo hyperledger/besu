@@ -20,9 +20,14 @@ import org.hyperledger.besu.controller.BesuController;
 
 /**
  * All PreSynchronizationTask instances execute after the {@link BesuController} instance in {@link
- * BesuCommand} is ready and before {@link Runner#startEthereumMainLoop()} is called
+ * BesuCommand}* is ready and before {@link Runner#startEthereumMainLoop()} is called
  */
 public interface PreSynchronizationTask {
 
+  /**
+   * Run.
+   *
+   * @param besuController the besu controller
+   */
   void run(final BesuController besuController);
 }

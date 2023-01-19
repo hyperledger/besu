@@ -161,6 +161,7 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                null,
                 null),
             new BlockBody(
                 List.of(
@@ -174,8 +175,7 @@ public class EthGasPriceTest {
                         Bytes.EMPTY,
                         Address.ZERO,
                         Optional.empty())),
-                List.of(),
-                Optional.empty())));
+                List.of())));
   }
 
   private Object createEmptyBlock(final Long height) {
@@ -198,8 +198,9 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                null,
                 null),
-            new BlockBody(List.of(), List.of(), Optional.empty())));
+            new BlockBody(List.of(), List.of())));
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

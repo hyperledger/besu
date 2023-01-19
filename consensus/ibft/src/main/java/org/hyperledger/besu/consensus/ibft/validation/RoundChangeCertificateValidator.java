@@ -33,6 +33,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Round change certificate validator. */
 public class RoundChangeCertificateValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(RoundChangeCertificateValidator.class);
@@ -44,6 +45,15 @@ public class RoundChangeCertificateValidator {
   private final long quorum;
   private final long chainHeight;
 
+  /**
+   * Instantiates a new Round change certificate validator.
+   *
+   * @param validators the validators
+   * @param messageValidatorFactory the message validator factory
+   * @param chainHeight the chain height
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param bftBlockInterface the bft block interface
+   */
   public RoundChangeCertificateValidator(
       final Collection<Address> validators,
       final MessageValidatorForHeightFactory messageValidatorFactory,
@@ -58,6 +68,13 @@ public class RoundChangeCertificateValidator {
     this.bftBlockInterface = bftBlockInterface;
   }
 
+  /**
+   * Validate round change messages and ensure target round matches root boolean.
+   *
+   * @param expectedRound the expected round
+   * @param roundChangeCert the round change cert
+   * @return the boolean
+   */
   public boolean validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
       final ConsensusRoundIdentifier expectedRound, final RoundChangeCertificate roundChangeCert) {
 
@@ -109,6 +126,13 @@ public class RoundChangeCertificateValidator {
     return false;
   }
 
+  /**
+   * Validate proposal message matches latest prepare certificate.
+   *
+   * @param roundChangeCert the round change cert
+   * @param proposedBlock the proposed block
+   * @return the boolean
+   */
   public boolean validateProposalMessageMatchesLatestPrepareCertificate(
       final RoundChangeCertificate roundChangeCert, final Block proposedBlock) {
 
@@ -148,6 +172,12 @@ public class RoundChangeCertificateValidator {
     return true;
   }
 
+  /**
+   * Find latest prepared certificate.
+   *
+   * @param msgs the msgs
+   * @return the optional
+   */
   public static Optional<PreparedCertificate> findLatestPreparedCertificate(
       final Collection<SignedData<RoundChangePayload>> msgs) {
 

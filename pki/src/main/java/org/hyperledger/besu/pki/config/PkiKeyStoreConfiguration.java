@@ -24,9 +24,12 @@ import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The Pki key store configuration. */
 public class PkiKeyStoreConfiguration {
 
+  /** The constant DEFAULT_KEYSTORE_TYPE. */
   public static String DEFAULT_KEYSTORE_TYPE = "PKCS12";
+  /** The constant DEFAULT_CERTIFICATE_ALIAS. */
   public static String DEFAULT_CERTIFICATE_ALIAS = "validator";
 
   private final String keyStoreType;
@@ -38,6 +41,18 @@ public class PkiKeyStoreConfiguration {
   private final Path trustStorePasswordPath;
   private final Optional<Path> crlFilePath;
 
+  /**
+   * Instantiates a new Pki key store configuration.
+   *
+   * @param keyStoreType the key store type
+   * @param keyStorePath the key store path
+   * @param keyStorePasswordPath the key store password path
+   * @param certificateAlias the certificate alias
+   * @param trustStoreType the trust store type
+   * @param trustStorePath the trust store path
+   * @param trustStorePasswordPath the trust store password path
+   * @param crlFilePath the crl file path
+   */
   public PkiKeyStoreConfiguration(
       final String keyStoreType,
       final Path keyStorePath,
@@ -57,48 +72,99 @@ public class PkiKeyStoreConfiguration {
     this.crlFilePath = crlFilePath;
   }
 
+  /**
+   * Gets key store type.
+   *
+   * @return the key store type
+   */
   public String getKeyStoreType() {
     return keyStoreType;
   }
 
+  /**
+   * Gets key store path.
+   *
+   * @return the key store path
+   */
   public Path getKeyStorePath() {
     return keyStorePath;
   }
 
+  /**
+   * Gets key store password path.
+   *
+   * @return the key store password path
+   */
   @VisibleForTesting
   public Path getKeyStorePasswordPath() {
     return keyStorePasswordPath;
   }
 
+  /**
+   * Gets key store password.
+   *
+   * @return the key store password
+   */
   public String getKeyStorePassword() {
     return readPasswordFromFile(keyStorePasswordPath);
   }
 
+  /**
+   * Gets certificate alias.
+   *
+   * @return the certificate alias
+   */
   public String getCertificateAlias() {
     return certificateAlias;
   }
 
+  /**
+   * Gets trust store type.
+   *
+   * @return the trust store type
+   */
   public String getTrustStoreType() {
     return trustStoreType;
   }
 
+  /**
+   * Gets trust store path.
+   *
+   * @return the trust store path
+   */
   public Path getTrustStorePath() {
     return trustStorePath;
   }
 
+  /**
+   * Gets trust store password path.
+   *
+   * @return the trust store password path
+   */
   @VisibleForTesting
   public Path getTrustStorePasswordPath() {
     return trustStorePasswordPath;
   }
 
+  /**
+   * Gets trust store password.
+   *
+   * @return the trust store password
+   */
   public String getTrustStorePassword() {
     return readPasswordFromFile(trustStorePasswordPath);
   }
 
+  /**
+   * Gets CRL file path.
+   *
+   * @return the crl file path
+   */
   public Optional<Path> getCrlFilePath() {
     return crlFilePath;
   }
 
+  /** The Builder. */
   public static final class Builder {
 
     private String keyStoreType = DEFAULT_KEYSTORE_TYPE;
@@ -110,48 +176,102 @@ public class PkiKeyStoreConfiguration {
     private Path trustStorePasswordPath;
     private Path crlFilePath;
 
+    /** Instantiates a new Builder. */
     public Builder() {}
 
+    /**
+     * With key store type.
+     *
+     * @param keyStoreType the key store type
+     * @return the builder
+     */
     public Builder withKeyStoreType(final String keyStoreType) {
       this.keyStoreType = keyStoreType;
       return this;
     }
 
+    /**
+     * With key store path.
+     *
+     * @param keyStorePath the key store path
+     * @return the builder
+     */
     public Builder withKeyStorePath(final Path keyStorePath) {
       this.keyStorePath = keyStorePath;
       return this;
     }
 
+    /**
+     * With key store password path.
+     *
+     * @param keyStorePasswordPath the key store password path
+     * @return the builder
+     */
     public Builder withKeyStorePasswordPath(final Path keyStorePasswordPath) {
       this.keyStorePasswordPath = keyStorePasswordPath;
       return this;
     }
 
+    /**
+     * With certificate alias.
+     *
+     * @param certificateAlias the certificate alias
+     * @return the builder
+     */
     public Builder withCertificateAlias(final String certificateAlias) {
       this.certificateAlias = certificateAlias;
       return this;
     }
 
+    /**
+     * With trust store type.
+     *
+     * @param trustStoreType the trust store type
+     * @return the builder
+     */
     public Builder withTrustStoreType(final String trustStoreType) {
       this.trustStoreType = trustStoreType;
       return this;
     }
 
+    /**
+     * With trust store path.
+     *
+     * @param trustStorePath the trust store path
+     * @return the builder
+     */
     public Builder withTrustStorePath(final Path trustStorePath) {
       this.trustStorePath = trustStorePath;
       return this;
     }
 
+    /**
+     * With trust store password path.
+     *
+     * @param trustStorePasswordPath the trust store password path
+     * @return the builder
+     */
     public Builder withTrustStorePasswordPath(final Path trustStorePasswordPath) {
       this.trustStorePasswordPath = trustStorePasswordPath;
       return this;
     }
 
+    /**
+     * With crl file path.
+     *
+     * @param filePath the file path
+     * @return the builder
+     */
     public Builder withCrlFilePath(final Path filePath) {
       this.crlFilePath = filePath;
       return this;
     }
 
+    /**
+     * Build pki key store configuration.
+     *
+     * @return the pki key store configuration
+     */
     public PkiKeyStoreConfiguration build() {
       requireNonNull(keyStoreType, "Key Store Type must not be null");
       requireNonNull(keyStorePasswordPath, "Key Store password file must not be null");

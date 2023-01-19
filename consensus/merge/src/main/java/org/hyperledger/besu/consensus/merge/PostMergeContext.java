@@ -37,8 +37,10 @@ import com.google.common.collect.EvictingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Post merge context. */
 public class PostMergeContext implements MergeContext {
   private static final Logger LOG = LoggerFactory.getLogger(PostMergeContext.class);
+  /** The Max blocks in progress. */
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
   private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
@@ -73,11 +75,17 @@ public class PostMergeContext implements MergeContext {
   // https://github.com/hyperledger/besu/pull/4703 is merged.
   private boolean isChainPruningEnabled = false;
 
+  /** Instantiates a new Post merge context. */
   @VisibleForTesting
   PostMergeContext() {
     this(Difficulty.ZERO);
   }
 
+  /**
+   * Instantiates a new Post merge context.
+   *
+   * @param difficulty the difficulty
+   */
   @VisibleForTesting
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
@@ -85,6 +93,11 @@ public class PostMergeContext implements MergeContext {
     this.isCheckpointPostMergeSync = false;
   }
 
+  /**
+   * Get post merge context.
+   *
+   * @return the post merge context
+   */
   public static PostMergeContext get() {
     if (singleton.get() == null) {
       singleton.compareAndSet(null, new PostMergeContext());
@@ -273,9 +286,17 @@ public class PostMergeContext implements MergeContext {
   }
 
   private static class PayloadTuple {
+    /** The Payload identifier. */
     final PayloadIdentifier payloadIdentifier;
+    /** The Block with receipts. */
     final BlockWithReceipts blockWithReceipts;
 
+    /**
+     * Instantiates a new Payload tuple.
+     *
+     * @param payloadIdentifier the payload identifier
+     * @param blockWithReceipts the block with receipts
+     */
     PayloadTuple(
         final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts) {
       this.payloadIdentifier = payloadIdentifier;
@@ -293,6 +314,12 @@ public class PostMergeContext implements MergeContext {
     return isChainPruningEnabled;
   }
 
+  /**
+   * Sets checkpoint post merge sync.
+   *
+   * @param isCheckpointPostMergeSync the is checkpoint post merge sync
+   * @return the checkpoint post merge sync
+   */
   public PostMergeContext setCheckpointPostMergeSync(final boolean isCheckpointPostMergeSync) {
     this.isCheckpointPostMergeSync = isCheckpointPostMergeSync;
     return this;

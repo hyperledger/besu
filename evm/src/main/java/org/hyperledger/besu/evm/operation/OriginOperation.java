@@ -18,8 +18,14 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Origin operation. */
 public class OriginOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Origin operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public OriginOperation(final GasCalculator gasCalculator) {
     super(0x32, "ORIGIN", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }

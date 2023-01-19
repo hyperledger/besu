@@ -18,8 +18,11 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 import java.util.Optional;
 
+/** The enum Standard metric category. */
 public enum StandardMetricCategory implements MetricCategory {
+  /** Jvm standard metric category. */
   JVM("jvm"),
+  /** Process standard metric category. */
   PROCESS("process");
 
   private final String name;

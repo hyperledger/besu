@@ -22,8 +22,15 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
+/** The Ibft forks schedules factory. */
 public class IbftForksSchedulesFactory {
 
+  /**
+   * Create forks schedule.
+   *
+   * @param genesisConfig the genesis config
+   * @return the forks schedule
+   */
   public static ForksSchedule<BftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
     return BftForksScheduleFactory.create(
         genesisConfig.getBftConfigOptions(),

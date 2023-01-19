@@ -22,6 +22,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Prefix code rule. */
 public class PrefixCodeRule implements ContractValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrefixCodeRule.class);
@@ -39,6 +40,11 @@ public class PrefixCodeRule implements ContractValidationRule {
     }
   }
 
+  /**
+   * Instantiate ContractValidationRule of prefix code rule
+   *
+   * @return the contract validation rule
+   */
   public static ContractValidationRule of() {
     return new PrefixCodeRule();
   }

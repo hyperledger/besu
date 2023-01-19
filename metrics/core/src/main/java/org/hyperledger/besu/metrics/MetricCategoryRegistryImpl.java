@@ -20,10 +20,16 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
+/** The Metric category registry implementation. */
 public class MetricCategoryRegistryImpl implements MetricCategoryRegistry {
 
   private final List<MetricCategory> metricCategories = new ArrayList<>();
 
+  /**
+   * Gets metric categories.
+   *
+   * @return the metric categories
+   */
   public List<MetricCategory> getMetricCategories() {
     return metricCategories;
   }

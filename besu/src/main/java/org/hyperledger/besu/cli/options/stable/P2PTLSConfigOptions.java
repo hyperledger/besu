@@ -30,6 +30,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
+/** The P2P TLS Config Cli Options. */
 public class P2PTLSConfigOptions {
   @Option(
       names = {"--Xp2p-tls-enabled"},
@@ -95,6 +96,12 @@ public class P2PTLSConfigOptions {
       description = "Certificate revocation list for the P2P service.")
   private final Path p2pCrlFile = null;
 
+  /**
+   * Generate P2p tls configuration.
+   *
+   * @param commandLine the command line object to report exceptions
+   * @return the optional TLSConfiguration
+   */
   public Optional<TLSConfiguration> p2pTLSConfiguration(final CommandLine commandLine) {
     if (!p2pTLSEnabled) {
       return Optional.empty();
@@ -128,6 +135,12 @@ public class P2PTLSConfigOptions {
             .build());
   }
 
+  /**
+   * Check P2P Tls options dependencies.
+   *
+   * @param logger the logger
+   * @param commandLine the command line
+   */
   public void checkP2PTLSOptionsDependencies(final Logger logger, final CommandLine commandLine) {
     CommandLineUtils.checkOptionDependencies(
         logger,

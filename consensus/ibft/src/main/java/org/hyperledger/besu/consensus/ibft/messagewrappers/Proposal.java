@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Proposal. */
 public class Proposal extends BftMessage<ProposalPayload> {
 
   private static final IbftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new IbftExtraDataCodec();
@@ -38,6 +39,13 @@ public class Proposal extends BftMessage<ProposalPayload> {
 
   private final Optional<RoundChangeCertificate> roundChangeCertificate;
 
+  /**
+   * Instantiates a new Proposal.
+   *
+   * @param payload the payload
+   * @param proposedBlock the proposed block
+   * @param certificate the certificate
+   */
   public Proposal(
       final SignedData<ProposalPayload> payload,
       final Block proposedBlock,
@@ -47,14 +55,29 @@ public class Proposal extends BftMessage<ProposalPayload> {
     this.roundChangeCertificate = certificate;
   }
 
+  /**
+   * Gets block.
+   *
+   * @return the block
+   */
   public Block getBlock() {
     return proposedBlock;
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return getPayload().getDigest();
   }
 
+  /**
+   * Gets round change certificate.
+   *
+   * @return the round change certificate
+   */
   public Optional<RoundChangeCertificate> getRoundChangeCertificate() {
     return roundChangeCertificate;
   }
@@ -74,6 +97,12 @@ public class Proposal extends BftMessage<ProposalPayload> {
     return rlpOut.encoded();
   }
 
+  /**
+   * Decode.
+   *
+   * @param data the data
+   * @return the proposal
+   */
   public static Proposal decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();

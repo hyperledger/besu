@@ -17,8 +17,19 @@
 
 package org.hyperledger.besu.services.tasks;
 
+/** The interface Tasks priority provider. */
 public interface TasksPriorityProvider {
+  /**
+   * Gets priority.
+   *
+   * @return the priority
+   */
   long getPriority();
 
+  /**
+   * Gets depth.
+   *
+   * @return the depth
+   */
   int getDepth();
 }

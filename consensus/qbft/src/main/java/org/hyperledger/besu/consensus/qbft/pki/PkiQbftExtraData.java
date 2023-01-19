@@ -25,10 +25,21 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Pki Qbft extra data. */
 public class PkiQbftExtraData extends BftExtraData {
 
   private final Bytes cms;
 
+  /**
+   * Instantiates a new Pki Qbft extra data.
+   *
+   * @param vanityData the vanity data
+   * @param seals the seals
+   * @param vote the vote
+   * @param round the round
+   * @param validators the validators
+   * @param cms the cms
+   */
   public PkiQbftExtraData(
       final Bytes vanityData,
       final Collection<SECPSignature> seals,
@@ -40,6 +51,12 @@ public class PkiQbftExtraData extends BftExtraData {
     this.cms = cms;
   }
 
+  /**
+   * Instantiates a new Pki Qbft extra data.
+   *
+   * @param bftExtraData the bft extra data
+   * @param cms the cms
+   */
   public PkiQbftExtraData(final BftExtraData bftExtraData, final Bytes cms) {
     this(
         bftExtraData.getVanityData(),
@@ -50,6 +67,11 @@ public class PkiQbftExtraData extends BftExtraData {
         cms);
   }
 
+  /**
+   * Gets cms.
+   *
+   * @return the cms
+   */
   public Bytes getCms() {
     return cms;
   }

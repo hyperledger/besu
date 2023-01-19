@@ -17,13 +17,29 @@ package org.hyperledger.besu.config;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+/** The interface Qbft config options. */
 public interface QbftConfigOptions extends BftConfigOptions {
 
+  /**
+   * Gets validator contract address.
+   *
+   * @return the validator contract address
+   */
   Optional<String> getValidatorContractAddress();
 
+  /**
+   * Is validator contract mode.
+   *
+   * @return true of validator contract mode, false otherwise.
+   */
   default boolean isValidatorContractMode() {
     return getValidatorContractAddress().isPresent();
   }
 
+  /**
+   * Gets start block.
+   *
+   * @return the start block
+   */
   OptionalLong getStartBlock();
 }

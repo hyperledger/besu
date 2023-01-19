@@ -26,9 +26,21 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import java.util.List;
 import java.util.Optional;
 
+/** The Merge block processor. */
 public class MergeBlockProcessor extends MainnetBlockProcessor {
   private final MergeContext mergeContext;
 
+  /**
+   * Instantiates a new Merge block processor.
+   *
+   * @param transactionProcessor the transaction processor
+   * @param transactionReceiptFactory the transaction receipt factory
+   * @param blockReward the block reward
+   * @param miningBeneficiaryCalculator the mining beneficiary calculator
+   * @param skipZeroBlockRewards the skip zero block rewards
+   * @param goQuorumPrivacyParameters the go quorum privacy parameters
+   * @param protocolSchedule the header based protocol scheduler
+   */
   public MergeBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,

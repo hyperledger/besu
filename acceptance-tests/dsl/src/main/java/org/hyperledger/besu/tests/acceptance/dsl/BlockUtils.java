@@ -53,6 +53,7 @@ public class BlockUtils {
         null,
         mixHash,
         new BigInteger(block.getNonceRaw().substring(2), 16).longValue(),
+        null,
         blockHeaderFunctions);
   }
 }

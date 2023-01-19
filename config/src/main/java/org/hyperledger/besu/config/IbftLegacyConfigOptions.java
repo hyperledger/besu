@@ -19,8 +19,10 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
+/** The Ibft legacy config options. */
 public class IbftLegacyConfigOptions {
 
+  /** The constant DEFAULT. */
   public static final IbftLegacyConfigOptions DEFAULT =
       new IbftLegacyConfigOptions(JsonUtil.createEmptyObjectNode());
 
@@ -31,27 +33,57 @@ public class IbftLegacyConfigOptions {
 
   private final ObjectNode ibftConfigRoot;
 
+  /**
+   * Instantiates a new Ibft legacy config options.
+   *
+   * @param ibftConfigRoot the ibft config root
+   */
   IbftLegacyConfigOptions(final ObjectNode ibftConfigRoot) {
     this.ibftConfigRoot = ibftConfigRoot;
   }
 
+  /**
+   * Gets epoch length.
+   *
+   * @return the epoch length
+   */
   public long getEpochLength() {
     return JsonUtil.getLong(ibftConfigRoot, "epochlength", DEFAULT_EPOCH_LENGTH);
   }
 
+  /**
+   * Gets block period seconds.
+   *
+   * @return the block period seconds
+   */
   public int getBlockPeriodSeconds() {
     return JsonUtil.getPositiveInt(
         ibftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
+  /**
+   * Gets request timeout seconds.
+   *
+   * @return the request timeout seconds
+   */
   public int getRequestTimeoutSeconds() {
     return JsonUtil.getInt(ibftConfigRoot, "requesttimeoutseconds", DEFAULT_ROUND_EXPIRY_SECONDS);
   }
 
+  /**
+   * Gets ceil 2N by 3 block.
+   *
+   * @return the ceil 2N by 3 block
+   */
   public long getCeil2Nby3Block() {
     return JsonUtil.getLong(ibftConfigRoot, "ceil2nby3block", DEFAULT_CEIL_2N_BY_3_BLOCK);
   }
 
+  /**
+   * As map.
+   *
+   * @return the map
+   */
   Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     if (ibftConfigRoot.has("epochlength")) {

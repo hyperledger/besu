@@ -285,8 +285,7 @@ public class MessageWrapperTest {
         @JsonProperty("Uncles") final List<TestBlockHeader> uncles) {
       super(
           transactions.stream().collect(toUnmodifiableList()),
-          uncles.stream().collect(toUnmodifiableList()),
-          Optional.empty());
+          uncles.stream().collect(toUnmodifiableList()));
     }
   }
 
@@ -327,6 +326,7 @@ public class MessageWrapperTest {
           null,
           Hash.fromHexString(mixHash),
           Bytes.fromHexStringLenient(nonce).toLong(),
+          null,
           new MainnetBlockHeaderFunctions());
     }
   }

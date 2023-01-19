@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoun
 
 import java.util.Optional;
 
+/** The Merge validation ruleset factory. */
 public class MergeValidationRulesetFactory {
 
   private static final EpochCalculator preMergeCalculator =

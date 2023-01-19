@@ -56,6 +56,7 @@ public class ChainForTestCreator {
         null,
         Hash.EMPTY,
         0,
+        null,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -79,6 +80,7 @@ public class ChainForTestCreator {
         blockHeader.getBaseFee().orElse(null),
         blockHeader.getMixHash(),
         blockHeader.getNonce(),
+        blockHeader.getWithdrawalsRoot().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
 
@@ -94,14 +96,11 @@ public class ChainForTestCreator {
   }
 
   public static Block createEmptyBlock(final Long height) {
-    return new Block(
-        prepareEmptyHeader(height), new BlockBody(List.of(), List.of(), Optional.empty()));
+    return new Block(prepareEmptyHeader(height), new BlockBody(List.of(), List.of()));
   }
 
   private static Block createEmptyBlock(final Block parent) {
-    return new Block(
-        prepareEmptyHeader(parent.getHeader()),
-        new BlockBody(List.of(), List.of(), Optional.empty()));
+    return new Block(prepareEmptyHeader(parent.getHeader()), new BlockBody(List.of(), List.of()));
   }
 
   private static BlockHeader prepareEmptyHeader(final Long number) {
@@ -127,6 +126,7 @@ public class ChainForTestCreator {
         Wei.ZERO,
         Hash.EMPTY,
         0,
+        null,
         new MainnetBlockHeaderFunctions());
   }
 }

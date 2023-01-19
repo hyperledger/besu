@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Prepare message data. */
 public class PrepareMessageData extends AbstractBftMessageData {
 
   private static final int MESSAGE_CODE = IbftV2.PREPARE;
@@ -28,15 +29,32 @@ public class PrepareMessageData extends AbstractBftMessageData {
     super(data);
   }
 
+  /**
+   * Gets prepare message data from message data.
+   *
+   * @param messageData the message data
+   * @return the prepare message data
+   */
   public static PrepareMessageData fromMessageData(final MessageData messageData) {
     return fromMessageData(
         messageData, MESSAGE_CODE, PrepareMessageData.class, PrepareMessageData::new);
   }
 
+  /**
+   * Decode.
+   *
+   * @return the prepare
+   */
   public Prepare decode() {
     return Prepare.decode(data);
   }
 
+  /**
+   * Create prepare message data.
+   *
+   * @param preapare the Prepare
+   * @return the prepare message data
+   */
   public static PrepareMessageData create(final Prepare preapare) {
     return new PrepareMessageData(preapare.encode());
   }

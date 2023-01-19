@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -38,5 +40,15 @@ public class EngineNewPayloadV1 extends AbstractEngineNewPayload {
   @Override
   public String getName() {
     return RpcMethod.ENGINE_NEW_PAYLOAD_V1.getMethodName();
+  }
+
+  @Override
+  protected boolean requireTerminalPoWBlockValidation() {
+    return true;
+  }
+
+  @Override
+  protected EngineStatus getInvalidBlockHashStatus() {
+    return INVALID_BLOCK_HASH;
   }
 }

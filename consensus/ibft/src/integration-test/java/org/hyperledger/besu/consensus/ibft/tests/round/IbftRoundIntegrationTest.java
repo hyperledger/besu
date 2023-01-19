@@ -110,7 +110,7 @@ public class IbftRoundIntegrationTest {
     headerTestFixture.extraData(bftExtraDataEncoder.encode(proposedExtraData));
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
-    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList(), Optional.empty()));
+    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
 
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 
