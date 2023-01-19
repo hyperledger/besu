@@ -249,6 +249,7 @@ public class EngineExchangeTransitionConfigurationTest {
         Wei.ZERO,
         Bytes32.ZERO,
         0,
+        null,
         UInt256.ZERO,
         new BlockHeaderFunctions() {
           @Override

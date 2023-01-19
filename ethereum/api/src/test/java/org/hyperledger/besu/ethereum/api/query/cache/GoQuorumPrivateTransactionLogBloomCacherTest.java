@@ -169,6 +169,7 @@ public class GoQuorumPrivateTransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
             UInt256.ZERO,
             new MainnetBlockHeaderFunctions(),
             Optional.of(testLogsBloomFilter));

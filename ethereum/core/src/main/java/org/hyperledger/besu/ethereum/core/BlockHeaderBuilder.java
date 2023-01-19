@@ -44,6 +44,8 @@ public class BlockHeaderBuilder {
 
   private Hash transactionsRoot;
 
+  private Hash withdrawalsRoot = null;
+
   private Hash receiptsRoot;
 
   private LogsBloomFilter logsBloom;
@@ -115,6 +117,7 @@ public class BlockHeaderBuilder {
         .mixHash(header.getMixHash())
         .nonce(header.getNonce())
         .prevRandao(header.getPrevRandao().orElse(null))
+        .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
         .excessDataGas(header.getExcessDataGas().orElse(null));
   }
 
@@ -136,6 +139,7 @@ public class BlockHeaderBuilder {
             .extraData(fromBuilder.extraData)
             .baseFee(fromBuilder.baseFee)
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
+            .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessDataGas(fromBuilder.excessDataGas)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
@@ -162,6 +166,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         nonce.getAsLong(),
+        withdrawalsRoot,
         excessDataGas,
         blockHeaderFunctions);
   }
@@ -200,6 +205,7 @@ public class BlockHeaderBuilder {
         extraData,
         baseFee,
         mixHashOrPrevRandao,
+        withdrawalsRoot,
         excessDataGas);
   }
 
@@ -261,6 +267,7 @@ public class BlockHeaderBuilder {
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
     sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     return this;
   }
@@ -369,6 +376,11 @@ public class BlockHeaderBuilder {
     if (prevRandao != null) {
       this.mixHashOrPrevRandao = prevRandao;
     }
+    return this;
+  }
+
+  public BlockHeaderBuilder withdrawalsRoot(final Hash hash) {
+    this.withdrawalsRoot = hash;
     return this;
   }
 

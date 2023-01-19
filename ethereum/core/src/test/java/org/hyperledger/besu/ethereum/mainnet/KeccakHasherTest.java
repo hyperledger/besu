@@ -48,6 +48,7 @@ public class KeccakHasherTest {
         final Bytes extraData,
         final Wei baseFee,
         final Bytes32 random,
+        final Hash withdrawalsRoot,
         final UInt256 excessDataGas) {
       super(
           parentHash,
@@ -65,6 +66,7 @@ public class KeccakHasherTest {
           extraData,
           baseFee,
           random,
+          withdrawalsRoot,
           excessDataGas);
     }
   }
@@ -110,6 +112,7 @@ public class KeccakHasherTest {
             7987824L,
             1538483791L,
             Bytes.fromHexString("0xd88301080f846765746888676f312e31302e31856c696e7578"),
+            null,
             null,
             null,
             null);

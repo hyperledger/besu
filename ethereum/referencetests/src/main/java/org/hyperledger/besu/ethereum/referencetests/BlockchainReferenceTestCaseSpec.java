@@ -178,8 +178,8 @@ public class BlockchainReferenceTestCaseSpec {
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
-          // withdrawalsRoot == null ? Hash.EMPTY : Hash.fromHexString(withdrawalsRoot),
-          excessDataGas == null ? null : UInt256.fromHexString(excessDataGas),
+          withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
+          excessDataGas != null ? UInt256.fromHexString(excessDataGas) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {

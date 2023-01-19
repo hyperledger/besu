@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -39,6 +41,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final Bytes extraData;
 
+  protected final Hash withdrawalsRoot;
+
   protected SealableBlockHeader(
       final Hash parentHash,
       final Hash ommersHash,
@@ -55,6 +59,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Bytes extraData,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
+      final Hash withdrawalsRoot,
       final UInt256 excessDataGas) {
     super(
         parentHash,
@@ -69,6 +74,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;
+    this.withdrawalsRoot = withdrawalsRoot;
     this.receiptsRoot = receiptsRoot;
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
@@ -136,5 +142,14 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Bytes getExtraData() {
     return extraData;
+  }
+
+  /**
+   * Returns the block withdrawals root hash.
+   *
+   * @return the block withdrawals root hash
+   */
+  public Optional<Hash> getWithdrawalsRoot() {
+    return Optional.ofNullable(withdrawalsRoot);
   }
 }

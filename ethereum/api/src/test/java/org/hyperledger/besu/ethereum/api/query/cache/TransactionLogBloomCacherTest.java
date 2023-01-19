@@ -101,6 +101,7 @@ public class TransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
             UInt256.ZERO,
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
@@ -266,6 +267,7 @@ public class TransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
             UInt256.ZERO,
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
