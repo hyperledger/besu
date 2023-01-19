@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.operation.DataHashOperation;
@@ -66,16 +65,18 @@ public class DataHashOperationTest {
 
     Operation.OperationResult failed1 = getHash.execute(frame, fakeEVM);
     assertThat(failed1.getGasCost()).isEqualTo(3);
+    assertThat(failed1.getHaltReason()).isNull();
 
     when(frame.popStackItem()).thenReturn(Bytes.of(0));
     when(frame.getVersionedHashes()).thenReturn(Optional.of(new ArrayList<>()));
     Operation.OperationResult failed2 = getHash.execute(frame, fakeEVM);
     assertThat(failed2.getGasCost()).isEqualTo(3);
+    assertThat(failed2.getHaltReason()).isNull();
     verify(frame, times(2)).pushStackItem(Bytes.EMPTY);
   }
 
   @Test
-  public void failsOnVersionIndexOutOFBounds() {
+  public void pushZeroOnVersionIndexOutOFBounds() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
     List<Hash> versionedHashes = Arrays.asList(version0Hash);
     DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
@@ -85,6 +86,7 @@ public class DataHashOperationTest {
     EVM fakeEVM = mock(EVM.class);
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
+    assertThat(r.getHaltReason()).isNull();
     verify(frame).pushStackItem(Bytes.EMPTY);
   }
 }
