@@ -727,6 +727,17 @@ public class MainnetEVMs {
   /**
    * Cancun evm.
    *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancun(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return cancun(new ShanghaiGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Cancun evm.
+   *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration

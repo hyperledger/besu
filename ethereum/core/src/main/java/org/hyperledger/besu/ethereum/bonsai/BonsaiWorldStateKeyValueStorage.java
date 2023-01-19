@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -181,24 +182,37 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
+    return getStorageValueBySlotHash(
+        () ->
+            getAccount(accountHash)
+                .map(
+                    b ->
+                        StateTrieAccountValue.readFrom(
+                                org.hyperledger.besu.ethereum.rlp.RLP.input(b))
+                            .getStorageRoot()),
+        accountHash,
+        slotHash);
+  }
+
+  public Optional<Bytes> getStorageValueBySlotHash(
+      final Supplier<Optional<Hash>> storageRootSupplier,
+      final Hash accountHash,
+      final Hash slotHash) {
     Optional<Bytes> response =
         storageStorage
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
-      final Optional<Bytes> account = getAccount(accountHash);
+      final Optional<Hash> storageRoot = storageRootSupplier.get();
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (account.isPresent() && worldStateRootHash.isPresent()) {
-        final StateTrieAccountValue accountValue =
-            StateTrieAccountValue.readFrom(
-                org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
+      if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
         response =
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(
                         (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
                         Function.identity(),
                         Function.identity()),
-                    accountValue.getStorageRoot())
+                    storageRoot.get())
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
       }
