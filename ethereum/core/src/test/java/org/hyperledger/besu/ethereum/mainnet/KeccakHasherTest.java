@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class KeccakHasherTest {
@@ -49,7 +49,7 @@ public class KeccakHasherTest {
         final Wei baseFee,
         final Bytes32 random,
         final Hash withdrawalsRoot,
-        final UInt256 excessDataGas) {
+        final DataGas excessDataGas) {
       super(
           parentHash,
           ommersHash,

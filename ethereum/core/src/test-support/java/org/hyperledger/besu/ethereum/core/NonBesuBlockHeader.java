@@ -22,7 +22,6 @@ import org.hyperledger.besu.plugin.data.Quantity;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class NonBesuBlockHeader implements BlockHeader {
 
@@ -120,7 +119,7 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
-  public Optional<UInt256> getExcessDataGas() {
+  public Optional<? extends Quantity> getExcessDataGas() {
     return Optional.empty();
   }
 }

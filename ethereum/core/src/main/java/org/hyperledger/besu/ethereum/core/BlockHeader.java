@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -28,7 +29,6 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -64,7 +64,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final Hash withdrawalsRoot,
-      final UInt256 excessDataGas,
+      final DataGas excessDataGas,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<LogsBloomFilter> privateLogsBloom) {
     super(
@@ -109,7 +109,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final Hash withdrawalsRoot,
-      final UInt256 excessDataGas,
+      final DataGas excessDataGas,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -264,7 +264,8 @@ public class BlockHeader extends SealableBlockHeader
     final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
     final Hash withdrawalHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
-    final UInt256 excessDataGas = !input.isEndOfCurrentList() ? input.readUInt256Scalar() : null;
+    final DataGas excessDataGas =
+        !input.isEndOfCurrentList() ? DataGas.of(input.readUInt256Scalar()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -359,7 +360,7 @@ public class BlockHeader extends SealableBlockHeader
             .getWithdrawalsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        pluginBlockHeader.getExcessDataGas().orElse(null),
+        pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
         blockHeaderFunctions);
   }
 

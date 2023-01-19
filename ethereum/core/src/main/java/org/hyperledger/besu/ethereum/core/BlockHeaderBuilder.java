@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -29,7 +30,6 @@ import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -72,7 +72,7 @@ public class BlockHeaderBuilder {
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
 
-  private UInt256 excessDataGas = null;
+  private DataGas excessDataGas = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -384,7 +384,7 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder excessDataGas(final UInt256 excessDataGas) {
+  public BlockHeaderBuilder excessDataGas(final DataGas excessDataGas) {
     checkArgument(gasLimit >= 0L);
     this.excessDataGas = excessDataGas;
     return this;
