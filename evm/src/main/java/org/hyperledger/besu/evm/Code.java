@@ -81,7 +81,5 @@ public interface Code {
    *
    * @return The version of hte ode.
    */
-  default int getEofVersion() {
-    return 0;
-  }
+  int getEofVersion();
 }

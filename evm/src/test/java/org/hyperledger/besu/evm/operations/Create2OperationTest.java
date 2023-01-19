@@ -306,8 +306,8 @@ public class Create2OperationTest {
     return messageFrame;
   }
 
-  @org.junit.Test
-  public void eofV1CannotCreateLegacy() {
+  @Test
+  void eofV1CannotCreateLegacy() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
@@ -331,8 +331,8 @@ public class Create2OperationTest {
     assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
   }
 
-  @org.junit.Test
-  public void legacyCanCreateEOFv1() {
+  @Test
+  void legacyCanCreateEOFv1() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_EOF.size());
     final MessageFrame messageFrame =

@@ -133,6 +133,11 @@ public class CodeV0 implements Code {
     return 1;
   }
 
+  @Override
+  public int getEofVersion() {
+    return 0;
+  }
+
   /**
    * Calculate jump destination.
    *

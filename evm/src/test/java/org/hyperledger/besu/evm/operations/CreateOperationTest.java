@@ -47,9 +47,9 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class CreateOperationTest {
+class CreateOperationTest {
 
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
@@ -83,7 +83,7 @@ public class CreateOperationTest {
   private static final int SHANGHAI_CREATE_GAS = 41240;
 
   @Test
-  public void createFromMemoryMutationSafe() {
+  void createFromMemoryMutationSafe() {
 
     // Given:  Execute a CREATE operation with a contract that logs in the constructor
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
@@ -126,7 +126,7 @@ public class CreateOperationTest {
   }
 
   @Test
-  public void nonceTooLarge() {
+  void nonceTooLarge() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -145,7 +145,7 @@ public class CreateOperationTest {
   }
 
   @Test
-  public void messageFrameStackTooDeep() {
+  void messageFrameStackTooDeep() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -164,7 +164,7 @@ public class CreateOperationTest {
   }
 
   @Test
-  public void notEnoughValue() {
+  void notEnoughValue() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -186,7 +186,7 @@ public class CreateOperationTest {
   }
 
   @Test
-  public void shanghaiMaxInitCodeSizeCreate() {
+  void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -218,7 +218,7 @@ public class CreateOperationTest {
   }
 
   @Test
-  public void shanghaiMaxInitCodeSizePlus1Create() {
+  void shanghaiMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc001");
     final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -242,7 +242,7 @@ public class CreateOperationTest {
   }
 
   @Test
-  public void eofV1CannotCreateLegacy() {
+  void eofV1CannotCreateLegacy() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
@@ -266,7 +266,7 @@ public class CreateOperationTest {
   }
 
   @Test
-  public void legacyCanCreateEOFv1() {
+  void legacyCanCreateEOFv1() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_EOF.size());
     final MessageFrame messageFrame =
