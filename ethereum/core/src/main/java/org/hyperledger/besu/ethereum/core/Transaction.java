@@ -302,8 +302,7 @@ public class Transaction
       final SECPSignature signature,
       final Bytes payload,
       final Address sender,
-      final Optional<BigInteger> chainId,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<BigInteger> chainId) {
     this(
         nonce,
         Optional.of(gasPrice),
@@ -317,7 +316,7 @@ public class Transaction
         sender,
         chainId,
         Optional.empty(),
-        versionedHashes);
+        Optional.empty());
   }
 
   /**
