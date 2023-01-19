@@ -22,10 +22,17 @@ import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Mul operation. */
 public class MulOperation extends AbstractFixedCostOperation {
 
+  /** The Mul operation success result. */
   static final OperationResult mulSuccess = new OperationResult(5, null);
 
+  /**
+   * Instantiates a new Mul operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public MulOperation(final GasCalculator gasCalculator) {
     super(0x02, "MUL", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
@@ -36,6 +43,12 @@ public class MulOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs mul operation
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     BigInteger a = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
     BigInteger b = new BigInteger(1, frame.popStackItem().toArrayUnsafe());

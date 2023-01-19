@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.options.unstable;
 import net.consensys.quorum.mainnet.launcher.options.Options;
 import picocli.CommandLine;
 
+/** The Launcher CLI options. */
 public class LauncherOptions implements Options {
 
   private static final String LAUNCHER_OPTION_NAME = "--Xlauncher";
@@ -40,14 +41,29 @@ public class LauncherOptions implements Options {
       arity = "0..1")
   private Boolean isLauncherModeForced = Boolean.FALSE;
 
+  /**
+   * Create launcher options.
+   *
+   * @return the launcher options
+   */
   public static LauncherOptions create() {
     return new LauncherOptions();
   }
 
+  /**
+   * Is launcher mode enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
   public boolean isLauncherMode() {
     return isLauncherMode;
   }
 
+  /**
+   * Is launcher mode forced enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
   public boolean isLauncherModeForced() {
     return isLauncherModeForced;
   }

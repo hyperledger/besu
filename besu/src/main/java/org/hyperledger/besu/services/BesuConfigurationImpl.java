@@ -18,11 +18,18 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 
 import java.nio.file.Path;
 
+/** A concrete implementation of BesuConfiguration which is used in Besu plugin framework. */
 public class BesuConfigurationImpl implements BesuConfiguration {
 
   private final Path storagePath;
   private final Path dataPath;
 
+  /**
+   * BesuConfigurationImpl Constructor.
+   *
+   * @param dataPath The Path representing data folder
+   * @param storagePath The path representing storage folder
+   */
   public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
     this.dataPath = dataPath;
     this.storagePath = storagePath;

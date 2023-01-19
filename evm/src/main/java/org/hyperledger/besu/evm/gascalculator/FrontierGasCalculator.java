@@ -29,6 +29,7 @@ import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Frontier gas calculator. */
 public class FrontierGasCalculator implements GasCalculator {
 
   private static final long TX_DATA_ZERO_COST = 4L;
@@ -101,14 +102,18 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long KECCAK256_OPERATION_BASE_GAS_COST = 30L;
 
+  /** The constant KECCAK256_OPERATION_WORD_GAS_COST. */
   static final long KECCAK256_OPERATION_WORD_GAS_COST = 6L;
 
   private static final long SLOAD_OPERATION_GAS_COST = 50L;
 
+  /** The constant STORAGE_SET_GAS_COST. */
   public static final long STORAGE_SET_GAS_COST = 20_000L;
 
+  /** The constant STORAGE_RESET_GAS_COST. */
   public static final long STORAGE_RESET_GAS_COST = 5_000L;
 
+  /** The constant STORAGE_RESET_REFUND_AMOUNT. */
   public static final long STORAGE_RESET_REFUND_AMOUNT = 15_000L;
 
   private static final long SELF_DESTRUCT_REFUND_AMOUNT = 24_000L;
@@ -439,6 +444,16 @@ public class FrontierGasCalculator implements GasCalculator {
     return SELF_DESTRUCT_REFUND_AMOUNT;
   }
 
+  /**
+   * Copy words to memory gas cost.
+   *
+   * @param frame the frame
+   * @param baseGasCost the base gas cost
+   * @param wordGasCost the word gas cost
+   * @param offset the offset
+   * @param length the length
+   * @return the cost
+   */
   protected long copyWordsToMemoryGasCost(
       final MessageFrame frame,
       final long baseGasCost,
@@ -453,6 +468,12 @@ public class FrontierGasCalculator implements GasCalculator {
     return clampedAdd(copyCost, memoryCost);
   }
 
+  /**
+   * Memory cost.
+   *
+   * @param length the length
+   * @return the cost
+   */
   static long memoryCost(final long length) {
     final long lengthSquare = clampedMultiply(length, length);
     final long base =

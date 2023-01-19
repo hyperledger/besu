@@ -18,8 +18,15 @@ package org.hyperledger.besu.consensus.qbft.pki;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
+/** The Pki qbft block header functions. */
 public class PkiQbftBlockHeaderFunctions {
 
+  /**
+   * Create block header functions for cms signature.
+   *
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the block header functions
+   */
   public static BlockHeaderFunctions forCmsSignature(
       final PkiQbftExtraDataCodec bftExtraDataCodec) {
     return new BftBlockHeaderFunctions(

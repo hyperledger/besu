@@ -21,12 +21,21 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
+/** The Observation. */
 public class Observation {
   private final MetricCategory category;
   private final String metricName;
   private final List<String> labels;
   private final Object value;
 
+  /**
+   * Instantiates a new Observation.
+   *
+   * @param category the category
+   * @param metricName the metric name
+   * @param value the value
+   * @param labels the labels
+   */
   public Observation(
       final MetricCategory category,
       final String metricName,
@@ -38,18 +47,38 @@ public class Observation {
     this.labels = labels;
   }
 
+  /**
+   * Gets category.
+   *
+   * @return the category
+   */
   public MetricCategory getCategory() {
     return category;
   }
 
+  /**
+   * Gets metric name.
+   *
+   * @return the metric name
+   */
   public String getMetricName() {
     return metricName;
   }
 
+  /**
+   * Gets labels.
+   *
+   * @return the labels
+   */
   public List<String> getLabels() {
     return labels;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public Object getValue() {
     return value;
   }

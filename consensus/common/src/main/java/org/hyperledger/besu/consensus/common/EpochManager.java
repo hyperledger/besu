@@ -14,18 +14,36 @@
  */
 package org.hyperledger.besu.consensus.common;
 
+/** The Epoch manager. */
 public class EpochManager {
 
   private final long epochLengthInBlocks;
 
+  /**
+   * Instantiates a new Epoch manager.
+   *
+   * @param epochLengthInBlocks the epoch length in blocks
+   */
   public EpochManager(final long epochLengthInBlocks) {
     this.epochLengthInBlocks = epochLengthInBlocks;
   }
 
+  /**
+   * Is epoch block.
+   *
+   * @param blockNumber the block number
+   * @return the boolean
+   */
   public boolean isEpochBlock(final long blockNumber) {
     return (blockNumber % epochLengthInBlocks) == 0;
   }
 
+  /**
+   * Gets last epoch block.
+   *
+   * @param blockNumber the block number
+   * @return the last epoch block
+   */
   public long getLastEpochBlock(final long blockNumber) {
     return blockNumber - (blockNumber % epochLengthInBlocks);
   }

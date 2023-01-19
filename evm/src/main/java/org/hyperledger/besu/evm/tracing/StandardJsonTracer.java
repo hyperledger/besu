@@ -31,6 +31,7 @@ import com.google.common.base.Joiner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Standard json tracer. */
 public class StandardJsonTracer implements OperationTracer {
 
   private static final Joiner commaJoiner = Joiner.on(',');
@@ -43,15 +44,33 @@ public class StandardJsonTracer implements OperationTracer {
   private Bytes memory;
   private int memorySize;
 
+  /**
+   * Instantiates a new Standard json tracer.
+   *
+   * @param out the out
+   * @param showMemory the show memory
+   */
   public StandardJsonTracer(final PrintStream out, final boolean showMemory) {
     this.out = out;
     this.showMemory = showMemory;
   }
 
+  /**
+   * Short as hex string.
+   *
+   * @param number the number
+   * @return the string
+   */
   public static String shortNumber(final UInt256 number) {
     return number.isZero() ? "0x0" : number.toShortHexString();
   }
 
+  /**
+   * Long number as hex string.
+   *
+   * @param number the number
+   * @return the string
+   */
   public static String shortNumber(final long number) {
     return "0x" + Long.toHexString(number);
   }

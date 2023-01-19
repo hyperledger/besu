@@ -21,7 +21,7 @@ import java.util.Objects;
 
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class Withdrawal {
+public class Withdrawal implements org.hyperledger.besu.plugin.data.Withdrawal {
   private final UInt64 index;
   private final UInt64 validatorIndex;
   private final Address address;
@@ -35,18 +35,22 @@ public class Withdrawal {
     this.amount = amount;
   }
 
+  @Override
   public UInt64 getIndex() {
     return index;
   }
 
+  @Override
   public UInt64 getValidatorIndex() {
     return validatorIndex;
   }
 
+  @Override
   public Address getAddress() {
     return address;
   }
 
+  @Override
   public GWei getAmount() {
     return amount;
   }

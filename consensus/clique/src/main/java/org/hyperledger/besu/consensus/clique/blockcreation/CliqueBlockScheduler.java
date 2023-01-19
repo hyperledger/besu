@@ -25,6 +25,7 @@ import java.util.Random;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The Clique block scheduler. */
 public class CliqueBlockScheduler extends DefaultBlockScheduler {
 
   private final int OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS = 500;
@@ -33,6 +34,14 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
   private final Address localNodeAddress;
   private final Random r = new Random();
 
+  /**
+   * Instantiates a new Clique block scheduler.
+   *
+   * @param clock the clock
+   * @param validatorProvider the validator provider
+   * @param localNodeAddress the local node address
+   * @param secondsBetweenBlocks the seconds between blocks
+   */
   public CliqueBlockScheduler(
       final Clock clock,
       final ValidatorProvider validatorProvider,

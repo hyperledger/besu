@@ -30,6 +30,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The In memory storage plugin. */
 public class InMemoryStoragePlugin implements BesuPlugin {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryStoragePlugin.class);
@@ -87,11 +88,17 @@ public class InMemoryStoragePlugin implements BesuPlugin {
             () -> LOG.error("Failed to register KeyValueFactory due to missing StorageService."));
   }
 
+  /** The Memory key value storage factory. */
   public static class MemoryKeyValueStorageFactory implements KeyValueStorageFactory {
 
     private final String name;
     private final Map<SegmentIdentifier, InMemoryKeyValueStorage> storageMap = new HashMap<>();
 
+    /**
+     * Instantiates a new Memory key value storage factory.
+     *
+     * @param name the name
+     */
     public MemoryKeyValueStorageFactory(final String name) {
       this.name = name;
     }

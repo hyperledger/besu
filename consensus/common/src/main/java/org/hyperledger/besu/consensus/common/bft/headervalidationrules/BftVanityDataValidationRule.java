@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Bft vanity data validation rule. */
 public class BftVanityDataValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(BftVanityDataValidationRule.class);

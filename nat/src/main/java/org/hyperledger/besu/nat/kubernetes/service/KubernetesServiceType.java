@@ -14,17 +14,28 @@
  */
 package org.hyperledger.besu.nat.kubernetes.service;
 
+/** The enum Kubernetes service type. */
 public enum KubernetesServiceType {
+  /** Cluster ip kubernetes service type. */
   CLUSTER_IP("ClusterIP"),
+  /** Load balancer kubernetes service type. */
   LOAD_BALANCER("LoadBalancer"),
+  /** Unknown kubernetes service type. */
   UNKNOWN("");
 
+  /** The Name. */
   String name;
 
   KubernetesServiceType(final String name) {
     this.name = name;
   }
 
+  /**
+   * Map KubernetesServiceType from String value.
+   *
+   * @param name the name
+   * @return the kubernetes service type
+   */
   public static KubernetesServiceType fromName(final String name) {
     for (KubernetesServiceType value : values()) {
       if (value.name.equals(name)) {

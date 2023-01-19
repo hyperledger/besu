@@ -19,10 +19,12 @@ import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The BLS12G1 Mul precompiled contract. */
 public class BLS12G1MulPrecompiledContract extends AbstractBLS12PrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 160;
 
+  /** Instantiates a new BLS12G1 Mul precompiled contract. */
   public BLS12G1MulPrecompiledContract() {
     super("BLS12_G1MUL", LibEthPairings.BLS12_G1MUL_OPERATION_RAW_VALUE, PARAMETER_LENGTH);
   }

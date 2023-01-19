@@ -24,9 +24,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+/** The Discard Json RPC method. */
 public class Discard implements JsonRpcMethod {
   private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Discard.
+   *
+   * @param validatorProvider the validator provider
+   */
   public Discard(final ValidatorProvider validatorProvider) {
     this.validatorProvider = validatorProvider;
   }

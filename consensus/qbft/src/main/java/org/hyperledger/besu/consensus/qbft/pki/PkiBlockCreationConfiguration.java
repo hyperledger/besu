@@ -17,12 +17,20 @@ package org.hyperledger.besu.consensus.qbft.pki;
 
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
+/** The Pki block creation configuration. */
 public class PkiBlockCreationConfiguration {
 
   private final KeyStoreWrapper keyStore;
   private final KeyStoreWrapper trustStore;
   private final String certificateAlias;
 
+  /**
+   * Instantiates a new Pki block creation configuration.
+   *
+   * @param keyStore the key store
+   * @param trustStore the trust store
+   * @param certificateAlias the certificate alias
+   */
   public PkiBlockCreationConfiguration(
       final KeyStoreWrapper keyStore,
       final KeyStoreWrapper trustStore,
@@ -32,14 +40,29 @@ public class PkiBlockCreationConfiguration {
     this.certificateAlias = certificateAlias;
   }
 
+  /**
+   * Gets key store.
+   *
+   * @return the key store
+   */
   public KeyStoreWrapper getKeyStore() {
     return keyStore;
   }
 
+  /**
+   * Gets trust store.
+   *
+   * @return the trust store
+   */
   public KeyStoreWrapper getTrustStore() {
     return trustStore;
   }
 
+  /**
+   * Gets certificate alias.
+   *
+   * @return the certificate alias
+   */
   public String getCertificateAlias() {
     return certificateAlias;
   }

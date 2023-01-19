@@ -28,19 +28,35 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Wrapped evm account. */
 public class WrappedEvmAccount implements EvmAccount {
   private final MutableAccount mutableAccount;
 
+  /**
+   * Is immutable.
+   *
+   * @return the boolean
+   */
   public boolean isImmutable() {
     return isImmutable;
   }
 
+  /**
+   * Sets immutable.
+   *
+   * @param immutable the immutable
+   */
   public void setImmutable(final boolean immutable) {
     isImmutable = immutable;
   }
 
   private boolean isImmutable;
 
+  /**
+   * Instantiates a new Wrapped evm account.
+   *
+   * @param mutableAccount the mutable account
+   */
   public WrappedEvmAccount(final MutableAccount mutableAccount) {
 
     this.mutableAccount = mutableAccount;

@@ -44,11 +44,19 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 /**
  * Utility class for generating JUnit test parameters from json files. Each set of test parameters
  * will contain a String name followed by an object representing a deserialized json test case.
+ *
+ * @param <S> the type parameter
+ * @param <T> the type parameter
  */
 public class JsonTestParameters<S, T> {
 
   private static final String TEST_PATTERN_STR = System.getProperty("test.ethereum.include");
 
+  /**
+   * The Collector.
+   *
+   * @param <S> the type parameter
+   */
   public static class Collector<S> {
 
     @Nullable private final Predicate<String> includes;
@@ -64,6 +72,13 @@ public class JsonTestParameters<S, T> {
     // memory when we run a single test, but it's not the case we're trying to optimize.
     private final List<Object[]> testParameters = new ArrayList<>(256);
 
+    /**
+     * Add.
+     *
+     * @param name the name
+     * @param value the value
+     * @param runTest the run test
+     */
     public void add(final String name, final S value, final boolean runTest) {
       testParameters.add(new Object[] {name, value, runTest && includes(name)});
     }
@@ -83,8 +98,21 @@ public class JsonTestParameters<S, T> {
     }
   }
 
+  /**
+   * The interface Generator.
+   *
+   * @param <S> the type parameter
+   * @param <T> the type parameter
+   */
   @FunctionalInterface
   public interface Generator<S, T> {
+    /**
+     * Generate.
+     *
+     * @param name the name
+     * @param mappedType the mapped type
+     * @param collector the collector
+     */
     void generate(String name, S mappedType, Collector<T> collector);
   }
 
@@ -115,16 +143,38 @@ public class JsonTestParameters<S, T> {
     }
   }
 
+  /**
+   * Create json test parameters.
+   *
+   * @param <T> the type parameter
+   * @param testCaseSpec the test case spec
+   * @return the json test parameters
+   */
   public static <T> JsonTestParameters<T, T> create(final Class<T> testCaseSpec) {
     return new JsonTestParameters<>(testCaseSpec, testCaseSpec)
         .generator((name, testCase, collector) -> collector.add(name, testCase, true));
   }
 
+  /**
+   * Create json test parameters.
+   *
+   * @param <S> the type parameter
+   * @param <T> the type parameter
+   * @param jsonFileMappedType the json file mapped type
+   * @param testCaseSpec the test case spec
+   * @return the json test parameters
+   */
   public static <S, T> JsonTestParameters<S, T> create(
       final Class<S> jsonFileMappedType, final Class<T> testCaseSpec) {
     return new JsonTestParameters<>(jsonFileMappedType, testCaseSpec);
   }
 
+  /**
+   * Exclude files json test parameters.
+   *
+   * @param filenames the filenames
+   * @return the json test parameters
+   */
   @SuppressWarnings("unused")
   public JsonTestParameters<S, T> excludeFiles(final String... filenames) {
     fileExcludes.addAll(Arrays.asList(filenames));
@@ -143,24 +193,49 @@ public class JsonTestParameters<S, T> {
     addPatterns(patterns, testIncludes);
   }
 
+  /**
+   * Ignore json test parameters.
+   *
+   * @param patterns the patterns
+   * @return the json test parameters
+   */
   public JsonTestParameters<S, T> ignore(final String... patterns) {
     addPatterns(patterns, testIgnores);
     return this;
   }
 
+  /** Ignore all. */
   public void ignoreAll() {
     testIgnores.add(t -> true);
   }
 
+  /**
+   * Generator json test parameters.
+   *
+   * @param generator the generator
+   * @return the json test parameters
+   */
   public JsonTestParameters<S, T> generator(final Generator<S, T> generator) {
     this.generator = generator;
     return this;
   }
 
+  /**
+   * Generate collection.
+   *
+   * @param path the path
+   * @return the collection
+   */
   public Collection<Object[]> generate(final String path) {
     return generate(new String[] {path});
   }
 
+  /**
+   * Generate collection.
+   *
+   * @param paths the paths
+   * @return the collection
+   */
   public Collection<Object[]> generate(final String... paths) {
     return generate(getFilteredFiles(paths));
   }
@@ -233,6 +308,7 @@ public class JsonTestParameters<S, T> {
 
   private static class JsonTestCaseReader<T> {
 
+    /** The Test case specs. */
     final Map<String, T> testCaseSpecs;
 
     /**

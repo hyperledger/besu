@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/** The Docker detector. */
 public class DockerDetector implements NatMethodDetector {
 
   @Override

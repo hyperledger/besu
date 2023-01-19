@@ -42,6 +42,16 @@ public class CliqueProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(4);
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param nodeKey the node key
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final NodeKey nodeKey,
@@ -78,6 +88,15 @@ public class CliqueProtocolSchedule {
         .createProtocolSchedule();
   }
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param nodeKey the node key
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final NodeKey nodeKey,

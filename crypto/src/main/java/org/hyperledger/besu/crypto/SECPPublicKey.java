@@ -26,22 +26,48 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 
+/** The Secp public key. */
 public class SECPPublicKey implements java.security.PublicKey {
 
+  /** The constant BYTE_LENGTH. */
   public static final int BYTE_LENGTH = 64;
 
+  /** Encoded Bytes */
   private final Bytes encoded;
+  /** Algorithm */
   private final String algorithm;
 
+  /**
+   * Create secp public key.
+   *
+   * @param key the key
+   * @param algorithm the algorithm
+   * @return the secp public key
+   */
   public static SECPPublicKey create(final BigInteger key, final String algorithm) {
     checkNotNull(key);
     return create(toBytes64(key.toByteArray()), algorithm);
   }
 
+  /**
+   * Create secp public key.
+   *
+   * @param encoded the encoded
+   * @param algorithm the algorithm
+   * @return the secp public key
+   */
   public static SECPPublicKey create(final Bytes encoded, final String algorithm) {
     return new SECPPublicKey(encoded, algorithm);
   }
 
+  /**
+   * Create secp public key.
+   *
+   * @param privateKey the private key
+   * @param curve the curve
+   * @param algorithm the algorithm
+   * @return the secp public key
+   */
   public static SECPPublicKey create(
       final SECPPrivateKey privateKey, final ECDomainParameters curve, final String algorithm) {
     BigInteger privKey = privateKey.getEncodedBytes().toUnsignedBigInteger();
@@ -111,6 +137,11 @@ public class SECPPublicKey implements java.security.PublicKey {
     return encoded.toArrayUnsafe();
   }
 
+  /**
+   * Gets encoded bytes.
+   *
+   * @return the encoded bytes
+   */
   public Bytes getEncodedBytes() {
     return encoded;
   }

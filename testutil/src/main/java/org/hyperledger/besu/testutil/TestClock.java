@@ -20,15 +20,27 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.TemporalUnit;
 
+/** The Test clock. */
 public class TestClock extends Clock {
+  /**
+   * Fixed clock.
+   *
+   * @return the clock
+   */
   public static Clock fixed() {
     return Clock.fixed(Instant.ofEpochSecond(10_000_000), ZoneId.systemDefault());
   }
 
   private Instant now = Instant.ofEpochSecond(24982948294L);
 
+  /** Instantiates a new Test clock. */
   public TestClock() {}
 
+  /**
+   * Instantiates a new Test clock.
+   *
+   * @param now the now
+   */
   public TestClock(final Instant now) {
     this.now = now;
   }
@@ -48,10 +60,21 @@ public class TestClock extends Clock {
     return now;
   }
 
+  /**
+   * Step millis.
+   *
+   * @param millis the millis
+   */
   public void stepMillis(final long millis) {
     now = now.plusMillis(millis);
   }
 
+  /**
+   * Step.
+   *
+   * @param a the amount to add
+   * @param unit the temporal unit
+   */
   public void step(final long a, final TemporalUnit unit) {
     now = now.plus(a, unit);
   }

@@ -16,7 +16,13 @@ package org.hyperledger.besu.consensus.common.bft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 
+/** The interface Round specific. */
 public interface RoundSpecific {
 
+  /**
+   * Gets round identifier.
+   *
+   * @return the round identifier
+   */
   ConsensusRoundIdentifier getRoundIdentifier();
 }

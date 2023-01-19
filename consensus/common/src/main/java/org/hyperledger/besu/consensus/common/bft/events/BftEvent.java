@@ -16,5 +16,10 @@ package org.hyperledger.besu.consensus.common.bft.events;
 
 /** Category of events that will effect and are interpretable by the Bft processing mechanism */
 public interface BftEvent {
+  /**
+   * Gets type.
+   *
+   * @return the type
+   */
   BftEvents.Type getType();
 }

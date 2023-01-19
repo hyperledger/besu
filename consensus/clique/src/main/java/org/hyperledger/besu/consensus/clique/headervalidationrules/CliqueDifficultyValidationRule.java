@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Clique difficulty validation rule. */
 public class CliqueDifficultyValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(CliqueDifficultyValidationRule.class);

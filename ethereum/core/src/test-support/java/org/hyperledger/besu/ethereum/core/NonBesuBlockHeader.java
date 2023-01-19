@@ -19,6 +19,8 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.data.Quantity;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class NonBesuBlockHeader implements BlockHeader {
@@ -104,6 +106,11 @@ public class NonBesuBlockHeader implements BlockHeader {
   @Override
   public long getNonce() {
     return 0;
+  }
+
+  @Override
+  public Optional<? extends Hash> getWithdrawalsRoot() {
+    return Optional.empty();
   }
 
   @Override

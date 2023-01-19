@@ -41,6 +41,7 @@ import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The Block header validation ruleset factory. */
 public class BlockHeaderValidationRulesetFactory {
 
   /**
@@ -62,6 +63,15 @@ public class BlockHeaderValidationRulesetFactory {
         secondsBetweenBlocks, epochManager, baseFeeMarket, MergeConfigOptions.isMergeEnabled());
   }
 
+  /**
+   * Clique block header validator. Visible for testing.
+   *
+   * @param secondsBetweenBlocks the seconds between blocks
+   * @param epochManager the epoch manager
+   * @param baseFeeMarket the base fee market
+   * @param isMergeEnabled the is merge enabled
+   * @return the block header validator . builder
+   */
   @VisibleForTesting
   public static BlockHeaderValidator.Builder cliqueBlockHeaderValidator(
       final long secondsBetweenBlocks,

@@ -78,10 +78,10 @@ import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
-/*
- This is a placeholder class for the QBFT migration logic. For now, all it does is to delegate any
- BesuControllerBuilder to the first controller in the list.
-*/
+/**
+ * This is a placeholder class for the QBFT migration logic. For now, all it does is to delegate any
+ * BesuControllerBuilder to the first controller in the list.
+ */
 public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilder {
 
   private final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
@@ -89,6 +89,11 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
           NavigableSet<ForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
       combinedProtocolScheduleFactory;
 
+  /**
+   * Instantiates a new Consensus schedule Besu controller builder.
+   *
+   * @param besuControllerBuilderSchedule the besu controller builder schedule
+   */
   public ConsensusScheduleBesuControllerBuilder(
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule) {
     this(
@@ -97,6 +102,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
             new CombinedProtocolScheduleFactory().create(protocolScheduleSpecs, chainId));
   }
 
+  /**
+   * Instantiates a new Consensus schedule besu controller builder. Visible for testing.
+   *
+   * @param besuControllerBuilderSchedule the besu controller builder schedule
+   * @param combinedProtocolScheduleFactory the combined protocol schedule factory
+   */
   @VisibleForTesting
   protected ConsensusScheduleBesuControllerBuilder(
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule,
@@ -415,6 +426,11 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
     return super.evmConfiguration(evmConfiguration);
   }
 
+  /**
+   * Gets besu controller builder schedule. Visible for testing.
+   *
+   * @return the Besu controller builder schedule
+   */
   @VisibleForTesting
   Map<Long, BesuControllerBuilder> getBesuControllerBuilderSchedule() {
     return besuControllerBuilderSchedule;

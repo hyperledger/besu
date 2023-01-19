@@ -29,14 +29,28 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Optional;
 
+/** The Message factory. */
 public class MessageFactory {
 
   private final NodeKey nodeKey;
 
+  /**
+   * Instantiates a new Message factory.
+   *
+   * @param nodeKey the node key
+   */
   public MessageFactory(final NodeKey nodeKey) {
     this.nodeKey = nodeKey;
   }
 
+  /**
+   * Create proposal.
+   *
+   * @param roundIdentifier the round identifier
+   * @param block the block
+   * @param roundChangeCertificate the round change certificate
+   * @return the proposal
+   */
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
@@ -47,6 +61,13 @@ public class MessageFactory {
     return new Proposal(createSignedMessage(payload), block, roundChangeCertificate);
   }
 
+  /**
+   * Create prepare.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @return the prepare
+   */
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
 
     final PreparePayload payload = new PreparePayload(roundIdentifier, digest);
@@ -54,6 +75,14 @@ public class MessageFactory {
     return new Prepare(createSignedMessage(payload));
   }
 
+  /**
+   * Create commit.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @param commitSeal the commit seal
+   * @return the commit
+   */
   public Commit createCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
@@ -64,6 +93,13 @@ public class MessageFactory {
     return new Commit(createSignedMessage(payload));
   }
 
+  /**
+   * Create round change.
+   *
+   * @param roundIdentifier the round identifier
+   * @param preparedRoundArtifacts the prepared round artifacts
+   * @return the round change
+   */
   public RoundChange createRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {

@@ -31,6 +31,11 @@ public class BftEventQueue {
   private static final Logger LOG = LoggerFactory.getLogger(BftEventQueue.class);
   private final int messageQueueLimit;
 
+  /**
+   * Instantiates a new Bft event queue.
+   *
+   * @param messageQueueLimit the message queue limit
+   */
   public BftEventQueue(final int messageQueueLimit) {
     this.messageQueueLimit = messageQueueLimit;
   }
@@ -48,10 +53,20 @@ public class BftEventQueue {
     }
   }
 
+  /**
+   * Size of queue.
+   *
+   * @return the int
+   */
   public int size() {
     return queue.size();
   }
 
+  /**
+   * Is empty.
+   *
+   * @return the boolean
+   */
   public boolean isEmpty() {
     return queue.isEmpty();
   }

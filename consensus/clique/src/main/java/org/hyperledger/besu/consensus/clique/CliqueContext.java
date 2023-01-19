@@ -30,6 +30,13 @@ public class CliqueContext implements PoaContext {
   private final EpochManager epochManager;
   private final BlockInterface blockInterface;
 
+  /**
+   * Instantiates a new Clique context.
+   *
+   * @param validatorProvider the validator provider
+   * @param epochManager the epoch manager
+   * @param blockInterface the block interface
+   */
   public CliqueContext(
       final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
@@ -39,10 +46,20 @@ public class CliqueContext implements PoaContext {
     this.blockInterface = blockInterface;
   }
 
+  /**
+   * Gets validator provider.
+   *
+   * @return the validator provider
+   */
   public ValidatorProvider getValidatorProvider() {
     return validatorProvider;
   }
 
+  /**
+   * Gets epoch manager.
+   *
+   * @return the epoch manager
+   */
   public EpochManager getEpochManager() {
     return epochManager;
   }

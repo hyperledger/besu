@@ -21,21 +21,37 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/** The Qbft fork. */
 public class QbftFork extends BftFork {
 
+  /** The enum Validator selection mode. */
   public enum VALIDATOR_SELECTION_MODE {
+    /** Blockheader validator selection mode. */
     BLOCKHEADER,
+    /** Contract validator selection mode. */
     CONTRACT
   }
 
+  /** The constant VALIDATOR_SELECTION_MODE_KEY. */
   public static final String VALIDATOR_SELECTION_MODE_KEY = "validatorselectionmode";
+  /** The constant VALIDATOR_CONTRACT_ADDRESS_KEY. */
   public static final String VALIDATOR_CONTRACT_ADDRESS_KEY = "validatorcontractaddress";
 
+  /**
+   * Instantiates a new Qbft fork.
+   *
+   * @param forkConfigRoot the fork config root
+   */
   @JsonCreator
   public QbftFork(final ObjectNode forkConfigRoot) {
     super(forkConfigRoot);
   }
 
+  /**
+   * Gets validator selection mode.
+   *
+   * @return the validator selection mode
+   */
   public Optional<VALIDATOR_SELECTION_MODE> getValidatorSelectionMode() {
     final Optional<String> mode = JsonUtil.getString(forkConfigRoot, VALIDATOR_SELECTION_MODE_KEY);
     return mode.flatMap(
@@ -45,6 +61,11 @@ public class QbftFork extends BftFork {
                 .findFirst());
   }
 
+  /**
+   * Gets validator contract address.
+   *
+   * @return the validator contract address
+   */
   public Optional<String> getValidatorContractAddress() {
     return JsonUtil.getString(forkConfigRoot, VALIDATOR_CONTRACT_ADDRESS_KEY);
   }

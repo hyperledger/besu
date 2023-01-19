@@ -17,11 +17,18 @@ package org.hyperledger.besu.enclave.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The Delete privacy group request. */
 public class DeletePrivacyGroupRequest {
 
   private final String privacyGroupId;
   private final String from;
 
+  /**
+   * Instantiates a new Delete privacy group request.
+   *
+   * @param privacyGroupId the privacy group id
+   * @param from the from
+   */
   @JsonCreator
   public DeletePrivacyGroupRequest(
       @JsonProperty("privacyGroupId") final String privacyGroupId,
@@ -30,11 +37,21 @@ public class DeletePrivacyGroupRequest {
     this.from = from;
   }
 
+  /**
+   * Privacy group id.
+   *
+   * @return the string
+   */
   @JsonProperty("privacyGroupId")
   public String privacyGroupId() {
     return privacyGroupId;
   }
 
+  /**
+   * From string.
+   *
+   * @return the string
+   */
   @JsonProperty("from")
   public String from() {
     return from;

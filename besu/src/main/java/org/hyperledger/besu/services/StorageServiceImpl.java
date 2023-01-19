@@ -24,11 +24,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+/** The Storage service implementation. */
 public class StorageServiceImpl implements StorageService {
 
   private final List<SegmentIdentifier> segments;
   private final Map<String, KeyValueStorageFactory> factories;
 
+  /** Instantiates a new Storage service. */
   public StorageServiceImpl() {
     this.segments = List.of(KeyValueSegmentIdentifier.values());
     this.factories = new ConcurrentHashMap<>();

@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 
 import picocli.CommandLine;
 
+/** The Rpc Cli options. */
 public class RPCOptions {
 
   @CommandLine.Option(
@@ -34,14 +35,29 @@ public class RPCOptions {
       arity = "1")
   private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  /**
+   * Create rpc options.
+   *
+   * @return the rpc options
+   */
   public static RPCOptions create() {
     return new RPCOptions();
   }
 
+  /**
+   * Gets http timeout sec.
+   *
+   * @return the http timeout sec
+   */
   public Long getHttpTimeoutSec() {
     return httpTimeoutSec;
   }
 
+  /**
+   * Gets WebSocket timeout sec.
+   *
+   * @return the WebSocket timeout sec
+   */
   public Long getWsTimeoutSec() {
     return wsTimeoutSec;
   }

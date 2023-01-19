@@ -88,6 +88,14 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   private final DebugMetricReader debugMetricReader;
   private final SdkTracerProvider sdkTracerProvider;
 
+  /**
+   * Instantiates a new Open telemetry system.
+   *
+   * @param enabledCategories the enabled categories
+   * @param timersEnabled the timers enabled
+   * @param jobName the job name
+   * @param setAsGlobal the set as global
+   */
   public OpenTelemetrySystem(
       final Set<MetricCategory> enabledCategories,
       final boolean timersEnabled,
@@ -273,6 +281,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     return enabledCategories;
   }
 
+  /** Init defaults. */
   public void initDefaults() {
     if (isCategoryEnabled(StandardMetricCategory.JVM)) {
       collectGC();
@@ -359,6 +368,11 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     result.join(5000, TimeUnit.SECONDS);
   }
 
+  /**
+   * Gets tracer provider.
+   *
+   * @return the tracer provider
+   */
   public TracerProvider getTracerProvider() {
     return sdkTracerProvider;
   }

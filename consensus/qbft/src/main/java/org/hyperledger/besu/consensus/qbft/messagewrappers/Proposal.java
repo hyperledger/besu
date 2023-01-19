@@ -29,11 +29,19 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Proposal. */
 public class Proposal extends BftMessage<ProposalPayload> {
 
   private final List<SignedData<RoundChangePayload>> roundChanges;
   private final List<SignedData<PreparePayload>> prepares;
 
+  /**
+   * Instantiates a new Proposal.
+   *
+   * @param payload the payload
+   * @param roundChanges the round changes
+   * @param prepares the prepares
+   */
   public Proposal(
       final SignedData<ProposalPayload> payload,
       final List<SignedData<RoundChangePayload>> roundChanges,
@@ -43,14 +51,29 @@ public class Proposal extends BftMessage<ProposalPayload> {
     this.prepares = prepares;
   }
 
+  /**
+   * Gets round changes.
+   *
+   * @return the round changes
+   */
   public List<SignedData<RoundChangePayload>> getRoundChanges() {
     return roundChanges;
   }
 
+  /**
+   * Gets list of Prepare payload.
+   *
+   * @return the list of Prepare payload
+   */
   public List<SignedData<PreparePayload>> getPrepares() {
     return prepares;
   }
 
+  /**
+   * Gets block.
+   *
+   * @return the block
+   */
   public Block getBlock() {
     return getPayload().getProposedBlock();
   }
@@ -70,6 +93,13 @@ public class Proposal extends BftMessage<ProposalPayload> {
     return rlpOut.encoded();
   }
 
+  /**
+   * Decode.
+   *
+   * @param data the data
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the proposal
+   */
   public static Proposal decode(final Bytes data, final BftExtraDataCodec bftExtraDataCodec) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
