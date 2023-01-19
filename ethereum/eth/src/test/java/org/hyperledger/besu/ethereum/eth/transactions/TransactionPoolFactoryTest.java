@@ -50,8 +50,8 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.assertj.core.api.Condition;
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

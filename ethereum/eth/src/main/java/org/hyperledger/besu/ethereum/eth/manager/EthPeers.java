@@ -387,7 +387,8 @@ public class EthPeers {
       final List<PeerConnection> notReadyConnections = getNotReadyConnections(id);
       if (!notReadyConnections.isEmpty()) {
         // we already have a connection that we have initiated that is getting ready
-        if (!notReadyConnections.stream().anyMatch(c -> !c.inboundInitiated() && !c.isDisconnected())) {
+        if (!notReadyConnections.stream()
+            .anyMatch(c -> !c.inboundInitiated() && !c.isDisconnected())) {
           return false;
         }
       }
