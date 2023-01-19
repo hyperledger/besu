@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -46,6 +47,10 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
   @Override
   @Test
   public void shouldReturnBlockForKnownPayloadId() {
+    // should return withdrawals for a post-Shanghai block
+    when(mergeContext.retrieveBlockById(mockPid))
+        .thenReturn(Optional.of(mockBlockWithReceiptsAndWithdrawals));
+
     final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
     Optional.of(resp)
@@ -54,11 +59,27 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
             r -> {
               assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
               final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
+              assertThat(res.getExecutionPayload().getWithdrawals()).isNotNull();
               assertThat(res.getExecutionPayload().getHash())
                   .isEqualTo(mockHeader.getHash().toString());
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));
               assertThat(res.getExecutionPayload().getPrevRandao())
                   .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
+            });
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnExecutionPayloadWithoutWithdrawals_PreShanghaiBlock() {
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
+    assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+    Optional.of(resp)
+        .map(JsonRpcSuccessResponse.class::cast)
+        .ifPresent(
+            r -> {
+              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
+              final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
+              assertThat(res.getExecutionPayload().getWithdrawals()).isNull();
             });
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
