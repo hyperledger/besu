@@ -31,9 +31,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
 import java.util.OptionalLong;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class EthGetTransactionCountTest {
+public class EthGetTransactionCountTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final ChainHead chainHead = mock(ChainHead.class);
@@ -41,10 +42,16 @@ class EthGetTransactionCountTest {
   private EthGetTransactionCount ethGetTransactionCount;
   private final String pendingTransactionString = "0x00000000000000000000000000000000000000AA";
   private final Object[] pendingParams = new Object[] {pendingTransactionString, "pending"};
+  private PendingTransactions pendingTransactions;
+
+  @BeforeEach
+  public void setup() {
+    pendingTransactions = mock(PendingTransactions.class);
+    ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, pendingTransactions);
+  }
 
   @Test
-  void shouldUsePendingTransactionsWhenToldTo(final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  public void shouldUsePendingTransactionsWhenToldTo() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(12));
@@ -58,9 +65,7 @@ class EthGetTransactionCountTest {
   }
 
   @Test
-  void shouldUseLatestTransactionsWhenNoPendingTransactions(
-      final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  public void shouldUseLatestTransactionsWhenNoPendingTransactions() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.empty());
@@ -74,8 +79,7 @@ class EthGetTransactionCountTest {
   }
 
   @Test
-  void shouldUseLatestWhenItIsBiggerThanPending(final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  public void shouldUseLatestWhenItIsBiggerThanPending() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     mockGetTransactionCount(address, 8);
@@ -90,8 +94,7 @@ class EthGetTransactionCountTest {
   }
 
   @Test
-  void shouldReturnPendingWithHighNonce(final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  public void shouldReturnPendingWithHighNonce() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address))
@@ -106,8 +109,7 @@ class EthGetTransactionCountTest {
   }
 
   @Test
-  void shouldReturnLatestWithHighNonce(final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  public void shouldReturnLatestWithHighNonce() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address))
@@ -119,10 +121,6 @@ class EthGetTransactionCountTest {
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionCount.response(request);
     assertThat(response.getResult()).isEqualTo("0xfffffffffffffffe");
-  }
-
-  private void setup(final PendingTransactions pendingTransactions) {
-    ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, pendingTransactions);
   }
 
   private void mockGetTransactionCount(final Address address, final long transactionCount) {
