@@ -35,6 +35,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
@@ -424,6 +425,15 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
     return worldStateStorage
         .getStorageValueBySlotHash(Hash.hash(address), slotHash)
+        .map(UInt256::fromBytes);
+  }
+
+  public Optional<UInt256> getStorageValueBySlotHash(
+      final Supplier<Optional<Hash>> storageRootSupplier,
+      final Address address,
+      final Hash slotHash) {
+    return worldStateStorage
+        .getStorageValueBySlotHash(storageRootSupplier, Hash.hash(address), slotHash)
         .map(UInt256::fromBytes);
   }
 
