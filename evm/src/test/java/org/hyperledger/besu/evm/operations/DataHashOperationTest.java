@@ -55,7 +55,7 @@ public class DataHashOperationTest {
   }
 
   @Test
-  public void failsOnBloblessTx() {
+  public void pushesZeroOnBloblessTx() {
 
     EVM fakeEVM = mock(EVM.class);
 
