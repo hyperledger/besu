@@ -3575,8 +3575,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setHasCustomGenesis(genesisFile != null);
-
-    builder.setNetworkId(networkId);
+    builder.setNetworkId(ethNetworkConfig.getNetworkId());
 
     builder
         .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())
