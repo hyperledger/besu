@@ -250,7 +250,7 @@ public class EngineExchangeTransitionConfigurationTest {
         Bytes32.ZERO,
         0,
         null,
-        UInt256.ZERO,
+        null,
         new BlockHeaderFunctions() {
           @Override
           public Hash hash(final BlockHeader header) {

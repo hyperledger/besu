@@ -26,7 +26,6 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 
 public class BlockUtils {
@@ -55,7 +54,7 @@ public class BlockUtils {
         mixHash,
         new BigInteger(block.getNonceRaw().substring(2), 16).longValue(),
         null,
-        UInt256.ZERO,
+        null,
         blockHeaderFunctions);
   }
 }
