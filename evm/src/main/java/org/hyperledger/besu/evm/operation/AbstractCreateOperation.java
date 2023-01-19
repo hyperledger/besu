@@ -98,7 +98,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
       Code code = evm.getCode(Hash.hash(inputData), inputData);
 
-      if (code.isValid()) {
+      if (code.isValid() && frame.getCode().getEofVersion() <= code.getEofVersion()) {
         frame.decrementRemainingGas(cost);
         spawnChildMessage(frame, code, evm);
         frame.incrementRemainingGas(cost);
