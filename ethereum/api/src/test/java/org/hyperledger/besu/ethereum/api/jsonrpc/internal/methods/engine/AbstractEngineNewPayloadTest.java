@@ -476,7 +476,6 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getLogsBloom(),
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
-        null,
         null);
   }
 
@@ -499,8 +498,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getLogsBloom(),
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
-        withdrawals,
-        null);
+        withdrawals);
   }
 
   @NotNull

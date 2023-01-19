@@ -20,13 +20,17 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * parentHash: DATA, 32 Bytes feeRecipient: DATA, 20 Bytes stateRoot: DATA, 32 Bytes receiptsRoot:
+ * DATA, 32 Bytes logsBloom: DATA, 256 Bytes prevRandao: DATA, 32 Bytes blockNumber: QUANTITY
+ * gasLimit: QUANTITY gasUsed: QUANTITY timestamp: QUANTITY baseFeePerGas: QUANTITY blockHash: DATA,
+ * 32 Bytes transactions: Array of TypedTransaction
+ */
 public class EnginePayloadParameter {
   private final Hash blockHash;
   private final Hash parentHash;
@@ -43,7 +47,6 @@ public class EnginePayloadParameter {
   private final LogsBloomFilter logsBloom;
   private final List<String> transactions;
   private final List<WithdrawalParameter> withdrawals;
-  private final UInt256 excessDataGas;
 
   @JsonCreator
   public EnginePayloadParameter(
@@ -61,8 +64,7 @@ public class EnginePayloadParameter {
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("transactions") final List<String> transactions,
-      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
-      @JsonProperty("excessDataGas") final String excessDataGas) {
+      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -78,7 +80,6 @@ public class EnginePayloadParameter {
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.transactions = transactions;
     this.withdrawals = withdrawals;
-    this.excessDataGas = excessDataGas != null ? UInt256.fromHexString(excessDataGas) : null;
   }
 
   public Hash getBlockHash() {
@@ -139,9 +140,5 @@ public class EnginePayloadParameter {
 
   public List<WithdrawalParameter> getWithdrawals() {
     return withdrawals;
-  }
-
-  public Optional<UInt256> getExcessDataGas() {
-    return Optional.ofNullable(excessDataGas);
   }
 }

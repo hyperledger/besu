@@ -52,7 +52,6 @@ public enum RpcMethod {
   ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
   ENGINE_NEW_PAYLOAD_V1("engine_newPayloadV1"),
   ENGINE_NEW_PAYLOAD_V2("engine_newPayloadV2"),
-  ENGINE_NEW_PAYLOAD_V3("engine_newPayloadV3"),
   ENGINE_FORKCHOICE_UPDATED_V1("engine_forkchoiceUpdatedV1"),
   ENGINE_FORKCHOICE_UPDATED_V2("engine_forkchoiceUpdatedV2"),
   ENGINE_EXCHANGE_TRANSITION_CONFIGURATION("engine_exchangeTransitionConfigurationV1"),
