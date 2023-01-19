@@ -31,10 +31,16 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
 
+/** The ECREC precompiled contract. */
 public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final int V_BASE = 27;
 
+  /**
+   * Instantiates a new ECREC precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public ECRECPrecompiledContract(final GasCalculator gasCalculator) {
     super("ECREC", gasCalculator);
   }

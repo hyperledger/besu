@@ -14,6 +14,12 @@
  */
 package org.hyperledger.besu.services.pipeline;
 
+/** The interface Stage. */
 public interface Stage extends Runnable {
+  /**
+   * Gets name.
+   *
+   * @return the name
+   */
   String getName();
 }

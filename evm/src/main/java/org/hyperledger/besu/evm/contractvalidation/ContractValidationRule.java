@@ -20,8 +20,15 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The interface Contract validation rule. */
 @FunctionalInterface
 public interface ContractValidationRule {
 
+  /**
+   * Validate.
+   *
+   * @param contractCode the contract code to validate
+   * @return the optional halt reason
+   */
   Optional<ExceptionalHaltReason> validate(Bytes contractCode);
 }

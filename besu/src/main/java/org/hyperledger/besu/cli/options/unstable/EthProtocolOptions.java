@@ -24,6 +24,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
+/** The Eth protocol CLI options. */
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
   private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
   private static final String MAX_GET_HEADERS_FLAG = "--Xewp-max-get-headers";
@@ -114,10 +115,21 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
 
   private EthProtocolOptions() {}
 
+  /**
+   * Create eth protocol options.
+   *
+   * @return the eth protocol options
+   */
   public static EthProtocolOptions create() {
     return new EthProtocolOptions();
   }
 
+  /**
+   * From config eth protocol options.
+   *
+   * @param config the config
+   * @return the eth protocol options
+   */
   public static EthProtocolOptions fromConfig(final EthProtocolConfiguration config) {
     final EthProtocolOptions options = create();
     options.maxMessageSize = PositiveNumber.fromInt(config.getMaxMessageSize());

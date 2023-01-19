@@ -18,15 +18,27 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The Error response. */
 @JsonPropertyOrder({"error"})
 public class ErrorResponse {
+  /** The Error. */
   String error;
 
+  /**
+   * Instantiates a new Error response.
+   *
+   * @param error the error
+   */
   @JsonCreator
   public ErrorResponse(@JsonProperty("error") final String error) {
     this.error = error;
   }
 
+  /**
+   * Gets error.
+   *
+   * @return the error
+   */
   public String getError() {
     return error;
   }

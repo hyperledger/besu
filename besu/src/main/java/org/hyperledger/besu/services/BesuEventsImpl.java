@@ -38,12 +38,21 @@ import java.util.function.Supplier;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** A concrete implementation of BesuEvents used in Besu plugin framework. */
 public class BesuEventsImpl implements BesuEvents {
   private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final TransactionPool transactionPool;
   private final SyncState syncState;
 
+  /**
+   * Constructor for BesuEventsImpl
+   *
+   * @param blockchain An instance of Blockchain
+   * @param blockBroadcaster An instance of BlockBroadcaster
+   * @param transactionPool An instance of TransactionPool
+   * @param syncState An instance of SyncState
+   */
   public BesuEventsImpl(
       final Blockchain blockchain,
       final BlockBroadcaster blockBroadcaster,

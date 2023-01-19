@@ -26,9 +26,19 @@ import javax.annotation.Nonnull;
 
 import org.testcontainers.containers.Network;
 
+/** The Tessera test harness factory. */
 public class TesseraTestHarnessFactory {
   private static final String storage = "memory";
 
+  /**
+   * Create tessera test harness.
+   *
+   * @param name the name
+   * @param tempDir the temp dir
+   * @param enclaveConfig the enclave config
+   * @param containerNetwork the container network
+   * @return the tessera test harness
+   */
   public static TesseraTestHarness create(
       final String name,
       final Path tempDir,
@@ -44,6 +54,18 @@ public class TesseraTestHarnessFactory {
         containerNetwork);
   }
 
+  /**
+   * Create tessera test harness.
+   *
+   * @param name the name
+   * @param tempDir the temp dir
+   * @param pubKeyPaths the pub key paths
+   * @param privKeyPaths the priv key paths
+   * @param enclaveEncryptorType the enclave encryptor type
+   * @param othernodes the othernodes
+   * @param containerNetwork the container network
+   * @return the tessera test harness
+   */
   public static TesseraTestHarness create(
       final String name,
       final Path tempDir,
@@ -59,6 +81,18 @@ public class TesseraTestHarnessFactory {
         name, tempDir, pubKeys, privKeys, enclaveEncryptorType, othernodes, containerNetwork);
   }
 
+  /**
+   * Create tessera test harness.
+   *
+   * @param name the name
+   * @param tempDir the temp dir
+   * @param key1pubs the key 1 pubs
+   * @param key1keys the key 1 keys
+   * @param enclaveEncryptorType the enclave encryptor type
+   * @param othernodes the othernodes
+   * @param containerNetwork the container network
+   * @return the tessera test harness
+   */
   public static TesseraTestHarness create(
       final String name,
       final Path tempDir,

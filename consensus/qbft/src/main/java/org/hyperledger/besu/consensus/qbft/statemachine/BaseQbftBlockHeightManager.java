@@ -20,13 +20,34 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 
+/** The interface Base qbft block height manager. */
 public interface BaseQbftBlockHeightManager extends BaseBlockHeightManager {
 
+  /**
+   * Handle proposal payload.
+   *
+   * @param proposal the proposal
+   */
   void handleProposalPayload(Proposal proposal);
 
+  /**
+   * Handle prepare payload.
+   *
+   * @param prepare the Prepare payload
+   */
   void handlePreparePayload(Prepare prepare);
 
+  /**
+   * Handle commit payload.
+   *
+   * @param commit the commit payload
+   */
   void handleCommitPayload(Commit commit);
 
+  /**
+   * Handle round change payload.
+   *
+   * @param roundChange the round change payload
+   */
   void handleRoundChangePayload(RoundChange roundChange);
 }

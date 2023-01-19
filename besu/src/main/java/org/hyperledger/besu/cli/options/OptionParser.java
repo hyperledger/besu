@@ -22,34 +22,77 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Option parser. */
 public class OptionParser {
 
+  /**
+   * Parse long range range.
+   *
+   * @param arg the arg
+   * @return the range
+   */
   public static Range<Long> parseLongRange(final String arg) {
     checkArgument(arg.matches("-?\\d+\\.\\.-?\\d+"));
     final Iterator<String> ends = Splitter.on("..").split(arg).iterator();
     return Range.closed(parseLong(ends.next()), parseLong(ends.next()));
   }
 
+  /**
+   * Parse long from String.
+   *
+   * @param arg long value to parse from String
+   * @return the long
+   */
   public static long parseLong(final String arg) {
     return Long.parseLong(arg, 10);
   }
 
+  /**
+   * Format Long values range.
+   *
+   * @param range the range
+   * @return the string
+   */
   public static String format(final Range<Long> range) {
     return format(range.lowerEndpoint()) + ".." + format(range.upperEndpoint());
   }
 
+  /**
+   * Format int to String.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String format(final int value) {
     return Integer.toString(value, 10);
   }
 
+  /**
+   * Format long to String.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String format(final long value) {
     return Long.toString(value, 10);
   }
 
+  /**
+   * Format float to string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String format(final float value) {
     return Float.toString(value);
   }
 
+  /**
+   * Format UInt256 to string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String format(final UInt256 value) {
     return value.toBigInteger().toString(10);
   }

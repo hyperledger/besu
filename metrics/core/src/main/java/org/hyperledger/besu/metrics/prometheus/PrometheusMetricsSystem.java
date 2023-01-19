@@ -48,6 +48,7 @@ import io.prometheus.client.hotspot.MemoryPoolsExports;
 import io.prometheus.client.hotspot.StandardExports;
 import io.prometheus.client.hotspot.ThreadExports;
 
+/** The Prometheus metrics system. */
 public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
@@ -60,12 +61,19 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
 
+  /**
+   * Instantiates a new Prometheus metrics system.
+   *
+   * @param enabledCategories the enabled categories
+   * @param timersEnabled the timers enabled
+   */
   public PrometheusMetricsSystem(
       final Set<MetricCategory> enabledCategories, final boolean timersEnabled) {
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
   }
 
+  /** Init. */
   public void init() {
     addCollector(StandardMetricCategory.PROCESS, StandardExports::new);
     addCollector(StandardMetricCategory.JVM, MemoryPoolsExports::new);
@@ -157,6 +165,12 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
   }
 
+  /**
+   * Add collector.
+   *
+   * @param category the category
+   * @param metricSupplier the metric supplier
+   */
   public void addCollector(
       final MetricCategory category, final Supplier<Collector> metricSupplier) {
     if (isCategoryEnabled(category)) {
@@ -236,6 +250,13 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
         labelValues);
   }
 
+  /**
+   * Convert to prometheus name.
+   *
+   * @param category the category
+   * @param name the name
+   * @return the name as string
+   */
   public String convertToPrometheusName(final MetricCategory category, final String name) {
     return prometheusPrefix(category) + name;
   }
@@ -249,6 +270,11 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     return category.getApplicationPrefix().orElse("") + category.getName() + "_";
   }
 
+  /**
+   * Gets registry.
+   *
+   * @return the registry
+   */
   CollectorRegistry getRegistry() {
     return registry;
   }

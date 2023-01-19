@@ -31,6 +31,17 @@ import java.util.Optional;
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
 public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param forksSchedule the forks schedule
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<BftConfigOptions> forksSchedule,
@@ -48,6 +59,15 @@ public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
             evmConfiguration);
   }
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param forksSchedule the forks schedule
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<BftConfigOptions> forksSchedule,

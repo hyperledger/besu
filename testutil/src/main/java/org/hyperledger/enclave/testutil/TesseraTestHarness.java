@@ -39,6 +39,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
+/** The Tessera test harness. */
 public class TesseraTestHarness implements EnclaveTestHarness {
   private static final Logger LOG = LoggerFactory.getLogger(TesseraTestHarness.class);
 
@@ -49,10 +50,12 @@ public class TesseraTestHarness implements EnclaveTestHarness {
   private URI q2TUri;
   private URI thirdPartyUri;
 
+  /** The constant TESSERA_VERSION. */
   public static final String TESSERA_VERSION = "22.10.0";
 
   private final int thirdPartyPort = 9081;
   private final int q2TPort = 9082;
+  /** The constant p2pPort. */
   public static final int p2pPort = 9001;
 
   private final String containerKeyDir = "/tmp/keys/";
@@ -63,6 +66,12 @@ public class TesseraTestHarness implements EnclaveTestHarness {
   private final Optional<Network> containerNetwork;
   private final String containerName;
 
+  /**
+   * Instantiates a new Tessera test harness.
+   *
+   * @param enclaveConfiguration the enclave configuration
+   * @param containerNetwork the container network
+   */
   protected TesseraTestHarness(
       final EnclaveConfiguration enclaveConfiguration, final Optional<Network> containerNetwork) {
     this.enclaveConfiguration = enclaveConfiguration;

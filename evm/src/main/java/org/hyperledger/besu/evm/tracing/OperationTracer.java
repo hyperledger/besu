@@ -22,23 +22,55 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The interface Operation tracer. */
 public interface OperationTracer {
 
+  /** The constant NO_TRACING. */
   OperationTracer NO_TRACING = new OperationTracer() {};
 
+  /**
+   * Trace pre execution.
+   *
+   * @param frame the frame
+   */
   default void tracePreExecution(final MessageFrame frame) {}
 
+  /**
+   * Trace post execution.
+   *
+   * @param frame the frame
+   * @param operationResult the operation result
+   */
   default void tracePostExecution(
       final MessageFrame frame, final OperationResult operationResult) {}
 
+  /**
+   * Trace precompile call.
+   *
+   * @param frame the frame
+   * @param gasRequirement the gas requirement
+   * @param output the output
+   */
   default void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {}
 
+  /**
+   * Trace account creation result.
+   *
+   * @param frame the frame
+   * @param haltReason the halt reason
+   */
   default void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}
 
+  /** The interface Execute operation. */
   interface ExecuteOperation {
 
+    /**
+     * Execute operation.
+     *
+     * @return the operation result
+     */
     OperationResult execute();
   }
 }

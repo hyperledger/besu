@@ -32,10 +32,20 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.rocksdb.OptimisticTransactionDB;
 
+/** The RocksDb columnar key value snapshot. */
 public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
+  /** The Db. */
   final OptimisticTransactionDB db;
+  /** The Snap tx. */
   final RocksDBSnapshotTransaction snapTx;
 
+  /**
+   * Instantiates a new RocksDb columnar key value snapshot.
+   *
+   * @param db the db
+   * @param segment the segment
+   * @param metrics the metrics
+   */
   RocksDBColumnarKeyValueSnapshot(
       final OptimisticTransactionDB db,
       final RocksDbSegmentIdentifier segment,

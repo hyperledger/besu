@@ -27,6 +27,7 @@ import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Round change payload validator. */
 public class RoundChangePayloadValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(RoundChangePayloadValidator.class);
@@ -36,6 +37,14 @@ public class RoundChangePayloadValidator {
   private final long minimumPrepareMessages;
   private final long chainHeight;
 
+  /**
+   * Instantiates a new Round change payload validator.
+   *
+   * @param messageValidatorFactory the message validator factory
+   * @param validators the validators
+   * @param minimumPrepareMessages the minimum prepare messages
+   * @param chainHeight the chain height
+   */
   public RoundChangePayloadValidator(
       final MessageValidatorForHeightFactory messageValidatorFactory,
       final Collection<Address> validators,
@@ -47,6 +56,12 @@ public class RoundChangePayloadValidator {
     this.chainHeight = chainHeight;
   }
 
+  /**
+   * Validate round change.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateRoundChange(final SignedData<RoundChangePayload> msg) {
 
     if (!validators.contains(msg.getAuthor())) {
@@ -146,8 +161,15 @@ public class RoundChangePayloadValidator {
     return true;
   }
 
+  /** The interface Message validator for height factory. */
   @FunctionalInterface
   public interface MessageValidatorForHeightFactory {
+    /**
+     * Create at round identifier and return signed data validator.
+     *
+     * @param roundIdentifier the round identifier
+     * @return the signed data validator
+     */
     SignedDataValidator createAt(final ConsensusRoundIdentifier roundIdentifier);
   }
 }

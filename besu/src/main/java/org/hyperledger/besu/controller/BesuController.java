@@ -48,11 +48,15 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Besu controller. */
 public class BesuController implements java.io.Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BesuController.class);
 
+  /** The constant DATABASE_PATH. */
   public static final String DATABASE_PATH = "database";
+  /** The constant CACHE_PATH. */
   public static final String CACHE_PATH = "caches";
+
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthProtocolManager ethProtocolManager;
@@ -70,6 +74,25 @@ public class BesuController implements java.io.Closeable {
   private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
 
+  /**
+   * Instantiates a new Besu controller.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param ethProtocolManager the eth protocol manager
+   * @param genesisConfigOptions the genesis config options
+   * @param subProtocolConfiguration the sub protocol configuration
+   * @param synchronizer the synchronizer
+   * @param syncState the sync state
+   * @param transactionPool the transaction pool
+   * @param miningCoordinator the mining coordinator
+   * @param privacyParameters the privacy parameters
+   * @param miningParameters the mining parameters
+   * @param additionalJsonRpcMethodsFactory the additional json rpc methods factory
+   * @param nodeKey the node key
+   * @param closeables the closeables
+   * @param additionalPluginServices the additional plugin services
+   */
   BesuController(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
@@ -103,38 +126,83 @@ public class BesuController implements java.io.Closeable {
     this.additionalPluginServices = additionalPluginServices;
   }
 
+  /**
+   * Gets protocol context.
+   *
+   * @return the protocol context
+   */
   public ProtocolContext getProtocolContext() {
     return protocolContext;
   }
 
+  /**
+   * Gets protocol schedule.
+   *
+   * @return the protocol schedule
+   */
   public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 
+  /**
+   * Gets protocol manager.
+   *
+   * @return the protocol manager
+   */
   public EthProtocolManager getProtocolManager() {
     return ethProtocolManager;
   }
 
+  /**
+   * Gets genesis config options.
+   *
+   * @return the genesis config options
+   */
   public GenesisConfigOptions getGenesisConfigOptions() {
     return genesisConfigOptions;
   }
 
+  /**
+   * Gets synchronizer.
+   *
+   * @return the synchronizer
+   */
   public Synchronizer getSynchronizer() {
     return synchronizer;
   }
 
+  /**
+   * Gets sub protocol configuration.
+   *
+   * @return the sub protocol configuration
+   */
   public SubProtocolConfiguration getSubProtocolConfiguration() {
     return subProtocolConfiguration;
   }
 
+  /**
+   * Gets node key.
+   *
+   * @return the node key
+   */
   public NodeKey getNodeKey() {
     return nodeKey;
   }
 
+  /**
+   * Gets transaction pool.
+   *
+   * @return the transaction pool
+   */
   public TransactionPool getTransactionPool() {
     return transactionPool;
   }
 
+  /**
+   * Gets mining coordinator.
+   *
+   * @return the mining coordinator
+   */
   public MiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
   }
@@ -152,29 +220,64 @@ public class BesuController implements java.io.Closeable {
     }
   }
 
+  /**
+   * Gets privacy parameters.
+   *
+   * @return the privacy parameters
+   */
   public PrivacyParameters getPrivacyParameters() {
     return privacyParameters;
   }
 
+  /**
+   * Gets mining parameters.
+   *
+   * @return the mining parameters
+   */
   public MiningParameters getMiningParameters() {
     return miningParameters;
   }
 
+  /**
+   * Gets additional json rpc methods.
+   *
+   * @param enabledRpcApis the enabled rpc apis
+   * @return the additional json rpc methods
+   */
   public Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
       final Collection<String> enabledRpcApis) {
     return additionalJsonRpcMethodsFactory.create(enabledRpcApis);
   }
 
+  /**
+   * Gets sync state.
+   *
+   * @return the sync state
+   */
   public SyncState getSyncState() {
     return syncState;
   }
 
+  /**
+   * Gets additional plugin services.
+   *
+   * @return the additional plugin services
+   */
   public PluginServiceFactory getAdditionalPluginServices() {
     return additionalPluginServices;
   }
 
+  /** The type Builder. */
   public static class Builder {
 
+    /**
+     * From eth network config besu controller builder.
+     *
+     * @param ethNetworkConfig the eth network config
+     * @param genesisConfigOverrides the genesis config overrides
+     * @param syncMode The sync mode
+     * @return the besu controller builder
+     */
     public BesuControllerBuilder fromEthNetworkConfig(
         final EthNetworkConfig ethNetworkConfig,
         final Map<String, String> genesisConfigOverrides,
@@ -186,11 +289,25 @@ public class BesuController implements java.io.Closeable {
           .networkId(ethNetworkConfig.getNetworkId());
     }
 
+    /**
+     * From genesis config besu controller builder.
+     *
+     * @param genesisConfig the genesis config
+     * @param syncMode The Sync Mode
+     * @return the besu controller builder
+     */
     public BesuControllerBuilder fromGenesisConfig(
         final GenesisConfigFile genesisConfig, final SyncMode syncMode) {
       return fromGenesisConfig(genesisConfig, Collections.emptyMap(), syncMode);
     }
 
+    /**
+     * From genesis config besu controller builder.
+     *
+     * @param genesisConfig the genesis config
+     * @param genesisConfigOverrides the genesis config overrides
+     * @return the besu controller builder
+     */
     BesuControllerBuilder fromGenesisConfig(
         final GenesisConfigFile genesisConfig,
         final Map<String, String> genesisConfigOverrides,

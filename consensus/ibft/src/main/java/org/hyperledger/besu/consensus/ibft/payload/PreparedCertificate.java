@@ -23,10 +23,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/** The Prepared certificate. */
 public class PreparedCertificate {
   private final SignedData<ProposalPayload> proposalPayload;
   private final List<SignedData<PreparePayload>> preparePayloads;
 
+  /**
+   * Instantiates a new Prepared certificate.
+   *
+   * @param proposalPayload the proposal payload
+   * @param preparePayloads the prepare payloads
+   */
   public PreparedCertificate(
       final SignedData<ProposalPayload> proposalPayload,
       final List<SignedData<PreparePayload>> preparePayloads) {
@@ -34,6 +41,12 @@ public class PreparedCertificate {
     this.preparePayloads = preparePayloads;
   }
 
+  /**
+   * Read from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the prepared certificate
+   */
   public static PreparedCertificate readFrom(final RLPInput rlpInput) {
     final SignedData<ProposalPayload> proposalMessage;
     final List<SignedData<PreparePayload>> prepareMessages;
@@ -46,6 +59,11 @@ public class PreparedCertificate {
     return new PreparedCertificate(proposalMessage, prepareMessages);
   }
 
+  /**
+   * Write to rlp output.
+   *
+   * @param rlpOutput the rlp output
+   */
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
     proposalPayload.writeTo(rlpOutput);
@@ -53,10 +71,20 @@ public class PreparedCertificate {
     rlpOutput.endList();
   }
 
+  /**
+   * Gets proposal payload.
+   *
+   * @return the proposal payload
+   */
   public SignedData<ProposalPayload> getProposalPayload() {
     return proposalPayload;
   }
 
+  /**
+   * Gets prepare payloads.
+   *
+   * @return the prepare payloads
+   */
   public Collection<SignedData<PreparePayload>> getPreparePayloads() {
     return preparePayloads;
   }

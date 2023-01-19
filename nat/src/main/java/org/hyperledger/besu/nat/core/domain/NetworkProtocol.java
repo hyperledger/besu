@@ -24,6 +24,8 @@ package org.hyperledger.besu.nat.core.domain;
  * </ul>
  */
 public enum NetworkProtocol {
+  /** Tcp network protocol. */
   TCP,
+  /** Udp network protocol. */
   UDP
 }

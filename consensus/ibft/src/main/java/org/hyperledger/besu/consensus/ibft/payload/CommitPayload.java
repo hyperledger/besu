@@ -26,12 +26,20 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/** The Commit payload. */
 public class CommitPayload extends IbftPayload {
   private static final int TYPE = IbftV2.COMMIT;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
   private final SECPSignature commitSeal;
 
+  /**
+   * Instantiates a new Commit payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @param commitSeal the commit seal
+   */
   public CommitPayload(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
@@ -41,6 +49,12 @@ public class CommitPayload extends IbftPayload {
     this.commitSeal = commitSeal;
   }
 
+  /**
+   * Read from rlp input and return commit payload.
+   *
+   * @param rlpInput the rlp input
+   * @return the commit payload
+   */
   public static CommitPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
@@ -66,10 +80,20 @@ public class CommitPayload extends IbftPayload {
     return TYPE;
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return digest;
   }
 
+  /**
+   * Gets commit seal.
+   *
+   * @return the commit seal
+   */
   public SECPSignature getCommitSeal() {
     return commitSeal;
   }

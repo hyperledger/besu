@@ -31,6 +31,7 @@ import org.rocksdb.RocksIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Rocks db iterator. */
 public class RocksDbIterator implements Iterator<Pair<byte[], byte[]>>, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDbIterator.class);
 
@@ -41,6 +42,12 @@ public class RocksDbIterator implements Iterator<Pair<byte[], byte[]>>, AutoClos
     this.rocksIterator = rocksIterator;
   }
 
+  /**
+   * Create RocksDb iterator.
+   *
+   * @param rocksIterator the rocks iterator
+   * @return the rocks db iterator
+   */
   public static RocksDbIterator create(final RocksIterator rocksIterator) {
     return new RocksDbIterator(rocksIterator);
   }
@@ -70,6 +77,11 @@ public class RocksDbIterator implements Iterator<Pair<byte[], byte[]>>, AutoClos
     return Pair.of(key, value);
   }
 
+  /**
+   * Next key.
+   *
+   * @return the byte [ ]
+   */
   public byte[] nextKey() {
     assertOpen();
     try {
@@ -87,6 +99,11 @@ public class RocksDbIterator implements Iterator<Pair<byte[], byte[]>>, AutoClos
     return key;
   }
 
+  /**
+   * To stream.
+   *
+   * @return the stream
+   */
   public Stream<Pair<byte[], byte[]>> toStream() {
     assertOpen();
     final Spliterator<Pair<byte[], byte[]>> spliterator =
@@ -101,6 +118,11 @@ public class RocksDbIterator implements Iterator<Pair<byte[], byte[]>>, AutoClos
     return StreamSupport.stream(spliterator, false).onClose(this::close);
   }
 
+  /**
+   * To stream keys.
+   *
+   * @return the stream
+   */
   public Stream<byte[]> toStreamKeys() {
     assertOpen();
     final Spliterator<byte[]> spliterator =

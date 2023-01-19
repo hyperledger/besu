@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Pki block creation configuration provider. */
 public class PkiBlockCreationConfigurationProvider {
 
   private static final Logger LOG =
@@ -31,15 +32,27 @@ public class PkiBlockCreationConfigurationProvider {
 
   private final KeyStoreWrapperProvider keyStoreWrapperProvider;
 
+  /** Instantiates a new Pki block creation configuration provider. */
   public PkiBlockCreationConfigurationProvider() {
     this(new DefaultKeyStoreWrapperProvider());
   }
 
+  /**
+   * Instantiates a new Pki block creation configuration provider.
+   *
+   * @param keyStoreWrapperProvider the key store wrapper provider
+   */
   @VisibleForTesting
   PkiBlockCreationConfigurationProvider(final KeyStoreWrapperProvider keyStoreWrapperProvider) {
     this.keyStoreWrapperProvider = checkNotNull(keyStoreWrapperProvider);
   }
 
+  /**
+   * Load pki block creation configuration.
+   *
+   * @param pkiKeyStoreConfiguration the pki key store configuration
+   * @return the pki block creation configuration
+   */
   public PkiBlockCreationConfiguration load(
       final PkiKeyStoreConfiguration pkiKeyStoreConfiguration) {
     KeyStoreWrapper keyStore;

@@ -24,12 +24,15 @@ import java.util.List;
 
 import picocli.CommandLine;
 
+/** The Chain pruning CLI options. */
 public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration> {
   private static final String CHAIN_PRUNING_ENABLED_FLAG = "--Xchain-pruning-enabled";
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_FLAG =
       "--Xchain-pruning-blocks-retained";
   private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
+  /** The constant DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED. */
   public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 7200;
+  /** The constant DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY. */
   public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
 
   @CommandLine.Option(
@@ -57,14 +60,29 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   private final PositiveNumber chainDataPruningBlocksFrequency =
       PositiveNumber.fromInt(DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY);
 
+  /**
+   * Create chain pruning options.
+   *
+   * @return the chain pruning options
+   */
   public static ChainPruningOptions create() {
     return new ChainPruningOptions();
   }
 
+  /**
+   * Gets chain data pruning enabled.
+   *
+   * @return the chain data pruning enabled
+   */
   public Boolean getChainDataPruningEnabled() {
     return chainDataPruningEnabled;
   }
 
+  /**
+   * Gets chain data pruning blocks retained.
+   *
+   * @return the chain data pruning blocks retained
+   */
   public Long getChainDataPruningBlocksRetained() {
     return chainDataPruningBlocksRetained;
   }

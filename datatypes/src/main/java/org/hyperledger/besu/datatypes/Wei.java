@@ -26,12 +26,20 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** A particular quantity of Wei, the Ethereum currency. */
 public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
+  /** The constant ZERO. */
   public static final Wei ZERO = of(0);
 
+  /** The constant ONE. */
   public static final Wei ONE = of(1);
 
+  /** The constant MAX_WEI. */
   public static final Wei MAX_WEI = of(UInt256.MAX_VALUE);
 
+  /**
+   * Instantiates a new Wei.
+   *
+   * @param value the value
+   */
   Wei(final UInt256 value) {
     super(value, Wei::new);
   }
@@ -48,30 +56,72 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
     this(UInt256.fromHexString(hexString));
   }
 
+  /**
+   * Wei of value.
+   *
+   * @param value the value
+   * @return the wei
+   */
   public static Wei of(final long value) {
     return new Wei(value);
   }
 
+  /**
+   * Wei of value.
+   *
+   * @param value the value
+   * @return the wei
+   */
   public static Wei of(final BigInteger value) {
     return new Wei(value);
   }
 
+  /**
+   * Wei of value.
+   *
+   * @param value the value
+   * @return the wei
+   */
   public static Wei of(final UInt256 value) {
     return new Wei(value);
   }
 
+  /**
+   * Wei of value.
+   *
+   * @param value the value
+   * @return the wei
+   */
   public static Wei ofNumber(final Number value) {
     return new Wei((BigInteger) value);
   }
 
+  /**
+   * Wrap wei.
+   *
+   * @param value the value
+   * @return the wei
+   */
   public static Wei wrap(final Bytes value) {
     return new Wei(UInt256.fromBytes(value));
   }
 
+  /**
+   * From hex string to wei.
+   *
+   * @param str the str
+   * @return the wei
+   */
   public static Wei fromHexString(final String str) {
     return new Wei(str);
   }
 
+  /**
+   * From eth to wei.
+   *
+   * @param eth the eth
+   * @return the wei
+   */
   public static Wei fromEth(final long eth) {
     return Wei.of(BigInteger.valueOf(eth).multiply(BigInteger.TEN.pow(18)));
   }
@@ -96,10 +146,21 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
     return super.isZero() ? "0x0" : super.toShortHexString();
   }
 
+  /**
+   * From quantity to wei.
+   *
+   * @param quantity the quantity
+   * @return the wei
+   */
   public static Wei fromQuantity(final Quantity quantity) {
     return Wei.wrap((Bytes) quantity);
   }
 
+  /**
+   * Wei to human-readable string.
+   *
+   * @return the string
+   */
   public String toHumanReadableString() {
     final BigInteger amount = toBigInteger();
     final int numOfDigits = amount.toString().length();
@@ -108,21 +169,36 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
     return String.format("%1." + preferredUnit.decimals + "f %s", res, preferredUnit);
   }
 
+  /** The enum Unit. */
   enum Unit {
+    /** Wei unit. */
     Wei(0, 0),
+    /** K wei unit. */
     KWei(3),
+    /** M wei unit. */
     MWei(6),
+    /** G wei unit. */
     GWei(9),
+    /** Szabo unit. */
     Szabo(12),
+    /** Finney unit. */
     Finney(15),
+    /** Ether unit. */
     Ether(18),
+    /** K ether unit. */
     KEther(21),
+    /** M ether unit. */
     MEther(24),
+    /** G ether unit. */
     GEther(27),
+    /** T ether unit. */
     TEther(30);
 
+    /** The Pow. */
     final int pow;
+    /** The Divisor. */
     final double divisor;
+    /** The Decimals. */
     final int decimals;
 
     Unit(final int pow) {
@@ -135,6 +211,12 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
       this.divisor = Math.pow(10, pow);
     }
 
+    /**
+     * Gets preferred.
+     *
+     * @param numOfDigits the num of digits
+     * @return the preferred
+     */
     static Unit getPreferred(final int numOfDigits) {
       return Arrays.stream(values())
           .filter(u -> numOfDigits <= u.pow + 3)

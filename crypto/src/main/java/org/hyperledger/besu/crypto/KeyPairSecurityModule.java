@@ -36,6 +36,11 @@ public class KeyPairSecurityModule implements SecurityModule {
   private final PublicKey publicKey;
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
+  /**
+   * Instantiates a new Key pair security module.
+   *
+   * @param keyPair the key pair
+   */
   public KeyPairSecurityModule(final KeyPair keyPair) {
     this.keyPair = keyPair;
     this.publicKey = convertPublicKey(keyPair.getPublicKey());
@@ -84,6 +89,11 @@ public class KeyPairSecurityModule implements SecurityModule {
 
     private final SECPSignature signature;
 
+    /**
+     * Instantiates a new Signature.
+     *
+     * @param signature the signature
+     */
     SignatureImpl(final SECPSignature signature) {
       this.signature = signature;
     }
@@ -102,6 +112,11 @@ public class KeyPairSecurityModule implements SecurityModule {
   private static class PublicKeyImpl implements PublicKey {
     private final ECPoint w;
 
+    /**
+     * Instantiates a new Public key.
+     *
+     * @param w the w ECPoint
+     */
     PublicKeyImpl(final ECPoint w) {
       this.w = w;
     }

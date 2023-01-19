@@ -34,13 +34,16 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The AltBN128Pairing precompiled contract. */
 public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
 
+  /** The constant FALSE. */
   static final Bytes FALSE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000");
+  /** The constant TRUE. */
   public static final Bytes TRUE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
 
@@ -58,10 +61,22 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     this.baseGasCost = baseGasCost;
   }
 
+  /**
+   * Create Byzantium AltBN128Pairing precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the AltBN128Pairing precompiled contract
+   */
   public static AltBN128PairingPrecompiledContract byzantium(final GasCalculator gasCalculator) {
     return new AltBN128PairingPrecompiledContract(gasCalculator, 80_000L, 100_000L);
   }
 
+  /**
+   * Create Istanbul AltBN128Pairing precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the AltBN128Pairing precompiled contract
+   */
   public static AltBN128PairingPrecompiledContract istanbul(final GasCalculator gasCalculator) {
     return new AltBN128PairingPrecompiledContract(gasCalculator, 34_000L, 45_000L);
   }

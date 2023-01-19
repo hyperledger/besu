@@ -29,11 +29,22 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
 
   private final String name;
 
+  /**
+   * Instantiates a new Abstract precompiled contract.
+   *
+   * @param name the name
+   * @param gasCalculator the gas calculator
+   */
   protected AbstractPrecompiledContract(final String name, final GasCalculator gasCalculator) {
     this.name = name;
     this.gasCalculator = gasCalculator;
   }
 
+  /**
+   * Gas calculator.
+   *
+   * @return the gas calculator
+   */
   protected GasCalculator gasCalculator() {
     return gasCalculator;
   }
