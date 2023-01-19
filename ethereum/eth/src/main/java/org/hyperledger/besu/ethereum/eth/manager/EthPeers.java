@@ -68,7 +68,7 @@ public class EthPeers {
           .thenComparing(EthPeer::getLastRequestTimestamp);
 
   private final Map<Bytes, EthPeer> connections = new ConcurrentHashMap<>();
-  // If entries in the notReadyConnections are not removed or
+
   private final Cache<PeerConnection, EthPeer> notReadyConnections =
       CacheBuilder.newBuilder()
           .expireAfterWrite(Duration.ofSeconds(20L))
@@ -204,6 +204,7 @@ public class EthPeers {
 
   private boolean registerDisconnect(
       final Bytes id, final EthPeer peer, final PeerConnection connection) {
+    notReadyConnections.invalidate(connection);
     boolean removed = false;
     if (peer != null && peer.getConnection().equals(connection)) {
       if (!peerHasNonReadyConnection(id)) {
@@ -378,14 +379,15 @@ public class EthPeers {
 
   public boolean shouldConnectOutbound(final Peer peer) {
     final Bytes id = peer.getId();
-    if (connections.containsKey(id)) {
+    final EthPeer ethPeer = connections.get(id);
+    if (ethPeer != null && !ethPeer.isDisconnected()) {
       return false;
     }
     if (peerCount() < peerLowerBound) {
       final List<PeerConnection> notReadyConnections = getNotReadyConnections(id);
       if (!notReadyConnections.isEmpty()) {
         // we already have a connection that we have initiated that is getting ready
-        if (!notReadyConnections.stream().anyMatch(c -> !c.inboundInitiated())) {
+        if (!notReadyConnections.stream().anyMatch(c -> !c.inboundInitiated() && !c.isDisconnected())) {
           return false;
         }
       }
@@ -543,6 +545,9 @@ public class EthPeers {
   private boolean addPeerToEthPeers(final EthPeer peer) {
     // We have a connection to a peer that is on the right chain and is willing to connect to us.
     // Figure out whether we want to keep this peer and add it to the EthPeers connections.
+    if (connections.containsValue(peer)) {
+      return false;
+    }
     final Bytes id = peer.getId();
     if (!randomPeerPriority) {
       // Disconnect if too many peers

@@ -381,7 +381,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public boolean shouldConnectOutbound(final Peer peer) {
-    // if we have an existing connection to that peer return null
     if (peer.getForkId().map(forkId -> forkIdManager.peerCheck(forkId)).orElse(true)) {
       if (ethPeers.shouldConnectOutbound(peer)) {
         return true;

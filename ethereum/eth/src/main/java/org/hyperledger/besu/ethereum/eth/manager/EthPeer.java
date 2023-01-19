@@ -103,7 +103,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   private final Map<String, Map<Integer, RequestManager>> requestManagers;
 
-  private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
+  private final Consumer<EthPeer> onStatusesExchanged;
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
   private final Bytes id;
@@ -139,7 +139,7 @@ public class EthPeer implements Comparable<EthPeer> {
     this.maxMessageSize = maxMessageSize;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
-    this.onStatusesExchanged.set(onStatusesExchanged);
+    this.onStatusesExchanged = onStatusesExchanged;
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
@@ -498,13 +498,12 @@ public class EthPeer implements Comparable<EthPeer> {
       if (connectionWithReceivedStatusMessage.contains(actualHashCode)
           && connectionWithSentStatusMessage.contains(actualHashCode)) {
         readyForRequests.set(true);
-        final Consumer<EthPeer> callback = onStatusesExchanged.getAndSet(null);
-        if (callback == null) {
+        if (onStatusesExchanged == null) {
           return;
         } else {
           LOG.info("Executing callback connected to peer {}", this.id);
           LOG.debug("Status message exchange successful with a peer on a matching chain. {}", this);
-          callback.accept(this);
+          onStatusesExchanged.accept(this);
         }
       }
     }
