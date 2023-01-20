@@ -29,6 +29,7 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
 
   /** The constant JUMPDEST_CACHE_WEIGHT. */
   public static final String JUMPDEST_CACHE_WEIGHT = "--Xevm-jumpdest-cache-weight-kb";
+
   public static final String KZG_TRUSTED_SETUP_FILE_PATH = "--evm-kzg-trusted-setup-path";
 
   /**

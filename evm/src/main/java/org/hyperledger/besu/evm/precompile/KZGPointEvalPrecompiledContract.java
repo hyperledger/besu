@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -34,6 +33,7 @@ import java.util.Optional;
 import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
 
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
@@ -127,8 +127,10 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
       if (proved) {
         Bytes fieldElementsPerBlob =
-                Bytes32.wrap(Bytes.of(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO)); // usually 4096
-        Bytes blsModulus = Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
+            Bytes32.wrap(
+                Bytes.of(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO)); // usually 4096
+        Bytes blsModulus =
+            Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
 
         output = Bytes.concatenate(fieldElementsPerBlob, blsModulus);
 
