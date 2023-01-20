@@ -45,10 +45,6 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.0-RC1/besu-23.1
 
 ## 23.1.0-beta
 
-### Additions and Improvements
-- Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
-- Add new KZG precompile and option to override the trusted setup being used.
-
 ### Breaking Changes
 - GoQuorum-compatible privacy is deprecated and will be removed in 23.4
 - IBFT 1.0 is deprecated and will be removed in 23.4
