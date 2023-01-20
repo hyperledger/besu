@@ -47,6 +47,7 @@ import java.util.OptionalInt;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -743,7 +744,7 @@ public class Transaction
   }
 
   private BigInteger calculateUpfrontGasCost(final Wei gasPrice) {
-    return BigInteger.valueOf(getGasLimit())
+    return new BigInteger(1, Longs.toByteArray(getGasLimit()))
         .multiply(gasPrice.getAsBigInteger())
         .add(
             getMaxFeePerDataGas()
