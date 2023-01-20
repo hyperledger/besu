@@ -327,6 +327,7 @@ public class MessageWrapperTest {
           Hash.fromHexString(mixHash),
           Bytes.fromHexStringLenient(nonce).toLong(),
           null,
+          null,
           new MainnetBlockHeaderFunctions());
     }
   }
