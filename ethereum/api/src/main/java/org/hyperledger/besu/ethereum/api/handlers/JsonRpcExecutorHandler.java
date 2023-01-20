@@ -177,7 +177,6 @@ public class JsonRpcExecutorHandler {
   private static HttpResponseStatus statusCodeFromError(final JsonRpcError error) {
     switch (error) {
       case INVALID_REQUEST:
-      case INVALID_PARAMS:
       case PARSE_ERROR:
         return HttpResponseStatus.BAD_REQUEST;
       default:

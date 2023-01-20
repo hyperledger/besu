@@ -124,6 +124,7 @@ public class JsonRpcResponseUtils {
             mixHash,
             nonce,
             withdrawalsRoot,
+            null, // ToDo 4844: set with the value of excess_data_gas field
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

@@ -87,6 +87,7 @@ public class LogRollingTests {
           Hash.ZERO,
           0,
           null,
+          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
@@ -106,6 +107,7 @@ public class LogRollingTests {
           Wei.ZERO,
           Hash.ZERO,
           0,
+          null,
           null,
           new MainnetBlockHeaderFunctions());
 

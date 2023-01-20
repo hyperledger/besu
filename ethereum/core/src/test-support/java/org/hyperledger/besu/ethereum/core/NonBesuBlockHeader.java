@@ -117,4 +117,9 @@ public class NonBesuBlockHeader implements BlockHeader {
   public Hash getBlockHash() {
     return blockHash;
   }
+
+  @Override
+  public Optional<? extends Quantity> getExcessDataGas() {
+    return Optional.empty();
+  }
 }
