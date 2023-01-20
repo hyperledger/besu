@@ -85,7 +85,7 @@ public class BlockReplay {
                   action.performAction(
                       transaction, header, blockchain, mutableWorldState, transactionProcessor));
             } else {
-              final ProtocolSpec spec = protocolSchedule.getByBlockNumber(header.getNumber());
+              final ProtocolSpec spec = protocolSchedule.getByBlockHeader(header);
               transactionProcessor.processTransaction(
                   blockchain,
                   mutableWorldState.updater(),
@@ -107,7 +107,7 @@ public class BlockReplay {
         blockHash,
         transactionHash,
         (transaction, blockHeader, blockchain, worldState, transactionProcessor) -> {
-          final ProtocolSpec spec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+          final ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
           transactionProcessor.processTransaction(
               blockchain,
               worldState.updater(),
@@ -139,7 +139,7 @@ public class BlockReplay {
     if (body == null) {
       return Optional.empty();
     }
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final BlockHeader previous = blockchain.getBlockHeader(header.getParentHash()).orElse(null);
     if (previous == null) {
@@ -172,7 +172,7 @@ public class BlockReplay {
 
   private Optional<Block> getBadBlock(final Hash blockHash) {
     final ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockNumber(blockchain.getChainHeadHeader().getNumber());
+        protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
     return protocolSpec.getBadBlocksManager().getBadBlock(blockHash);
   }
 

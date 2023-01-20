@@ -37,11 +37,15 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Bft mining coordinator. */
 public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
   private enum State {
+    /** Idle state. */
     IDLE,
+    /** Running state. */
     RUNNING,
+    /** Stopped state. */
     STOPPED
   }
 
@@ -50,13 +54,25 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   private final BftEventHandler eventHandler;
   private final BftProcessor bftProcessor;
   private final BftBlockCreatorFactory<?> blockCreatorFactory;
+  /** The Blockchain. */
   protected final Blockchain blockchain;
+
   private final BftEventQueue eventQueue;
   private final BftExecutors bftExecutors;
 
   private long blockAddedObserverId;
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
 
+  /**
+   * Instantiates a new Bft mining coordinator.
+   *
+   * @param bftExecutors the bft executors
+   * @param eventHandler the event handler
+   * @param bftProcessor the bft processor
+   * @param blockCreatorFactory the block creator factory
+   * @param blockchain the blockchain
+   * @param eventQueue the event queue
+   */
   public BftMiningCoordinator(
       final BftExecutors bftExecutors,
       final BftEventHandler eventHandler,

@@ -25,21 +25,36 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The SStore operation. */
 public class SStoreOperation extends AbstractOperation {
 
+  /** The constant FRONTIER_MINIMUM. */
   public static final long FRONTIER_MINIMUM = 0L;
+  /** The constant EIP_1706_MINIMUM. */
   public static final long EIP_1706_MINIMUM = 2300L;
 
+  /** The constant ILLEGAL_STATE_CHANGE. */
   protected static final OperationResult ILLEGAL_STATE_CHANGE =
       new OperationResult(0L, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
 
   private final long minimumGasRemaining;
 
+  /**
+   * Instantiates a new SStore operation.
+   *
+   * @param gasCalculator the gas calculator
+   * @param minimumGasRemaining the minimum gas remaining
+   */
   public SStoreOperation(final GasCalculator gasCalculator, final long minimumGasRemaining) {
     super(0x55, "SSTORE", 2, 0, gasCalculator);
     this.minimumGasRemaining = minimumGasRemaining;
   }
 
+  /**
+   * Gets minimum gas remaining.
+   *
+   * @return the minimum gas remaining
+   */
   public long getMinimumGasRemaining() {
     return minimumGasRemaining;
   }

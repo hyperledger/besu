@@ -26,17 +26,29 @@ import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateMigrationB
 import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateStorageMigration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+/** The Private storage migration builder. */
 public class PrivateStorageMigrationBuilder {
 
   private final BesuController besuController;
   private final PrivacyParameters privacyParameters;
 
+  /**
+   * Instantiates a new Private storage migration builder.
+   *
+   * @param besuController the besu controller
+   * @param privacyParameters the privacy parameters
+   */
   public PrivateStorageMigrationBuilder(
       final BesuController besuController, final PrivacyParameters privacyParameters) {
     this.besuController = besuController;
     this.privacyParameters = privacyParameters;
   }
 
+  /**
+   * Build private storage migration.
+   *
+   * @return the private storage migration
+   */
   public PrivateStorageMigration build() {
     final Blockchain blockchain = besuController.getProtocolContext().getBlockchain();
     final Address privacyPrecompileAddress = privacyParameters.getPrivacyAddress();

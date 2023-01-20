@@ -30,6 +30,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
+/** The Besu configuration Validate sub command. */
 @Command(
     name = COMMAND_NAME,
     description = "This command provides basic Besu config validation (syntax only).",
@@ -37,6 +38,7 @@ import picocli.CommandLine.ParentCommand;
     versionProvider = VersionProvider.class)
 public class ValidateConfigSubCommand implements Runnable {
 
+  /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "validate-config";
 
   @Option(
@@ -49,9 +51,15 @@ public class ValidateConfigSubCommand implements Runnable {
   @ParentCommand
   private BesuCommand parentCommand;
 
-  final PrintWriter out;
-  final CommandLine commandLine;
+  private final PrintWriter out;
+  private final CommandLine commandLine;
 
+  /**
+   * Instantiates a new Validate config sub command.
+   *
+   * @param commandLine the command line
+   * @param out the PrintWriter where validation results will be reported.
+   */
   public ValidateConfigSubCommand(final CommandLine commandLine, final PrintWriter out) {
     this.out = out;
     this.commandLine = commandLine;

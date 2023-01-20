@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.GWei;
 public class WithdrawalParameterTestFixture {
 
   public static final WithdrawalParameter WITHDRAWAL_PARAM_1 =
-      createWithdrawal("0x0", "0xFFFF", "0x0000000000000000000000000000000000000000", "0x0");
+      createWithdrawal("0x0", "0xffff", "0x0000000000000000000000000000000000000000", "0x0");
   static final WithdrawalParameter WITHDRAWAL_PARAM_2 =
       createWithdrawal(
           "0x1", "0x10000", "0x0100000000000000000000000000000000000000", GWei.ONE.toHexString());

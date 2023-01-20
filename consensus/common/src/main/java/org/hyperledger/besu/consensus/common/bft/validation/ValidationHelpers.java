@@ -20,14 +20,30 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 
 import java.util.Collection;
 
+/** The type Validation helpers. */
 public class ValidationHelpers {
 
+  /**
+   * Has duplicate authors.
+   *
+   * @param <T> the type parameter
+   * @param msgs the msgs
+   * @return the boolean
+   */
   public static <T extends Payload> boolean hasDuplicateAuthors(
       final Collection<SignedData<T>> msgs) {
     final long distinctAuthorCount = msgs.stream().map(Authored::getAuthor).distinct().count();
     return distinctAuthorCount != msgs.size();
   }
 
+  /**
+   * Has sufficient entries.
+   *
+   * @param <T> the type parameter
+   * @param msgs the msgs
+   * @param requiredMsgCount the required msg count
+   * @return the boolean
+   */
   public static <T extends Payload> boolean hasSufficientEntries(
       final Collection<SignedData<T>> msgs, final long requiredMsgCount) {
     return msgs.size() >= requiredMsgCount;

@@ -38,6 +38,11 @@ public final class RoundExpiry implements BftEvent {
     return BftEvents.Type.ROUND_EXPIRY;
   }
 
+  /**
+   * Gets view.
+   *
+   * @return the view
+   */
   public ConsensusRoundIdentifier getView() {
     return round;
   }

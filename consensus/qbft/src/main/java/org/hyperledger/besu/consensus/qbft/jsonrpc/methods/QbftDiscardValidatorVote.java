@@ -27,10 +27,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Qbft discard validator vote. */
 public class QbftDiscardValidatorVote implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(QbftDiscardValidatorVote.class);
   private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Qbft discard validator vote.
+   *
+   * @param validatorProvider the validator provider
+   */
   public QbftDiscardValidatorVote(final ValidatorProvider validatorProvider) {
     this.validatorProvider = validatorProvider;
   }

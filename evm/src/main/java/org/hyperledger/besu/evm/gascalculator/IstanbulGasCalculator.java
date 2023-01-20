@@ -18,6 +18,7 @@ import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Istanbul gas calculator. */
 public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   private static final long TX_DATA_ZERO_COST = 4L;

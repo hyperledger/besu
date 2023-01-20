@@ -84,9 +84,9 @@ public interface KeyValueStorage extends Closeable {
    * the underlying storage. Do nothing otherwise.
    *
    * @param key The key to delete.
-   * @throws StorageException any problem encountered during the deletion attempt.
    * @return false if the lock on the underlying storage could not be instantly acquired, true
    *     otherwise
+   * @throws StorageException any problem encountered during the deletion attempt.
    */
   boolean tryDelete(byte[] key) throws StorageException;
 
@@ -99,6 +99,12 @@ public interface KeyValueStorage extends Closeable {
    */
   Set<byte[]> getAllKeysThat(Predicate<byte[]> returnCondition);
 
+  /**
+   * Gets all values from keys that matches the predicate.
+   *
+   * @param returnCondition the return condition
+   * @return the all values from keys that
+   */
   Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition);
 
   /**

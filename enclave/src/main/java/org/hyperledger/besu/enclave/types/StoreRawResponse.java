@@ -17,14 +17,25 @@ package org.hyperledger.besu.enclave.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The Store raw response. */
 public class StoreRawResponse {
   private final String key;
 
+  /**
+   * Instantiates a new Store raw response.
+   *
+   * @param key the key
+   */
   @JsonCreator
   public StoreRawResponse(@JsonProperty("key") final String key) {
     this.key = key;
   }
 
+  /**
+   * Gets key.
+   *
+   * @return the key
+   */
   public String getKey() {
     return key;
   }

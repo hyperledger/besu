@@ -42,12 +42,24 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Clique miner executor. */
 public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner> {
 
   private final Address localAddress;
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
 
+  /**
+   * Instantiates a new Clique miner executor.
+   *
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param pendingTransactions the pending transactions
+   * @param nodeKey the node key
+   * @param miningParams the mining params
+   * @param blockScheduler the block scheduler
+   * @param epochManager the epoch manager
+   */
   public CliqueMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -97,6 +109,12 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     return Optional.of(localAddress);
   }
 
+  /**
+   * Calculate extra data bytes.
+   *
+   * @param parentHeader the parent header
+   * @return the bytes
+   */
   @VisibleForTesting
   Bytes calculateExtraData(final BlockHeader parentHeader) {
     final List<Address> validators = Lists.newArrayList();

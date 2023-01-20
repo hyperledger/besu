@@ -20,13 +20,19 @@ import java.io.ByteArrayInputStream;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The EOF layout. */
 public class EOFLayout {
 
+  /** The Section Terminator. */
   static final int SECTION_TERMINATOR = 0x00;
+  /** The Section types. */
   static final int SECTION_TYPES = 0x01;
+  /** The Section code. */
   static final int SECTION_CODE = 0x02;
+  /** The Section data. */
   static final int SECTION_DATA = 0x03;
 
+  /** The Max supported section. */
   static final int MAX_SUPPORTED_VERSION = 1;
 
   private final Bytes container;
@@ -64,6 +70,12 @@ public class EOFLayout {
     return null;
   }
 
+  /**
+   * Parse EOF.
+   *
+   * @param container the container
+   * @return the eof layout
+   */
   public static EOFLayout parseEOF(final Bytes container) {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(container.toArrayUnsafe());
 
@@ -197,6 +209,12 @@ public class EOFLayout {
     return new EOFLayout(container, version, codeSections);
   }
 
+  /**
+   * Read unsigned short int.
+   *
+   * @param inputStream the input stream
+   * @return the int
+   */
   static int readUnsignedShort(final ByteArrayInputStream inputStream) {
     if (inputStream.available() < 2) {
       return -1;
@@ -205,26 +223,57 @@ public class EOFLayout {
     }
   }
 
+  /**
+   * Gets container.
+   *
+   * @return the container
+   */
   public Bytes getContainer() {
     return container;
   }
 
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
   public int getVersion() {
     return version;
   }
 
+  /**
+   * Get code section count.
+   *
+   * @return the code section count
+   */
   public int getCodeSectionCount() {
     return codeSections == null ? 0 : codeSections.length;
   }
 
+  /**
+   * Get code sections.
+   *
+   * @param i the index
+   * @return the Code section
+   */
   public CodeSection getCodeSection(final int i) {
     return codeSections[i];
   }
 
+  /**
+   * Gets invalid reason.
+   *
+   * @return the invalid reason
+   */
   public String getInvalidReason() {
     return invalidReason;
   }
 
+  /**
+   * Is valid.
+   *
+   * @return the boolean
+   */
   public boolean isValid() {
     return invalidReason == null;
   }

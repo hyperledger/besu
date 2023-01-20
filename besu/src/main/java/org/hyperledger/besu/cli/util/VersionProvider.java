@@ -21,9 +21,15 @@ import java.util.stream.Stream;
 
 import picocli.CommandLine;
 
+/** The Version provider used by PicoCli to report Besu version on Cli. */
 public class VersionProvider implements CommandLine.IVersionProvider {
   private final PluginVersionsProvider pluginVersionsProvider;
 
+  /**
+   * Instantiates a new Version provider.
+   *
+   * @param pluginVersionsProvider the plugin versions provider
+   */
   public VersionProvider(final PluginVersionsProvider pluginVersionsProvider) {
     this.pluginVersionsProvider = pluginVersionsProvider;
   }

@@ -30,6 +30,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Signed data validator. */
 public class SignedDataValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(SignedDataValidator.class);
@@ -40,6 +41,13 @@ public class SignedDataValidator {
 
   private Optional<SignedData<ProposalPayload>> proposal = Optional.empty();
 
+  /**
+   * Instantiates a new Signed data validator.
+   *
+   * @param validators the validators
+   * @param expectedProposer the expected proposer
+   * @param roundIdentifier the round identifier
+   */
   public SignedDataValidator(
       final Collection<Address> validators,
       final Address expectedProposer,
@@ -49,6 +57,12 @@ public class SignedDataValidator {
     this.roundIdentifier = roundIdentifier;
   }
 
+  /**
+   * Validate proposal.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateProposal(final SignedData<ProposalPayload> msg) {
 
     if (proposal.isPresent()) {
@@ -98,6 +112,12 @@ public class SignedDataValidator {
     return true;
   }
 
+  /**
+   * Validate prepare.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validatePrepare(final SignedData<PreparePayload> msg) {
     final String msgType = "Prepare";
 
@@ -113,6 +133,12 @@ public class SignedDataValidator {
     return validateDigestMatchesProposal(msg.getPayload().getDigest(), msgType);
   }
 
+  /**
+   * Validate commit.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateCommit(final SignedData<CommitPayload> msg) {
     final String msgType = "Commit";
 

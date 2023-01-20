@@ -22,12 +22,24 @@ public abstract class MainnetPrecompiledContracts {
 
   private MainnetPrecompiledContracts() {}
 
+  /**
+   * Frontier precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
   public static PrecompileContractRegistry frontier(final GasCalculator gasCalculator) {
     PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     populateForFrontier(precompileContractRegistry, gasCalculator);
     return precompileContractRegistry;
   }
 
+  /**
+   * Populate registry for frontier.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
   public static void populateForFrontier(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     registry.put(Address.ECREC, new ECRECPrecompiledContract(gasCalculator));
@@ -36,16 +48,34 @@ public abstract class MainnetPrecompiledContracts {
     registry.put(Address.ID, new IDPrecompiledContract(gasCalculator));
   }
 
+  /**
+   * Homestead precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
   public static PrecompileContractRegistry homestead(final GasCalculator gasCalculator) {
     return frontier(gasCalculator);
   }
 
+  /**
+   * Byzantium precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
   public static PrecompileContractRegistry byzantium(final GasCalculator gasCalculator) {
     PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     populateForByzantium(precompileContractRegistry, gasCalculator);
     return precompileContractRegistry;
   }
 
+  /**
+   * Populate registry for byzantium.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
   public static void populateForByzantium(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForFrontier(registry, gasCalculator);
@@ -57,12 +87,24 @@ public abstract class MainnetPrecompiledContracts {
         Address.ALTBN128_PAIRING, AltBN128PairingPrecompiledContract.byzantium(gasCalculator));
   }
 
+  /**
+   * Istanbul precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
   public static PrecompileContractRegistry istanbul(final GasCalculator gasCalculator) {
     PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     populateForIstanbul(precompileContractRegistry, gasCalculator);
     return precompileContractRegistry;
   }
 
+  /**
+   * Populate registry for istanbul.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
   public static void populateForIstanbul(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForByzantium(registry, gasCalculator);
@@ -73,6 +115,12 @@ public abstract class MainnetPrecompiledContracts {
     registry.put(Address.BLAKE2B_F_COMPRESSION, new BLAKE2BFPrecompileContract(gasCalculator));
   }
 
+  /**
+   * Populate registry for bls12.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
   public static void populateForBLS12(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForIstanbul(registry, gasCalculator);

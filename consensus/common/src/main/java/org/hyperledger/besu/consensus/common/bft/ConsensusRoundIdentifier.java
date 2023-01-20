@@ -61,10 +61,20 @@ public class ConsensusRoundIdentifier implements Comparable<ConsensusRoundIdenti
     out.writeInt(round);
   }
 
+  /**
+   * Gets round number.
+   *
+   * @return the round number
+   */
   public int getRoundNumber() {
     return this.round;
   }
 
+  /**
+   * Gets sequence number.
+   *
+   * @return the sequence number
+   */
   public long getSequenceNumber() {
     return this.sequence;
   }

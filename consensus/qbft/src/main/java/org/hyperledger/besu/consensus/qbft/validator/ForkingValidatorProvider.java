@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Collection;
 import java.util.Optional;
 
+/** The Forking validator provider. */
 public class ForkingValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
@@ -35,6 +36,14 @@ public class ForkingValidatorProvider implements ValidatorProvider {
   private final BlockValidatorProvider blockValidatorProvider;
   private final TransactionValidatorProvider transactionValidatorProvider;
 
+  /**
+   * Instantiates a new Forking validator provider.
+   *
+   * @param blockchain the blockchain
+   * @param forksSchedule the forks schedule
+   * @param blockValidatorProvider the block validator provider
+   * @param transactionValidatorProvider the transaction validator provider
+   */
   public ForkingValidatorProvider(
       final Blockchain blockchain,
       final ForksSchedule<QbftConfigOptions> forksSchedule,

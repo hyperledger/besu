@@ -19,10 +19,12 @@ import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The BLS12Pairing precompiled contract. */
 public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 384;
 
+  /** Instantiates a new BLS12Pairing precompiled contract. */
   public BLS12PairingPrecompiledContract() {
     super(
         "BLS12_PAIRING",

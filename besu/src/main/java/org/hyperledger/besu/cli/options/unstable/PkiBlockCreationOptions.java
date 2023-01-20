@@ -29,14 +29,17 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
+/** The Pki block creation Cli options. */
 public class PkiBlockCreationOptions {
 
+  /** The pki block creation enabled. */
   @Option(
       names = {"--Xpki-block-creation-enabled"},
       hidden = true,
       description = "Enable PKI integration (default: ${DEFAULT-VALUE})")
   Boolean enabled = false;
 
+  /** The Key store type. */
   @Option(
       names = {"--Xpki-block-creation-keystore-type"},
       hidden = true,
@@ -45,6 +48,7 @@ public class PkiBlockCreationOptions {
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   String keyStoreType = PkiKeyStoreConfiguration.DEFAULT_KEYSTORE_TYPE;
 
+  /** The Key store file. */
   @Option(
       names = {"--Xpki-block-creation-keystore-file"},
       hidden = true,
@@ -52,6 +56,7 @@ public class PkiBlockCreationOptions {
       description = "Keystore containing key/certificate for PKI Block Creation.")
   Path keyStoreFile = null;
 
+  /** The Key store password file. */
   @Option(
       names = {"--Xpki-block-creation-keystore-password-file"},
       hidden = true,
@@ -60,6 +65,7 @@ public class PkiBlockCreationOptions {
           "File containing password to unlock keystore for PKI Integration. Required if PKI Block Creation is enabled.")
   Path keyStorePasswordFile = null;
 
+  /** The Certificate alias. */
   @Option(
       names = {"--Xpki-block-creation-keystore-certificate-alias"},
       hidden = true,
@@ -69,6 +75,7 @@ public class PkiBlockCreationOptions {
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   String certificateAlias = PkiKeyStoreConfiguration.DEFAULT_CERTIFICATE_ALIAS;
 
+  /** The Trust store type. */
   @Option(
       names = {"--Xpki-block-creation-truststore-type"},
       hidden = true,
@@ -77,6 +84,7 @@ public class PkiBlockCreationOptions {
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   String trustStoreType = PkiKeyStoreConfiguration.DEFAULT_KEYSTORE_TYPE;
 
+  /** The Trust store file. */
   @Option(
       names = {"--Xpki-block-creation-truststore-file"},
       hidden = true,
@@ -84,6 +92,7 @@ public class PkiBlockCreationOptions {
       description = "Truststore containing trusted certificates for PKI Block Creation.")
   Path trustStoreFile = null;
 
+  /** The Trust store password file. */
   @Option(
       names = {"--Xpki-block-creation-truststore-password-file"},
       hidden = true,
@@ -91,6 +100,7 @@ public class PkiBlockCreationOptions {
       description = "File containing password to unlock truststore for PKI Block Creation.")
   Path trustStorePasswordFile = null;
 
+  /** The Crl file. */
   @Option(
       names = {"--Xpki-block-creation-crl-file"},
       hidden = true,
@@ -98,6 +108,12 @@ public class PkiBlockCreationOptions {
       description = "File with all CRLs for PKI Block Creation.")
   Path crlFile = null;
 
+  /**
+   * As domain config optional.
+   *
+   * @param commandLine the command line
+   * @return the optional
+   */
   public Optional<PkiKeyStoreConfiguration> asDomainConfig(final CommandLine commandLine) {
     if (!enabled) {
       return Optional.empty();
@@ -127,6 +143,12 @@ public class PkiBlockCreationOptions {
             .build());
   }
 
+  /**
+   * Check pki block creation options dependencies.
+   *
+   * @param logger the logger
+   * @param commandLine the command line
+   */
   public void checkPkiBlockCreationOptionsDependencies(
       final Logger logger, final CommandLine commandLine) {
     CommandLineUtils.checkOptionDependencies(

@@ -39,6 +39,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
+/** Subcommand that performs back up of state and accounts at a specified block */
 @Command(
     name = "x-backup-state",
     description = "Backs up the state and accounts at a specified block.",

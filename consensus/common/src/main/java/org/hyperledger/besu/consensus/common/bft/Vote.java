@@ -27,30 +27,65 @@ public class Vote {
   private final Address recipient;
   private final VoteType voteType;
 
+  /** The constant ADD_BYTE_VALUE. */
   public static final byte ADD_BYTE_VALUE = (byte) 0xFF;
+  /** The constant DROP_BYTE_VALUE. */
   public static final byte DROP_BYTE_VALUE = (byte) 0x0L;
 
+  /**
+   * Instantiates a new Vote.
+   *
+   * @param recipient the recipient
+   * @param voteType the vote type
+   */
   public Vote(final Address recipient, final VoteType voteType) {
     this.recipient = recipient;
     this.voteType = voteType;
   }
 
+  /**
+   * Auth vote.
+   *
+   * @param address the address
+   * @return the vote
+   */
   public static Vote authVote(final Address address) {
     return new Vote(address, VoteType.ADD);
   }
 
+  /**
+   * Drop vote.
+   *
+   * @param address the address
+   * @return the vote
+   */
   public static Vote dropVote(final Address address) {
     return new Vote(address, VoteType.DROP);
   }
 
+  /**
+   * Gets recipient.
+   *
+   * @return the recipient
+   */
   public Address getRecipient() {
     return recipient;
   }
 
+  /**
+   * Is auth.
+   *
+   * @return the boolean
+   */
   public boolean isAuth() {
     return voteType.equals(VoteType.ADD);
   }
 
+  /**
+   * Is drop.
+   *
+   * @return the boolean
+   */
   public boolean isDrop() {
     return voteType.equals(VoteType.DROP);
   }

@@ -28,10 +28,12 @@ import javax.annotation.Nonnull;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
+/** The Cors allowed origins property used in CLI */
 public class CorsAllowedOriginsProperty extends AbstractList<String> {
 
   private final List<String> domains = new ArrayList<>();
 
+  /** Instantiates a new Cors allowed origins property. */
   public CorsAllowedOriginsProperty() {}
 
   @Override
