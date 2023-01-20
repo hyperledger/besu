@@ -14,10 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import static java.util.stream.Collectors.toList;
+
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -47,7 +53,9 @@ import com.fasterxml.jackson.databind.JsonNode;
   "gasUsed",
   "timestamp",
   "uncles",
-  "transactions"
+  "transactions",
+  "withdrawalsRoot",
+  "withdrawals"
 })
 public class BlockResult implements JsonRpcResult {
 
@@ -73,6 +81,8 @@ public class BlockResult implements JsonRpcResult {
   protected final List<TransactionResult> transactions;
   private final List<JsonNode> ommers;
   private final String coinbase;
+  private final String withdrawalsRoot;
+  private final List<WithdrawalParameter> withdrawals;
 
   public <T extends TransactionResult> BlockResult(
       final BlockHeader header,
@@ -80,7 +90,7 @@ public class BlockResult implements JsonRpcResult {
       final List<JsonNode> ommers,
       final Difficulty totalDifficulty,
       final int size) {
-    this(header, transactions, ommers, totalDifficulty, size, false);
+    this(header, transactions, ommers, totalDifficulty, size, false, Optional.empty());
   }
 
   public <T extends TransactionResult> BlockResult(
@@ -89,7 +99,8 @@ public class BlockResult implements JsonRpcResult {
       final List<JsonNode> ommers,
       final Difficulty totalDifficulty,
       final int size,
-      final boolean includeCoinbase) {
+      final boolean includeCoinbase,
+      final Optional<List<Withdrawal>> withdrawals) {
     this.number = Quantity.create(header.getNumber());
     this.hash = header.getHash().toString();
     this.mixHash = header.getMixHash().toString();
@@ -112,6 +123,11 @@ public class BlockResult implements JsonRpcResult {
     this.ommers = ommers;
     this.transactions = transactions;
     this.coinbase = includeCoinbase ? header.getCoinbase().toString() : null;
+    this.withdrawalsRoot = header.getWithdrawalsRoot().map(Hash::toString).orElse(null);
+    this.withdrawals =
+        withdrawals
+            .map(w -> w.stream().map(WithdrawalParameter::fromWithdrawal).collect(toList()))
+            .orElse(null);
   }
 
   @JsonGetter(value = "number")
@@ -223,5 +239,15 @@ public class BlockResult implements JsonRpcResult {
   @JsonInclude(Include.NON_NULL)
   public String getCoinbase() {
     return coinbase;
+  }
+
+  @JsonGetter(value = "withdrawalsRoot")
+  public String getWithdrawalsRoot() {
+    return withdrawalsRoot;
+  }
+
+  @JsonGetter(value = "withdrawals")
+  public List<WithdrawalParameter> getWithdrawals() {
+    return withdrawals;
   }
 }

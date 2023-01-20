@@ -15,7 +15,6 @@
 package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
@@ -43,7 +42,6 @@ import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.protocol.exceptions.ClientConnectionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 import org.web3j.utils.Restriction;
@@ -141,7 +139,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   }
 
   @Test
-  public void mustNotSucceedWithWronglyEncodedFunction() {
+  public void mustNotSucceedWithWronglyEncodedFunction() throws IOException {
 
     final String privacyGroupId =
         minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
@@ -162,9 +160,8 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
 
     final Request<Object, EthCall> priv_call = privCall(privacyGroupId, eventEmitter, true, false);
 
-    assertThatExceptionOfType(ClientConnectionException.class)
-        .isThrownBy(() -> priv_call.send())
-        .withMessageContaining("Invalid params");
+    final String errorMessage = priv_call.send().getError().getMessage();
+    assertThat(errorMessage).isEqualTo("Invalid params");
   }
 
   @Test
