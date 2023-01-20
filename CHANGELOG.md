@@ -17,6 +17,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Send only hash announcement for blob transaction type [#4940](https://github.com/hyperledger/besu/pull/4940)
 - Add `excess_data_gas` field to block header [#4958](https://github.com/hyperledger/besu/pull/4958)
 
 ### Bug Fixes

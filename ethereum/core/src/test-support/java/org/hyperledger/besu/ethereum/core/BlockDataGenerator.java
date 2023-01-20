@@ -373,6 +373,8 @@ public class BlockDataGenerator {
         return eip1559Transaction(payload, to);
       case ACCESS_LIST:
         return accessListTransaction(payload, to);
+      case BLOB:
+        return blobTransaction(payload, to);
       default:
         throw new RuntimeException(
             String.format(
@@ -420,6 +422,21 @@ public class BlockDataGenerator {
         .payload(payload)
         .chainId(BigInteger.ONE)
         .signAndBuild(generateKeyPair());
+  }
+
+  private Transaction blobTransaction(final Bytes payload, final Address to) {
+    return Transaction.builder()
+        .type(TransactionType.BLOB)
+        .nonce(random.nextLong())
+        .maxPriorityFeePerGas(Wei.wrap(bytesValue(4)))
+        .maxFeePerGas(Wei.wrap(bytesValue(4)))
+        .gasLimit(positiveLong())
+        .to(to)
+        .value(Wei.of(positiveLong()))
+        .payload(payload)
+        .chainId(BigInteger.ONE)
+        .signAndBuild(generateKeyPair());
+    // ToDo 4844: specialize for blob when more field will be added for it
   }
 
   private Transaction frontierTransaction(final Bytes payload, final Address to) {
