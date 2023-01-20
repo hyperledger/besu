@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -43,12 +45,20 @@ public class WithdrawalParameter {
     this.amount = amount;
   }
 
+  public static WithdrawalParameter fromWithdrawal(final Withdrawal withdrawal) {
+    return new WithdrawalParameter(
+        withdrawal.getIndex().toBytes().toQuantityHexString(),
+        withdrawal.getValidatorIndex().toBytes().toQuantityHexString(),
+        withdrawal.getAddress().toString(),
+        withdrawal.getAmount().toShortHexString());
+  }
+
   public Withdrawal toWithdrawal() {
     return new Withdrawal(
         UInt64.fromHexString(index),
         UInt64.fromHexString(validatorIndex),
         Address.fromHexString(address),
-        Wei.fromHexString(amount));
+        GWei.fromHexString(amount));
   }
 
   public JsonObject asJsonObject() {
@@ -77,6 +87,22 @@ public class WithdrawalParameter {
   @JsonGetter
   public String getAmount() {
     return amount;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final WithdrawalParameter that = (WithdrawalParameter) o;
+    return Objects.equals(index, that.index)
+        && Objects.equals(validatorIndex, that.validatorIndex)
+        && Objects.equals(address, that.address)
+        && Objects.equals(amount, that.amount);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(index, validatorIndex, address, amount);
   }
 
   @Override

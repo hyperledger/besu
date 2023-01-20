@@ -335,7 +335,9 @@ public class BlockDataGenerator {
   }
 
   private TransactionType transactionType() {
-    return transactionType(TransactionType.values());
+    // TODO: when TransactionType.EIP4844 is fully supported, revert this.
+    return transactionType(
+        TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
   }
 
   private TransactionType transactionType(final TransactionType... transactionTypes) {
@@ -441,7 +443,11 @@ public class BlockDataGenerator {
   }
 
   public Set<Transaction> transactions(final int n) {
-    return transactions(n, TransactionType.values());
+    return transactions(
+        n,
+        new TransactionType[] {
+          TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+        });
   }
 
   public Set<Transaction> transactionsWithAllTypes() {
@@ -451,7 +457,11 @@ public class BlockDataGenerator {
   public Set<Transaction> transactionsWithAllTypes(final int atLeast) {
     checkArgument(atLeast >= 0);
     final HashSet<TransactionType> remainingTransactionTypes =
-        new HashSet<>(Set.of(TransactionType.values()));
+        new HashSet<>(
+            Set.of(
+                new TransactionType[] {
+                  TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+                }));
     final HashSet<Transaction> transactions = new HashSet<>();
     while (transactions.size() < atLeast || !remainingTransactionTypes.isEmpty()) {
       final Transaction newTransaction = transaction();
@@ -627,7 +637,9 @@ public class BlockDataGenerator {
     private Optional<Long> timestamp = Optional.empty();
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
-    private TransactionType[] transactionTypes = TransactionType.values();
+    private TransactionType[] transactionTypes = {
+      TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+    };
     private Optional<Address> coinbase = Optional.empty();
     private Optional<Optional<Wei>> maybeBaseFee = Optional.empty();
 

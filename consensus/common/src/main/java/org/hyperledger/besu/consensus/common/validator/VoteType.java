@@ -19,6 +19,8 @@ package org.hyperledger.besu.consensus.common.validator;
  * attempt to determine how said vote should be serialised/deserialised.
  */
 public enum VoteType {
+  /** Add vote type. */
   ADD,
+  /** Drop vote type. */
   DROP;
 }

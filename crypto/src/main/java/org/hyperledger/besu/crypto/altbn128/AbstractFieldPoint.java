@@ -22,26 +22,48 @@ import com.google.common.base.MoreObjects;
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:
  * https://github.com/ethereum/py_ecc/blob/master/py_ecc/bn128/bn128_field_elements.py
+ *
+ * @param <U> the type parameter
  */
 @SuppressWarnings("rawtypes")
 public abstract class AbstractFieldPoint<U extends AbstractFieldPoint> implements FieldPoint<U> {
 
   private static final BigInteger TWO = BigInteger.valueOf(2);
 
+  /** The X. */
   @SuppressWarnings("rawtypes")
   protected final FieldElement x;
 
+  /** The Y. */
   @SuppressWarnings("rawtypes")
   protected final FieldElement y;
 
+  /**
+   * Instantiates a new Abstract field point.
+   *
+   * @param x the x
+   * @param y the y
+   */
   @SuppressWarnings("rawtypes")
   AbstractFieldPoint(final FieldElement x, final FieldElement y) {
     this.x = x;
     this.y = y;
   }
 
+  /**
+   * Infinity u.
+   *
+   * @return the u
+   */
   protected abstract U infinity();
 
+  /**
+   * New instance of generic type U.
+   *
+   * @param x the x
+   * @param y the y
+   * @return the U
+   */
   @SuppressWarnings("rawtypes")
   protected abstract U newInstance(final FieldElement x, final FieldElement y);
 

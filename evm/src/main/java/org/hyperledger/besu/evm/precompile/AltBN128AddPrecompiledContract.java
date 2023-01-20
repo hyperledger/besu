@@ -29,6 +29,7 @@ import javax.annotation.Nonnull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
+/** The AltBN128Add precompiled contract. */
 public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 128;
@@ -44,10 +45,22 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
     this.gasCost = gasCost;
   }
 
+  /**
+   * Create Byzantium AltBN128Add precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the AltBN128Add precompiled contract
+   */
   public static AltBN128AddPrecompiledContract byzantium(final GasCalculator gasCalculator) {
     return new AltBN128AddPrecompiledContract(gasCalculator, 500L);
   }
 
+  /**
+   * Create Istanbul AltBN128Add precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the AltBN128Add precompiled contract
+   */
   public static AltBN128AddPrecompiledContract istanbul(final GasCalculator gasCalculator) {
     return new AltBN128AddPrecompiledContract(gasCalculator, 150L);
   }

@@ -14,11 +14,23 @@
  */
 package org.hyperledger.besu.enclave;
 
+/** The Enclave IO exception. */
 public class EnclaveIOException extends RuntimeException {
+  /**
+   * Instantiates a new Enclave IO exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
   public EnclaveIOException(final String message, final Throwable cause) {
     super(message, cause);
   }
 
+  /**
+   * Instantiates a new Enclave IO exception.
+   *
+   * @param message the message
+   */
   public EnclaveIOException(final String message) {
     super(message);
   }

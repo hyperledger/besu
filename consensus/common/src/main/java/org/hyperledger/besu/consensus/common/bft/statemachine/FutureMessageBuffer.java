@@ -41,6 +41,13 @@ public class FutureMessageBuffer {
   private final long futureMessagesLimit;
   private long chainHeight;
 
+  /**
+   * Instantiates a new Future message buffer.
+   *
+   * @param futureMessagesMaxDistance the future messages max distance
+   * @param futureMessagesLimit the future messages limit
+   * @param chainHeight the chain height
+   */
   public FutureMessageBuffer(
       final long futureMessagesMaxDistance,
       final long futureMessagesLimit,
@@ -50,6 +57,12 @@ public class FutureMessageBuffer {
     this.chainHeight = chainHeight;
   }
 
+  /**
+   * Add message.
+   *
+   * @param msgChainHeight the msg chain height
+   * @param rawMsg the raw msg
+   */
   public void addMessage(final long msgChainHeight, final Message rawMsg) {
     if (futureMessagesLimit == 0 || !validMessageHeight(msgChainHeight, chainHeight)) {
       return;
@@ -83,6 +96,12 @@ public class FutureMessageBuffer {
     }
   }
 
+  /**
+   * Retrieve messages for height.
+   *
+   * @param height the height
+   * @return the list
+   */
   public List<Message> retrieveMessagesForHeight(final long height) {
     chainHeight = height;
     final List<Message> messages = buffer.getOrDefault(height, Collections.emptyList());
@@ -98,6 +117,11 @@ public class FutureMessageBuffer {
     }
   }
 
+  /**
+   * Total messages size.
+   *
+   * @return the long
+   */
   @VisibleForTesting
   long totalMessagesSize() {
     return buffer.values().stream().map(List::size).reduce(0, Integer::sum).longValue();

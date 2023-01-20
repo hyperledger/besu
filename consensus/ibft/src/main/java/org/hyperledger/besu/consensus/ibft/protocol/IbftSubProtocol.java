@@ -18,13 +18,21 @@ import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
+/** The Ibft sub protocol. */
 public class IbftSubProtocol implements SubProtocol {
 
+  /** The constant NAME. */
   public static String NAME = "IBF";
+  /** The constant IBFV1. */
   public static final Capability IBFV1 = Capability.create(NAME, 1);
 
   private static final IbftSubProtocol INSTANCE = new IbftSubProtocol();
 
+  /**
+   * Get ibft sub protocol.
+   *
+   * @return the ibft sub protocol
+   */
   public static IbftSubProtocol get() {
     return INSTANCE;
   }

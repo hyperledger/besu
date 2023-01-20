@@ -15,39 +15,43 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
 
 import java.util.Objects;
 
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class Withdrawal {
+public class Withdrawal implements org.hyperledger.besu.plugin.data.Withdrawal {
   private final UInt64 index;
   private final UInt64 validatorIndex;
   private final Address address;
-  private final Wei amount;
+  private final GWei amount;
 
   public Withdrawal(
-      final UInt64 index, final UInt64 validatorIndex, final Address address, final Wei amount) {
+      final UInt64 index, final UInt64 validatorIndex, final Address address, final GWei amount) {
     this.index = index;
     this.validatorIndex = validatorIndex;
     this.address = address;
     this.amount = amount;
   }
 
+  @Override
   public UInt64 getIndex() {
     return index;
   }
 
+  @Override
   public UInt64 getValidatorIndex() {
     return validatorIndex;
   }
 
+  @Override
   public Address getAddress() {
     return address;
   }
 
-  public Wei getAmount() {
+  @Override
+  public GWei getAmount() {
     return amount;
   }
 

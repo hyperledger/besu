@@ -20,12 +20,20 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;
 
+/** The Prepared certificate. */
 public class PreparedCertificate {
 
   private final Block block;
   private final List<SignedData<PreparePayload>> prepares;
   private final int round;
 
+  /**
+   * Instantiates a new Prepared certificate.
+   *
+   * @param block the block
+   * @param prepares the prepares
+   * @param round the round
+   */
   public PreparedCertificate(
       final Block block, final List<SignedData<PreparePayload>> prepares, final int round) {
     this.block = block;
@@ -33,14 +41,29 @@ public class PreparedCertificate {
     this.round = round;
   }
 
+  /**
+   * Gets round.
+   *
+   * @return the round
+   */
   public int getRound() {
     return round;
   }
 
+  /**
+   * Gets block.
+   *
+   * @return the block
+   */
   public Block getBlock() {
     return block;
   }
 
+  /**
+   * Gets list of Prepare payload messages.
+   *
+   * @return the prepares
+   */
   public List<SignedData<PreparePayload>> getPrepares() {
     return prepares;
   }

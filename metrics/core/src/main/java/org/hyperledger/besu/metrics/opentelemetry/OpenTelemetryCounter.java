@@ -21,11 +21,18 @@ import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.metrics.LongCounter;
 
+/** The Open telemetry counter. */
 public class OpenTelemetryCounter implements LabelledMetric<Counter> {
 
   private final LongCounter counter;
   private final String[] labelNames;
 
+  /**
+   * Instantiates a new Open telemetry counter.
+   *
+   * @param counter the counter
+   * @param labelNames the label names
+   */
   public OpenTelemetryCounter(final LongCounter counter, final String... labelNames) {
     this.counter = counter;
     this.labelNames = labelNames;

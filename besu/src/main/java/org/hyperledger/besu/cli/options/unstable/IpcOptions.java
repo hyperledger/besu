@@ -21,13 +21,25 @@ import java.util.List;
 
 import picocli.CommandLine;
 
+/** The Ipc CLI options. */
 public class IpcOptions {
   private static final String DEFAULT_IPC_FILE = "besu.ipc";
 
+  /**
+   * Create ipc options.
+   *
+   * @return the ipc options
+   */
   public static IpcOptions create() {
     return new IpcOptions();
   }
 
+  /**
+   * Gets default path.
+   *
+   * @param dataDir the data dir
+   * @return the default path
+   */
   public static Path getDefaultPath(final Path dataDir) {
     return dataDir.resolve(DEFAULT_IPC_FILE);
   }
@@ -57,14 +69,29 @@ public class IpcOptions {
           "Comma separated list of APIs to enable on JSON-RPC IPC service (default: ${DEFAULT-VALUE})")
   private final List<String> rpcIpcApis = DEFAULT_RPC_APIS;
 
+  /**
+   * Whether IPC options are enabled.
+   *
+   * @return true for enabled, false otherwise.
+   */
   public Boolean isEnabled() {
     return enabled;
   }
 
+  /**
+   * Gets ipc path.
+   *
+   * @return the ipc path
+   */
   public Path getIpcPath() {
     return ipcPath;
   }
 
+  /**
+   * Gets rpc ipc apis.
+   *
+   * @return the rpc ipc apis
+   */
   public List<String> getRpcIpcApis() {
     return rpcIpcApis;
   }

@@ -21,11 +21,17 @@ import org.hyperledger.besu.evm.Code;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+/** The Code cache. */
 public class CodeCache {
 
   private final Cache<Hash, Code> cache;
   private final long weightLimit;
 
+  /**
+   * Instantiates a new Code cache.
+   *
+   * @param config the config
+   */
   public CodeCache(final EvmConfiguration config) {
     this(config.getJumpDestCacheWeightBytes());
   }
@@ -36,27 +42,55 @@ public class CodeCache {
         Caffeine.newBuilder().maximumWeight(maxWeightBytes).weigher(new CodeScale()).build();
   }
 
+  /**
+   * Invalidate cache for given key.
+   *
+   * @param key the key
+   */
   public void invalidate(final Hash key) {
     this.cache.invalidate(key);
   }
 
+  /** Clean up. */
   public void cleanUp() {
     this.cache.cleanUp();
   }
 
+  /**
+   * Gets if present.
+   *
+   * @param codeHash the code hash
+   * @return the if present
+   */
   public Code getIfPresent(final Hash codeHash) {
     return cache.getIfPresent(codeHash);
   }
 
+  /**
+   * Put.
+   *
+   * @param key the key
+   * @param value the value
+   */
   public void put(final Hash key, final Code value) {
     cache.put(key, value);
   }
 
+  /**
+   * Size of cache.
+   *
+   * @return the long
+   */
   public long size() {
     cache.cleanUp();
     return cache.estimatedSize();
   }
 
+  /**
+   * Gets weight limit.
+   *
+   * @return the weight limit
+   */
   public long getWeightLimit() {
     return weightLimit;
   }

@@ -43,6 +43,8 @@ public class BlockHeaderBuilder {
 
   private Hash transactionsRoot;
 
+  private Hash withdrawalsRoot = null;
+
   private Hash receiptsRoot;
 
   private LogsBloomFilter logsBloom;
@@ -111,7 +113,8 @@ public class BlockHeaderBuilder {
         .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
         .nonce(header.getNonce())
-        .prevRandao(header.getPrevRandao().orElse(null));
+        .prevRandao(header.getPrevRandao().orElse(null))
+        .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -132,6 +135,7 @@ public class BlockHeaderBuilder {
             .extraData(fromBuilder.extraData)
             .baseFee(fromBuilder.baseFee)
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
+            .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -157,6 +161,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         nonce.getAsLong(),
+        withdrawalsRoot,
         blockHeaderFunctions);
   }
 
@@ -192,7 +197,8 @@ public class BlockHeaderBuilder {
         timestamp,
         extraData,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        withdrawalsRoot);
   }
 
   private void validateBlockHeader() {
@@ -252,6 +258,7 @@ public class BlockHeaderBuilder {
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
     return this;
   }
 
@@ -359,6 +366,11 @@ public class BlockHeaderBuilder {
     if (prevRandao != null) {
       this.mixHashOrPrevRandao = prevRandao;
     }
+    return this;
+  }
+
+  public BlockHeaderBuilder withdrawalsRoot(final Hash hash) {
+    this.withdrawalsRoot = hash;
     return this;
   }
 }

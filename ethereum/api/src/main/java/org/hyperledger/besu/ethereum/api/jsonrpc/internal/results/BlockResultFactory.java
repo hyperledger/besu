@@ -107,7 +107,10 @@ public class BlockResultFactory {
 
     final long blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
     return new EngineGetPayloadResultV2(
-        blockWithReceipts.getHeader(), txs, Quantity.create(blockValue));
+        blockWithReceipts.getHeader(),
+        txs,
+        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        Quantity.create(blockValue));
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

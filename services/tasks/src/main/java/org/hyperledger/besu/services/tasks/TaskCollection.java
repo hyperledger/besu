@@ -16,6 +16,11 @@ package org.hyperledger.besu.services.tasks;
 
 import java.io.Closeable;
 
+/**
+ * The interface Task collection.
+ *
+ * @param <T> the type parameter
+ */
 public interface TaskCollection<T> extends Closeable {
   /**
    * Add some data that needs to be processed.
@@ -26,7 +31,7 @@ public interface TaskCollection<T> extends Closeable {
 
   /**
    * Get a task for processing. This task will be tracked as a pending task until either {@code
-   * Task.markCompleted} or {@code Task.requeue} is called.
+   * Task.markCompleted}* or {@code Task.requeue} is called.
    *
    * @return The task to be processed.
    */

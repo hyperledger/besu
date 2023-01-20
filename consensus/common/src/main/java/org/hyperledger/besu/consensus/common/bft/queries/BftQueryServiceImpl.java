@@ -30,12 +30,22 @@ import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Bft query service. */
 public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQueryService {
 
   private final ValidatorProvider validatorProvider;
   private final String consensusMechanismName;
   private final BftBlockInterface bftBlockInterface;
 
+  /**
+   * Instantiates a new Bft query service.
+   *
+   * @param blockInterface the block interface
+   * @param blockchain the blockchain
+   * @param validatorProvider the validator provider
+   * @param nodeKey the node key
+   * @param consensusMechanismName the consensus mechanism name
+   */
   public BftQueryServiceImpl(
       final BftBlockInterface blockInterface,
       final Blockchain blockchain,

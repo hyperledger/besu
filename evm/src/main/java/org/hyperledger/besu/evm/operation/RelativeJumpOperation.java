@@ -22,14 +22,31 @@ import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Relative jump operation. */
 public class RelativeJumpOperation extends AbstractFixedCostOperation {
 
+  /** The constant OPCODE. */
   public static final int OPCODE = 0x5c;
 
+  /**
+   * Instantiates a new Relative jump operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public RelativeJumpOperation(final GasCalculator gasCalculator) {
     this(OPCODE, "RJUMP", 0, 0, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
+  /**
+   * Instantiates a new Relative jump operation.
+   *
+   * @param opcode the opcode
+   * @param name the name
+   * @param stackItemsConsumed the stack items consumed
+   * @param stackItemsProduced the stack items produced
+   * @param gasCalculator the gas calculator
+   * @param fixedCost the fixed cost
+   */
   protected RelativeJumpOperation(
       final int opcode,
       final String name,

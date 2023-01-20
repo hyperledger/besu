@@ -17,22 +17,44 @@ package org.hyperledger.besu.consensus.common;
 import java.util.Comparator;
 import java.util.Objects;
 
+/**
+ * The Fork spec.
+ *
+ * @param <C> the type parameter
+ */
 public class ForkSpec<C> {
 
+  /** The constant COMPARATOR. */
   public static final Comparator<ForkSpec<?>> COMPARATOR = Comparator.comparing(ForkSpec::getBlock);
 
   private final long block;
   private final C value;
 
+  /**
+   * Instantiates a new Fork spec.
+   *
+   * @param block the block
+   * @param value the value
+   */
   public ForkSpec(final long block, final C value) {
     this.block = block;
     this.value = value;
   }
 
+  /**
+   * Gets block.
+   *
+   * @return the block
+   */
   public long getBlock() {
     return block;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public C getValue() {
     return value;
   }

@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import com.google.common.collect.ForwardingMap;
 import org.apache.tuweni.bytes.Bytes;
@@ -96,7 +97,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   public Account get(final Address address) {
-    return super.get(address);
+    return super.getAccount(address);
   }
 
   @Override
@@ -151,6 +152,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   protected BonsaiAccount getForMutation(final Address address) {
+    return loadAccount(address, BonsaiValue::getUpdated);
+  }
+
+  protected BonsaiAccount loadAccount(
+      final Address address,
+      final Function<BonsaiValue<BonsaiAccount>, BonsaiAccount> bonsaiAccountFunction) {
     final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
     if (bonsaiValue == null) {
       final Account account = wrappedWorldView().get(address);
@@ -162,7 +169,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         return null;
       }
     } else {
-      return bonsaiValue.getUpdated();
+      return bonsaiAccountFunction.apply(bonsaiValue);
     }
   }
 
@@ -359,7 +366,15 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       return Optional.empty();
     } else {
       final Optional<UInt256> valueUInt =
-          wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
+          (wrappedWorldView() instanceof BonsaiPersistedWorldState)
+              ? ((BonsaiPersistedWorldState) wrappedWorldView())
+                  .getStorageValueBySlotHash(
+                      () ->
+                          Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
+                              .map(BonsaiAccount::getStorageRoot),
+                      address,
+                      slotHash)
+              : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
       valueUInt.ifPresentOrElse(
           v ->
               storageToUpdate

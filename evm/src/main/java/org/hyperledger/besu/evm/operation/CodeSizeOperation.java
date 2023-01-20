@@ -21,8 +21,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Code size operation. */
 public class CodeSizeOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Code size operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CodeSizeOperation(final GasCalculator gasCalculator) {
     super(0x38, "CODESIZE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }

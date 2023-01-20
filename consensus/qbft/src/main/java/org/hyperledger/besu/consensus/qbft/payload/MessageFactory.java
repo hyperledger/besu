@@ -31,14 +31,29 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/** The Message factory. */
 public class MessageFactory {
 
   private final NodeKey nodeKey;
 
+  /**
+   * Instantiates a new Message factory.
+   *
+   * @param nodeKey the node key
+   */
   public MessageFactory(final NodeKey nodeKey) {
     this.nodeKey = nodeKey;
   }
 
+  /**
+   * Create proposal.
+   *
+   * @param roundIdentifier the round identifier
+   * @param block the block
+   * @param roundChanges the round changes
+   * @param prepares the prepares
+   * @return the proposal
+   */
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
@@ -50,11 +65,26 @@ public class MessageFactory {
     return new Proposal(createSignedMessage(payload), roundChanges, prepares);
   }
 
+  /**
+   * Create Prepare payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @return the prepare
+   */
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     final PreparePayload payload = new PreparePayload(roundIdentifier, digest);
     return new Prepare(createSignedMessage(payload));
   }
 
+  /**
+   * Create commit payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @param commitSeal the commit seal
+   * @return the commit
+   */
   public Commit createCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
@@ -63,6 +93,13 @@ public class MessageFactory {
     return new Commit(createSignedMessage(payload));
   }
 
+  /**
+   * Create round change payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param preparedRoundData the prepared round data
+   * @return the round change
+   */
   public RoundChange createRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedCertificate> preparedRoundData) {

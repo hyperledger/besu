@@ -34,6 +34,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
+/** The generate-log-bloom-cache CLI command. */
 @Command(
     name = "generate-log-bloom-cache",
     description = "Generate cached values of block log bloom filters.",

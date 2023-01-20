@@ -16,13 +16,24 @@ package org.hyperledger.besu.config;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/** The Merge config options. */
 public class MergeConfigOptions {
   private static final AtomicBoolean mergeEnabled = new AtomicBoolean(false);
 
+  /**
+   * Enables merge.
+   *
+   * @param bool true to enable merge, false otherwise.
+   */
   public static void setMergeEnabled(final boolean bool) {
     mergeEnabled.set(bool);
   }
 
+  /**
+   * Is merge enabled.
+   *
+   * @return true if merge is enabled, false otherwise.
+   */
   public static boolean isMergeEnabled() {
     return mergeEnabled.get();
   }

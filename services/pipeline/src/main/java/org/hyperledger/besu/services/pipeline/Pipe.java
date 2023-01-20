@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * the pipeline aborted.
  *
  * <p>In most cases a Pipe is used through one of two narrower interfaces it supports {@link
- * ReadPipe} and {@link WritePipe}. These are designed to expose only the operations relevant to
+ * ReadPipe}* and {@link WritePipe}. These are designed to expose only the operations relevant to
  * objects either reading from or publishing to the pipe respectively.
  *
  * @param <T> the type of item that flows through the pipe.
@@ -45,6 +45,14 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
   private final AtomicBoolean closed = new AtomicBoolean();
   private final AtomicBoolean aborted = new AtomicBoolean();
 
+  /**
+   * Instantiates a new Pipe.
+   *
+   * @param capacity the capacity
+   * @param inputCounter the input counter
+   * @param outputCounter the output counter
+   * @param abortedItemCounter the aborted item counter
+   */
   public Pipe(
       final int capacity,
       final Counter inputCounter,

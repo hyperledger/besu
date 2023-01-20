@@ -22,6 +22,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
+/** The Ethstats CLI options. */
 public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
 
   private static final String ETHSTATS = "--ethstats";
@@ -44,6 +45,11 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
 
   private EthstatsOptions() {}
 
+  /**
+   * Create ethstats options.
+   *
+   * @return the ethstats options
+   */
   public static EthstatsOptions create() {
     return new EthstatsOptions();
   }
@@ -53,10 +59,20 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
     return NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact);
   }
 
+  /**
+   * Gets ethstats url.
+   *
+   * @return the ethstats url
+   */
   public String getEthstatsUrl() {
     return ethstatsUrl;
   }
 
+  /**
+   * Gets ethstats contact.
+   *
+   * @return the ethstats contact
+   */
   public String getEthstatsContact() {
     return ethstatsContact;
   }

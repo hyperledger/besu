@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
@@ -39,7 +40,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.List;
 import java.util.Optional;
@@ -119,7 +119,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
-    if (!mergeContext.get().isCheckpointPostMergeSync()
+    if (requireTerminalPoWBlockValidation()
+        && !mergeContext.get().isCheckpointPostMergeSync()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)
         && !mergeContext.get().isChainPruningEnabled()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -135,19 +136,27 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
+    final Optional<List<Withdrawal>> withdrawals =
+        maybePayloadAttributes.flatMap(
+            payloadAttributes ->
+                Optional.ofNullable(payloadAttributes.getWithdrawals())
+                    .map(
+                        ws ->
+                            ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList())));
+
+    ForkchoiceResult result =
+        mergeCoordinator.updateForkChoice(
+            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
+
     if (maybePayloadAttributes.isPresent()
-        && !isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
+        && !isPayloadAttributesValid(maybePayloadAttributes.get(), withdrawals, newHead)) {
       warnLambda(
           LOG,
           "Invalid payload attributes: {}",
           () ->
               maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize).orElse(null));
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+      return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
     }
-
-    ForkchoiceResult result =
-        mergeCoordinator.updateForkChoice(
-            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -162,7 +171,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     newHead,
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
-                    payloadAttributes.getSuggestedFeeRecipient()));
+                    payloadAttributes.getSuggestedFeeRecipient(),
+                    withdrawals));
 
     payloadId.ifPresent(
         pid ->
@@ -183,30 +193,15 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   private boolean isPayloadAttributesValid(
-      final EnginePayloadAttributesParameter payloadAttributes, final BlockHeader headBlockHeader) {
+      final EnginePayloadAttributesParameter payloadAttributes,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final BlockHeader headBlockHeader) {
 
     final boolean newTimestampGreaterThanHead =
         payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
-    return newTimestampGreaterThanHead && isWithdrawalsValid(payloadAttributes);
-  }
-
-  private boolean isWithdrawalsValid(final EnginePayloadAttributesParameter payloadAttributes) {
-    final List<Withdrawal> withdrawals =
-        Optional.ofNullable(payloadAttributes.getWithdrawals())
-            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()))
-            .orElse(null);
-
-    return timestampSchedule
-        .getByTimestamp(payloadAttributes.getTimestamp())
-        .map(
-            protocolSpec -> protocolSpec.getWithdrawalsValidator().validateWithdrawals(withdrawals))
-        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
-        // previous fork. This might be resolved when
-        // https://github.com/hyperledger/besu/issues/4789 is played
-        // and if we can combine protocolSchedule and timestampSchedule.
-        .orElseGet(
-            () ->
-                new WithdrawalsValidator.ProhibitedWithdrawals().validateWithdrawals(withdrawals));
+    return newTimestampGreaterThanHead
+        && getWithdrawalsValidator(timestampSchedule, payloadAttributes.getTimestamp())
+            .validateWithdrawals(maybeWithdrawals.orElse(null));
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
@@ -222,9 +217,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                 requestId,
                 new EngineUpdateForkchoiceResult(
                     INVALID, latestValid.orElse(null), null, result.getErrorMessage()));
-        break;
-      case INVALID_PAYLOAD_ATTRIBUTES:
-        response = new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
         break;
       case IGNORE_UPDATE_TO_OLD_HEAD:
         response =
@@ -304,6 +296,14 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     logForkchoiceUpdatedCall(this::logAtDebug, SYNCING, forkChoice);
     return new JsonRpcSuccessResponse(
         requestId, new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
+  }
+
+  protected boolean requireTerminalPoWBlockValidation() {
+    return false;
+  }
+
+  protected JsonRpcError getInvalidPayloadError() {
+    return JsonRpcError.INVALID_PARAMS;
   }
 
   // fcU calls are synchronous, no need to make volatile

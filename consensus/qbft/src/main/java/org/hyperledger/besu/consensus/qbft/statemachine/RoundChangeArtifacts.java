@@ -24,11 +24,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The Round change artifacts. */
 public class RoundChangeArtifacts {
 
   private final List<SignedData<RoundChangePayload>> roundChanges;
   private final Optional<PreparedCertificate> bestPreparedPeer;
 
+  /**
+   * Instantiates a new Round change artifacts.
+   *
+   * @param roundChanges the round changes
+   * @param bestPreparedPeer the best prepared peer
+   */
   public RoundChangeArtifacts(
       final List<SignedData<RoundChangePayload>> roundChanges,
       final Optional<PreparedCertificate> bestPreparedPeer) {
@@ -36,14 +43,30 @@ public class RoundChangeArtifacts {
     this.bestPreparedPeer = bestPreparedPeer;
   }
 
+  /**
+   * Gets best prepared peer certificate.
+   *
+   * @return the best prepared peer
+   */
   public Optional<PreparedCertificate> getBestPreparedPeer() {
     return bestPreparedPeer;
   }
 
+  /**
+   * Gets round changes.
+   *
+   * @return the round changes
+   */
   public List<SignedData<RoundChangePayload>> getRoundChanges() {
     return roundChanges;
   }
 
+  /**
+   * Create round change artifacts.
+   *
+   * @param roundChanges the round changes
+   * @return the round change artifacts
+   */
   public static RoundChangeArtifacts create(final Collection<RoundChange> roundChanges) {
 
     final Comparator<RoundChange> preparedRoundComparator =

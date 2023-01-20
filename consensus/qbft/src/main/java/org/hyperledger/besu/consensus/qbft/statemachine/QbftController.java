@@ -32,12 +32,25 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
+/** The Qbft controller. */
 public class QbftController extends BaseBftController {
 
   private BaseQbftBlockHeightManager currentHeightManager;
   private final QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Qbft controller.
+   *
+   * @param blockchain the blockchain
+   * @param bftFinalState the bft final state
+   * @param qbftBlockHeightManagerFactory the qbft block height manager factory
+   * @param gossiper the gossiper
+   * @param duplicateMessageTracker the duplicate message tracker
+   * @param futureMessageBuffer the future message buffer
+   * @param sychronizerUpdater the sychronizer updater
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public QbftController(
       final Blockchain blockchain,
       final BftFinalState bftFinalState,
