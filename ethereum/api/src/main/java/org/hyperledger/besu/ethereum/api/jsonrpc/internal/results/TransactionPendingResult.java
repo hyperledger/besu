@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -47,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "v",
   "r",
   "s",
-        "blobVersionedHashes"
+  "blobVersionedHashes"
 })
 public class TransactionPendingResult implements TransactionResult {
 
@@ -226,6 +225,7 @@ public class TransactionPendingResult implements TransactionResult {
   }
 
   @JsonGetter(value = "blobVersionedHashes")
-  public List<Hash> getVersionedHashes() { return versionedHashes; }
-
+  public List<Hash> getVersionedHashes() {
+    return versionedHashes;
+  }
 }
