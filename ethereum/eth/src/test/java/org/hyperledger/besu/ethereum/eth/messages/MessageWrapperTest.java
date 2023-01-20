@@ -245,6 +245,7 @@ public class MessageWrapperTest {
         @JsonProperty("r") final String r,
         @JsonProperty("s") final String s,
         @JsonProperty("hash") final String __) {
+
       super(
           Bytes.fromHexStringLenient(nonce).toLong(),
           Wei.fromHexString(gasPrice),
@@ -258,6 +259,7 @@ public class MessageWrapperTest {
                   recIdAndChainId(Byte.decode(v)).getKey()),
           Bytes.fromHexString(data),
           recIdAndChainId(Byte.decode(v)).getValue(),
+          Optional.empty(),
           Optional.empty());
     }
   }
