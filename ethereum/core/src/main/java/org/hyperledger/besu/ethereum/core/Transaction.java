@@ -754,6 +754,7 @@ public class Transaction
       case FRONTIER:
         preimage = frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
         break;
+      case BLOB: // ToDo 4844: specialize for blob when more field will be added for it
       case EIP1559:
         preimage =
             eip1559Preimage(

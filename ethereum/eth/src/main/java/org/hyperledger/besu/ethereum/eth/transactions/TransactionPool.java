@@ -406,7 +406,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public interface TransactionBatchAddedListener {
 
-    void onTransactionsAdded(Iterable<Transaction> transactions);
+    void onTransactionsAdded(Collection<Transaction> transactions);
   }
 
   private static class ValidationResultAndAccount {

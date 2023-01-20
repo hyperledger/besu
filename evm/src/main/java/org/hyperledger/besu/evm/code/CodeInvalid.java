@@ -88,4 +88,9 @@ public class CodeInvalid implements Code {
   public int getCodeSectionCount() {
     return 0;
   }
+
+  @Override
+  public int getEofVersion() {
+    return -1;
+  }
 }
