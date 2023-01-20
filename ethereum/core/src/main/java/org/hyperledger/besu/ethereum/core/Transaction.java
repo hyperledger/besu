@@ -488,7 +488,7 @@ public class Transaction
    */
   public OptionalInt getTotalDataGas() {
     if (transactionType.supportsBlob()) {
-      OptionalInt.of(DATA_GAS_PER_BLOB * versionedHashes.map(List::size).orElseThrow());
+      return OptionalInt.of(DATA_GAS_PER_BLOB * versionedHashes.map(List::size).orElseThrow());
     }
 
     return OptionalInt.empty();

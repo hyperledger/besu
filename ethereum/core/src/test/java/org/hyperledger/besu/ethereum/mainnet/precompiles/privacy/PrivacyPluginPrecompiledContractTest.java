@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -178,7 +179,8 @@ public class PrivacyPluginPrecompiledContractTest {
 
     final Bytes payload = convertPrivateTransactionToBytes(privateTransaction);
 
-    final Transaction transaction = Transaction.builder().payload(payload).build();
+    final Transaction transaction =
+        Transaction.builder().payload(payload).gasPrice(Wei.ZERO).build();
 
     when(messageFrame.getContextVariable(KEY_TRANSACTION)).thenReturn(transaction);
 
