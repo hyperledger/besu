@@ -141,7 +141,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   }
 
   @Test
-  public void mustNotSucceedWithWronglyEncodedFunction() {
+  public void mustNotSucceedWithWronglyEncodedFunction() throws IOException {
 
     final String privacyGroupId =
         minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
@@ -162,9 +162,8 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
 
     final Request<Object, EthCall> priv_call = privCall(privacyGroupId, eventEmitter, true, false);
 
-    assertThatExceptionOfType(ClientConnectionException.class)
-        .isThrownBy(() -> priv_call.send())
-        .withMessageContaining("Invalid params");
+    final String errorMessage = priv_call.send().getError().getMessage();
+    assertThat(errorMessage).isEqualTo("Invalid params");
   }
 
   @Test
