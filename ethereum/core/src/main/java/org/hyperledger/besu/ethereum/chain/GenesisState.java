@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -156,6 +157,7 @@ public final class GenesisState {
         .nonce(parseNonce(genesis))
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
         .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
+        .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
 
@@ -211,6 +213,14 @@ public final class GenesisState {
       nonce = nonce.substring(2);
     }
     return Long.parseUnsignedLong(nonce, 16);
+  }
+
+  private static boolean isShanghaiAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
+    if (shanghaiTimestamp.isPresent()) {
+      return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
+    }
+    return false;
   }
 
   @Override
