@@ -31,6 +31,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    * {@link org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.BodyIdentifier }
    */
   private final List<Transaction> transactions;
+
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
 
