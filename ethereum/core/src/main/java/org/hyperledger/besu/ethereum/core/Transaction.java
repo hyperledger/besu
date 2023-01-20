@@ -768,7 +768,6 @@ public class Transaction
         break;
       case BLOB: // ToDo 4844: specialize for blob when more field will be added for it
       case EIP1559:
-      case BLOB:
         preimage =
             eip1559Preimage(
                 nonce,
