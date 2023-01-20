@@ -20,32 +20,69 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Bft extra data codec. */
 public abstract class BftExtraDataCodec {
 
+  /** The enum Encoding type. */
   protected enum EncodingType {
+    /** All encoding type. */
     ALL,
+    /** Exclude commit seals encoding type. */
     EXCLUDE_COMMIT_SEALS,
+    /** Exclude commit seals and round number encoding type. */
     EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(BftExtraDataCodec.class);
 
+  /** The constant EXTRA_VANITY_LENGTH. */
   public static int EXTRA_VANITY_LENGTH = 32;
 
+  /**
+   * Encode.
+   *
+   * @param bftExtraData the bft extra data
+   * @return the bytes
+   */
   public Bytes encode(final BftExtraData bftExtraData) {
     return encode(bftExtraData, EncodingType.ALL);
   }
 
+  /**
+   * Encode without commit seals.
+   *
+   * @param bftExtraData the bft extra data
+   * @return the bytes
+   */
   public Bytes encodeWithoutCommitSeals(final BftExtraData bftExtraData) {
     return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS);
   }
 
+  /**
+   * Encode without commit seals and round number.
+   *
+   * @param bftExtraData the bft extra data
+   * @return the bytes
+   */
   public Bytes encodeWithoutCommitSealsAndRoundNumber(final BftExtraData bftExtraData) {
     return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
   }
 
+  /**
+   * Encode.
+   *
+   * @param bftExtraData the bft extra data
+   * @param encodingType the encoding type
+   * @return the bytes
+   */
   protected abstract Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType);
 
+  /**
+   * Decode.
+   *
+   * @param blockHeader the block header
+   * @return the bft extra data
+   */
   public BftExtraData decode(final BlockHeader blockHeader) {
     final Object inputExtraData = blockHeader.getParsedExtraData();
     if (inputExtraData instanceof BftExtraData) {
@@ -57,5 +94,11 @@ public abstract class BftExtraDataCodec {
     return decodeRaw(blockHeader.getExtraData());
   }
 
+  /**
+   * Decode raw.
+   *
+   * @param bytes the bytes
+   * @return the bft extra data
+   */
   public abstract BftExtraData decodeRaw(Bytes bytes);
 }

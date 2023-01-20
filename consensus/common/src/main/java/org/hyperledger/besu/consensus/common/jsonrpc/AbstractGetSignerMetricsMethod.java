@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.LongStream;
 
+/** The Abstract get signer metrics method. */
 public abstract class AbstractGetSignerMetricsMethod {
 
   private static final long DEFAULT_RANGE_BLOCK = 100;
@@ -41,6 +42,13 @@ public abstract class AbstractGetSignerMetricsMethod {
   private final BlockInterface blockInterface;
   private final BlockchainQueries blockchainQueries;
 
+  /**
+   * Instantiates a new Abstract get signer metrics method.
+   *
+   * @param validatorProvider the validator provider
+   * @param blockInterface the block interface
+   * @param blockchainQueries the blockchain queries
+   */
   protected AbstractGetSignerMetricsMethod(
       final ValidatorProvider validatorProvider,
       final BlockInterface blockInterface,
@@ -50,6 +58,12 @@ public abstract class AbstractGetSignerMetricsMethod {
     this.blockchainQueries = blockchainQueries;
   }
 
+  /**
+   * Response.
+   *
+   * @param requestContext the request context
+   * @return the json rpc response
+   */
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
     final Optional<BlockParameter> startBlockParameter =

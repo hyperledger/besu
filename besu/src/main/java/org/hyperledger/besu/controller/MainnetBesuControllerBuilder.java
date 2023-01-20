@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+/** The Mainnet besu controller builder. */
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   private EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();

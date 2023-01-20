@@ -414,7 +414,12 @@ public class BlockchainQueries {
                                               .collect(Collectors.toList());
                                       final int size = new Block(header, body).calculateSize();
                                       return new BlockWithMetadata<>(
-                                          header, formattedTxs, ommers, td, size);
+                                          header,
+                                          formattedTxs,
+                                          ommers,
+                                          td,
+                                          size,
+                                          body.getWithdrawals());
                                     })));
   }
 
@@ -468,7 +473,8 @@ public class BlockchainQueries {
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
                                       final int size = new Block(header, body).calculateSize();
-                                      return new BlockWithMetadata<>(header, txs, ommers, td, size);
+                                      return new BlockWithMetadata<>(
+                                          header, txs, ommers, td, size, body.getWithdrawals());
                                     })));
   }
 

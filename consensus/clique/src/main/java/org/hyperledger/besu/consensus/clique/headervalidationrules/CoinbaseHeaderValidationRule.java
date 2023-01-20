@@ -22,12 +22,18 @@ import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Coinbase header validation rule. */
 public class CoinbaseHeaderValidationRule implements DetachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(CoinbaseHeaderValidationRule.class);
 
   private final EpochManager epochManager;
 
+  /**
+   * Instantiates a new Coinbase header validation rule.
+   *
+   * @param epochManager the epoch manager
+   */
   public CoinbaseHeaderValidationRule(final EpochManager epochManager) {
     this.epochManager = epochManager;
   }

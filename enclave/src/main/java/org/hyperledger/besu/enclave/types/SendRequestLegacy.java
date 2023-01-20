@@ -19,10 +19,18 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The Send request Legacy. */
 @JsonPropertyOrder({"payload", "from", "to"})
 public class SendRequestLegacy extends SendRequest {
   private final List<String> to;
 
+  /**
+   * Instantiates a new Send request legacy.
+   *
+   * @param payload the payload
+   * @param from the from
+   * @param to the to
+   */
   public SendRequestLegacy(
       @JsonProperty(value = "payload") final String payload,
       @JsonProperty(value = "from") final String from,
@@ -31,6 +39,11 @@ public class SendRequestLegacy extends SendRequest {
     this.to = to;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   public List<String> getTo() {
     return to;
   }

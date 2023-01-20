@@ -21,10 +21,19 @@ import java.util.List;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
 
+/**
+ * The custom default value provider for Besu CLI options which uses multiple default value
+ * providers such as environment variables or TOML file.
+ */
 public class CascadingDefaultProvider implements IDefaultValueProvider {
 
   private final List<IDefaultValueProvider> defaultValueProviders;
 
+  /**
+   * Instantiates a new Cascading default provider.
+   *
+   * @param defaultValueProviders List of default value providers
+   */
   public CascadingDefaultProvider(final IDefaultValueProvider... defaultValueProviders) {
     this.defaultValueProviders = asList(defaultValueProviders);
   }

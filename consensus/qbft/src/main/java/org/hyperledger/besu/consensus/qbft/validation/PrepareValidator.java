@@ -26,6 +26,7 @@ import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Prepare validator. */
 public class PrepareValidator {
 
   private static final String ERROR_PREFIX = "Invalid Prepare Message";
@@ -36,6 +37,13 @@ public class PrepareValidator {
   private final ConsensusRoundIdentifier targetRound;
   private final Hash expectedDigest;
 
+  /**
+   * Instantiates a new Prepare validator.
+   *
+   * @param validators the validators
+   * @param targetRound the target round
+   * @param expectedDigest the expected digest
+   */
   public PrepareValidator(
       final Collection<Address> validators,
       final ConsensusRoundIdentifier targetRound,
@@ -45,10 +53,22 @@ public class PrepareValidator {
     this.expectedDigest = expectedDigest;
   }
 
+  /**
+   * Validate.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validate(final Prepare msg) {
     return validate(msg.getSignedPayload());
   }
 
+  /**
+   * Validate.
+   *
+   * @param signedPayload the signed payload
+   * @return the boolean
+   */
   public boolean validate(final SignedData<PreparePayload> signedPayload) {
     if (!validators.contains(signedPayload.getAuthor())) {
       LOG.info("{}: did not originate from a recognized validator.", ERROR_PREFIX);

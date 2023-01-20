@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.services.query.IbftQueryService;
 import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
+/** The IBFT query plugin service factory. */
 public class IbftQueryPluginServiceFactory implements PluginServiceFactory {
 
   private final Blockchain blockchain;
@@ -33,6 +34,14 @@ public class IbftQueryPluginServiceFactory implements PluginServiceFactory {
   private final ValidatorProvider validatorProvider;
   private final NodeKey nodeKey;
 
+  /**
+   * Instantiates a new Ibft query plugin service factory.
+   *
+   * @param blockchain the blockchain
+   * @param blockInterface the block interface
+   * @param validatorProvider the validator provider
+   * @param nodeKey the node key
+   */
   public IbftQueryPluginServiceFactory(
       final Blockchain blockchain,
       final BftBlockInterface blockInterface,

@@ -26,24 +26,40 @@ import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/** The Bft block creator. */
 // This class is responsible for creating a block without committer seals (basically it was just
 // too hard to coordinate with the state machine).
 public class BftBlockCreator extends AbstractBlockCreator {
 
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Bft block creator.
+   *
+   * @param forksSchedule the forks schedule
+   * @param localAddress the local address
+   * @param targetGasLimitSupplier the target gas limit supplier
+   * @param extraDataCalculator the extra data calculator
+   * @param pendingTransactions the pending transactions
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param minTransactionGasPrice the min transaction gas price
+   * @param minBlockOccupancyRatio the min block occupancy ratio
+   * @param parentHeader the parent header
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public BftBlockCreator(
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final Address localAddress,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,

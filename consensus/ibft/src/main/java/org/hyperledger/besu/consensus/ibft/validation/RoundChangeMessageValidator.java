@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Round change message validator. */
 public class RoundChangeMessageValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(RoundChangeMessageValidator.class);
@@ -28,6 +29,13 @@ public class RoundChangeMessageValidator {
   private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator;
   private final BftBlockInterface bftBlockInterface;
 
+  /**
+   * Instantiates a new Round change message validator.
+   *
+   * @param roundChangePayloadValidator the round change payload validator
+   * @param proposalBlockConsistencyValidator the proposal block consistency validator
+   * @param bftBlockInterface the bft block interface
+   */
   public RoundChangeMessageValidator(
       final RoundChangePayloadValidator roundChangePayloadValidator,
       final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator,
@@ -37,6 +45,12 @@ public class RoundChangeMessageValidator {
     this.bftBlockInterface = bftBlockInterface;
   }
 
+  /**
+   * Validate round change.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateRoundChange(final RoundChange msg) {
 
     if (!roundChangePayloadValidator.validateRoundChange(msg.getSignedPayload())) {

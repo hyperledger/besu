@@ -29,11 +29,19 @@ import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
+/** Custom Config option search and run handler. */
 public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
   private final IExecutionStrategy resultHandler;
   private final IParameterExceptionHandler parameterExceptionHandler;
   private final Map<String, String> environment;
 
+  /**
+   * Instantiates a new Config option search and run handler.
+   *
+   * @param resultHandler the result handler
+   * @param parameterExceptionHandler the parameter exception handler
+   * @param environment the environment variables map
+   */
   public ConfigOptionSearchAndRunHandler(
       final IExecutionStrategy resultHandler,
       final IParameterExceptionHandler parameterExceptionHandler,
@@ -98,6 +106,13 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
     return Optional.empty();
   }
 
+  /**
+   * Create default value provider default value provider.
+   *
+   * @param commandLine the command line
+   * @param configFile the config file
+   * @return the default value provider
+   */
   @VisibleForTesting
   IDefaultValueProvider createDefaultValueProvider(
       final CommandLine commandLine, final Optional<File> configFile) {

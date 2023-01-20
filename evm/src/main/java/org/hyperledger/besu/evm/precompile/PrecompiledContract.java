@@ -78,6 +78,7 @@ public interface PrecompiledContract {
     return computePrecompile(input, messageFrame).getOutput();
   }
 
+  /** The Precompile contract result. */
   class PrecompileContractResult {
     private final Bytes output;
     private final boolean refundGas;
@@ -105,16 +106,35 @@ public interface PrecompiledContract {
       this.haltReason = haltReason;
     }
 
+    /**
+     * precompile contract result with Success state.
+     *
+     * @param output the output
+     * @return the precompile contract result
+     */
     public static PrecompileContractResult success(final Bytes output) {
       return new PrecompileContractResult(
           output, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
     }
 
+    /**
+     * precompile contract result with revert state.
+     *
+     * @param output the output
+     * @return the precompile contract result
+     */
     public static PrecompileContractResult revert(final Bytes output) {
       return new PrecompileContractResult(
           output, false, MessageFrame.State.REVERT, Optional.empty());
     }
 
+    /**
+     * precompile contract result with Halt state.
+     *
+     * @param output the output
+     * @param haltReason the halt reason
+     * @return the precompile contract result
+     */
     public static PrecompileContractResult halt(
         final Bytes output, final Optional<ExceptionalHaltReason> haltReason) {
       if (haltReason.isEmpty()) {
@@ -124,18 +144,38 @@ public interface PrecompiledContract {
           output, false, MessageFrame.State.EXCEPTIONAL_HALT, haltReason);
     }
 
+    /**
+     * Gets output.
+     *
+     * @return the output
+     */
     public Bytes getOutput() {
       return output;
     }
 
+    /**
+     * Is refund gas.
+     *
+     * @return the boolean
+     */
     public boolean isRefundGas() {
       return refundGas;
     }
 
+    /**
+     * Gets state.
+     *
+     * @return the state
+     */
     public MessageFrame.State getState() {
       return state;
     }
 
+    /**
+     * Gets halt reason.
+     *
+     * @return the halt reason
+     */
     public Optional<ExceptionalHaltReason> getHaltReason() {
       return haltReason;
     }

@@ -24,11 +24,18 @@ import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 
+/** The Round change payload. */
 public class RoundChangePayload extends QbftPayload {
   private static final int TYPE = QbftV1.ROUND_CHANGE;
   private final ConsensusRoundIdentifier roundChangeIdentifier;
   private final Optional<PreparedRoundMetadata> preparedRoundMetadata;
 
+  /**
+   * Instantiates a new Round change payload.
+   *
+   * @param roundChangeIdentifier the round change identifier
+   * @param preparedRoundMetadata the prepared round metadata
+   */
   public RoundChangePayload(
       final ConsensusRoundIdentifier roundChangeIdentifier,
       final Optional<PreparedRoundMetadata> preparedRoundMetadata) {
@@ -41,6 +48,11 @@ public class RoundChangePayload extends QbftPayload {
     return roundChangeIdentifier;
   }
 
+  /**
+   * Gets prepared round metadata.
+   *
+   * @return the prepared round metadata
+   */
   public Optional<PreparedRoundMetadata> getPreparedRoundMetadata() {
     return preparedRoundMetadata;
   }
@@ -58,6 +70,12 @@ public class RoundChangePayload extends QbftPayload {
     rlpOutput.endList();
   }
 
+  /**
+   * Read from rlp input and return round change payload.
+   *
+   * @param rlpInput the rlp input
+   * @return the round change payload
+   */
   public static RoundChangePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);

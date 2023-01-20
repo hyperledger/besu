@@ -31,10 +31,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The Clique get signers at hash. */
 public class CliqueGetSignersAtHash implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
   private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Clique get signers at hash.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param validatorProvider the validator provider
+   */
   public CliqueGetSignersAtHash(
       final BlockchainQueries blockchainQueries, final ValidatorProvider validatorProvider) {
     this.blockchainQueries = blockchainQueries;

@@ -16,7 +16,13 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
+/** The interface Gossiper. */
 public interface Gossiper {
 
+  /**
+   * Send.
+   *
+   * @param message the message
+   */
   void send(Message message);
 }

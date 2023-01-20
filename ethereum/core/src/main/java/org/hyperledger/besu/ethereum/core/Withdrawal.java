@@ -15,37 +15,43 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
+
+import java.util.Objects;
 
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class Withdrawal {
+public class Withdrawal implements org.hyperledger.besu.plugin.data.Withdrawal {
   private final UInt64 index;
   private final UInt64 validatorIndex;
   private final Address address;
-  private final Wei amount;
+  private final GWei amount;
 
   public Withdrawal(
-      final UInt64 index, final UInt64 validatorIndex, final Address address, final Wei amount) {
+      final UInt64 index, final UInt64 validatorIndex, final Address address, final GWei amount) {
     this.index = index;
     this.validatorIndex = validatorIndex;
     this.address = address;
     this.amount = amount;
   }
 
+  @Override
   public UInt64 getIndex() {
     return index;
   }
 
+  @Override
   public UInt64 getValidatorIndex() {
     return validatorIndex;
   }
 
+  @Override
   public Address getAddress() {
     return address;
   }
 
-  public Wei getAmount() {
+  @Override
+  public GWei getAmount() {
     return amount;
   }
 
@@ -61,5 +67,21 @@ public class Withdrawal {
         + ", amount="
         + amount
         + '}';
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final Withdrawal that = (Withdrawal) o;
+    return Objects.equals(index, that.index)
+        && Objects.equals(validatorIndex, that.validatorIndex)
+        && Objects.equals(address, that.address)
+        && Objects.equals(amount, that.amount);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(index, validatorIndex, address, amount);
   }
 }

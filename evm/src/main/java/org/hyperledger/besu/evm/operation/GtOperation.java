@@ -20,10 +20,17 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The GT operation. */
 public class GtOperation extends AbstractFixedCostOperation {
 
+  /** The GT operation success result. */
   static final OperationResult gtSuccess = new OperationResult(3, null);
 
+  /**
+   * Instantiates a new GT operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public GtOperation(final GasCalculator gasCalculator) {
     super(0x11, "GT", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
@@ -34,6 +41,12 @@ public class GtOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs GT operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());

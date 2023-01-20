@@ -16,7 +16,13 @@
 
 package org.hyperledger.besu.consensus.merge;
 
+/** The interface Unverified forkchoice listener. */
 public interface UnverifiedForkchoiceListener {
 
+  /**
+   * On new unverified forkchoice event.
+   *
+   * @param event the event
+   */
   void onNewUnverifiedForkchoice(final ForkchoiceEvent event);
 }

@@ -14,7 +14,13 @@
  */
 package org.hyperledger.besu.util;
 
+/** The Illegal port exception. */
 public class IllegalPortException extends IllegalArgumentException {
+  /**
+   * Instantiates a new Illegal port exception.
+   *
+   * @param message the message
+   */
   IllegalPortException(final String message) {
     super(message);
   }

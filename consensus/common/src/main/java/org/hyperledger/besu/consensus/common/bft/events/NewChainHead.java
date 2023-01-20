@@ -62,6 +62,11 @@ public final class NewChainHead implements BftEvent {
     return Objects.hash(newChainHeadHeader);
   }
 
+  /**
+   * Gets new chain head header.
+   *
+   * @return the new chain head header
+   */
   public BlockHeader getNewChainHeadHeader() {
     return newChainHeadHeader;
   }

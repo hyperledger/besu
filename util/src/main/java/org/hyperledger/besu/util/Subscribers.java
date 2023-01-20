@@ -56,15 +56,34 @@ public class Subscribers<T> {
     this.suppressCallbackExceptions = suppressCallbackExceptions;
   }
 
+  /**
+   * None subscribers.
+   *
+   * @param <T> the type parameter
+   * @return the subscribers
+   */
   @SuppressWarnings("unchecked")
   public static <T> Subscribers<T> none() {
     return (Subscribers<T>) NONE;
   }
 
+  /**
+   * Create subscribers.
+   *
+   * @param <T> the type parameter
+   * @return the subscribers
+   */
   public static <T> Subscribers<T> create() {
     return new Subscribers<T>(false);
   }
 
+  /**
+   * Create subscribers.
+   *
+   * @param <T> the type parameter
+   * @param catchCallbackExceptions the catch callback exceptions
+   * @return the subscribers
+   */
   public static <T> Subscribers<T> create(final boolean catchCallbackExceptions) {
     return new Subscribers<T>(catchCallbackExceptions);
   }
@@ -86,7 +105,7 @@ public class Subscribers<T> {
    *
    * @param subscriberId the ID of the subscriber to remove
    * @return <code>true</code> if a subscriber with that ID was found and removed, otherwise <code>
-   *     false</code>
+   *          false</code>
    */
   public boolean unsubscribe(final long subscriberId) {
     return subscribers.remove(subscriberId) != null;

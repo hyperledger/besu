@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Base bft controller. */
 public abstract class BaseBftController implements BftEventHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(BaseBftController.class);
@@ -47,6 +48,16 @@ public abstract class BaseBftController implements BftEventHandler {
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
+  /**
+   * Instantiates a new Base bft controller.
+   *
+   * @param blockchain the blockchain
+   * @param bftFinalState the bft final state
+   * @param gossiper the gossiper
+   * @param duplicateMessageTracker the duplicate message tracker
+   * @param futureMessageBuffer the future message buffer
+   * @param sychronizerUpdater the synchronizer updater
+   */
   protected BaseBftController(
       final Blockchain blockchain,
       final BftFinalState bftFinalState,
@@ -80,8 +91,21 @@ public abstract class BaseBftController implements BftEventHandler {
     }
   }
 
+  /**
+   * Handle message.
+   *
+   * @param message the message
+   */
   protected abstract void handleMessage(final Message message);
 
+  /**
+   * Consume message.
+   *
+   * @param <P> the type parameter of BftMessage
+   * @param message the message
+   * @param bftMessage the bft message
+   * @param handleMessage the handle message
+   */
   protected <P extends BftMessage<?>> void consumeMessage(
       final Message message, final P bftMessage, final Consumer<P> handleMessage) {
     LOG.trace("Received BFT {} message", bftMessage.getClass().getSimpleName());
@@ -168,8 +192,18 @@ public abstract class BaseBftController implements BftEventHandler {
     }
   }
 
+  /**
+   * Create new height manager.
+   *
+   * @param parentHeader the parent header
+   */
   protected abstract void createNewHeightManager(final BlockHeader parentHeader);
 
+  /**
+   * Gets current height manager.
+   *
+   * @return the current height manager
+   */
   protected abstract BaseBlockHeightManager getCurrentHeightManager();
 
   private void startNewHeightManager(final BlockHeader parentHeader) {

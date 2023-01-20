@@ -27,8 +27,17 @@ import org.apache.tuweni.toml.TomlParseResult;
 import picocli.CommandLine;
 import picocli.CommandLine.ParameterException;
 
+/** The Rpc authentication file validator. */
 public class RpcAuthFileValidator {
 
+  /**
+   * Validate auth file.
+   *
+   * @param commandLine the command line to use for parameter exceptions
+   * @param filename the auth file
+   * @param type the RPC type
+   * @return the auth filename
+   */
   public static String validate(
       final CommandLine commandLine, final String filename, final String type) {
 

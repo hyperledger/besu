@@ -16,7 +16,13 @@ package org.hyperledger.besu.consensus.common.bft.payload;
 
 import org.hyperledger.besu.datatypes.Address;
 
+/** The interface Authored. */
 public interface Authored {
 
+  /**
+   * Gets author.
+   *
+   * @return the author
+   */
   Address getAuthor();
 }

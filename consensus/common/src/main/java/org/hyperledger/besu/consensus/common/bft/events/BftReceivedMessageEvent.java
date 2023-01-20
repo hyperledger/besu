@@ -16,14 +16,25 @@ package org.hyperledger.besu.consensus.common.bft.events;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
+/** The Bft received message event. */
 public class BftReceivedMessageEvent implements BftEvent {
 
   private final Message message;
 
+  /**
+   * Instantiates a new Bft received message event.
+   *
+   * @param message the message
+   */
   public BftReceivedMessageEvent(final Message message) {
     this.message = message;
   }
 
+  /**
+   * Gets message.
+   *
+   * @return the message
+   */
   public Message getMessage() {
     return message;
   }

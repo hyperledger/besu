@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+/** The Homestead gas calculator. */
 public class HomesteadGasCalculator extends FrontierGasCalculator {
 
   private static final long TX_CREATE_EXTRA = 32_000L;

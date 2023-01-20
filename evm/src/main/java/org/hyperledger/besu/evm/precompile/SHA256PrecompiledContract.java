@@ -22,8 +22,14 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Sha256 precompiled contract. */
 public class SHA256PrecompiledContract extends AbstractPrecompiledContract {
 
+  /**
+   * Instantiates a new Sha256 precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public SHA256PrecompiledContract(final GasCalculator gasCalculator) {
     super("SHA256", gasCalculator);
   }

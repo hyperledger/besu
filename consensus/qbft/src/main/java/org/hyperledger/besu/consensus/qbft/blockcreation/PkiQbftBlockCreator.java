@@ -40,6 +40,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Pki qbft block creator. */
 public class PkiQbftBlockCreator implements BlockCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(PkiQbftBlockCreator.class);
@@ -48,6 +49,13 @@ public class PkiQbftBlockCreator implements BlockCreator {
   private final PkiQbftExtraDataCodec pkiQbftExtraDataCodec;
   private final CmsCreator cmsCreator;
 
+  /**
+   * Instantiates a new Pki qbft block creator.
+   *
+   * @param blockCreator the block creator
+   * @param pkiBlockCreationConfiguration the pki block creation configuration
+   * @param pkiQbftExtraDataCodec the pki qbft extra data codec
+   */
   public PkiQbftBlockCreator(
       final BlockCreator blockCreator,
       final PkiBlockCreationConfiguration pkiBlockCreationConfiguration,
@@ -60,6 +68,13 @@ public class PkiQbftBlockCreator implements BlockCreator {
         pkiQbftExtraDataCodec);
   }
 
+  /**
+   * Instantiates a new Pki qbft block creator.
+   *
+   * @param blockCreator the block creator
+   * @param cmsCreator the cms creator
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   @VisibleForTesting
   public PkiQbftBlockCreator(
       final BlockCreator blockCreator,

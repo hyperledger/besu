@@ -120,8 +120,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -134,8 +134,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -149,8 +149,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -168,8 +168,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -413,7 +413,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   public RequestBody createNetServicesRequestBody() {
     final String id = "123";
     return RequestBody.create(
-        JSON, "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}");
+        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}", JSON);
   }
 
   public JsonRpcHttpService getJsonRpcHttpService(final boolean[] enabledNetServices)

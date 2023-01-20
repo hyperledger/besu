@@ -24,16 +24,23 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 
+/**
+ * The InMemory tasks priority queues.
+ *
+ * @param <T> the type parameter
+ */
 public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     implements TaskCollection<T> {
   private final List<PriorityQueue<T>> internalQueues = new ArrayList<>(16);
   private final Set<InMemoryTask<T>> unfinishedOutstandingTasks = new HashSet<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
+  /** Instantiates a new InMemory tasks priority queues. */
   public InMemoryTasksPriorityQueues() {
     clearInternalQueues();
   }
 
+  /** Clear internal queues. */
   public synchronized void clearInternalQueues() {
     internalQueues.clear();
     for (int i = 0; i < 16; i++) {
@@ -130,6 +137,12 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     return unfinishedOutstandingTasks.remove(task);
   }
 
+  /**
+   * Check if queue Contains the task .
+   *
+   * @param request the request
+   * @return the boolean
+   */
   public synchronized boolean contains(final T request) {
     final PriorityQueue<T> queue = findQueue(request.getDepth());
     return queue.contains(request)
@@ -143,6 +156,12 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     private final InMemoryTasksPriorityQueues<T> queue;
     private final AtomicBoolean completed = new AtomicBoolean(false);
 
+    /**
+     * Instantiates a new InMemory task.
+     *
+     * @param queue the queue
+     * @param data the data
+     */
     public InMemoryTask(final InMemoryTasksPriorityQueues<T> queue, final T data) {
       this.queue = queue;
       this.data = data;

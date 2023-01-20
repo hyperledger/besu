@@ -20,10 +20,22 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import java.util.Set;
 import java.util.stream.Stream;
 
+/** The interface Observable metrics system. */
 public interface ObservableMetricsSystem extends MetricsSystem {
 
+  /**
+   * Stream observations.
+   *
+   * @param category the category
+   * @return the stream
+   */
   Stream<Observation> streamObservations(MetricCategory category);
 
+  /**
+   * Stream observations.
+   *
+   * @return the stream
+   */
   Stream<Observation> streamObservations();
 
   /**

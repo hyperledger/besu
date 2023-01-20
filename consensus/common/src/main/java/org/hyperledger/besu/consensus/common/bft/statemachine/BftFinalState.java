@@ -40,6 +40,19 @@ public class BftFinalState {
   private final Clock clock;
   private final ValidatorMulticaster validatorMulticaster;
 
+  /**
+   * Instantiates a new Bft final state.
+   *
+   * @param validatorProvider the validator provider
+   * @param nodeKey the node key
+   * @param localAddress the local address
+   * @param proposerSelector the proposer selector
+   * @param validatorMulticaster the validator multicaster
+   * @param roundTimer the round timer
+   * @param blockTimer the block timer
+   * @param blockCreatorFactory the block creator factory
+   * @param clock the clock
+   */
   public BftFinalState(
       final ValidatorProvider validatorProvider,
       final NodeKey nodeKey,
@@ -61,50 +74,112 @@ public class BftFinalState {
     this.validatorMulticaster = validatorMulticaster;
   }
 
+  /**
+   * Gets quorum.
+   *
+   * @return the quorum
+   */
   public int getQuorum() {
     return BftHelpers.calculateRequiredValidatorQuorum(getValidators().size());
   }
 
+  /**
+   * Gets validators.
+   *
+   * @return the validators
+   */
   public Collection<Address> getValidators() {
     return validatorProvider.getValidatorsAtHead();
   }
 
+  /**
+   * Gets node key.
+   *
+   * @return the node key
+   */
   public NodeKey getNodeKey() {
     return nodeKey;
   }
 
+  /**
+   * Gets local address.
+   *
+   * @return the local address
+   */
   public Address getLocalAddress() {
     return localAddress;
   }
 
+  /**
+   * Is local node proposer for round.
+   *
+   * @param roundIdentifier the round identifier
+   * @return the boolean
+   */
   public boolean isLocalNodeProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
     return getProposerForRound(roundIdentifier).equals(localAddress);
   }
 
+  /**
+   * Is local node validator.
+   *
+   * @return the boolean
+   */
   public boolean isLocalNodeValidator() {
     return getValidators().contains(localAddress);
   }
 
+  /**
+   * Gets round timer.
+   *
+   * @return the round timer
+   */
   public RoundTimer getRoundTimer() {
     return roundTimer;
   }
 
+  /**
+   * Gets block timer.
+   *
+   * @return the block timer
+   */
   public BlockTimer getBlockTimer() {
     return blockTimer;
   }
 
+  /**
+   * Gets block creator factory.
+   *
+   * @return the block creator factory
+   */
   public BftBlockCreatorFactory<?> getBlockCreatorFactory() {
     return blockCreatorFactory;
   }
 
+  /**
+   * Gets proposer for round.
+   *
+   * @param roundIdentifier the round identifier
+   * @return the proposer for round
+   */
   public Address getProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
     return proposerSelector.selectProposerForRound(roundIdentifier);
   }
 
+  /**
+   * Gets validator multicaster.
+   *
+   * @return the validator multicaster
+   */
   public ValidatorMulticaster getValidatorMulticaster() {
     return validatorMulticaster;
   }
 
+  /**
+   * Gets clock.
+   *
+   * @return the clock
+   */
   public Clock getClock() {
     return clock;
   }

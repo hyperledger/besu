@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -62,6 +63,8 @@ public class BlockHeader extends SealableBlockHeader
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
+      final Hash withdrawalsRoot,
+      final DataGas excessDataGas,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<LogsBloomFilter> privateLogsBloom) {
     super(
@@ -79,7 +82,9 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        withdrawalsRoot,
+        excessDataGas);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -103,6 +108,8 @@ public class BlockHeader extends SealableBlockHeader
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
+      final Hash withdrawalsRoot,
+      final DataGas excessDataGas,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -119,7 +126,9 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        withdrawalsRoot,
+        excessDataGas);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -225,6 +234,12 @@ public class BlockHeader extends SealableBlockHeader
     if (baseFee != null) {
       out.writeUInt256Scalar(baseFee);
     }
+    if (withdrawalsRoot != null) {
+      out.writeBytes(withdrawalsRoot);
+    }
+    if (excessDataGas != null) {
+      out.writeUInt256Scalar(excessDataGas);
+    }
     out.endList();
   }
 
@@ -247,6 +262,10 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes32 mixHashOrPrevRandao = input.readBytes32();
     final long nonce = input.readLong();
     final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
+    final Hash withdrawalHashRoot =
+        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final DataGas excessDataGas =
+        !input.isEndOfCurrentList() ? DataGas.of(input.readUInt256Scalar()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -265,6 +284,8 @@ public class BlockHeader extends SealableBlockHeader
         baseFee,
         mixHashOrPrevRandao,
         nonce,
+        withdrawalHashRoot,
+        excessDataGas,
         blockHeaderFunctions);
   }
 
@@ -305,7 +326,13 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("extraData=").append(extraData).append(", ");
     sb.append("baseFee=").append(baseFee).append(", ");
     sb.append("mixHashOrPrevRandao=").append(mixHashOrPrevRandao).append(", ");
-    sb.append("nonce=").append(nonce);
+    sb.append("nonce=").append(nonce).append(", ");
+    if (withdrawalsRoot != null) {
+      sb.append("withdrawalsRoot=").append(withdrawalsRoot).append(", ");
+    }
+    if (excessDataGas != null) {
+      sb.append("excessDataGas=").append(excessDataGas);
+    }
     return sb.append("}").toString();
   }
 
@@ -329,6 +356,11 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getBaseFee().map(Wei::fromQuantity).orElse(null),
         pluginBlockHeader.getPrevRandao().orElse(null),
         pluginBlockHeader.getNonce(),
+        pluginBlockHeader
+            .getWithdrawalsRoot()
+            .map(h -> Hash.fromHexString(h.toHexString()))
+            .orElse(null),
+        pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
         blockHeaderFunctions);
   }
 

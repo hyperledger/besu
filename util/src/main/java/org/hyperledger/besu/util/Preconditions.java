@@ -18,9 +18,18 @@ import java.util.function.Function;
 
 import com.google.errorprone.annotations.FormatMethod;
 
+/** The Preconditions. */
 public class Preconditions {
   private Preconditions() {}
 
+  /**
+   * Check guard.
+   *
+   * @param condition the condition
+   * @param exceptionGenerator the exception generator
+   * @param template the template
+   * @param variables the variables
+   */
   @FormatMethod
   public static void checkGuard(
       final boolean condition,

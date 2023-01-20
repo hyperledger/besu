@@ -31,11 +31,18 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import java.util.Map;
 
+/** The Qbft json rpc methods. */
 public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final ProtocolContext context;
   private final ValidatorProvider readOnlyValidatorProvider;
 
+  /**
+   * Instantiates a new Qbft json rpc methods.
+   *
+   * @param context the context
+   * @param readOnlyValidatorProvider the read only validator provider
+   */
   public QbftJsonRpcMethods(
       final ProtocolContext context, final ValidatorProvider readOnlyValidatorProvider) {
     this.context = context;

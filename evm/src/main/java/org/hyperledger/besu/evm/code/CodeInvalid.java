@@ -32,12 +32,24 @@ public class CodeInvalid implements Code {
 
   private final String invalidReason;
 
+  /**
+   * Instantiates a new Code invalid.
+   *
+   * @param codeHash the code hash
+   * @param codeBytes the code bytes
+   * @param invalidReason the invalid reason
+   */
   public CodeInvalid(final Hash codeHash, final Bytes codeBytes, final String invalidReason) {
     this.codeHash = codeHash;
     this.codeBytes = codeBytes;
     this.invalidReason = invalidReason;
   }
 
+  /**
+   * Gets invalid reason.
+   *
+   * @return the invalid reason
+   */
   public String getInvalidReason() {
     return invalidReason;
   }
@@ -75,5 +87,10 @@ public class CodeInvalid implements Code {
   @Override
   public int getCodeSectionCount() {
     return 0;
+  }
+
+  @Override
+  public int getEofVersion() {
+    return -1;
   }
 }

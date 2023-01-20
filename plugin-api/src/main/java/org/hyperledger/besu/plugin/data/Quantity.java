@@ -35,6 +35,11 @@ public interface Quantity {
   @Deprecated
   Number getValue();
 
+  /**
+   * Gets Quantity as BigInteger.
+   *
+   * @return the Quantity as BigInteger
+   */
   BigInteger getAsBigInteger();
 
   /**

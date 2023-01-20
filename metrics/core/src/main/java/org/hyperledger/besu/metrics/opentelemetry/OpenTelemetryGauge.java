@@ -28,10 +28,19 @@ import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
 
+/** The Open telemetry gauge. */
 public class OpenTelemetryGauge implements LabelledGauge {
   private final List<String> labelNames;
   private final Map<Attributes, DoubleSupplier> observationsMap = new ConcurrentHashMap<>();
 
+  /**
+   * Instantiates a new Open telemetry gauge.
+   *
+   * @param metricName the metric name
+   * @param help the help
+   * @param meter the meter
+   * @param labelNames the label names
+   */
   public OpenTelemetryGauge(
       final String metricName,
       final String help,

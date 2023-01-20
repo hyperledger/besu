@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -64,6 +65,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   final Wei blockReward;
 
   protected final boolean skipZeroBlockRewards;
+  private final HeaderBasedProtocolSchedule protocolSchedule;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
@@ -72,12 +74,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
+    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
@@ -87,6 +91,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -132,6 +137,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
+    }
+
+    final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
+        protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
+    if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
+      maybeWithdrawalsProcessor
+          .get()
+          .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

@@ -19,6 +19,7 @@ import org.hyperledger.besu.util.number.Percentage;
 
 import picocli.CommandLine;
 
+/** The Percentage Cli type converter. */
 public class PercentageConverter implements CommandLine.ITypeConverter<Integer> {
 
   @Override
