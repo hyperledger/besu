@@ -9,7 +9,7 @@
 ### Additions and Improvements
 - Added option to evm CLI tool to allow code execution at specific forks [#4913](https://github.com/hyperledger/besu/pull/4913)
 - Improve get account performance by using the world state updater cache [#4897](https://github.com/hyperledger/besu/pull/4897)
-- Add new KZG precompile and option to override the trusted setup being used.
+- Add new KZG precompile and option to override the trusted setup being used [#4822](https://github.com/hyperledger/besu/issues/4822)
 
 ### Bug Fixes
 
