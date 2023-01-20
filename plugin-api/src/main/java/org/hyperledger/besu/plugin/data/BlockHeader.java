@@ -187,4 +187,12 @@ public interface BlockHeader {
    *     withdrawal in the withdrawal list portion of the block.
    */
   Optional<? extends Hash> getWithdrawalsRoot();
+
+  /**
+   * The excess_data_gas of this header.
+   *
+   * @return The excess_data_gas of this header.
+   */
+  @Unstable
+  Optional<? extends Quantity> getExcessDataGas();
 }
