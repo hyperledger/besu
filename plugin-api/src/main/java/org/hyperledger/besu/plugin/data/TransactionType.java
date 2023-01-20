@@ -105,4 +105,8 @@ public enum TransactionType {
   public boolean requiresChainId() {
     return !this.equals(FRONTIER);
   }
+
+  public boolean supportsBlob() {
+    return this.equals(BLOB);
+  }
 }

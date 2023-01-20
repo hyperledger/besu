@@ -1301,6 +1301,7 @@ public class MessageFrame {
     return versionedHashes;
   }
 
+  /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
     maybeUpdatedStorage = Optional.empty();
@@ -1336,6 +1337,12 @@ public class MessageFrame {
 
     private Optional<List<Hash>> versionedHashes;
 
+    /**
+     * Sets Type.
+     *
+     * @param type the type
+     * @return the builder
+     */
     public Builder type(final Type type) {
       this.type = type;
       return this;

@@ -175,6 +175,7 @@ public class EthGasPriceTest {
                         null,
                         Bytes.EMPTY,
                         Address.ZERO,
+                        Optional.empty(),
                         Optional.empty())),
                 List.of())));
   }
