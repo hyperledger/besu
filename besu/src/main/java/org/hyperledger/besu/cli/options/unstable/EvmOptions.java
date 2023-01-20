@@ -18,6 +18,7 @@ package org.hyperledger.besu.cli.options.unstable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -65,7 +66,10 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   @Override
   public EvmConfiguration toDomainObject() {
     return new EvmConfiguration(
-        jumpDestCacheWeightKilobytes, Optional.ofNullable(kzgTrustedSetupFilePath));
+        jumpDestCacheWeightKilobytes,
+        kzgTrustedSetupFilePath != null
+            ? Optional.ofNullable(Path.of(kzgTrustedSetupFilePath))
+            : Optional.empty());
   }
 
   @Override

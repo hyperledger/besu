@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -32,6 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -57,7 +57,8 @@ public class KZGPointEvalPrecompileContractTest {
         Bytes.fromHexString(
             "013c03613f6fc558fb7e61e75602241ed9a2f04e36d8670aadd286e71b5ca9cc420000000000000000000000000000000000000000000000000000000000000031e5a2356cbc2ef6a733eae8d54bf48719ae3d990017ca787c419c7d369f8e3c83fac17c3f237fc51f90e2c660eb202a438bc2025baded5cd193c1a018c5885bc9281ba704d5566082e851235c7be763b2a99adff965e0a121ee972ebc472d02944a74f5c6243e14052e105124b70bf65faf85ad3a494325e269fad097842cba");
 
-    Bytes fieldElementsPerBlob = Bytes32.wrap(Bytes.of(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
+    Bytes fieldElementsPerBlob =
+        Bytes32.wrap(Bytes.of(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
     Bytes blsModulus = Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()));
     Bytes expectedOutput = Bytes.concatenate(fieldElementsPerBlob, blsModulus);
     // contract input is encoded as follows: versioned_hash | z | y | commitment | proof |
