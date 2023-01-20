@@ -189,7 +189,7 @@ public class Transaction
           "Must not specify access list for transaction not supporting it");
     }
 
-    if (transactionType.supportsAccessList()) {
+    if (Objects.equals(transactionType, TransactionType.ACCESS_LIST)) {
       checkArgument(
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
     }
