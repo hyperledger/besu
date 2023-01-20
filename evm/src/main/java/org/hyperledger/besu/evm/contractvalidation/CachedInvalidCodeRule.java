@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
@@ -41,7 +42,8 @@ public class CachedInvalidCodeRule implements ContractValidationRule {
   }
 
   @Override
-  public Optional<ExceptionalHaltReason> validate(final Bytes contractCode) {
+  public Optional<ExceptionalHaltReason> validate(
+      final Bytes contractCode, final MessageFrame frame) {
     final Code code =
         CodeFactory.createCode(contractCode, Hash.hash(contractCode), maxEofVersion, false);
     if (!code.isValid()) {
