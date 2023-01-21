@@ -25,6 +25,7 @@ import java.util.List;
 import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Access List Operation Tracer. */
 public class AccessListOperationTracer extends EstimateGasOperationTracer {
 
   private Multimap<Address, Bytes32> warmedUpStorage;
@@ -38,6 +39,11 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
   @Override
   public void tracePreExecution(final MessageFrame frame) {}
 
+  /**
+   * Get the access list.
+   *
+   * @return the access list
+   */
   public List<AccessListEntry> getAccessList() {
     final List<AccessListEntry> list = new ArrayList<>();
     if (warmedUpStorage != null) {
@@ -50,6 +56,11 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
     return list;
   }
 
+  /**
+   * Create a AccessListOperationTracer.
+   *
+   * @return the AccessListOperationTracer
+   */
   public static AccessListOperationTracer create() {
     return new AccessListOperationTracer();
   }

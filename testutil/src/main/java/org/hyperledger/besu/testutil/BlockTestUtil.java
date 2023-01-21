@@ -131,7 +131,11 @@ public final class BlockTestUtil {
   public static ChainResources getUpgradedForkResources() {
     return forkUpgradedSupplier.get();
   }
-
+  /**
+   * Gets Eth Reg Test resources.
+   *
+   * @return the Eth Reg Test resources.
+   */
   public static ChainResources getEthRefTestResources() {
     return testRpcCompactChainSupplier.get();
   }
