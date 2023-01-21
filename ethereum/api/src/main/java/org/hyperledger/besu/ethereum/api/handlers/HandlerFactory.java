@@ -50,7 +50,7 @@ public class HandlerFactory {
   public static Handler<RoutingContext> jsonRpcExecutor(
       final JsonRpcExecutor jsonRpcExecutor,
       final Tracer tracer,
-      final JsonRpcConfiguration configuration) {
-    return JsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer, configuration);
+      final JsonRpcConfiguration jsonRpcConfiguration) {
+    return JsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
   }
 }
