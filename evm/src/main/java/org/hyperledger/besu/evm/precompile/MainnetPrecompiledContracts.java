@@ -17,8 +17,6 @@ package org.hyperledger.besu.evm.precompile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
-
 /** Provides the various precompiled contracts used on mainnet hard forks. */
 public abstract class MainnetPrecompiledContracts {
 
@@ -141,6 +139,6 @@ public abstract class MainnetPrecompiledContracts {
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForIstanbul(registry, gasCalculator);
     // TODO: allow override to be configured?
-    registry.put(Address.KZG_POINT_EVAL, new KZGPointEvalPrecompiledContract(Optional.empty()));
+    registry.put(Address.KZG_POINT_EVAL, new KZGPointEvalPrecompiledContract());
   }
 }

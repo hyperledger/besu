@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -37,6 +36,10 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
 
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
+
+  public KZGPointEvalPrecompiledContract() {
+    this(Optional.empty());
+  }
 
   public KZGPointEvalPrecompiledContract(final Optional<Path> pathToTrustedSetup) {
 
@@ -60,7 +63,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       }
     }
     try (BufferedReader setupFile =
-        Files.newBufferedReader(Paths.get(absolutePathToSetup), Charset.defaultCharset()); ) {
+        Files.newBufferedReader(Paths.get(absolutePathToSetup), Charset.defaultCharset())) {
       String firstLine = setupFile.readLine();
       if ("4".equals(firstLine)) {
         bitLength = CKZG4844JNI.Preset.MINIMAL;
@@ -72,14 +75,11 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       CKZG4844JNI.loadNativeLibrary(bitLength);
       try {
         CKZG4844JNI.loadTrustedSetup(absolutePathToSetup);
-      } catch (RuntimeException alreadyLoaded) {
-        if (alreadyLoaded.getMessage().contains("Trusted Setup is already loaded")) {
-        } else {
-          throw alreadyLoaded;
+      } catch (RuntimeException mightBeAlreadyLoaded) {
+        if (!mightBeAlreadyLoaded.getMessage().contains("Trusted Setup is already loaded")) {
+          throw mightBeAlreadyLoaded;
         }
       }
-    } catch (FileNotFoundException e) {
-      throw new RuntimeException(e);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

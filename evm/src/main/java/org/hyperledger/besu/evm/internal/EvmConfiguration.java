@@ -15,10 +15,18 @@
 
 package org.hyperledger.besu.evm.internal;
 
+/** The Evm configuration. */
 public class EvmConfiguration {
+  /** The constant DEFAULT. */
   public static final EvmConfiguration DEFAULT = new EvmConfiguration(32_000L);
+
   private final long jumpDestCacheWeightKB;
 
+  /**
+   * Instantiates a new Evm configuration.
+   *
+   * @param jumpDestCacheWeightKB the jump dest cache weight kb
+   */
   public EvmConfiguration(final long jumpDestCacheWeightKB) {
     this.jumpDestCacheWeightKB = jumpDestCacheWeightKB;
   }
@@ -30,5 +38,14 @@ public class EvmConfiguration {
    */
   public long getJumpDestCacheWeightBytes() {
     return jumpDestCacheWeightKB * 1024L;
+  }
+
+  /**
+   * Gets jump dest cache weight kb.
+   *
+   * @return the jump dest cache weight kb
+   */
+  public long getJumpDestCacheWeightKB() {
+    return jumpDestCacheWeightKB;
   }
 }
