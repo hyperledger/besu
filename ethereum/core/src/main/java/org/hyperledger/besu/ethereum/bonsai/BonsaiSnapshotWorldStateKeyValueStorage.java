@@ -228,23 +228,21 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         // Don't save empty values
         return this;
       }
-      accountStorageTransaction
-          .put(accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
+      accountStorageTransaction.put(accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
       return this;
     }
 
     @Override
     public BonsaiUpdater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
-      storageStorageTransaction
-          .put(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
+      storageStorageTransaction.put(
+          Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
       return this;
     }
 
     @Override
     public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-      storageStorageTransaction
-          .remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
+      storageStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
     }
 
     @Override
@@ -260,11 +258,9 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     @Override
     public WorldStateStorage.Updater saveWorldState(
         final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
-      trieBranchStorageTransaction
-          .put(Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+      trieBranchStorageTransaction.put(Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
       trieBranchStorageTransaction.put(WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
-      trieBranchStorageTransaction
-          .put(WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
+      trieBranchStorageTransaction.put(WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
       return this;
     }
 
@@ -275,8 +271,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         // Don't save empty nodes
         return this;
       }
-      trieBranchStorageTransaction
-          .put(location.toArrayUnsafe(), node.toArrayUnsafe());
+      trieBranchStorageTransaction.put(location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 
@@ -294,8 +289,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         // Don't save empty nodes
         return this;
       }
-      trieBranchStorageTransaction
-          .put(Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
+      trieBranchStorageTransaction.put(
+          Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 
