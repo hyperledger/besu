@@ -18,10 +18,8 @@ package org.hyperledger.besu.cli.options.unstable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import picocli.CommandLine;
 
@@ -30,8 +28,6 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
 
   /** The constant JUMPDEST_CACHE_WEIGHT. */
   public static final String JUMPDEST_CACHE_WEIGHT = "--Xevm-jumpdest-cache-weight-kb";
-
-  public static final String KZG_TRUSTED_SETUP_FILE_PATH = "--evm-kzg-trusted-setup-path";
 
   /**
    * Create evm options.
@@ -55,21 +51,9 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   private Long jumpDestCacheWeightKilobytes =
       32_000L; // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
-  @CommandLine.Option(
-      names = {KZG_TRUSTED_SETUP_FILE_PATH},
-      description =
-          "absolute file path on the host system which points to the trusted KZG setup file to use",
-      arity = "1")
-  private String kzgTrustedSetupFilePath = null;
-
   @Override
   public EvmConfiguration toDomainObject() {
-    return new EvmConfiguration(
-        jumpDestCacheWeightKilobytes,
-        kzgTrustedSetupFilePath != null
-            ? Optional.ofNullable(Path.of(kzgTrustedSetupFilePath))
-            : Optional.empty());
+    return new EvmConfiguration(jumpDestCacheWeightKilobytes);
   }
 
   @Override

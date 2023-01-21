@@ -15,10 +15,6 @@
 
 apply plugin: 'java-library'
 
-repositories {
-  maven { url "https://artifacts.consensys.net/public/maven/maven/" }
-}
-
 jar {
   archiveBaseName = 'besu-core'
   manifest {
@@ -58,7 +54,6 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-concurrent'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.apache.tuweni:tuweni-rlp'
-  implementation 'tech.pegasys:jc-kzg-4844:0.1.0'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
 
