@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -58,7 +59,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Bytes extraData,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
-      final Hash withdrawalsRoot) {
+      final Hash withdrawalsRoot,
+      final DataGas excessDataGas) {
     super(
         parentHash,
         coinbase,
@@ -67,7 +69,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         gasLimit,
         timestamp,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        excessDataGas);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;

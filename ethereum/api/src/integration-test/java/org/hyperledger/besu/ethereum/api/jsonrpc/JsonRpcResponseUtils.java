@@ -124,6 +124,7 @@ public class JsonRpcResponseUtils {
             mixHash,
             nonce,
             withdrawalsRoot,
+            null, // ToDo 4844: set with the value of excess_data_gas field
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(
@@ -192,7 +193,8 @@ public class JsonRpcResponseUtils {
             Optional.empty(),
             address(fromAddress),
             Optional.empty(),
-            Optional.of(bigInteger(v)));
+            Optional.of(bigInteger(v)),
+            Optional.empty());
 
     return new TransactionCompleteResult(
         new TransactionWithMetadata(

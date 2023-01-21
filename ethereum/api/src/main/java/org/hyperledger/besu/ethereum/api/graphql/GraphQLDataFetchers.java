@@ -350,6 +350,7 @@ public class GraphQLDataFetchers {
                 enclavePayload,
                 transaction.getSender(),
                 transaction.getChainId(),
-                Optional.ofNullable(transaction.getV()))));
+                Optional.ofNullable(transaction.getV()),
+                Optional.empty())));
   }
 }
