@@ -56,7 +56,8 @@ public class BlockResultFactory {
         ommers,
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
-        includeCoinbase);
+        includeCoinbase,
+        blockWithMetadata.getWithdrawals());
   }
 
   public BlockResult transactionComplete(final Block block) {
@@ -135,6 +136,7 @@ public class BlockResultFactory {
         ommers,
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
-        includeCoinbase);
+        includeCoinbase,
+        blockWithMetadata.getWithdrawals());
   }
 }
