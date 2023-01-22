@@ -134,7 +134,7 @@ public final class BlockTestUtil {
   /**
    * Gets Eth Reg Test resources.
    *
-   * @return the Eth Reg Test resources.
+   * @return the Eth Ref Test resources.
    */
   public static ChainResources getEthRefTestResources() {
     return testRpcCompactChainSupplier.get();
