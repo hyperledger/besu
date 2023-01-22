@@ -1297,10 +1297,16 @@ public class MessageFrame {
     return maybeUpdatedStorage;
   }
 
+  /**
+   * Accessor for versionedHashes, if present.
+   *
+   * @return optional list of hashes
+   */
   public Optional<List<Hash>> getVersionedHashes() {
     return versionedHashes;
   }
 
+  /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
     maybeUpdatedStorage = Optional.empty();
@@ -1335,7 +1341,12 @@ public class MessageFrame {
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     private Optional<List<Hash>> versionedHashes;
-
+    /**
+     * Sets Type.
+     *
+     * @param type the type
+     * @return the builder
+     */
     public Builder type(final Type type) {
       this.type = type;
       return this;
