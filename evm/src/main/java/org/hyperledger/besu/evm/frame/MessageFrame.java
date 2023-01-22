@@ -1280,6 +1280,14 @@ public class MessageFrame {
   }
 
   /**
+   * Gets warmedUp Storage.
+   *
+   * @return the warmed up storage
+   */
+  public Multimap<Address, Bytes32> getWarmedUpStorage() {
+    return warmedUpStorage;
+  }
+  /**
    * Gets maybe updated memory.
    *
    * @return the maybe updated memory
