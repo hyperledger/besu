@@ -132,6 +132,7 @@ public class BesuEventsImplTest {
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
+    when(mockWorldState.copy()).thenReturn(mockWorldState);
     when(mockWorldStateArchive.getMutable(any(), any(), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));
 

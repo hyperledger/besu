@@ -118,6 +118,7 @@ public class TransactionTracerTest {
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     when(protocolSpec.getBadBlocksManager()).thenReturn(new BadBlockManager());
+    when(mutableWorldState.copy()).thenReturn(mutableWorldState);
   }
 
   @Test

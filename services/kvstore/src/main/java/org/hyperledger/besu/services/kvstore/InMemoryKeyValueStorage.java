@@ -19,6 +19,8 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -36,7 +38,9 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
-public class InMemoryKeyValueStorage implements KeyValueStorage {
+/** The In memory key value storage. */
+public class InMemoryKeyValueStorage
+    implements SnappedKeyValueStorage, SnappableKeyValueStorage, KeyValueStorage {
 
   private final Map<Bytes, byte[]> hashValueStore;
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
@@ -140,6 +144,21 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   public Set<Bytes> keySet() {
     return Set.copyOf(hashValueStore.keySet());
+  }
+
+  @Override
+  public SnappedKeyValueStorage takeSnapshot() {
+    return new InMemoryKeyValueStorage(new HashMap<>(hashValueStore));
+  }
+
+  @Override
+  public KeyValueStorageTransaction getSnapshotTransaction() {
+    return startTransaction();
+  }
+
+  @Override
+  public SnappedKeyValueStorage cloneFromSnapshot() {
+    return takeSnapshot();
   }
 
   private class InMemoryTransaction implements KeyValueStorageTransaction {

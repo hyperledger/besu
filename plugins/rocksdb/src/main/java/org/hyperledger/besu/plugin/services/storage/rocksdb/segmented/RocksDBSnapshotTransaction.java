@@ -140,8 +140,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void commit() throws StorageException {
-    // no-op or throw?
-    throw new UnsupportedOperationException("RocksDBSnapshotTransaction does not support commit");
+    // no-op
   }
 
   @Override
