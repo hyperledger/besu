@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -38,6 +39,31 @@ class ConfigurationOverviewBuilderTest {
     builder.setNetwork("foobar");
     final String networkSet = builder.build();
     assertThat(networkSet).contains("Network: foobar");
+  }
+
+  @Test
+  void setGenesisFile() {
+    final String noGenesisSet = builder.build();
+    assertThat(noGenesisSet).doesNotContain("Network: Custom genesis file specified");
+
+    builder.setNetwork("foobar");
+    final String networkSet = builder.build();
+    assertThat(networkSet).contains("Network: foobar");
+
+    builder.setHasCustomGenesis(true);
+    final String genesisSet = builder.build();
+    assertThat(genesisSet).contains("Network: Custom genesis file specified");
+    assertThat(genesisSet).doesNotContain("Network: foobar");
+  }
+
+  @Test
+  void setNetworkId() {
+    final String noNetworkIdSet = builder.build();
+    assertThat(noNetworkIdSet).doesNotContain("Network Id:");
+
+    builder.setNetworkId(BigInteger.ONE);
+    final String networkIdSet = builder.build();
+    assertThat(networkIdSet).contains("Network Id: 1");
   }
 
   @Test
