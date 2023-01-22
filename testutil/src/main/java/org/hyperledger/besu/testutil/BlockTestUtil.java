@@ -132,7 +132,7 @@ public final class BlockTestUtil {
     return forkUpgradedSupplier.get();
   }
   /**
-   * Gets Eth Reg Test resources.
+   * Gets Eth Ref Test resources.
    *
    * @return the Eth Ref Test resources.
    */
