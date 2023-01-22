@@ -58,15 +58,15 @@ public class EthCreateAccessList extends EthEstimateGas {
       return errorResponse(requestContext, jsonRpcError.get());
     }
     final AccessListSimulatorResult maybeResult =
-        maybeProcessTransaction(jsonCallParameter, blockHeader);
-    // if the call accessList is same than the simulation result, calculate gas and return
-    if (isAccessListResultValid(jsonCallParameter, maybeResult.getTracer())) {
-      return createResponse(requestContext, maybeResult);
-    } else { // process transaction with the simulation accessList result
+        processTransaction(jsonCallParameter, blockHeader);
+    // if the call accessList is different from the simulation result, calculate gas and return
+    if (shouldProcessWithAccessListOverride(jsonCallParameter, maybeResult.getTracer())) {
       final AccessListSimulatorResult result =
-          processTransactionWithAccessList(
+          processTransactionWithAccessListOverride(
               jsonCallParameter, blockHeader, maybeResult.getTracer().getAccessList());
       return createResponse(requestContext, result);
+    } else {
+      return createResponse(requestContext, maybeResult);
     }
   }
 
@@ -98,17 +98,21 @@ public class EthCreateAccessList extends EthEstimateGas {
         .build();
   }
 
-  private boolean isAccessListResultValid(
+  private boolean shouldProcessWithAccessListOverride(
       final JsonCallParameter parameters, final AccessListOperationTracer tracer) {
+
+    // if empty, transaction did not access any storage, does not need to reprocess
     if (tracer.getAccessList().isEmpty()) {
-      return true; // did not access any storage
-    } else {
-      if (parameters.getAccessList().isEmpty()) {
-        return false;
-      }
-      return parameters.getAccessList().get().isEmpty()
-          || Objects.equals(tracer.getAccessList(), parameters.getAccessList().get());
+      return false;
     }
+
+    // if empty, call did not include accessList, should reprocess
+    if (parameters.getAccessList().isEmpty()) {
+      return true;
+    }
+
+    // If call included access list, compare it with tracer result and return true if different
+    return !Objects.equals(tracer.getAccessList(), parameters.getAccessList().get());
   }
 
   private Function<TransactionSimulatorResult, JsonRpcResponse> createResponse(
@@ -122,7 +126,7 @@ public class EthCreateAccessList extends EthEstimateGas {
             : errorResponse(request, result);
   }
 
-  private AccessListSimulatorResult maybeProcessTransaction(
+  private AccessListSimulatorResult processTransaction(
       final JsonCallParameter jsonCallParameter, final BlockHeader blockHeader) {
     final TransactionValidationParams transactionValidationParams =
         transactionValidationParams(!jsonCallParameter.isMaybeStrict().orElse(Boolean.FALSE));
@@ -137,7 +141,7 @@ public class EthCreateAccessList extends EthEstimateGas {
     return new AccessListSimulatorResult(result, tracer);
   }
 
-  private AccessListSimulatorResult processTransactionWithAccessList(
+  private AccessListSimulatorResult processTransactionWithAccessListOverride(
       final JsonCallParameter jsonCallParameter,
       final BlockHeader blockHeader,
       final List<AccessListEntry> accessList) {
