@@ -37,7 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class EthCreateAccessList extends EthEstimateGas {
+public class EthCreateAccessList extends AbstractEstimateGas {
 
   public EthCreateAccessList(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
