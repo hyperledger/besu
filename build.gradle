@@ -160,7 +160,7 @@ allprojects {
     ]
 
     options.errorprone {
-      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*)'
+      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*|build/.*/annotation-output/.*)'
 
       // Our equals need to be symmetric, this checker doesn't respect that.
       check('EqualsGetClass', CheckSeverity.OFF)

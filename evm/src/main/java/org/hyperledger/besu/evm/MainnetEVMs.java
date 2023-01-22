@@ -48,6 +48,7 @@ import org.hyperledger.besu.evm.operation.CodeSizeOperation;
 import org.hyperledger.besu.evm.operation.CoinbaseOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
+import org.hyperledger.besu.evm.operation.DataHashOperation;
 import org.hyperledger.besu.evm.operation.DelegateCallOperation;
 import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
@@ -726,6 +727,17 @@ public class MainnetEVMs {
   /**
    * Cancun evm.
    *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancun(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return cancun(new ShanghaiGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Cancun evm.
+   *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
@@ -773,6 +785,7 @@ public class MainnetEVMs {
     registry.put(new RelativeJumpVectorOperation(gasCalculator));
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
+    registry.put(new DataHashOperation(gasCalculator));
   }
 
   /**

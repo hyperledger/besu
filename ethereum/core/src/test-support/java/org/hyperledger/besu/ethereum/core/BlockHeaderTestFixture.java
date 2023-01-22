@@ -48,6 +48,7 @@ public class BlockHeaderTestFixture {
 
   private Hash mixHash = Hash.EMPTY;
   private long nonce = 0;
+  private Optional<Hash> withdrawalsRoot = Optional.empty();
   private BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
 
   public BlockHeader buildHeader() {
@@ -69,6 +70,7 @@ public class BlockHeaderTestFixture {
     builder.extraData(extraData);
     builder.mixHash(mixHash);
     builder.nonce(nonce);
+    withdrawalsRoot.ifPresent(builder::withdrawalsRoot);
     builder.blockHeaderFunctions(blockHeaderFunctions);
 
     return builder.buildBlockHeader();
@@ -156,6 +158,11 @@ public class BlockHeaderTestFixture {
 
   public BlockHeaderTestFixture nonce(final long nonce) {
     this.nonce = nonce;
+    return this;
+  }
+
+  public BlockHeaderTestFixture withdrawalsRoot(final Hash withdrawalsRoot) {
+    this.withdrawalsRoot = Optional.ofNullable(withdrawalsRoot);
     return this;
   }
 
