@@ -1605,6 +1605,12 @@ public class MessageFrame {
       return this;
     }
 
+    /**
+     * Sets versioned hashes list.
+     *
+     * @param versionedHashes the Optional list of versioned hashes
+     * @return the builder
+     */
     public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
       this.versionedHashes = versionedHashes;
       return this;
