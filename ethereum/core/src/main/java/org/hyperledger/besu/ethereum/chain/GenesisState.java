@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import static java.util.Collections.emptyList;
+
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
@@ -25,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -37,11 +40,11 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,9 +55,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
-
-  private static final BlockBody BODY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList());
 
   private final Block block;
   private final List<GenesisAccount> genesisAccounts;
@@ -89,8 +89,14 @@ public final class GenesisState {
     final Block block =
         new Block(
             buildHeader(config, calculateGenesisStateHash(genesisAccounts), protocolSchedule),
-            BODY);
+            buildBody(config));
     return new GenesisState(block, genesisAccounts);
+  }
+
+  private static BlockBody buildBody(final GenesisConfigFile config) {
+    final Optional<List<Withdrawal>> withdrawals =
+        isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+    return new BlockBody(emptyList(), emptyList(), withdrawals);
   }
 
   public Block getBlock() {
