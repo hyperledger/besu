@@ -33,6 +33,7 @@ import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,9 +89,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
 
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
     if (accumulatedTime > PRINT_DELAY) {
-      final BigDecimal blocksPercent =
-          BigDecimal.valueOf((lastBlock / pivotHeader.getNumber()) * 100)
-              .setScale(2, RoundingMode.HALF_UP);
+      final BigDecimal blocksPercent = getBlocksPercent(lastBlock, pivotHeader.getNumber());
       LOG.info(
           "Block import progress: {} of {} ({}%)",
           lastBlock, pivotHeader.getNumber(), blocksPercent);
@@ -104,6 +103,16 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
       accumulatedTime = 0L;
       logStartBlock = OptionalLong.empty();
     }
+  }
+
+  @VisibleForTesting
+  protected static BigDecimal getBlocksPercent(final long lastBlock, final long totalBlocks) {
+    if (totalBlocks == 0) {
+      return BigDecimal.ZERO;
+    }
+    final BigDecimal blocksPercent =
+        BigDecimal.valueOf((100 * lastBlock / totalBlocks)).setScale(2, RoundingMode.HALF_UP);
+    return blocksPercent;
   }
 
   protected boolean importBlock(final BlockWithReceipts blockWithReceipts) {

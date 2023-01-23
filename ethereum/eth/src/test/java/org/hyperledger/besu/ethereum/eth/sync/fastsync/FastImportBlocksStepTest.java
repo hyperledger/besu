@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.FULL;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.junit.Before;
@@ -73,6 +75,18 @@ public class FastImportBlocksStepTest {
             ommerValidationPolicy,
             null,
             pivotHeader);
+  }
+
+  @Test
+  public void blocksPercent_shouldHandleZeroDenominator() {
+    assertThat(FastImportBlocksStep.getBlocksPercent(1, 1))
+        .isEqualByComparingTo(BigDecimal.valueOf(100));
+    assertThat(FastImportBlocksStep.getBlocksPercent(1, 100))
+        .isEqualByComparingTo(BigDecimal.valueOf(1));
+    assertThat(FastImportBlocksStep.getBlocksPercent(0, 100))
+        .isEqualByComparingTo(BigDecimal.valueOf(0));
+    assertThat(FastImportBlocksStep.getBlocksPercent(99, 0))
+        .isEqualByComparingTo(BigDecimal.valueOf(0));
   }
 
   @Test
