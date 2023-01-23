@@ -102,4 +102,29 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
       return spec;
     }
   }
+
+  public NavigableSet<TimedProtocolSpec> getProtocolSpecs() {
+    return protocolSpecs;
+  }
+
+  /**
+   * Get the timestamp value for a named fork.
+   *
+   * @param forkName a named for to find the scheduled timestamp it activates at
+   * @return if that name exists and has a timestamp, it is returned. If it is NOT present,
+   *     Long.MAX_VALUE is returned, assuming it has yet to be scheduled.
+   */
+  public long scheduledAt(final String forkName) {
+    return protocolSpecs.stream()
+        .filter(
+            tps -> {
+              return tps.getSpec().getName().equalsIgnoreCase(forkName);
+            })
+        .mapToLong(
+            tps -> {
+              return tps.getTimestamp();
+            })
+        .findFirst()
+        .orElse(Long.MAX_VALUE);
+  }
 }

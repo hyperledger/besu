@@ -20,6 +20,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Add `excess_data_gas` field to block header [#4958](https://github.com/hyperledger/besu/pull/4958)
 - Support for new DATAHASH opcode as part of EIP-4844 [#4823](https://github.com/hyperledger/besu/issues/4823)
 - Send only hash announcement for blob transaction type [#4940](https://github.com/hyperledger/besu/pull/4940)
 - Add `excess_data_gas` field to block header [#4958](https://github.com/hyperledger/besu/pull/4958)
