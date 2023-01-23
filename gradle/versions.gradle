@@ -139,6 +139,7 @@ dependencyManagement {
     dependency 'org.apache.tuweni:tuweni-io:2.3.1'
     dependency 'org.apache.tuweni:tuweni-net:2.3.1'
     dependency 'org.apache.tuweni:tuweni-rlp:2.3.1'
+    dependency 'org.apache.tuweni:tuweni-ssz:2.3.1'
     dependency 'org.apache.tuweni:tuweni-toml:2.3.1'
     dependency 'org.apache.tuweni:tuweni-units:2.3.1'
 
