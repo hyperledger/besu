@@ -22,8 +22,8 @@ executors:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
   besu_arm64_executor_med: # 2cpu, 8G ram
-    machine:
-      image: ubuntu-2004:202101-01
+    machine: #https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2
     resource_class: arm.medium
     working_directory: ~/project
     environment:
