@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(FastImportBlocksStep.class);
-  private static final long PRINT_DELAY = TimeUnit.SECONDS.toMillis(15L);
+  private static final long PRINT_DELAY = TimeUnit.SECONDS.toMillis(30L);
 
   private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;

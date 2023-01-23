@@ -130,7 +130,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           snapTaskCollection.size());
 
       final SnapsyncMetricsManager snapsyncMetricsManager =
-          new SnapsyncMetricsManager(metricsSystem);
+          new SnapsyncMetricsManager(metricsSystem, ethContext);
 
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(
