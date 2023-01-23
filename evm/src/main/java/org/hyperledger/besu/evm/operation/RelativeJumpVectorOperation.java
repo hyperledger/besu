@@ -41,7 +41,12 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
   @Override
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes code = frame.getCode().getBytes();
-    final int offsetCase = frame.popStackItem().toInt();
+    int offsetCase;
+    try {
+      offsetCase = frame.popStackItem().toInt() & 0xff;
+    } catch (ArithmeticException | IllegalArgumentException ae) {
+      offsetCase = Integer.MAX_VALUE;
+    }
     final int vectorSize = getVectorSize(code, frame.getPC() + 1);
     return new OperationResult(
         gasCost,

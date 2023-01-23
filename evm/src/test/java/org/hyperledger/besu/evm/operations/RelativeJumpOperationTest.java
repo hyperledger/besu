@@ -28,6 +28,8 @@ import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -127,6 +129,51 @@ class RelativeJumpOperationTest {
     Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement()).isEqualTo(1 + 2 * jumpVectorSize + 1);
+  }
+
+  @Test
+  void rjumpvOverflowOperation() {
+    final GasCalculator gasCalculator = mock(GasCalculator.class);
+    final Code mockCode = mock(Code.class);
+    final int rjumpOperationIndex = 3;
+    final int jumpVectorSize = 1;
+    final int jumpLength = 4;
+    final Bytes code =
+        Bytes.fromHexString(
+            "00".repeat(rjumpOperationIndex)
+                + String.format("5e%02x%04x", jumpVectorSize, jumpLength));
+
+    when(mockCode.getBytes()).thenReturn(code);
+    RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
+
+    for (Bytes jump :
+        List.of(
+            Bytes.fromHexString("0x7f"),
+            Bytes.fromHexString("0xff"),
+            Bytes.fromHexString("0x7fff"),
+            Bytes.fromHexString("0xffff"),
+            Bytes.fromHexString("0x7fffffff"),
+            Bytes.fromHexString("0xffffffff"),
+            Bytes.fromHexString("0x7fffffffffffffff"),
+            Bytes.fromHexString("0xffffffffffffffff"),
+            Bytes.fromHexString("0x7fffffffffffffffffffffffffffffff"),
+            Bytes.fromHexString("0xffffffffffffffffffffffffffffffff"),
+            Bytes.fromHexString(
+                "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
+            Bytes.fromHexString(
+                "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))) {
+      MessageFrame messageFrame =
+          new TestMessageFrameBuilder()
+              .code(mockCode)
+              .pc(rjumpOperationIndex)
+              .initialGas(5L)
+              .pushStackItem(jump)
+              .build();
+
+      Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
+
+      assertThat(rjumpResult.getPcIncrement()).isEqualTo(1 + 2 * jumpVectorSize + 1);
+    }
   }
 
   @Test
