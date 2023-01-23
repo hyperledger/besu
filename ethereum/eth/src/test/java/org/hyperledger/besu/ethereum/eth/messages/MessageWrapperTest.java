@@ -319,6 +319,8 @@ public class MessageWrapperTest {
                   recIdAndChainId(Byte.decode(v)).getKey()),
           Bytes.fromHexString(data),
           recIdAndChainId(Byte.decode(v)).getValue(),
+          Optional.empty(),
+          Optional.empty(),
           Optional.empty());
     }
   }
