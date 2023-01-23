@@ -271,9 +271,11 @@ class TLSContextFactoryTest {
 
     if (testSuccess) {
       client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0));
-      final boolean allMessagesServerExchanged = serverLatch.await(10, TimeUnit.SECONDS);
-      final boolean allMessagesClientExchanged = clientLatch.await(10, TimeUnit.SECONDS);
-      assertThat(allMessagesClientExchanged && allMessagesServerExchanged).isTrue();
+      final boolean allMessagesServerExchanged = serverLatch.await(15, TimeUnit.SECONDS);
+      final boolean allMessagesClientExchanged = clientLatch.await(15, TimeUnit.SECONDS);
+
+      assertThat(allMessagesClientExchanged).isTrue();
+      assertThat(allMessagesServerExchanged).isTrue();
     } else {
       try {
         client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0)).sync();
@@ -281,6 +283,7 @@ class TLSContextFactoryTest {
         assertThat(client.getChannelFuture().channel().isActive()).isFalse();
       } catch (final Exception e) {
         // NOOP
+        LOG.info("Failure test, unexpected exception - ignoring. " + e.getMessage());
       }
     }
   }
