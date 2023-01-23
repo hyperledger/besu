@@ -189,9 +189,7 @@ public class MainnetBlockValidator implements BlockValidator {
       if (result.errorMessage.isPresent()) {
         LOG.info("Invalid block {}: {}", invalidBlock.toLogString(), result.errorMessage);
       } else {
-        LOG.info(
-            "Invalid block {}: Block import failed with no error message",
-            invalidBlock.toLogString());
+        LOG.info("Invalid block {}", invalidBlock.toLogString());
       }
     }
     badBlockManager.addBadBlock(invalidBlock, result.causedBy());
