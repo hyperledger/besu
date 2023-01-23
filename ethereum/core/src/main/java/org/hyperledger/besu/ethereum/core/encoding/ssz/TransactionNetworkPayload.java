@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.ssz.SSZFixedSizeTypeList;
+import org.apache.tuweni.ssz.SSZFixedSizeVector;
 import org.apache.tuweni.ssz.SSZReadable;
 import org.apache.tuweni.ssz.SSZReader;
 import org.apache.tuweni.ssz.SSZVariableSizeTypeList;
@@ -124,7 +125,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
       UInt256 value;
       SSZVariableSizeTypeList<AccessTuple> accessList =
           new SSZVariableSizeTypeList<>(AccessTuple::new);
-      UInt256 maxFeePerDataGas;
+      UInt256 maxFeePerData;
 
       SSZFixedSizeTypeList<VersionedHash> blobVersionedHashes =
           new SSZFixedSizeTypeList<>(32, VersionedHash::new);
@@ -146,7 +147,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
             r -> value = r.readUInt256(),
             data,
             accessList,
-            r -> maxFeePerDataGas = r.readUInt256(),
+            r -> maxFeePerData = r.readUInt256(),
             blobVersionedHashes);
       }
 
@@ -162,7 +163,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
             w -> w.writeUInt256(value),
             data,
             accessList,
-            w -> w.writeUInt256(maxFeePerDataGas),
+            w -> w.writeUInt256(maxFeePerData),
             blobVersionedHashes);
       }
 
@@ -202,8 +203,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
         return accessList.getElements();
       }
 
-      public UInt256 getMaxFeePerDataGas() {
-        return maxFeePerDataGas;
+      public UInt256 getMaxFeePerData() {
+        return maxFeePerData;
       }
 
       public List<Hash> getBlobVersionedHashes() {
@@ -244,8 +245,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
         this.accessList = accessList;
       }
 
-      public void setMaxFeePerDataGas(final UInt256 maxFeePerData) {
-        this.maxFeePerDataGas = maxFeePerData;
+      public void setMaxFeePerData(final UInt256 maxFeePerData) {
+        this.maxFeePerData = maxFeePerData;
       }
 
       public void setBlobVersionedHashes(final List<Hash> blobVersionedHashes) {
@@ -301,7 +302,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
     public static class Data implements SSZReadable, SSZWritable {
       public static final int MAX_CALL_DATA_SIZE = 16777216; // 2**24
 
-      Bytes data = Bytes.EMPTY;
+      Bytes data;
 
       @Override
       public boolean isFixed() {
@@ -318,7 +319,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
       @Override
       public void writeTo(final SSZWriter writer) {
-        if (data != Bytes.EMPTY) {
+        if (data != null) {
           writer.writeBytes(data);
         }
       }
@@ -334,8 +335,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
     public static class AccessTuple implements SSZReadable, SSZWritable {
       Bytes address;
-      SSZFixedSizeTypeList<SSZByte32Wrapper> storageKeys =
-          new SSZFixedSizeTypeList<>(ELEMENT_SIZE, SSZByte32Wrapper::new);
+      SSZFixedSizeTypeList<SSZUInt256Wrapper> storageKeys =
+          new SSZFixedSizeTypeList<>(ELEMENT_SIZE, SSZUInt256Wrapper::new);
 
       @Override
       public boolean isFixed() {
@@ -358,7 +359,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
       public List<Bytes32> getStorageKeys() {
         return storageKeys.getElements().stream()
-            .map(sszByte32Wrapper -> sszByte32Wrapper.getData())
+            .map(sszuInt256Wrapper -> sszuInt256Wrapper.getData().toBytes())
             .collect(Collectors.toList());
       }
 
@@ -374,9 +375,9 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
                 storageKeys.stream()
                     .map(
                         bytes32 -> {
-                          SSZByte32Wrapper sszByte32Wrapper = new SSZByte32Wrapper();
-                          sszByte32Wrapper.setData(UInt256.fromBytes(bytes32));
-                          return sszByte32Wrapper;
+                          SSZUInt256Wrapper sszuInt256Wrapper = new SSZUInt256Wrapper();
+                          sszuInt256Wrapper.setData(UInt256.fromBytes(bytes32));
+                          return sszuInt256Wrapper;
                         })
                     .collect(Collectors.toList()));
       }
@@ -479,41 +480,42 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
   }
 
   public static class Blob implements SSZReadable, SSZWritable {
-    Bytes bytes;
+    SSZFixedSizeVector<SSZUInt256Wrapper> vector =
+        new SSZFixedSizeVector<>(FIELD_ELEMENTS_PER_BLOB, ELEMENT_SIZE, SSZUInt256Wrapper::new);
 
     @Override
     public void populateFromReader(final SSZReader reader) {
-      bytes = reader.readFixedBytes(FIELD_ELEMENTS_PER_BLOB * ELEMENT_SIZE);
+      vector.populateFromReader(reader);
     }
 
     @Override
     public void writeTo(final SSZWriter writer) {
-      writer.writeFixedBytes(bytes);
+      vector.writeTo(writer);
     }
 
-    public Bytes getBytes() {
-      return bytes;
+    public List<SSZUInt256Wrapper> getElements() {
+      return vector.getElements();
     }
   }
 
-  public static class SSZByte32Wrapper implements SSZReadable, SSZWritable {
-    Bytes32 data;
+  public static class SSZUInt256Wrapper implements SSZReadable, SSZWritable {
+    UInt256 data;
 
     @Override
     public void populateFromReader(final SSZReader reader) {
-      data = Bytes32.wrap(reader.readFixedBytes(32));
+      data = reader.readUInt256();
     }
 
     @Override
     public void writeTo(final SSZWriter writer) {
-      writer.writeBytes(data);
+      writer.writeUInt256(data);
     }
 
-    public Bytes32 getData() {
+    public UInt256 getData() {
       return data;
     }
 
-    public void setData(final Bytes32 data) {
+    public void setData(final UInt256 data) {
       this.data = data;
     }
   }
