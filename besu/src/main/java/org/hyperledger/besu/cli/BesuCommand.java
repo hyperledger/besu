@@ -758,6 +758,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         split = ",",
         arity = "1..*")
     private final List<String> rpcHttpTlsCipherSuites = new ArrayList<>();
+
+    @CommandLine.Option(
+        names = {"--rpc-http-max-batch-size"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Specifies the maximum number of requests in a single RPC batch request via RPC. -1 specifies no limit  (default: ${DEFAULT-VALUE})")
+    private final Integer rpcHttpMaxBatchSize = DEFAULT_HTTP_MAX_BATCH_SIZE;
   }
 
   // JSON-RPC Websocket Options
@@ -2378,6 +2385,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRPCHttpOptionGroup.rpcHttpAuthenticationAlgorithm);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
+    jsonRpcConfiguration.setMaxBatchSize(jsonRPCHttpOptionGroup.rpcHttpMaxBatchSize);
     return jsonRpcConfiguration;
   }
 
@@ -3573,6 +3581,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (network != null) {
       builder.setNetwork(network.normalize());
     }
+
+    builder.setHasCustomGenesis(genesisFile != null);
+    builder.setNetworkId(ethNetworkConfig.getNetworkId());
 
     builder
         .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())

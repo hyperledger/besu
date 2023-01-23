@@ -14,16 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.apache.tuweni.units.bigints.UInt64;
+import org.junit.Test;
 
 public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> {
 
@@ -55,5 +63,22 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
     for (final Block block : partialResponse) {
       assertThat(requestedData).contains(block);
     }
+  }
+
+  @Test
+  public void assertBodyIdentifierUsesWithdrawalsToGenerateBodyIdentifiers() {
+    final Withdrawal withdrawal =
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
+
+    // Empty body block
+    final BlockBody emptyBodyBlock = BlockBody.empty();
+    // Block with no tx, no ommers, 1 withdrawal
+    final BlockBody bodyBlockWithWithdrawal =
+        new BlockBody(emptyList(), emptyList(), Optional.of(List.of(withdrawal)));
+
+    assertThat(
+            new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)
+                .equals(new GetBodiesFromPeerTask.BodyIdentifier(bodyBlockWithWithdrawal)))
+        .isFalse();
   }
 }
