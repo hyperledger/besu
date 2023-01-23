@@ -27,7 +27,7 @@ public enum TransactionType {
   /** Eip1559 transaction type. */
   EIP1559(0x02),
   /** Blob transaction type. */
-  BLOB(0x03);
+  BLOB(0x05);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
       Set.of(ACCESS_LIST, EIP1559, BLOB);
@@ -69,7 +69,10 @@ public enum TransactionType {
   public static TransactionType of(final int serializedTypeValue) {
     return Arrays.stream(
             new TransactionType[] {
-              TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+              TransactionType.FRONTIER,
+              TransactionType.ACCESS_LIST,
+              TransactionType.EIP1559,
+              TransactionType.BLOB
             })
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
         .findFirst()
