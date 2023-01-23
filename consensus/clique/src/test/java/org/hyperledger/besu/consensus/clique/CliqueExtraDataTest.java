@@ -37,7 +37,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CliqueExtraDataTest {
 

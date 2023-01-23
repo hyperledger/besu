@@ -38,8 +38,8 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueExtraDataValidationRuleTest {
 
@@ -50,7 +50,7 @@ public class CliqueExtraDataValidationRuleTest {
   private final List<Address> validatorList = Lists.newArrayList();
   private ProtocolContext cliqueProtocolContext;
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddr = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
 

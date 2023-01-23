@@ -27,8 +27,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueProposerSelectorTest {
 
@@ -40,7 +40,7 @@ public class CliqueProposerSelectorTest {
           AddressHelpers.ofValue(4));
   private ValidatorProvider validatorProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
     validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);

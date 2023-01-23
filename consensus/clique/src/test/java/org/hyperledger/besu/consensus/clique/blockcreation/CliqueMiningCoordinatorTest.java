@@ -49,14 +49,14 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CliqueMiningCoordinatorTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -81,7 +81,7 @@ public class CliqueMiningCoordinatorTest {
   @Mock private SyncState syncState;
   @Mock private ValidatorProvider validatorProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
 
     headerTestFixture.number(1);
