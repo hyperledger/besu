@@ -45,13 +45,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.ssz.SSZ;
 import org.apache.tuweni.ssz.SSZReader;
 import org.apache.tuweni.units.bigints.UInt32;
-import org.slf4j.Logger;
 
 public class TransactionDecoder {
 
   private static final UInt32 BLOB_TRANSACTION_OFFSET = UInt32.fromHexString("0x3c000000");
-
-  private static final Logger LOG = getLogger(TransactionDecoder.class);
 
   @FunctionalInterface
   interface Decoder {
@@ -91,7 +88,6 @@ public class TransactionDecoder {
     TransactionNetworkPayload.SingedBlobTransaction signedBlobTransaction;
 
     if (firstOffset.equals(BLOB_TRANSACTION_OFFSET)) {
-      LOG.trace("Decoding TransactionNetworkPayload");
 
       TransactionNetworkPayload payload = new TransactionNetworkPayload();
       payload.populateFromReader(input);
@@ -99,7 +95,6 @@ public class TransactionDecoder {
 
       builder.kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProof());
     } else {
-      LOG.trace("Decoding TransactionNetworkPayload.SingedBlobTransaction");
       signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
       signedBlobTransaction.populateFromReader(input);
     }
@@ -130,7 +125,7 @@ public class TransactionDecoder {
                     signedBlobTransaction.getSignature().getR().toUnsignedBigInteger(),
                     signedBlobTransaction.getSignature().getS().toUnsignedBigInteger(),
                     signedBlobTransaction.getSignature().isParity() ? (byte) 1 : 0))
-        .maxFeePerDataGas(Wei.of(blobTransaction.getMaxFeePerDataGas()))
+        .maxFeePerData(Wei.of(blobTransaction.getMaxFeePerData()))
         .versionedHashes(blobTransaction.getBlobVersionedHashes())
         .build();
   }
