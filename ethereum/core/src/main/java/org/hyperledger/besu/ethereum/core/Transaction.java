@@ -117,6 +117,8 @@ public class Transaction
   private final Optional<Wei> maxFeePerData;
   private final Optional<List<Hash>> versionedHashes;
 
+  private final Optional<BlobsWithCommitments> blobsWithCommitments;
+
   public static Builder builder() {
     return new Builder();
   }
@@ -170,7 +172,8 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
       final Optional<Wei> maxFeePerData,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes,
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
     if (v.isPresent() && chainId.isPresent()) {
       throw new IllegalArgumentException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
@@ -218,6 +221,7 @@ public class Transaction
     this.v = v;
     this.maxFeePerData = maxFeePerData;
     this.versionedHashes = versionedHashes;
+    this.blobsWithCommitments = blobsWithCommitments;
   }
 
   public Transaction(
@@ -234,7 +238,8 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
       final Optional<Wei> maxFeePerData,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes,
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         TransactionType.FRONTIER,
         nonce,
@@ -251,7 +256,8 @@ public class Transaction
         chainId,
         v,
         maxFeePerData,
-        versionedHashes);
+        versionedHashes,
+        blobsWithCommitments);
   }
 
   public Transaction(
@@ -264,7 +270,8 @@ public class Transaction
       final Bytes payload,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes,
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         TransactionType.FRONTIER,
         nonce,
@@ -281,7 +288,8 @@ public class Transaction
         chainId,
         v,
         Optional.empty(),
-        versionedHashes);
+        versionedHashes,
+        blobsWithCommitments);
   }
 
   /**
@@ -325,6 +333,7 @@ public class Transaction
         chainId,
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
         Optional.empty());
   }
 
@@ -358,7 +367,8 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
       final Optional<Wei> maxFeePerData,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes,
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         nonce,
         Optional.of(gasPrice),
@@ -373,7 +383,8 @@ public class Transaction
         chainId,
         v,
         maxFeePerData,
-        versionedHashes);
+        versionedHashes,
+        blobsWithCommitments);
   }
 
   /**
@@ -720,8 +731,16 @@ public class Transaction
     return this.transactionType;
   }
 
+  public Optional<Wei> getMaxFeePerData() {
+    return maxFeePerData;
+  }
+
   public Optional<List<Hash>> getVersionedHashes() {
-    return this.versionedHashes;
+    return versionedHashes;
+  }
+
+  public Optional<BlobsWithCommitments> getBlobsWithCommitments() {
+    return blobsWithCommitments;
   }
 
   /**
@@ -1007,6 +1026,7 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<Hash> versionedHashes = null;
     private Wei maxFeePerData;
+    private BlobsWithCommitments blobsWithCommitments;
 
     public Builder type(final TransactionType transactionType) {
       this.transactionType = transactionType;
@@ -1118,7 +1138,8 @@ public class Transaction
           chainId,
           v,
           Optional.ofNullable(maxFeePerData),
-          Optional.ofNullable(versionedHashes));
+          Optional.ofNullable(versionedHashes),
+          Optional.ofNullable(blobsWithCommitments));
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
@@ -1151,12 +1172,28 @@ public class Transaction
         final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
         final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
         final TransactionNetworkPayload.KZGProof kzgProof) {
+      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProof);
       return this;
     }
 
-    public Builder maxFeePerData(Wei maxFeePerData) {
+    public Builder maxFeePerData(final Wei maxFeePerData) {
       this.maxFeePerData = maxFeePerData;
       return this;
+    }
+  }
+
+  public static class BlobsWithCommitments {
+    public final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments;
+    public final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs;
+    public final TransactionNetworkPayload.KZGProof kzgProof;
+
+    public BlobsWithCommitments(
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
+        final TransactionNetworkPayload.KZGProof kzgProof) {
+      this.kzgCommitments = kzgCommitments;
+      this.blobs = blobs;
+      this.kzgProof = kzgProof;
     }
   }
 

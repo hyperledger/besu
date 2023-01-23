@@ -61,6 +61,18 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
     return kzgProof;
   }
 
+  public void setKzgCommitments(final SSZFixedSizeTypeList<KZGCommitment> kzgCommitments) {
+    this.kzgCommitments = kzgCommitments;
+  }
+
+  public void setBlobs(final SSZFixedSizeTypeList<Blob> blobs) {
+    this.blobs = blobs;
+  }
+
+  public void setKzgProof(final KZGProof kzgProof) {
+    this.kzgProof = kzgProof;
+  }
+
   public static class SingedBlobTransaction implements SSZReadable, SSZWritable {
     private final BlobTransaction message = new BlobTransaction();
     private final ECDSASignature signature = new ECDSASignature();
@@ -186,6 +198,56 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
             .map(VersionedHash::toHash)
             .collect(Collectors.toList());
       }
+
+      public void setChainId(final UInt256 chainId) {
+        this.chainId = chainId;
+      }
+
+      public void setNonce(final long nonce) {
+        this.nonce = nonce;
+      }
+
+      public void setMaxPriorityFeePerGas(final UInt256 maxPriorityFeePerGas) {
+        this.maxPriorityFeePerGas = maxPriorityFeePerGas;
+      }
+
+      public void setMaxFeePerGas(final UInt256 maxFeePerGas) {
+        this.maxFeePerGas = maxFeePerGas;
+      }
+
+      public void setGas(final long gas) {
+        this.gas = gas;
+      }
+
+      public void setAddress(final Optional<Address> address) {
+        this.address.setAddress(address);
+      }
+
+      public void setValue(final UInt256 value) {
+        this.value = value;
+      }
+
+      public void setAccessList(final SSZVariableSizeTypeList<AccessTuple> accessList) {
+        this.accessList = accessList;
+      }
+
+      public void setMaxFeePerData(final UInt256 maxFeePerData) {
+        this.maxFeePerData = maxFeePerData;
+      }
+
+      public void setBlobVersionedHashes(final List<Hash> blobVersionedHashes) {
+        this.blobVersionedHashes.getElements().clear();
+        this.blobVersionedHashes
+            .getElements()
+            .addAll(
+                blobVersionedHashes.stream()
+                    .map(VersionedHash::fromHash)
+                    .collect(Collectors.toList()));
+      }
+
+      public void setData(final Bytes data) {
+        this.data.setData(data);
+      }
     }
 
     public static class AddressUnion implements SSZReadable, SSZWritable {
@@ -217,6 +279,10 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
       public Bytes getAddress() {
         return address;
       }
+
+      public void setAddress(final Optional<Address> address) {
+        this.address = address.orElse(null);
+      }
     }
 
     public static class Data implements SSZReadable, SSZWritable {
@@ -246,6 +312,10 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
       public Bytes getData() {
         return data;
+      }
+
+      public void setData(final Bytes data) {
+        this.data = data;
       }
     }
 
@@ -278,6 +348,25 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
             .map(sszuInt256Wrapper -> sszuInt256Wrapper.getData().toBytes())
             .collect(Collectors.toList());
       }
+
+      public void setAddress(final Bytes address) {
+        this.address = address;
+      }
+
+      public void setStorageKeys(final List<Bytes32> storageKeys) {
+        this.storageKeys.getElements().clear();
+        this.storageKeys
+            .getElements()
+            .addAll(
+                storageKeys.stream()
+                    .map(
+                        bytes32 -> {
+                          SSZUInt256Wrapper sszuInt256Wrapper = new SSZUInt256Wrapper();
+                          sszuInt256Wrapper.setData(UInt256.fromBytes(bytes32));
+                          return sszuInt256Wrapper;
+                        })
+                    .collect(Collectors.toList()));
+      }
     }
 
     public static class VersionedHash implements SSZReadable, SSZWritable {
@@ -304,6 +393,12 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
       public Hash toHash() {
         return Hash.wrap(Bytes32.wrap(bytes));
+      }
+
+      public static VersionedHash fromHash(final Hash hash) {
+        VersionedHash versionedHash = new VersionedHash();
+        versionedHash.bytes = hash;
+        return versionedHash;
       }
     }
 
@@ -336,6 +431,18 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
       public UInt256 getS() {
         return s;
+      }
+
+      public void setParity(final boolean parity) {
+        this.parity = parity;
+      }
+
+      public void setR(final UInt256 r) {
+        this.r = r;
+      }
+
+      public void setS(final UInt256 s) {
+        this.s = s;
       }
     }
   }
@@ -392,6 +499,10 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
     public UInt256 getData() {
       return data;
+    }
+
+    public void setData(final UInt256 data) {
+      this.data = data;
     }
   }
 
