@@ -41,16 +41,21 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +77,11 @@ public class RlpxAgent {
 
   private Callable<Stream<PeerConnection>> getAllConnectionsCallback;
   private Callable<Stream<PeerConnection>> getAllActiveConnectionsCallback;
+  private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
+      CacheBuilder.newBuilder()
+          .expireAfterWrite(Duration.ofSeconds(5L))
+          .concurrencyLevel(1)
+          .build();
 
   private RlpxAgent(
       final LocalNode localNode,
@@ -233,19 +243,32 @@ public class RlpxAgent {
 
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture;
     if (checkWhetherToConnect(peer)) {
-      peerConnectionCompletableFuture = initiateOutboundConnection(peer);
-      peerConnectionCompletableFuture.whenComplete(
-          (peerConnection, throwable) -> {
-            if (throwable == null) {
-              dispatchConnect(peerConnection);
-            }
-          });
+      try {
+        peerConnectionCompletableFuture =
+            peersConnectingCache.get(peer.getId(), () -> getPeerConnectionCompletableFuture(peer));
+      } catch (final ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     } else {
       final String errorMsg =
           "None of the ProtocolManagers want to connect to peer " + peer.getId();
       LOG.debug(errorMsg);
       return CompletableFuture.failedFuture((new RuntimeException(errorMsg)));
     }
+
+    return peerConnectionCompletableFuture;
+  }
+
+  @NotNull
+  private CompletableFuture<PeerConnection> getPeerConnectionCompletableFuture(final Peer peer) {
+    final CompletableFuture<PeerConnection> peerConnectionCompletableFuture =
+        initiateOutboundConnection(peer);
+    peerConnectionCompletableFuture.whenComplete(
+        (peerConnection, throwable) -> {
+          if (throwable == null) {
+            dispatchConnect(peerConnection);
+          }
+        });
     return peerConnectionCompletableFuture;
   }
 

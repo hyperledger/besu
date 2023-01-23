@@ -391,6 +391,8 @@ public class EthPeers {
           return false;
         }
       }
+    } else if (peerCount() >= peerUpperBound) {
+      return false;
     }
     return true;
   }

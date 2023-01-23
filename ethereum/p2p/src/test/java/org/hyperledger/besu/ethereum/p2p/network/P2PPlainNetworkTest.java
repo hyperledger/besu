@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MockSubProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -90,6 +91,8 @@ public class P2PPlainNetworkTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
+      listener.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
 
       listener.start();
       connector.start();
@@ -112,6 +115,8 @@ public class P2PPlainNetworkTest {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(listenNodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
+      listener.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
 
       listener.start();
       connector.start();
@@ -134,68 +139,6 @@ public class P2PPlainNetworkTest {
     }
   }
 
-  /**
-   * Tests that max peers setting is honoured and inbound connections that would exceed the limit
-   * are correctly disconnected.
-   *
-   * @throws Exception On Failure
-   */
-  @Test
-  public void limitMaxPeers() throws Exception {
-    final NodeKey nodeKey = NodeKeyUtils.generate();
-    final int maxPeers = 1;
-    final NetworkingConfiguration listenerConfig =
-        NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setActive(false))
-            .setRlpx(
-                RlpxConfiguration.create()
-                    .setBindPort(0)
-                    .setPeerUpperBound(maxPeers)
-                    .setSupportedProtocols(MockSubProtocol.create()));
-    try (final P2PNetwork listener =
-            builder("partner1client1").nodeKey(nodeKey).config(listenerConfig).build();
-        final P2PNetwork connector1 = builder("partner1client1").build();
-        final P2PNetwork connector2 = builder("partner2client1").build()) {
-
-      // Setup listener and first connection
-      listener.start();
-      connector1.start();
-      final EnodeURL listenerEnode = listener.getLocalEnode().get();
-      final Bytes listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort().get();
-
-      final Peer listeningPeer = createPeer(listenId, listenPort);
-      Assertions.assertThat(
-              connector1
-                  .connect(listeningPeer)
-                  .get(30L, TimeUnit.SECONDS)
-                  .getPeerInfo()
-                  .getNodeId())
-          .isEqualTo(listenId);
-
-      // Setup second connection and check that connection is not accepted
-      final CompletableFuture<PeerConnection> peerFuture = new CompletableFuture<>();
-      final CompletableFuture<DisconnectReason> reasonFuture = new CompletableFuture<>();
-      connector2.subscribeDisconnect(
-          (peerConnection, reason, initiatedByPeer) -> {
-            peerFuture.complete(peerConnection);
-            reasonFuture.complete(reason);
-          });
-      connector2.start();
-      Assertions.assertThat(
-              connector2
-                  .connect(listeningPeer)
-                  .get(30L, TimeUnit.SECONDS)
-                  .getPeerInfo()
-                  .getNodeId())
-          .isEqualTo(listenId);
-      Assertions.assertThat(peerFuture.get(30L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
-          .isEqualTo(listenId);
-      assertThat(reasonFuture.get(30L, TimeUnit.SECONDS))
-          .isEqualByComparingTo(DisconnectReason.TOO_MANY_PEERS);
-    }
-  }
-
   @Test
   public void rejectPeerWithNoSharedCaps() throws Exception {
     final NodeKey listenerNodeKey = NodeKeyUtils.generate();
@@ -215,6 +158,9 @@ public class P2PPlainNetworkTest {
                 .nodeKey(connectorNodeKey)
                 .supportedCapabilities(cap2)
                 .build()) {
+      listener.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
@@ -234,6 +180,8 @@ public class P2PPlainNetworkTest {
     try (final P2PNetwork localNetwork =
             builder("partner1client1").peerPermissions(localDenylist).build();
         final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
+      localNetwork.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      remoteNetwork.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
 
       localNetwork.start();
       remoteNetwork.start();
@@ -282,6 +230,8 @@ public class P2PPlainNetworkTest {
     try (final P2PNetwork localNetwork =
             builder("partner1client1").peerPermissions(peerPermissions).build();
         final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
+      localNetwork.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      remoteNetwork.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
 
       localNetwork.start();
       remoteNetwork.start();
@@ -331,6 +281,8 @@ public class P2PPlainNetworkTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
+      listener.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
 
       final CompletableFuture<DisconnectReason> disconnectReasonFuture = new CompletableFuture<>();
       listener.subscribeDisconnect(
@@ -378,6 +330,14 @@ public class P2PPlainNetworkTest {
           .get(30L, TimeUnit.SECONDS);
     }
   }
+
+  private final ShouldConnectCallback testCallback =
+      new ShouldConnectCallback() {
+        @Override
+        public boolean shouldConnect(final Peer peer) {
+          return true;
+        }
+      };
 
   private static class LargeMessageData extends AbstractMessageData {
 
