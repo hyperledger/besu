@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.util.List;
@@ -81,7 +81,7 @@ public class TransactionPendingResult implements TransactionResult {
   private final String s;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final List<Hash> versionedHashes;
+  private final List<VersionedHash> versionedHashes;
 
   public TransactionPendingResult(final Transaction transaction) {
     final TransactionType transactionType = transaction.getType();
@@ -99,9 +99,7 @@ public class TransactionPendingResult implements TransactionResult {
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
     this.publicKey = transaction.getPublicKey().orElse(null);
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    this.raw = out.encoded().toString();
+    this.raw = TransactionEncoder.encodeOpaqueBytes(transaction).toString();
     this.to = transaction.getTo().map(Address::toHexString).orElse(null);
     this.type =
         transactionType.equals(TransactionType.FRONTIER)
@@ -225,7 +223,7 @@ public class TransactionPendingResult implements TransactionResult {
   }
 
   @JsonGetter(value = "blobVersionedHashes")
-  public List<Hash> getVersionedHashes() {
+  public List<VersionedHash> getVersionedHashes() {
     return versionedHashes;
   }
 }

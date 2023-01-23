@@ -42,8 +42,20 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
 
-  public EngineNewPayloadV1Test() {
-    super(EngineNewPayloadV1::new);
+  public EngineNewPayloadV1Test() {}
+
+  @Override
+  @Before
+  public void before() {
+    super.before();
+    this.method =
+        new EngineNewPayloadV1(
+            vertx,
+            protocolSchedule,
+            protocolContext,
+            mergeCoordinator,
+            ethPeers,
+            engineCallListener);
   }
 
   @Override

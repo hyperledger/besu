@@ -127,6 +127,7 @@ public class JsonRpcResponseUtils {
             mixHash,
             nonce,
             withdrawalsRoot,
+            null, // ToDo 4844: set with the value of data_gas_used field
             null, // ToDo 4844: set with the value of excess_data_gas field
             depositsRoot,
             blockHeaderFunctions);
@@ -194,7 +195,6 @@ public class JsonRpcResponseUtils {
                             .byteValueExact()))
             .payload(bytes(input))
             .sender(address(fromAddress))
-            .v(bigInteger(v))
             .build();
 
     return new TransactionCompleteResult(
@@ -222,10 +222,6 @@ public class JsonRpcResponseUtils {
 
   private String removeHexPrefix(final String prefixedHex) {
     return prefixedHex.startsWith("0x") ? prefixedHex.substring(2) : prefixedHex;
-  }
-
-  private BigInteger bigInteger(final String hex) {
-    return hex == null ? null : new BigInteger(removeHexPrefix(hex), HEX_RADIX);
   }
 
   private Wei wei(final String hex) {
