@@ -20,7 +20,7 @@ import java.util.List;
 
 public class BlockValueCalculator {
 
-  public long calculateBlockValue(final BlockWithReceipts blockWithReceipts) {
+  public Wei calculateBlockValue(final BlockWithReceipts blockWithReceipts) {
     final Block block = blockWithReceipts.getBlock();
     final List<Transaction> txs = block.getBody().getTransactions();
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
@@ -29,6 +29,6 @@ public class BlockValueCalculator {
       final Wei minerFee = txs.get(i).getEffectivePriorityFeePerGas(block.getHeader().getBaseFee());
       totalFee = totalFee.add(minerFee.multiply(receipts.get(i).getCumulativeGasUsed()));
     }
-    return totalFee.toLong();
+    return totalFee;
   }
 }
