@@ -109,13 +109,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
   private static boolean validateTransactionsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
-    LOG.info(
-        "Invalid block {} ({}): transaction root mismatch (expected={}, actual={})",
-        header.getNumber(),
-        header.getBlockHash(),
-        expected,
-        actual);
     if (!expected.equals(actual)) {
+      LOG.info(
+          "Invalid block {}: transaction root mismatch (expected={}, actual={})",
+          header.toLogString(),
+          expected,
+          actual);
       return false;
     }
 
@@ -126,9 +125,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final BlockHeader header, final LogsBloomFilter expected, final LogsBloomFilter actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
-          "Invalid block {} ({}): logs bloom filter mismatch (expected={}, actual={})",
-          header.getNumber(),
-          header.getBlockHash(),
+          "Invalid block {}: logs bloom filter mismatch (expected={}, actual={})",
+          header.toLogString(),
           expected,
           actual);
       return false;
@@ -141,9 +139,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final BlockHeader header, final long expected, final long actual) {
     if (expected != actual) {
       LOG.warn(
-          "Invalid block {} ({}): gas used mismatch (expected={}, actual={})",
-          header.getNumber(),
-          header.getBlockHash(),
+          "Invalid block {}: gas used mismatch (expected={}, actual={})",
+          header.toLogString(),
           expected,
           actual);
       return false;
@@ -154,13 +151,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
   private static boolean validateReceiptsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
-    LOG.warn(
-        "Invalid block {} ({}): receipts root mismatch (expected={}, actual={})",
-        header.getNumber(),
-        header.getBlockHash(),
-        expected,
-        actual);
     if (!expected.equals(actual)) {
+      LOG.warn(
+          "Invalid block {}: receipts root mismatch (expected={}, actual={})",
+          header.toLogString(),
+          expected,
+          actual);
       return false;
     }
 
@@ -171,9 +167,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
-          "Invalid block {} ({}): state root mismatch (expected={}, actual={})",
-          header.getNumber(),
-          header.getBlockHash(),
+          "Invalid block {}: state root mismatch (expected={}, actual={})",
+          header.toLogString(),
           expected,
           actual);
       return false;
@@ -205,9 +200,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
-          "Invalid block {} ({}): ommers hash mismatch (expected={}, actual={})",
-          header.getNumber(),
-          header.getBlockHash(),
+          "Invalid block {}: ommers hash mismatch (expected={}, actual={})",
+          header.toLogString(),
           expected,
           actual);
       return false;
@@ -223,26 +217,21 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final HeaderValidationMode ommerValidationMode) {
     if (ommers.size() > MAX_OMMERS) {
       LOG.warn(
-          "Invalid block {} ({}): ommer count {} exceeds ommer limit {}",
-          header.getNumber(),
-          header.getBlockHash(),
+          "Invalid block {}: ommer count {} exceeds ommer limit {}",
+          header.toLogString(),
           ommers.size(),
           MAX_OMMERS);
       return false;
     }
 
     if (!areOmmersUnique(ommers)) {
-      LOG.warn(
-          "Invalid block {} ({}): ommers are not unique",
-          header.getNumber(),
-          header.getBlockHash());
+      LOG.warn("Invalid block {}: ommers are not unique", header.toLogString());
       return false;
     }
 
     for (final BlockHeader ommer : ommers) {
       if (!isOmmerValid(context, header, ommer, ommerValidationMode)) {
-        LOG.warn(
-            "Invalid block {} ({}): ommer is invalid", header.getNumber(), header.getBlockHash());
+        LOG.warn("Invalid block {}: ommer is invalid", header.toLogString());
         return false;
       }
     }
