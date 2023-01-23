@@ -71,7 +71,8 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   /** The constant BLS12_MAP_FP2_TO_G2. */
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x12);
 
-  /** The constant ZERO. */
+  public static final Address KZG_POINT_EVAL = Address.precompiled(0x14);
+
   public static final Address ZERO = Address.fromHexString("0x0");
 
   /**
