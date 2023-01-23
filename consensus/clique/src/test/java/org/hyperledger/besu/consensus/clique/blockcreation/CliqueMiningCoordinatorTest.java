@@ -88,11 +88,6 @@ public class CliqueMiningCoordinatorTest {
     Block genesisBlock = createEmptyBlock(0, Hash.ZERO, proposerKeys); // not normally signed but ok
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
-    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-
-    when(protocolContext.getConsensusContext(CliqueContext.class)).thenReturn(cliqueContext);
-    when(protocolContext.getBlockchain()).thenReturn(blockChain);
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
     when(syncState.isInSync()).thenReturn(true);
 
@@ -101,6 +96,8 @@ public class CliqueMiningCoordinatorTest {
 
   @Test
   public void outOfTurnBlockImportedDoesNotInterruptInTurnMiningOperation() {
+    setupCliqueContextAndBlockchain();
+
     // As the head of the blockChain is 0 (which effectively doesn't have a signer, all validators
     // are able to propose.
 
@@ -159,6 +156,8 @@ public class CliqueMiningCoordinatorTest {
 
   @Test
   public void outOfTurnBlockImportedInterruptsOutOfTurnMiningOperation() {
+    setupCliqueContextAndBlockchain();
+
     blockChain.appendBlock(
         createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys), Collections.emptyList());
 
@@ -190,6 +189,8 @@ public class CliqueMiningCoordinatorTest {
 
   @Test
   public void outOfTurnBlockImportedInterruptsNonRunningMiner() {
+    setupCliqueContextAndBlockchain();
+
     blockChain.appendBlock(
         createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys), Collections.emptyList());
 
@@ -250,5 +251,14 @@ public class CliqueMiningCoordinatorTest {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerTestFixture, signer, validators);
     return new Block(header, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+  }
+
+  private void setupCliqueContextAndBlockchain() {
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
+
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    when(protocolContext.getConsensusContext(CliqueContext.class)).thenReturn(cliqueContext);
+
+    when(protocolContext.getBlockchain()).thenReturn(blockChain);
   }
 }
