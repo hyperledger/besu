@@ -27,6 +27,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.AccessListEntry;
@@ -35,24 +36,98 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.ssz.SSZ;
+import org.apache.tuweni.ssz.SSZReader;
+import org.apache.tuweni.units.bigints.UInt32;
 
 public class TransactionDecoder {
 
+  private static final UInt32 BLOB_TRANSACTION_OFFSET = UInt32.fromHexString("0x3c000000");
+
   @FunctionalInterface
   interface Decoder {
-    Transaction decode(RLPInput input);
+    Transaction decode(final Bytes input);
+
+    static Decoder rlpDecoder(final RLPDecoder rlpDecoder) {
+      return encoded -> rlpDecoder.decode(RLP.input(encoded));
+    }
+
+    static Decoder sszDecoder(final SSZDecoder sszDecoder) {
+      return encoded -> {
+        UInt32 firstOffset = UInt32.fromBytes(encoded.slice(0, 4));
+        return SSZ.decode(encoded, (SSZReader reader) -> sszDecoder.decode(reader, firstOffset));
+      };
+    }
+  }
+
+  interface RLPDecoder {
+    Transaction decode(final RLPInput input);
+  }
+
+  interface SSZDecoder {
+    Transaction decode(final SSZReader reader, UInt32 firstOffset);
   }
 
   private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
       ImmutableMap.of(
           TransactionType.ACCESS_LIST,
-          TransactionDecoder::decodeAccessList,
+          Decoder.rlpDecoder(TransactionDecoder::decodeAccessList),
           TransactionType.EIP1559,
-          TransactionDecoder::decodeEIP1559);
+          Decoder.rlpDecoder(TransactionDecoder::decodeEIP1559),
+          TransactionType.BLOB,
+          Decoder.sszDecoder(TransactionDecoder::decodeBlob));
+
+  public static Transaction decodeBlob(final SSZReader input, final UInt32 firstOffset) {
+    Transaction.Builder builder = Transaction.builder();
+    TransactionNetworkPayload.SingedBlobTransaction signedBlobTransaction;
+
+    if (firstOffset.equals(BLOB_TRANSACTION_OFFSET)) {
+
+      TransactionNetworkPayload payload = new TransactionNetworkPayload();
+      payload.populateFromReader(input);
+      signedBlobTransaction = payload.getSignedBlobTransaction();
+
+      builder.kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProof());
+    } else {
+      signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
+      signedBlobTransaction.populateFromReader(input);
+    }
+
+    var blobTransaction = signedBlobTransaction.getMessage();
+
+    return builder
+        .type(TransactionType.BLOB)
+        .chainId(blobTransaction.getChainId().toUnsignedBigInteger())
+        .nonce(blobTransaction.getNonce())
+        .maxPriorityFeePerGas(Wei.of(blobTransaction.getMaxPriorityFeePerGas()))
+        .maxFeePerGas(Wei.of(blobTransaction.getMaxFeePerGas()))
+        .gasLimit(blobTransaction.getGas())
+        .to(blobTransaction.getAddress().orElse(null))
+        .value(Wei.of(blobTransaction.getValue()))
+        .payload(blobTransaction.getData())
+        .accessList(
+            blobTransaction.getAccessList().stream()
+                .map(
+                    accessListEntry ->
+                        new AccessListEntry(
+                            accessListEntry.getAddress(), accessListEntry.getStorageKeys()))
+                .collect(Collectors.toList()))
+        .signature(
+            SIGNATURE_ALGORITHM
+                .get()
+                .createSignature(
+                    signedBlobTransaction.getSignature().getR().toUnsignedBigInteger(),
+                    signedBlobTransaction.getSignature().getS().toUnsignedBigInteger(),
+                    signedBlobTransaction.getSignature().isParity() ? (byte) 1 : 0))
+        .maxFeePerData(Wei.of(blobTransaction.getMaxFeePerData()))
+        .versionedHashes(blobTransaction.getBlobVersionedHashes())
+        .build();
+  }
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -64,7 +139,7 @@ public class TransactionDecoder {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
-      return getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
+      return getDecoder(transactionType).decode(typedTransactionBytes.slice(1));
     }
   }
 
@@ -75,7 +150,7 @@ public class TransactionDecoder {
     } catch (final IllegalArgumentException __) {
       return decodeForWire(RLP.input(input));
     }
-    return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
+    return getDecoder(transactionType).decode(input.slice(1));
   }
 
   private static Decoder getDecoder(final TransactionType transactionType) {
