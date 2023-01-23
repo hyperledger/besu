@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -37,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -64,48 +67,73 @@ abstract class AbstractBlockCreatorTest {
 
   @Test
   void withProcessorAndEmptyWithdrawals_NoWithdrawalsAreProcessed() {
-    final AbstractBlockCreator blockCreator = createBlockCreatorWithWithdrawalsProcessor();
-    blockCreator.createBlock(
-        Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
+    final AbstractBlockCreator blockCreator = blockCreatorWithWithdrawalsProcessor();
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(
+            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+    assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
   }
 
   @Test
   void withNoProcessorAndEmptyWithdrawals_NoWithdrawalsAreNotProcessed() {
-    final AbstractBlockCreator blockCreator = createBlockCreatorWithoutWithdrawalsProcessor();
-    blockCreator.createBlock(
-        Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
+    final AbstractBlockCreator blockCreator = blockCreatorWithoutWithdrawalsProcessor();
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(
+            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+    assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
   }
 
   @Test
   void withProcessorAndWithdrawals_WithdrawalsAreProcessed() {
-    final AbstractBlockCreator blockCreator = createBlockCreatorWithWithdrawalsProcessor();
+    final AbstractBlockCreator blockCreator = blockCreatorWithWithdrawalsProcessor();
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
-    blockCreator.createBlock(
-        Optional.empty(), Optional.empty(), Optional.of(withdrawals), Optional.empty(), 1L, false);
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(
+            Optional.empty(),
+            Optional.empty(),
+            Optional.of(withdrawals),
+            Optional.empty(),
+            1L,
+            false);
+
+    final Hash withdrawalsRoot = BodyValidation.withdrawalsRoot(withdrawals);
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
+    assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot())
+        .hasValue(withdrawalsRoot);
+    assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).hasValue(withdrawals);
   }
 
   @Test
   void withNoProcessorAndWithdrawals_WithdrawalsAreNotProcessed() {
-    final AbstractBlockCreator blockCreator = createBlockCreatorWithoutWithdrawalsProcessor();
+    final AbstractBlockCreator blockCreator = blockCreatorWithoutWithdrawalsProcessor();
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
-    blockCreator.createBlock(
-        Optional.empty(), Optional.empty(), Optional.of(withdrawals), Optional.empty(), 1L, false);
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(
+            Optional.empty(),
+            Optional.empty(),
+            Optional.of(withdrawals),
+            Optional.empty(),
+            1L,
+            false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+    assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
   }
 
-  private AbstractBlockCreator createBlockCreatorWithWithdrawalsProcessor() {
+  private AbstractBlockCreator blockCreatorWithWithdrawalsProcessor() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
             0, specBuilder -> specBuilder.withdrawalsProcessor(withdrawalsProcessor));
     return createBlockCreator(protocolSpecAdapters);
   }
 
-  private AbstractBlockCreator createBlockCreatorWithoutWithdrawalsProcessor() {
+  private AbstractBlockCreator blockCreatorWithoutWithdrawalsProcessor() {
     return createBlockCreator(new ProtocolSpecAdapters(Map.of()));
   }
 

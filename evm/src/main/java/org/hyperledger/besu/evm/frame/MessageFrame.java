@@ -1280,6 +1280,14 @@ public class MessageFrame {
   }
 
   /**
+   * Gets warmedUp Storage.
+   *
+   * @return the warmed up storage
+   */
+  public Multimap<Address, Bytes32> getWarmedUpStorage() {
+    return warmedUpStorage;
+  }
+  /**
    * Gets maybe updated memory.
    *
    * @return the maybe updated memory
@@ -1297,10 +1305,16 @@ public class MessageFrame {
     return maybeUpdatedStorage;
   }
 
+  /**
+   * Accessor for versionedHashes, if present.
+   *
+   * @return optional list of hashes
+   */
   public Optional<List<Hash>> getVersionedHashes() {
     return versionedHashes;
   }
 
+  /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
     maybeUpdatedStorage = Optional.empty();
@@ -1335,7 +1349,12 @@ public class MessageFrame {
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     private Optional<List<Hash>> versionedHashes;
-
+    /**
+     * Sets Type.
+     *
+     * @param type the type
+     * @return the builder
+     */
     public Builder type(final Type type) {
       this.type = type;
       return this;
@@ -1594,6 +1613,12 @@ public class MessageFrame {
       return this;
     }
 
+    /**
+     * Sets versioned hashes list.
+     *
+     * @param versionedHashes the Optional list of versioned hashes
+     * @return the builder
+     */
     public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
       this.versionedHashes = versionedHashes;
       return this;

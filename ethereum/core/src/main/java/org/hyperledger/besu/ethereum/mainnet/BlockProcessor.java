@@ -81,7 +81,7 @@ public interface BlockProcessor {
         block.getHeader(),
         block.getBody().getTransactions(),
         block.getBody().getOmmers(),
-        Optional.empty(),
+        block.getBody().getWithdrawals(),
         null);
   }
 

@@ -176,7 +176,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
           newProtocolSpec.getWithdrawalsProcessor();
-      if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
+      final boolean withdrawalsCanBeProcessed =
+          maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent();
+      if (withdrawalsCanBeProcessed) {
         maybeWithdrawalsProcessor
             .get()
             .processWithdrawals(maybeWithdrawals.get(), disposableWorldState.updater());
@@ -209,12 +211,20 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
               .gasUsed(transactionResults.getCumulativeGasUsed())
               .extraData(extraDataCalculator.get(parentHeader))
+              .withdrawalsRoot(
+                  withdrawalsCanBeProcessed
+                      ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
+                      : null)
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
+      final Optional<List<Withdrawal>> withdrawals =
+          withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final Block block =
-          new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
+          new Block(
+              blockHeader,
+              new BlockBody(transactionResults.getTransactions(), ommers, withdrawals));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);

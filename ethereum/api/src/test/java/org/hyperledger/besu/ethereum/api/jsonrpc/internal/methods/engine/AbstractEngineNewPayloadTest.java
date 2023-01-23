@@ -55,7 +55,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
@@ -140,7 +142,8 @@ public abstract class AbstractEngineNewPayloadTest {
   public void shouldReturnValid() {
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))));
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -149,7 +152,8 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnInvalidOnBlockExecutionError() {
-    BlockHeader mockHeader = setupValidPayload(new BlockProcessingResult("error 42"));
+    BlockHeader mockHeader =
+        setupValidPayload(new BlockProcessingResult("error 42"), Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -162,7 +166,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnAcceptedOnLatestValidAncestorEmpty() {
-    BlockHeader mockHeader = createBlockHeader();
+    BlockHeader mockHeader = createBlockHeader(Optional.empty());
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -197,7 +201,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnInvalidWithLatestValidHashIsABadBlock() {
-    BlockHeader mockHeader = createBlockHeader();
+    BlockHeader mockHeader = createBlockHeader(Optional.empty());
     Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
 
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
@@ -217,7 +221,8 @@ public abstract class AbstractEngineNewPayloadTest {
   public void shouldNotReturnInvalidOnStorageException() {
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.empty(), new StorageException("database bedlam")));
+            new BlockProcessingResult(Optional.empty(), new StorageException("database bedlam")),
+            Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -231,7 +236,8 @@ public abstract class AbstractEngineNewPayloadTest {
   public void shouldNotReturnInvalidOnHandledMerkleTrieException() {
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.empty(), new MerkleTrieException("missing leaf")));
+            new BlockProcessingResult(Optional.empty(), new MerkleTrieException("missing leaf")),
+            Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -243,7 +249,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldNotReturnInvalidOnThrownMerkleTrieException() {
-    BlockHeader mockHeader = createBlockHeader();
+    BlockHeader mockHeader = createBlockHeader(Optional.empty());
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -394,7 +400,12 @@ public abstract class AbstractEngineNewPayloadTest {
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
 
-    var resp = resp(mockPayload(createBlockHeader(), Collections.emptyList(), withdrawals));
+    var resp =
+        resp(
+            mockPayload(
+                createBlockHeader(Optional.of(Collections.emptyList())),
+                Collections.emptyList(),
+                withdrawals));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -408,7 +419,8 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))));
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals));
 
@@ -421,7 +433,9 @@ public abstract class AbstractEngineNewPayloadTest {
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
 
-    var resp = resp(mockPayload(createBlockHeader(), Collections.emptyList(), withdrawals));
+    var resp =
+        resp(
+            mockPayload(createBlockHeader(Optional.empty()), Collections.emptyList(), withdrawals));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -429,14 +443,16 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnValidIfWithdrawalsIsNotNull_WhenWithdrawalsAllowed() {
-    final List<WithdrawalParameter> withdrawals = List.of(WITHDRAWAL_PARAM_1);
+    final List<WithdrawalParameter> withdrawalsParam = List.of(WITHDRAWAL_PARAM_1);
+    final List<Withdrawal> withdrawals = List.of(WITHDRAWAL_PARAM_1.toWithdrawal());
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))));
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.of(withdrawals));
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals));
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawalsParam));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -446,7 +462,8 @@ public abstract class AbstractEngineNewPayloadTest {
     when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.empty());
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))));
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -502,8 +519,9 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @NotNull
-  private BlockHeader setupValidPayload(final BlockProcessingResult value) {
-    BlockHeader mockHeader = createBlockHeader();
+  private BlockHeader setupValidPayload(
+      final BlockProcessingResult value, final Optional<List<Withdrawal>> maybeWithdrawals) {
+    BlockHeader mockHeader = createBlockHeader(maybeWithdrawals);
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -542,7 +560,7 @@ public abstract class AbstractEngineNewPayloadTest {
         .get();
   }
 
-  protected BlockHeader createBlockHeader() {
+  protected BlockHeader createBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals) {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     BlockHeader mockHeader =
@@ -551,6 +569,7 @@ public abstract class AbstractEngineNewPayloadTest {
             .parentHash(parentBlockHeader.getParentHash())
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(parentBlockHeader.getTimestamp() + 1)
+            .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .buildHeader();
     return mockHeader;
   }
