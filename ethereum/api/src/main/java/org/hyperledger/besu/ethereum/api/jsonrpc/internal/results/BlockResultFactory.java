@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1.PayloadBody;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -118,17 +119,12 @@ public class BlockResultFactory {
 
   public EngineGetPayloadBodiesResultV1 payloadBodiesCompleteV1(
       final List<Optional<BlockBody>> blockBodies) {
-    final List<List<String>> payloadBodies =
+    final List<PayloadBody> payloadBodies =
         blockBodies.stream()
             .map(
                 maybeBody ->
                     maybeBody
-                        .map(
-                            blockBody ->
-                                blockBody.getTransactions().stream()
-                                    .map(TransactionEncoder::encodeOpaqueBytes)
-                                    .map(Bytes::toHexString)
-                                    .collect(Collectors.toList()))
+                        .map(blockBody -> new PayloadBody(blockBody))
                         .orElse(null))
             .collect(Collectors.toList());
     return new EngineGetPayloadBodiesResultV1(payloadBodies);

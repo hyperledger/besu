@@ -14,19 +14,61 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.tuweni.bytes.Bytes;
 
+@JsonPropertyOrder({"payloadBodies"})
 public class EngineGetPayloadBodiesResultV1 {
-  private final List<List<String>> payloadBodies;
+  private final List<PayloadBody> payloadBodies;
 
-  public EngineGetPayloadBodiesResultV1(final List<List<String>> payloadBodies) {
-    this.payloadBodies = payloadBodies;
+  public EngineGetPayloadBodiesResultV1(final List<PayloadBody> payloadBody) {
+    this.payloadBodies = payloadBody;
   }
 
   @JsonValue
-  public List<List<String>> getPayloadBodies() {
+  public List<PayloadBody> getPayloadBodies() {
     return payloadBodies;
+  }
+
+  public static class PayloadBody {
+    private final List<String> transactions;
+    private final List<WithdrawalParameter> withdrawals;
+
+    public PayloadBody(final BlockBody blockBody) {
+      this.transactions =
+          blockBody.getTransactions().stream()
+              .map(TransactionEncoder::encodeOpaqueBytes)
+              .map(Bytes::toHexString)
+              .collect(Collectors.toList());
+      this.withdrawals =
+          blockBody
+              .getWithdrawals()
+              .map(
+                  ws ->
+                      ws.stream()
+                          .map(WithdrawalParameter::fromWithdrawal)
+                          .collect(Collectors.toList()))
+              .orElse(null);
+    }
+
+    @JsonGetter(value = "transactions")
+    public List<String> getTransactions() {
+      return transactions;
+    }
+
+    @JsonGetter(value = "withdrawals")
+    public List<WithdrawalParameter> getWithdrawals() {
+      return withdrawals;
+    }
   }
 }
