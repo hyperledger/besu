@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.FULL;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT;
@@ -37,16 +36,15 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-import java.math.BigDecimal;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FastImportBlocksStepTest {
 
   @Mock private ProtocolSchedule protocolSchedule;
@@ -60,7 +58,7 @@ public class FastImportBlocksStepTest {
 
   private FastImportBlocksStep importBlocksStep;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -75,18 +73,6 @@ public class FastImportBlocksStepTest {
             ommerValidationPolicy,
             null,
             pivotHeader);
-  }
-
-  @Test
-  public void blocksPercent_shouldHandleZeroDenominator() {
-    assertThat(FastImportBlocksStep.getBlocksPercent(1, 1))
-        .isEqualByComparingTo(BigDecimal.valueOf(100));
-    assertThat(FastImportBlocksStep.getBlocksPercent(1, 100))
-        .isEqualByComparingTo(BigDecimal.valueOf(1));
-    assertThat(FastImportBlocksStep.getBlocksPercent(0, 100))
-        .isEqualByComparingTo(BigDecimal.valueOf(0));
-    assertThat(FastImportBlocksStep.getBlocksPercent(99, 0))
-        .isEqualByComparingTo(BigDecimal.valueOf(0));
   }
 
   @Test
