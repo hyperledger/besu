@@ -46,8 +46,11 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.ssz.SSZ;
 import org.apache.tuweni.ssz.SSZReader;
+import org.apache.tuweni.units.bigints.UInt32;
 
 public class TransactionDecoder {
+
+  private static final UInt32 BLOB_TRANSACTION_OFFSET = UInt32.fromHexString("0x3c000000");
 
   @FunctionalInterface
   interface Decoder {
@@ -58,8 +61,10 @@ public class TransactionDecoder {
     }
 
     static Decoder sszDecoder(final SSZDecoder sszDecoder) {
-      return encoded ->
-          SSZ.decode(encoded, (SSZReader reader) -> sszDecoder.decode(reader, encoded.size()));
+      return encoded -> {
+        UInt32 firstOffset = UInt32.fromBytes(encoded.slice(0, 4));
+        return SSZ.decode(encoded, (SSZReader reader) -> sszDecoder.decode(reader, firstOffset));
+      };
     }
   }
 
@@ -68,7 +73,7 @@ public class TransactionDecoder {
   }
 
   interface SSZDecoder {
-    Transaction decode(final SSZReader reader, int length);
+    Transaction decode(final SSZReader reader, UInt32 firstOffset);
   }
 
   private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
@@ -80,15 +85,25 @@ public class TransactionDecoder {
           TransactionType.BLOB,
           Decoder.sszDecoder(TransactionDecoder::decodeBlob));
 
-  public static Transaction decodeBlob(final SSZReader input, final int length) {
+  public static Transaction decodeBlob(final SSZReader input, final UInt32 firstOffset) {
+    Transaction.Builder builder = Transaction.builder();
+    TransactionNetworkPayload.SingedBlobTransaction signedBlobTransaction;
 
-    TransactionNetworkPayload payload = new TransactionNetworkPayload();
-    payload.populateFromReader(input);
+    if (firstOffset.equals(BLOB_TRANSACTION_OFFSET)) {
 
-    var signedBlobTransaction = payload.getSignedBlobTransaction();
+      TransactionNetworkPayload payload = new TransactionNetworkPayload();
+      payload.populateFromReader(input);
+      signedBlobTransaction = payload.getSignedBlobTransaction();
+
+      builder.kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProof());
+    } else {
+      signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
+      signedBlobTransaction.populateFromReader(input);
+    }
+
     var blobTransaction = signedBlobTransaction.getMessage();
 
-    return Transaction.builder()
+    return builder
         .type(TransactionType.BLOB)
         .chainId(blobTransaction.getChainId().toUnsignedBigInteger())
         .nonce(blobTransaction.getNonce())
@@ -114,7 +129,6 @@ public class TransactionDecoder {
                     signedBlobTransaction.getSignature().isParity() ? (byte) 1 : 0))
         .maxFeePerData(Wei.of(blobTransaction.getMaxFeePerData()))
         .versionedHashes(blobTransaction.getBlobVersionedHashes())
-        .kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProof())
         .build();
   }
 

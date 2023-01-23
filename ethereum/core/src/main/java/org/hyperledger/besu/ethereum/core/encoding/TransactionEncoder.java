@@ -66,11 +66,10 @@ public class TransactionEncoder {
           TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeWithoutBlobs));
 
   private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS_FOR_NETWORK =
-          Map.of(
-                  TransactionType.ACCESS_LIST, Encoder.rlpEncoder(TransactionEncoder::encodeAccessList),
-                  TransactionType.EIP1559, Encoder.rlpEncoder(TransactionEncoder::encodeEIP1559),
-                  TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeWithBlobs));
-
+      Map.of(
+          TransactionType.ACCESS_LIST, Encoder.rlpEncoder(TransactionEncoder::encodeAccessList),
+          TransactionType.EIP1559, Encoder.rlpEncoder(TransactionEncoder::encodeEIP1559),
+          TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeWithBlobs));
 
   public static void encodeWithBlobs(final Transaction transaction, final SSZWriter rlpOutput) {
     var payload = new TransactionNetworkPayload();
@@ -88,12 +87,14 @@ public class TransactionEncoder {
   }
 
   public static void encodeWithoutBlobs(final Transaction transaction, final SSZWriter rlpOutput) {
-    var signedBlobTransaction =new TransactionNetworkPayload.SingedBlobTransaction();
+    var signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
     populatedSignedBlobTransaction(transaction, signedBlobTransaction);
     signedBlobTransaction.writeTo(rlpOutput);
   }
 
-  private static void populatedSignedBlobTransaction(Transaction transaction, TransactionNetworkPayload.SingedBlobTransaction signedBlobTransaction) {
+  private static void populatedSignedBlobTransaction(
+      final Transaction transaction,
+      final TransactionNetworkPayload.SingedBlobTransaction signedBlobTransaction) {
     var signature = signedBlobTransaction.getSignature();
     signature.setR(UInt256.valueOf(transaction.getSignature().getR()));
     signature.setS(UInt256.valueOf(transaction.getSignature().getS()));
@@ -104,25 +105,25 @@ public class TransactionEncoder {
     blobTransaction.setChainId(UInt256.valueOf(transaction.getChainId().orElseThrow()));
     blobTransaction.setNonce(transaction.getNonce());
     blobTransaction.setMaxPriorityFeePerGas(
-            transaction.getMaxPriorityFeePerGas().orElseThrow().toUInt256());
+        transaction.getMaxPriorityFeePerGas().orElseThrow().toUInt256());
     blobTransaction.setMaxFeePerGas(transaction.getMaxFeePerGas().orElseThrow().toUInt256());
     blobTransaction.setGas(transaction.getGasLimit());
     blobTransaction.setAddress(transaction.getTo());
     blobTransaction.setValue(transaction.getValue().toUInt256());
     blobTransaction.setData(transaction.getPayload());
     transaction
-            .getAccessList()
-            .ifPresent(
-                    accessListEntries -> {
-                      var accessList = blobTransaction.getAccessList();
-                      accessListEntries.forEach(
-                              accessListEntry -> {
-                                var tuple = new TransactionNetworkPayload.SingedBlobTransaction.AccessTuple();
-                                tuple.setAddress(accessListEntry.getAddress());
-                                tuple.setStorageKeys(accessListEntry.getStorageKeys());
-                                accessList.add(tuple);
-                              });
-                    });
+        .getAccessList()
+        .ifPresent(
+            accessListEntries -> {
+              var accessList = blobTransaction.getAccessList();
+              accessListEntries.forEach(
+                  accessListEntry -> {
+                    var tuple = new TransactionNetworkPayload.SingedBlobTransaction.AccessTuple();
+                    tuple.setAddress(accessListEntry.getAddress());
+                    tuple.setStorageKeys(accessListEntry.getStorageKeys());
+                    accessList.add(tuple);
+                  });
+            });
     blobTransaction.setMaxFeePerData(transaction.getMaxFeePerData().orElseThrow().toUInt256());
     blobTransaction.setBlobVersionedHashes(transaction.getVersionedHashes().orElseThrow());
   }
@@ -131,7 +132,7 @@ public class TransactionEncoder {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
-    encodeForWire(transactionType, encodeOpaqueBytes(transaction), rlpOutput);
+    encodeForWire(transactionType, encodeOpaqueBytesForNetwork(transaction), rlpOutput);
   }
 
   public static void encodeForWire(
@@ -142,6 +143,13 @@ public class TransactionEncoder {
     } else {
       rlpOutput.writeBytes(opaqueBytes);
     }
+  }
+
+  public static void encodeOpaqueBytes(final Transaction transaction, final RLPOutput rlpOutput) {
+    final TransactionType transactionType =
+        checkNotNull(
+            transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    encodeForWire(transactionType, encodeOpaqueBytes(transaction), rlpOutput);
   }
 
   public static Bytes encodeOpaqueBytes(final Transaction transaction) {
@@ -163,18 +171,18 @@ public class TransactionEncoder {
 
   public static Bytes encodeOpaqueBytesForNetwork(final Transaction transaction) {
     final TransactionType transactionType =
-            checkNotNull(
-                    transaction.getType(), "Transaction type for %s was not specified.", transaction);
+        checkNotNull(
+            transaction.getType(), "Transaction type for %s was not specified.", transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
       return RLP.encode(rlpOutput -> encodeFrontier(transaction, rlpOutput));
     } else {
       final Encoder encoder =
-              checkNotNull(
-                      TYPED_TRANSACTION_ENCODERS_FOR_NETWORK.get(transactionType),
-                      "Developer Error. A supported transaction type %s has no associated encoding logic",
-                      transactionType);
+          checkNotNull(
+              TYPED_TRANSACTION_ENCODERS_FOR_NETWORK.get(transactionType),
+              "Developer Error. A supported transaction type %s has no associated encoding logic",
+              transactionType);
       return Bytes.concatenate(
-              Bytes.of(transactionType.getSerializedType()), encoder.encode(transaction));
+          Bytes.of(transactionType.getSerializedType()), encoder.encode(transaction));
     }
   }
 
