@@ -43,7 +43,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -73,8 +72,6 @@ public class Transaction
   public static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
-
-  public static final int DATA_GAS_PER_BLOB = 131072; // 2^17
 
   private final long nonce;
 
@@ -224,11 +221,6 @@ public class Transaction
     this.chainId = chainId;
     this.v = v;
     this.versionedHashes = versionedHashes;
-
-    final var upfrontCost = calculateUpfrontGasCost(getMaxGasPrice());
-    if (upfrontCost.bitLength() > 256) {
-      throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
-    }
   }
 
   public Transaction(
@@ -483,19 +475,6 @@ public class Transaction
   }
 
   /**
-   * Returns the total data gas used.
-   *
-   * @return optionally the total data gas used if this transaction if it supports blobs or nothing
-   */
-  public OptionalInt getTotalDataGas() {
-    if (transactionType.supportsBlob()) {
-      return OptionalInt.of(DATA_GAS_PER_BLOB * versionedHashes.map(List::size).orElseThrow());
-    }
-
-    return OptionalInt.empty();
-  }
-
-  /**
    * Returns the transaction recipient.
    *
    * <p>The {@code Optional<Address>} will be {@code Optional.empty()} if the transaction is a
@@ -724,6 +703,15 @@ public class Transaction
   }
 
   /**
+   * Check if the upfront gas cost is over the max allowed
+   *
+   * @return true is upfront data cost overflow uint256 max value
+   */
+  public boolean isUpfrontGasCostTooHigh() {
+    return calculateUpfrontGasCost(getMaxGasPrice()).bitLength() > 256;
+  }
+
+  /**
    * Calculates the up-front cost for the gas the transaction can use.
    *
    * @param gasPrice the gas price to use
@@ -744,12 +732,7 @@ public class Transaction
   }
 
   private BigInteger calculateUpfrontGasCost(final Wei gasPrice) {
-    return new BigInteger(1, Longs.toByteArray(getGasLimit()))
-        .multiply(gasPrice.getAsBigInteger())
-        .add(
-            getMaxFeePerDataGas()
-                .map(wei -> wei.multiply(getTotalDataGas().orElseThrow()).getAsBigInteger())
-                .orElse(BigInteger.ZERO));
+    return new BigInteger(1, Longs.toByteArray(getGasLimit())).multiply(gasPrice.getAsBigInteger());
   }
 
   /**
@@ -765,6 +748,11 @@ public class Transaction
     return getUpfrontGasCost().addExact(getValue());
   }
 
+  /**
+   * Return the maximum fee per gas the sender is willing to pay for this transaction.
+   *
+   * @return max fee per gas in wei
+   */
   public Wei getMaxGasPrice() {
     return maxFeePerGas.orElseGet(
         () ->

@@ -162,6 +162,12 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
     }
 
+    if (transaction.isUpfrontGasCostTooHigh()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.UPFRONT_FEE_TOO_HIGH,
+          "gasLimit x price must be less than 2^256");
+    }
+
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
