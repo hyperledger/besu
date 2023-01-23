@@ -92,7 +92,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
           "Block import progress: {} of {} ({}%)",
           lastBlock, pivotHeader.getNumber(), blocksPercent);
       LOG.debug(
-          "Completed importing chain segment {} to {} ({} blocks in {}ms), Peers: {}",
+          "Completed importing chain segment {} to {} ({} blocks in {}ms), Peer count: {}",
           logStartBlock.getAsLong(),
           lastBlock,
           lastBlock - logStartBlock.getAsLong() + 1,
