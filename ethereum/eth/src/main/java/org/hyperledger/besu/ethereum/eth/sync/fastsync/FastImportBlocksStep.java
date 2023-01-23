@@ -26,8 +26,6 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockExcep
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +87,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
 
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
     if (accumulatedTime > PRINT_DELAY) {
-      final BigDecimal blocksPercent = getBlocksPercent(lastBlock, pivotHeader.getNumber());
+      final long blocksPercent = getBlocksPercent(lastBlock, pivotHeader.getNumber());
       LOG.info(
           "Block import progress: {} of {} ({}%)",
           lastBlock, pivotHeader.getNumber(), blocksPercent);
@@ -106,12 +104,11 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   }
 
   @VisibleForTesting
-  protected static BigDecimal getBlocksPercent(final long lastBlock, final long totalBlocks) {
+  protected static long getBlocksPercent(final long lastBlock, final long totalBlocks) {
     if (totalBlocks == 0) {
-      return BigDecimal.ZERO;
+      return 0;
     }
-    final BigDecimal blocksPercent =
-        BigDecimal.valueOf((100 * lastBlock / totalBlocks)).setScale(2, RoundingMode.HALF_UP);
+    final long blocksPercent = (100 * lastBlock / totalBlocks);
     return blocksPercent;
   }
 
