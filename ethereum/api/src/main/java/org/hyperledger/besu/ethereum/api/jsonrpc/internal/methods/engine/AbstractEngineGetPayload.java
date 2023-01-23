@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
-  protected final MergeMiningCoordinator mergeMiningCoordinator;
+  private final MergeMiningCoordinator mergeMiningCoordinator;
   protected final BlockResultFactory blockResultFactory;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineGetPayload.class);
 
