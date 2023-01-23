@@ -86,14 +86,8 @@ public class TransactionSSZEncodingTest {
     assertThat(transaction).isNotNull();
     assertThat(transaction.getTo()).hasValue(Address.fromHexString(input.getTo()));
     assertThat(transaction.getGasLimit()).isEqualTo(Long.parseLong(input.getGasLimit()));
-    //    assertThat(transaction.getGasPrice())
-    //        .hasValue(Wei.fromEth(Long.parseLong(input.getGasPrice())));
     assertThat(transaction.getNonce()).isEqualTo(Long.parseLong(input.getNonce()));
-    //
-    // assertThat(transaction.getValue()).isEqualTo(Wei.fromEth(Long.parseLong(input.getValue())));
-    //    assertThat(transaction.getData()).hasValue(Bytes.fromHexString(input.getData()));
-
-    final Bytes encodedBytes = TransactionEncoder.encodeOpaqueBytes(transaction);
+    final Bytes encodedBytes = TransactionEncoder.encodeOpaqueBytesForNetwork(transaction);
     assertThat(encodedBytes).isNotNull();
     assertThat(encodedBytes.toHexString()).isEqualTo(rawTransaction);
   }
