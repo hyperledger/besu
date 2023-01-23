@@ -56,13 +56,11 @@ jobs:
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
         queries: security-and-quality,security-extended
-    # Autobuild
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+
     # Autobuild failed (OOM)
     # Hence, supply memory args for gradle build
-    # - run: |
-    #    ./gradlew --no-scan compileJava
+    - run: |
+        JAVA_OPTS="-Xmx1000M" ./gradlew --no-scan compileJava
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
