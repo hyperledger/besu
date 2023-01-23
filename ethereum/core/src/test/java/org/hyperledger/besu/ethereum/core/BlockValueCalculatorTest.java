@@ -104,7 +104,8 @@ public class BlockValueCalculatorTest {
             .type(TransactionType.EIP1559)
             .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
     final TransactionReceipt receipt1 =
-        new TransactionReceipt(Hash.EMPTY_TRIE_HASH, 21000, Collections.emptyList(), Optional.empty());
+        new TransactionReceipt(
+            Hash.EMPTY_TRIE_HASH, 21000L, Collections.emptyList(), Optional.empty());
     final BlockHeader blockHeader =
         new BlockHeaderTestFixture()
             .prevRandao(Bytes32.random())
