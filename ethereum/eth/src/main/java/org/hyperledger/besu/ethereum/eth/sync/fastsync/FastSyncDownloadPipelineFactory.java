@@ -142,7 +142,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolContext,
             attachedValidationPolicy,
             ommerValidationPolicy,
-            ethContext);
+            ethContext,
+            fastSyncState.getPivotBlockHeader().get());
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

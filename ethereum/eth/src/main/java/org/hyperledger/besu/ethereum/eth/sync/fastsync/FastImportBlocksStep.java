@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockExcep
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(FastImportBlocksStep.class);
-  private static final long TEN_SECONDS = TimeUnit.SECONDS.toMillis(10L);
+  private static final long PRINT_DELAY = TimeUnit.SECONDS.toMillis(15L);
 
   private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
@@ -44,18 +47,21 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private final EthContext ethContext;
   private long accumulatedTime = 0L;
   private OptionalLong logStartBlock = OptionalLong.empty();
+  private final BlockHeader pivotHeader;
 
   public FastImportBlocksStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final ValidationPolicy headerValidationPolicy,
       final ValidationPolicy ommerValidationPolicy,
-      final EthContext ethContext) {
+      final EthContext ethContext,
+      final BlockHeader pivotHeader) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.headerValidationPolicy = headerValidationPolicy;
     this.ommerValidationPolicy = ommerValidationPolicy;
     this.ethContext = ethContext;
+    this.pivotHeader = pivotHeader;
   }
 
   @Override
@@ -81,8 +87,14 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
     final long endTime = System.nanoTime();
 
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
-    if (accumulatedTime > TEN_SECONDS) {
+    if (accumulatedTime > PRINT_DELAY) {
+      final BigDecimal blocksPercent =
+          BigDecimal.valueOf((lastBlock / pivotHeader.getNumber()) * 100)
+              .setScale(2, RoundingMode.HALF_UP);
       LOG.info(
+          "Block import progress: {} of {} ({}%)",
+          lastBlock, pivotHeader.getNumber(), blocksPercent);
+      LOG.debug(
           "Completed importing chain segment {} to {} ({} blocks in {}ms), Peers: {}",
           logStartBlock.getAsLong(),
           lastBlock,

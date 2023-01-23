@@ -119,7 +119,7 @@ public class FastSyncDownloader<REQUEST> {
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
       LOG.error(
-          "Encountered an unexpected error during fast sync. Restarting fast sync in "
+          "Encountered an unexpected error during fast sync. Restarting sync in "
               + FAST_SYNC_RETRY_DELAY
               + " seconds.",
           error);

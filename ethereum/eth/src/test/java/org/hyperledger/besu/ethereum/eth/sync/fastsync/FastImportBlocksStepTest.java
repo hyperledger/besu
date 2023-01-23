@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
@@ -52,6 +53,7 @@ public class FastImportBlocksStepTest {
   @Mock private BlockImporter blockImporter;
   @Mock private ValidationPolicy validationPolicy;
   @Mock private ValidationPolicy ommerValidationPolicy;
+  @Mock private BlockHeader pivotHeader;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
   private FastImportBlocksStep importBlocksStep;
@@ -65,7 +67,12 @@ public class FastImportBlocksStepTest {
 
     importBlocksStep =
         new FastImportBlocksStep(
-            protocolSchedule, protocolContext, validationPolicy, ommerValidationPolicy, null);
+            protocolSchedule,
+            protocolContext,
+            validationPolicy,
+            ommerValidationPolicy,
+            null,
+            pivotHeader);
   }
 
   @Test
