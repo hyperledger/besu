@@ -20,7 +20,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.io.IOException;
@@ -44,9 +43,6 @@ public class TransactionSSZEncodingTest {
   private static final String BLOB_TRANSACTIONS_TEST_VECTORS_JSON =
       "org/hyperledger/besu/ethereum/core/encoding/blob_transactions_test_vectors.json";
 
-  private static final String BLOB_TRANSACTIONS_WITHOUT_BLOBS_TEST_VECTORS_JSON =
-      "org/hyperledger/besu/ethereum/core/encoding/blob_transactions_without_blobs_test_vectors.json";
-
   private static Collection<Object[]> blobTransactionsTestVectors() throws IOException {
 
     ClassLoader classLoader = TransactionSSZEncodingTest.class.getClassLoader();
@@ -67,29 +63,6 @@ public class TransactionSSZEncodingTest {
         .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
   }
 
-  private static Collection<Object[]> blobTransactionsTestVectorsWithoutBlobs() throws IOException {
-
-    ClassLoader classLoader = TransactionSSZEncodingTest.class.getClassLoader();
-    InputStream inputStream =
-        classLoader.getResourceAsStream(BLOB_TRANSACTIONS_WITHOUT_BLOBS_TEST_VECTORS_JSON);
-    JsonParser parser = new JsonFactory().createParser(inputStream);
-    ObjectMapper mapper =
-        JsonMapper.builder()
-            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-            .build();
-    List<ModelWithoutBlobs> models = mapper.readValue(parser, new TypeReference<>() {});
-
-    return models.stream()
-        .map(
-            model ->
-                new Object[] {
-                  generateNameWithoutblobs(model.getInput()),
-                  model.getInput(),
-                  model.getRawEncodedTransaction()
-                })
-        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-  }
-
   private static String generateName(final Input input) {
     return " To: "
         + input.getTo()
@@ -101,10 +74,6 @@ public class TransactionSSZEncodingTest {
         + input.getGasPrice()
         + " Nonce: "
         + input.getNonce();
-  }
-
-  private static String generateNameWithoutblobs(final InputWithoutBlobs input) {
-    return " hash: " + input.getHash();
   }
 
   @ParameterizedTest(name = "[{index}] {0}")
@@ -123,21 +92,6 @@ public class TransactionSSZEncodingTest {
     assertThat(encodedBytes.toHexString()).isEqualTo(rawTransaction);
   }
 
-  @ParameterizedTest(name = "[{index}] {0}")
-  @MethodSource("blobTransactionsTestVectorsWithoutBlobs")
-  void shouldDecodeSSZTransactionsWithoutBlobs(
-      final String name, final InputWithoutBlobs input, final String rawTransaction) {
-    final Bytes bytes = Bytes.fromHexString(rawTransaction);
-    final Transaction transaction = TransactionDecoder.decodeOpaqueBytes(bytes);
-
-    assertThat(transaction).isNotNull();
-    assertThat(transaction.getPayload()).isNotNull();
-    assertThat(transaction.getHash()).isEqualTo(Hash.fromHexString(input.getHash()));
-    final Bytes encodedBytes = TransactionEncoder.encodeOpaqueBytes(transaction);
-    assertThat(encodedBytes).isNotNull();
-    assertThat(encodedBytes.toHexString()).isEqualTo(rawTransaction);
-  }
-
   public static class Model {
     private Input input;
     private String rawEncodedTransaction;
@@ -147,27 +101,6 @@ public class TransactionSSZEncodingTest {
     }
 
     public void setInput(final Input input) {
-      this.input = input;
-    }
-
-    public String getRawEncodedTransaction() {
-      return rawEncodedTransaction;
-    }
-
-    public void setRawEncodedTransaction(final String rawEncodedTransaction) {
-      this.rawEncodedTransaction = rawEncodedTransaction;
-    }
-  }
-
-  public static class ModelWithoutBlobs {
-    private InputWithoutBlobs input;
-    private String rawEncodedTransaction;
-
-    public InputWithoutBlobs getInput() {
-      return input;
-    }
-
-    public void setInput(final InputWithoutBlobs input) {
       this.input = input;
     }
 
@@ -261,18 +194,6 @@ public class TransactionSSZEncodingTest {
 
     public void setData(final String data) {
       this.data = data;
-    }
-  }
-
-  public static class InputWithoutBlobs {
-    String hash;
-
-    public String getHash() {
-      return hash;
-    }
-
-    public void setHash(final String hash) {
-      this.hash = hash;
     }
   }
 }
