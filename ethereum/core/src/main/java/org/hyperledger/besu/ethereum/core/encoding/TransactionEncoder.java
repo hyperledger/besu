@@ -62,7 +62,7 @@ public class TransactionEncoder {
       Map.of(
           TransactionType.ACCESS_LIST, Encoder.rlpEncoder(TransactionEncoder::encodeAccessList),
           TransactionType.EIP1559, Encoder.rlpEncoder(TransactionEncoder::encodeEIP1559),
-          TransactionType.BLOB_TX_TYPE, Encoder.sszEncoder(TransactionEncoder::encodeBlob));
+          TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeBlob));
 
   public static void encodeBlob(final Transaction transaction, final SSZWriter rlpOutput) {
     var signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();

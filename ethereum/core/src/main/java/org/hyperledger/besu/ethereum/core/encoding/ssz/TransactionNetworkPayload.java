@@ -1,6 +1,7 @@
 package org.hyperledger.besu.ethereum.core.encoding.ssz;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.List;
 import java.util.Optional;
@@ -180,8 +181,10 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
         return maxFeePerData;
       }
 
-      public SSZFixedSizeTypeList<VersionedHash> getBlobVersionedHashes() {
-        return blobVersionedHashes;
+      public List<Hash> getBlobVersionedHashes() {
+        return blobVersionedHashes.getElements().stream()
+            .map(VersionedHash::toHash)
+            .collect(Collectors.toList());
       }
     }
 
@@ -297,6 +300,10 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
       public Bytes getBytes() {
         return bytes;
+      }
+
+      public Hash toHash() {
+        return Hash.wrap(Bytes32.wrap(bytes));
       }
     }
 

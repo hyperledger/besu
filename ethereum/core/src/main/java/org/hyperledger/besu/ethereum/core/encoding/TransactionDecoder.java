@@ -77,7 +77,7 @@ public class TransactionDecoder {
           Decoder.rlpDecoder(TransactionDecoder::decodeAccessList),
           TransactionType.EIP1559,
           Decoder.rlpDecoder(TransactionDecoder::decodeEIP1559),
-          TransactionType.BLOB_TX_TYPE,
+          TransactionType.BLOB,
           Decoder.sszDecoder(TransactionDecoder::decodeBlob));
 
   public static Transaction decodeBlob(final SSZReader input, final int length) {
@@ -89,7 +89,7 @@ public class TransactionDecoder {
     var blobTransaction = signedBlobTransaction.getMessage();
 
     return Transaction.builder()
-        .type(TransactionType.BLOB_TX_TYPE)
+        .type(TransactionType.BLOB)
         .chainId(blobTransaction.getChainId().toUnsignedBigInteger())
         .nonce(blobTransaction.getNonce())
         .maxPriorityFeePerGas(Wei.of(blobTransaction.getMaxPriorityFeePerGas()))
@@ -112,7 +112,9 @@ public class TransactionDecoder {
                     signedBlobTransaction.getSignature().getR().toUnsignedBigInteger(),
                     signedBlobTransaction.getSignature().getS().toUnsignedBigInteger(),
                     signedBlobTransaction.getSignature().isParity() ? (byte) 1 : 0))
-        .kzgBlobs(payload.getKzgCommitments(),payload.getBlobs(),payload.getKzgProof())
+        .maxFeePerData(Wei.of(blobTransaction.getMaxFeePerData()))
+        .versionedHashes(blobTransaction.getBlobVersionedHashes())
+        .kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProof())
         .build();
   }
 

@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import org.apache.tuweni.ssz.SSZFixedSizeTypeList;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -50,6 +49,7 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.ssz.SSZFixedSizeTypeList;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256s;
 
@@ -114,6 +114,7 @@ public class Transaction
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+  private final Optional<Wei> maxFeePerData;
   private final Optional<List<Hash>> versionedHashes;
 
   public static Builder builder() {
@@ -168,6 +169,7 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
+      final Optional<Wei> maxFeePerData,
       final Optional<List<Hash>> versionedHashes) {
     if (v.isPresent() && chainId.isPresent()) {
       throw new IllegalArgumentException(
@@ -214,6 +216,7 @@ public class Transaction
     this.sender = sender;
     this.chainId = chainId;
     this.v = v;
+    this.maxFeePerData = maxFeePerData;
     this.versionedHashes = versionedHashes;
   }
 
@@ -230,6 +233,7 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
+      final Optional<Wei> maxFeePerData,
       final Optional<List<Hash>> versionedHashes) {
     this(
         TransactionType.FRONTIER,
@@ -246,6 +250,7 @@ public class Transaction
         sender,
         chainId,
         v,
+        maxFeePerData,
         versionedHashes);
   }
 
@@ -275,6 +280,7 @@ public class Transaction
         null,
         chainId,
         v,
+        Optional.empty(),
         versionedHashes);
   }
 
@@ -318,6 +324,7 @@ public class Transaction
         sender,
         chainId,
         Optional.empty(),
+        Optional.empty(),
         Optional.empty());
   }
 
@@ -350,6 +357,7 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
+      final Optional<Wei> maxFeePerData,
       final Optional<List<Hash>> versionedHashes) {
     this(
         nonce,
@@ -364,6 +372,7 @@ public class Transaction
         sender,
         chainId,
         v,
+        maxFeePerData,
         versionedHashes);
   }
 
@@ -997,6 +1006,7 @@ public class Transaction
 
     protected Optional<BigInteger> v = Optional.empty();
     protected List<Hash> versionedHashes = null;
+    private Wei maxFeePerData;
 
     public Builder type(final TransactionType transactionType) {
       this.transactionType = transactionType;
@@ -1107,6 +1117,7 @@ public class Transaction
           sender,
           chainId,
           v,
+          Optional.ofNullable(maxFeePerData),
           Optional.ofNullable(versionedHashes));
     }
 
@@ -1136,7 +1147,15 @@ public class Transaction
               keys);
     }
 
-    public Builder kzgBlobs(SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments, SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs, TransactionNetworkPayload.KZGProof kzgProof) {
+    public Builder kzgBlobs(
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
+        final TransactionNetworkPayload.KZGProof kzgProof) {
+      return this;
+    }
+
+    public Builder maxFeePerData(Wei maxFeePerData) {
+      this.maxFeePerData = maxFeePerData;
       return this;
     }
   }
