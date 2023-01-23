@@ -50,6 +50,11 @@ public class DummySynchronizer implements Synchronizer {
   }
 
   @Override
+  public boolean healWorldState() {
+    return false;
+  }
+
+  @Override
   public long subscribeSyncStatus(final BesuEvents.SyncStatusListener listener) {
     return 0;
   }

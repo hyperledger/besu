@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessingResult;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
@@ -167,7 +168,12 @@ public class MainnetBlockValidator implements BlockValidator {
         return new BlockProcessingResult(
             Optional.of(new BlockProcessingOutputs(worldState, receipts)));
       }
-    } catch (StorageException | MerkleTrieException ex) {
+    } catch (MerkleTrieException ex) {
+      context.getSynchronizer().ifPresent(Synchronizer::healWorldState);
+      var retval = new BlockProcessingResult(Optional.empty(), ex);
+      handleAndLogImportFailure(block, retval);
+      return retval;
+    } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
       handleAndLogImportFailure(block, retval);
       return retval;

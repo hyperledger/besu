@@ -39,9 +39,11 @@ public class SnapPersistedContext {
   private final byte[] SNAP_INCONSISTENT_ACCOUNT_INDEX =
       "snapInconsistentAccountsStorageIndex".getBytes(StandardCharsets.UTF_8);
 
+  private final byte[] SNAP_HEALING = "snapHealingStatus".getBytes(StandardCharsets.UTF_8);
+
   private final GenericKeyValueStorageFacade<BigInteger, AccountRangeDataRequest>
       accountRangeToDownload;
-  private final GenericKeyValueStorageFacade<BigInteger, Bytes> inconsistentAccounts;
+  private final GenericKeyValueStorageFacade<BigInteger, Bytes> healContext;
 
   public SnapPersistedContext(final StorageProvider storageProvider) {
     this.accountRangeToDownload =
@@ -61,7 +63,7 @@ public class SnapPersistedContext {
             },
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.SNAPSYNC_MISSING_ACCOUNT_RANGE));
-    this.inconsistentAccounts =
+    this.healContext =
         new GenericKeyValueStorageFacade<>(
             BigInteger::toByteArray,
             new ValueConvertor<>() {
@@ -95,27 +97,38 @@ public class SnapPersistedContext {
 
   public void addInconsistentAccount(final Bytes inconsistentAccount) {
     final BigInteger index =
-        inconsistentAccounts
+        healContext
             .get(SNAP_INCONSISTENT_ACCOUNT_INDEX)
             .map(bytes -> new BigInteger(bytes.toArrayUnsafe()).add(BigInteger.ONE))
             .orElse(BigInteger.ZERO);
-    inconsistentAccounts.putAll(
+    healContext.putAll(
         keyValueStorageTransaction -> {
           keyValueStorageTransaction.put(SNAP_INCONSISTENT_ACCOUNT_INDEX, index.toByteArray());
           keyValueStorageTransaction.put(index.toByteArray(), inconsistentAccount.toArrayUnsafe());
         });
   }
 
-  public List<AccountRangeDataRequest> getPersistedTasks() {
+  public List<AccountRangeDataRequest> getCurrentAccountRange() {
     return accountRangeToDownload
         .streamValuesFromKeysThat(bytes -> true)
         .collect(Collectors.toList());
   }
 
   public HashSet<Bytes> getInconsistentAccounts() {
-    return inconsistentAccounts
+    return healContext
         .streamValuesFromKeysThat(notEqualsTo(SNAP_INCONSISTENT_ACCOUNT_INDEX))
         .collect(Collectors.toCollection(HashSet::new));
+  }
+
+  public boolean isHealing() {
+    return getCurrentAccountRange().isEmpty()
+        && (healContext.get(SNAP_HEALING).isPresent() || !getInconsistentAccounts().isEmpty());
+  }
+
+  public void markHealing() {
+    healContext.putAll(
+        keyValueStorageTransaction ->
+            keyValueStorageTransaction.put(SNAP_HEALING, new byte[] {0x01}));
   }
 
   public void clearAccountRangeTasks() {
@@ -124,12 +137,12 @@ public class SnapPersistedContext {
 
   public void clear() {
     accountRangeToDownload.clear();
-    inconsistentAccounts.clear();
+    healContext.clear();
   }
 
   public void close() throws IOException {
     accountRangeToDownload.close();
-    inconsistentAccounts.close();
+    healContext.close();
   }
 
   private Predicate<byte[]> notEqualsTo(final byte[] name) {

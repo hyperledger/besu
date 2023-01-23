@@ -632,6 +632,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethProtocolManager,
             pivotBlockSelector);
 
+    protocolContext.setSynchronizer(Optional.of(synchronizer));
+
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
             protocolSchedule,

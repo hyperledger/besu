@@ -80,8 +80,7 @@ public class FastDownloaderFactoryTest {
                     ethContext,
                     worldStateStorage,
                     syncState,
-                    clock,
-                    false))
+                    clock))
         .isInstanceOf(IllegalStateException.class);
   }
 
@@ -102,8 +101,7 @@ public class FastDownloaderFactoryTest {
             ethContext,
             worldStateStorage,
             syncState,
-            clock,
-            false);
+            clock);
     assertThat(result).isEmpty();
   }
 
@@ -127,8 +125,7 @@ public class FastDownloaderFactoryTest {
         ethContext,
         worldStateStorage,
         syncState,
-        clock,
-        false);
+        clock);
 
     verify(mutableBlockchain).getChainHeadBlockNumber();
   }
@@ -158,8 +155,7 @@ public class FastDownloaderFactoryTest {
         ethContext,
         worldStateStorage,
         syncState,
-        clock,
-        false);
+        clock);
 
     verify(worldStateStorage).clear();
     assertThat(Files.exists(stateQueueDir)).isFalse();
@@ -191,8 +187,7 @@ public class FastDownloaderFactoryTest {
                     ethContext,
                     worldStateStorage,
                     syncState,
-                    clock,
-                    false))
+                    clock))
         .isInstanceOf(IllegalStateException.class);
   }
 

@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
@@ -158,18 +159,24 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   protected BonsaiAccount loadAccount(
       final Address address,
       final Function<BonsaiValue<BonsaiAccount>, BonsaiAccount> bonsaiAccountFunction) {
-    final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
-    if (bonsaiValue == null) {
-      final Account account = wrappedWorldView().get(address);
-      if (account instanceof BonsaiAccount) {
-        final BonsaiAccount mutableAccount = new BonsaiAccount((BonsaiAccount) account, this, true);
-        accountsToUpdate.put(address, new BonsaiValue<>((BonsaiAccount) account, mutableAccount));
-        return mutableAccount;
+    try {
+      final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
+      if (bonsaiValue == null) {
+        final Account account = wrappedWorldView().get(address);
+        if (account instanceof BonsaiAccount) {
+          final BonsaiAccount mutableAccount =
+              new BonsaiAccount((BonsaiAccount) account, this, true);
+          accountsToUpdate.put(address, new BonsaiValue<>((BonsaiAccount) account, mutableAccount));
+          return mutableAccount;
+        } else {
+          return null;
+        }
       } else {
-        return null;
+        return bonsaiAccountFunction.apply(bonsaiValue);
       }
-    } else {
-      return bonsaiAccountFunction.apply(bonsaiValue);
+    } catch (MerkleTrieException e) {
+      pruneInconsistentPath(address, e.getLocation(), false);
+      throw new MerkleTrieException(e.getMessage(), e.getHash(), e.getLocation());
     }
   }
 
@@ -365,29 +372,35 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     if (emptySlot.contains(slot)) {
       return Optional.empty();
     } else {
-      final Optional<UInt256> valueUInt =
-          (wrappedWorldView() instanceof BonsaiPersistedWorldState)
-              ? ((BonsaiPersistedWorldState) wrappedWorldView())
-                  .getStorageValueBySlotHash(
-                      () ->
-                          Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
-                              .map(BonsaiAccount::getStorageRoot),
-                      address,
-                      slotHash)
-              : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
-      valueUInt.ifPresentOrElse(
-          v ->
-              storageToUpdate
-                  .computeIfAbsent(
-                      address,
-                      key ->
-                          new StorageConsumingMap<>(
-                              address, new ConcurrentHashMap<>(), storagePreloader))
-                  .put(slotHash, new BonsaiValue<>(v, v)),
-          () -> {
-            emptySlot.add(Bytes.concatenate(Hash.hash(address), slotHash));
-          });
-      return valueUInt;
+      try {
+        final Optional<UInt256> valueUInt =
+            (wrappedWorldView() instanceof BonsaiPersistedWorldState)
+                ? ((BonsaiPersistedWorldState) wrappedWorldView())
+                    .getStorageValueBySlotHash(
+                        () ->
+                            Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
+                                .map(BonsaiAccount::getStorageRoot),
+                        address,
+                        slotHash)
+                : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
+        valueUInt.ifPresentOrElse(
+            v ->
+                storageToUpdate
+                    .computeIfAbsent(
+                        address,
+                        key ->
+                            new StorageConsumingMap<>(
+                                address, new ConcurrentHashMap<>(), storagePreloader))
+                    .put(slotHash, new BonsaiValue<>(v, v)),
+            () -> {
+              emptySlot.add(Bytes.concatenate(Hash.hash(address), slotHash));
+            });
+        return valueUInt;
+      } catch (MerkleTrieException e) {
+        System.out.println("found invalid node " + address + " " + slotHash);
+        pruneInconsistentPath(address, e.getLocation(), true);
+        throw new MerkleTrieException(e.getMessage(), e.getHash(), e.getLocation());
+      }
     }
   }
 
@@ -423,6 +436,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     final Map<Bytes32, Bytes> results = wrappedWorldView().getAllAccountStorage(address, rootHash);
     storageToUpdate.get(address).forEach((key, value) -> results.put(key, value.getUpdated()));
     return results;
+  }
+
+  @Override
+  public void pruneInconsistentPath(
+      final Address address, final Bytes location, final boolean isSlot) {
+    wrappedWorldView().pruneInconsistentPath(address, location, isSlot);
   }
 
   public TrieLogLayer generateTrieLog(final Hash blockHash) {

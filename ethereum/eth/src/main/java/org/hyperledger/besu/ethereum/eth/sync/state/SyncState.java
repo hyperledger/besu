@@ -58,6 +58,10 @@ public class SyncState {
   private final Optional<Checkpoint> checkpoint;
   private volatile boolean isInitialSyncPhaseDone;
 
+  private volatile boolean isResyncNeeded;
+
+  private volatile boolean isHealNeeded;
+
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this(blockchain, ethPeers, false, Optional.empty());
   }
@@ -311,13 +315,29 @@ public class SyncState {
     return checkpoint;
   }
 
+  public boolean isInitialSyncPhaseDone() {
+    return isInitialSyncPhaseDone;
+  }
+
   public void markInitialSyncPhaseAsDone() {
     isInitialSyncPhaseDone = true;
     completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncCompleted);
   }
 
-  public boolean isInitialSyncPhaseDone() {
-    return isInitialSyncPhaseDone;
+  public boolean isResyncNeeded() {
+    return isResyncNeeded;
+  }
+
+  public void markResyncNeeded() {
+    isResyncNeeded = true;
+  }
+
+  public boolean isHealNeeded() {
+    return isHealNeeded;
+  }
+
+  public void markHealNeeded() {
+    isHealNeeded = true;
   }
 
   public void markInitialSyncRestart() {

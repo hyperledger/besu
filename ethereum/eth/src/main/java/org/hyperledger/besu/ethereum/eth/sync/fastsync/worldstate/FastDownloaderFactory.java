@@ -61,8 +61,7 @@ public class FastDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
-      final Clock clock,
-      final boolean isResync) {
+      final Clock clock) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -82,7 +81,7 @@ public class FastDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
-    if (isResync) {
+    if (syncState.isResyncNeeded()) {
       worldStateStorage.clear();
     } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()

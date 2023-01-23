@@ -56,8 +56,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
-      final Clock clock,
-      final boolean isResync) {
+      final Clock clock) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -77,13 +76,14 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
-    if (isResync) {
+    if (syncState.isResyncNeeded()) {
+      System.out.println("resync");
       snapContext.clear();
       worldStateStorage.clear();
-    }
-
-    if (!isResync
-        && fastSyncState.getPivotBlockHeader().isEmpty()
+    } else if (syncState.isHealNeeded()) {
+      System.out.println("heal");
+      snapContext.markHealing();
+    } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(

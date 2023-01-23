@@ -50,7 +50,7 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final Optional<BlockPropagationManager> blockPropagationManager;
-  private final Function<Boolean, Optional<FastSyncDownloader<?>>> fastSyncFactory;
+  private final Supplier<Optional<FastSyncDownloader<?>>> fastSyncFactory;
   private Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
   private final EthContext ethContext;
@@ -136,7 +136,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
 
     if (SyncMode.FAST.equals(syncConfig.getSyncMode())) {
       this.fastSyncFactory =
-          (isResync) ->
+          () ->
               FastDownloaderFactory.create(
                   pivotBlockSelector,
                   syncConfig,
@@ -147,11 +147,10 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   ethContext,
                   worldStateStorage,
                   syncState,
-                  clock,
-                  isResync);
+                  clock);
     } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
       this.fastSyncFactory =
-          (isResync) ->
+          () ->
               CheckpointDownloaderFactory.createCheckpointDownloader(
                   new SnapPersistedContext(storageProvider),
                   pivotBlockSelector,
@@ -163,11 +162,10 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   ethContext,
                   worldStateStorage,
                   syncState,
-                  clock,
-                  isResync);
+                  clock);
     } else {
       this.fastSyncFactory =
-          (isResync) ->
+          () ->
               SnapDownloaderFactory.createSnapDownloader(
                   new SnapPersistedContext(storageProvider),
                   pivotBlockSelector,
@@ -179,12 +177,11 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   ethContext,
                   worldStateStorage,
                   syncState,
-                  clock,
-                  isResync);
+                  clock);
     }
 
     // create a non-resync fast sync downloader:
-    this.fastSyncDownloader = this.fastSyncFactory.apply(false);
+    this.fastSyncDownloader = this.fastSyncFactory.get();
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,
@@ -325,7 +322,18 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
 
     // recreate fast sync with resync and start
     this.syncState.markInitialSyncRestart();
-    this.fastSyncDownloader = this.fastSyncFactory.apply(true);
+    this.syncState.markResyncNeeded();
+    this.fastSyncDownloader = this.fastSyncFactory.get();
+    start();
+    return true;
+  }
+
+  @Override
+  public boolean healWorldState() {
+    // recreate fast sync with resync and start
+    this.syncState.markInitialSyncRestart();
+    this.syncState.markHealNeeded();
+    this.fastSyncDownloader = this.fastSyncFactory.get();
     start();
     return true;
   }

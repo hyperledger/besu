@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -30,6 +31,8 @@ public class ProtocolContext {
   private final WorldStateArchive worldStateArchive;
   private final ConsensusContext consensusContext;
 
+  private Optional<Synchronizer> synchronizer;
+
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
@@ -37,6 +40,7 @@ public class ProtocolContext {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
+    this.synchronizer = Optional.empty();
   }
 
   public static ProtocolContext init(
@@ -48,6 +52,14 @@ public class ProtocolContext {
         blockchain,
         worldStateArchive,
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule));
+  }
+
+  public Optional<Synchronizer> getSynchronizer() {
+    return synchronizer;
+  }
+
+  public void setSynchronizer(final Optional<Synchronizer> synchronizer) {
+    this.synchronizer = synchronizer;
   }
 
   public MutableBlockchain getBlockchain() {

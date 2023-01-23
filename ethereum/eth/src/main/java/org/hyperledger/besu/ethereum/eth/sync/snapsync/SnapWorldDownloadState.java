@@ -182,6 +182,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized void startHeal() {
     snapContext.clearAccountRangeTasks();
+    snapContext.markHealing();
     snapSyncState.setHealStatus(true);
     // try to find new pivot block before healing
     dynamicPivotBlockManager.switchToNewPivotBlock(

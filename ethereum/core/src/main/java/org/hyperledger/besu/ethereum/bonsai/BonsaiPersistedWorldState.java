@@ -25,15 +25,19 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -451,5 +455,62 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             Function.identity(),
             Function.identity());
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+  }
+
+  @Override
+  public void pruneInconsistentPath(
+      final Address address, final Bytes location, final boolean isSlot) {
+    System.out.println("we are pruning !!!");
+    final Set<Bytes> keysToDelete = new HashSet<>();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
+    final Hash accountHash = Hash.hash(address);
+    final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+        new StoredMerklePatriciaTrie<>(
+            (l, h) -> {
+              final Optional<Bytes> node = worldStateStorage.getAccountStateTrieNode(l, h);
+              if (node.isPresent()) {
+                keysToDelete.add(l);
+              }
+              return node;
+            },
+            Bytes32.wrap(worldStateRootHash),
+            Function.identity(),
+            Function.identity());
+    try {
+      if (isSlot) {
+        accountTrie
+            .get(address)
+            .map(RLP::input)
+            .map(StateTrieAccountValue::readFrom)
+            .ifPresent(
+                account -> {
+                  final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+                      new StoredMerklePatriciaTrie<>(
+                          (l, h) -> {
+                            Optional<Bytes> node =
+                                worldStateStorage.getAccountStorageTrieNode(accountHash, l, h);
+                            if (node.isPresent()) {
+                              keysToDelete.add(Bytes.concatenate(accountHash, l));
+                            }
+                            return node;
+                          },
+                          account.getStorageRoot(),
+                          Function.identity(),
+                          Function.identity());
+                  try {
+                    storageTrie.getPath(location);
+                  } catch (Exception eA) {
+                    System.out.println("exception " + eA.getMessage());
+                    // ignore
+                  }
+                });
+      }
+    } catch (Exception eA) {
+      updater.removeAccountInfoState(accountHash);
+      System.out.println("exception " + eA.getMessage());
+      // ignore
+    }
+    keysToDelete.forEach(bytes -> updater.removeAccountStateTrieNode(bytes, null));
+    updater.commit();
   }
 }
