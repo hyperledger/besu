@@ -221,6 +221,10 @@ public class Transaction
     this.chainId = chainId;
     this.v = v;
     this.versionedHashes = versionedHashes;
+
+    if (isUpfrontGasCostTooHigh()) {
+      throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
+    }
   }
 
   public Transaction(
@@ -707,7 +711,7 @@ public class Transaction
    *
    * @return true is upfront data cost overflow uint256 max value
    */
-  public boolean isUpfrontGasCostTooHigh() {
+  private boolean isUpfrontGasCostTooHigh() {
     return calculateUpfrontGasCost(getMaxGasPrice()).bitLength() > 256;
   }
 
