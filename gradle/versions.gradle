@@ -143,6 +143,7 @@ dependencyManagement {
       entry 'tuweni-io'
       entry 'tuweni-net'
       entry 'tuweni-rlp'
+      entry 'tuweni-ssz'
       entry 'tuweni-toml'
       entry 'tuweni-units'
     }
