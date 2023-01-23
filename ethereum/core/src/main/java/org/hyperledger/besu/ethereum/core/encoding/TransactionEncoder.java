@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.ssz.SignedBlobTransaction;
+import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.AccessListEntry;
@@ -65,8 +65,8 @@ public class TransactionEncoder {
           TransactionType.BLOB_TX_TYPE, Encoder.sszEncoder(TransactionEncoder::encodeBlob));
 
   public static void encodeBlob(final Transaction transaction, final SSZWriter rlpOutput) {
-    SignedBlobTransaction signedBlobTransaction = new SignedBlobTransaction();
-    signedBlobTransaction.encodeInto(rlpOutput);
+    var signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
+    signedBlobTransaction.writeTo(rlpOutput);
   }
 
   public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {

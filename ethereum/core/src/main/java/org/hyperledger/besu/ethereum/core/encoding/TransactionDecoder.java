@@ -29,7 +29,6 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.ssz.SignedBlobTransaction;
 import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -84,12 +83,11 @@ public class TransactionDecoder {
   public static Transaction decodeBlob(final SSZReader input, final int length) {
 
     TransactionNetworkPayload payload = new TransactionNetworkPayload();
-    payload.decodeFrom(input, length);
+    payload.populateFromReader(input);
 
-    SignedBlobTransaction signedBlobTransaction = payload.getTransaction();
+    var signedBlobTransaction = payload.getSignedBlobTransaction();
+    var blobTransaction = signedBlobTransaction.getMessage();
 
-    final SignedBlobTransaction.BlobTransaction blobTransaction =
-        signedBlobTransaction.getMessage();
     return Transaction.builder()
         .type(TransactionType.BLOB_TX_TYPE)
         .chainId(blobTransaction.getChainId().toUnsignedBigInteger())
@@ -98,7 +96,7 @@ public class TransactionDecoder {
         .maxFeePerGas(Wei.of(blobTransaction.getMaxFeePerGas()))
         .gasLimit(blobTransaction.getGas())
         .to(blobTransaction.getAddress().orElse(null))
-        .value(Wei.of(blobTransaction.getValue().getValue()))
+        .value(Wei.of(blobTransaction.getValue()))
         .payload(blobTransaction.getData())
         .accessList(
             blobTransaction.getAccessList().stream()
@@ -111,9 +109,10 @@ public class TransactionDecoder {
             SIGNATURE_ALGORITHM
                 .get()
                 .createSignature(
-                    signedBlobTransaction.getSignature().getR().getValue().toUnsignedBigInteger(),
-                    signedBlobTransaction.getSignature().getS().getValue().toUnsignedBigInteger(),
-                    signedBlobTransaction.getSignature().getyParity().getValue() ? (byte) 1 : 0))
+                    signedBlobTransaction.getSignature().getR().toUnsignedBigInteger(),
+                    signedBlobTransaction.getSignature().getS().toUnsignedBigInteger(),
+                    signedBlobTransaction.getSignature().isParity() ? (byte) 1 : 0))
+        .kzgBlobs(payload.getKzgCommitments(),payload.getBlobs(),payload.getKzgProof())
         .build();
   }
 

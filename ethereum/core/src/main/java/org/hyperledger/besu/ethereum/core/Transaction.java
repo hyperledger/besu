@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
+import org.apache.tuweni.ssz.SSZFixedSizeTypeList;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -1132,6 +1134,10 @@ public class Transaction
                   accessList,
                   chainId),
               keys);
+    }
+
+    public Builder kzgBlobs(SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments, SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs, TransactionNetworkPayload.KZGProof kzgProof) {
+      return this;
     }
   }
 

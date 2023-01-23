@@ -27,10 +27,16 @@ jar {
   }
 }
 
+repositories {
+  mavenLocal()
+}
+
 dependencies {
   api 'org.slf4j:slf4j-api'
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+
+  //  implementation fileTree(dir: '/Users/jiripeinlich/consensys/src/incubator-tuweni/ssz/build/classes', include: '*.class')
 
   implementation project(':config')
   implementation project(':crypto')
@@ -54,7 +60,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-concurrent'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.apache.tuweni:tuweni-rlp'
-  implementation 'org.apache.tuweni:tuweni-ssz'
+  implementation 'org.apache.tuweni:tuweni-ssz:2.4.0-SNAPSHOT'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
 
