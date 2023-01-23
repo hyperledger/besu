@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -106,7 +107,7 @@ public class BlockResultFactory {
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    final long blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
+    final Wei blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
     return new EngineGetPayloadResultV2(
         blockWithReceipts.getHeader(),
         txs,
