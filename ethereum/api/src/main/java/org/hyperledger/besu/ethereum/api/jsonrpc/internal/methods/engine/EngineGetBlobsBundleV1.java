@@ -29,7 +29,7 @@ public class EngineGetBlobsBundleV1 extends AbstractEngineGetPayload {
     }
 
     @Override
-    protected JsonRpcResponse createResponse(JsonRpcRequestContext request, BlockWithReceipts blockWithReceipts) {
+    protected JsonRpcResponse createResponse(final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts) {
         return null;
     }
 
