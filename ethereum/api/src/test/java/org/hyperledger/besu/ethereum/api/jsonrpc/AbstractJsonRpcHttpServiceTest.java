@@ -205,6 +205,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final NatService natService = new NatService(Optional.empty());
 
     config.setPort(0);
+    config.setMaxBatchSize(10);
     service =
         new JsonRpcHttpService(
             vertx,

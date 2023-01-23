@@ -99,6 +99,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
+    if (!validateWithdrawals(block)) {
+      return false;
+    }
+
     return true;
   }
 
@@ -252,5 +256,20 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       previous = ancestor;
     }
     return false;
+  }
+
+  private boolean validateWithdrawals(final Block block) {
+    final WithdrawalsValidator withdrawalsValidator =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getWithdrawalsValidator();
+
+    if (!withdrawalsValidator.validateWithdrawals(block.getBody().getWithdrawals())) {
+      return false;
+    }
+
+    if (!withdrawalsValidator.validateWithdrawalsRoot(block)) {
+      return false;
+    }
+
+    return true;
   }
 }

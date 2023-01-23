@@ -350,7 +350,8 @@ public class JsonRpcHttpService {
                       authenticationService.get(),
                       config.getNoAuthRpcApis()),
                   rpcMethods),
-              tracer),
+              tracer,
+              config),
           false);
     } else {
       mainRoute.blockingHandler(
@@ -359,7 +360,8 @@ public class JsonRpcHttpService {
                   new TimedJsonRpcProcessor(
                       new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
                   rpcMethods),
-              tracer),
+              tracer,
+              config),
           false);
     }
 

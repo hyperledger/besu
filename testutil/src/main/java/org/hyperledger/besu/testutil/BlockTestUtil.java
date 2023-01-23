@@ -44,6 +44,8 @@ public final class BlockTestUtil {
       Suppliers.memoize(BlockTestUtil::supplyOutdatedForkResources);
   private static final Supplier<ChainResources> forkUpgradedSupplier =
       Suppliers.memoize(BlockTestUtil::supplyUpgradedForkResources);
+  private static final Supplier<ChainResources> testRpcCompactChainSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyTestRpcCompactResources);
 
   /**
    * Gets test blockchain url.
@@ -129,6 +131,14 @@ public final class BlockTestUtil {
   public static ChainResources getUpgradedForkResources() {
     return forkUpgradedSupplier.get();
   }
+  /**
+   * Gets Eth Ref Test resources.
+   *
+   * @return the Eth Ref Test resources.
+   */
+  public static ChainResources getEthRefTestResources() {
+    return testRpcCompactChainSupplier.get();
+  }
 
   private static ChainResources supplyTestChainResources() {
     final URL genesisURL =
@@ -196,6 +206,20 @@ public final class BlockTestUtil {
             BlockTestUtil.class
                 .getClassLoader()
                 .getResource("fork-chain-data/fork-upgraded.blocks"));
+    return new ChainResources(genesisURL, blocksURL);
+  }
+
+  private static ChainResources supplyTestRpcCompactResources() {
+    final URL genesisURL =
+        ensureFileUrl(
+            BlockTestUtil.class
+                .getClassLoader()
+                .getResource("test-eth-ref-rpc-compact/genesis.json"));
+    final URL blocksURL =
+        ensureFileUrl(
+            BlockTestUtil.class
+                .getClassLoader()
+                .getResource("test-eth-ref-rpc-compact/chain.blocks"));
     return new ChainResources(genesisURL, blocksURL);
   }
 
