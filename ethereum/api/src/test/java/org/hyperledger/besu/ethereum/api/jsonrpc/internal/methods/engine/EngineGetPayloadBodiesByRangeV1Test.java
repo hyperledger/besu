@@ -19,6 +19,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -32,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPaylo
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +42,7 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,9 +111,9 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     final var resp = resp(123, 3);
     final EngineGetPayloadBodiesResultV1 result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(3);
-    assertThat(result.getPayloadBodies().get(0).size()).isEqualTo(1);
-    assertThat(result.getPayloadBodies().get(1).size()).isEqualTo(2);
-    assertThat(result.getPayloadBodies().get(2).size()).isEqualTo(3);
+    assertThat(result.getPayloadBodies().get(0).getTransactions().size()).isEqualTo(1);
+    assertThat(result.getPayloadBodies().get(1).getTransactions().size()).isEqualTo(2);
+    assertThat(result.getPayloadBodies().get(2).getTransactions().size()).isEqualTo(3);
   }
 
   @Test
@@ -146,9 +150,43 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     final var resp = resp(123, 3);
     final var result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(3);
-    assertThat(result.getPayloadBodies().get(0).size()).isEqualTo(1);
+    assertThat(result.getPayloadBodies().get(0).getTransactions().size()).isEqualTo(1);
     assertThat(result.getPayloadBodies().get(1)).isNull();
-    assertThat(result.getPayloadBodies().get(2).size()).isEqualTo(3);
+    assertThat(result.getPayloadBodies().get(2).getTransactions().size()).isEqualTo(3);
+  }
+
+  @Test
+  public void shouldReturnWithdrawalNullWhenBlockIsPreShanghai() {
+    final SignatureAlgorithm sig = SignatureAlgorithmFactory.getInstance();
+    final Hash blockHash1 = Hash.wrap(Bytes32.random());
+    final Hash blockHash2 = Hash.wrap(Bytes32.random());
+    final Withdrawal withdrawal =
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
+    final BlockBody preShanghaiBlockBody =
+        new BlockBody(
+            List.of(
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
+            Collections.emptyList());
+
+    final BlockBody ShanghaiBlockBody =
+        new BlockBody(
+            List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
+            Collections.emptyList(),
+            Optional.of(List.of(withdrawal)));
+    when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(preShanghaiBlockBody));
+    when(blockchain.getBlockBody(blockHash2)).thenReturn(Optional.of(ShanghaiBlockBody));
+    when(blockchain.getBlockHashByNumber(123)).thenReturn(Optional.of(blockHash1));
+    when(blockchain.getBlockHashByNumber(124)).thenReturn(Optional.of(blockHash2));
+
+    final var resp = resp(123, 2);
+    final var result = fromSuccessResp(resp);
+    assertThat(result.getPayloadBodies().size()).isEqualTo(2);
+    assertThat(result.getPayloadBodies().get(0).getTransactions().size()).isEqualTo(3);
+    assertThat(result.getPayloadBodies().get(0).getWithdrawals()).isNull();
+    assertThat(result.getPayloadBodies().get(1).getTransactions().size()).isEqualTo(1);
+    assertThat(result.getPayloadBodies().get(1).getWithdrawals().size()).isEqualTo(1);
   }
 
   private JsonRpcResponse resp(final long startBlockNumber, final long range) {
