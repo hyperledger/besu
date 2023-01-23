@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.Optional;
 
@@ -36,19 +37,23 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
-  private final MergeMiningCoordinator mergeMiningCoordinator;
+  protected final MergeMiningCoordinator mergeMiningCoordinator;
   protected final BlockResultFactory blockResultFactory;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineGetPayload.class);
+
+  protected final Optional<TimestampSchedule> schedule;
 
   public AbstractEngineGetPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
-      final EngineCallListener engineCallListener) {
+      final EngineCallListener engineCallListener,
+      final TimestampSchedule schedule) {
     super(vertx, protocolContext, engineCallListener);
     this.mergeMiningCoordinator = mergeMiningCoordinator;
     this.blockResultFactory = blockResultFactory;
+    this.schedule = Optional.ofNullable(schedule);
   }
 
   @Override

@@ -26,6 +26,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -157,6 +158,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             0,
             maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
             null,
+            DataGas.fromHexString(blockParam.getExcessDataGas()),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
