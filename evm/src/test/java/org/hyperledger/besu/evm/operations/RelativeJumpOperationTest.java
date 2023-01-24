@@ -129,6 +129,87 @@ class RelativeJumpOperationTest {
     assertThat(rjumpResult.getPcIncrement()).isEqualTo(1 + 2 * jumpVectorSize + 1);
   }
 
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "0xff",
+        "0x5f5f",
+        "0xf5f5",
+        "0x7fff",
+        "0xffff",
+        "0x5f5f5f5f",
+        "0xf5f5f5f5",
+        "0x7fffffff",
+        "0xffffffff",
+        "0x5f5f5f5f5f5f5f5f",
+        "0xf5f5f5f5f5f5f5f5",
+        "0x7fffffffffffffff",
+        "0xffffffffffffffff",
+        "0x5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+        "0xf5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5",
+        "0x7fffffffffffffffffffffffffffffff",
+        "0xffffffffffffffffffffffffffffffff",
+        "0x5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+        "0xf5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5",
+        "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      })
+  void rjumpvOverflowOperation(final String stackValue) {
+    final GasCalculator gasCalculator = mock(GasCalculator.class);
+    final Code mockCode = mock(Code.class);
+    final int rjumpOperationIndex = 3;
+    final int jumpVectorSize = 255;
+    final int jumpLength = 400;
+    final Bytes code =
+        Bytes.fromHexString(
+            "00".repeat(rjumpOperationIndex)
+                + String.format("5e%02x", jumpVectorSize)
+                + String.format("%04x", jumpLength).repeat(jumpVectorSize));
+
+    when(mockCode.getBytes()).thenReturn(code);
+    RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
+    MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(mockCode)
+            .pc(rjumpOperationIndex)
+            .initialGas(5L)
+            .pushStackItem(Bytes.fromHexString(stackValue))
+            .build();
+
+    Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
+
+    assertThat(rjumpResult.getPcIncrement()).isEqualTo(1 + 2 * jumpVectorSize + 1);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"0x7f", "0xf5", "0x5f", "0xfe"})
+  void rjumpvIndexOperation(final String stackValue) {
+    final GasCalculator gasCalculator = mock(GasCalculator.class);
+    final Code mockCode = mock(Code.class);
+    final int rjumpOperationIndex = 3;
+    final int jumpVectorSize = 255;
+    final int jumpLength = 400;
+    final Bytes code =
+        Bytes.fromHexString(
+            "00".repeat(rjumpOperationIndex)
+                + String.format("5e%02x", jumpVectorSize)
+                + String.format("%04x", jumpLength).repeat(jumpVectorSize));
+
+    when(mockCode.getBytes()).thenReturn(code);
+    RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
+    MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(mockCode)
+            .pc(rjumpOperationIndex)
+            .initialGas(5L)
+            .pushStackItem(Bytes.fromHexString(stackValue))
+            .build();
+
+    Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
+
+    assertThat(rjumpResult.getPcIncrement()).isEqualTo(2 + 2 * jumpVectorSize + jumpLength);
+  }
+
   @Test
   void rjumpvHitOperation() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);

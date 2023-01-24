@@ -103,7 +103,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         Optional.ofNullable(blockParam.getWithdrawals())
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
     if (!getWithdrawalsValidator(timestampSchedule, blockParam.getTimestamp())
-        .validateWithdrawals(maybeWithdrawals.orElse(null))) {
+        .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
 
@@ -155,7 +155,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
-            null,
+            maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
             null,
             headerFunctions);
 
