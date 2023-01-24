@@ -336,10 +336,12 @@ public class MainnetTransactionProcessor {
 
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas - dataGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} (limit - intrinsic)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - data)",
           gasAvailable,
           transaction.getGasLimit(),
-          intrinsicGas);
+          intrinsicGas,
+          accessListGas,
+          dataGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
