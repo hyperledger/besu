@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineF
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsBundleV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsBundleV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV3;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineN
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayloadDebug;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -86,21 +88,21 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               mergeCoordinator.get(),
               blockResultFactory,
               engineQosTimer,
-              protocolSchedule),
+              timestampSchedule),
           new EngineGetPayloadV2(
               consensusEngineServer,
               protocolContext,
               mergeCoordinator.get(),
               blockResultFactory,
               engineQosTimer,
-              protocolSchedule),
+              timestampSchedule),
           new EngineGetPayloadV3(
               consensusEngineServer,
               protocolContext,
               mergeCoordinator.get(),
               blockResultFactory,
               engineQosTimer,
-              protocolSchedule),
+              timestampSchedule),
           new EngineNewPayloadV1(
               consensusEngineServer,
               protocolSchedule,
@@ -117,7 +119,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               engineQosTimer),
           new EngineNewPayloadV3(
               consensusEngineServer,
-              protocolSchedule,
+              timestampSchedule,
               protocolContext,
               mergeCoordinator.get(),
               ethPeers,
@@ -140,7 +142,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               mergeCoordinator.get(),
               new BlockResultFactory(),
               engineQosTimer,
-              protocolSchedule),
+              timestampSchedule),
           new EngineExchangeTransitionConfiguration(
               consensusEngineServer, protocolContext, engineQosTimer),
           new EngineGetPayloadBodiesByHashV1(
