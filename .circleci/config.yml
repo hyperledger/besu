@@ -243,7 +243,7 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            echo "Prepared arguments for Gradle: $GRADLE_ARGS"
+            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
@@ -364,9 +364,77 @@ workflows:
       - unitTests:
            requires:
             - assemble
+      - testWindows:
+          requires:
+            - assemble
+      - referenceTests:
+          requires:
+            - assemble
+      - integrationTests:
+          requires:
+            - assemble
       - acceptanceTests:
           requires:
             - assemble
+      - buildDocker:
+          requires:
+            - assemble
+      - buildArm64Docker:
+          requires:
+            - assemble
+      - publish:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - assemble
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildDocker
+      - publishDocker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - assemble
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildDocker
+          context:
+            - besu-dockerhub-rw
+      - publishArm64Docker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildArm64Docker
+          context:
+            - besu-dockerhub-rw
+      - manifestDocker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - publishDocker
+            - publishArm64Docker
+          context:
+            - besu-dockerhub-rw
 
   nightly:
     triggers:
