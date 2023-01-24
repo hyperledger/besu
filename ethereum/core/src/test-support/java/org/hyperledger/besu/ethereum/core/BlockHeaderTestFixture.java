@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -50,6 +51,7 @@ public class BlockHeaderTestFixture {
   private long nonce = 0;
   private Optional<Hash> withdrawalsRoot = Optional.empty();
   private BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
+  private Optional<DataGas> excessDataGas = Optional.empty();
 
   public BlockHeader buildHeader() {
     final BlockHeaderBuilder builder = BlockHeaderBuilder.create();
@@ -71,6 +73,7 @@ public class BlockHeaderTestFixture {
     builder.mixHash(mixHash);
     builder.nonce(nonce);
     withdrawalsRoot.ifPresent(builder::withdrawalsRoot);
+    excessDataGas.ifPresent(builder::excessDataGas);
     builder.blockHeaderFunctions(blockHeaderFunctions);
 
     return builder.buildBlockHeader();
@@ -163,6 +166,11 @@ public class BlockHeaderTestFixture {
 
   public BlockHeaderTestFixture withdrawalsRoot(final Hash withdrawalsRoot) {
     this.withdrawalsRoot = Optional.ofNullable(withdrawalsRoot);
+    return this;
+  }
+
+  public BlockHeaderTestFixture excessDataGas(final DataGas excessDataGas) {
+    this.excessDataGas = Optional.ofNullable(excessDataGas);
     return this;
   }
 
