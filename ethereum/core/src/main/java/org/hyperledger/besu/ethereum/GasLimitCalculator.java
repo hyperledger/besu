@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.datatypes.DataGas;
-
 public interface GasLimitCalculator {
 
   long nextGasLimit(long currentGasLimit, long targetGasLimit, long newBlockNumber);
@@ -24,7 +22,7 @@ public interface GasLimitCalculator {
     return (currentGasLimit, targetGasLimit, newBlockNumber) -> currentGasLimit;
   }
 
-  default DataGas nextDataGasLimit() {
-    return DataGas.ZERO;
+  default long currentDataGasLimit() {
+    return 0L;
   }
 }

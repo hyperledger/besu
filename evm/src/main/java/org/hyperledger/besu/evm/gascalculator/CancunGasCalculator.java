@@ -14,17 +14,15 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.datatypes.DataGas;
-
 /** The Cancun gas calculator as defined in EIP-4844 */
 public class CancunGasCalculator extends LondonGasCalculator {
 
-  public static final DataGas CANCUN_DATA_GAS_PER_BLOB = DataGas.of(131072); // 2^17
-  public static final DataGas CANCUN_TARGET_DATA_GAS_PER_BLOCK = DataGas.of(262144); // 2^18
+  public static final long CANCUN_DATA_GAS_PER_BLOB = 131072; // 2^17
+  public static final long CANCUN_TARGET_DATA_GAS_PER_BLOCK = 262144; // 2^18
 
   @Override
-  public DataGas dataGasCost(final int blobCount) {
-    return CANCUN_DATA_GAS_PER_BLOB.multiply(blobCount);
+  public long dataGasCost(final int blobCount) {
+    return CANCUN_DATA_GAS_PER_BLOB * blobCount;
   }
 
   /**
@@ -36,13 +34,13 @@ public class CancunGasCalculator extends LondonGasCalculator {
    * @return the new excess data gas value
    */
   @Override
-  public DataGas computeExcessDataGas(final DataGas parentExcessDataGas, final int newBlobs) {
-    final DataGas consumedDataGas = CANCUN_DATA_GAS_PER_BLOB.multiply(newBlobs);
-    final DataGas currentExcessDataGas = parentExcessDataGas.add(consumedDataGas);
+  public long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
+    final long consumedDataGas = CANCUN_DATA_GAS_PER_BLOB * newBlobs;
+    final long currentExcessDataGas = parentExcessDataGas + consumedDataGas;
 
-    if (currentExcessDataGas.lessThan(CANCUN_TARGET_DATA_GAS_PER_BLOCK)) {
-      return DataGas.ZERO;
+    if (currentExcessDataGas < CANCUN_TARGET_DATA_GAS_PER_BLOCK) {
+      return 0L;
     }
-    return currentExcessDataGas.add(CANCUN_TARGET_DATA_GAS_PER_BLOCK);
+    return currentExcessDataGas - CANCUN_TARGET_DATA_GAS_PER_BLOCK;
   }
 }

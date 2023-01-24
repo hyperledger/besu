@@ -264,8 +264,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .map(tx -> tx.getVersionedHashes().orElseThrow())
               .mapToInt(List::size)
               .sum();
-      return gasCalculator.computeExcessDataGas(
-          parentHeader.getExcessDataGas().orElse(DataGas.ZERO), newBlobsCount);
+      // casting parent excess data gas to long since for the moment it should be well below that
+      // limit
+      return DataGas.of(
+          gasCalculator.computeExcessDataGas(
+              parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L), newBlobsCount));
     }
     return null;
   }

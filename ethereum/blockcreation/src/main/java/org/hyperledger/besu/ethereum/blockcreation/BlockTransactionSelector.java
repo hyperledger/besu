@@ -342,7 +342,7 @@ public class BlockTransactionSelector {
         transaction.isGoQuorumPrivateTransaction(
             transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
-    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount()).toLong();
+    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
     final long gasUsedByTransaction =
         isGoQuorumPrivateTransaction
@@ -375,16 +375,15 @@ public class BlockTransactionSelector {
   }
 
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
-    final var dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
-    if (dataGasUsed.greaterThan(
-        gasLimitCalculator
-            .nextDataGasLimit()
-            .subtract(transactionSelectionResult.getCumulativeDataGasUsed()))) {
+    if (dataGasUsed
+        > gasLimitCalculator.currentDataGasLimit()
+            - transactionSelectionResult.getCumulativeDataGasUsed()) {
       return true;
     }
 
-    return transaction.getGasLimit() + dataGasUsed.toLong()
+    return transaction.getGasLimit() + dataGasUsed
         > processableBlockHeader.getGasLimit() - transactionSelectionResult.getCumulativeGasUsed();
   }
 

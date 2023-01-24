@@ -31,7 +31,6 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -234,7 +233,7 @@ public class MainnetTransactionValidatorTest {
     validator.setTransactionFilter(transactionFilter(false));
 
     Account invalidEOA =
-        when(account(basicTransaction.getUpfrontCost(DataGas.ZERO), basicTransaction.getNonce())
+        when(account(basicTransaction.getUpfrontCost(0L), basicTransaction.getNonce())
                 .getCodeHash())
             .thenReturn(Hash.fromHexStringLenient("0xdeadbeef"))
             .getMock();
@@ -617,7 +616,7 @@ public class MainnetTransactionValidatorTest {
   }
 
   private Account accountWithNonce(final long nonce) {
-    return account(basicTransaction.getUpfrontCost(DataGas.ZERO), nonce);
+    return account(basicTransaction.getUpfrontCost(0L), nonce);
   }
 
   private Account account(final Wei balance, final long nonce) {

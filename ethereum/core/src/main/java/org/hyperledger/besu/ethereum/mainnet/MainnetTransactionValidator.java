@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -193,14 +192,13 @@ public class MainnetTransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final DataGas txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
-      if (txTotalDataGas.greaterThan(gasLimitCalculator.nextDataGasLimit())) {
+      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
             String.format(
-                "total data gas %s exceeds max data gas per block %s",
-                txTotalDataGas.getAsBigInteger(),
-                gasLimitCalculator.nextDataGasLimit().getAsBigInteger()));
+                "total data gas %d exceeds max data gas per block %d",
+                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
       }
     }
 

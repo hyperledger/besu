@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCalculator {
-  public static final DataGas MAX_DATA_GAS_PER_BLOCK = DataGas.of(524288); // 2^19
+  public static final long MAX_DATA_GAS_PER_BLOCK = 524288; // 2^19
 
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket) {
@@ -26,7 +25,7 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   }
 
   @Override
-  public DataGas nextDataGasLimit() {
+  public long currentDataGasLimit() {
     return MAX_DATA_GAS_PER_BLOCK;
   }
 }
