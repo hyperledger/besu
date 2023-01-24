@@ -79,8 +79,10 @@ public class JsonTestParameters<S, T> {
      * @param value the value
      * @param runTest the run test
      */
-    public void add(final String name, final S value, final boolean runTest) {
-      testParameters.add(new Object[] {name, value, runTest && includes(name)});
+    public void add(
+        final String name, final String fullPath, final S value, final boolean runTest) {
+      testParameters.add(
+          new Object[] {name, value, runTest && includes(name) && includes(fullPath)});
     }
 
     private boolean includes(final String name) {
@@ -113,7 +115,7 @@ public class JsonTestParameters<S, T> {
      * @param mappedType the mapped type
      * @param collector the collector
      */
-    void generate(String name, S mappedType, Collector<T> collector);
+    void generate(String name, String fullPath, S mappedType, Collector<T> collector);
   }
 
   private static final ObjectMapper objectMapper =
@@ -152,7 +154,8 @@ public class JsonTestParameters<S, T> {
    */
   public static <T> JsonTestParameters<T, T> create(final Class<T> testCaseSpec) {
     return new JsonTestParameters<>(testCaseSpec, testCaseSpec)
-        .generator((name, testCase, collector) -> collector.add(name, testCase, true));
+        .generator(
+            (name, fullPath, testCase, collector) -> collector.add(name, fullPath, testCase, true));
   }
 
   /**
@@ -223,16 +226,6 @@ public class JsonTestParameters<S, T> {
   /**
    * Generate collection.
    *
-   * @param path the path
-   * @return the collection
-   */
-  public Collection<Object[]> generate(final String path) {
-    return generate(new String[] {path});
-  }
-
-  /**
-   * Generate collection.
-   *
    * @param paths the paths
    * @return the collection
    */
@@ -253,7 +246,7 @@ public class JsonTestParameters<S, T> {
       for (final Map.Entry<String, S> entry : testCase.testCaseSpecs.entrySet()) {
         final String testName = entry.getKey();
         final S mappedType = entry.getValue();
-        generator.generate(testName, mappedType, collector);
+        generator.generate(testName, file.getPath(), mappedType, collector);
       }
     }
     return collector.getParameters();

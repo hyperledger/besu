@@ -56,9 +56,9 @@ public class BlockchainReferenceTestTools {
   private static final JsonTestParameters<?, ?> params =
       JsonTestParameters.create(BlockchainReferenceTestCaseSpec.class)
           .generator(
-              (testName, spec, collector) -> {
+              (testName, fullPath, spec, collector) -> {
                 final String eip = spec.getNetwork();
-                collector.add(testName + "[" + eip + "]", spec, NETWORKS_TO_RUN.contains(eip));
+                collector.add(testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
               });
 
   static {
@@ -85,6 +85,9 @@ public class BlockchainReferenceTestTools {
     // chain head.
     // Perfectly valid test pre-merge.
     params.ignore("UncleFromSideChain_Merge");
+
+    // EIP tests are explicitly meant to be works-in-progress with known failing tests
+    params.ignore("/EIPTests/");
   }
 
   private BlockchainReferenceTestTools() {
