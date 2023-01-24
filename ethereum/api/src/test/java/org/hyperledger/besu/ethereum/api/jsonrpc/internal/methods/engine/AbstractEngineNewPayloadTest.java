@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
@@ -347,7 +348,11 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldRespondWithSyncingDuringBackwardsSync() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .excessDataGas(DataGas.ZERO)
+            .buildHeader();
     when(mergeCoordinator.appendNewPayloadToSync(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -480,22 +485,7 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
-    return new EnginePayloadParameter(
-        header.getHash(),
-        header.getParentHash(),
-        header.getCoinbase(),
-        header.getStateRoot(),
-        new UnsignedLongParameter(header.getNumber()),
-        header.getBaseFee().map(w -> w.toHexString()).orElse("0x0"),
-        new UnsignedLongParameter(header.getGasLimit()),
-        new UnsignedLongParameter(header.getGasUsed()),
-        new UnsignedLongParameter(header.getTimestamp()),
-        header.getExtraData() == null ? null : header.getExtraData().toHexString(),
-        header.getReceiptsRoot(),
-        header.getLogsBloom(),
-        header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
-        txs,
-        null);
+    return mockPayload(header, txs, null);
   }
 
   private EnginePayloadParameter mockPayload(
@@ -517,7 +507,8 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getLogsBloom(),
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
-        withdrawals);
+        withdrawals,
+        header.getExcessDataGas().map(DataGas::toHexString).orElse(null));
   }
 
   @NotNull
