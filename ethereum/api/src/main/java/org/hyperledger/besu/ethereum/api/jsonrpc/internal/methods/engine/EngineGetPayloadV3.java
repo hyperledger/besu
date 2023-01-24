@@ -18,26 +18,16 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-
-import java.util.Optional;
+import org.hyperledger.besu.ethereum.mainnet.DefaultTimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import io.vertx.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
-
-  private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadV3.class);
-  private final Optional<ScheduledProtocolSpec.Hardfork> shanghai;
-  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   public EngineGetPayloadV3(
       final Vertx vertx,
@@ -45,7 +35,7 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
-      final ProtocolSchedule schedule) {
+      final TimestampSchedule schedule) {
     super(
         vertx,
         protocolContext,
@@ -53,8 +43,6 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
         blockResultFactory,
         engineCallListener,
         schedule);
-    this.shanghai = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Shanghai"));
-    this.cancun = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
 
   @Override
@@ -66,37 +54,26 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
   protected JsonRpcResponse createResponse(
       final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts) {
 
-    try {
-      long builtAt = blockWithReceipts.getHeader().getTimestamp();
-
-      if (beforeShanghai(builtAt)) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
-      } else if (duringShanghai(builtAt)) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
-      } else {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
-      }
-
-    } catch (ClassCastException e) {
-      LOG.error("configuration error, can't call V3 endpoint with non-default protocol schedule");
-      return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+    DefaultTimestampSchedule tsched = (DefaultTimestampSchedule) this.schedule.get();
+    long shanghaiTimestamp = tsched.scheduledAt("Shanghai");
+    long cancunTimestamp = tsched.scheduledAt("Cancun");
+    long builtAt = blockWithReceipts.getHeader().getTimestamp();
+    if (builtAt < shanghaiTimestamp) {
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(),
+          blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
+    } else if (builtAt >= shanghaiTimestamp && builtAt < cancunTimestamp) {
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(),
+          blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
+    } else if (builtAt >= cancunTimestamp) {
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(),
+          blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
     }
-  }
 
-  private boolean duringShanghai(final long builtAt) {
-    return (this.shanghai.isPresent() && builtAt >= this.shanghai.get().milestone())
-        && //
-        (this.cancun.isEmpty()
-            || (this.cancun.isPresent() && builtAt < this.cancun.get().milestone()));
-  }
-
-  private boolean beforeShanghai(final long builtAt) {
-    return this.shanghai.isEmpty() || builtAt < this.shanghai.get().milestone();
+    return new JsonRpcSuccessResponse(
+        request.getRequest().getId(),
+        blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
   }
 }
