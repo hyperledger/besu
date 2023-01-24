@@ -70,7 +70,8 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x11);
   /** The constant BLS12_MAP_FP2_TO_G2. */
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x12);
-
+  /** The constant KZG_POINT_EVAL. */
+  public static final Address KZG_POINT_EVAL = Address.precompiled(0x14);
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");
 
@@ -136,10 +137,10 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   }
 
   /**
-   * Parse an hexadecimal string representing an account address.
+   * Parse a hexadecimal string representing an account address.
    *
-   * @param str An hexadecimal string (with or without the leading '0x') representing a valid
-   *     account address.
+   * @param str A hexadecimal string (with or without the leading '0x') representing a valid account
+   *     address.
    * @return The parsed address: {@code null} if the provided string is {@code null}.
    * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid
    *     representation of an address.
@@ -151,9 +152,9 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   }
 
   /**
-   * Parse an hexadecimal string representing an account address.
+   * Parse a hexadecimal string representing an account address.
    *
-   * @param str An hexadecimal string representing a valid account address (strictly 20 bytes).
+   * @param str A hexadecimal string representing a valid account address (strictly 20 bytes).
    * @return The parsed address.
    * @throws IllegalArgumentException if the provided string is {@code null}.
    * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid

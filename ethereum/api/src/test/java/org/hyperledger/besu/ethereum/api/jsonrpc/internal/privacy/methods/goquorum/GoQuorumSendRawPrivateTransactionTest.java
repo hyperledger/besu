@@ -291,7 +291,6 @@ public class GoQuorumSendRawPrivateTransactionTest {
             Optional.empty(),
             Optional.of(BigInteger.valueOf(37)),
             Optional.empty(),
-            Optional.empty(),
             Optional.empty());
     publicTransaction.writeTo(bvrlp);
     return bvrlp.encoded().toHexString();

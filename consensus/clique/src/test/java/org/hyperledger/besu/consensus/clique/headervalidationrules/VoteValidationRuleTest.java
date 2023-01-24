@@ -20,39 +20,33 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@RunWith(Parameterized.class)
 public class VoteValidationRuleTest {
 
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {CliqueBlockInterface.DROP_NONCE, true},
-          {CliqueBlockInterface.ADD_NONCE, true},
-          {0x01L, false},
-          {0xFFFFFFFFFFFFFFFEL, false}
-        });
+  static class CliqueVoteValidationArgumentsProvider implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(CliqueBlockInterface.DROP_NONCE, true),
+          Arguments.of(CliqueBlockInterface.ADD_NONCE, true),
+          Arguments.of(0x01L, false),
+          Arguments.of(0xFFFFFFFFFFFFFFFEL, false));
+    }
   }
 
-  @Parameter public long actualVote;
-
-  @Parameter(1)
-  public boolean expectedResult;
-
-  @Test
-  public void test() {
+  @ParameterizedTest
+  @ArgumentsSource(CliqueVoteValidationArgumentsProvider.class)
+  public void test(final long input, final boolean expectedResult) {
     final VoteValidationRule uut = new VoteValidationRule();
     final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
-    blockBuilder.nonce(actualVote);
+    blockBuilder.nonce(input);
 
     final BlockHeader header = blockBuilder.buildHeader();
 
