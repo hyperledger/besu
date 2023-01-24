@@ -85,7 +85,7 @@ public class BlockReplay {
                   action.performAction(
                       transaction, header, blockchain, mutableWorldState, transactionProcessor));
             } else {
-              final ProtocolSpec spec = protocolSchedule.getByBlockNumber(header.getNumber());
+              final ProtocolSpec spec = protocolSchedule.getByBlockHeader(header);
               transactionProcessor.processTransaction(
                   blockchain,
                   mutableWorldState.updater(),
@@ -107,7 +107,7 @@ public class BlockReplay {
         blockHash,
         transactionHash,
         (transaction, blockHeader, blockchain, worldState, transactionProcessor) -> {
-          final ProtocolSpec spec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+          final ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
           transactionProcessor.processTransaction(
               blockchain,
               worldState.updater(),
@@ -139,21 +139,28 @@ public class BlockReplay {
     if (body == null) {
       return Optional.empty();
     }
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final BlockHeader previous = blockchain.getBlockHeader(header.getParentHash()).orElse(null);
     if (previous == null) {
       return Optional.empty();
     }
-    try (final MutableWorldState mutableWorldState =
+    try (final var worldState =
         worldStateArchive
-            .getMutable(previous.getStateRoot(), previous.getHash(), false)
+            .getMutable(previous.getStateRoot(), previous.getBlockHash(), false)
+            .map(
+                ws -> {
+                  if (!ws.isPersistable()) {
+                    return ws.copy();
+                  }
+                  return ws;
+                })
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
                         "Missing worldstate for stateroot "
                             + previous.getStateRoot().toShortHexString()))) {
-      return action.perform(body, header, blockchain, mutableWorldState, transactionProcessor);
+      return action.perform(body, header, blockchain, worldState, transactionProcessor);
     } catch (Exception ex) {
       return Optional.empty();
     }
@@ -172,7 +179,7 @@ public class BlockReplay {
 
   private Optional<Block> getBadBlock(final Hash blockHash) {
     final ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockNumber(blockchain.getChainHeadHeader().getNumber());
+        protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
     return protocolSpec.getBadBlocksManager().getBadBlock(blockHash);
   }
 

@@ -16,6 +16,13 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 
+/** The interface Evm account. */
 public interface EvmAccount extends Account {
+  /**
+   * Gets mutable account.
+   *
+   * @return the mutable account
+   * @throws ModificationNotAllowedException the modification not allowed exception
+   */
   public MutableAccount getMutable() throws ModificationNotAllowedException;
 }

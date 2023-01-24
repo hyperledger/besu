@@ -24,16 +24,27 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Event multiplexer. */
 public class EventMultiplexer {
 
   private static final Logger LOG = LoggerFactory.getLogger(EventMultiplexer.class);
 
   private final BftEventHandler eventHandler;
 
+  /**
+   * Instantiates a new Event multiplexer.
+   *
+   * @param eventHandler the event handler
+   */
   public EventMultiplexer(final BftEventHandler eventHandler) {
     this.eventHandler = eventHandler;
   }
 
+  /**
+   * Handle bft event.
+   *
+   * @param bftEvent the bft event
+   */
   public void handleBftEvent(final BftEvent bftEvent) {
     try {
       switch (bftEvent.getType()) {

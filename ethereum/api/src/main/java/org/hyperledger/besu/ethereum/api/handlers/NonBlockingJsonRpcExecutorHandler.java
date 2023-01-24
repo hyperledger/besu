@@ -161,17 +161,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
     JsonObject jsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
     lazyTraceLogger(jsonRequest::toString);
 
-    final String methodName = jsonRequest.getString("method");
-
-    if (methodName == null
-        || methodName.startsWith("priv_")
-        || methodName.startsWith("eea_")
-        || methodName.startsWith("clique_")
-        || methodName.startsWith("ibft_")
-        || methodName.startsWith("perm_")
-        || methodName.startsWith("qbft_")) {
-      ctx.next();
-    }
+    //    final String methodName = jsonRequest.getString("method");
 
     vertx
         .eventBus()

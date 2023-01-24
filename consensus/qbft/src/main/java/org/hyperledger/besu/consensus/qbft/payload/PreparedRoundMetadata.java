@@ -22,19 +22,36 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
+/** The Prepared round metadata. */
 public class PreparedRoundMetadata {
   private final Hash preparedBlockHash;
   private final int preparedRound;
 
+  /**
+   * Instantiates a new Prepared round metadata.
+   *
+   * @param preparedBlockHash the prepared block hash
+   * @param preparedRound the prepared round
+   */
   public PreparedRoundMetadata(final Hash preparedBlockHash, final int preparedRound) {
     this.preparedBlockHash = preparedBlockHash;
     this.preparedRound = preparedRound;
   }
 
+  /**
+   * Gets prepared block hash.
+   *
+   * @return the prepared block hash
+   */
   public Hash getPreparedBlockHash() {
     return preparedBlockHash;
   }
 
+  /**
+   * Gets prepared round.
+   *
+   * @return the prepared round
+   */
   public int getPreparedRound() {
     return preparedRound;
   }

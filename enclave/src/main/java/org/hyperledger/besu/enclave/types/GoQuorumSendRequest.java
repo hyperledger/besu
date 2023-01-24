@@ -19,12 +19,20 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The GoQuorum send request. */
 @JsonPropertyOrder({"payload", "from", "to"})
 public class GoQuorumSendRequest {
   private final byte[] payload;
   private final String from;
   private final List<String> to;
 
+  /**
+   * Instantiates a new Go quorum send request.
+   *
+   * @param payload the payload
+   * @param from the from
+   * @param to the to
+   */
   public GoQuorumSendRequest(
       @JsonProperty(value = "payload") final byte[] payload,
       @JsonProperty(value = "from") final String from,
@@ -34,14 +42,29 @@ public class GoQuorumSendRequest {
     this.to = to;
   }
 
+  /**
+   * Get payload byte [ ].
+   *
+   * @return the byte [ ]
+   */
   public byte[] getPayload() {
     return payload;
   }
 
+  /**
+   * Gets from.
+   *
+   * @return the from
+   */
   public String getFrom() {
     return from;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   public List<String> getTo() {
     return to;
   }

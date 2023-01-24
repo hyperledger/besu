@@ -19,31 +19,91 @@ import java.math.BigInteger;
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:
  * https://github.com/ethereum/py_ecc/blob/master/py_ecc/bn128/bn128_field_elements.py
+ *
+ * @param <T> the type parameter
  */
 @SuppressWarnings("rawtypes")
 public interface FieldElement<T extends FieldElement> {
 
+  /** The constant FIELD_MODULUS. */
   BigInteger FIELD_MODULUS =
       new BigInteger(
           "21888242871839275222246405745257275088696311157297823662689037894645226208583");
 
+  /**
+   * Is valid boolean.
+   *
+   * @return the boolean
+   */
   boolean isValid();
 
+  /**
+   * Is zero boolean.
+   *
+   * @return the boolean
+   */
   boolean isZero();
 
+  /**
+   * Add t.
+   *
+   * @param other the other
+   * @return the t
+   */
   T add(T other);
 
+  /**
+   * Subtract t.
+   *
+   * @param other the other
+   * @return the t
+   */
   T subtract(T other);
 
+  /**
+   * Multiply t.
+   *
+   * @param val the val
+   * @return the t
+   */
   T multiply(int val);
 
+  /**
+   * Multiply t.
+   *
+   * @param other the other
+   * @return the t
+   */
   T multiply(T other);
 
+  /**
+   * Negate t.
+   *
+   * @return the t
+   */
   T negate();
 
+  /**
+   * Divide t.
+   *
+   * @param other the other
+   * @return the t
+   */
   T divide(T other);
 
+  /**
+   * Power t.
+   *
+   * @param n the n
+   * @return the t
+   */
   T power(int n);
 
+  /**
+   * Power t.
+   *
+   * @param n the n
+   * @return the t
+   */
   T power(BigInteger n);
 }

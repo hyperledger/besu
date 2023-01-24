@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -28,13 +28,13 @@ class WithdrawalEncoderTest {
   public static final String WITHDRAWAL_ZERO_CASE =
       "0xd8808094000000000000000000000000000000000000000080";
   public static final String WITHDRAWAL_MAX_VALUE =
-      "0xf84888ffffffffffffffff88ffffffffffffffff94ffffffffffffffffffffffffffffffffffffffffa0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+      "0xf088ffffffffffffffff88ffffffffffffffff94ffffffffffffffffffffffffffffffffffffffff88ffffffffffffffff";
   public static final Address MAX_ADDRESS =
       Address.fromHexString(Bytes.repeat((byte) 0xff, 20).toHexString());
 
   @Test
   void shouldEncodeWithdrawalForZeroCase() {
-    final Withdrawal withdrawal = new Withdrawal(UInt64.ZERO, UInt64.ZERO, Address.ZERO, Wei.ZERO);
+    final Withdrawal withdrawal = new Withdrawal(UInt64.ZERO, UInt64.ZERO, Address.ZERO, GWei.ZERO);
     final Bytes bytes = WithdrawalEncoder.encodeOpaqueBytes(withdrawal);
     assertThat(bytes.toHexString()).isEqualTo(WITHDRAWAL_ZERO_CASE);
   }
@@ -42,8 +42,21 @@ class WithdrawalEncoderTest {
   @Test
   void shouldEncodeWithdrawalForMaxValues() {
     final Withdrawal withdrawal =
-        new Withdrawal(UInt64.MAX_VALUE, UInt64.MAX_VALUE, MAX_ADDRESS, Wei.MAX_WEI);
+        new Withdrawal(UInt64.MAX_VALUE, UInt64.MAX_VALUE, MAX_ADDRESS, GWei.MAX_GWEI);
     final Bytes bytes = WithdrawalEncoder.encodeOpaqueBytes(withdrawal);
     assertThat(bytes.toHexString()).isEqualTo(WITHDRAWAL_MAX_VALUE);
+  }
+
+  @Test
+  void shouldEncode() {
+    final UInt64 index = UInt64.valueOf(3);
+    final UInt64 validatorIndex = UInt64.valueOf(1);
+    final Address address = Address.fromHexString("0xdeadbeef");
+    final GWei amount = GWei.of(5);
+    final Withdrawal withdrawal = new Withdrawal(index, validatorIndex, address, amount);
+    final Bytes encoded = WithdrawalEncoder.encodeOpaqueBytes(withdrawal);
+
+    assertThat(encoded)
+        .isEqualTo(Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05"));
   }
 }

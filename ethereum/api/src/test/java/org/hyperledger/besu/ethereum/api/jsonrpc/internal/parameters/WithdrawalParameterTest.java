@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import org.apache.tuweni.units.bigints.UInt64;
@@ -32,9 +32,20 @@ public class WithdrawalParameterTest {
     Withdrawal expected =
         new Withdrawal(
             UInt64.fromHexString("0x0"),
-            UInt64.fromHexString("0xFFFF"),
+            UInt64.fromHexString("0xffff"),
             Address.fromHexString("0x0000000000000000000000000000000000000000"),
-            Wei.of(0L));
+            GWei.of(0L));
     assertThat(WITHDRAWAL_PARAM_1.toWithdrawal()).isEqualTo(expected);
+  }
+
+  @Test
+  public void fromWithdrawal() {
+    Withdrawal withdrawal =
+        new Withdrawal(
+            UInt64.fromHexString("0x0"),
+            UInt64.fromHexString("0xffff"),
+            Address.fromHexString("0x0000000000000000000000000000000000000000"),
+            GWei.of(0L));
+    assertThat(WithdrawalParameter.fromWithdrawal(withdrawal)).isEqualTo(WITHDRAWAL_PARAM_1);
   }
 }

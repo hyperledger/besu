@@ -47,6 +47,16 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
   private final List<ContractValidationRule> contractValidationRules;
 
+  /**
+   * Instantiates a new Contract creation processor.
+   *
+   * @param gasCalculator the gas calculator
+   * @param evm the evm
+   * @param requireCodeDepositToSucceed the require code deposit to succeed
+   * @param contractValidationRules the contract validation rules
+   * @param initialContractNonce the initial contract nonce
+   * @param forceCommitAddresses the force commit addresses
+   */
   public ContractCreationProcessor(
       final GasCalculator gasCalculator,
       final EVM evm,
@@ -61,6 +71,15 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     this.initialContractNonce = initialContractNonce;
   }
 
+  /**
+   * Instantiates a new Contract creation processor.
+   *
+   * @param gasCalculator the gas calculator
+   * @param evm the evm
+   * @param requireCodeDepositToSucceed the require code deposit to succeed
+   * @param contractValidationRules the contract validation rules
+   * @param initialContractNonce the initial contract nonce
+   */
   public ContractCreationProcessor(
       final GasCalculator gasCalculator,
       final EVM evm,
@@ -140,7 +159,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     } else {
       final var invalidReason =
           contractValidationRules.stream()
-              .map(rule -> rule.validate(contractCode))
+              .map(rule -> rule.validate(contractCode, frame))
               .filter(Optional::isPresent)
               .findFirst();
       if (invalidReason.isEmpty()) {

@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -38,9 +38,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 @SuppressWarnings("unused") // reflected by GraphQL
 public class PendingStateAdapter extends AdapterBase {
 
-  private final AbstractPendingTransactionsSorter pendingTransactions;
+  private final PendingTransactions pendingTransactions;
 
-  public PendingStateAdapter(final AbstractPendingTransactionsSorter pendingTransactions) {
+  public PendingStateAdapter(final PendingTransactions pendingTransactions) {
     this.pendingTransactions = pendingTransactions;
   }
 

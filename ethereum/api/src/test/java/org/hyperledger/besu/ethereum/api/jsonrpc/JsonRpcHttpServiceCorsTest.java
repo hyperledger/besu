@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -28,26 +29,25 @@ import io.vertx.core.Vertx;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceCorsTest {
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private final Vertx vertx = Vertx.vertx();
   private final OkHttpClient client = new OkHttpClient();
   private JsonRpcHttpService jsonRpcHttpService;
 
-  @Before
+  @BeforeEach
   public void before() {
     final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
     configuration.setPort(0);
   }
 
-  @After
+  @AfterEach
   public void after() {
     jsonRpcHttpService.stop().join();
   }
@@ -210,7 +210,7 @@ public class JsonRpcHttpServiceCorsTest {
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
-            folder.newFolder().toPath(),
+            folder,
             config,
             new NoOpMetricsSystem(),
             natService,

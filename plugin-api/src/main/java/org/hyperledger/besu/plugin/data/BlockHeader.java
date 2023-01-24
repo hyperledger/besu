@@ -62,10 +62,10 @@ public interface BlockHeader {
   Hash getStateRoot();
 
   /**
-   * The Keccak 256-bit hash of theroot node of the trie structure populated with each transaction
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each transaction
    * in the transactions list portion of the block.
    *
-   * @return The Keccak 256-bit hash of theroot node of the trie structure populated with each
+   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
    *     transaction in the transactions list portion of the block.
    */
   Hash getTransactionsRoot();
@@ -178,4 +178,21 @@ public interface BlockHeader {
   default Optional<Bytes32> getPrevRandao() {
     return Optional.empty();
   }
+
+  /**
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each withdrawal
+   * in the withdrawals list portion of the block.
+   *
+   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
+   *     withdrawal in the withdrawal list portion of the block.
+   */
+  Optional<? extends Hash> getWithdrawalsRoot();
+
+  /**
+   * The excess_data_gas of this header.
+   *
+   * @return The excess_data_gas of this header.
+   */
+  @Unstable
+  Optional<? extends Quantity> getExcessDataGas();
 }

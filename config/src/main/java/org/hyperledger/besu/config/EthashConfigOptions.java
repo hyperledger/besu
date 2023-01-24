@@ -20,21 +20,38 @@ import java.util.OptionalLong;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
+/** The Ethash config options. */
 public class EthashConfigOptions {
 
+  /** The constant DEFAULT. */
   public static final EthashConfigOptions DEFAULT =
       new EthashConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private final ObjectNode ethashConfigRoot;
 
+  /**
+   * Instantiates a new Ethash config options.
+   *
+   * @param ethashConfigRoot the ethash config root
+   */
   EthashConfigOptions(final ObjectNode ethashConfigRoot) {
     this.ethashConfigRoot = ethashConfigRoot;
   }
 
+  /**
+   * Gets fixed difficulty.
+   *
+   * @return the fixed difficulty
+   */
   public OptionalLong getFixedDifficulty() {
     return JsonUtil.getLong(ethashConfigRoot, "fixeddifficulty");
   }
 
+  /**
+   * As map.
+   *
+   * @return the map
+   */
   Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getFixedDifficulty().ifPresent(l -> builder.put("fixeddifficulty", l));

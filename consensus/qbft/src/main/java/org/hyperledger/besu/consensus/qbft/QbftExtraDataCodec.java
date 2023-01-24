@@ -48,6 +48,12 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
           VoteType.ADD, ADD_BYTE_VALUE,
           VoteType.DROP, DROP_BYTE_VALUE);
 
+  /**
+   * Encode from addresses.
+   *
+   * @param addresses the addresses
+   * @return the bytes
+   */
   public static Bytes encodeFromAddresses(final Collection<Address> addresses) {
     return new QbftExtraDataCodec()
         .encode(
@@ -59,6 +65,12 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
                 addresses));
   }
 
+  /**
+   * Create genesis extra data string.
+   *
+   * @param validators the validators
+   * @return the string
+   */
   public static String createGenesisExtraDataString(final List<Address> validators) {
     return encodeFromAddresses(validators).toString();
   }
@@ -122,6 +134,12 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     return encoder.encoded();
   }
 
+  /**
+   * Encode vote.
+   *
+   * @param rlpOutput the rlp output
+   * @param vote the vote
+   */
   protected void encodeVote(final RLPOutput rlpOutput, final Vote vote) {
     final VoteType voteType = vote.isAuth() ? VoteType.ADD : VoteType.DROP;
     rlpOutput.startList();
@@ -134,6 +152,12 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     rlpOutput.endList();
   }
 
+  /**
+   * Decode vote.
+   *
+   * @param rlpInput the rlp input
+   * @return the vote
+   */
   protected Vote decodeVote(final RLPInput rlpInput) {
     rlpInput.enterList();
     final Address recipient = Address.readFrom(rlpInput);

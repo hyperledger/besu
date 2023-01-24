@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -25,23 +26,37 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import java.util.List;
 import java.util.Optional;
 
+/** The Merge block processor. */
 public class MergeBlockProcessor extends MainnetBlockProcessor {
   private final MergeContext mergeContext;
 
+  /**
+   * Instantiates a new Merge block processor.
+   *
+   * @param transactionProcessor the transaction processor
+   * @param transactionReceiptFactory the transaction receipt factory
+   * @param blockReward the block reward
+   * @param miningBeneficiaryCalculator the mining beneficiary calculator
+   * @param skipZeroBlockRewards the skip zero block rewards
+   * @param goQuorumPrivacyParameters the go quorum privacy parameters
+   * @param protocolSchedule the header based protocol scheduler
+   */
   public MergeBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        goQuorumPrivacyParameters);
+        goQuorumPrivacyParameters,
+        protocolSchedule);
     this.mergeContext = PostMergeContext.get();
   }
 

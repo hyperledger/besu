@@ -343,6 +343,7 @@ public class GraphQLDataFetchers {
                 transaction.getGasPrice(),
                 transaction.getMaxPriorityFeePerGas(),
                 transaction.getMaxFeePerGas(),
+                transaction.getMaxFeePerDataGas(),
                 transaction.getGasLimit(),
                 transaction.getTo(),
                 transaction.getValue(),
@@ -350,6 +351,7 @@ public class GraphQLDataFetchers {
                 enclavePayload,
                 transaction.getSender(),
                 transaction.getChainId(),
-                Optional.ofNullable(transaction.getV()))));
+                Optional.ofNullable(transaction.getV()),
+                transaction.getVersionedHashes())));
   }
 }

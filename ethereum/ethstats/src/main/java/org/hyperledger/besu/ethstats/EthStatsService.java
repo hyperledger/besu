@@ -111,6 +111,20 @@ public class EthStatsService {
   private EnodeURL enodeURL;
   private long pingTimestamp;
 
+  /**
+   * Instantiates a new EthStats service.
+   *
+   * @param netstatsUrl the netstats url
+   * @param blockchainQueries the blockchain queries
+   * @param protocolManager the protocol manager
+   * @param transactionPool the transaction pool
+   * @param miningCoordinator the mining coordinator
+   * @param syncState the sync state
+   * @param vertx the vertx
+   * @param clientVersion the client version
+   * @param genesisConfigOptions the genesis config options
+   * @param p2PNetwork the p 2 p network
+   */
   public EthStatsService(
       final NetstatsUrl netstatsUrl,
       final BlockchainQueries blockchainQueries,
@@ -142,6 +156,7 @@ public class EthStatsService {
             .setSsl(true);
   }
 
+  /** Start. */
   public void start() {
 
     try {

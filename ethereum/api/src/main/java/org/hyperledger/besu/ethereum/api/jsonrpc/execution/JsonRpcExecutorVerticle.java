@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXEC
 import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_OBJECT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -35,10 +36,15 @@ public class JsonRpcExecutorVerticle extends AbstractVerticle {
 
   private final JsonRpcExecutor jsonRpcExecutor;
   private final Tracer tracer;
+  final JsonRpcConfiguration jsonRpcConfiguration;
 
-  public JsonRpcExecutorVerticle(final JsonRpcExecutor jsonRpcExecutor, final Tracer tracer) {
+  public JsonRpcExecutorVerticle(
+      final JsonRpcExecutor jsonRpcExecutor,
+      final Tracer tracer,
+      final JsonRpcConfiguration jsonRpcConfiguration) {
     this.jsonRpcExecutor = jsonRpcExecutor;
     this.tracer = tracer;
+    this.jsonRpcConfiguration = jsonRpcConfiguration;
   }
 
   @Override
@@ -72,6 +78,11 @@ public class JsonRpcExecutorVerticle extends AbstractVerticle {
       final Message<JsonRpcExecutorArrayRequest> requestMessage) {
     final JsonRpcExecutorArrayRequest request = requestMessage.body();
     final JsonArray jsonArray = request.getJsonArray();
+
+    if (jsonRpcConfiguration.getMaxBatchSize() > 0
+        && jsonArray.size() > jsonRpcConfiguration.getMaxBatchSize()) {
+      requestMessage.fail(-1, "Number of request too big");
+    }
 
     JsonRpcResponse[] jsonRpcBatchResponses = new JsonRpcResponse[jsonArray.size()];
     try {

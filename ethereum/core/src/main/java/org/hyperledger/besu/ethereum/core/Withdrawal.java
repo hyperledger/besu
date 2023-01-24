@@ -15,39 +15,61 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class Withdrawal {
+public class Withdrawal implements org.hyperledger.besu.plugin.data.Withdrawal {
   private final UInt64 index;
   private final UInt64 validatorIndex;
   private final Address address;
-  private final Wei amount;
+  private final GWei amount;
 
   public Withdrawal(
-      final UInt64 index, final UInt64 validatorIndex, final Address address, final Wei amount) {
+      final UInt64 index, final UInt64 validatorIndex, final Address address, final GWei amount) {
     this.index = index;
     this.validatorIndex = validatorIndex;
     this.address = address;
     this.amount = amount;
   }
 
+  public static Withdrawal readFrom(final Bytes rlpBytes) {
+    return readFrom(RLP.input(rlpBytes));
+  }
+
+  public static Withdrawal readFrom(final RLPInput rlpInput) {
+    return WithdrawalDecoder.decode(rlpInput);
+  }
+
+  public void writeTo(final RLPOutput out) {
+    WithdrawalEncoder.encode(this, out);
+  }
+
+  @Override
   public UInt64 getIndex() {
     return index;
   }
 
+  @Override
   public UInt64 getValidatorIndex() {
     return validatorIndex;
   }
 
+  @Override
   public Address getAddress() {
     return address;
   }
 
-  public Wei getAmount() {
+  @Override
+  public GWei getAmount() {
     return amount;
   }
 

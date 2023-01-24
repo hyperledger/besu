@@ -21,8 +21,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Exp operation. */
 public class ExpOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Exp operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public ExpOperation(final GasCalculator gasCalculator) {
     super(0x0A, "EXP", 2, 1, gasCalculator);
   }

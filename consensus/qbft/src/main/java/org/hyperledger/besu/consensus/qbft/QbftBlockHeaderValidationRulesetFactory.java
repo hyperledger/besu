@@ -35,6 +35,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Qbft block header validation ruleset factory. */
 public class QbftBlockHeaderValidationRulesetFactory {
 
   /**

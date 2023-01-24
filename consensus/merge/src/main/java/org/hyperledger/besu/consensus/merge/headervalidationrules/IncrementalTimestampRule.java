@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Incremental timestamp rule. */
 public class IncrementalTimestampRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(IncrementalTimestampRule.class);

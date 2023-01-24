@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -56,7 +57,8 @@ public class BlockResultFactory {
         ommers,
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
-        includeCoinbase);
+        includeCoinbase,
+        blockWithMetadata.getWithdrawals());
   }
 
   public BlockResult transactionComplete(final Block block) {
@@ -105,9 +107,12 @@ public class BlockResultFactory {
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    final long blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
+    final Wei blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
     return new EngineGetPayloadResultV2(
-        blockWithReceipts.getHeader(), txs, Quantity.create(blockValue));
+        blockWithReceipts.getHeader(),
+        txs,
+        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        Quantity.create(blockValue));
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
@@ -132,6 +137,7 @@ public class BlockResultFactory {
         ommers,
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
-        includeCoinbase);
+        includeCoinbase,
+        blockWithMetadata.getWithdrawals());
   }
 }

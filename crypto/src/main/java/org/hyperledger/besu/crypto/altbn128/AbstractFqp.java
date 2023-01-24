@@ -23,15 +23,27 @@ import com.google.common.base.MoreObjects;
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:
  * https://github.com/ethereum/py_ecc/blob/master/py_ecc/bn128/bn128_field_elements.py
+ *
+ * @param <T> the type parameter
  */
 @SuppressWarnings("rawtypes")
 public abstract class AbstractFqp<T extends AbstractFqp> implements FieldElement<T> {
   private static final BigInteger BIGINT_2 = BigInteger.valueOf(2);
 
+  /** The Degree. */
   protected final int degree;
+  /** The Modulus coefficients. */
   protected final Fq[] modulusCoefficients;
+  /** The Coefficients. */
   protected final Fq[] coefficients;
 
+  /**
+   * Instantiates a new Abstract fqp.
+   *
+   * @param degree the degree
+   * @param modulusCoefficients the modulus coefficients
+   * @param coefficients the coefficients
+   */
   protected AbstractFqp(final int degree, final Fq[] modulusCoefficients, final Fq[] coefficients) {
     if (degree != coefficients.length) {
       throw new IllegalArgumentException(
@@ -47,8 +59,19 @@ public abstract class AbstractFqp<T extends AbstractFqp> implements FieldElement
     this.coefficients = coefficients;
   }
 
+  /**
+   * New instance t.
+   *
+   * @param coefficients the coefficients
+   * @return the t
+   */
   protected abstract T newInstance(final Fq[] coefficients);
 
+  /**
+   * Get coefficients fq [ ].
+   *
+   * @return the fq [ ]
+   */
   public Fq[] getCoefficients() {
     return coefficients;
   }
@@ -173,6 +196,11 @@ public abstract class AbstractFqp<T extends AbstractFqp> implements FieldElement
     }
   }
 
+  /**
+   * Inverse fq [ ].
+   *
+   * @return the fq [ ]
+   */
   protected Fq[] inverse() {
     Fq[] lm = lm();
     Fq[] hm = hm();

@@ -27,6 +27,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 abstract class AbstractRLPInput implements RLPInput {
 
@@ -322,6 +323,19 @@ abstract class AbstractRLPInput implements RLPInput {
     final BigInteger res = getUnsignedBigInteger(currentPayloadOffset, currentPayloadSize);
     setTo(nextItem());
     return res;
+  }
+
+  private Bytes readBytes8Scalar() {
+    checkScalar("8-bytes scalar", 8);
+    final MutableBytes res = MutableBytes.create(8);
+    payloadSlice().copyTo(res, res.size() - currentPayloadSize);
+    setTo(nextItem());
+    return res;
+  }
+
+  @Override
+  public UInt64 readUInt64Scalar() {
+    return UInt64.fromBytes(readBytes8Scalar());
   }
 
   private Bytes32 readBytes32Scalar() {

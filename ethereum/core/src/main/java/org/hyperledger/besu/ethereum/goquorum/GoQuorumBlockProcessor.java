@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -66,14 +67,16 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        Optional.empty());
+        Optional.empty(),
+        protocolSchedule);
 
     this.goQuorumEnclave = goQuorumPrivacyParameters.orElseThrow().enclave();
     this.goQuorumPrivateStorage = goQuorumPrivacyParameters.orElseThrow().privateStorage();
@@ -289,6 +292,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         // signature of the private transaction will not (and should not) be
         // checked again.
         transaction.getChainId(),
-        Optional.of(transaction.getV()));
+        Optional.of(transaction.getV()),
+        Optional.empty());
   }
 }

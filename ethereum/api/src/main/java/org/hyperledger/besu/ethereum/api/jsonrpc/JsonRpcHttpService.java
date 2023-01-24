@@ -348,14 +348,26 @@ public class JsonRpcHttpService {
         .handler(
             HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods));
 
-    nonBlockingJsonRpcExecutorHandler =
-        (NonBlockingJsonRpcExecutorHandler)
-            HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(4));
+    //    if (methodName == null
+    //        || methodName.startsWith("priv_")
+    //        || methodName.startsWith("eea_")
+    //        || methodName.startsWith("clique_")
+    //        || methodName.startsWith("ibft_")
+    //        || methodName.startsWith("perm_")
+    //        || methodName.startsWith("qbft_")) {
+    //      ctx.next();
+    //    }
+    if (rpcMethods.keySet().stream()
+        .anyMatch(rpcMethod -> rpcMethod.startsWith("priv_") || rpcMethod.startsWith("eea_"))) {
+      mainRoute.blockingHandler(
+          HandlerFactory.jsonRpcExecutor(createJsonRpcExecutor(), tracer, config), false);
+    } else {
+      nonBlockingJsonRpcExecutorHandler =
+          (NonBlockingJsonRpcExecutorHandler)
+              HandlerFactory.jsonRpcExecutor(vertx, createJsonRpcExecutorVerticle(4));
 
-    mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
-
-    mainRoute.blockingHandler(
-        HandlerFactory.jsonRpcExecutor(createJsonRpcExecutor(), tracer), false);
+      mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
+    }
 
     if (maybeAuthenticationService.isPresent()) {
       router
@@ -377,7 +389,8 @@ public class JsonRpcHttpService {
     final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles = new ArrayList<>(noOfInstances);
 
     for (int i = 0; i < noOfInstances; i++) {
-      jsonRpcExecutorVerticles.add(new JsonRpcExecutorVerticle(createJsonRpcExecutor(), tracer));
+      jsonRpcExecutorVerticles.add(
+          new JsonRpcExecutorVerticle(createJsonRpcExecutor(), tracer, config));
     }
     return jsonRpcExecutorVerticles;
   }
