@@ -226,7 +226,6 @@ public class Transaction
     this.chainId = chainId;
     this.v = v;
     this.versionedHashes = versionedHashes;
-    this.blobsWithCommitments = blobsWithCommitments;
 
     if (isUpfrontGasCostTooHigh()) {
       throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
@@ -329,7 +328,6 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<List<Hash>> versionedHashes) {
-
     this(
         nonce,
         Optional.of(gasPrice),
@@ -344,8 +342,7 @@ public class Transaction
         sender,
         chainId,
         Optional.empty(),
-        versionedHashes,
-        Optional.empty());
+        versionedHashes);
   }
 
   /**
@@ -1326,21 +1323,6 @@ public class Transaction
         final TransactionNetworkPayload.KZGProof kzgProof) {
       this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProof);
       return this;
-    }
-  }
-
-  public static class BlobsWithCommitments {
-    public final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments;
-    public final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs;
-    public final TransactionNetworkPayload.KZGProof kzgProof;
-
-    public BlobsWithCommitments(
-        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
-        final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
-        final TransactionNetworkPayload.KZGProof kzgProof) {
-      this.kzgCommitments = kzgCommitments;
-      this.blobs = blobs;
-      this.kzgProof = kzgProof;
     }
   }
 }
