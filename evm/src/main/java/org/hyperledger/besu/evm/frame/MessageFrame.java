@@ -1349,6 +1349,7 @@ public class MessageFrame {
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     private Optional<List<Hash>> versionedHashes;
+
     /**
      * Sets Type.
      *

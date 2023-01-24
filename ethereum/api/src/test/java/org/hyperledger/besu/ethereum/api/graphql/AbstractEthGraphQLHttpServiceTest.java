@@ -151,6 +151,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                         .type(TransactionType.FRONTIER)
                         .nonce(42)
                         .gasLimit(654321)
+                        .gasPrice(Wei.ONE)
                         .build(),
                     true,
                     Instant.ofEpochSecond(Integer.MAX_VALUE))));

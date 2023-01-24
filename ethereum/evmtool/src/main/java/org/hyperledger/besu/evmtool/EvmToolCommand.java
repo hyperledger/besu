@@ -236,6 +236,7 @@ public class EvmToolCommand implements Runnable {
               null,
               callData,
               sender,
+              Optional.empty(),
               Optional.empty());
 
       final long intrinsicGasCost =
