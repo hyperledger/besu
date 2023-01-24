@@ -123,7 +123,7 @@ public class BlockResultFactory {
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    final long blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
+    final Wei blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
     return new EngineGetPayloadResultV3(
         blockWithReceipts.getHeader(),
         txs,
