@@ -163,7 +163,13 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
 
     final String methodName = jsonRequest.getString("method");
 
-    if (methodName.startsWith("priv_") || methodName.startsWith("eea_")) {
+    if (methodName == null
+        || methodName.startsWith("priv_")
+        || methodName.startsWith("eea_")
+        || methodName.startsWith("clique_")
+        || methodName.startsWith("ibft_")
+        || methodName.startsWith("perm_")
+        || methodName.startsWith("qbft_")) {
       ctx.next();
     }
 
