@@ -43,7 +43,10 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
     final Bytes code = frame.getCode().getBytes();
     int offsetCase;
     try {
-      offsetCase = frame.popStackItem().toInt() & 0xff;
+      offsetCase = frame.popStackItem().toInt();
+      if (offsetCase < 0) {
+        offsetCase = Integer.MAX_VALUE;
+      }
     } catch (ArithmeticException | IllegalArgumentException ae) {
       offsetCase = Integer.MAX_VALUE;
     }
