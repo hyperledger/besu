@@ -59,7 +59,8 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
 
     traceLambda(
         LOG,
-        "EngineGetPayloadBodiesByRangeV1 parameters: start block number {} count {}",
+        "{} parameters: start block number {} count {}",
+        () -> getName(),
         () -> startBlockNumber,
         () -> count);
 
