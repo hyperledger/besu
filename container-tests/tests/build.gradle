@@ -29,7 +29,7 @@ dependencies {
 }
 
 test.enabled = false
-
+// TODO make this run only on nightly
 task containerTests(type: Test) {
   description = 'Runs GoQuorum <> Besu container tests.'
   dependsOn(rootProject.distDocker)
