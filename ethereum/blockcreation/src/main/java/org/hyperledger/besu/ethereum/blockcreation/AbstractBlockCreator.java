@@ -256,7 +256,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       BlockTransactionSelector.TransactionSelectionResults transactionResults,
       ProtocolSpec newProtocolSpec) {
 
-    if (newProtocolSpec.getFeeMarket().implementsBaseFee()) {
+    if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
       final var gasCalculator = newProtocolSpec.getGasCalculator();
       final int newBlobsCount =
           transactionResults.getTransactionsByType(TransactionType.BLOB).stream()

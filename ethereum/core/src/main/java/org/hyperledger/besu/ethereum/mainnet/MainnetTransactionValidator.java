@@ -141,17 +141,6 @@ public class MainnetTransactionValidator {
               transaction.getPayload().size(), maxInitcodeSize));
     }
 
-    if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
-      if (txTotalDataGas > gasCalculator.getDataGasLimit()) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
-            String.format(
-                "total data gas %d exceeds max data gas per block %d",
-                txTotalDataGas, gasCalculator.getDataGasLimit()));
-      }
-    }
-
     return validateCostAndFee(transaction, baseFee, transactionValidationParams);
   }
 
@@ -192,6 +181,17 @@ public class MainnetTransactionValidator {
     if (transaction.getNonce() == MAX_NONCE) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
+    }
+
+    if (transaction.getType().supportsBlob()) {
+      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      if (txTotalDataGas > gasCalculator.getDataGasLimit()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
+            String.format(
+                "total data gas %d exceeds max data gas per block %d",
+                txTotalDataGas, gasCalculator.getDataGasLimit()));
+      }
     }
 
     final long intrinsicGasCost =
