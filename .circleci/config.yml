@@ -225,7 +225,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests (High Priority)
+          name: AcceptanceTests (Mainnet)
           no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
@@ -241,13 +241,13 @@ jobs:
 
   acceptanceTestsNonMainnet:
     parallelism: 6
-    executor: xl_machine_executor # TODO maybe can reduce this since only running a subset of ATs
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests (Low Priority)
+          name: AcceptanceTests (Non-Mainnet)
           no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
@@ -388,6 +388,9 @@ workflows:
           requires:
             - assemble
       - acceptanceTests:
+          requires:
+            - assemble
+      - acceptanceTestsNonMainnet:
           requires:
             - assemble
       - buildDocker:
