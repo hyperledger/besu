@@ -100,6 +100,29 @@ processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
 
 task acceptanceTest(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+
+  dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
+  systemProperty 'acctests.runBesuAsProcess', 'true'
+  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  mustRunAfter rootProject.subprojects*.test
+  description = 'Runs ALL Besu acceptance tests (mainnet and non-mainnet).'
+  group = 'verification'
+
+  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showExceptions = true
+    showCauses = true
+  }
+
+  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+}
+task acceptanceTestMainnet(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   exclude '**/bft/**'
   exclude '**/clique/**'
   exclude '**/permissioning/**'
@@ -110,7 +133,7 @@ task acceptanceTest(type: Test) {
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
   mustRunAfter rootProject.subprojects*.test
-  description = 'Runs Besu acceptance tests (excluding permissioning, privacy and some other stable features).'
+  description = 'Runs MAINNET Besu acceptance tests (excluding permissioning, privacy and some other stable features).'
   group = 'verification'
 
   jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
@@ -126,7 +149,7 @@ task acceptanceTest(type: Test) {
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
 
-task acceptanceTestLowPriority(type: Test) {
+task acceptanceTestNonMainnet(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/bft/**'
   include '**/clique/**'
@@ -138,7 +161,7 @@ task acceptanceTestLowPriority(type: Test) {
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
   mustRunAfter rootProject.subprojects*.test
-  description = 'Runs Besu acceptance tests for permissioning and privacy (excluding mainnet features).'
+  description = 'Runs NON-MAINNET Besu acceptance tests for permissioning and privacy (excluding mainnet features).'
   group = 'verification'
 
   jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
