@@ -61,7 +61,7 @@ public class EngineGetBlobsBundleV1 extends AbstractEngineGetPayload {
         request.getRequest().getId(), createResponse(blockWithReceipts.getBlock()));
   }
 
-  private BlobsBundleV1 createResponse(Block block) {
+  private BlobsBundleV1 createResponse(final Block block) {
 
     List<Bytes> kzgs =
         block.getBody().getTransactions().stream()
