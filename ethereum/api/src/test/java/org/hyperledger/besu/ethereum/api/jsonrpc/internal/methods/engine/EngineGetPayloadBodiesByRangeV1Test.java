@@ -177,7 +177,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
         new BlockBody(
             List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-                Optional.empty());
+            Optional.empty());
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(130));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(preShanghaiBlockBody));
     when(blockchain.getBlockBody(blockHash2)).thenReturn(Optional.of(preShanghaiBlockBody2));
@@ -190,7 +190,8 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     assertThat(result.getPayloadBodies().get(0).getTransactions().size()).isEqualTo(3);
     assertThat(result.getPayloadBodies().get(0).getWithdrawals()).isNull();
     assertThat(result.getPayloadBodies().get(1).getTransactions().size()).isEqualTo(1);
-    assertThat(result.getPayloadBodies().get(1).getWithdrawals()).isNull();;
+    assertThat(result.getPayloadBodies().get(1).getWithdrawals()).isNull();
+    ;
   }
 
   @Test
@@ -199,24 +200,24 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     final Hash blockHash1 = Hash.wrap(Bytes32.random());
     final Hash blockHash2 = Hash.wrap(Bytes32.random());
     final Withdrawal withdrawal =
-            new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
     final Withdrawal withdrawal2 =
-            new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x2"), GWei.ONE);
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x2"), GWei.ONE);
 
     final BlockBody shanghaiBlockBody =
-            new BlockBody(
-                    List.of(
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
-                    Collections.emptyList(),
-                    Optional.of(List.of(withdrawal)));
+        new BlockBody(
+            List.of(
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
+            Collections.emptyList(),
+            Optional.of(List.of(withdrawal)));
 
     final BlockBody shanghaiBlockBody2 =
-            new BlockBody(
-                    List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
-                    Collections.emptyList(),
-                    Optional.of(List.of(withdrawal2)));
+        new BlockBody(
+            List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
+            Collections.emptyList(),
+            Optional.of(List.of(withdrawal2)));
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(130));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(shanghaiBlockBody));
     when(blockchain.getBlockBody(blockHash2)).thenReturn(Optional.of(shanghaiBlockBody2));
@@ -233,20 +234,20 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   }
 
   @Test
-  public void shouldNotContainTrailingNullForBlocksPastTheCurrentHead(){
+  public void shouldNotContainTrailingNullForBlocksPastTheCurrentHead() {
     final SignatureAlgorithm sig = SignatureAlgorithmFactory.getInstance();
     final Hash blockHash1 = Hash.wrap(Bytes32.random());
     final Withdrawal withdrawal =
-            new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
 
     final BlockBody shanghaiBlockBody =
-            new BlockBody(
-                    List.of(
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
-                    Collections.emptyList(),
-                    Optional.of(List.of(withdrawal)));
+        new BlockBody(
+            List.of(
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
+                new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
+            Collections.emptyList(),
+            Optional.of(List.of(withdrawal)));
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(123));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(shanghaiBlockBody));
     when(blockchain.getBlockHashByNumber(123)).thenReturn(Optional.of(blockHash1));
@@ -257,32 +258,29 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   }
 
   @Test
-  public void shouldReturnUpUntilHeadWhenStartBlockPlusCountEqualsHeadNumber(){
+  public void shouldReturnUpUntilHeadWhenStartBlockPlusCountEqualsHeadNumber() {
     final SignatureAlgorithm sig = SignatureAlgorithmFactory.getInstance();
     final Hash blockHash1 = Hash.wrap(Bytes32.random());
     final Hash blockHash2 = Hash.wrap(Bytes32.random());
     final Hash blockHash3 = Hash.wrap(Bytes32.random());
     final Withdrawal withdrawal =
-            new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
 
     final BlockBody shanghaiBlockBody =
-            new BlockBody(
-                    List.of(
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
-                    Collections.emptyList(),
-                    Optional.of(List.of(withdrawal)));
+        new BlockBody(
+            List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
+            Collections.emptyList(),
+            Optional.of(List.of(withdrawal)));
     final BlockBody shanghaiBlockBody2 =
-            new BlockBody(
-                    List.of(
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
-                    Collections.emptyList(),
-                    Optional.of(List.of(withdrawal)));
+        new BlockBody(
+            List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
+            Collections.emptyList(),
+            Optional.of(List.of(withdrawal)));
     final BlockBody shanghaiBlockBody3 =
-            new BlockBody(
-                    List.of(
-                            new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
-                    Collections.emptyList(),
-                    Optional.of(List.of(withdrawal)));
+        new BlockBody(
+            List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
+            Collections.emptyList(),
+            Optional.of(List.of(withdrawal)));
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(125));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(shanghaiBlockBody));
     when(blockchain.getBlockBody(blockHash2)).thenReturn(Optional.of(shanghaiBlockBody2));
