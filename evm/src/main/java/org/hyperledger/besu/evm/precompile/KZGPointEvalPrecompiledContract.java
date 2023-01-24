@@ -38,10 +38,7 @@ import org.jetbrains.annotations.NotNull;
 /** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
-  /**
-   * Instantiates a new KZGPointEval precompile contract.
-   *
-   */
+  /** Instantiates a new KZGPointEval precompile contract. */
   public KZGPointEvalPrecompiledContract() {
     this(Optional.empty());
   }
@@ -95,11 +92,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     }
   }
 
-
-  /**
-   * free up resources.
-   *
-   */
+  /** free up resources. */
   @VisibleForTesting
   public void tearDown() {
     CKZG4844JNI.freeTrustedSetup();
