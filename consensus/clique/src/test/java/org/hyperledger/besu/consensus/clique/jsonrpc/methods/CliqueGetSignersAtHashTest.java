@@ -42,13 +42,13 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CliqueGetSignersAtHashTest {
 
   private CliqueGetSignersAtHash method;
@@ -63,7 +63,7 @@ public class CliqueGetSignersAtHashTest {
   public static final String BLOCK_HASH =
       "0xe36a3edf0d8664002a72ef7c5f8e271485e7ce5c66455a07cb679d855818415f";
 
-  @Before
+  @BeforeEach
   public void setup() {
     method = new CliqueGetSignersAtHash(blockchainQueries, validatorProvider);
 
