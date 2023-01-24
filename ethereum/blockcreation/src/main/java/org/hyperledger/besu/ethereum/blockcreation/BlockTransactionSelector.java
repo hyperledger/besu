@@ -235,7 +235,7 @@ public class BlockTransactionSelector {
   }
 
   private boolean transactionDataPriceBelowMin(final Transaction transaction) {
-    if (feeMarket.implementsBaseFee()) {
+    if (transaction.getType().supportsBlob()) {
       if (transaction
           .getMaxFeePerDataGas()
           .orElseThrow()
