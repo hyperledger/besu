@@ -226,7 +226,7 @@ jobs:
           at: ~/project
       - run:
           name: AcceptanceTests (High Priority)
-          no_output_timeout: 30m
+          no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
@@ -235,11 +235,11 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTestMainnet $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
-  acceptanceTestsLowPriority:
+  acceptanceTestsNonMainnet:
     parallelism: 6
     executor: xl_machine_executor # TODO maybe can reduce this since only running a subset of ATs
     steps:
@@ -248,7 +248,7 @@ jobs:
           at: ~/project
       - run:
           name: AcceptanceTests (Low Priority)
-          no_output_timeout: 30m
+          no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
@@ -257,7 +257,7 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTestLowPriority $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTestNonMainnet $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
@@ -390,9 +390,6 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
-      - acceptanceTestsLowPriority:
-          requires:
-            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -464,4 +461,4 @@ workflows:
     jobs:
       - assemble
       - dockerScan
-      - acceptanceTestsLowPriority
+      - acceptanceTestsNonMainnet
