@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -49,6 +50,7 @@ import java.util.stream.Stream;
 import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.ssz.SSZFixedSizeTypeList;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256s;
 
@@ -116,6 +118,8 @@ public class Transaction
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
   private final Optional<List<Hash>> versionedHashes;
 
+  private final Optional<BlobsWithCommitments> blobsWithCommitments;
+
   public static Builder builder() {
     return new Builder();
   }
@@ -170,7 +174,8 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes,
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
     if (v.isPresent() && chainId.isPresent()) {
       throw new IllegalArgumentException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
@@ -221,6 +226,7 @@ public class Transaction
     this.chainId = chainId;
     this.v = v;
     this.versionedHashes = versionedHashes;
+    this.blobsWithCommitments = blobsWithCommitments;
 
     if (isUpfrontGasCostTooHigh()) {
       throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
@@ -241,7 +247,8 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes,
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         TransactionType.FRONTIER,
         nonce,
@@ -258,7 +265,8 @@ public class Transaction
         sender,
         chainId,
         v,
-        versionedHashes);
+        versionedHashes,
+        blobsWithCommitments);
   }
 
   public Transaction(
@@ -271,7 +279,8 @@ public class Transaction
       final Bytes payload,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes,
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         TransactionType.FRONTIER,
         nonce,
@@ -288,7 +297,8 @@ public class Transaction
         null,
         chainId,
         v,
-        versionedHashes);
+        versionedHashes,
+        blobsWithCommitments);
   }
 
   /**
@@ -319,6 +329,7 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<List<Hash>> versionedHashes) {
+
     this(
         nonce,
         Optional.of(gasPrice),
@@ -333,7 +344,8 @@ public class Transaction
         sender,
         chainId,
         Optional.empty(),
-        versionedHashes);
+        versionedHashes,
+        Optional.empty());
   }
 
   /**
@@ -365,7 +377,8 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Hash>> versionedHashes,
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         nonce,
         Optional.of(gasPrice),
@@ -380,7 +393,8 @@ public class Transaction
         sender,
         chainId,
         v,
-        versionedHashes);
+        versionedHashes,
+        blobsWithCommitments);
   }
 
   /**
@@ -787,7 +801,11 @@ public class Transaction
   }
 
   public Optional<List<Hash>> getVersionedHashes() {
-    return this.versionedHashes;
+    return versionedHashes;
+  }
+
+  public Optional<BlobsWithCommitments> getBlobsWithCommitments() {
+    return blobsWithCommitments;
   }
 
   /**
@@ -1153,6 +1171,7 @@ public class Transaction
 
     protected Optional<BigInteger> v = Optional.empty();
     protected List<Hash> versionedHashes = null;
+    private BlobsWithCommitments blobsWithCommitments;
 
     public Builder type(final TransactionType transactionType) {
       this.transactionType = transactionType;
@@ -1269,7 +1288,8 @@ public class Transaction
           sender,
           chainId,
           v,
-          Optional.ofNullable(versionedHashes));
+          Optional.ofNullable(versionedHashes),
+          Optional.ofNullable(blobsWithCommitments));
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
@@ -1298,6 +1318,47 @@ public class Transaction
                   versionedHashes,
                   chainId),
               keys);
+    }
+
+    public Builder kzgBlobs(
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
+        final TransactionNetworkPayload.KZGProof kzgProof) {
+      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProof);
+      return this;
+    }
+  }
+
+  public static class BlobsWithCommitments {
+    public final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments;
+    public final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs;
+    public final TransactionNetworkPayload.KZGProof kzgProof;
+
+    public BlobsWithCommitments(
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
+        final TransactionNetworkPayload.KZGProof kzgProof) {
+      this.kzgCommitments = kzgCommitments;
+      this.blobs = blobs;
+      this.kzgProof = kzgProof;
+    }
+
+    public List<Bytes> getBlobs() {
+      return blobs.getElements().stream()
+          .map(
+              blob -> {
+                return blob.getElements().stream()
+                    .map(sszuInt256Wrapper -> (Bytes) sszuInt256Wrapper.getData().toBytes())
+                    .reduce(Bytes::concatenate)
+                    .orElseThrow();
+              })
+          .collect(Collectors.toList());
+    }
+
+    public List<Bytes> getKzgCommitments() {
+      return kzgCommitments.getElements().stream()
+          .map(c -> c.getData())
+          .collect(Collectors.toList());
     }
   }
 }

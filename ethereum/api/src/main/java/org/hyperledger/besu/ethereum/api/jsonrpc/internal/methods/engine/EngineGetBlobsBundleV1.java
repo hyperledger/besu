@@ -20,11 +20,20 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EngineGetBlobsBundleV1 extends AbstractEngineGetPayload {
 
@@ -47,7 +56,30 @@ public class EngineGetBlobsBundleV1 extends AbstractEngineGetPayload {
   @Override
   protected JsonRpcResponse createResponse(
       final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts) {
-    return null;
+
+    return new JsonRpcSuccessResponse(
+        request.getRequest().getId(), createResponse(blockWithReceipts.getBlock()));
+  }
+
+  private BlobsBundleV1 createResponse(Block block) {
+
+    List<Bytes> kzgs =
+        block.getBody().getTransactions().stream()
+            .map(Transaction::getBlobsWithCommitments)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .flatMap(b -> b.getKzgCommitments().stream())
+            .collect(Collectors.toList());
+
+    List<Bytes> blobs =
+        block.getBody().getTransactions().stream()
+            .map(Transaction::getBlobsWithCommitments)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .flatMap(b -> b.getBlobs().stream())
+            .collect(Collectors.toList());
+
+    return new BlobsBundleV1(block.getHash(), kzgs, blobs);
   }
 
   @Override

@@ -495,7 +495,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         null,
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(null));
+        header.getExcessDataGas().map(DataGas::toHexString).orElse(""));
   }
 
   private EnginePayloadParameter mockPayload(
@@ -518,7 +518,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         withdrawals,
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(null));
+        header.getExcessDataGas().map(DataGas::toHexString).orElse(""));
   }
 
   @NotNull

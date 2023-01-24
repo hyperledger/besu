@@ -290,6 +290,7 @@ public class GoQuorumSendRawPrivateTransactionTest {
                     "0x8411b12666f68ef74cace3615c9d5a377729d03f")), // sender public address
             Optional.empty(),
             Optional.of(BigInteger.valueOf(37)),
+            Optional.empty(),
             Optional.empty());
     publicTransaction.writeTo(bvrlp);
     return bvrlp.encoded().toHexString();
