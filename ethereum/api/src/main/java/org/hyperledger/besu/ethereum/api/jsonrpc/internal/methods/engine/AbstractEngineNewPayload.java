@@ -25,6 +25,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -172,8 +173,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getPrevRandao(),
             0,
             maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
-            null,
-            maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
+            blockParam.getExcessDataGas() == null
+                ? null
+                : DataGas.fromHexString(blockParam.getExcessDataGas()),
+                maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
