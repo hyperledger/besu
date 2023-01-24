@@ -17,8 +17,8 @@ package org.hyperledger.besu.evm.gascalculator;
 /** The Cancun gas calculator as defined in EIP-4844 */
 public class CancunGasCalculator extends LondonGasCalculator {
 
-  private static final long CANCUN_DATA_GAS_PER_BLOB = 131072; // 2^17
-  private static final long CANCUN_TARGET_DATA_GAS_PER_BLOCK = 262144; // 2^18
+  private static final long CANCUN_DATA_GAS_PER_BLOB = 1 << 17;
+  private static final long CANCUN_TARGET_DATA_GAS_PER_BLOCK = 1 << 18;
 
   @Override
   public long dataGasCost(final int blobCount) {
