@@ -19,14 +19,12 @@ import org.hyperledger.besu.datatypes.DataGas;
 /** The Cancun gas calculator as defined in EIP-4844 */
 public class CancunGasCalculator extends LondonGasCalculator {
 
-  public static final int CANCUN_DATA_GAS_PER_BLOB = 131072; // 2^17
+  public static final DataGas CANCUN_DATA_GAS_PER_BLOB = DataGas.of(131072); // 2^17
   public static final DataGas CANCUN_TARGET_DATA_GAS_PER_BLOCK = DataGas.of(262144); // 2^18
 
-  public static final int CANCUN_MAX_DATA_GAS_PER_BLOCK = 524288; // 2^19
-
   @Override
-  public int dataGasCost(final int blobCount) {
-    return CANCUN_DATA_GAS_PER_BLOB * blobCount;
+  public DataGas dataGasCost(final int blobCount) {
+    return CANCUN_DATA_GAS_PER_BLOB.multiply(blobCount);
   }
 
   /**
@@ -39,17 +37,12 @@ public class CancunGasCalculator extends LondonGasCalculator {
    */
   @Override
   public DataGas computeExcessDataGas(final DataGas parentExcessDataGas, final int newBlobs) {
-    final int consumedDataGas = newBlobs * CANCUN_DATA_GAS_PER_BLOB;
+    final DataGas consumedDataGas = CANCUN_DATA_GAS_PER_BLOB.multiply(newBlobs);
     final DataGas currentExcessDataGas = parentExcessDataGas.add(consumedDataGas);
 
     if (currentExcessDataGas.lessThan(CANCUN_TARGET_DATA_GAS_PER_BLOCK)) {
       return DataGas.ZERO;
     }
     return currentExcessDataGas.add(CANCUN_TARGET_DATA_GAS_PER_BLOCK);
-  }
-
-  @Override
-  public long getDataGasLimit() {
-    return CANCUN_MAX_DATA_GAS_PER_BLOCK;
   }
 }

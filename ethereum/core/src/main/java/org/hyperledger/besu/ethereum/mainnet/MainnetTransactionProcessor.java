@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -299,7 +300,7 @@ public class MainnetTransactionProcessor {
           previousNonce,
           sender.getNonce());
 
-      final int dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      final DataGas dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
 
       final Wei upfrontGasCost =
           transaction.getUpfrontGasCost(transactionGasPrice, dataGasPrice, dataGas);
@@ -334,7 +335,8 @@ public class MainnetTransactionProcessor {
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
 
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas - dataGas;
+      final long gasAvailable =
+          transaction.getGasLimit() - intrinsicGas - accessListGas - dataGas.toLong();
       LOG.trace(
           "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - data)",
           gasAvailable,

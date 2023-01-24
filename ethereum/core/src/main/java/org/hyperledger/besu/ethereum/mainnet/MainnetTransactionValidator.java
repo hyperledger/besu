@@ -18,8 +18,10 @@ import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -41,6 +43,7 @@ import java.util.Set;
 public class MainnetTransactionValidator {
 
   private final GasCalculator gasCalculator;
+  private final GasLimitCalculator gasLimitCalculator;
   private final FeeMarket feeMarket;
 
   private final boolean disallowSignatureMalleability;
@@ -55,11 +58,13 @@ public class MainnetTransactionValidator {
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final boolean goQuorumCompatibilityMode) {
     this(
         gasCalculator,
+        gasLimitCalculator,
         checkSignatureMalleability,
         chainId,
         Set.of(TransactionType.FRONTIER),
@@ -68,12 +73,14 @@ public class MainnetTransactionValidator {
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
       final boolean quorumCompatibilityMode) {
     this(
         gasCalculator,
+        gasLimitCalculator,
         FeeMarket.legacy(),
         checkSignatureMalleability,
         chainId,
@@ -84,6 +91,7 @@ public class MainnetTransactionValidator {
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
@@ -91,6 +99,7 @@ public class MainnetTransactionValidator {
       final boolean goQuorumCompatibilityMode,
       final int maxInitcodeSize) {
     this.gasCalculator = gasCalculator;
+    this.gasLimitCalculator = gasLimitCalculator;
     this.feeMarket = feeMarket;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
@@ -184,13 +193,14 @@ public class MainnetTransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
-      if (txTotalDataGas > gasCalculator.getDataGasLimit()) {
+      final DataGas txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      if (txTotalDataGas.greaterThan(gasLimitCalculator.nextDataGasLimit())) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
             String.format(
-                "total data gas %d exceeds max data gas per block %d",
-                txTotalDataGas, gasCalculator.getDataGasLimit()));
+                "total data gas %s exceeds max data gas per block %s",
+                txTotalDataGas.getAsBigInteger(),
+                gasLimitCalculator.nextDataGasLimit().getAsBigInteger()));
       }
     }
 

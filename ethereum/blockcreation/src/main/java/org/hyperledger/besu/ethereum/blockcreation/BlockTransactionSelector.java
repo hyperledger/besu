@@ -18,6 +18,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -90,6 +91,7 @@ public class BlockTransactionSelector {
   private final Address miningBeneficiary;
   private final FeeMarket feeMarket;
   private final GasCalculator gasCalculator;
+  private final GasLimitCalculator gasLimitCalculator;
 
   private final TransactionSelectionResults transactionSelectionResult =
       new TransactionSelectionResults();
@@ -106,7 +108,8 @@ public class BlockTransactionSelector {
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final FeeMarket feeMarket,
-      final GasCalculator gasCalculator) {
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -119,6 +122,7 @@ public class BlockTransactionSelector {
     this.miningBeneficiary = miningBeneficiary;
     this.feeMarket = feeMarket;
     this.gasCalculator = gasCalculator;
+    this.gasLimitCalculator = gasLimitCalculator;
   }
 
   /*
@@ -338,7 +342,7 @@ public class BlockTransactionSelector {
         transaction.isGoQuorumPrivateTransaction(
             transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
-    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount()).toLong();
 
     final long gasUsedByTransaction =
         isGoQuorumPrivateTransaction
@@ -373,12 +377,14 @@ public class BlockTransactionSelector {
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
     final var dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
-    if (dataGasUsed
-        > gasCalculator.getDataGasLimit() - transactionSelectionResult.getCumulativeDataGasUsed()) {
+    if (dataGasUsed.greaterThan(
+        gasLimitCalculator
+            .nextDataGasLimit()
+            .subtract(transactionSelectionResult.getCumulativeDataGasUsed()))) {
       return true;
     }
 
-    return transaction.getGasLimit() + dataGasUsed
+    return transaction.getGasLimit() + dataGasUsed.toLong()
         > processableBlockHeader.getGasLimit() - transactionSelectionResult.getCumulativeGasUsed();
   }
 

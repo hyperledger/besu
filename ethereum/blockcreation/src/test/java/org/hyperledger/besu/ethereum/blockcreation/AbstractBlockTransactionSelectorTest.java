@@ -27,6 +27,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -257,7 +258,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             FeeMarket.london(0L),
-            new LondonGasCalculator());
+            new LondonGasCalculator(),
+            GasLimitCalculator.constant());
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -455,7 +457,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             getFeeMarket(),
-            new LondonGasCalculator());
+            new LondonGasCalculator(),
+            GasLimitCalculator.constant());
     return selector;
   }
 

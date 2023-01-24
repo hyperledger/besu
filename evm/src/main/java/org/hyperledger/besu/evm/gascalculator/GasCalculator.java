@@ -489,15 +489,11 @@ public interface GasCalculator {
   // what would be the gas for a PMT with hash of all non-zeros
   long getMaximumTransactionCost(int size);
 
-  default int dataGasCost(final int totalDataGas) {
-    return 0;
+  default DataGas dataGasCost(final int totalDataGas) {
+    return DataGas.ZERO;
   }
 
   default DataGas computeExcessDataGas(final DataGas parentExcessDataGas, final int newBlobs) {
     return DataGas.ZERO;
-  }
-
-  default long getDataGasLimit() {
-    return 0;
   }
 }
