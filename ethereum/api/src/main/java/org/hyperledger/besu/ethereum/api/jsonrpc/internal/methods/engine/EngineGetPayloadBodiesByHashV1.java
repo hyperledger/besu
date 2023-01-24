@@ -57,10 +57,7 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
 
     final Hash[] blockHashes = request.getRequiredParameter(0, Hash[].class);
 
-    traceLambda(
-        LOG, "{} parameters: blockHashes {}",
-            () -> getName(),
-            () -> blockHashes);
+    traceLambda(LOG, "{} parameters: blockHashes {}", () -> getName(), () -> blockHashes);
 
     final Blockchain blockchain = protocolContext.getBlockchain();
     return new JsonRpcSuccessResponse(
