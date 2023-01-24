@@ -26,6 +26,10 @@ public interface FeeMarket {
     return false;
   }
 
+  default boolean implementsDataFee() {
+    return false;
+  }
+
   TransactionPriceCalculator getTransactionPriceCalculator();
 
   boolean satisfiesFloorTxFee(Transaction txn);
@@ -37,6 +41,11 @@ public interface FeeMarket {
   static BaseFeeMarket london(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
     return new LondonFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
+  }
+
+  static BaseFeeMarket cancun(
+      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+    return new CancunFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
   static BaseFeeMarket zeroBaseFee(final long londonForkBlockNumber) {

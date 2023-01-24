@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,17 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum;
+package org.hyperledger.besu.ethereum.mainnet;
 
-public interface GasLimitCalculator {
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
-  long nextGasLimit(long currentGasLimit, long targetGasLimit, long newBlockNumber);
+public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCalculator {
+  private static final long MAX_DATA_GAS_PER_BLOCK = 1 << 19;
 
-  static GasLimitCalculator constant() {
-    return (currentGasLimit, targetGasLimit, newBlockNumber) -> currentGasLimit;
+  public CancunTargetingGasLimitCalculator(
+      final long londonForkBlock, final BaseFeeMarket feeMarket) {
+    super(londonForkBlock, feeMarket);
   }
 
-  default long currentDataGasLimit() {
-    return 0L;
+  @Override
+  public long currentDataGasLimit() {
+    return MAX_DATA_GAS_PER_BLOCK;
   }
 }

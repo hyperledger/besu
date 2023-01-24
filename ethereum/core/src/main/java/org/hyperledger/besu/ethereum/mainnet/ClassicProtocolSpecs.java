@@ -76,9 +76,9 @@ public class ClassicProtocolSpecs {
             contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, evmConfiguration)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    gasCalculator, gasLimitCalculator, true, chainId, quorumCompatibilityMode))
         .name("ClassicTangerineWhistle");
   }
 
@@ -149,9 +149,9 @@ public class ClassicProtocolSpecs {
             evmConfiguration)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    gasCalculator, gasLimitCalculator, true, chainId, quorumCompatibilityMode))
         .name("DefuseDifficultyBomb");
   }
 
@@ -353,9 +353,10 @@ public class ClassicProtocolSpecs {
             evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
+                    gasLimitCalculator,
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
