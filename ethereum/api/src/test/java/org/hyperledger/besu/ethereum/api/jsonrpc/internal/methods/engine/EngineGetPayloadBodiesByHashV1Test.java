@@ -185,7 +185,7 @@ public class EngineGetPayloadBodiesByHashV1Test {
   }
 
   @Test
-  public void shouldReturnWithdrawalsWhenBlockIsShanghai() {
+  public void shouldReturnWithdrawalsWhenBlockIsPostShanghai() {
     final SignatureAlgorithm sig = SignatureAlgorithmFactory.getInstance();
     final Hash blockHash1 = Hash.wrap(Bytes32.random());
     final Hash blockHash2 = Hash.wrap(Bytes32.random());
