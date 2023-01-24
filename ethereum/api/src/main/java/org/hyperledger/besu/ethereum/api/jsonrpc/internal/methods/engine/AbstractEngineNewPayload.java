@@ -157,7 +157,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getPrevRandao(),
             0,
             maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
-            DataGas.fromHexString(blockParam.getExcessDataGas()),
+            blockParam.getExcessDataGas() == null
+                ? null
+                : DataGas.fromHexString(blockParam.getExcessDataGas()),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
