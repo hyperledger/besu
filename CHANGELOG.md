@@ -24,6 +24,7 @@
 - Send only hash announcement for blob transaction type [#4940](https://github.com/hyperledger/besu/pull/4940)
 - Add `excess_data_gas` field to block header [#4958](https://github.com/hyperledger/besu/pull/4958)
 - Add `max_fee_per_data_gas` field to transaction [#4970](https://github.com/hyperledger/besu/pull/4970)
+- Gas accounting for EIP-4844 [#4992](https://github.com/hyperledger/besu/pull/4992)
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
