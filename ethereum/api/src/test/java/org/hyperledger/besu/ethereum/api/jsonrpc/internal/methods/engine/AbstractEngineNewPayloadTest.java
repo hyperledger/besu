@@ -483,23 +483,7 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
-    return new EnginePayloadParameter(
-        header.getHash(),
-        header.getParentHash(),
-        header.getCoinbase(),
-        header.getStateRoot(),
-        new UnsignedLongParameter(header.getNumber()),
-        header.getBaseFee().map(w -> w.toHexString()).orElse("0x0"),
-        new UnsignedLongParameter(header.getGasLimit()),
-        new UnsignedLongParameter(header.getGasUsed()),
-        new UnsignedLongParameter(header.getTimestamp()),
-        header.getExtraData() == null ? null : header.getExtraData().toHexString(),
-        header.getReceiptsRoot(),
-        header.getLogsBloom(),
-        header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
-        txs,
-        null,
-        header.getExcessDataGas().orElse(DataGas.ZERO).toHexString());
+    return mockPayload(header, txs, null);
   }
 
   private EnginePayloadParameter mockPayload(
@@ -522,7 +506,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         withdrawals,
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(""));
+        header.getExcessDataGas().map(DataGas::toHexString).orElse(null));
   }
 
   @NotNull
