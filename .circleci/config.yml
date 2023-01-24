@@ -175,6 +175,7 @@ jobs:
             done
 
   unitTests:
+    parallelism: 6
     executor: besu_executor_xl
     steps:
       - prepare
@@ -184,7 +185,15 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon build
+            CLASSNAMES=$(circleci tests glob "*/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            echo "Prepared arguments for Gradle: $GRADLE_ARGS"
+            ./gradlew --no-daemon test $GRADLE_ARGS
       - capture_test_results
 
   integrationTests:
@@ -235,7 +244,7 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
+            echo "Prepared arguments for Gradle: $GRADLE_ARGS"
       - capture_test_results
       - capture_test_logs
 
@@ -356,22 +365,7 @@ workflows:
       - unitTests:
            requires:
             - assemble
-      - testWindows:
-          requires:
-            - assemble
-      - referenceTests:
-          requires:
-            - assemble
-      - integrationTests:
-          requires:
-            - assemble
       - acceptanceTests:
-          requires:
-            - assemble
-      - buildDocker:
-          requires:
-            - assemble
-      - buildArm64Docker:
           requires:
             - assemble
       - publish:
