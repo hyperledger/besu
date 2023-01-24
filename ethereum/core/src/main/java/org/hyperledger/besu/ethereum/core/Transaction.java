@@ -478,14 +478,12 @@ public class Transaction
   }
 
   /**
-   * Returns the number of blobs this transaction has. Only call on a blob type transaction or it
-   * will throw exception
+   * Returns the number of blobs this transaction has, or 0 if not a blob transaction type
    *
-   * @throws java.util.NoSuchElementException if called on a non blob transaction
    * @return return the count
    */
   public int getBlobCount() {
-    return versionedHashes.orElseThrow().size();
+    return versionedHashes.map(List::size).orElse(0);
   }
 
   /**
