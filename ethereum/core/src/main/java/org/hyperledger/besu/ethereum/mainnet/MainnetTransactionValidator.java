@@ -23,6 +23,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
@@ -30,8 +32,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import ethereum.ckzg4844.CKZG4844JNI;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.crypto.digests.SHA256Digest;
 
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
@@ -40,6 +48,10 @@ import java.util.Set;
  * {@link Transaction}.
  */
 public class MainnetTransactionValidator implements TransactionValidator {
+
+  private final long MAX_DATA_GAS_PER_BLOCK = 524_288; // 2**19
+  private final long DATA_GAS_PER_BLOB = 131_072; // 2**17
+  private final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
 
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
@@ -109,6 +121,14 @@ public class MainnetTransactionValidator implements TransactionValidator {
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
+    }
+    if (transaction.getType().equals(TransactionType.BLOB)
+        && transaction.getBlobsWithCommitments().isPresent()) {
+      final ValidationResult<TransactionInvalidReason> blobsResult =
+          validateTransactionsBlobs(transaction);
+      if (!blobsResult.isValid()) {
+        return blobsResult;
+      }
     }
 
     final TransactionType transactionType = transaction.getType();
@@ -285,6 +305,107 @@ public class MainnetTransactionValidator implements TransactionValidator {
           "sender could not be extracted from transaction signature");
     }
     return ValidationResult.valid();
+  }
+
+  public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
+      final Transaction transaction) {
+
+    if (transaction.getBlobsWithCommitments().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blobs are empty, cannot verify without blobs");
+    }
+
+    Transaction.BlobsWithCommitments blobsWithCommitments =
+        transaction.getBlobsWithCommitments().get();
+
+    if (blobsWithCommitments.blobs.getElements().size()
+        > MAX_DATA_GAS_PER_BLOCK / DATA_GAS_PER_BLOB) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "Too many transaction blobs ("
+              + blobsWithCommitments.blobs.getElements().size()
+              + ") in transaction, max is "
+              + MAX_DATA_GAS_PER_BLOCK / DATA_GAS_PER_BLOB);
+    }
+
+    if (blobsWithCommitments.blobs.getElements().size()
+        != blobsWithCommitments.kzgCommitments.getElements().size()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blobs and commitments are not the same size");
+    }
+
+    List<TransactionNetworkPayload.KZGCommitment> commitments =
+        blobsWithCommitments.kzgCommitments.getElements();
+    for (TransactionNetworkPayload.KZGCommitment commitment : commitments) {
+      if (commitment.getData().get(0) != BLOB_COMMITMENT_VERSION_KZG) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_BLOBS,
+            "transaction blobs commitment version is not supported");
+      }
+    }
+    if (transaction.getVersionedHashes().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction versioned hashes are empty, cannot verify without versioned hashes");
+    }
+    List<Hash> versionedHashes = transaction.getVersionedHashes().get();
+
+    for (int i = 0; i < versionedHashes.size(); i++) {
+      TransactionNetworkPayload.KZGCommitment commitment =
+          blobsWithCommitments.kzgCommitments.getElements().get(i);
+      Hash versionedHash = versionedHashes.get(i);
+      Hash calculatedVersionedHash = hashCommitment(commitment);
+      if (!calculatedVersionedHash.equals(versionedHash)) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_BLOBS,
+            "transaction blobs commitment hash does not match commitment");
+      }
+    }
+
+    Bytes blobs =
+        blobsWithCommitments.blobs.getElements().stream()
+            .map(
+                blob ->
+                    blob.getElements().stream()
+                        .map(sszuInt256Wrapper -> (Bytes) sszuInt256Wrapper.getData().toBytes())
+                        .reduce(Bytes::concatenate)
+                        .orElseThrow())
+            .reduce(Bytes::concatenate)
+            .orElseThrow();
+
+    Bytes kzgCommitments =
+        blobsWithCommitments.kzgCommitments.getElements().stream()
+            .map(commitment -> commitment.getData())
+            .reduce(Bytes::concatenate)
+            .orElseThrow();
+
+    boolean kzgVerification =
+        CKZG4844JNI.verifyAggregateKzgProof(
+            blobs.toArrayUnsafe(),
+            kzgCommitments.toArrayUnsafe(),
+            blobsWithCommitments.blobs.getElements().size(),
+            blobsWithCommitments.kzgProof.getBytes().toArrayUnsafe());
+    if (!kzgVerification) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blobs kzg proof verification failed");
+    }
+
+    return ValidationResult.valid();
+  }
+
+  private Hash hashCommitment(final TransactionNetworkPayload.KZGCommitment commitment) {
+    SHA256Digest digest = new SHA256Digest();
+    digest.update(commitment.getData().toArrayUnsafe(), 0, commitment.getData().size());
+
+    final byte[] dig = new byte[digest.getDigestSize()];
+
+    digest.doFinal(dig, 0);
+
+    dig[0] = BLOB_COMMITMENT_VERSION_KZG;
+    return Hash.wrap(Bytes32.wrap(dig));
   }
 
   private boolean isSenderAllowed(
