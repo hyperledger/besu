@@ -49,13 +49,15 @@ public enum RpcMethod {
 
   ENGINE_GET_PAYLOAD_V1("engine_getPayloadV1"),
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
+  ENGINE_GET_PAYLOAD_V3("engine_getPayloadV3"),
   ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
   ENGINE_NEW_PAYLOAD_V1("engine_newPayloadV1"),
   ENGINE_NEW_PAYLOAD_V2("engine_newPayloadV2"),
+  ENGINE_NEW_PAYLOAD_V3("engine_newPayloadV3"),
   ENGINE_FORKCHOICE_UPDATED_V1("engine_forkchoiceUpdatedV1"),
   ENGINE_FORKCHOICE_UPDATED_V2("engine_forkchoiceUpdatedV2"),
   ENGINE_EXCHANGE_TRANSITION_CONFIGURATION("engine_exchangeTransitionConfigurationV1"),
-
+  ENGINE_GET_BLOBS_BUNDLE_V1("engine_getBlobsBundleV1"),
   GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),
   GOQUORUM_STORE_RAW("goquorum_storeRaw"),
   PRIV_CALL("priv_call"),
