@@ -700,15 +700,6 @@ public class Transaction
   }
 
   /**
-   * Check if the upfront gas cost is over the max allowed
-   *
-   * @return true is upfront data cost overflow uint256 max value
-   */
-  private boolean isUpfrontGasCostTooHigh() {
-    return calculateUpfrontGasCost(getMaxGasPrice(), Wei.ZERO, 0).bitLength() > 256;
-  }
-
-  /**
    * Calculates the max up-front cost for the gas the transaction can use.
    *
    * @return the max up-front cost for the gas the transaction can use.
@@ -716,6 +707,15 @@ public class Transaction
   private Wei getMaxUpfrontGasCost(final int dataGasPerBlock) {
     return getUpfrontGasCost(
         getMaxGasPrice(), getMaxFeePerDataGas().orElse(Wei.ZERO), dataGasPerBlock);
+  }
+
+  /**
+   * Check if the upfront gas cost is over the max allowed
+   *
+   * @return true is upfront data cost overflow uint256 max value
+   */
+  private boolean isUpfrontGasCostTooHigh() {
+    return calculateUpfrontGasCost(getMaxGasPrice(), Wei.ZERO, 0).bitLength() > 256;
   }
 
   /**
