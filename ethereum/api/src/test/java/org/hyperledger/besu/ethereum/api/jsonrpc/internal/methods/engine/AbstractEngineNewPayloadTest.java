@@ -348,7 +348,11 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldRespondWithSyncingDuringBackwardsSync() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .excessDataGas(DataGas.ZERO)
+            .buildHeader();
     when(mergeCoordinator.appendNewPayloadToSync(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -495,7 +499,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         null,
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(""));
+        header.getExcessDataGas().orElse(DataGas.ZERO).toHexString());
   }
 
   private EnginePayloadParameter mockPayload(
