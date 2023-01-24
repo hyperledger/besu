@@ -45,6 +45,7 @@ import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
@@ -82,6 +83,9 @@ public abstract class MainnetProtocolSpecs {
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
   public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
+
+  private static final int CANCUN_MIN_DATA_GAS_PRICE = 1;
+  private static final int CANCUN_DATA_GAS_PRICE_UPDATE_FRACTION = 2225652;
 
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
@@ -719,6 +723,15 @@ public abstract class MainnetProtocolSpecs {
 
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+    final BaseFeeMarket londonFeeMarket =
+        genesisConfigOptions.isZeroBaseFee()
+            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+            : FeeMarket.cancun(
+                londonForkBlockNumber,
+                genesisConfigOptions.getBaseFeePerGas(),
+                CANCUN_MIN_DATA_GAS_PRICE,
+                CANCUN_DATA_GAS_PRICE_UPDATE_FRACTION);
 
     return shanghaiDefinition(
             chainId,
@@ -728,6 +741,8 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        // gas calculator for EIP-4844 data gas
+        .gasCalculator(CancunGasCalculator::new)
         // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -744,6 +759,20 @@ public abstract class MainnetProtocolSpecs {
                         MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        // change to check for max data gas per block for EIP-4844
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    londonFeeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
+                    quorumCompatibilityMode,
+                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .name("Cancun");
   }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
@@ -208,6 +210,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
+      final DataGas newExcessDataGas = computeExcessDataGas(transactionResults, newProtocolSpec);
+
+      throwIfStopped();
+
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
@@ -223,6 +229,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
+              .excessDataGas(newExcessDataGas)
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
@@ -242,6 +249,23 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throw new IllegalStateException(
           "Block creation failed unexpectedly. Will restart on next block added to chain.", ex);
     }
+  }
+
+  private DataGas computeExcessDataGas(
+      BlockTransactionSelector.TransactionSelectionResults transactionResults,
+      ProtocolSpec newProtocolSpec) {
+
+    if (newProtocolSpec.getFeeMarket().implementsBaseFee()) {
+      final var gasCalculator = newProtocolSpec.getGasCalculator();
+      final int newBlobsCount =
+          transactionResults.getTransactionsByType(TransactionType.BLOB).stream()
+              .map(tx -> tx.getVersionedHashes().orElseThrow())
+              .mapToInt(List::size)
+              .sum();
+      return gasCalculator.computeExcessDataGas(
+          parentHeader.getExcessDataGas().orElse(DataGas.ZERO), newBlobsCount);
+    }
+    return null;
   }
 
   private BlockTransactionSelector.TransactionSelectionResults selectTransactions(
@@ -268,7 +292,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
-            protocolSpec.getFeeMarket());
+            protocolSpec.getFeeMarket(),
+            protocolSpec.getGasCalculator());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());

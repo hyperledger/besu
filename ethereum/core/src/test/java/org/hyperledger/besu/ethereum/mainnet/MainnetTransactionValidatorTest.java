@@ -195,7 +195,7 @@ public class MainnetTransactionValidatorTest {
     validator.setTransactionFilter(transactionFilter(false));
 
     Account invalidEOA =
-        when(account(basicTransaction.getUpfrontCost(), basicTransaction.getNonce()).getCodeHash())
+        when(account(basicTransaction.getUpfrontCost(0), basicTransaction.getNonce()).getCodeHash())
             .thenReturn(Hash.fromHexStringLenient("0xdeadbeef"))
             .getMock();
 
@@ -547,7 +547,7 @@ public class MainnetTransactionValidatorTest {
   }
 
   private Account accountWithNonce(final long nonce) {
-    return account(basicTransaction.getUpfrontCost(), nonce);
+    return account(basicTransaction.getUpfrontCost(0), nonce);
   }
 
   private Account account(final Wei balance, final long nonce) {

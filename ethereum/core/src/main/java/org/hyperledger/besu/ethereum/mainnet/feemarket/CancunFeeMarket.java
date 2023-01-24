@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,28 +15,21 @@
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.util.Optional;
 
-public class ZeroBaseFeeMarket extends LondonFeeMarket {
+public class CancunFeeMarket extends LondonFeeMarket {
 
-  public ZeroBaseFeeMarket(final long londonForkBlockNumber) {
-    super(londonForkBlockNumber, Optional.of(Wei.ZERO));
-  }
-
-  @Override
-  public Wei computeBaseFee(
-      final long blockNumber,
-      final Wei parentBaseFee,
-      final long parentBlockGasUsed,
-      final long targetGasUsed) {
-
-    return Wei.ZERO;
-  }
-
-  @Override
-  public ValidationMode baseFeeValidationMode(final long blockNumber) {
-    return ValidationMode.NONE;
+  public CancunFeeMarket(
+      final long londonForkBlockNumber,
+      final Optional<Wei> baseFeePerGasOverride,
+      final int minDataGasPrice,
+      final int dataGasPriceUpdateFraction) {
+    super(
+        new TransactionPriceCalculator.DataBlob(minDataGasPrice, dataGasPriceUpdateFraction),
+        londonForkBlockNumber,
+        baseFeePerGasOverride);
   }
 
   @Override
