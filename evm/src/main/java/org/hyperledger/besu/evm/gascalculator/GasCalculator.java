@@ -488,10 +488,24 @@ public interface GasCalculator {
   // what would be the gas for a PMT with hash of all non-zeros
   long getMaximumTransactionCost(int size);
 
-  default long dataGasCost(final int totalDataGas) {
+  /**
+   * Return the gas cost given the number of blobs
+   *
+   * @param blobCount the number of blobs
+   * @return the total gas cost
+   */
+  default long dataGasCost(final int blobCount) {
     return 0L;
   }
 
+  /**
+   * Compute the new value for the excess data gas, given the parent value and the count of new
+   * blobs
+   *
+   * @param parentExcessDataGas excess data gas from the parent
+   * @param newBlobs count of new blobs
+   * @return the new excess data gas value
+   */
   default long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
     return 0L;
   }
