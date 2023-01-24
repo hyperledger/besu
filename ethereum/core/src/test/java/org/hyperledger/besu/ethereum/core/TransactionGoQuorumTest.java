@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -70,13 +71,15 @@ public class TransactionGoQuorumTest {
 
   @Test
   public void givenTransactionWithChainId_assertThatIsGoQuorumFlagIsFalse() {
-    final Transaction transaction = Transaction.builder().chainId(BigInteger.valueOf(0)).build();
+    final Transaction transaction =
+        Transaction.builder().chainId(BigInteger.valueOf(0)).gasPrice(Wei.ZERO).build();
     assertThat(transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)).isFalse();
   }
 
   @Test
   public void givenTransactionWithoutChainIdAndV37_assertThatIsGoQuorumFlagIsTrue() {
-    final Transaction transaction = Transaction.builder().v(BigInteger.valueOf(37)).build();
+    final Transaction transaction =
+        Transaction.builder().v(BigInteger.valueOf(37)).gasPrice(Wei.ZERO).build();
     assertThat(transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)).isTrue();
   }
 
