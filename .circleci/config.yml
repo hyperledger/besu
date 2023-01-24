@@ -185,8 +185,9 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            GRADLE_ARGS=$(ls -d */ | egrep -v 'scripts|acceptance-tests' \
+            GRADLE_ARGS=$(ls -d */src/test/java \
               | sed 's/^/:/' \
+              | sed 's@src/test/java@@' \
               | sed 's@/@:test@' \
               | circleci tests split --split-by=timings)
             # Format the arguments to "./gradlew test"
