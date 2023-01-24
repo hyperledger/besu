@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -23,15 +22,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.mainnet.DefaultTimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
-
-import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
-public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
+public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
-  public EngineGetPayloadV1(
+  public EngineGetPayloadV3(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
@@ -49,17 +47,33 @@ public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_GET_PAYLOAD_V1.getMethodName();
+    return RpcMethod.ENGINE_GET_PAYLOAD_V3.getMethodName();
   }
 
   @Override
   protected JsonRpcResponse createResponse(
-      final JsonRpcRequestContext request,
-      final PayloadIdentifier payloadId,
-      final BlockWithReceipts blockWithReceipts) {
-    final var result =
-        blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock());
-    logProposal(payloadId, blockWithReceipts, Optional.empty());
-    return new JsonRpcSuccessResponse(request.getRequest().getId(), result);
+      final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts) {
+
+    DefaultTimestampSchedule tsched = (DefaultTimestampSchedule) this.schedule.get();
+    long shanghaiTimestamp = tsched.scheduledAt("Shanghai");
+    long cancunTimestamp = tsched.scheduledAt("Cancun");
+    long builtAt = blockWithReceipts.getHeader().getTimestamp();
+    if (builtAt < shanghaiTimestamp) {
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(),
+          blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
+    } else if (builtAt >= shanghaiTimestamp && builtAt < cancunTimestamp) {
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(),
+          blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
+    } else if (builtAt >= cancunTimestamp) {
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(),
+          blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
+    }
+
+    return new JsonRpcSuccessResponse(
+        request.getRequest().getId(),
+        blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
   }
 }
