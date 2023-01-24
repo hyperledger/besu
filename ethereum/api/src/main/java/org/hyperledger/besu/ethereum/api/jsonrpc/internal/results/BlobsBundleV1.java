@@ -21,34 +21,35 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({"blockHash", "kzgs", "blobs"})
 public class BlobsBundleV1 {
 
-  private final String blockHash;
+  private final Hash blockHash;
 
-  private final List<String> kzgs;
+  private final List<Bytes> kzgs;
 
-  private final List<String> blobs;
+  private final List<Bytes> blobs;
 
-  public BlobsBundleV1(final Hash blockHash, final List<String> kzgs, final List<String> blobs) {
-    this.blockHash = blockHash.toString();
+  public BlobsBundleV1(final Hash blockHash, final List<Bytes> kzgs, final List<Bytes> blobs) {
+    this.blockHash = blockHash;
     this.kzgs = kzgs;
     this.blobs = blobs;
   }
 
   @JsonGetter("blockHash")
-  public String getBlockHash() {
+  public Hash getBlockHash() {
     return blockHash;
   }
 
   @JsonGetter("kzgs")
-  public List<String> getKzgs() {
+  public List<Bytes> getKzgs() {
     return kzgs;
   }
 
   @JsonGetter("blobs")
-  public List<String> getBlobs() {
+  public List<Bytes> getBlobs() {
     return blobs;
   }
 }

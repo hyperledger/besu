@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +43,7 @@ public class EngineGetBlobsBundleV1 extends AbstractEngineGetPayload {
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
-      final ProtocolSchedule schedule) {
+      final TimestampSchedule schedule) {
     super(
         vertx,
         protocolContext,
@@ -63,23 +63,20 @@ public class EngineGetBlobsBundleV1 extends AbstractEngineGetPayload {
 
   private BlobsBundleV1 createResponse(final Block block) {
 
-    final List<Transaction.BlobsWithCommitments> blobsWithCommitments =
+    List<Bytes> kzgs =
         block.getBody().getTransactions().stream()
             .map(Transaction::getBlobsWithCommitments)
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(Collectors.toList());
-
-    final List<String> kzgs =
-        blobsWithCommitments.stream()
             .flatMap(b -> b.getKzgCommitments().stream())
-            .map(Bytes::toString)
             .collect(Collectors.toList());
 
-    final List<String> blobs =
-        blobsWithCommitments.stream()
+    List<Bytes> blobs =
+        block.getBody().getTransactions().stream()
+            .map(Transaction::getBlobsWithCommitments)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .flatMap(b -> b.getBlobs().stream())
-            .map(Bytes::toString)
             .collect(Collectors.toList());
 
     return new BlobsBundleV1(block.getHash(), kzgs, blobs);
