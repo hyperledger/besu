@@ -124,7 +124,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
       LOG.info(
-          "Downloading world state from peers for pivot block {}. State root {} pending request {}",
+          "Downloading world state from peers for pivot block {}. State root {} pending requests {}",
           header.toLogString(),
           stateRoot,
           snapTaskCollection.size());
