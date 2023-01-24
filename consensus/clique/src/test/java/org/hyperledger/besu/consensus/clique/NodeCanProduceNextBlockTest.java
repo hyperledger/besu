@@ -39,8 +39,8 @@ import org.hyperledger.besu.ethereum.core.Util;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NodeCanProduceNextBlockTest {
 
@@ -62,7 +62,7 @@ public class NodeCanProduceNextBlockTest {
     return new Block(header, new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddress = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
     validatorList.add(localAddress);
