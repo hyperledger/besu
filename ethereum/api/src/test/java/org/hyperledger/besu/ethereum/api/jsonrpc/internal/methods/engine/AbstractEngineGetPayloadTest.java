@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -58,7 +59,8 @@ public abstract class AbstractEngineGetPayloadTest {
         final ProtocolContext protocolContext,
         final MergeMiningCoordinator mergeCoordinator,
         final BlockResultFactory ethPeers,
-        final EngineCallListener engineCallListener);
+        final EngineCallListener engineCallListener,
+        final TimestampSchedule schedule);
   }
 
   private final MethodFactory methodFactory;
@@ -114,7 +116,16 @@ public abstract class AbstractEngineGetPayloadTest {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         methodFactory.create(
-            vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
+            vertx,
+            protocolContext,
+            mergeMiningCoordinator,
+            factory,
+            engineCallListener,
+            getTimestampSchedule());
+  }
+
+  protected TimestampSchedule getTimestampSchedule() {
+    return null;
   }
 
   @Test

@@ -1363,5 +1363,23 @@ public class Transaction
       this.blobs = blobs;
       this.kzgProof = kzgProof;
     }
+
+    public List<Bytes> getBlobs() {
+      return blobs.getElements().stream()
+          .map(
+              blob -> {
+                return blob.getElements().stream()
+                    .map(sszuInt256Wrapper -> (Bytes) sszuInt256Wrapper.getData().toBytes())
+                    .reduce(Bytes::concatenate)
+                    .orElseThrow();
+              })
+          .collect(Collectors.toList());
+    }
+
+    public List<Bytes> getKzgCommitments() {
+      return kzgCommitments.getElements().stream()
+          .map(c -> c.getData())
+          .collect(Collectors.toList());
+    }
   }
 }
