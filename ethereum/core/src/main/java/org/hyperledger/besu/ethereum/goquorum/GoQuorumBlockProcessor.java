@@ -294,7 +294,6 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         transaction.getChainId(),
         Optional.of(transaction.getV()),
         Optional.empty(),
-        Optional.empty(),
         Optional.empty());
   }
 }

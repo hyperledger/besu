@@ -83,7 +83,7 @@ public enum TransactionType {
   }
 
   /**
-   * Does transaction type Supports access list.
+   * Does transaction type supports access list.
    *
    * @return the boolean
    */
@@ -92,7 +92,7 @@ public enum TransactionType {
   }
 
   /**
-   * Does transaction type Supports 1559 fee market.
+   * Does transaction type supports EIP-1559 fee market.
    *
    * @return the boolean
    */
@@ -107,5 +107,14 @@ public enum TransactionType {
    */
   public boolean requiresChainId() {
     return !this.equals(FRONTIER);
+  }
+
+  /**
+   * Does transaction type supports data blobs.
+   *
+   * @return the boolean
+   */
+  public boolean supportsBlob() {
+    return this.equals(BLOB);
   }
 }
