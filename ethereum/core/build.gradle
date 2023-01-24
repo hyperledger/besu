@@ -81,6 +81,7 @@ dependencies {
   implementation files('libs/tuweni-ssz-2.4.0-SNAPSHOT.jar')
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
+  implementation 'tech.pegasys:jc-kzg-4844'
 
   implementation 'io.prometheus:simpleclient_guava'
 
