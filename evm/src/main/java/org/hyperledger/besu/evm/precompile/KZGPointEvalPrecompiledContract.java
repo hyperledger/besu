@@ -35,12 +35,19 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
 
+/** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
+  /** Instantiates a new KZGPointEval precompile contract. */
   public KZGPointEvalPrecompiledContract() {
     this(Optional.empty());
   }
 
+  /**
+   * Instantiates a new KZGPointEval precompile contract.
+   *
+   * @param pathToTrustedSetup the trusted setup path
+   */
   public KZGPointEvalPrecompiledContract(final Optional<Path> pathToTrustedSetup) {
 
     String absolutePathToSetup;
@@ -85,6 +92,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     }
   }
 
+  /** free up resources. */
   @VisibleForTesting
   public void tearDown() {
     CKZG4844JNI.freeTrustedSetup();

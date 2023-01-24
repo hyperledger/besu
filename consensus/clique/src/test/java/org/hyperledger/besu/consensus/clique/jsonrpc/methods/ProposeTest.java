@@ -32,15 +32,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ProposeTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String METHOD = "clique_propose";
   private ValidatorProvider validatorProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
     final Blockchain blockchain = mock(Blockchain.class);
     final EpochManager epochManager = mock(EpochManager.class);

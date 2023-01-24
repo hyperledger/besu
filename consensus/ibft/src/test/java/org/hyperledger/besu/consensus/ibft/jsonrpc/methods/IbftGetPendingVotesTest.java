@@ -19,8 +19,8 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractVoteProposerMethod;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractVoteProposerMethodTest;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class IbftGetPendingVotesTest extends AbstractVoteProposerMethodTest {
 
@@ -36,7 +36,7 @@ public class IbftGetPendingVotesTest extends AbstractVoteProposerMethodTest {
     return "ibft_getPendingVotes";
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     method = new IbftGetPendingVotes(getValidatorProvider());
   }

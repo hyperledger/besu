@@ -52,8 +52,8 @@ import java.util.Random;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueMinerExecutorTest {
 
@@ -69,7 +69,7 @@ public class CliqueMinerExecutorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
     validatorList.add(localAddress);
