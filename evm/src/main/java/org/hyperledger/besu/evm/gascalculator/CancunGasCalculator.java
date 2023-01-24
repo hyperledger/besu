@@ -16,7 +16,9 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.DataGas;
 
-/** The Cancun gas calculator. */
+/**
+ * The Cancun gas calculator as defined in EIP-4844
+ */
 public class CancunGasCalculator extends LondonGasCalculator {
 
   public static final int CANCUN_DATA_GAS_PER_BLOB = 131072; // 2^17
