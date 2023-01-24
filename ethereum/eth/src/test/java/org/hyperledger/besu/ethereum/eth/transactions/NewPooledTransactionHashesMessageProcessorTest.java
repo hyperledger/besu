@@ -115,10 +115,8 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   @Test
   public void shouldNotAddAlreadyPresentTransactions() {
 
-    when(transactionPool.getTransactionByHash(hash1))
-        .thenReturn(Optional.of(Transaction.builder().build()));
-    when(transactionPool.getTransactionByHash(hash2))
-        .thenReturn(Optional.of(Transaction.builder().build()));
+    when(transactionPool.getTransactionByHash(hash1)).thenReturn(Optional.of(transaction1));
+    when(transactionPool.getTransactionByHash(hash2)).thenReturn(Optional.of(transaction2));
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,

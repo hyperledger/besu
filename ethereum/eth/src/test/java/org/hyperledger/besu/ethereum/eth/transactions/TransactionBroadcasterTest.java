@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.toTransactionList;
+import static org.hyperledger.besu.plugin.data.TransactionType.BLOB;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -244,7 +245,7 @@ public class TransactionBroadcasterTest {
     when(ethPeers.streamAvailablePeers())
         .thenReturn(Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65)));
 
-    List<Transaction> txs = toTransactionList(setupTransactionPool(TransactionType.BLOB, 0, 1));
+    List<Transaction> txs = toTransactionList(setupTransactionPool(BLOB, 0, 1));
 
     txBroadcaster.onTransactionsAdded(txs);
 
@@ -276,8 +277,7 @@ public class TransactionBroadcasterTest {
     // 1 hash only broadcast transaction type
     List<Transaction> fullBroadcastTxs =
         toTransactionList(setupTransactionPool(TransactionType.EIP1559, 0, 1));
-    List<Transaction> hashBroadcastTxs =
-        toTransactionList(setupTransactionPool(TransactionType.BLOB, 0, 1));
+    List<Transaction> hashBroadcastTxs = toTransactionList(setupTransactionPool(BLOB, 0, 1));
 
     List<Transaction> mixedTxs = new ArrayList<>(fullBroadcastTxs);
     mixedTxs.addAll(hashBroadcastTxs);
