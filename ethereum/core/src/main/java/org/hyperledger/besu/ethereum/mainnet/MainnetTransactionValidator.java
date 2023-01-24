@@ -47,9 +47,6 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  * {@link Transaction}.
  */
 public class MainnetTransactionValidator {
-
-  private final long MAX_DATA_GAS_PER_BLOCK = 524_288; // 2**19
-  private final long DATA_GAS_PER_BLOB = 131_072; // 2**17
   private final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
 
   private final GasCalculator gasCalculator;
@@ -350,14 +347,14 @@ public class MainnetTransactionValidator {
     Transaction.BlobsWithCommitments blobsWithCommitments =
         transaction.getBlobsWithCommitments().get();
 
-    if (blobsWithCommitments.blobs.getElements().size()
-        > MAX_DATA_GAS_PER_BLOCK / DATA_GAS_PER_BLOB) {
+    final long blobsLimit = gasLimitCalculator.currentDataGasLimit() / gasCalculator.dataGasCost(1);
+    if (blobsWithCommitments.blobs.getElements().size() > blobsLimit) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
           "Too many transaction blobs ("
               + blobsWithCommitments.blobs.getElements().size()
               + ") in transaction, max is "
-              + MAX_DATA_GAS_PER_BLOCK / DATA_GAS_PER_BLOB);
+              + blobsLimit);
     }
 
     if (blobsWithCommitments.blobs.getElements().size()
