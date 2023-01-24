@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,13 +21,13 @@ import java.util.Optional;
 
 public class CancunFeeMarket extends LondonFeeMarket {
 
+  private static final int MIN_DATA_GAS_PRICE = 1;
+  private static final int DATA_GAS_PRICE_UPDATE_FRACTION = 2225652;
+
   public CancunFeeMarket(
-      final long londonForkBlockNumber,
-      final Optional<Wei> baseFeePerGasOverride,
-      final int minDataGasPrice,
-      final int dataGasPriceUpdateFraction) {
+      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
     super(
-        new TransactionPriceCalculator.DataBlob(minDataGasPrice, dataGasPriceUpdateFraction),
+        new TransactionPriceCalculator.DataBlob(MIN_DATA_GAS_PRICE, DATA_GAS_PRICE_UPDATE_FRACTION),
         londonForkBlockNumber,
         baseFeePerGasOverride);
   }

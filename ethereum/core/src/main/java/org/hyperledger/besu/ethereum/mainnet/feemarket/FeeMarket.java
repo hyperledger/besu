@@ -44,12 +44,8 @@ public interface FeeMarket {
   }
 
   static BaseFeeMarket cancun(
-      final long londonForkBlockNumber,
-      final Optional<Wei> baseFeePerGasOverride,
-      final int minDataGasPrice,
-      final int dataGasPriceUpdateFraction) {
-    return new CancunFeeMarket(
-        londonForkBlockNumber, baseFeePerGasOverride, minDataGasPrice, dataGasPriceUpdateFraction);
+      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+    return new CancunFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
   static BaseFeeMarket zeroBaseFee(final long londonForkBlockNumber) {

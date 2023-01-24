@@ -84,9 +84,6 @@ public abstract class MainnetProtocolSpecs {
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
   public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
 
-  private static final int CANCUN_MIN_DATA_GAS_PRICE = 1;
-  private static final int CANCUN_DATA_GAS_PRICE_UPDATE_FRACTION = 2225652;
-
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
 
@@ -727,11 +724,7 @@ public abstract class MainnetProtocolSpecs {
     final BaseFeeMarket londonFeeMarket =
         genesisConfigOptions.isZeroBaseFee()
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
-            : FeeMarket.cancun(
-                londonForkBlockNumber,
-                genesisConfigOptions.getBaseFeePerGas(),
-                CANCUN_MIN_DATA_GAS_PRICE,
-                CANCUN_DATA_GAS_PRICE_UPDATE_FRACTION);
+            : FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
 
     return shanghaiDefinition(
             chainId,
