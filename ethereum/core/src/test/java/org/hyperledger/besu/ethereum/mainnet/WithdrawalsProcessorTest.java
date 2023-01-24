@@ -106,8 +106,7 @@ class WithdrawalsProcessorTest {
 
   @Test
   void shouldDeleteEmptyAccounts() {
-    final MutableWorldState worldState =
-        createWorldStateWithAccounts(List.of(entry("0x1", 0), entry("0x2", 2)));
+    final MutableWorldState worldState = createWorldStateWithAccounts(List.of(entry("0x1", 0)));
     final WorldUpdater updater = worldState.updater();
 
     final List<Withdrawal> withdrawals =
@@ -118,13 +117,12 @@ class WithdrawalsProcessorTest {
                 UInt64.valueOf(200),
                 UInt64.valueOf(2000),
                 Address.fromHexString("0x2"),
-                GWei.of(200)));
+                GWei.ZERO));
     final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
     withdrawalsProcessor.processWithdrawals(withdrawals, updater);
 
     assertThat(worldState.get(Address.fromHexString("0x1"))).isNull();
-    assertThat(worldState.get(Address.fromHexString("0x2")).getBalance())
-        .isEqualTo(GWei.of(200).getAsWei().add(2));
+    assertThat(worldState.get(Address.fromHexString("0x2"))).isNull();
   }
 
   private MutableWorldState createWorldStateWithAccounts(
