@@ -149,6 +149,6 @@ public interface WorldUpdater extends MutableWorldView {
 
   default void clearAccountsThatAreEmpty() {
     new ArrayList<>(getTouchedAccounts())
-            .stream().filter(Account::isEmpty).forEach(a -> deleteAccount(a.getAddress()));
+        .stream().filter(Account::isEmpty).forEach(a -> deleteAccount(a.getAddress()));
   }
 }
