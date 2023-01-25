@@ -76,6 +76,7 @@ public class JsonTestParameters<S, T> {
      * Add.
      *
      * @param name the name
+     * @param fullPath the full path of the test
      * @param value the value
      * @param runTest the run test
      */
@@ -112,6 +113,7 @@ public class JsonTestParameters<S, T> {
      * Generate.
      *
      * @param name the name
+     * @param fullPath the full path of the test
      * @param mappedType the mapped type
      * @param collector the collector
      */
