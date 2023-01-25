@@ -28,6 +28,7 @@ public class WithdrawalsProcessor {
       final EvmAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
       account.getMutable().incrementBalance(withdrawal.getAmount().getAsWei());
     }
+    worldUpdater.clearAccountsThatAreEmpty();
     worldUpdater.commit();
   }
 }

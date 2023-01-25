@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -40,6 +41,7 @@ public class SnapsyncMetricsManager {
   private static final long PRINT_DELAY = TimeUnit.MINUTES.toMillis(1);
 
   private final MetricsSystem metricsSystem;
+  private final EthContext ethContext;
 
   private final AtomicReference<BigDecimal> percentageDownloaded;
   private final AtomicLong nbAccounts;
@@ -53,8 +55,9 @@ public class SnapsyncMetricsManager {
 
   private long lastNotifyTimestamp;
 
-  public SnapsyncMetricsManager(final MetricsSystem metricsSystem) {
+  public SnapsyncMetricsManager(final MetricsSystem metricsSystem, final EthContext ethContext) {
     this.metricsSystem = metricsSystem;
+    this.ethContext = ethContext;
     percentageDownloaded = new AtomicReference<>(new BigDecimal(0));
     nbAccounts = new AtomicLong(0);
     nbSlots = new AtomicLong(0);
@@ -140,13 +143,19 @@ public class SnapsyncMetricsManager {
     if (now - lastNotifyTimestamp >= PRINT_DELAY) {
       lastNotifyTimestamp = now;
       if (!isHeal) {
-        LOG.info(
-            "Worldstate download in progress synced={}%, accounts={}, slots={}, codes={}, nodes={}",
-            percentageDownloaded.get().setScale(2, RoundingMode.HALF_UP),
+        int peerCount = -1; // ethContext is not available in tests
+        if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
+          peerCount = ethContext.getEthPeers().peerCount();
+        }
+        LOG.debug(
+            "Worldstate download in progress accounts={}, slots={}, codes={}, nodes={}",
             nbAccounts,
             nbSlots,
             nbCodes,
             nbNodesGenerated);
+        LOG.info(
+            "Worldstate download progress: {}%, Peer count: {}",
+            percentageDownloaded.get().setScale(2, RoundingMode.HALF_UP), peerCount);
       } else {
         LOG.info("Healed {} world state nodes", nbNodesHealed.get());
       }
