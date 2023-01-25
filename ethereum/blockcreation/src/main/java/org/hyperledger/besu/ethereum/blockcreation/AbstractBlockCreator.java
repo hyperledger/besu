@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -220,6 +221,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
+      final DataGas newExcessDataGas = computeExcessDataGas(transactionResults, newProtocolSpec);
+
+      throwIfStopped();
+
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
@@ -341,13 +346,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<Bytes32> maybePrevRandao,
       final ProtocolSpec protocolSpec) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    long gasLimit =
-        protocolSpec
-            .getGasLimitCalculator()
-            .nextGasLimit(
-                parentHeader.getGasLimit(),
-                targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
-                newBlockNumber);
+    final GasLimitCalculator gasLimitCalculator = protocolSpec.getGasLimitCalculator();
+
+    final long gasLimit =
+        gasLimitCalculator.nextGasLimit(
+            parentHeader.getGasLimit(),
+            targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
+            newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
