@@ -211,6 +211,17 @@ public class MainnetTransactionValidator {
       }
     }
 
+    if (transaction.getType().supportsBlob()) {
+      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
+            String.format(
+                "total data gas %d exceeds max data gas per block %d",
+                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
+      }
+    }
+
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
@@ -338,14 +349,14 @@ public class MainnetTransactionValidator {
     Transaction.BlobsWithCommitments blobsWithCommitments =
         transaction.getBlobsWithCommitments().get();
 
-    if (blobsWithCommitments.blobs.getElements().size()
-        > MAX_DATA_GAS_PER_BLOCK / DATA_GAS_PER_BLOB) {
+    final long blobsLimit = gasLimitCalculator.currentDataGasLimit() / gasCalculator.dataGasCost(1);
+    if (blobsWithCommitments.blobs.getElements().size() > blobsLimit) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
           "Too many transaction blobs ("
               + blobsWithCommitments.blobs.getElements().size()
               + ") in transaction, max is "
-              + MAX_DATA_GAS_PER_BLOCK / DATA_GAS_PER_BLOB);
+              + blobsLimit);
     }
 
     if (blobsWithCommitments.blobs.getElements().size()
