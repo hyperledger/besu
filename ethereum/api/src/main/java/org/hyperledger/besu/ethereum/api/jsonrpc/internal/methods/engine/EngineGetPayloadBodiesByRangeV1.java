@@ -68,13 +68,13 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
 
     final long latestKnownBlockNumber = blockchain.getChainHeadBlockNumber();
     final long upperBound = startBlockNumber + count;
-    final long finalBlockNumber =
+    final long endExclusiveBlockNumber =
         latestKnownBlockNumber < upperBound ? latestKnownBlockNumber + 1 : upperBound;
 
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(),
         blockResultFactory.payloadBodiesCompleteV1(
-            LongStream.range(startBlockNumber, finalBlockNumber)
+            LongStream.range(startBlockNumber, endExclusiveBlockNumber)
                 .mapToObj(
                     blockNumber ->
                         blockchain
