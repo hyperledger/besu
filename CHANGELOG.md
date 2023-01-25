@@ -12,6 +12,7 @@
 - Improve get account performance by using the world state updater cache [#4897](https://github.com/hyperledger/besu/pull/4897)
 - Add new KZG precompile and option to override the trusted setup being used [#4822](https://github.com/hyperledger/besu/issues/4822)
 - Add implementation for eth_createAccessList RPC method [#4942](https://github.com/hyperledger/besu/pull/4942)
+- Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
 
 ### Bug Fixes
 
