@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
+/** The Transaction pool Cli options. */
 public class TransactionPoolOptions
     implements CLIOptions<ImmutableTransactionPoolConfiguration.Builder> {
   private static final Logger LOG = LoggerFactory.getLogger(Besu.class);
@@ -95,10 +96,21 @@ public class TransactionPoolOptions
 
   private TransactionPoolOptions() {}
 
+  /**
+   * Create transaction pool options.
+   *
+   * @return the transaction pool options
+   */
   public static TransactionPoolOptions create() {
     return new TransactionPoolOptions();
   }
 
+  /**
+   * Create Transaction Pool Options from Transaction Pool Configuration.
+   *
+   * @param config the Transaction Pool Configuration
+   * @return the transaction pool options
+   */
   public static TransactionPoolOptions fromConfig(final TransactionPoolConfiguration config) {
     final TransactionPoolOptions options = TransactionPoolOptions.create();
     options.txMessageKeepAliveSeconds = config.getTxMessageKeepAliveSeconds();

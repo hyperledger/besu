@@ -21,14 +21,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/** The Bft validator overrides. */
 public class BftValidatorOverrides {
 
   private final Map<Long, List<Address>> overriddenValidators;
 
+  /**
+   * Instantiates a new Bft validator overrides.
+   *
+   * @param overriddenValidators the overridden validators
+   */
   public BftValidatorOverrides(final Map<Long, List<Address>> overriddenValidators) {
     this.overriddenValidators = overriddenValidators;
   }
 
+  /**
+   * Gets for block.
+   *
+   * @param blockNumber the block number
+   * @return validators address
+   */
   public Optional<Collection<Address>> getForBlock(final long blockNumber) {
     return Optional.ofNullable(overriddenValidators.get(blockNumber));
   }

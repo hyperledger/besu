@@ -27,14 +27,26 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 
+/** The Round change certificate. */
 public class RoundChangeCertificate {
 
   private final List<SignedData<RoundChangePayload>> roundChangePayloads;
 
+  /**
+   * Instantiates a new Round change certificate.
+   *
+   * @param roundChangePayloads the round change payloads
+   */
   public RoundChangeCertificate(final List<SignedData<RoundChangePayload>> roundChangePayloads) {
     this.roundChangePayloads = roundChangePayloads;
   }
 
+  /**
+   * Read from rlp input and return round change certificate.
+   *
+   * @param rlpInput the rlp input
+   * @return the round change certificate
+   */
   public static RoundChangeCertificate readFrom(final RLPInput rlpInput) {
     final List<SignedData<RoundChangePayload>> roundChangePayloads;
 
@@ -45,26 +57,48 @@ public class RoundChangeCertificate {
     return new RoundChangeCertificate(roundChangePayloads);
   }
 
+  /**
+   * Write to rlp output.
+   *
+   * @param rlpOutput the rlp output
+   */
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
     rlpOutput.writeList(roundChangePayloads, SignedData::writeTo);
     rlpOutput.endList();
   }
 
+  /**
+   * Gets round change payloads.
+   *
+   * @return the round change payloads
+   */
   public Collection<SignedData<RoundChangePayload>> getRoundChangePayloads() {
     return roundChangePayloads;
   }
 
+  /** The Builder. */
   public static class Builder {
 
     private final List<RoundChange> roundChangePayloads = Lists.newArrayList();
 
+    /** Instantiates a new Builder. */
     public Builder() {}
 
+    /**
+     * Append round change message.
+     *
+     * @param msg the msg
+     */
     public void appendRoundChangeMessage(final RoundChange msg) {
       roundChangePayloads.add(msg);
     }
 
+    /**
+     * Build round change certificate.
+     *
+     * @return the round change certificate
+     */
     public RoundChangeCertificate buildCertificate() {
       return new RoundChangeCertificate(
           roundChangePayloads.stream()

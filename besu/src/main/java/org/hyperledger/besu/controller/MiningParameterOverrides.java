@@ -21,6 +21,12 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
  * overrides.
  */
 public interface MiningParameterOverrides {
+  /**
+   * Overrides MiningParameter.
+   *
+   * @param fromCli The mining parameters that contains original values.
+   * @return MiningParameters constructed from provided param with additional overridden parameters.
+   */
   default MiningParameters getMiningParameterOverrides(final MiningParameters fromCli) {
     return fromCli;
   }

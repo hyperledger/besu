@@ -34,7 +34,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBK
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
@@ -77,7 +76,7 @@ public class OperationBenchmarkHelper {
                   .number(i)
                   .difficulty(Difficulty.ONE)
                   .buildHeader(),
-              new BlockBody(emptyList(), emptyList(), Optional.empty())),
+              new BlockBody(emptyList(), emptyList())),
           emptyList());
     }
     final MessageFrame messageFrame =

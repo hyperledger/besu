@@ -21,21 +21,29 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Cached invalid code rule. */
 public class CachedInvalidCodeRule implements ContractValidationRule {
 
   private final int maxEofVersion;
 
+  /**
+   * Instantiates a new Cached invalid code rule.
+   *
+   * @param maxEofVersion the max eof version
+   */
   public CachedInvalidCodeRule(final int maxEofVersion) {
     this.maxEofVersion = maxEofVersion;
   }
 
   @Override
-  public Optional<ExceptionalHaltReason> validate(final Bytes contractCode) {
+  public Optional<ExceptionalHaltReason> validate(
+      final Bytes contractCode, final MessageFrame frame) {
     final Code code =
         CodeFactory.createCode(contractCode, Hash.hash(contractCode), maxEofVersion, false);
     if (!code.isValid()) {
@@ -45,6 +53,12 @@ public class CachedInvalidCodeRule implements ContractValidationRule {
     }
   }
 
+  /**
+   * Instantiate contract validation rule.
+   *
+   * @param specVersion The evm spec version
+   * @return the contract validation rule
+   */
   public static ContractValidationRule of(final EvmSpecVersion specVersion) {
     return new CachedInvalidCodeRule(specVersion.getMaxEofVersion());
   }

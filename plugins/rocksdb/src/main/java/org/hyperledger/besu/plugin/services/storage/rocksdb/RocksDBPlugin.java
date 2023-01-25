@@ -32,6 +32,7 @@ import com.google.common.base.Suppliers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The RocksDb plugin. */
 public class RocksDBPlugin implements BesuPlugin {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBPlugin.class);
@@ -43,10 +44,16 @@ public class RocksDBPlugin implements BesuPlugin {
   private RocksDBKeyValueStorageFactory factory;
   private RocksDBKeyValuePrivacyStorageFactory privacyFactory;
 
+  /** Instantiates a newRocksDb plugin. */
   public RocksDBPlugin() {
     this.options = RocksDBCLIOptions.create();
   }
 
+  /**
+   * Add ignorable segment identifier.
+   *
+   * @param ignorable the ignorable
+   */
   public void addIgnorableSegmentIdentifier(final SegmentIdentifier ignorable) {
     ignorableSegments.add(ignorable);
   }
@@ -101,6 +108,11 @@ public class RocksDBPlugin implements BesuPlugin {
     }
   }
 
+  /**
+   * Is high spec enabled.
+   *
+   * @return the boolean
+   */
   public boolean isHighSpecEnabled() {
     return options.isHighSpec();
   }

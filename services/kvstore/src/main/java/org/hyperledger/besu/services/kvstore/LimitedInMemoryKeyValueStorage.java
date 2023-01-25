@@ -46,6 +46,11 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   private final Cache<Bytes, byte[]> storage;
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
+  /**
+   * Instantiates a new Limited in memory key value storage.
+   *
+   * @param maxSize the max size
+   */
   public LimitedInMemoryKeyValueStorage(final long maxSize) {
     storage = CacheBuilder.newBuilder().maximumSize(maxSize).build();
   }

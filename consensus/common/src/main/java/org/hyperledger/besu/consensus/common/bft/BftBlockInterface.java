@@ -30,10 +30,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The Bft block interface. */
 public class BftBlockInterface implements BlockInterface {
 
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Bft block interface.
+   *
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public BftBlockInterface(final BftExtraDataCodec bftExtraDataCodec) {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
@@ -70,6 +76,14 @@ public class BftBlockInterface implements BlockInterface {
     return bftExtraData.getValidators();
   }
 
+  /**
+   * Replace round in block.
+   *
+   * @param block the block
+   * @param round the round
+   * @param blockHeaderFunctions the block header functions
+   * @return the block
+   */
   public Block replaceRoundInBlock(
       final Block block, final int round, final BlockHeaderFunctions blockHeaderFunctions) {
     final BftExtraData prevExtraData = bftExtraDataCodec.decode(block.getHeader());
@@ -91,10 +105,22 @@ public class BftBlockInterface implements BlockInterface {
     return new Block(newHeader, block.getBody());
   }
 
+  /**
+   * Gets extra data.
+   *
+   * @param header the header
+   * @return the extra data
+   */
   public BftExtraData getExtraData(final BlockHeader header) {
     return bftExtraDataCodec.decode(header);
   }
 
+  /**
+   * Gets committers.
+   *
+   * @param header the header
+   * @return the committers
+   */
   public List<Address> getCommitters(final BlockHeader header) {
     final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
 

@@ -19,8 +19,15 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Create operation. */
 public class CreateOperation extends AbstractCreateOperation {
 
+  /**
+   * Instantiates a new Create operation.
+   *
+   * @param gasCalculator the gas calculator
+   * @param maxInitcodeSize Maximum init code size
+   */
   public CreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
     super(0xF0, "CREATE", 3, 1, gasCalculator, maxInitcodeSize);
   }

@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -716,6 +717,9 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
 
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+
     return shanghaiDefinition(
             chainId,
             configContractSizeLimit,
@@ -729,6 +733,18 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.cancun(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // change contract call creator to accept EOF code
+        .contractCreationProcessorBuilder(
+            (gasCalculator, evm) ->
+                new ContractCreationProcessor(
+                    gasCalculator,
+                    evm,
+                    true,
+                    List.of(
+                        MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .name("Cancun");
   }
 

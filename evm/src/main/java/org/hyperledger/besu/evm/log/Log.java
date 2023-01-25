@@ -36,6 +36,8 @@ public class Log {
   private final ImmutableList<LogTopic> topics;
 
   /**
+   * Instantiates a new Log.
+   *
    * @param logger The address of the contract that produced this log.
    * @param data Data associated with this log.
    * @param topics Indexable topics associated with this log.
@@ -74,14 +76,29 @@ public class Log {
     return new Log(logger, data, topics);
   }
 
+  /**
+   * Gets logger address.
+   *
+   * @return the logger
+   */
   public Address getLogger() {
     return logger;
   }
 
+  /**
+   * Gets data.
+   *
+   * @return the data
+   */
   public Bytes getData() {
     return data;
   }
 
+  /**
+   * Gets topics.
+   *
+   * @return the topics
+   */
   public List<LogTopic> getTopics() {
     return topics;
   }

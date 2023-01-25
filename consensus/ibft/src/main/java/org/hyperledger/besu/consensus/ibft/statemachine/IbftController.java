@@ -31,11 +31,23 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
+/** The Ibft controller. */
 public class IbftController extends BaseBftController {
 
   private BaseIbftBlockHeightManager currentHeightManager;
   private final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory;
 
+  /**
+   * Instantiates a new Ibft controller.
+   *
+   * @param blockchain the blockchain
+   * @param bftFinalState the bft final state
+   * @param ibftBlockHeightManagerFactory the ibft block height manager factory
+   * @param gossiper the gossiper
+   * @param duplicateMessageTracker the duplicate message tracker
+   * @param futureMessageBuffer the future message buffer
+   * @param sychronizerUpdater the sychronizer updater
+   */
   public IbftController(
       final Blockchain blockchain,
       final BftFinalState bftFinalState,

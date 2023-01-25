@@ -23,8 +23,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Revert operation. */
 public class RevertOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Revert operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public RevertOperation(final GasCalculator gasCalculator) {
     super(0xFD, "REVERT", 2, 0, gasCalculator);
   }

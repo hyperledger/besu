@@ -131,18 +131,20 @@ public class EthPeers {
       EthPeer ethPeer = connections.get(id);
       if (ethPeer == null) {
         final Optional<EthPeer> peerInList =
-                notReadyConnections.asMap().values().stream()
-                        .filter(p -> p.getId().equals(id))
-                        .findFirst();
-        ethPeer = peerInList.orElse(new EthPeer(
-                newConnection,
-                protocolName,
-                this::ethPeerStatusExchanged,
-                peerValidators,
-                maxMessageSize,
-                clock,
-                permissioningProviders,
-                localNodeId));
+            notReadyConnections.asMap().values().stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst();
+        ethPeer =
+            peerInList.orElse(
+                new EthPeer(
+                    newConnection,
+                    protocolName,
+                    this::ethPeerStatusExchanged,
+                    peerValidators,
+                    maxMessageSize,
+                    clock,
+                    permissioningProviders,
+                    localNodeId));
       }
       notReadyConnections.put(newConnection, ethPeer);
     }
@@ -195,7 +197,8 @@ public class EthPeers {
 
   public EthPeer peer(final PeerConnection connection) {
     try {
-      return notReadyConnections.get(connection, () ->  connections.get(connection.getPeer().getId()));
+      return notReadyConnections.get(
+          connection, () -> connections.get(connection.getPeer().getId()));
     } catch (final ExecutionException e) {
       throw new RuntimeException(e);
     }
@@ -269,7 +272,8 @@ public class EthPeers {
   }
 
   private void removeDisconnectedPeers() {
-    connections.values()
+    connections
+        .values()
         .forEach(
             ep -> {
               if (ep.isDisconnected()) {
@@ -333,7 +337,8 @@ public class EthPeers {
   }
 
   public boolean shouldConnect(final Peer peer, final boolean incoming) {
-    if ((incoming && peerCount() >= peerUpperBound) || (!incoming && peerCount() >= peerLowerBound)) {
+    if ((incoming && peerCount() >= peerUpperBound)
+        || (!incoming && peerCount() >= peerLowerBound)) {
       return false;
     }
     final Bytes id = peer.getId();
@@ -345,7 +350,7 @@ public class EthPeers {
     if (!notReadyConnections.isEmpty()) {
       // we already have a connection that we have initiated that is getting ready
       if (notReadyConnections.stream()
-              .anyMatch(c -> (c.inboundInitiated() == incoming) && !c.isDisconnected())) {
+          .anyMatch(c -> (c.inboundInitiated() == incoming) && !c.isDisconnected())) {
         return false;
       }
     }

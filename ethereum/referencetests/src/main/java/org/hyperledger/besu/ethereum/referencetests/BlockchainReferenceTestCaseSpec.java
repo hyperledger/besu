@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -39,7 +40,6 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -159,6 +159,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
+        @JsonProperty("excessDataGas") final String excessDataGas,
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
@@ -177,7 +178,8 @@ public class BlockchainReferenceTestCaseSpec {
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
-          // withdrawalsRoot == null ? Hash.EMPTY : Hash.fromHexString(withdrawalsRoot),
+          withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
+          excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -257,8 +259,7 @@ public class BlockchainReferenceTestCaseSpec {
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
-              Optional.empty());
+              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)));
       // input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions),
       // input.isEndOfCurrentList()
       //         ? Optional.empty()

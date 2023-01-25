@@ -16,29 +16,56 @@ package org.hyperledger.besu.evm.internal;
 
 import java.util.Objects;
 
+/** The type Return stack. */
 public class ReturnStack extends FixedStack<ReturnStack.ReturnStackItem> {
 
+  /** The type Return stack item. */
   // Java17 convert to record
   public static final class ReturnStackItem {
 
+    /** The Code section index. */
     final int codeSectionIndex;
+    /** The Pc. */
     final int pc;
+    /** The Stack height. */
     final int stackHeight;
 
+    /**
+     * Instantiates a new Return stack item.
+     *
+     * @param codeSectionIndex the code section index
+     * @param pc the pc
+     * @param stackHeight the stack height
+     */
     public ReturnStackItem(final int codeSectionIndex, final int pc, final int stackHeight) {
       this.codeSectionIndex = codeSectionIndex;
       this.pc = pc;
       this.stackHeight = stackHeight;
     }
 
+    /**
+     * Gets code section index.
+     *
+     * @return the code section index
+     */
     public int getCodeSectionIndex() {
       return codeSectionIndex;
     }
 
+    /**
+     * Gets pc.
+     *
+     * @return the pc
+     */
     public int getPC() {
       return pc;
     }
 
+    /**
+     * Gets stack height.
+     *
+     * @return the stack height
+     */
     public int getStackHeight() {
       return stackHeight;
     }
@@ -77,6 +104,7 @@ public class ReturnStack extends FixedStack<ReturnStack.ReturnStackItem> {
    */
   static final int MAX_RETURN_STACK = 1024;
 
+  /** Instantiates a new Return stack. */
   public ReturnStack() {
     super(MAX_RETURN_STACK, ReturnStackItem.class);
   }

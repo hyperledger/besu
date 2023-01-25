@@ -29,7 +29,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -102,8 +101,7 @@ public final class RawBlockIterator implements Iterator<Block>, Closeable {
       rlp.enterList();
       final BlockHeader header = headerReader.apply(rlp);
       final BlockBody body =
-          new BlockBody(
-              rlp.readList(Transaction::readFrom), rlp.readList(headerReader), Optional.empty());
+          new BlockBody(rlp.readList(Transaction::readFrom), rlp.readList(headerReader));
       next = new Block(header, body);
       readBuffer.position(length);
       readBuffer.compact();

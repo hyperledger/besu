@@ -24,12 +24,20 @@ import java.util.function.DoubleSupplier;
 
 import io.prometheus.client.Collector;
 
+/** The Prometheus gauge. */
 public class PrometheusGauge extends Collector implements LabelledGauge {
   private final String metricName;
   private final String help;
   private final List<String> labelNames;
   private final Map<List<String>, DoubleSupplier> observationsMap = new ConcurrentHashMap<>();
 
+  /**
+   * Instantiates a new Prometheus gauge.
+   *
+   * @param metricName the metric name
+   * @param help the help
+   * @param labelNames the label names
+   */
   public PrometheusGauge(
       final String metricName, final String help, final List<String> labelNames) {
     this.metricName = metricName;

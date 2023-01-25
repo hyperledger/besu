@@ -48,6 +48,7 @@ import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Evm executor. */
 public class EVMExecutor {
 
   private final EVM evm;
@@ -78,10 +79,22 @@ public class EVMExecutor {
     this.evm = evm;
   }
 
+  /**
+   * Instandiate Evm executor.
+   *
+   * @param evm the evm
+   * @return the evm executor
+   */
   public static EVMExecutor evm(final EVM evm) {
     return new EVMExecutor(evm);
   }
 
+  /**
+   * Instantiate Frontier evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor frontier(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.frontier(evmConfiguration));
     executor.precompileContractRegistry =
@@ -92,6 +105,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Homestead evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor homestead(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.homestead(evmConfiguration));
     executor.precompileContractRegistry =
@@ -101,6 +120,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Spurious dragon evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor spuriousDragon(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.spuriousDragon(evmConfiguration));
     executor.precompileContractRegistry =
@@ -109,6 +134,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Tangerine whistle evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor tangerineWhistle(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.tangerineWhistle(evmConfiguration));
     executor.precompileContractRegistry =
@@ -117,6 +148,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Byzantium evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor byzantium(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.byzantium(evmConfiguration));
     executor.precompileContractRegistry =
@@ -125,6 +162,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Constantinople evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor constantinople(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.constantinople(evmConfiguration));
     executor.precompileContractRegistry =
@@ -133,6 +176,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Petersburg evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor petersburg(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.petersburg(evmConfiguration));
     executor.precompileContractRegistry =
@@ -141,6 +190,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Istanbul evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor istanbul(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.istanbul(evmConfiguration));
     executor.precompileContractRegistry =
@@ -149,6 +204,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Berlin evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor berlin(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.berlin(evmConfiguration));
     executor.precompileContractRegistry =
@@ -157,6 +218,12 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate London evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
   public static EVMExecutor london(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.london(evmConfiguration));
     executor.precompileContractRegistry =
@@ -182,6 +249,15 @@ public class EVMExecutor {
                 forceCommitAddresses));
   }
 
+  /**
+   * Execute code.
+   *
+   * @param code the code
+   * @param inputData the input data
+   * @param value the value
+   * @param receiver the receiver
+   * @return the bytes
+   */
   public Bytes execute(
       final Code code, final Bytes inputData, final Wei value, final Address receiver) {
     this.code = code;
@@ -191,6 +267,15 @@ public class EVMExecutor {
     return execute();
   }
 
+  /**
+   * Execute code.
+   *
+   * @param codeBytes the code bytes
+   * @param inputData the input data
+   * @param value the value
+   * @param receiver the receiver
+   * @return the bytes
+   */
   public Bytes execute(
       final Bytes codeBytes, final Bytes inputData, final Wei value, final Address receiver) {
     this.code = evm.getCode(Hash.hash(codeBytes), codeBytes);
@@ -200,6 +285,11 @@ public class EVMExecutor {
     return execute();
   }
 
+  /**
+   * Execute.
+   *
+   * @return the bytes
+   */
   public Bytes execute() {
     final MessageCallProcessor mcp = thisMessageCallProcessor();
     final ContractCreationProcessor ccp = thisContractCreationProcessor();
@@ -243,87 +333,189 @@ public class EVMExecutor {
     return initialMessageFrame.getReturnData();
   }
 
+  /**
+   * MArk Commit world state to true.
+   *
+   * @return the evm executor
+   */
   public EVMExecutor commitWorldState() {
     this.commitWorldState = true;
     return this;
   }
 
+  /**
+   * Sets Commit world state.
+   *
+   * @param commitWorldState the commit world state
+   * @return the evm executor
+   */
   public EVMExecutor commitWorldState(final boolean commitWorldState) {
     this.commitWorldState = commitWorldState;
     return this;
   }
 
+  /**
+   * Sets World updater.
+   *
+   * @param worldUpdater the world updater
+   * @return the evm executor
+   */
   public EVMExecutor worldUpdater(final WorldUpdater worldUpdater) {
     this.worldUpdater = worldUpdater;
     return this;
   }
 
+  /**
+   * Sets Gas.
+   *
+   * @param gas the gas
+   * @return the evm executor
+   */
   public EVMExecutor gas(final long gas) {
     this.gas = gas;
     return this;
   }
 
+  /**
+   * Sets Receiver address.
+   *
+   * @param receiver the receiver
+   * @return the evm executor
+   */
   public EVMExecutor receiver(final Address receiver) {
     this.receiver = receiver;
     return this;
   }
 
+  /**
+   * Sets Sender address.
+   *
+   * @param sender the sender
+   * @return the evm executor
+   */
   public EVMExecutor sender(final Address sender) {
     this.sender = sender;
     return this;
   }
 
+  /**
+   * Sets Gas price GWei.
+   *
+   * @param gasPriceGWei the gas price g wei
+   * @return the evm executor
+   */
   public EVMExecutor gasPriceGWei(final Wei gasPriceGWei) {
     this.gasPriceGWei = gasPriceGWei;
     return this;
   }
 
+  /**
+   * Sets Call data.
+   *
+   * @param callData the call data
+   * @return the evm executor
+   */
   public EVMExecutor callData(final Bytes callData) {
     this.callData = callData;
     return this;
   }
 
+  /**
+   * Sets Eth value.
+   *
+   * @param ethValue the eth value
+   * @return the evm executor
+   */
   public EVMExecutor ethValue(final Wei ethValue) {
     this.ethValue = ethValue;
     return this;
   }
 
+  /**
+   * Sets Code.
+   *
+   * @param code the code
+   * @return the evm executor
+   */
   public EVMExecutor code(final Code code) {
     this.code = code;
     return this;
   }
 
+  /**
+   * Sets Code.
+   *
+   * @param codeBytes the code bytes
+   * @param hash the hash
+   * @return the evm executor
+   */
   public EVMExecutor code(final Bytes codeBytes, final Hash hash) {
     this.code = evm.getCode(hash, codeBytes);
     return this;
   }
 
+  /**
+   * Sets Block values.
+   *
+   * @param blockValues the block values
+   * @return the evm executor
+   */
   public EVMExecutor blockValues(final BlockValues blockValues) {
     this.blockValues = blockValues;
     return this;
   }
 
+  /**
+   * Sets Operation Tracer.
+   *
+   * @param tracer the tracer
+   * @return the evm executor
+   */
   public EVMExecutor tracer(final OperationTracer tracer) {
     this.tracer = tracer;
     return this;
   }
 
+  /**
+   * Sets Precompile contract registry.
+   *
+   * @param precompileContractRegistry the precompile contract registry
+   * @return the evm executor
+   */
   public EVMExecutor precompileContractRegistry(
       final PrecompileContractRegistry precompileContractRegistry) {
     this.precompileContractRegistry = precompileContractRegistry;
     return this;
   }
 
+  /**
+   * Sets Require deposit.
+   *
+   * @param requireDeposit the require deposit
+   * @return the evm executor
+   */
   public EVMExecutor requireDeposit(final boolean requireDeposit) {
     this.requireDeposit = requireDeposit;
     return this;
   }
 
+  /**
+   * Sets Initial nonce.
+   *
+   * @param initialNonce the initial nonce
+   * @return the evm executor
+   */
   public EVMExecutor initialNonce(final long initialNonce) {
     this.initialNonce = initialNonce;
     return this;
   }
 
+  /**
+   * Sets Contract validation rules.
+   *
+   * @param contractValidationRules the contract validation rules
+   * @return the evm executor
+   */
   public EVMExecutor contractValidationRules(
       final List<ContractValidationRule> contractValidationRules) {
     this.contractValidationRules = contractValidationRules;
@@ -334,41 +526,78 @@ public class EVMExecutor {
    * List of EIP-718 contracts that require special delete handling. By default, this is only the
    * RIPEMD precompile contract.
    *
-   * @see <a
-   *     href="https://github.com/ethereum/EIPs/issues/716">https://github.com/ethereum/EIPs/issues/716</a>
    * @param forceCommitAddresses collection of addresses for special handling
    * @return fluent executor
+   * @see <a
+   *     href="https://github.com/ethereum/EIPs/issues/716">https://github.com/ethereum/EIPs/issues/716</a>
    */
   public EVMExecutor forceCommitAddresses(final Collection<Address> forceCommitAddresses) {
     this.forceCommitAddresses = forceCommitAddresses;
     return this;
   }
 
+  /**
+   * Sets Access list warm addresses.
+   *
+   * @param accessListWarmAddresses the access list warm addresses
+   * @return the evm executor
+   */
   public EVMExecutor accessListWarmAddresses(final Set<Address> accessListWarmAddresses) {
     this.accessListWarmAddresses = accessListWarmAddresses;
     return this;
   }
 
+  /**
+   * Sets Warm addresses.
+   *
+   * @param addresses the addresses
+   * @return the evm executor
+   */
   public EVMExecutor warmAddress(final Address... addresses) {
     this.accessListWarmAddresses.addAll(List.of(addresses));
     return this;
   }
 
+  /**
+   * Sets Access list warm storage map.
+   *
+   * @param accessListWarmStorage the access list warm storage
+   * @return the evm executor
+   */
   public EVMExecutor accessListWarmStorage(final Multimap<Address, Bytes32> accessListWarmStorage) {
     this.accessListWarmStorage = accessListWarmStorage;
     return this;
   }
 
+  /**
+   * Sets Access list warm storage.
+   *
+   * @param address the address
+   * @param slots the slots
+   * @return the evm executor
+   */
   public EVMExecutor accessListWarmStorage(final Address address, final Bytes32... slots) {
     this.accessListWarmStorage.putAll(address, List.of(slots));
     return this;
   }
 
+  /**
+   * Sets Message call processor.
+   *
+   * @param messageCallProcessor the message call processor
+   * @return the evm executor
+   */
   public EVMExecutor messageCallProcessor(final MessageCallProcessor messageCallProcessor) {
     this.messageCallProcessor = messageCallProcessor;
     return this;
   }
 
+  /**
+   * Sets Contract call processor.
+   *
+   * @param contractCreationProcessor the contract creation processor
+   * @return the evm executor
+   */
   public EVMExecutor contractCallProcessor(
       final ContractCreationProcessor contractCreationProcessor) {
     this.contractCreationProcessor = contractCreationProcessor;

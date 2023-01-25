@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>It does this by extracting the previous block's proposer from the ProposerSeal (stored in the
  * Blocks ExtraData) then iterating through the validator list (stored in {@link
- * ValidatorProvider}), such that each new round for the given height is serviced by a different
+ * ValidatorProvider}*), such that each new round for the given height is serviced by a different
  * validator.
  */
 public class ProposerSelector {
@@ -58,6 +58,14 @@ public class ProposerSelector {
 
   private final BlockInterface blockInterface;
 
+  /**
+   * Instantiates a new Proposer selector.
+   *
+   * @param blockchain the blockchain
+   * @param blockInterface the block interface
+   * @param changeEachBlock the change each block
+   * @param validatorProvider the validator provider
+   */
   public ProposerSelector(
       final Blockchain blockchain,
       final BlockInterface blockInterface,

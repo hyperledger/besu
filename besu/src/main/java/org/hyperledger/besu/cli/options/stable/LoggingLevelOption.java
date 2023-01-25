@@ -21,17 +21,30 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
+/** The Logging level CLI option. */
 public class LoggingLevelOption {
 
+  /**
+   * Create logging level option.
+   *
+   * @return the logging level option
+   */
   public static LoggingLevelOption create() {
     return new LoggingLevelOption();
   }
 
   private static final Set<String> ACCEPTED_VALUES =
       Set.of("OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
+  /** The Picocli CommandSpec. Visible for testing. Injected by Picocli framework at runtime. */
   @Spec CommandSpec spec;
+
   private Level logLevel;
 
+  /**
+   * Sets log level.
+   *
+   * @param logLevel the log level
+   */
   @CommandLine.Option(
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
@@ -48,6 +61,11 @@ public class LoggingLevelOption {
     }
   }
 
+  /**
+   * Gets log level.
+   *
+   * @return the log level
+   */
   public Level getLogLevel() {
     return logLevel;
   }

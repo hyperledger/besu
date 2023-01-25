@@ -29,10 +29,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Abstract BLS12 precompiled contract. */
 public abstract class AbstractBLS12PrecompiledContract implements PrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBLS12PrecompiledContract.class);
 
+  /** The Discount table. */
   static final int[] DISCOUNT_TABLE =
       new int[] {
         -1, 1_200, 888, 764, 641, 594, 547, 500, 453, 438, 423, 408, 394, 379, 364, 349,
@@ -46,12 +48,20 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
         174
       };
 
+  /** The Max discount. */
   static final int MAX_DISCOUNT = 174;
 
   private final String name;
   private final byte operationId;
   private final int inputLen;
 
+  /**
+   * Instantiates a new Abstract BLS12 precompiled contract.
+   *
+   * @param name the name
+   * @param operationId the operation id
+   * @param inputLen the input len
+   */
   AbstractBLS12PrecompiledContract(final String name, final byte operationId, final int inputLen) {
     this.name = name;
     this.operationId = operationId;
@@ -95,6 +105,12 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     }
   }
 
+  /**
+   * Gets discount.
+   *
+   * @param k the k
+   * @return the discount
+   */
   protected int getDiscount(final int k) {
     // `k * multiplication_cost * discount / multiplier` where `multiplier = 1000`
     // multiplication_cost and multiplier are folded into one constant as a long and placed first to

@@ -32,9 +32,20 @@ public class WithdrawalParameterTest {
     Withdrawal expected =
         new Withdrawal(
             UInt64.fromHexString("0x0"),
-            UInt64.fromHexString("0xFFFF"),
+            UInt64.fromHexString("0xffff"),
             Address.fromHexString("0x0000000000000000000000000000000000000000"),
             GWei.of(0L));
     assertThat(WITHDRAWAL_PARAM_1.toWithdrawal()).isEqualTo(expected);
+  }
+
+  @Test
+  public void fromWithdrawal() {
+    Withdrawal withdrawal =
+        new Withdrawal(
+            UInt64.fromHexString("0x0"),
+            UInt64.fromHexString("0xffff"),
+            Address.fromHexString("0x0000000000000000000000000000000000000000"),
+            GWei.of(0L));
+    assertThat(WithdrawalParameter.fromWithdrawal(withdrawal)).isEqualTo(WITHDRAWAL_PARAM_1);
   }
 }

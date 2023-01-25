@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 
+/** The Message validator factory. */
 public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
@@ -36,6 +37,14 @@ public class MessageValidatorFactory {
   private final ProtocolContext protocolContext;
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Message validator factory.
+   *
+   * @param proposerSelector the proposer selector
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
       final ProtocolSchedule protocolSchedule,
@@ -54,6 +63,13 @@ public class MessageValidatorFactory {
         .getValidatorsAfterBlock(parentHeader);
   }
 
+  /**
+   * Create round change message validator.
+   *
+   * @param chainHeight the chain height
+   * @param parentHeader the parent header
+   * @return the round change message validator
+   */
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
 
@@ -74,6 +90,13 @@ public class MessageValidatorFactory {
         protocolContext);
   }
 
+  /**
+   * Create message validator.
+   *
+   * @param roundIdentifier the round identifier
+   * @param parentHeader the parent header
+   * @return the message validator
+   */
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
 
@@ -100,6 +123,13 @@ public class MessageValidatorFactory {
         proposalValidator);
   }
 
+  /**
+   * Create future round proposal message validator.
+   *
+   * @param chainHeight the chain height
+   * @param parentHeader the parent header
+   * @return the future round proposal message validator
+   */
   public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
     return new FutureRoundProposalMessageValidator(this, chainHeight, parentHeader);

@@ -55,6 +55,7 @@ public enum RpcMethod {
   ENGINE_FORKCHOICE_UPDATED_V1("engine_forkchoiceUpdatedV1"),
   ENGINE_FORKCHOICE_UPDATED_V2("engine_forkchoiceUpdatedV2"),
   ENGINE_EXCHANGE_TRANSITION_CONFIGURATION("engine_exchangeTransitionConfigurationV1"),
+  ENGINE_EXCHANGE_CAPABILITIES("engine_exchangeCapabilities"),
 
   GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),
   GOQUORUM_STORE_RAW("goquorum_storeRaw"),
@@ -86,6 +87,7 @@ public enum RpcMethod {
   ETH_CHAIN_ID("eth_chainId"),
   ETH_COINBASE("eth_coinbase"),
   ETH_ESTIMATE_GAS("eth_estimateGas"),
+  ETH_CREATE_ACCESS_LIST("eth_createAccessList"),
   ETH_FEE_HISTORY("eth_feeHistory"),
   ETH_GAS_PRICE("eth_gasPrice"),
   ETH_GET_BALANCE("eth_getBalance"),

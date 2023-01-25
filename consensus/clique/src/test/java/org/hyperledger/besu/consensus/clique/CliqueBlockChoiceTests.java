@@ -37,13 +37,12 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueBlockChoiceTests {
   private List<KeyPair> keyPairs;
@@ -55,11 +54,10 @@ public class CliqueBlockChoiceTests {
   private Block createEmptyBlock(final KeyPair blockSigner) {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerBuilder, blockSigner, addresses);
-    return new Block(
-        header, new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Optional.empty()));
+    return new Block(header, new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     keyPairs =
         IntStream.range(0, 8)

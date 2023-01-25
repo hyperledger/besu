@@ -23,8 +23,14 @@ import java.io.IOException;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Rlp block exporter. */
 public class RlpBlockExporter extends BlockExporter {
 
+  /**
+   * Instantiates a new Rlp block exporter.
+   *
+   * @param blockchain the blockchain
+   */
   public RlpBlockExporter(final Blockchain blockchain) {
     super(blockchain);
   }

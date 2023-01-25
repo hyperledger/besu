@@ -44,6 +44,11 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
   private final RocksDBKeyValueStorageFactory publicFactory;
   private Integer databaseVersion;
 
+  /**
+   * Instantiates a new RocksDb key value privacy storage factory.
+   *
+   * @param publicFactory the public factory
+   */
   public RocksDBKeyValuePrivacyStorageFactory(final RocksDBKeyValueStorageFactory publicFactory) {
     this.publicFactory = publicFactory;
   }

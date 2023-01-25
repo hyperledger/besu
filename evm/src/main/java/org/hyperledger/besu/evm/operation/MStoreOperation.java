@@ -23,8 +23,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The M store operation. */
 public class MStoreOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new M store operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public MStoreOperation(final GasCalculator gasCalculator) {
     super(0x52, "MSTORE", 2, 0, gasCalculator);
   }

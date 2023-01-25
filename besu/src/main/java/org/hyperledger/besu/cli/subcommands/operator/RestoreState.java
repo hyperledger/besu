@@ -56,6 +56,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
+/** The Restore state subcommand. */
 @Command(
     name = "x-restore-state",
     description = "Restores the chain from a previously generated backup-state.",

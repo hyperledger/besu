@@ -68,8 +68,7 @@ public class RewardTraceGeneratorTest {
 
   @Before
   public void setUp() {
-    final BlockBody blockBody =
-        new BlockBody(Collections.emptyList(), List.of(ommerHeader), Optional.empty());
+    final BlockBody blockBody = new BlockBody(Collections.emptyList(), List.of(ommerHeader));
     final BlockHeader blockHeader =
         gen.header(0x0A, blockBody, new BlockDataGenerator.BlockOptions());
     block = new Block(blockHeader, blockBody);

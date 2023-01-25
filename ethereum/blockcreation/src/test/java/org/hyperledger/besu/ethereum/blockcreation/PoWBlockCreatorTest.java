@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTrans
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
@@ -54,7 +55,7 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
+class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
   private final Address BLOCK_1_COINBASE =
       Address.fromHexString("0x05a56e2d52c817161883f50c441c3228cfe54d9f");
@@ -68,7 +69,7 @@ public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
-  public void createMainnetBlock1() throws IOException {
+  void createMainnetBlock1() throws IOException {
     final GenesisConfigOptions genesisConfigOptions = GenesisConfigFile.DEFAULT.getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
@@ -104,7 +105,7 @@ public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
-            () -> Optional.empty(),
+            Optional::empty,
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
@@ -115,20 +116,20 @@ public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     // A Hashrate should not exist in the block creator prior to creating a block
-    assertThat(blockCreator.getHashesPerSecond().isPresent()).isFalse();
+    assertThat(blockCreator.getHashesPerSecond()).isNotPresent();
 
     final BlockCreationResult blockResult = blockCreator.createBlock(BLOCK_1_TIMESTAMP);
     final Block actualBlock = blockResult.getBlock();
     final Block expectedBlock = ValidationTestUtils.readBlock(1);
 
     assertThat(actualBlock).isEqualTo(expectedBlock);
-    assertThat(blockCreator.getHashesPerSecond().isPresent()).isTrue();
+    assertThat(blockCreator.getHashesPerSecond()).isPresent();
     assertThat(blockResult.getTransactionSelectionResults())
         .isEqualTo(new TransactionSelectionResults());
   }
 
   @Test
-  public void createMainnetBlock1_fixedDifficulty1() {
+  void createMainnetBlock1_fixedDifficulty1() {
     final GenesisConfigOptions genesisConfigOptions =
         GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
             .getConfigOptions();
@@ -166,7 +167,7 @@ public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
-            () -> Optional.empty(),
+            Optional::empty,
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
@@ -176,29 +177,28 @@ public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
-    blockCreator.createBlock(BLOCK_1_TIMESTAMP);
+    assertThat(blockCreator.createBlock(BLOCK_1_TIMESTAMP)).isNotNull();
     // If we weren't setting difficulty to 2^256-1 a difficulty of 1 would have caused a
     // IllegalArgumentException at the previous line, as 2^256 is 33 bytes.
   }
 
   @Test
-  public void rewardBeneficiary_zeroReward_skipZeroRewardsFalse() {
+  void rewardBeneficiary_zeroReward_skipZeroRewardsFalse() {
     final GenesisConfigOptions genesisConfigOptions =
         GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
             .getConfigOptions();
+    ProtocolSchedule protocolSchedule =
+        new ProtocolScheduleBuilder(
+                genesisConfigOptions,
+                BigInteger.valueOf(42),
+                ProtocolSpecAdapters.create(0, Function.identity()),
+                PrivacyParameters.DEFAULT,
+                false,
+                genesisConfigOptions.isQuorum(),
+                EvmConfiguration.DEFAULT)
+            .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder()
-            .protocolSchedule(
-                new ProtocolScheduleBuilder(
-                        genesisConfigOptions,
-                        BigInteger.valueOf(42),
-                        ProtocolSpecAdapters.create(0, Function.identity()),
-                        PrivacyParameters.DEFAULT,
-                        false,
-                        genesisConfigOptions.isQuorum(),
-                        EvmConfiguration.DEFAULT)
-                    .createProtocolSchedule())
-            .build();
+        ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
 
     final PoWSolver solver =
         new PoWSolver(
@@ -245,30 +245,35 @@ public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             .buildProcessableBlockHeader();
 
     blockCreator.rewardBeneficiary(
-        mutableWorldState, header, Collections.emptyList(), BLOCK_1_COINBASE, Wei.ZERO, false);
+        mutableWorldState,
+        header,
+        Collections.emptyList(),
+        BLOCK_1_COINBASE,
+        Wei.ZERO,
+        false,
+        protocolSchedule.getByBlockHeader(header));
 
     assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNotNull();
     assertThat(mutableWorldState.get(BLOCK_1_COINBASE).getBalance()).isEqualTo(Wei.ZERO);
   }
 
   @Test
-  public void rewardBeneficiary_zeroReward_skipZeroRewardsTrue() {
+  void rewardBeneficiary_zeroReward_skipZeroRewardsTrue() {
     final GenesisConfigOptions genesisConfigOptions =
         GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
             .getConfigOptions();
+    ProtocolSchedule protocolSchedule =
+        new ProtocolScheduleBuilder(
+                genesisConfigOptions,
+                BigInteger.valueOf(42),
+                ProtocolSpecAdapters.create(0, Function.identity()),
+                PrivacyParameters.DEFAULT,
+                false,
+                genesisConfigOptions.isQuorum(),
+                EvmConfiguration.DEFAULT)
+            .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder()
-            .protocolSchedule(
-                new ProtocolScheduleBuilder(
-                        genesisConfigOptions,
-                        BigInteger.valueOf(42),
-                        ProtocolSpecAdapters.create(0, Function.identity()),
-                        PrivacyParameters.DEFAULT,
-                        false,
-                        genesisConfigOptions.isQuorum(),
-                        EvmConfiguration.DEFAULT)
-                    .createProtocolSchedule())
-            .build();
+        ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
 
     final PoWSolver solver =
         new PoWSolver(
@@ -315,7 +320,13 @@ public class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             .buildProcessableBlockHeader();
 
     blockCreator.rewardBeneficiary(
-        mutableWorldState, header, Collections.emptyList(), BLOCK_1_COINBASE, Wei.ZERO, true);
+        mutableWorldState,
+        header,
+        Collections.emptyList(),
+        BLOCK_1_COINBASE,
+        Wei.ZERO,
+        true,
+        protocolSchedule.getByBlockHeader(header));
 
     assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNull();
   }

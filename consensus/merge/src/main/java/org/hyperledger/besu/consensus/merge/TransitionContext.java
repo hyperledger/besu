@@ -24,10 +24,19 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
 
+/** The Transition context. */
 public class TransitionContext implements MergeContext {
+  /** The Pre merge context. */
   final ConsensusContext preMergeContext;
+  /** The Post merge context. */
   final MergeContext postMergeContext;
 
+  /**
+   * Instantiates a new Transition context.
+   *
+   * @param preMergeContext the pre merge context
+   * @param postMergeContext the post merge context
+   */
   public TransitionContext(
       final ConsensusContext preMergeContext, final MergeContext postMergeContext) {
     this.preMergeContext = preMergeContext;

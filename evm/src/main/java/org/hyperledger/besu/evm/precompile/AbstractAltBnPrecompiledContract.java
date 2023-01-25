@@ -30,10 +30,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Abstract AltBn precompiled contract. */
 public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractAltBnPrecompiledContract.class);
 
+  /** The constant useNative. */
   // use the native library implementation, if it is available
   static boolean useNative;
 
@@ -46,10 +48,16 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
     }
   }
 
+  /** Disable native. */
   public static void disableNative() {
     useNative = false;
   }
 
+  /**
+   * Is native boolean.
+   *
+   * @return the boolean
+   */
   public static boolean isNative() {
     return useNative;
   }
@@ -57,6 +65,14 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
   private final byte operationId;
   private final int inputLen;
 
+  /**
+   * Instantiates a new Abstract alt bn precompiled contract.
+   *
+   * @param name the name
+   * @param gasCalculator the gas calculator
+   * @param operationId the operation id
+   * @param inputLen the input len
+   */
   AbstractAltBnPrecompiledContract(
       final String name,
       final GasCalculator gasCalculator,
@@ -71,6 +87,13 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
     }
   }
 
+  /**
+   * Compute native precompile contract result.
+   *
+   * @param input the input
+   * @param messageFrame the message frame
+   * @return the precompile contract result
+   */
   @Nonnull
   public PrecompileContractResult computeNative(
       final @Nonnull Bytes input, final MessageFrame messageFrame) {

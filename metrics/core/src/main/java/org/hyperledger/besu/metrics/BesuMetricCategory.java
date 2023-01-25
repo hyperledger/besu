@@ -22,24 +22,41 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
+/** The enum Besu metric category. */
 public enum BesuMetricCategory implements MetricCategory {
+  /** Blockchain besu metric category. */
   BLOCKCHAIN("blockchain"),
+  /** Ethereum besu metric category. */
   ETHEREUM("ethereum", false),
+  /** Executors besu metric category. */
   EXECUTORS("executors"),
+  /** Network besu metric category. */
   NETWORK("network"),
+  /** Peers besu metric category. */
   PEERS("peers"),
+  /** Permissioning besu metric category. */
   PERMISSIONING("permissioning"),
+  /** Kvstore rocksdb besu metric category. */
   KVSTORE_ROCKSDB("rocksdb"),
+  /** Kvstore private rocksdb besu metric category. */
   KVSTORE_PRIVATE_ROCKSDB("private_rocksdb"),
+  /** Kvstore rocksdb stats besu metric category. */
   KVSTORE_ROCKSDB_STATS("rocksdb", false),
+  /** Kvstore private rocksdb stats besu metric category. */
   KVSTORE_PRIVATE_ROCKSDB_STATS("private_rocksdb", false),
+  /** Pruner besu metric category. */
   PRUNER("pruner"),
+  /** Rpc besu metric category. */
   RPC("rpc"),
+  /** Synchronizer besu metric category. */
   SYNCHRONIZER("synchronizer"),
+  /** Transaction pool besu metric category. */
   TRANSACTION_POOL("transaction_pool"),
+  /** Stratum besu metric category. */
   STRATUM("stratum");
 
   private static final Optional<String> BESU_PREFIX = Optional.of("besu_");
+  /** The constant DEFAULT_METRIC_CATEGORIES. */
   public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES;
 
   static {

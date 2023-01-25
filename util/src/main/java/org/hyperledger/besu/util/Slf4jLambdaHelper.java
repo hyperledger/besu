@@ -27,6 +27,13 @@ public class Slf4jLambdaHelper {
 
   private Slf4jLambdaHelper() {}
 
+  /**
+   * Warn lambda.
+   *
+   * @param log the log
+   * @param message the message
+   * @param params the params
+   */
   public static void warnLambda(
       final Logger log, final String message, final Supplier<?>... params) {
     if (log.isWarnEnabled()) {
@@ -34,6 +41,13 @@ public class Slf4jLambdaHelper {
     }
   }
 
+  /**
+   * Info lambda.
+   *
+   * @param log the log
+   * @param message the message
+   * @param params the params
+   */
   public static void infoLambda(
       final Logger log, final String message, final Supplier<?>... params) {
     if (log.isInfoEnabled()) {
@@ -41,6 +55,13 @@ public class Slf4jLambdaHelper {
     }
   }
 
+  /**
+   * Debug lambda.
+   *
+   * @param log the log
+   * @param message the message
+   * @param params the params
+   */
   public static void debugLambda(
       final Logger log, final String message, final Supplier<?>... params) {
     if (log.isDebugEnabled()) {
@@ -48,6 +69,13 @@ public class Slf4jLambdaHelper {
     }
   }
 
+  /**
+   * Trace lambda.
+   *
+   * @param log the log
+   * @param message the message
+   * @param params the params
+   */
   public static void traceLambda(
       final Logger log, final String message, final Supplier<?>... params) {
     if (log.isTraceEnabled()) {

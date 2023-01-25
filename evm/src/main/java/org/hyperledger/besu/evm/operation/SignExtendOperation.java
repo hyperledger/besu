@@ -21,10 +21,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Sign extend operation. */
 public class SignExtendOperation extends AbstractFixedCostOperation {
 
   private static final OperationResult signExtendSuccess = new OperationResult(5, null);
 
+  /**
+   * Instantiates a new Sign extend operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public SignExtendOperation(final GasCalculator gasCalculator) {
     super(0x0B, "SIGNEXTEND", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
@@ -35,6 +41,12 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs Sign Extend operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());

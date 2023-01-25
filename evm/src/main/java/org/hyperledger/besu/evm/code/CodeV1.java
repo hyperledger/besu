@@ -25,11 +25,18 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The CodeV1. */
 public class CodeV1 implements Code {
 
   private final Hash codeHash;
   EOFLayout eofLayout;
 
+  /**
+   * Instantiates a new CodeV1.
+   *
+   * @param codeHash the code hash
+   * @param layout the layout
+   */
   CodeV1(final Hash codeHash, final EOFLayout layout) {
     this.codeHash = codeHash;
     this.eofLayout = layout;
@@ -70,6 +77,11 @@ public class CodeV1 implements Code {
   @Override
   public boolean isValid() {
     return true;
+  }
+
+  @Override
+  public int getEofVersion() {
+    return eofLayout.getVersion();
   }
 
   @Override

@@ -102,6 +102,7 @@ public class BesuControllerBuilderTest {
     when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
+    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
     when(genesisConfigOptions.getEthashConfigOptions()).thenReturn(ethashConfigOptions);
     when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);

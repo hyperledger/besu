@@ -24,20 +24,44 @@ public class Fq2 extends AbstractFqp<Fq2> {
 
   private static final int DEGREE = 2;
 
+  /**
+   * Zero fq2.
+   *
+   * @return the fq2
+   */
   static final Fq2 zero() {
     return new Fq2(new Fq[] {Fq.zero(), Fq.zero()});
   }
 
+  /**
+   * One fq2.
+   *
+   * @return the fq2
+   */
   static final Fq2 one() {
     return new Fq2(new Fq[] {Fq.one(), Fq.zero()});
   }
 
   private static final Fq[] MODULUS_COEFFICIENTS = new Fq[] {Fq.create(1), Fq.create(0)};
 
+  /**
+   * Create fq2.
+   *
+   * @param c0 the c0
+   * @param c1 the c1
+   * @return the fq2
+   */
   public static final Fq2 create(final long c0, final long c1) {
     return create(BigInteger.valueOf(c0), BigInteger.valueOf((c1)));
   }
 
+  /**
+   * Create fq2.
+   *
+   * @param c0 the c0
+   * @param c1 the c1
+   * @return the fq2
+   */
   public static final Fq2 create(final BigInteger c0, final BigInteger c1) {
     return new Fq2(Fq.create(c0), Fq.create(c1));
   }
@@ -46,6 +70,11 @@ public class Fq2 extends AbstractFqp<Fq2> {
     super(DEGREE, MODULUS_COEFFICIENTS, coefficients);
   }
 
+  /**
+   * b2 Fq2.
+   *
+   * @return the Fq2
+   */
   public static Fq2 b2() {
     final Fq2 numerator = create(3, 0);
     final Fq2 denominator = create(9, 1);

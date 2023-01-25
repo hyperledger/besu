@@ -18,8 +18,14 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Prev randao operation. */
 public class PrevRanDaoOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Prev randao operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public PrevRanDaoOperation(final GasCalculator gasCalculator) {
     super(0x44, "PREVRANDAO", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }

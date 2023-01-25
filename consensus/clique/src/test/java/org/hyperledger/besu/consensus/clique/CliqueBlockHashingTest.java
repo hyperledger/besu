@@ -27,8 +27,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueBlockHashingTest {
 
@@ -43,7 +43,7 @@ public class CliqueBlockHashingTest {
   private static final Hash KNOWN_BLOCK_HASH =
       Hash.fromHexString("0x8b27a29300811af926039b90288d3d384dcb55931049c17c4f762e45c116776e");
 
-  @Before
+  @BeforeEach
   public void setup() {
     expectedHeader = createKnownHeaderFromCapturedData();
   }

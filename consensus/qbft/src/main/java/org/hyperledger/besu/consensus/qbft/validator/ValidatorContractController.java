@@ -32,12 +32,21 @@ import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 
+/** The Validator contract controller. */
 public class ValidatorContractController {
+  /** The constant GET_VALIDATORS. */
   public static final String GET_VALIDATORS = "getValidators";
+  /** The constant CONTRACT_ERROR_MSG. */
   public static final String CONTRACT_ERROR_MSG = "Failed validator smart contract call";
+
   private final TransactionSimulator transactionSimulator;
   private final Function getValidatorsFunction;
 
+  /**
+   * Instantiates a new Validator contract controller.
+   *
+   * @param transactionSimulator the transaction simulator
+   */
   public ValidatorContractController(final TransactionSimulator transactionSimulator) {
     this.transactionSimulator = transactionSimulator;
 
@@ -52,6 +61,13 @@ public class ValidatorContractController {
     }
   }
 
+  /**
+   * Gets validators.
+   *
+   * @param blockNumber the block number
+   * @param contractAddress the contract address
+   * @return the validators
+   */
   public Collection<Address> getValidators(final long blockNumber, final Address contractAddress) {
     return callFunction(blockNumber, getValidatorsFunction, contractAddress)
         .map(this::parseGetValidatorsResult)

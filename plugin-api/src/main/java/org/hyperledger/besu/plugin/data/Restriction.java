@@ -18,9 +18,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The enum Restriction. */
 public enum Restriction {
+  /** Restricted restriction. */
   RESTRICTED(Bytes.wrap("restricted".getBytes(UTF_8))),
+  /** Unrestricted restriction. */
   UNRESTRICTED(Bytes.wrap("unrestricted".getBytes(UTF_8))),
+  /** Unsupported restriction. */
   UNSUPPORTED(Bytes.EMPTY);
 
   private final Bytes bytes;
@@ -29,6 +33,11 @@ public enum Restriction {
     this.bytes = bytes;
   }
 
+  /**
+   * Gets bytes.
+   *
+   * @return the bytes
+   */
   public Bytes getBytes() {
     return bytes;
   }

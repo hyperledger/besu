@@ -27,13 +27,27 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The Transition utils.
+ *
+ * @param <SwitchingObject> the type parameter
+ */
 public class TransitionUtils<SwitchingObject> {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionUtils.class);
 
+  /** The Merge context. */
   protected final MergeContext mergeContext;
+
   private final SwitchingObject preMergeObject;
   private final SwitchingObject postMergeObject;
 
+  /**
+   * Instantiates a new Transition utils.
+   *
+   * @param preMergeObject the pre merge object
+   * @param postMergeObject the post merge object
+   * @param mergeContext the merge context
+   */
   public TransitionUtils(
       final SwitchingObject preMergeObject,
       final SwitchingObject postMergeObject,
@@ -43,23 +57,52 @@ public class TransitionUtils<SwitchingObject> {
     this.mergeContext = mergeContext;
   }
 
+  /**
+   * Dispatch consumer according to merge state.
+   *
+   * @param consumer the consumer
+   */
   protected void dispatchConsumerAccordingToMergeState(final Consumer<SwitchingObject> consumer) {
     consumer.accept(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 
+  /**
+   * Dispatch function according to merge state t.
+   *
+   * @param <T> the type parameter
+   * @param function the function
+   * @return the t
+   */
   protected <T> T dispatchFunctionAccordingToMergeState(
       final Function<SwitchingObject, T> function) {
     return function.apply(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 
+  /**
+   * Gets pre merge object.
+   *
+   * @return the pre merge object
+   */
   public SwitchingObject getPreMergeObject() {
     return preMergeObject;
   }
 
+  /**
+   * Gets post merge object.
+   *
+   * @return the post merge object
+   */
   SwitchingObject getPostMergeObject() {
     return postMergeObject;
   }
 
+  /**
+   * Is terminal proof of work block boolean.
+   *
+   * @param header the header
+   * @param context the context
+   * @return the boolean
+   */
   public static boolean isTerminalProofOfWorkBlock(
       final ProcessableBlockHeader header, final ProtocolContext context) {
 

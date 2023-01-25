@@ -21,13 +21,38 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Collection;
 import java.util.Optional;
 
+/** The interface Block interface. */
 public interface BlockInterface {
 
+  /**
+   * Gets proposer of block.
+   *
+   * @param header the header
+   * @return the proposer of block
+   */
   Address getProposerOfBlock(final org.hyperledger.besu.ethereum.core.BlockHeader header);
 
+  /**
+   * Gets proposer of block.
+   *
+   * @param header the header
+   * @return the proposer of block
+   */
   Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header);
 
+  /**
+   * Extract vote from header optional.
+   *
+   * @param header the header
+   * @return the optional
+   */
   Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header);
 
+  /**
+   * Validators in block collection.
+   *
+   * @param header the header
+   * @return the collection
+   */
   Collection<Address> validatorsInBlock(final BlockHeader header);
 }

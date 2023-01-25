@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -65,29 +65,50 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Merge coordinator. */
 public class MergeCoordinator implements MergeMiningCoordinator, BadChainListener {
   private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinator.class);
 
+  /** The Target gas limit. */
   protected final AtomicLong targetGasLimit;
+  /** The Mining parameters. */
   protected final MiningParameters miningParameters;
+  /** The Merge block creator factory. */
   protected final MergeBlockCreatorFactory mergeBlockCreatorFactory;
+  /** The Extra data. */
   protected final AtomicReference<Bytes> extraData =
       new AtomicReference<>(Bytes.fromHexString("0x"));
+  /** The Latest descends from terminal. */
   protected final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
+  /** The Merge context. */
   protected final MergeContext mergeContext;
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+  /** The Block builder executor. */
   protected final ProposalBuilderExecutor blockBuilderExecutor;
+  /** The Backward sync context. */
   protected final BackwardSyncContext backwardSyncContext;
+  /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
 
   private final Map<PayloadIdentifier, BlockCreationTask> blockCreationTask =
       new ConcurrentHashMap<>();
 
+  /**
+   * Instantiates a new Merge coordinator.
+   *
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param blockBuilderExecutor the block builder executor
+   * @param pendingTransactions the pending transactions
+   * @param miningParams the mining params
+   * @param backwardSyncContext the backward sync context
+   */
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final ProposalBuilderExecutor blockBuilderExecutor,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final BackwardSyncContext backwardSyncContext) {
     this.protocolContext = protocolContext;
@@ -119,6 +140,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.backwardSyncContext.subscribeBadChainListener(this);
   }
 
+  /**
+   * Instantiates a new Merge coordinator.
+   *
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param blockBuilderExecutor the block builder executor
+   * @param miningParams the mining params
+   * @param backwardSyncContext the backward sync context
+   * @param mergeBlockCreatorFactory the merge block creator factory
+   */
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -596,6 +627,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     }
   }
 
+  /**
+   * Ancestor is valid terminal proof of work boolean.
+   *
+   * @param blockheader the blockheader
+   * @return the boolean
+   */
   // package visibility for testing
   boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
     // this should only happen very close to the transition from PoW to PoS, prior to a finalized
@@ -771,8 +808,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         });
   }
 
+  /** The interface Merge block creator factory. */
   @FunctionalInterface
   protected interface MergeBlockCreatorFactory {
+    /**
+     * Create merge block creator for block header and fee recipient.
+     *
+     * @param header the header
+     * @param feeRecipient the fee recipient
+     * @return the merge block creator
+     */
     MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
   }
 
@@ -828,21 +873,36 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private static class BlockCreationTask {
+    /** The Block creator. */
     final MergeBlockCreator blockCreator;
+    /** The Cancelled. */
     final AtomicBoolean cancelled;
 
+    /**
+     * Instantiates a new Block creation task.
+     *
+     * @param blockCreator the block creator
+     */
     public BlockCreationTask(final MergeBlockCreator blockCreator) {
       this.blockCreator = blockCreator;
       this.cancelled = new AtomicBoolean(false);
     }
 
+    /** Cancel. */
     public void cancel() {
       cancelled.set(true);
       blockCreator.cancel();
     }
   }
 
+  /** The interface Proposal builder executor. */
   public interface ProposalBuilderExecutor {
+    /**
+     * Build proposal and return completable future.
+     *
+     * @param task the task
+     * @return the completable future
+     */
     CompletableFuture<Void> buildProposal(final Runnable task);
   }
 }

@@ -16,8 +16,14 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import static picocli.CommandLine.Option;
 
+/** The Privacy plugin Cli options. */
 public class PrivacyPluginOptions {
 
+  /**
+   * Create privacy plugin options.
+   *
+   * @return the privacy plugin options
+   */
   public static PrivacyPluginOptions create() {
     return new PrivacyPluginOptions();
   }
@@ -29,6 +35,11 @@ public class PrivacyPluginOptions {
       hidden = true)
   private final Boolean isPrivacyPluginEnabled = false;
 
+  /**
+   * Is privacy plugin enabled boolean.
+   *
+   * @return the boolean
+   */
   public boolean isPrivacyPluginEnabled() {
     return isPrivacyPluginEnabled;
   }

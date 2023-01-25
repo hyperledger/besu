@@ -21,10 +21,21 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The interface Payload. */
 public interface Payload extends RoundSpecific {
 
+  /**
+   * Write to.
+   *
+   * @param rlpOutput the rlp output
+   */
   void writeTo(final RLPOutput rlpOutput);
 
+  /**
+   * Encoded.
+   *
+   * @return the bytes
+   */
   default Bytes encoded() {
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     writeTo(rlpOutput);
@@ -32,11 +43,27 @@ public interface Payload extends RoundSpecific {
     return rlpOutput.encoded();
   }
 
+  /**
+   * Gets message type.
+   *
+   * @return the message type
+   */
   int getMessageType();
 
+  /**
+   * Read digest.
+   *
+   * @param messageData the message data
+   * @return the hash
+   */
   static Hash readDigest(final RLPInput messageData) {
     return Hash.wrap(messageData.readBytes32());
   }
 
+  /**
+   * Hash for signature.
+   *
+   * @return the hash
+   */
   Hash hashForSignature();
 }

@@ -25,6 +25,11 @@ public class AltBn128Fq2Point extends AbstractFieldPoint<AltBn128Fq2Point> {
       new BigInteger(
           "21888242871839275222246405745257275088548364400416034343698204186575808495617", 10);
 
+  /**
+   * G 2 alt bn 128 fq 2 point.
+   *
+   * @return the alt bn 128 fq 2 point
+   */
   public static AltBn128Fq2Point g2() {
     final Fq2 x =
         Fq2.create(
@@ -41,14 +46,30 @@ public class AltBn128Fq2Point extends AbstractFieldPoint<AltBn128Fq2Point> {
     return new AltBn128Fq2Point(x, y);
   }
 
+  /**
+   * Instantiates a new Alt bn 128 fq 2 point.
+   *
+   * @param x the x
+   * @param y the y
+   */
   public AltBn128Fq2Point(final Fq2 x, final Fq2 y) {
     super(x, y);
   }
 
+  /**
+   * Gets x.
+   *
+   * @return the x
+   */
   public Fq2 getX() {
     return (Fq2) x;
   }
 
+  /**
+   * Gets y.
+   *
+   * @return the y
+   */
   public Fq2 getY() {
     return (Fq2) y;
   }
@@ -58,6 +79,11 @@ public class AltBn128Fq2Point extends AbstractFieldPoint<AltBn128Fq2Point> {
     return new AltBn128Fq2Point(Fq2.zero(), Fq2.zero());
   }
 
+  /**
+   * Is on curve boolean.
+   *
+   * @return the boolean
+   */
   public boolean isOnCurve() {
     if (!x.isValid() || !y.isValid()) {
       return false;
@@ -73,6 +99,11 @@ public class AltBn128Fq2Point extends AbstractFieldPoint<AltBn128Fq2Point> {
     return y.power(2).subtract(x.power(3)).equals(Fq2.b2());
   }
 
+  /**
+   * Is in group boolean.
+   *
+   * @return the boolean
+   */
   public boolean isInGroup() {
     return multiply(CURVE_ORDER).isInfinity();
   }

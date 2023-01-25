@@ -23,8 +23,14 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Call data load operation. */
 public class CallDataLoadOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Call data load operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CallDataLoadOperation(final GasCalculator gasCalculator) {
     super(0x35, "CALLDATALOAD", 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }

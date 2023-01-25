@@ -20,10 +20,17 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Is zero operation. */
 public class IsZeroOperation extends AbstractFixedCostOperation {
 
+  /** The Is zero operation success result. */
   static final OperationResult isZeroSuccess = new OperationResult(3, null);
 
+  /**
+   * Instantiates a new Is zero operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public IsZeroOperation(final GasCalculator gasCalculator) {
     super(0x15, "ISZERO", 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
@@ -34,6 +41,12 @@ public class IsZeroOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs Is Zero operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final UInt256 value = UInt256.fromBytes(frame.popStackItem());
 

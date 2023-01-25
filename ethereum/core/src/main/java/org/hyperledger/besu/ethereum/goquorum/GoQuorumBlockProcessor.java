@@ -292,6 +292,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         // signature of the private transaction will not (and should not) be
         // checked again.
         transaction.getChainId(),
-        Optional.of(transaction.getV()));
+        Optional.of(transaction.getV()),
+        Optional.empty());
   }
 }

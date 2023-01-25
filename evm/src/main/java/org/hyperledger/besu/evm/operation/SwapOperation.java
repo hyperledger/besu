@@ -21,14 +21,24 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Swap operation. */
 public class SwapOperation extends AbstractFixedCostOperation {
 
+  /** The constant SWAP_BASE. */
   public static final int SWAP_BASE = 0x8F;
+  /** The Swap operation success result. */
   static final OperationResult swapSuccess = new OperationResult(3, null);
 
   private final int index;
+  /** The operation result due to underflow. */
   protected final Operation.OperationResult underflowResponse;
 
+  /**
+   * Instantiates a new Swap operation.
+   *
+   * @param index the index
+   * @param gasCalculator the gas calculator
+   */
   public SwapOperation(final int index, final GasCalculator gasCalculator) {
     super(
         SWAP_BASE + index,
@@ -48,6 +58,13 @@ public class SwapOperation extends AbstractFixedCostOperation {
     return staticOperation(frame, index);
   }
 
+  /**
+   * Performs swap operation.
+   *
+   * @param frame the frame
+   * @param index the index
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame, final int index) {
     final Bytes tmp = frame.getStackItem(0);
     frame.setStackItem(0, frame.getStackItem(index));

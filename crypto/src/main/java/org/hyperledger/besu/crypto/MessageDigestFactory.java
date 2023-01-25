@@ -20,6 +20,7 @@ import java.security.Security;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+/** The Message digest factory. */
 public class MessageDigestFactory {
 
   static {
@@ -27,6 +28,13 @@ public class MessageDigestFactory {
     Security.addProvider(new BouncyCastleProvider());
   }
 
+  /**
+   * Create message digest.
+   *
+   * @param algorithm the algorithm
+   * @return the message digest
+   * @throws NoSuchAlgorithmException the no such algorithm exception
+   */
   @SuppressWarnings("DoNotInvokeMessageDigestDirectly")
   public static MessageDigest create(final String algorithm) throws NoSuchAlgorithmException {
     return MessageDigest.getInstance(algorithm);

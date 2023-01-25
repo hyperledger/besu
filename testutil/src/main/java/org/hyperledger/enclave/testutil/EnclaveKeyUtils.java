@@ -30,6 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Enclave key utils. */
 public class EnclaveKeyUtils {
   private static final Logger LOG = LoggerFactory.getLogger(EnclaveKeyUtils.class);
 
@@ -49,6 +50,12 @@ public class EnclaveKeyUtils {
     }
   }
 
+  /**
+   * Generate key pair.
+   *
+   * @return the key pair
+   * @throws NoSuchAlgorithmException the no such algorithm exception
+   */
   public static KeyPair generateKeys() throws NoSuchAlgorithmException {
     final KeyPair keyPair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
     final PublicKey pubKey = keyPair.getPublic();

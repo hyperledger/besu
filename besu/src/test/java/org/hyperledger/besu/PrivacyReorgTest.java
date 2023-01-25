@@ -76,15 +76,14 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -140,7 +139,7 @@ public class PrivacyReorgTest {
   private Enclave mockEnclave;
   private Transaction privacyMarkerTransaction;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     mockEnclave = mock(Enclave.class);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
@@ -164,9 +163,6 @@ public class PrivacyReorgTest {
             .to(DEFAULT_PRIVACY)
             .value(Wei.ZERO)
             .signAndBuild(KEY_PAIR);
-
-    // Create Storage
-    final Path dataDir = folder.newFolder().toPath();
 
     // Configure Privacy
     EnclaveFactory enclaveFactory = mock(EnclaveFactory.class);
@@ -204,7 +200,7 @@ public class PrivacyReorgTest {
                     .build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
-            .dataDirectory(dataDir)
+            .dataDirectory(folder)
             .clock(TestClock.fixed())
             .privacyParameters(privacyParameters)
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)

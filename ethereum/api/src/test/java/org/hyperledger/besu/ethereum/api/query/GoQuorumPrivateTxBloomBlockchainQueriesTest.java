@@ -92,11 +92,12 @@ public class GoQuorumPrivateTxBloomBlockchainQueriesTest {
             null,
             Hash.EMPTY,
             0,
+            null,
+            null,
             new MainnetBlockHeaderFunctions(),
             Optional.of(testLogsBloomFilter));
     testHash = fakeHeader.getHash();
-    final BlockBody fakeBody =
-        new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
+    final BlockBody fakeBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(fakeHeader));
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));
     when(blockchain.getTxReceipts(any())).thenReturn(Optional.of(Collections.emptyList()));

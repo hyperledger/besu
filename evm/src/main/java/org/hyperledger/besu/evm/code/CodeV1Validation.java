@@ -31,6 +31,7 @@ import java.util.BitSet;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** Code V1 Validation */
 public final class CodeV1Validation {
 
   private CodeV1Validation() {
@@ -563,6 +564,12 @@ public final class CodeV1Validation {
     {0, 0, 0}, // 0xff - SELFDESTRUCT
   };
 
+  /**
+   * Validate Code
+   *
+   * @param eofLayout The EOF Layout
+   * @return validation code, null otherwise.
+   */
   public static String validateCode(final EOFLayout eofLayout) {
     int sectionCount = eofLayout.getCodeSectionCount();
     for (int i = 0; i < sectionCount; i++) {

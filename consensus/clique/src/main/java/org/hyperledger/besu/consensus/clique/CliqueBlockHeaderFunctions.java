@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
+/** The Clique block header functions. */
 public class CliqueBlockHeaderFunctions implements BlockHeaderFunctions {
 
   @Override

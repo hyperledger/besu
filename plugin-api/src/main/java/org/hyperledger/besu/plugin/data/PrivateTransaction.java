@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The interface Private transaction. */
 public interface PrivateTransaction {
   /**
    * A scalar value equal to the number of transactions sent by the sender.

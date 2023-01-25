@@ -16,7 +16,18 @@ package org.hyperledger.besu.consensus.common.bft.statemachine;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+/**
+ * The interface Block height manager factory.
+ *
+ * @param <T> the type parameter of BaseBlockHeightManager
+ */
 public interface BlockHeightManagerFactory<T extends BaseBlockHeightManager> {
 
+  /**
+   * Create type of BaseBlockHeightManager.
+   *
+   * @param parentHeader the parent header
+   * @return the type of BaseBlockHeightManager
+   */
   public T create(final BlockHeader parentHeader);
 }

@@ -25,6 +25,7 @@ import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The RocksDb transaction. */
 public class RocksDBTransaction implements KeyValueStorageTransaction {
   private static final Logger logger = LoggerFactory.getLogger(RocksDBTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
@@ -33,6 +34,13 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
   private final Transaction innerTx;
   private final WriteOptions options;
 
+  /**
+   * Instantiates a new RocksDb transaction.
+   *
+   * @param innerTx the inner tx
+   * @param options the options
+   * @param metrics the metrics
+   */
   RocksDBTransaction(
       final Transaction innerTx, final WriteOptions options, final RocksDBMetrics metrics) {
     this.innerTx = innerTx;

@@ -21,10 +21,17 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Relative jump If operation. */
 public class RelativeJumpIfOperation extends RelativeJumpOperation {
 
+  /** The constant OPCODE. */
   public static final int OPCODE = 0x5d;
 
+  /**
+   * Instantiates a new Relative jump If operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public RelativeJumpIfOperation(final GasCalculator gasCalculator) {
     super(OPCODE, "RJUMPI", 0, 0, gasCalculator, 4L);
   }

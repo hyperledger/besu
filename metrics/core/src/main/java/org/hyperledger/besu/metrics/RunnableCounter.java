@@ -21,11 +21,22 @@ import java.util.concurrent.atomic.AtomicLong;
 /** Counter that triggers a specific task each time a step is hit. */
 public class RunnableCounter implements Counter {
 
+  /** The Backed counter. */
   protected final Counter backedCounter;
+  /** The Task. */
   protected final Runnable task;
+  /** The Step. */
   protected final int step;
+  /** The Step counter. */
   protected final AtomicLong stepCounter;
 
+  /**
+   * Instantiates a new Runnable counter.
+   *
+   * @param backedCounter the backed counter
+   * @param task the task
+   * @param step the step
+   */
   public RunnableCounter(final Counter backedCounter, final Runnable task, final int step) {
     this.backedCounter = backedCounter;
     this.task = task;
@@ -56,6 +67,11 @@ public class RunnableCounter implements Counter {
     }
   }
 
+  /**
+   * Get Step Counter.
+   *
+   * @return the long
+   */
   public long get() {
     return stepCounter.get();
   }

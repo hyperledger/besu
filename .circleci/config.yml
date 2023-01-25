@@ -175,6 +175,7 @@ jobs:
             done
 
   unitTests:
+    parallelism: 6
     executor: besu_executor_xl
     steps:
       - prepare
@@ -184,7 +185,14 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon build
+            GRADLE_ARGS=$(ls -d */src/test/java \
+              | sed 's/^/:/' \
+              | sed 's@src/test/java@@' \
+              | sed 's@/@:test@' \
+              | circleci tests split --split-by=timings)
+            # Format the arguments to "./gradlew test"
+            echo "Prepared arguments for Gradle: $GRADLE_ARGS"
+            ./gradlew --no-daemon $GRADLE_ARGS
       - capture_test_results
 
   integrationTests:
@@ -197,10 +205,6 @@ jobs:
           name: IntegrationTests
           command: |
             ./gradlew --no-daemon integrationTest
-      - run:
-          name: Javadoc
-          command: |
-            ./gradlew --no-daemon javadoc
       - run:
           name: CompileJmh
           command: |
@@ -229,8 +233,8 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests
-          no_output_timeout: 30m
+          name: AcceptanceTests (Mainnet)
+          no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
@@ -239,7 +243,29 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTestMainnet $GRADLE_ARGS
+      - capture_test_results
+      - capture_test_logs
+
+  acceptanceTestsNonMainnet:
+    parallelism: 6
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests (Non-Mainnet)
+          no_output_timeout: 20m
+          command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon acceptanceTestNonMainnet $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
@@ -443,3 +469,4 @@ workflows:
     jobs:
       - assemble
       - dockerScan
+      - acceptanceTestsNonMainnet

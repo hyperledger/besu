@@ -67,6 +67,17 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
   private Optional<QbftRound> currentRound = Optional.empty();
 
+  /**
+   * Instantiates a new Qbft block height manager.
+   *
+   * @param parentHeader the parent header
+   * @param finalState the final state
+   * @param roundChangeManager the round change manager
+   * @param qbftRoundFactory the qbft round factory
+   * @param clock the clock
+   * @param messageValidatorFactory the message validator factory
+   * @param messageFactory the message factory
+   */
   public QbftBlockHeightManager(
       final BlockHeader parentHeader,
       final BftFinalState finalState,
@@ -304,9 +315,13 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     return MessageAge.PRIOR_ROUND;
   }
 
+  /** The enum Message age. */
   public enum MessageAge {
+    /** Prior round message age. */
     PRIOR_ROUND,
+    /** Current round message age. */
     CURRENT_ROUND,
+    /** Future round message age. */
     FUTURE_ROUND
   }
 }

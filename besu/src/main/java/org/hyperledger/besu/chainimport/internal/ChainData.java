@@ -20,16 +20,27 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The Chain data. */
 @JsonIgnoreProperties("comment")
 public class ChainData {
 
   private final List<BlockData> blocks;
 
+  /**
+   * Instantiates a new Chain data.
+   *
+   * @param blocks the blocks
+   */
   @JsonCreator
   public ChainData(@JsonProperty("blocks") final List<BlockData> blocks) {
     this.blocks = blocks;
   }
 
+  /**
+   * Gets blocks.
+   *
+   * @return the blocks
+   */
   public List<BlockData> getBlocks() {
     return blocks;
   }

@@ -55,7 +55,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
+    if (!validateStateRoot(
+        block.getHeader(), block.getHeader().getStateRoot(), worldStateRootHash)) {
       LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
       receipts.forEach(
           receipt ->
@@ -76,22 +77,22 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockBody body = block.getBody();
 
     final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
-    if (!validateTransactionsRoot(header.getTransactionsRoot(), transactionsRoot)) {
+    if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
       return false;
     }
 
     final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-    if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
+    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
 
     final long gasUsed =
         receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
-    if (!validateGasUsed(header.getGasUsed(), gasUsed)) {
+    if (!validateGasUsed(header, header.getGasUsed(), gasUsed)) {
       return false;
     }
 
-    if (!validateLogsBloom(header.getLogsBloom(), BodyValidation.logsBloom(receipts))) {
+    if (!validateLogsBloom(header, header.getLogsBloom(), BodyValidation.logsBloom(receipts))) {
       return false;
     }
 
@@ -99,13 +100,21 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
+    if (!validateWithdrawals(block)) {
+      return false;
+    }
+
     return true;
   }
 
-  private static boolean validateTransactionsRoot(final Bytes32 expected, final Bytes32 actual) {
+  private static boolean validateTransactionsRoot(
+      final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.info(
-          "Invalid block: transaction root mismatch (expected={}, actual={})", expected, actual);
+          "Invalid block {}: transaction root mismatch (expected={}, actual={})",
+          header.toLogString(),
+          expected,
+          actual);
       return false;
     }
 
@@ -113,37 +122,55 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   }
 
   private static boolean validateLogsBloom(
-      final LogsBloomFilter expected, final LogsBloomFilter actual) {
+      final BlockHeader header, final LogsBloomFilter expected, final LogsBloomFilter actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
-          "Invalid block: logs bloom filter mismatch (expected={}, actual={})", expected, actual);
+          "Invalid block {}: logs bloom filter mismatch (expected={}, actual={})",
+          header.toLogString(),
+          expected,
+          actual);
       return false;
     }
 
     return true;
   }
 
-  private static boolean validateGasUsed(final long expected, final long actual) {
+  private static boolean validateGasUsed(
+      final BlockHeader header, final long expected, final long actual) {
     if (expected != actual) {
-      LOG.warn("Invalid block: gas used mismatch (expected={}, actual={})", expected, actual);
+      LOG.warn(
+          "Invalid block {}: gas used mismatch (expected={}, actual={})",
+          header.toLogString(),
+          expected,
+          actual);
       return false;
     }
 
     return true;
   }
 
-  private static boolean validateReceiptsRoot(final Bytes32 expected, final Bytes32 actual) {
+  private static boolean validateReceiptsRoot(
+      final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOG.warn("Invalid block: receipts root mismatch (expected={}, actual={})", expected, actual);
+      LOG.warn(
+          "Invalid block {}: receipts root mismatch (expected={}, actual={})",
+          header.toLogString(),
+          expected,
+          actual);
       return false;
     }
 
     return true;
   }
 
-  private static boolean validateStateRoot(final Bytes32 expected, final Bytes32 actual) {
+  private static boolean validateStateRoot(
+      final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOG.warn("Invalid block: state root mismatch (expected={}, actual={})", expected, actual);
+      LOG.warn(
+          "Invalid block {}: state root mismatch (expected={}, actual={})",
+          header.toLogString(),
+          expected,
+          actual);
       return false;
     }
 
@@ -158,7 +185,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockBody body = block.getBody();
 
     final Bytes32 ommerHash = BodyValidation.ommersHash(body.getOmmers());
-    if (!validateOmmersHash(header.getOmmersHash(), ommerHash)) {
+    if (!validateOmmersHash(header, header.getOmmersHash(), ommerHash)) {
       return false;
     }
 
@@ -169,9 +196,14 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private static boolean validateOmmersHash(final Bytes32 expected, final Bytes32 actual) {
+  private static boolean validateOmmersHash(
+      final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOG.warn("Invalid block: ommers hash mismatch (expected={}, actual={})", expected, actual);
+      LOG.warn(
+          "Invalid block {}: ommers hash mismatch (expected={}, actual={})",
+          header.toLogString(),
+          expected,
+          actual);
       return false;
     }
 
@@ -184,18 +216,22 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final List<BlockHeader> ommers,
       final HeaderValidationMode ommerValidationMode) {
     if (ommers.size() > MAX_OMMERS) {
-      LOG.warn("Invalid block: ommer count {} exceeds ommer limit {}", ommers.size(), MAX_OMMERS);
+      LOG.warn(
+          "Invalid block {}: ommer count {} exceeds ommer limit {}",
+          header.toLogString(),
+          ommers.size(),
+          MAX_OMMERS);
       return false;
     }
 
     if (!areOmmersUnique(ommers)) {
-      LOG.warn("Invalid block: ommers are not unique");
+      LOG.warn("Invalid block {}: ommers are not unique", header.toLogString());
       return false;
     }
 
     for (final BlockHeader ommer : ommers) {
       if (!isOmmerValid(context, header, ommer, ommerValidationMode)) {
-        LOG.warn("Invalid block: ommer is invalid");
+        LOG.warn("Invalid block {}: ommer is invalid", header.toLogString());
         return false;
       }
     }
@@ -252,5 +288,20 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       previous = ancestor;
     }
     return false;
+  }
+
+  private boolean validateWithdrawals(final Block block) {
+    final WithdrawalsValidator withdrawalsValidator =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getWithdrawalsValidator();
+
+    if (!withdrawalsValidator.validateWithdrawals(block.getBody().getWithdrawals())) {
+      return false;
+    }
+
+    if (!withdrawalsValidator.validateWithdrawalsRoot(block)) {
+      return false;
+    }
+
+    return true;
   }
 }

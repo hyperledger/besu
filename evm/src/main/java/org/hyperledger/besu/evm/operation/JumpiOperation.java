@@ -22,11 +22,17 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The JUMPI operation. */
 public class JumpiOperation extends AbstractFixedCostOperation {
 
   private final OperationResult invalidJumpResponse;
   private final OperationResult jumpResponse;
 
+  /**
+   * Instantiates a new JUMPI operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public JumpiOperation(final GasCalculator gasCalculator) {
     super(0x57, "JUMPI", 2, 0, gasCalculator, gasCalculator.getHighTierGasCost());
     invalidJumpResponse =

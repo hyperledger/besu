@@ -25,10 +25,17 @@ import org.apache.logging.log4j.util.Strings;
 import org.apache.logging.slf4j.Log4jLoggerFactory;
 import org.slf4j.LoggerFactory;
 
+/** The Log4j2 configurator util. */
 public class Log4j2ConfiguratorUtil {
 
   private Log4j2ConfiguratorUtil() {}
 
+  /**
+   * Sets all levels.
+   *
+   * @param parentLogger the parent logger
+   * @param level the level
+   */
   public static void setAllLevels(final String parentLogger, final Level level) {
     // 1) get logger config
     // 2) if exact match, use it, if not, create it.
@@ -48,10 +55,21 @@ public class Log4j2ConfiguratorUtil {
     }
   }
 
+  /**
+   * Sets Debug level to specified logger.
+   *
+   * @param loggerName the logger name
+   */
   public static void setLevelDebug(final String loggerName) {
     setLevel(loggerName, Level.DEBUG);
   }
 
+  /**
+   * Sets level to specified logger.
+   *
+   * @param loggerName the logger name
+   * @param level the level
+   */
   public static void setLevel(final String loggerName, final Level level) {
     final LoggerContext loggerContext = getLoggerContext();
     if (Strings.isEmpty(loggerName)) {
@@ -92,6 +110,7 @@ public class Log4j2ConfiguratorUtil {
     }
   }
 
+  /** Reconfigure. */
   public static void reconfigure() {
     getLoggerContext().reconfigure();
   }
@@ -102,6 +121,7 @@ public class Log4j2ConfiguratorUtil {
     return (LoggerContext) loggerContexts.iterator().next();
   }
 
+  /** Shutdown. */
   public static void shutdown() {
     getLoggerContext().terminate();
   }

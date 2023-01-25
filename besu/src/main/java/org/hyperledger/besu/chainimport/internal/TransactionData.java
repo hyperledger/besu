@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Transaction data. */
 @JsonIgnoreProperties("comment")
 public class TransactionData {
 
@@ -46,6 +47,16 @@ public class TransactionData {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  /**
+   * Instantiates a new Transaction data.
+   *
+   * @param gasLimit the gas limit
+   * @param gasPrice the gas price
+   * @param data the data
+   * @param value the value
+   * @param to the to
+   * @param secretKey the secret key
+   */
   @JsonCreator
   public TransactionData(
       @JsonProperty("gasLimit") final String gasLimit,
@@ -62,6 +73,12 @@ public class TransactionData {
     this.privateKey = SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes32.fromHexString(secretKey));
   }
 
+  /**
+   * Gets signed transaction.
+   *
+   * @param nonceProvider the nonce provider
+   * @return the signed transaction
+   */
   public Transaction getSignedTransaction(final NonceProvider nonceProvider) {
     final KeyPair keyPair = SIGNATURE_ALGORITHM.get().createKeyPair(privateKey);
 
@@ -78,8 +95,15 @@ public class TransactionData {
         .signAndBuild(keyPair);
   }
 
+  /** The interface Nonce provider. */
   @FunctionalInterface
   public interface NonceProvider {
+    /**
+     * Get Nonce.
+     *
+     * @param address the address
+     * @return the Nonce
+     */
     long get(final Address address);
   }
 }

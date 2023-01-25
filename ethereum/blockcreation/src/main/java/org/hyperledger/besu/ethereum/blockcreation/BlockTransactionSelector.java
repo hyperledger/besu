@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -188,7 +188,7 @@ public class BlockTransactionSelector {
   private final ProcessableBlockHeader processableBlockHeader;
   private final Blockchain blockchain;
   private final MutableWorldState worldState;
-  private final AbstractPendingTransactionsSorter pendingTransactions;
+  private final PendingTransactions pendingTransactions;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
   private final FeeMarket feeMarket;
@@ -200,7 +200,7 @@ public class BlockTransactionSelector {
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei minTransactionGasPrice,

@@ -245,6 +245,7 @@ public class MessageWrapperTest {
         @JsonProperty("r") final String r,
         @JsonProperty("s") final String s,
         @JsonProperty("hash") final String __) {
+
       super(
           Bytes.fromHexStringLenient(nonce).toLong(),
           Wei.fromHexString(gasPrice),
@@ -258,6 +259,7 @@ public class MessageWrapperTest {
                   recIdAndChainId(Byte.decode(v)).getKey()),
           Bytes.fromHexString(data),
           recIdAndChainId(Byte.decode(v)).getValue(),
+          Optional.empty(),
           Optional.empty());
     }
   }
@@ -285,8 +287,7 @@ public class MessageWrapperTest {
         @JsonProperty("Uncles") final List<TestBlockHeader> uncles) {
       super(
           transactions.stream().collect(toUnmodifiableList()),
-          uncles.stream().collect(toUnmodifiableList()),
-          Optional.empty());
+          uncles.stream().collect(toUnmodifiableList()));
     }
   }
 
@@ -327,6 +328,8 @@ public class MessageWrapperTest {
           null,
           Hash.fromHexString(mixHash),
           Bytes.fromHexStringLenient(nonce).toLong(),
+          null,
+          null,
           new MainnetBlockHeaderFunctions());
     }
   }

@@ -132,6 +132,7 @@ public class BesuEventsImplTest {
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
+    when(mockWorldState.copy()).thenReturn(mockWorldState);
     when(mockWorldStateArchive.getMutable(any(), any(), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));
 
@@ -192,7 +193,8 @@ public class BesuEventsImplTest {
     syncState.setSyncTarget(
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
-            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null));
+            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
+            null, null));
   }
 
   private void clearSyncTarget() {
@@ -484,8 +486,7 @@ public class BesuEventsImplTest {
   }
 
   private Block generateBlock() {
-    final BlockBody body =
-        new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
+    final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
     return new Block(new BlockHeaderTestFixture().buildHeader(), body);
   }
 

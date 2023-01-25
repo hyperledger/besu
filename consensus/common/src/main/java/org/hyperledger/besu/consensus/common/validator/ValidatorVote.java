@@ -21,12 +21,20 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Objects;
 
+/** The Validator vote. */
 public class ValidatorVote {
 
   private final VoteType votePolarity;
   private final Address proposer;
   private final Address recipient;
 
+  /**
+   * Instantiates a new Validator vote.
+   *
+   * @param votePolarity the vote polarity
+   * @param proposer the proposer
+   * @param recipient the recipient
+   */
   public ValidatorVote(
       final VoteType votePolarity, final Address proposer, final Address recipient) {
     checkNotNull(votePolarity);
@@ -37,18 +45,38 @@ public class ValidatorVote {
     this.recipient = recipient;
   }
 
+  /**
+   * Gets vote polarity.
+   *
+   * @return the vote polarity
+   */
   public VoteType getVotePolarity() {
     return votePolarity;
   }
 
+  /**
+   * Gets proposer.
+   *
+   * @return the proposer
+   */
   public Address getProposer() {
     return proposer;
   }
 
+  /**
+   * Gets recipient.
+   *
+   * @return the recipient
+   */
   public Address getRecipient() {
     return recipient;
   }
 
+  /**
+   * Is auth vote.
+   *
+   * @return the boolean
+   */
   public boolean isAuthVote() {
     return votePolarity.equals(ADD);
   }

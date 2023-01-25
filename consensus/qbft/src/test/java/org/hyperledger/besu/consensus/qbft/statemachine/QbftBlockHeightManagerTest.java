@@ -123,7 +123,7 @@ public class QbftBlockHeightManagerTest {
 
     headerTestFixture.extraData(bftExtraDataCodec.encode(extraData));
     final BlockHeader header = headerTestFixture.buildHeader();
-    createdBlock = new Block(header, new BlockBody(emptyList(), emptyList(), Optional.empty()));
+    createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
   }
 
   @Before

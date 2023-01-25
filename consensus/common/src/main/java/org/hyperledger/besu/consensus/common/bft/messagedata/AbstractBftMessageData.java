@@ -21,11 +21,27 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Abstract bft message data. */
 public abstract class AbstractBftMessageData extends AbstractMessageData {
+  /**
+   * Instantiates a new Abstract bft message data.
+   *
+   * @param data the data
+   */
   protected AbstractBftMessageData(final Bytes data) {
     super(data);
   }
 
+  /**
+   * From message data to type of AbstractBftMessageData.
+   *
+   * @param <T> the type parameter AbstractBftMessageData
+   * @param messageData the message data
+   * @param messageCode the message code
+   * @param clazz the clazz
+   * @param constructor the constructor
+   * @return the type of AbstractBftMessageData
+   */
   protected static <T extends AbstractBftMessageData> T fromMessageData(
       final MessageData messageData,
       final int messageCode,

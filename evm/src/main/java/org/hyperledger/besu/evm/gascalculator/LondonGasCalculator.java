@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.gascalculator;
 import com.google.common.base.Supplier;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The London gas calculator. */
 public class LondonGasCalculator extends BerlinGasCalculator {
 
   // redefinitions for EIP-3529
@@ -27,6 +28,7 @@ public class LondonGasCalculator extends BerlinGasCalculator {
   // redefinitions for EIP-3529
   private static final int NEW_MAX_REFUND_QUOTIENT = 5;
 
+  /** Instantiates a new London gas calculator. */
   public LondonGasCalculator() {}
 
   // Redefined refund amount from EIP-3529

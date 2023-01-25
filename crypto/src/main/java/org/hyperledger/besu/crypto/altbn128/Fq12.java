@@ -20,12 +20,23 @@ package org.hyperledger.besu.crypto.altbn128;
  */
 public class Fq12 extends AbstractFqp<Fq12> {
 
+  /** The constant DEGREE. */
   public static final int DEGREE = 12;
 
+  /**
+   * Zero fq 12.
+   *
+   * @return the fq 12
+   */
   static final Fq12 zero() {
     return create(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   }
 
+  /**
+   * One fq 12.
+   *
+   * @return the fq 12
+   */
   public static final Fq12 one() {
     return create(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   }
@@ -46,6 +57,23 @@ public class Fq12 extends AbstractFqp<Fq12> {
         Fq.create(0)
       };
 
+  /**
+   * Create fq 12.
+   *
+   * @param c0 the c 0
+   * @param c1 the c 1
+   * @param c2 the c 2
+   * @param c3 the c 3
+   * @param c4 the c 4
+   * @param c5 the c 5
+   * @param c6 the c 6
+   * @param c7 the c 7
+   * @param c8 the c 8
+   * @param c9 the c 9
+   * @param c10 the c 10
+   * @param c11 the c 11
+   * @return the fq 12
+   */
   public static Fq12 create(
       final long c0,
       final long c1,
@@ -74,6 +102,11 @@ public class Fq12 extends AbstractFqp<Fq12> {
         Fq.create(c11));
   }
 
+  /**
+   * Instantiates a new Fq 12.
+   *
+   * @param coefficients the coefficients
+   */
   protected Fq12(final Fq... coefficients) {
     super(DEGREE, MODULUS_COEFFICIENTS, coefficients);
   }

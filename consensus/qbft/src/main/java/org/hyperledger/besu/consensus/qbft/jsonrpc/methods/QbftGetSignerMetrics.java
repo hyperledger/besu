@@ -21,8 +21,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
+/** The Qbft get signer metrics. */
 public class QbftGetSignerMetrics extends AbstractGetSignerMetricsMethod implements JsonRpcMethod {
 
+  /**
+   * Instantiates a new Qbft get signer metrics.
+   *
+   * @param validatorProvider the validator provider
+   * @param blockInterface the block interface
+   * @param blockchainQueries the blockchain queries
+   */
   public QbftGetSignerMetrics(
       final ValidatorProvider validatorProvider,
       final BlockInterface blockInterface,

@@ -26,6 +26,11 @@ public class BesuCommandCustomFactory implements CommandLine.IFactory {
   private final PluginVersionsProvider pluginVersionsProvider;
   private final CommandLine.IFactory defaultFactory = CommandLine.defaultFactory();
 
+  /**
+   * BesuCommandCustomFactory Constructor
+   *
+   * @param pluginVersionsProvider instance of PluginVersionsProvider
+   */
   public BesuCommandCustomFactory(final PluginVersionsProvider pluginVersionsProvider) {
     this.pluginVersionsProvider = pluginVersionsProvider;
   }

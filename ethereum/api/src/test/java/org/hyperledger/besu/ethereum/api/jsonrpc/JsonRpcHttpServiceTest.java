@@ -759,7 +759,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
         .thenReturn(Optional.empty());
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
@@ -783,7 +783,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
@@ -806,7 +806,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
@@ -829,7 +829,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
@@ -853,7 +853,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
@@ -873,7 +873,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
@@ -893,7 +893,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
@@ -978,7 +978,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final String respBody = resp.body().string();
       final JsonObject json = new JsonObject(respBody);
@@ -2035,7 +2035,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;

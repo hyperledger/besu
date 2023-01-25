@@ -36,6 +36,7 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
@@ -81,6 +82,8 @@ public class Create2OperationTest {
               + "6000" // PUSH1 0x00
               + "F3" // RETURN
           );
+  public static final Bytes SIMPLE_EOF =
+      Bytes.fromHexString("0xEF00010100040200010001030000000000000000");
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
   private static final int SHANGHAI_CREATE_GAS = 41240 + (0xc000 / 32) * 6;
 
@@ -301,5 +304,59 @@ public class Create2OperationTest {
     messageFrame.writeMemory(
         memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
     return messageFrame;
+  }
+
+  @Test
+  void eofV1CannotCreateLegacy() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
+    final MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(CodeFactory.createCode(SIMPLE_EOF, Hash.hash(SIMPLE_EOF), 1, true))
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(memoryLength)
+            .pushStackItem(memoryOffset)
+            .pushStackItem(Bytes.EMPTY)
+            .worldUpdater(worldUpdater)
+            .build();
+    messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_CREATE);
+
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+
+    final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+  }
+
+  @Test
+  void legacyCanCreateEOFv1() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_EOF.size());
+    final MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(CodeFactory.createCode(SIMPLE_CREATE, Hash.hash(SIMPLE_CREATE), 1, true))
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(memoryLength)
+            .pushStackItem(memoryOffset)
+            .pushStackItem(Bytes.EMPTY)
+            .worldUpdater(worldUpdater)
+            .build();
+    messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_EOF);
+
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(account.getNonce()).thenReturn(55L);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(messageFrame.getStackItem(0)).isNotEqualTo(UInt256.ZERO);
   }
 }

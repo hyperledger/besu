@@ -25,11 +25,18 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 
+/** The Key pair class. */
 public class KeyPair {
 
   private final SECPPrivateKey privateKey;
   private final SECPPublicKey publicKey;
 
+  /**
+   * Instantiates a new Key pair.
+   *
+   * @param privateKey the private key
+   * @param publicKey the public key
+   */
   public KeyPair(final SECPPrivateKey privateKey, final SECPPublicKey publicKey) {
     checkNotNull(privateKey);
     checkNotNull(publicKey);
@@ -37,11 +44,26 @@ public class KeyPair {
     this.publicKey = publicKey;
   }
 
+  /**
+   * Create key pair.
+   *
+   * @param privateKey the private key
+   * @param curve the curve
+   * @param algorithm the algorithm
+   * @return the key pair
+   */
   public static KeyPair create(
       final SECPPrivateKey privateKey, final ECDomainParameters curve, final String algorithm) {
     return new KeyPair(privateKey, SECPPublicKey.create(privateKey, curve, algorithm));
   }
 
+  /**
+   * Generate key pair.
+   *
+   * @param keyPairGenerator the key pair generator
+   * @param algorithm the algorithm
+   * @return the key pair
+   */
   public static KeyPair generate(final KeyPairGenerator keyPairGenerator, final String algorithm) {
     final java.security.KeyPair rawKeyPair = keyPairGenerator.generateKeyPair();
     final BCECPrivateKey privateKey = (BCECPrivateKey) rawKeyPair.getPrivate();
@@ -85,10 +107,20 @@ public class KeyPair {
         + "]");
   }
 
+  /**
+   * Gets private key.
+   *
+   * @return the private key
+   */
   public SECPPrivateKey getPrivateKey() {
     return privateKey;
   }
 
+  /**
+   * Gets public key.
+   *
+   * @return the public key
+   */
   public SECPPublicKey getPublicKey() {
     return publicKey;
   }

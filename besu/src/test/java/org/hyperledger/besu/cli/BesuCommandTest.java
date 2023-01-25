@@ -1615,6 +1615,21 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcHttpMaxBatchSizeOptionMustBeUsed() {
+    final int rpcHttpMaxBatchSize = 1;
+    parseCommand("--rpc-http-max-batch-size", Integer.toString(rpcHttpMaxBatchSize));
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxBatchSize())
+        .isEqualTo(rpcHttpMaxBatchSize);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void maxpeersSet_p2pPeerLowerBoundSet() {
 
     final int maxPeers = 123;

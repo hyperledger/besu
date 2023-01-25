@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Merge besu controller builder. */
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
   private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
@@ -135,6 +136,18 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     return ethProtocolManager;
   }
 
+  /**
+   * Create transition mining coordinator.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param transactionPool the transaction pool
+   * @param miningParameters the mining parameters
+   * @param syncState the sync state
+   * @param backwardSyncContext the backward sync context
+   * @param metricsSystem the metrics system
+   * @return the mining coordinator
+   */
   protected MiningCoordinator createTransitionMiningCoordinator(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
@@ -243,6 +256,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     return controller;
   }
 
+  /**
+   * Create timestamp protocol schedule.
+   *
+   * @return the timestamp schedule
+   */
   public TimestampSchedule createTimestampProtocolSchedule() {
     return MergeProtocolSchedule.createTimestamp(
         configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled);

@@ -124,7 +124,8 @@ public interface PeerConnection {
   }
 
   /**
-   * Get the difference, measured in milliseconds, between the time this connection was initiated and midnight, January 1, 1970 UTC
+   * Get the difference, measured in milliseconds, between the time this connection was initiated
+   * and midnight, January 1, 1970 UTC
    *
    * @return the time when this connection was initiated.
    */

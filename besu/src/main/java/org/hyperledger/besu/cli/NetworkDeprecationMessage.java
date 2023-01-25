@@ -19,8 +19,15 @@ import org.hyperledger.besu.util.log.FramedLogMessage;
 
 import java.util.List;
 
+/** The Network deprecation message. */
 public class NetworkDeprecationMessage {
 
+  /**
+   * Generate deprecation message for specified testnet network.
+   *
+   * @param network the network
+   * @return the deprecation message for specified network
+   */
   public static String generate(final NetworkName network) {
     if (network.getDeprecationDate().isEmpty()) {
       throw new AssertionError("Deprecation date is not set. Cannot print a deprecation message");

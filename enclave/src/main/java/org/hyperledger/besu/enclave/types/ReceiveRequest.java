@@ -17,25 +17,47 @@ package org.hyperledger.besu.enclave.types;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The Receive request. */
 @JsonPropertyOrder({"key", "to"})
 public class ReceiveRequest {
   private final String key;
   private final String to;
 
+  /**
+   * Instantiates a new Receive request.
+   *
+   * @param key the key
+   * @param to the to
+   */
   public ReceiveRequest(
       @JsonProperty(value = "key") final String key, @JsonProperty(value = "to") final String to) {
     this.key = key;
     this.to = to;
   }
 
+  /**
+   * Instantiates a new Receive request.
+   *
+   * @param key the key
+   */
   public ReceiveRequest(final String key) {
     this(key, null);
   }
 
+  /**
+   * Gets key.
+   *
+   * @return the key
+   */
   public String getKey() {
     return key;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   public String getTo() {
     return to;
   }

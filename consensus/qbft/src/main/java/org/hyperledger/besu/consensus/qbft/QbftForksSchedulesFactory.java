@@ -25,8 +25,15 @@ import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory;
 import java.util.List;
 import java.util.Optional;
 
+/** The Qbft forks schedules factory. */
 public class QbftForksSchedulesFactory {
 
+  /**
+   * Create forks schedule.
+   *
+   * @param genesisConfig the genesis config
+   * @return the forks schedule
+   */
   public static ForksSchedule<QbftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
     return BftForksScheduleFactory.create(
         genesisConfig.getQbftConfigOptions(),

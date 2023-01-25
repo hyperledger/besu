@@ -21,14 +21,25 @@ import org.hyperledger.besu.evm.Code;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Code factory. */
 public final class CodeFactory {
 
+  /** The constant EOF_LEAD_BYTE. */
   public static final byte EOF_LEAD_BYTE = -17; // 0xEF in signed byte form
 
   private CodeFactory() {
     // factory class, no instantiations.
   }
 
+  /**
+   * Create Code.
+   *
+   * @param bytes the bytes
+   * @param codeHash the code hash
+   * @param maxEofVersion the max eof version
+   * @param inCreateOperation the in create operation
+   * @return the code
+   */
   public static Code createCode(
       final Bytes bytes,
       final Hash codeHash,

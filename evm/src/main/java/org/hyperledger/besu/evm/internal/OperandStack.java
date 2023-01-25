@@ -18,8 +18,14 @@ package org.hyperledger.besu.evm.internal;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Operand stack. */
 public class OperandStack extends FixedStack<Bytes> {
 
+  /**
+   * Instantiates a new Operand stack.
+   *
+   * @param maxSize the max size
+   */
   public OperandStack(final int maxSize) {
     super(maxSize, Bytes.class);
   }

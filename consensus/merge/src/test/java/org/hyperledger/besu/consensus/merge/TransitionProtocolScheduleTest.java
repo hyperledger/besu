@@ -23,8 +23,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -162,8 +160,7 @@ public class TransitionProtocolScheduleTest {
 
   @Test
   public void getByBlockNumber_returnsTimestampScheduleIfPresent() {
-    final Block block = new Block(blockHeader, BlockBody.empty());
-    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.of(block));
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
     when(timestampSchedule.getByBlockHeader(blockHeader)).thenReturn(mock(ProtocolSpec.class));
 
     assertThat(transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER)).isNotNull();
@@ -174,7 +171,7 @@ public class TransitionProtocolScheduleTest {
 
   @Test
   public void getByBlockNumber_delegatesToPreMergeScheduleWhenBlockNotFound() {
-    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.empty());
     when(mergeContext.isPostMerge()).thenReturn(false);
 
     transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
@@ -184,7 +181,7 @@ public class TransitionProtocolScheduleTest {
 
   @Test
   public void getByBlockNumber_delegatesToPostMergeScheduleWhenBlockNotFound() {
-    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.empty());
     when(mergeContext.isPostMerge()).thenReturn(true);
 
     transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
@@ -194,8 +191,6 @@ public class TransitionProtocolScheduleTest {
 
   @Test
   public void getByBlockNumber_delegatesToPostMergeScheduleWhenTimestampScheduleDoesNotExist() {
-    final Block block = new Block(blockHeader, BlockBody.empty());
-    when(blockchain.getBlockByNumber(BLOCK_NUMBER)).thenReturn(Optional.of(block));
     when(mergeContext.isPostMerge()).thenReturn(true);
 
     transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);

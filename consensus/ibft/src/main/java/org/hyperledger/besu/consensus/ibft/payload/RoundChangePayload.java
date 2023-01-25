@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+/** The Round change payload. */
 public class RoundChangePayload extends IbftPayload {
   private static final int TYPE = IbftV2.ROUND_CHANGE;
   private final ConsensusRoundIdentifier roundChangeIdentifier;
@@ -30,6 +31,12 @@ public class RoundChangePayload extends IbftPayload {
   // The validator may not hae any prepared certificate
   private final Optional<PreparedCertificate> preparedCertificate;
 
+  /**
+   * Instantiates a new Round change payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param preparedCertificate the prepared certificate
+   */
   public RoundChangePayload(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedCertificate> preparedCertificate) {
@@ -42,6 +49,11 @@ public class RoundChangePayload extends IbftPayload {
     return roundChangeIdentifier;
   }
 
+  /**
+   * Gets prepared certificate.
+   *
+   * @return the prepared certificate
+   */
   public Optional<PreparedCertificate> getPreparedCertificate() {
     return preparedCertificate;
   }
@@ -60,6 +72,12 @@ public class RoundChangePayload extends IbftPayload {
     rlpOutput.endList();
   }
 
+  /**
+   * Read from rlp input and return round change payload.
+   *
+   * @param rlpInput the rlp input
+   * @return the round change payload
+   */
   public static RoundChangePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);

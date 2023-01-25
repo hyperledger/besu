@@ -369,7 +369,8 @@ public class RlpxAgent {
       return;
     }
 
-    if (checkWhetherToConnect(peer, true)) { // TODO: checkWhetherToConnect should return Optional<DisconnectReason>
+    if (checkWhetherToConnect(
+        peer, true)) { // TODO: checkWhetherToConnect should return Optional<DisconnectReason>
       dispatchConnect(peerConnection);
     } else {
       peerConnection.disconnect(DisconnectReason.UNKNOWN);

@@ -48,6 +48,12 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
           VoteType.ADD, ADD_BYTE_VALUE,
           VoteType.DROP, DROP_BYTE_VALUE);
 
+  /**
+   * Encode from addresses.
+   *
+   * @param addresses the addresses
+   * @return the bytes
+   */
   public static Bytes encodeFromAddresses(final Collection<Address> addresses) {
     return new IbftExtraDataCodec()
         .encode(
@@ -59,6 +65,12 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
                 addresses));
   }
 
+  /**
+   * Create genesis extra data string.
+   *
+   * @param validators the validators
+   * @return the string
+   */
   public static String createGenesisExtraDataString(final List<Address> validators) {
     return encodeFromAddresses(validators).toString();
   }

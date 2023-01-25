@@ -27,21 +27,38 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Bft fork. */
 public class BftFork {
 
+  /** The constant FORK_BLOCK_KEY. */
   public static final String FORK_BLOCK_KEY = "block";
+  /** The constant VALIDATORS_KEY. */
   public static final String VALIDATORS_KEY = "validators";
+  /** The constant BLOCK_PERIOD_SECONDS_KEY. */
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+  /** The constant BLOCK_REWARD_KEY. */
   public static final String BLOCK_REWARD_KEY = "blockreward";
+  /** The constant MINING_BENEFICIARY_KEY. */
   public static final String MINING_BENEFICIARY_KEY = "miningbeneficiary";
 
+  /** The Fork config root. */
   protected final ObjectNode forkConfigRoot;
 
+  /**
+   * Instantiates a new Bft fork.
+   *
+   * @param forkConfigRoot the fork config root
+   */
   @JsonCreator
   public BftFork(final ObjectNode forkConfigRoot) {
     this.forkConfigRoot = forkConfigRoot;
   }
 
+  /**
+   * Gets fork block.
+   *
+   * @return the fork block
+   */
   public long getForkBlock() {
     return JsonUtil.getLong(forkConfigRoot, FORK_BLOCK_KEY)
         .orElseThrow(
@@ -50,10 +67,20 @@ public class BftFork {
                     "Fork block not specified for Bft fork in custom forks"));
   }
 
+  /**
+   * Gets block period seconds.
+   *
+   * @return the block period seconds
+   */
   public OptionalInt getBlockPeriodSeconds() {
     return JsonUtil.getPositiveInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
   }
 
+  /**
+   * Gets block reward wei.
+   *
+   * @return the block reward wei
+   */
   public Optional<BigInteger> getBlockRewardWei() {
     final Optional<String> configFileContent = JsonUtil.getString(forkConfigRoot, BLOCK_REWARD_KEY);
 
@@ -67,6 +94,11 @@ public class BftFork {
     return Optional.of(new BigInteger(weiStr));
   }
 
+  /**
+   * Gets mining beneficiary.
+   *
+   * @return the mining beneficiary
+   */
   public Optional<Address> getMiningBeneficiary() {
     try {
       return JsonUtil.getString(forkConfigRoot, MINING_BENEFICIARY_KEY)
@@ -79,10 +111,21 @@ public class BftFork {
     }
   }
 
+  /**
+   * Is mining beneficiary configured boolean.
+   *
+   * @return the boolean
+   */
   public boolean isMiningBeneficiaryConfigured() {
     return JsonUtil.hasKey(forkConfigRoot, MINING_BENEFICIARY_KEY);
   }
 
+  /**
+   * Gets validators.
+   *
+   * @return the validators
+   * @throws IllegalArgumentException the illegal argument exception
+   */
   public Optional<List<String>> getValidators() throws IllegalArgumentException {
     final Optional<ArrayNode> validatorNode = JsonUtil.getArrayNode(forkConfigRoot, VALIDATORS_KEY);
 

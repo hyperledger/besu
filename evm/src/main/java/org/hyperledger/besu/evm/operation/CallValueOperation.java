@@ -19,8 +19,14 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Call value operation. */
 public class CallValueOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Call value operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CallValueOperation(final GasCalculator gasCalculator) {
     super(0x34, "CALLVALUE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }

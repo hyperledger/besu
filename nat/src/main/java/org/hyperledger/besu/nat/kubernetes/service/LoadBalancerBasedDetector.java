@@ -23,10 +23,16 @@ import java.util.Optional;
 import io.kubernetes.client.openapi.models.V1LoadBalancerIngress;
 import io.kubernetes.client.openapi.models.V1Service;
 
+/** The Load balancer based detector. */
 public class LoadBalancerBasedDetector implements IpDetector {
 
   private final V1Service v1Service;
 
+  /**
+   * Instantiates a new Load balancer based detector.
+   *
+   * @param v1Service the v 1 service
+   */
   public LoadBalancerBasedDetector(final V1Service v1Service) {
     this.v1Service = v1Service;
   }

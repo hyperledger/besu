@@ -33,6 +33,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Bft protocol manager. */
 public class BftProtocolManager implements ProtocolManager {
   private static final Logger LOG = LoggerFactory.getLogger(BftProtocolManager.class);
 

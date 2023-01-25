@@ -22,7 +22,14 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.util.BigIntegers;
 
+/** The Ec point util class. */
 public class ECPointUtil {
+  /**
+   * From bouncy castle ec point to ECPoint.
+   *
+   * @param bouncyCastleECPoint the bouncy castle ec point
+   * @return the ECPoint
+   */
   public static ECPoint fromBouncyCastleECPoint(
       final org.bouncycastle.math.ec.ECPoint bouncyCastleECPoint) {
     final ECFieldElement xCoord = bouncyCastleECPoint.getAffineXCoord();
@@ -37,6 +44,12 @@ public class ECPointUtil {
     return new ECPoint(x, y);
   }
 
+  /**
+   * Gets encoded bytes.
+   *
+   * @param ecPoint the ec point
+   * @return the encoded bytes
+   */
   public static Bytes getEncodedBytes(final ECPoint ecPoint) {
     final Bytes xBytes = Bytes32.wrap(BigIntegers.asUnsignedByteArray(32, ecPoint.getAffineX()));
     final Bytes yBytes = Bytes32.wrap(BigIntegers.asUnsignedByteArray(32, ecPoint.getAffineY()));

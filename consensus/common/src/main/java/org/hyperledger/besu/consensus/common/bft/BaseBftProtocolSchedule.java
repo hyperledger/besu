@@ -40,6 +40,17 @@ public abstract class BaseBftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param forksSchedule the forks schedule
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public ProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions config,
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
@@ -72,6 +83,13 @@ public abstract class BaseBftProtocolSchedule {
         .createProtocolSchedule();
   }
 
+  /**
+   * Create block header ruleset.
+   *
+   * @param config the config
+   * @param feeMarket the fee market
+   * @return the block header validator . builder
+   */
   protected abstract BlockHeaderValidator.Builder createBlockHeaderRuleset(
       final BftConfigOptions config, final FeeMarket feeMarket);
 

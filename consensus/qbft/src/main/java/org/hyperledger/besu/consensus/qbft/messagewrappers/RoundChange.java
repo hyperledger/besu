@@ -31,11 +31,19 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Round change payload message. */
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
   private final Optional<Block> proposedBlock;
   private final List<SignedData<PreparePayload>> prepares;
 
+  /**
+   * Instantiates a new Round change.
+   *
+   * @param payload the payload
+   * @param proposedBlock the proposed block
+   * @param prepares the prepares
+   */
   public RoundChange(
       final SignedData<RoundChangePayload> payload,
       final Optional<Block> proposedBlock,
@@ -45,18 +53,38 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     this.prepares = prepares;
   }
 
+  /**
+   * Gets proposed block.
+   *
+   * @return the proposed block
+   */
   public Optional<Block> getProposedBlock() {
     return proposedBlock;
   }
 
+  /**
+   * Gets list of Prepare payload signed data.
+   *
+   * @return the prepares
+   */
   public List<SignedData<PreparePayload>> getPrepares() {
     return prepares;
   }
 
+  /**
+   * Gets prepared round metadata.
+   *
+   * @return the prepared round metadata
+   */
   public Optional<PreparedRoundMetadata> getPreparedRoundMetadata() {
     return getPayload().getPreparedRoundMetadata();
   }
 
+  /**
+   * Gets prepared round.
+   *
+   * @return the prepared round
+   */
   public Optional<Integer> getPreparedRound() {
     return getPayload().getPreparedRoundMetadata().map(PreparedRoundMetadata::getPreparedRound);
   }
@@ -72,6 +100,13 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     return rlpOut.encoded();
   }
 
+  /**
+   * Decode.
+   *
+   * @param data the data
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the round change
+   */
   public static RoundChange decode(final Bytes data, final BftExtraDataCodec bftExtraDataCodec) {
 
     final RLPInput rlpIn = RLP.input(data);

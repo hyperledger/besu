@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CliqueExtraData implements ParsedExtraData {
   private static final Logger LOG = LoggerFactory.getLogger(CliqueExtraData.class);
+  /** The constant EXTRA_VANITY_LENGTH. */
   public static final int EXTRA_VANITY_LENGTH = 32;
 
   private final Bytes vanityData;
@@ -46,6 +47,14 @@ public class CliqueExtraData implements ParsedExtraData {
   private final Optional<SECPSignature> proposerSeal;
   private final Supplier<Address> proposerAddress;
 
+  /**
+   * Instantiates a new Clique extra data.
+   *
+   * @param vanityData the vanity data
+   * @param proposerSeal the proposer seal
+   * @param validators the validators
+   * @param header the header
+   */
   public CliqueExtraData(
       final Bytes vanityData,
       final SECPSignature proposerSeal,
@@ -64,11 +73,24 @@ public class CliqueExtraData implements ParsedExtraData {
         Suppliers.memoize(() -> CliqueBlockHashing.recoverProposerAddress(header, this));
   }
 
+  /**
+   * Create without proposer seal.
+   *
+   * @param vanityData the vanity data
+   * @param validators the validators
+   * @return the bytes
+   */
   public static Bytes createWithoutProposerSeal(
       final Bytes vanityData, final List<Address> validators) {
     return CliqueExtraData.encodeUnsealed(vanityData, validators);
   }
 
+  /**
+   * Decode header to get clique extra data.
+   *
+   * @param header the header
+   * @return the clique extra data
+   */
   public static CliqueExtraData decode(final BlockHeader header) {
     final Object inputExtraData = header.getParsedExtraData();
     if (inputExtraData instanceof CliqueExtraData) {
@@ -80,6 +102,12 @@ public class CliqueExtraData implements ParsedExtraData {
     return decodeRaw(header);
   }
 
+  /**
+   * Decode raw to get clique extra data.
+   *
+   * @param header the header
+   * @return the clique extra data
+   */
   static CliqueExtraData decodeRaw(final BlockHeader header) {
     final Bytes input = header.getExtraData();
     if (input.size() < EXTRA_VANITY_LENGTH + SECPSignature.BYTES_REQUIRED) {
@@ -103,6 +131,11 @@ public class CliqueExtraData implements ParsedExtraData {
     return new CliqueExtraData(vanityData, proposerSeal, validators, header);
   }
 
+  /**
+   * Gets proposer address.
+   *
+   * @return the proposer address
+   */
   public synchronized Address getProposerAddress() {
     return proposerAddress.get();
   }
@@ -123,10 +156,22 @@ public class CliqueExtraData implements ParsedExtraData {
     return result;
   }
 
+  /**
+   * Encode to bytes.
+   *
+   * @return the bytes
+   */
   public Bytes encode() {
     return encode(vanityData, validators, proposerSeal);
   }
 
+  /**
+   * Encode unsealed to bytes.
+   *
+   * @param vanityData the vanity data
+   * @param validators the validators
+   * @return the bytes
+   */
   public static Bytes encodeUnsealed(final Bytes vanityData, final List<Address> validators) {
     return encode(vanityData, validators, Optional.empty());
   }
@@ -144,18 +189,39 @@ public class CliqueExtraData implements ParsedExtraData {
             .orElse(Bytes.wrap(new byte[SECPSignature.BYTES_REQUIRED])));
   }
 
+  /**
+   * Gets vanity data.
+   *
+   * @return the vanity data
+   */
   public Bytes getVanityData() {
     return vanityData;
   }
 
+  /**
+   * Gets proposer seal.
+   *
+   * @return the proposer seal
+   */
   public Optional<SECPSignature> getProposerSeal() {
     return proposerSeal;
   }
 
+  /**
+   * Gets validators.
+   *
+   * @return the validators
+   */
   public List<Address> getValidators() {
     return validators;
   }
 
+  /**
+   * Create genesis extra data string.
+   *
+   * @param validators the validators
+   * @return the string
+   */
   public static String createGenesisExtraDataString(final List<Address> validators) {
     return CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validators)
         .toString();

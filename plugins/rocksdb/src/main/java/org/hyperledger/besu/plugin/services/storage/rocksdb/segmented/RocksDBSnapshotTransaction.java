@@ -36,6 +36,7 @@ import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Rocks db snapshot transaction. */
 public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBSnapshotTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
@@ -49,6 +50,13 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   private final ReadOptions readOptions;
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
+  /**
+   * Instantiates a new RocksDb snapshot transaction.
+   *
+   * @param db the db
+   * @param columnFamilyHandle the column family handle
+   * @param metrics the metrics
+   */
   RocksDBSnapshotTransaction(
       final OptimisticTransactionDB db,
       final ColumnFamilyHandle columnFamilyHandle,
@@ -78,6 +86,12 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     this.snapTx = snapTx;
   }
 
+  /**
+   * Get data against given key.
+   *
+   * @param key the key
+   * @return the optional data
+   */
   public Optional<byte[]> get(final byte[] key) {
     if (isClosed.get()) {
       LOG.debug("Attempted to access closed snapshot");
@@ -126,12 +140,22 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     }
   }
 
+  /**
+   * Stream.
+   *
+   * @return the stream
+   */
   public Stream<Pair<byte[], byte[]>> stream() {
     final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
   }
 
+  /**
+   * Stream keys.
+   *
+   * @return the stream
+   */
   public Stream<byte[]> streamKeys() {
     final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
     rocksIterator.seekToFirst();
@@ -140,8 +164,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void commit() throws StorageException {
-    // no-op or throw?
-    throw new UnsupportedOperationException("RocksDBSnapshotTransaction does not support commit");
+    // no-op
   }
 
   @Override
@@ -160,6 +183,11 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     }
   }
 
+  /**
+   * Copy.
+   *
+   * @return the rocks db snapshot transaction
+   */
   public RocksDBSnapshotTransaction copy() {
     if (isClosed.get()) {
       throw new StorageException("Snapshot already closed");

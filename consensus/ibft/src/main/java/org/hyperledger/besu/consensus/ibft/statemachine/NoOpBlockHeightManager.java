@@ -22,10 +22,16 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+/** The NoOp block height manager. */
 public class NoOpBlockHeightManager implements BaseIbftBlockHeightManager {
 
   private final BlockHeader parentHeader;
 
+  /**
+   * Instantiates a new NoOp block height manager.
+   *
+   * @param parentHeader the parent header
+   */
   public NoOpBlockHeightManager(final BlockHeader parentHeader) {
     this.parentHeader = parentHeader;
   }

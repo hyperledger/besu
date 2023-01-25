@@ -18,6 +18,7 @@ import org.hyperledger.besu.plugin.Unstable;
 
 import java.util.Optional;
 
+/** The interface Sync status. */
 public interface SyncStatus {
 
   /**

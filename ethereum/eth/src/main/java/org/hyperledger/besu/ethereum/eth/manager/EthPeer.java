@@ -485,7 +485,7 @@ public class EthPeer implements Comparable<EthPeer> {
     LOG.info("checking connection with hash code {}", hashCode);
     synchronized (this) {
       if (connectionsWithReceivedStatusMessage.contains(hashCode)
-              && connectionsWithSentStatusMessage.contains(hashCode)) {
+          && connectionsWithSentStatusMessage.contains(hashCode)) {
         if (!this.connection.equals(newConnection)) {
           // figure out which connection to keep
           if (compareDuplicateConnections(this.connection, newConnection) > 0) {
@@ -496,13 +496,14 @@ public class EthPeer implements Comparable<EthPeer> {
         }
         final int actualHashCode = this.connection.hashCode();
         if (connectionsWithReceivedStatusMessage.contains(actualHashCode)
-                && connectionsWithSentStatusMessage.contains(actualHashCode)) {
+            && connectionsWithSentStatusMessage.contains(actualHashCode)) {
           readyForRequests.set(true);
           if (onStatusesExchanged == null) {
             return;
           } else {
             LOG.info("Executing callback connected to peer {}", this.id);
-            LOG.debug("Status message exchange successful with a peer on a matching chain. {}", this);
+            LOG.debug(
+                "Status message exchange successful with a peer on a matching chain. {}", this);
             onStatusesExchanged.accept(this);
           }
         }

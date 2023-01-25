@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Vote validation rule. */
 public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(VoteValidationRule.class);

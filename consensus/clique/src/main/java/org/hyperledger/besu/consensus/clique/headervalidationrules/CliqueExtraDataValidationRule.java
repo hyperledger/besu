@@ -29,12 +29,18 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Clique extra data validation rule. */
 public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(CliqueExtraDataValidationRule.class);
 
   private final EpochManager epochManager;
 
+  /**
+   * Instantiates a new Clique extra data validation rule.
+   *
+   * @param epochManager the epoch manager
+   */
   public CliqueExtraDataValidationRule(final EpochManager epochManager) {
     this.epochManager = epochManager;
   }

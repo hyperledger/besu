@@ -17,6 +17,7 @@
 package org.hyperledger.besu.plugin.data;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The parts of a Block not in the {@link BlockHeader}, information corresponding to the comprised
@@ -38,4 +39,11 @@ public interface BlockBody {
    * @return The list of ommers of the block.
    */
   public List<? extends BlockHeader> getOmmers();
+
+  /**
+   * Returns the list of withdrawals of the block.
+   *
+   * @return The list of withdrawals of the block.
+   */
+  Optional<? extends List<? extends Withdrawal>> getWithdrawals();
 }

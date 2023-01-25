@@ -22,14 +22,21 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import picocli.CommandLine.ITypeConverter;
 
+/** The Enode to uri property converter. */
 public class EnodeToURIPropertyConverter implements ITypeConverter<URI> {
 
   private final Function<String, URI> converter;
 
+  /** Instantiates a new Enode to uri property converter. */
   EnodeToURIPropertyConverter() {
     this.converter = (s) -> EnodeURLImpl.fromString(s).toURI();
   }
 
+  /**
+   * Instantiates a new Enode to uri property converter.
+   *
+   * @param converter the converter
+   */
   @VisibleForTesting
   EnodeToURIPropertyConverter(final Function<String, URI> converter) {
     this.converter = converter;

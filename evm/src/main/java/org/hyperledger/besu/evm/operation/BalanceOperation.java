@@ -26,12 +26,24 @@ import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Balance operation. */
 public class BalanceOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Balance operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public BalanceOperation(final GasCalculator gasCalculator) {
     super(0x31, "BALANCE", 1, 1, gasCalculator);
   }
 
+  /**
+   * Gets Balance operation Gas Cost plus warm storage read cost or cold account access cost.
+   *
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
+   * @return the long
+   */
   protected long cost(final boolean accountIsWarm) {
     return gasCalculator().getBalanceOperationGasCost()
         + (accountIsWarm

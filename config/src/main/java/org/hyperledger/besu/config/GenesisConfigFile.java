@@ -32,22 +32,36 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
 
+/** The Genesis config file. */
 public class GenesisConfigFile {
 
+  /** The constant DEFAULT. */
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 
+  /** The constant BASEFEE_AT_GENESIS_DEFAULT_VALUE. */
   public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
+
   private final ObjectNode configRoot;
 
   private GenesisConfigFile(final ObjectNode config) {
     this.configRoot = config;
   }
 
+  /**
+   * Mainnet genesis config file.
+   *
+   * @return the genesis config file
+   */
   public static GenesisConfigFile mainnet() {
     return genesisFileFromResources("/mainnet.json");
   }
 
+  /**
+   * Mainnet json node object node.
+   *
+   * @return the object node
+   */
   public static ObjectNode mainnetJsonNode() {
     try {
       final String jsonString =
@@ -58,14 +72,30 @@ public class GenesisConfigFile {
     }
   }
 
+  /**
+   * Development genesis config file.
+   *
+   * @return the genesis config file
+   */
   public static GenesisConfigFile development() {
     return genesisFileFromResources("/dev.json");
   }
 
+  /**
+   * Ecip 1049 dev genesis config file.
+   *
+   * @return the genesis config file
+   */
   public static GenesisConfigFile ecip1049dev() {
     return genesisFileFromResources("/ecip1049_dev.json");
   }
 
+  /**
+   * Genesis file from resources genesis config file.
+   *
+   * @param resourceName the resource name
+   * @return the genesis config file
+   */
   public static GenesisConfigFile genesisFileFromResources(final String resourceName) {
     try {
       return fromConfig(
@@ -75,18 +105,41 @@ public class GenesisConfigFile {
     }
   }
 
+  /**
+   * From config genesis config file.
+   *
+   * @param jsonString the json string
+   * @return the genesis config file
+   */
   public static GenesisConfigFile fromConfig(final String jsonString) {
     return fromConfig(JsonUtil.objectNodeFromString(jsonString, false));
   }
 
+  /**
+   * From config genesis config file.
+   *
+   * @param config the config
+   * @return the genesis config file
+   */
   public static GenesisConfigFile fromConfig(final ObjectNode config) {
     return new GenesisConfigFile(normalizeKeys(config));
   }
 
+  /**
+   * Gets config options.
+   *
+   * @return the config options
+   */
   public GenesisConfigOptions getConfigOptions() {
     return getConfigOptions(Collections.emptyMap());
   }
 
+  /**
+   * Gets config options.
+   *
+   * @param overrides the overrides
+   * @return the config options
+   */
   public GenesisConfigOptions getConfigOptions(final Map<String, String> overrides) {
     final ObjectNode config =
         JsonUtil.getObjectNode(configRoot, "config").orElse(JsonUtil.createEmptyObjectNode());
@@ -104,6 +157,11 @@ public class GenesisConfigFile {
     return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
   }
 
+  /**
+   * Stream allocations stream.
+   *
+   * @return the stream
+   */
   public Stream<GenesisAllocation> streamAllocations() {
     return JsonUtil.getObjectNode(configRoot, "alloc").stream()
         .flatMap(
@@ -115,27 +173,57 @@ public class GenesisConfigFile {
                                 key, JsonUtil.getObjectNode(allocations, key).get())));
   }
 
+  /**
+   * Gets parent hash.
+   *
+   * @return the parent hash
+   */
   public String getParentHash() {
     return JsonUtil.getString(configRoot, "parenthash", "");
   }
 
+  /**
+   * Gets difficulty.
+   *
+   * @return the difficulty
+   */
   public String getDifficulty() {
     return getRequiredString("difficulty");
   }
 
+  /**
+   * Gets extra data.
+   *
+   * @return the extra data
+   */
   public String getExtraData() {
     return JsonUtil.getString(configRoot, "extradata", "");
   }
 
+  /**
+   * Gets gas limit.
+   *
+   * @return the gas limit
+   */
   public long getGasLimit() {
     return parseLong("gasLimit", getFirstRequiredString("gaslimit", "gastarget"));
   }
 
+  /**
+   * Gets base fee per gas.
+   *
+   * @return the base fee per gas
+   */
   public Optional<Wei> getBaseFeePerGas() {
     return JsonUtil.getString(configRoot, "basefeepergas")
         .map(baseFeeStr -> Wei.of(parseLong("baseFeePerGas", baseFeeStr)));
   }
 
+  /**
+   * Gets genesis base fee per gas.
+   *
+   * @return the genesis base fee per gas
+   */
   public Optional<Wei> getGenesisBaseFeePerGas() {
     if (getBaseFeePerGas().isPresent()) {
       // always use specified basefee if present
@@ -150,18 +238,38 @@ public class GenesisConfigFile {
     }
   }
 
+  /**
+   * Gets mix hash.
+   *
+   * @return the mix hash
+   */
   public String getMixHash() {
     return JsonUtil.getString(configRoot, "mixhash", "");
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   public String getNonce() {
     return JsonUtil.getValueAsString(configRoot, "nonce", "0x0");
   }
 
+  /**
+   * Gets coinbase.
+   *
+   * @return the coinbase
+   */
   public Optional<String> getCoinbase() {
     return JsonUtil.getString(configRoot, "coinbase");
   }
 
+  /**
+   * Gets timestamp.
+   *
+   * @return the timestamp
+   */
   public long getTimestamp() {
     return parseLong("timestamp", JsonUtil.getValueAsString(configRoot, "timestamp", "0x0"));
   }
@@ -197,10 +305,20 @@ public class GenesisConfigFile {
     }
   }
 
+  /**
+   * Get Fork Block numbers
+   *
+   * @return list of fork block numbers
+   */
   public List<Long> getForkBlockNumbers() {
     return getConfigOptions().getForkBlockNumbers();
   }
 
+  /**
+   * Get fork time stamps
+   *
+   * @return list of fork time stamps
+   */
   public List<Long> getForkTimestamps() {
     return getConfigOptions().getForkBlockTimestamps();
   }
