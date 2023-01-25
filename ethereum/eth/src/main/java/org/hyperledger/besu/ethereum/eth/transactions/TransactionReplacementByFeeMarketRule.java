@@ -24,9 +24,9 @@ import java.util.Optional;
 public class TransactionReplacementByFeeMarketRule implements TransactionPoolReplacementRule {
 
   private static final TransactionPriceCalculator FRONTIER_CALCULATOR =
-      TransactionPriceCalculator.frontier();
+      new TransactionPriceCalculator.Frontier();
   private static final TransactionPriceCalculator EIP1559_CALCULATOR =
-      TransactionPriceCalculator.eip1559();
+      new TransactionPriceCalculator.EIP1559();
   private final Percentage priceBump;
 
   public TransactionReplacementByFeeMarketRule(final Percentage priceBump) {
