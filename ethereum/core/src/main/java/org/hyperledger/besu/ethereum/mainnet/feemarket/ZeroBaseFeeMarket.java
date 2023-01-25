@@ -38,4 +38,9 @@ public class ZeroBaseFeeMarket extends LondonFeeMarket {
   public ValidationMode baseFeeValidationMode(final long blockNumber) {
     return ValidationMode.NONE;
   }
+
+  @Override
+  public boolean implementsDataFee() {
+    return true;
+  }
 }
