@@ -331,13 +331,7 @@ public class P2PPlainNetworkTest {
     }
   }
 
-  private final ShouldConnectCallback testCallback =
-      new ShouldConnectCallback() {
-        @Override
-        public boolean shouldConnect(final Peer peer, final boolean incoming) {
-          return true;
-        }
-      };
+  private final ShouldConnectCallback testCallback = (p, d) -> true;
 
   private static class LargeMessageData extends AbstractMessageData {
 
