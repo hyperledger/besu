@@ -77,6 +77,17 @@ public interface Transaction {
   }
 
   /**
+   * A scalar value equal to the max number of Wei to be paid for data gas, as specified in
+   * EIP-4844.
+   *
+   * @return the quantity of Wei for fee per data gas.
+   */
+  @Unstable
+  default Optional<? extends Quantity> getMaxFeePerDataGas() {
+    return Optional.empty();
+  }
+
+  /**
    * A scalar value equal to the maximum amount of gas that should be used in executing this
    * transaction. This is paid up-front, before any computation is done and may not be increased
    * later.

@@ -33,8 +33,8 @@ import java.math.BigInteger;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueDifficultyCalculatorTest {
 
@@ -46,7 +46,7 @@ public class CliqueDifficultyCalculatorTest {
   private BlockHeaderTestFixture blockHeaderBuilder;
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddr = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
 

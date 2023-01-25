@@ -63,8 +63,8 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Java6Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueBlockCreatorTest {
 
@@ -84,7 +84,7 @@ public class CliqueBlockCreatorTest {
   private ValidatorProvider validatorProvider;
   private VoteProvider voteProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
     protocolSchedule =
         CliqueProtocolSchedule.create(

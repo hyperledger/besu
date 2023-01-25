@@ -135,6 +135,12 @@ public abstract class MainnetPrecompiledContracts {
     registry.put(Address.BLS12_MAP_FP2_TO_G2, new BLS12MapFp2ToG2PrecompiledContract());
   }
 
+  /**
+   * Populate registry for Cancun.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
   public static void populateForCancun(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForIstanbul(registry, gasCalculator);

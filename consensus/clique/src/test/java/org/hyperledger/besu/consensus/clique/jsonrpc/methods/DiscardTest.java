@@ -32,19 +32,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DiscardTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String METHOD = "clique_discard";
 
   private ValidatorProvider validatorProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
     final Blockchain blockchain = mock(Blockchain.class);
     final EpochManager epochManager = mock(EpochManager.class);

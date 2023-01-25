@@ -33,7 +33,7 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public abstract class AbstractVoteProposerMethodTest {
 
