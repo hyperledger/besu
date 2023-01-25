@@ -175,7 +175,6 @@ jobs:
             done
 
   unitTests:
-    parallelism: 6
     executor: besu_executor_xl
     steps:
       - prepare
@@ -185,14 +184,7 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            GRADLE_ARGS=$(ls -d */src/test/java \
-              | sed 's/^/:/' \
-              | sed 's@src/test/java@@' \
-              | sed 's@/@:test@' \
-              | circleci tests split --split-by=timings)
-            # Format the arguments to "./gradlew test"
-            echo "Prepared arguments for Gradle: $GRADLE_ARGS"
-            ./gradlew --no-daemon $GRADLE_ARGS
+            ./gradlew --no-daemon build
       - capture_test_results
 
   integrationTests:

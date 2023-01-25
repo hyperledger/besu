@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -145,4 +146,10 @@ public interface WorldUpdater extends MutableWorldView {
    * @return The parent WorldUpdater if this wraps another one, empty otherwise
    */
   Optional<WorldUpdater> parentUpdater();
+
+  /** Clears any accounts that are empty */
+  default void clearAccountsThatAreEmpty() {
+    new ArrayList<>(getTouchedAccounts())
+        .stream().filter(Account::isEmpty).forEach(a -> deleteAccount(a.getAddress()));
+  }
 }
