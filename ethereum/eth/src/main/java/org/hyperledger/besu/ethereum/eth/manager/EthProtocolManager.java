@@ -380,9 +380,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   @Override
-  public boolean shouldConnectOutbound(final Peer peer) {
+  public boolean shouldConnect(final Peer peer, final boolean incoming) {
     if (peer.getForkId().map(forkId -> forkIdManager.peerCheck(forkId)).orElse(true)) {
-      if (ethPeers.shouldConnectOutbound(peer)) {
+      if (ethPeers.shouldConnect(peer, incoming)) {
         return true;
       }
     }

@@ -91,8 +91,8 @@ public class P2PPlainNetworkTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
-      listener.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       listener.start();
       connector.start();
@@ -115,8 +115,8 @@ public class P2PPlainNetworkTest {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(listenNodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
-      listener.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       listener.start();
       connector.start();
@@ -158,8 +158,8 @@ public class P2PPlainNetworkTest {
                 .nodeKey(connectorNodeKey)
                 .supportedCapabilities(cap2)
                 .build()) {
-      listener.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       listener.start();
       connector.start();
@@ -180,8 +180,8 @@ public class P2PPlainNetworkTest {
     try (final P2PNetwork localNetwork =
             builder("partner1client1").peerPermissions(localDenylist).build();
         final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
-      localNetwork.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
-      remoteNetwork.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
+      remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       localNetwork.start();
       remoteNetwork.start();
@@ -230,8 +230,8 @@ public class P2PPlainNetworkTest {
     try (final P2PNetwork localNetwork =
             builder("partner1client1").peerPermissions(peerPermissions).build();
         final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
-      localNetwork.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
-      remoteNetwork.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
+      remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       localNetwork.start();
       remoteNetwork.start();
@@ -281,8 +281,8 @@ public class P2PPlainNetworkTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
-      listener.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeOutgoingConnectRequest(testCallback);
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       final CompletableFuture<DisconnectReason> disconnectReasonFuture = new CompletableFuture<>();
       listener.subscribeDisconnect(
@@ -334,7 +334,7 @@ public class P2PPlainNetworkTest {
   private final ShouldConnectCallback testCallback =
       new ShouldConnectCallback() {
         @Override
-        public boolean shouldConnect(final Peer peer) {
+        public boolean shouldConnect(final Peer peer, final boolean incoming) {
           return true;
         }
       };

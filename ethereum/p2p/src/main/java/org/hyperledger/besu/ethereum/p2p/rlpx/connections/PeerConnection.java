@@ -123,6 +123,11 @@ public interface PeerConnection {
     return getPeer().getEnodeURL();
   }
 
+  /**
+   * Get the difference, measured in milliseconds, between the time this connection was initiated and midnight, January 1, 1970 UTC
+   *
+   * @return the time when this connection was initiated.
+   */
   public long getInitiatedAt();
 
   public boolean inboundInitiated();

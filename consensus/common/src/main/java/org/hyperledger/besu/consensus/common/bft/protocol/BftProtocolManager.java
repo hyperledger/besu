@@ -108,7 +108,7 @@ public class BftProtocolManager implements ProtocolManager {
   }
 
   @Override
-  public boolean shouldConnectOutbound(final Peer peer) {
+  public boolean shouldConnect(final Peer peer, final boolean incoming) {
     return false; // for now the EthProtocolManager should take care of this
   }
 

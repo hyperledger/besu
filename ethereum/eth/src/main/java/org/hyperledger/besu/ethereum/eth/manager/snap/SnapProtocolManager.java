@@ -139,7 +139,7 @@ public class SnapProtocolManager implements ProtocolManager {
   public void handleNewConnection(final PeerConnection connection) {}
 
   @Override
-  public boolean shouldConnectOutbound(final Peer peer) {
+  public boolean shouldConnect(final Peer peer, final boolean incoming) {
     return false; // should be fine for now, as the EthManager is taking care of this
   }
 

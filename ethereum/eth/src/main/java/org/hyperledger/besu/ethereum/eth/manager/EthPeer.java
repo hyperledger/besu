@@ -72,8 +72,8 @@ public class EthPeer implements Comparable<EthPeer> {
 
   private final int maxTrackedSeenBlocks = 300;
 
-  private final List<Integer> connectionWithSentStatusMessage = new ArrayList<Integer>();
-  private final List<Integer> connectionWithReceivedStatusMessage = new ArrayList<Integer>();
+  private final List<Integer> connectionsWithSentStatusMessage = new ArrayList<Integer>();
+  private final List<Integer> connectionsWithReceivedStatusMessage = new ArrayList<Integer>();
 
   private final Set<Hash> knownBlocks =
       Collections.newSetFromMap(
@@ -459,7 +459,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void registerStatusSent(final PeerConnection connection) {
     synchronized (this) {
-      connectionWithSentStatusMessage.add(Integer.valueOf(connection.hashCode()));
+      connectionsWithSentStatusMessage.add(Integer.valueOf(connection.hashCode()));
       LOG.info("adding connection with hash code {} to status sent", connection.hashCode());
       maybeExecuteStatusesExchangedCallback(connection);
     }
@@ -474,7 +474,7 @@ public class EthPeer implements Comparable<EthPeer> {
       chainHeadState.statusReceived(hash, td);
       lastProtocolVersion.set(protocolVersion);
       statusHasBeenReceivedFromPeer.set(true);
-      connectionWithReceivedStatusMessage.add(Integer.valueOf(connection.hashCode()));
+      connectionsWithReceivedStatusMessage.add(Integer.valueOf(connection.hashCode()));
       LOG.info("adding connection with hash code {} to status received", connection.hashCode());
       maybeExecuteStatusesExchangedCallback(connection);
     }
@@ -483,26 +483,28 @@ public class EthPeer implements Comparable<EthPeer> {
   private void maybeExecuteStatusesExchangedCallback(final PeerConnection newConnection) {
     final Integer hashCode = Integer.valueOf(newConnection.hashCode());
     LOG.info("checking connection with hash code {}", hashCode);
-    if (connectionWithReceivedStatusMessage.contains(hashCode)
-        && connectionWithSentStatusMessage.contains(hashCode)) {
-      if (!this.connection.equals(newConnection)) {
-        // figure out which connection to keep
-        if (compareDuplicateConnections(this.connection, newConnection) > 0) {
-          final PeerConnection oldConnection = this.connection;
-          this.connection = newConnection;
-          LOG.info("Changed connection from {} to {}", oldConnection, newConnection);
+    synchronized (this) {
+      if (connectionsWithReceivedStatusMessage.contains(hashCode)
+              && connectionsWithSentStatusMessage.contains(hashCode)) {
+        if (!this.connection.equals(newConnection)) {
+          // figure out which connection to keep
+          if (compareDuplicateConnections(this.connection, newConnection) > 0) {
+            final PeerConnection oldConnection = this.connection;
+            this.connection = newConnection;
+            LOG.info("Changed connection from {} to {}", oldConnection, newConnection);
+          }
         }
-      }
-      final int actualHashCode = this.connection.hashCode();
-      if (connectionWithReceivedStatusMessage.contains(actualHashCode)
-          && connectionWithSentStatusMessage.contains(actualHashCode)) {
-        readyForRequests.set(true);
-        if (onStatusesExchanged == null) {
-          return;
-        } else {
-          LOG.info("Executing callback connected to peer {}", this.id);
-          LOG.debug("Status message exchange successful with a peer on a matching chain. {}", this);
-          onStatusesExchanged.accept(this);
+        final int actualHashCode = this.connection.hashCode();
+        if (connectionsWithReceivedStatusMessage.contains(actualHashCode)
+                && connectionsWithSentStatusMessage.contains(actualHashCode)) {
+          readyForRequests.set(true);
+          if (onStatusesExchanged == null) {
+            return;
+          } else {
+            LOG.info("Executing callback connected to peer {}", this.id);
+            LOG.debug("Status message exchange successful with a peer on a matching chain. {}", this);
+            onStatusesExchanged.accept(this);
+          }
         }
       }
     }

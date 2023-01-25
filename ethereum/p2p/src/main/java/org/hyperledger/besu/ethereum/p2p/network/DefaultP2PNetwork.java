@@ -415,8 +415,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public void subscribeOutgoingConnectRequest(final ShouldConnectCallback callback) {
-    rlpxAgent.subscribeOutgoingConnectRequest(callback);
+  public void subscribeConnectRequest(final ShouldConnectCallback callback) {
+    rlpxAgent.subscribeConnectRequest(callback);
   }
   ;
 

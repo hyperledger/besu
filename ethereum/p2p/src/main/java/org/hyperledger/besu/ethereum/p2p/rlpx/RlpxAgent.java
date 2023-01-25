@@ -66,7 +66,7 @@ public class RlpxAgent {
   private final PeerConnectionEvents connectionEvents;
   private final ConnectionInitializer connectionInitializer;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
-  private final List<ShouldConnectCallback> outgoingConnectRequestSubscribers = new ArrayList<>();
+  private final List<ShouldConnectCallback> connectRequestSubscribers = new ArrayList<>();
 
   private final PeerRlpxPermissions peerPermissions;
   private final PeerPrivileges peerPrivileges;
@@ -79,7 +79,7 @@ public class RlpxAgent {
   private Callable<Stream<PeerConnection>> getAllActiveConnectionsCallback;
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
       CacheBuilder.newBuilder()
-          .expireAfterWrite(Duration.ofSeconds(5L))
+          .expireAfterWrite(Duration.ofSeconds(10L))
           .concurrencyLevel(1)
           .build();
 
@@ -242,7 +242,7 @@ public class RlpxAgent {
     }
 
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture;
-    if (checkWhetherToConnect(peer)) {
+    if (checkWhetherToConnect(peer, false)) {
       try {
         peerConnectionCompletableFuture =
             peersConnectingCache.get(peer.getId(), () -> getPeerConnectionCompletableFuture(peer));
@@ -272,9 +272,9 @@ public class RlpxAgent {
     return peerConnectionCompletableFuture;
   }
 
-  private boolean checkWhetherToConnect(final Peer peer) {
-    return outgoingConnectRequestSubscribers.stream()
-        .anyMatch(callback -> callback.shouldConnect(peer));
+  private boolean checkWhetherToConnect(final Peer peer, final boolean incoming) {
+    return connectRequestSubscribers.stream()
+        .anyMatch(callback -> callback.shouldConnect(peer, incoming));
   }
 
   private void setupListeners() {
@@ -369,7 +369,11 @@ public class RlpxAgent {
       return;
     }
 
-    dispatchConnect(peerConnection);
+    if (checkWhetherToConnect(peer, true)) { // TODO: checkWhetherToConnect should return Optional<DisconnectReason>
+      dispatchConnect(peerConnection);
+    } else {
+      peerConnection.disconnect(DisconnectReason.UNKNOWN);
+    }
   }
 
   public void subscribeMessage(final Capability capability, final MessageCallback callback) {
@@ -380,8 +384,8 @@ public class RlpxAgent {
     connectSubscribers.subscribe(callback);
   }
 
-  public void subscribeOutgoingConnectRequest(final ShouldConnectCallback callback) {
-    outgoingConnectRequestSubscribers.add(callback);
+  public void subscribeConnectRequest(final ShouldConnectCallback callback) {
+    connectRequestSubscribers.add(callback);
   }
 
   public void subscribeDisconnect(final DisconnectCallback callback) {

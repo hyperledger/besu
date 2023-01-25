@@ -19,5 +19,5 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 @FunctionalInterface
 public interface ShouldConnectCallback {
 
-  boolean shouldConnect(final Peer peer);
+  boolean shouldConnect(final Peer peer, final boolean incoming);
 }

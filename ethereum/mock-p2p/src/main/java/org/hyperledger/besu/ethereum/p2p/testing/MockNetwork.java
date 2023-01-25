@@ -170,7 +170,7 @@ public final class MockNetwork {
     }
 
     @Override
-    public void subscribeOutgoingConnectRequest(final ShouldConnectCallback callback) {}
+    public void subscribeConnectRequest(final ShouldConnectCallback callback) {}
 
     @Override
     public void subscribeDisconnect(final DisconnectCallback callback) {

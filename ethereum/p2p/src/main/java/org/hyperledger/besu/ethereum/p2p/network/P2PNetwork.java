@@ -87,7 +87,7 @@ public interface P2PNetwork extends Closeable {
    */
   void subscribeConnect(final ConnectCallback callback);
 
-  void subscribeOutgoingConnectRequest(final ShouldConnectCallback callback);
+  void subscribeConnectRequest(final ShouldConnectCallback callback);
   /**
    * Subscribe a {@link Consumer} to all incoming new Peer disconnect events.
    *

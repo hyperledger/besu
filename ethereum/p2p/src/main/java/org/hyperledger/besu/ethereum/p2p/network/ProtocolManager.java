@@ -62,10 +62,11 @@ public interface ProtocolManager extends AutoCloseable {
   /**
    * Call this to find out whether we should try to connect to a certain peer
    *
-   * @param peer the peer that we are trying to connect to
+   * @param peer     the peer that we are trying to connect to
+   * @param incoming true if the connection is incoming
    * @return true, if the ProtocolManager wants to connect to the peer, false otherwise
    */
-  boolean shouldConnectOutbound(Peer peer);
+  boolean shouldConnect(Peer peer, final boolean incoming);
   /**
    * Handles peer disconnects.
    *

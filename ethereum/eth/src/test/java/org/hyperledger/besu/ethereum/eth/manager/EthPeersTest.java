@@ -338,22 +338,6 @@ public class EthPeersTest {
   }
 
   @Test
-  public void removeClosedConnectionWhenStreamAvailablePeers() {
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    // Check connection is there and connection was not removed
-    ethPeers.streamAvailablePeers();
-    assertThat(ethPeers.streamAllPeers().count()).isEqualTo(1);
-
-    // Disconnect peer
-    peer.getEthPeer().disconnect(DisconnectReason.UNKNOWN);
-
-    // Call method again, connection should be removed
-    ethPeers.streamAvailablePeers();
-    assertThat(ethPeers.streamAllPeers().count()).isEqualTo(0);
-  }
-
-  @Test
   public void toString_hasExpectedInfo() {
     assertThat(ethPeers.toString()).isEqualTo("0 EthPeers {}");
 

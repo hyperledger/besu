@@ -156,8 +156,8 @@ public class NetworkRunner implements AutoCloseable {
             protocolManager.handleNewConnection(connection);
           });
 
-      network.subscribeOutgoingConnectRequest(
-          (peer) -> protocolManager.shouldConnectOutbound(peer));
+      network.subscribeConnectRequest(
+          (peer, incoming) -> protocolManager.shouldConnect(peer, incoming));
 
       network.subscribeDisconnect(
           (connection, disconnectReason, initiatedByPeer) -> {

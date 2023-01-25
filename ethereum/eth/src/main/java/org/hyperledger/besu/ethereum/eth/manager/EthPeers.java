@@ -37,8 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -127,37 +126,15 @@ public class EthPeers {
 
   public void registerNewConnection(
       final PeerConnection newConnection, final List<PeerValidator> peerValidators) {
-    final AtomicBoolean addToNotReadyConnections = new AtomicBoolean(false);
-    final AtomicReference<EthPeer> ethPeer = new AtomicReference<>();
     final Bytes id = newConnection.getPeer().getId();
-    connections.compute(
-        id,
-        (c, p) -> {
-          if (p != null && !p.isDisconnected()) {
-            return p; // Keep existing peer with the existing connection.
-          }
-          final List<PeerConnection> nrcWithPeer = getNotReadyConnections(id);
-          if (!nrcWithPeer.isEmpty()) {
-            ethPeer.set(notReadyConnections.getIfPresent(nrcWithPeer.get(0)));
-            if (nrcWithPeer.stream()
-                .anyMatch(
-                    conn ->
-                        (conn.inboundInitiated() == newConnection.inboundInitiated())
-                            && !conn.isDisconnected())) {
-              LOG.info(
-                  "Found connection from same peer and initiated by the same side in not ready connections. Peer {}",
-                  id);
-              return p;
-            }
-          }
-          addToNotReadyConnections.set(true);
-          return p;
-        });
-    if (addToNotReadyConnections.get()) {
-      EthPeer peer = ethPeer.get();
-      if (peer == null) {
-        peer =
-            new EthPeer(
+    synchronized (this) {
+      EthPeer ethPeer = connections.get(id);
+      if (ethPeer == null) {
+        final Optional<EthPeer> peerInList =
+                notReadyConnections.asMap().values().stream()
+                        .filter(p -> p.getId().equals(id))
+                        .findFirst();
+        ethPeer = peerInList.orElse(new EthPeer(
                 newConnection,
                 protocolName,
                 this::ethPeerStatusExchanged,
@@ -165,27 +142,9 @@ public class EthPeers {
                 maxMessageSize,
                 clock,
                 permissioningProviders,
-                localNodeId);
+                localNodeId));
       }
-
-      synchronized (notReadyConnections) {
-        LOG.info(
-            "Adding connection {} with peer {} into notReadyConnections map", newConnection, id);
-        final Optional<EthPeer> peerInList =
-            notReadyConnections.asMap().values().stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst();
-        if (peerInList.isEmpty()) {
-          notReadyConnections.put(newConnection, peer);
-        } else {
-          notReadyConnections.put(newConnection, peerInList.get());
-        }
-      }
-
-    } else {
-      newConnection.disconnect(
-          DisconnectMessage.DisconnectReason.ALREADY_CONNECTED); // ?? could this be the problem?
-      LOG.info("disconnecting connection {} with peer {}", newConnection, id);
+      notReadyConnections.put(newConnection, ethPeer);
     }
   }
 
@@ -226,9 +185,7 @@ public class EthPeers {
 
   private void abortPendingRequestsAssignedToDisconnectedPeers() {
     synchronized (this) {
-      final Iterator<PendingPeerRequest> iterator = pendingRequests.iterator();
-      while (iterator.hasNext()) {
-        final PendingPeerRequest request = iterator.next();
+      for (final PendingPeerRequest request : pendingRequests) {
         if (request.getAssignedPeer().map(EthPeer::isDisconnected).orElse(false)) {
           request.abort();
         }
@@ -237,11 +194,10 @@ public class EthPeers {
   }
 
   public EthPeer peer(final PeerConnection connection) {
-    final EthPeer peer = notReadyConnections.getIfPresent(connection);
-    if (peer != null) {
-      return peer;
-    } else {
-      return connections.get(connection.getPeer().getId());
+    try {
+      return notReadyConnections.get(connection, () ->  connections.get(connection.getPeer().getId()));
+    } catch (final ExecutionException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -263,7 +219,7 @@ public class EthPeers {
 
   public void dispatchMessage(
       final EthPeer peer, final EthMessage ethMessage, final String protocolName) {
-    Optional<RequestManager> maybeRequestManager = peer.dispatch(ethMessage, protocolName);
+    final Optional<RequestManager> maybeRequestManager = peer.dispatch(ethMessage, protocolName);
     if (maybeRequestManager.isPresent() && peer.hasAvailableRequestCapacity()) {
       reattemptPendingPeerRequests();
     }
@@ -313,7 +269,7 @@ public class EthPeers {
   }
 
   private void removeDisconnectedPeers() {
-    connections.values().stream()
+    connections.values()
         .forEach(
             ep -> {
               if (ep.isDisconnected()) {
@@ -364,35 +320,34 @@ public class EthPeers {
 
   private Stream<PeerConnection> getAllActiveConnections() {
     return connections.values().stream()
-        .map(p -> p.getConnection())
+        .map(EthPeer::getConnection)
         .filter(c -> !c.isDisconnected());
   }
 
   private Stream<PeerConnection> getAllConnections() {
     return Stream.concat(
-            connections.values().stream().map(p -> p.getConnection()),
+            connections.values().stream().map(EthPeer::getConnection),
             notReadyConnections.asMap().keySet().stream())
         .distinct()
         .filter(c -> !c.isDisconnected());
   }
 
-  public boolean shouldConnectOutbound(final Peer peer) {
+  public boolean shouldConnect(final Peer peer, final boolean incoming) {
+    if ((incoming && peerCount() >= peerUpperBound) || (!incoming && peerCount() >= peerLowerBound)) {
+      return false;
+    }
     final Bytes id = peer.getId();
     final EthPeer ethPeer = connections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
       return false;
     }
-    if (peerCount() < peerLowerBound) {
-      final List<PeerConnection> notReadyConnections = getNotReadyConnections(id);
-      if (!notReadyConnections.isEmpty()) {
-        // we already have a connection that we have initiated that is getting ready
-        if (!notReadyConnections.stream()
-            .anyMatch(c -> !c.inboundInitiated() && !c.isDisconnected())) {
-          return false;
-        }
+    final List<PeerConnection> notReadyConnections = getNotReadyConnections(id);
+    if (!notReadyConnections.isEmpty()) {
+      // we already have a connection that we have initiated that is getting ready
+      if (notReadyConnections.stream()
+              .anyMatch(c -> (c.inboundInitiated() == incoming) && !c.isDisconnected())) {
+        return false;
       }
-    } else if (peerCount() >= peerUpperBound) {
-      return false;
     }
     return true;
   }
@@ -453,7 +408,7 @@ public class EthPeers {
     }
   }
 
-  private boolean canExceedPeerLimits(PeerConnection a) {
+  private boolean canExceedPeerLimits(final PeerConnection a) {
     if (rlpxAgent == null) {
       return true;
     }
