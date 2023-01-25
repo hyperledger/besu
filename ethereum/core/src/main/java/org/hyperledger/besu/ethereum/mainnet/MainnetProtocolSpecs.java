@@ -19,6 +19,7 @@ import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -45,6 +46,7 @@ import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
@@ -122,9 +124,9 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, false, Optional.empty(), goQuorumMode))
+                    gasCalculator, gasLimitCalculator, false, Optional.empty(), goQuorumMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -228,9 +230,13 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, Optional.empty(), quorumCompatibilityMode))
+                    gasCalculator,
+                    gasLimitCalculator,
+                    true,
+                    Optional.empty(),
+                    quorumCompatibilityMode))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -315,9 +321,9 @@ public abstract class MainnetProtocolSpecs {
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    gasCalculator, gasLimitCalculator, true, chainId, quorumCompatibilityMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -482,9 +488,10 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
+                    gasLimitCalculator,
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
@@ -524,9 +531,10 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculator(
             new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
+                    gasLimitCalculator,
                     londonFeeMarket,
                     true,
                     chainId,
@@ -691,9 +699,10 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.eip1559()))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorBuilder(
-            gasCalculator ->
+            (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
+                    gasLimitCalculator,
                     londonFeeMarket,
                     true,
                     chainId,
@@ -719,6 +728,14 @@ public abstract class MainnetProtocolSpecs {
 
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+    final BaseFeeMarket cancunFeeMarket =
+        genesisConfigOptions.isZeroBaseFee()
+            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+            : FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+
+    final GasLimitCalculator cancunGasLimitCalculator =
+        new CancunTargetingGasLimitCalculator(londonForkBlockNumber, cancunFeeMarket);
 
     return shanghaiDefinition(
             chainId,
@@ -728,6 +745,10 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        // gas calculator for EIP-4844 data gas
+        .gasCalculator(CancunGasCalculator::new)
+        // gas limit with EIP-4844 max data gas per block
+        .gasLimitCalculator(cancunGasLimitCalculator)
         // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -744,6 +765,21 @@ public abstract class MainnetProtocolSpecs {
                         MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        // change to check for max data gas per block for EIP-4844
+        .transactionValidatorBuilder(
+            (gasCalculator, gasLimitCalculator) ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    gasLimitCalculator,
+                    cancunFeeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
+                    quorumCompatibilityMode,
+                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .name("Cancun");
   }

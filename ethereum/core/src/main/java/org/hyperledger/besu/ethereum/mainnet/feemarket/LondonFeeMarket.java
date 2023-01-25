@@ -26,12 +26,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LondonFeeMarket implements BaseFeeMarket {
+  private static final Logger LOG = LoggerFactory.getLogger(LondonFeeMarket.class);
+
   static final Wei DEFAULT_BASEFEE_INITIAL_VALUE =
       GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
   static final long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
   static final long DEFAULT_SLACK_COEFFICIENT = 2L;
+
   private static final Wei DEFAULT_BASEFEE_FLOOR = Wei.of(7L);
-  private static final Logger LOG = LoggerFactory.getLogger(LondonFeeMarket.class);
 
   private final Wei baseFeeInitialValue;
   private final long londonForkBlockNumber;
@@ -44,7 +46,14 @@ public class LondonFeeMarket implements BaseFeeMarket {
 
   public LondonFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    this.txPriceCalculator = TransactionPriceCalculator.eip1559();
+    this(new TransactionPriceCalculator.EIP1559(), londonForkBlockNumber, baseFeePerGasOverride);
+  }
+
+  protected LondonFeeMarket(
+      final TransactionPriceCalculator txPriceCalculator,
+      final long londonForkBlockNumber,
+      final Optional<Wei> baseFeePerGasOverride) {
+    this.txPriceCalculator = txPriceCalculator;
     this.londonForkBlockNumber = londonForkBlockNumber;
     this.baseFeeInitialValue = baseFeePerGasOverride.orElse(DEFAULT_BASEFEE_INITIAL_VALUE);
     this.baseFeeFloor = baseFeeInitialValue.isZero() ? Wei.ZERO : DEFAULT_BASEFEE_FLOOR;

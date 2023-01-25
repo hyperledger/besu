@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Optional;
@@ -25,9 +24,9 @@ import java.util.Optional;
 public class TransactionReplacementByFeeMarketRule implements TransactionPoolReplacementRule {
 
   private static final TransactionPriceCalculator FRONTIER_CALCULATOR =
-      TransactionPriceCalculator.frontier();
+      new TransactionPriceCalculator.Frontier();
   private static final TransactionPriceCalculator EIP1559_CALCULATOR =
-      TransactionPriceCalculator.eip1559();
+      new TransactionPriceCalculator.EIP1559();
   private final Percentage priceBump;
 
   public TransactionReplacementByFeeMarketRule(final Percentage priceBump) {
@@ -38,26 +37,26 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
   public boolean shouldReplace(
       final PendingTransaction existingPendingTransaction,
       final PendingTransaction newPendingTransaction,
-      final Optional<Wei> baseFee) {
+      final Optional<Wei> maybeBaseFee) {
 
     // bail early if basefee is absent or neither transaction supports 1559 fee market
-    if (baseFee.isEmpty()
+    if (maybeBaseFee.isEmpty()
         || !(isNotGasPriced(existingPendingTransaction) || isNotGasPriced(newPendingTransaction))) {
       return false;
     }
 
-    Wei newEffPrice = priceOf(newPendingTransaction.getTransaction(), baseFee);
+    Wei newEffPrice = priceOf(newPendingTransaction.getTransaction(), maybeBaseFee);
     Wei newEffPriority =
-        newPendingTransaction.getTransaction().getEffectivePriorityFeePerGas(baseFee);
+        newPendingTransaction.getTransaction().getEffectivePriorityFeePerGas(maybeBaseFee);
 
     // bail early if price is not strictly positive
     if (newEffPrice.equals(Wei.ZERO)) {
       return false;
     }
 
-    Wei curEffPrice = priceOf(existingPendingTransaction.getTransaction(), baseFee);
+    Wei curEffPrice = priceOf(existingPendingTransaction.getTransaction(), maybeBaseFee);
     Wei curEffPriority =
-        existingPendingTransaction.getTransaction().getEffectivePriorityFeePerGas(baseFee);
+        existingPendingTransaction.getTransaction().getEffectivePriorityFeePerGas(maybeBaseFee);
 
     if (isBumpedBy(curEffPrice, newEffPrice, priceBump)) {
       // if effective price is bumped by percent:
@@ -71,12 +70,10 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
     return false;
   }
 
-  private Wei priceOf(final Transaction transaction, final Optional<Wei> baseFee) {
+  private Wei priceOf(final Transaction transaction, final Optional<Wei> maybeBaseFee) {
     final TransactionPriceCalculator transactionPriceCalculator =
-        transaction.getType().equals(TransactionType.EIP1559)
-            ? EIP1559_CALCULATOR
-            : FRONTIER_CALCULATOR;
-    return transactionPriceCalculator.price(transaction, baseFee);
+        transaction.getType().supports1559FeeMarket() ? EIP1559_CALCULATOR : FRONTIER_CALCULATOR;
+    return transactionPriceCalculator.price(transaction, maybeBaseFee);
   }
 
   private boolean isBumpedBy(final Wei val, final Wei bumpVal, final Percentage percent) {

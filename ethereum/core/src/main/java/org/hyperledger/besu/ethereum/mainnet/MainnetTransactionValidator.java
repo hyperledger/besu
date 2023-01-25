@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
@@ -46,12 +47,10 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  * {@link Transaction}.
  */
 public class MainnetTransactionValidator {
-
-  private final long MAX_DATA_GAS_PER_BLOCK = 524_288; // 2**19
-  private final long DATA_GAS_PER_BLOB = 131_072; // 2**17
   private final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
 
   private final GasCalculator gasCalculator;
+  private final GasLimitCalculator gasLimitCalculator;
   private final FeeMarket feeMarket;
 
   private final boolean disallowSignatureMalleability;
@@ -66,11 +65,13 @@ public class MainnetTransactionValidator {
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final boolean goQuorumCompatibilityMode) {
     this(
         gasCalculator,
+        gasLimitCalculator,
         checkSignatureMalleability,
         chainId,
         Set.of(TransactionType.FRONTIER),
@@ -79,12 +80,14 @@ public class MainnetTransactionValidator {
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
       final boolean quorumCompatibilityMode) {
     this(
         gasCalculator,
+        gasLimitCalculator,
         FeeMarket.legacy(),
         checkSignatureMalleability,
         chainId,
@@ -95,6 +98,7 @@ public class MainnetTransactionValidator {
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
@@ -102,6 +106,7 @@ public class MainnetTransactionValidator {
       final boolean goQuorumCompatibilityMode,
       final int maxInitcodeSize) {
     this.gasCalculator = gasCalculator;
+    this.gasLimitCalculator = gasLimitCalculator;
     this.feeMarket = feeMarket;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
@@ -138,12 +143,6 @@ public class MainnetTransactionValidator {
       }
     }
 
-    if (goQuorumCompatibilityMode && transaction.hasCostParams()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
-          "gasPrice must be set to zero on a GoQuorum compatible network");
-    }
-
     final TransactionType transactionType = transaction.getType();
     if (!acceptedTransactionTypes.contains(transactionType)) {
       return ValidationResult.invalid(
@@ -153,10 +152,37 @@ public class MainnetTransactionValidator {
               transactionType, acceptedTransactionTypes));
     }
 
-    if (baseFee.isPresent()) {
-      final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
+    if (transaction.getNonce() == MAX_NONCE) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
+    }
+
+    if (transaction.isContractCreation() && transaction.getPayload().size() > maxInitcodeSize) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INITCODE_TOO_LARGE,
+          String.format(
+              "Initcode size of %d exceeds maximum size of %s",
+              transaction.getPayload().size(), maxInitcodeSize));
+    }
+
+    return validateCostAndFee(transaction, baseFee, transactionValidationParams);
+  }
+
+  private ValidationResult<TransactionInvalidReason> validateCostAndFee(
+      final Transaction transaction,
+      final Optional<Wei> maybeBaseFee,
+      final TransactionValidationParams transactionValidationParams) {
+
+    if (goQuorumCompatibilityMode && transaction.hasCostParams()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
+          "gasPrice must be set to zero on a GoQuorum compatible network");
+    }
+
+    if (maybeBaseFee.isPresent()) {
+      final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, maybeBaseFee);
       if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
-          && price.compareTo(baseFee.orElseThrow()) < 0) {
+          && price.compareTo(maybeBaseFee.orElseThrow()) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE,
             "gasPrice is less than the current BaseFee");
@@ -181,6 +207,17 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
     }
 
+    if (transaction.getType().supportsBlob()) {
+      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
+            String.format(
+                "total data gas %d exceeds max data gas per block %d",
+                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
+      }
+    }
+
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
@@ -191,14 +228,6 @@ public class MainnetTransactionValidator {
           String.format(
               "intrinsic gas cost %s exceeds gas limit %s",
               intrinsicGasCost, transaction.getGasLimit()));
-    }
-
-    if (transaction.isContractCreation() && transaction.getPayload().size() > maxInitcodeSize) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INITCODE_TOO_LARGE,
-          String.format(
-              "Initcode size of %d exceeds maximum size of %s",
-              transaction.getPayload().size(), maxInitcodeSize));
     }
 
     return ValidationResult.valid();
@@ -218,12 +247,14 @@ public class MainnetTransactionValidator {
       if (sender.getCodeHash() != null) codeHash = sender.getCodeHash();
     }
 
-    if (transaction.getUpfrontCost().compareTo(senderBalance) > 0) {
+    final Wei upfrontCost =
+        transaction.getUpfrontCost(gasCalculator.dataGasCost(transaction.getBlobCount()));
+    if (upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(
               "transaction up-front cost %s exceeds transaction sender account balance %s",
-              transaction.getUpfrontCost(), senderBalance));
+              upfrontCost, senderBalance));
     }
 
     if (transaction.getNonce() < senderNonce) {
@@ -316,14 +347,14 @@ public class MainnetTransactionValidator {
     Transaction.BlobsWithCommitments blobsWithCommitments =
         transaction.getBlobsWithCommitments().get();
 
-    if (blobsWithCommitments.blobs.getElements().size()
-        > MAX_DATA_GAS_PER_BLOCK / DATA_GAS_PER_BLOB) {
+    final long blobsLimit = gasLimitCalculator.currentDataGasLimit() / gasCalculator.dataGasCost(1);
+    if (blobsWithCommitments.blobs.getElements().size() > blobsLimit) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
           "Too many transaction blobs ("
               + blobsWithCommitments.blobs.getElements().size()
               + ") in transaction, max is "
-              + MAX_DATA_GAS_PER_BLOCK / DATA_GAS_PER_BLOB);
+              + blobsLimit);
     }
 
     if (blobsWithCommitments.blobs.getElements().size()

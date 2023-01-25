@@ -291,13 +291,18 @@ public class MainnetTransactionProcessor {
       final long previousNonce = senderMutableAccount.incrementNonce();
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
+      final Wei dataGasPrice =
+          feeMarket.getTransactionPriceCalculator().dataPrice(transaction, blockHeader);
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
           senderAddress,
           previousNonce,
           sender.getNonce());
 
-      final Wei upfrontGasCost = transaction.getUpfrontGasCost(transactionGasPrice);
+      final long dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+
+      final Wei upfrontGasCost =
+          transaction.getUpfrontGasCost(transactionGasPrice, dataGasPrice, dataGas);
       final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
       LOG.trace(
           "Deducted sender {} upfront gas cost {} ({} -> {})",
@@ -328,12 +333,15 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
+
+      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas - dataGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} (limit - intrinsic)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - data)",
           gasAvailable,
           transaction.getGasLimit(),
-          intrinsicGas);
+          intrinsicGas,
+          accessListGas,
+          dataGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
