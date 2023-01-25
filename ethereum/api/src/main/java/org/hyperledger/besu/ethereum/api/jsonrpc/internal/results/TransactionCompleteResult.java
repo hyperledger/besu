@@ -95,7 +95,9 @@ public class TransactionCompleteResult implements TransactionResult {
         tx.getTransaction().getMaxFeePerGas().map(Wei::toShortHexString).orElse(null);
     this.gasPrice =
         Quantity.create(
-            transaction.getGasPrice().orElse(transaction.getEffectiveGasPrice(tx.getBaseFee())));
+            transaction
+                .getGasPrice()
+                .orElseGet(() -> transaction.getEffectiveGasPrice(tx.getBaseFee())));
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
