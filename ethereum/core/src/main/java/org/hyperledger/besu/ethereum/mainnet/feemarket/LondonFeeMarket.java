@@ -46,7 +46,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
 
   public LondonFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    this(TransactionPriceCalculator.eip1559(), londonForkBlockNumber, baseFeePerGasOverride);
+    this(new TransactionPriceCalculator.EIP1559(), londonForkBlockNumber, baseFeePerGasOverride);
   }
 
   protected LondonFeeMarket(
