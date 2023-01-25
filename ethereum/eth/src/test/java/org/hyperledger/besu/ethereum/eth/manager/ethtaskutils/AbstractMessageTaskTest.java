@@ -97,9 +97,9 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
                 Collections.emptyList(),
                 Bytes.random(64),
-                25,
-                25,
-                25,
+                    MAX_PEERS,
+                    MAX_PEERS,
+                    MAX_PEERS,
                 false));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
