@@ -22,7 +22,7 @@ public class LegacyFeeMarket implements FeeMarket {
   private final TransactionPriceCalculator txPriceCalculator;
 
   public LegacyFeeMarket() {
-    this.txPriceCalculator = TransactionPriceCalculator.frontier();
+    this.txPriceCalculator = new TransactionPriceCalculator.Frontier();
   }
 
   @Override
