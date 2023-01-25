@@ -325,7 +325,8 @@ public class Transaction
       final SECPSignature signature,
       final Bytes payload,
       final Address sender,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final Optional<List<Hash>> versionedHashes) {
     this(
         nonce,
         Optional.of(gasPrice),
