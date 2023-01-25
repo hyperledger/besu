@@ -176,7 +176,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
     } catch (MerkleTrieException e) {
       pruneInconsistentPath(address, e.getLocation(), false);
-      throw new MerkleTrieException(e.getMessage(), e.getHash(), e.getLocation());
+      throw new MerkleTrieException(
+          e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
     }
   }
 
@@ -399,7 +400,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       } catch (MerkleTrieException e) {
         System.out.println("found invalid node " + address + " " + slotHash);
         pruneInconsistentPath(address, e.getLocation(), true);
-        throw new MerkleTrieException(e.getMessage(), e.getHash(), e.getLocation());
+        throw new MerkleTrieException(
+            e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
       }
     }
   }

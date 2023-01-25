@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadStatus;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.InitialSyncCompletionListener;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
@@ -60,7 +61,7 @@ public class SyncState {
 
   private volatile boolean isResyncNeeded;
 
-  private volatile boolean isHealNeeded;
+  private Optional<Address> maybeAccountToRepair;
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this(blockchain, ethPeers, false, Optional.empty());
@@ -332,12 +333,12 @@ public class SyncState {
     isResyncNeeded = true;
   }
 
-  public boolean isHealNeeded() {
-    return isHealNeeded;
+  public Optional<Address> getAccountToRepair() {
+    return maybeAccountToRepair;
   }
 
-  public void markHealNeeded() {
-    isHealNeeded = true;
+  public void markAccountToRepair(final Optional<Address> address) {
+    maybeAccountToRepair = address;
   }
 
   public void markInitialSyncRestart() {

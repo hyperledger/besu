@@ -161,7 +161,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                       snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
                   newDownloadState.enqueueRequest(snapDataRequest);
                 });
-      } else if (snapContext.isHealing()) { // restart only the heal step
+      } else if (!snapContext.getInconsistentAccounts().isEmpty()) { // restart only the heal step
         snapSyncState.setHealStatus(true);
         newDownloadState.setInconsistentAccounts(inconsistentAccounts);
         newDownloadState.enqueueRequest(

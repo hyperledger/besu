@@ -329,4 +329,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     checkNotNull(fallbackNodeFinder);
     worldStateStorage.useFallbackNodeFinder(fallbackNodeFinder);
   }
+
+  @Override
+  public void reset() {
+    trieLogManager.reset();
+  }
 }

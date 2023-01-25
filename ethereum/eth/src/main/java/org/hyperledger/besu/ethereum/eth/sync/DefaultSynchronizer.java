@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -319,20 +320,24 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       stop();
       fastSyncDownloader.get().deleteFastSyncState();
     }
-
     // recreate fast sync with resync and start
     this.syncState.markInitialSyncRestart();
     this.syncState.markResyncNeeded();
+    this.worldStateStorage.clear();
     this.fastSyncDownloader = this.fastSyncFactory.get();
     start();
     return true;
   }
 
   @Override
-  public boolean healWorldState() {
+  public boolean healWorldState(final Optional<Address> maybeAccountToRepair) {
     // recreate fast sync with resync and start
     this.syncState.markInitialSyncRestart();
-    this.syncState.markHealNeeded();
+    this.syncState.markResyncNeeded();
+    this.worldStateStorage.clearFlatDatabase();
+    this.protocolContext.getBlockchain().moveHeadToLastSafeBlock();
+    this.protocolContext.getWorldStateArchive().reset();
+    this.syncState.markAccountToRepair(maybeAccountToRepair);
     this.fastSyncDownloader = this.fastSyncFactory.get();
     start();
     return true;

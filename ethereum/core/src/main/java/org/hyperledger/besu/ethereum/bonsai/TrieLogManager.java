@@ -38,6 +38,8 @@ public interface TrieLogManager {
 
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
 
+  void reset();
+
   interface CachedWorldState<Z extends MutableWorldState> {
     void dispose();
 

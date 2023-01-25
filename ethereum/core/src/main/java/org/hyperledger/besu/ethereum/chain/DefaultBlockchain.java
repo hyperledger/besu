@@ -367,6 +367,19 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.commit();
   }
 
+  @Override
+  public void moveHeadToLastSafeBlock() {
+    getSafeBlock()
+        .ifPresent(
+            hash ->
+                getBlockHeader(hash)
+                    .ifPresent(
+                        blockHeader ->
+                            getTotalDifficultyByHash(hash)
+                                .ifPresent(
+                                    difficulty -> unsafeSetChainHead(blockHeader, difficulty))));
+  }
+
   private Difficulty calculateTotalDifficulty(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       return blockHeader.getDifficulty();
