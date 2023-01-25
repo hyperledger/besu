@@ -122,7 +122,7 @@ public class BlockResultFactory {
       final List<Optional<BlockBody>> blockBodies) {
     final List<PayloadBody> payloadBodies =
         blockBodies.stream()
-            .map(maybeBody -> maybeBody.map(blockBody -> new PayloadBody(blockBody)).orElse(null))
+            .map(maybeBody -> maybeBody.map(PayloadBody::new).orElse(null))
             .collect(Collectors.toList());
     return new EngineGetPayloadBodiesResultV1(payloadBodies);
   }
