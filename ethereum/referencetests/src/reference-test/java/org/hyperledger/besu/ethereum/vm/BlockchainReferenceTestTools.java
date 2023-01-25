@@ -66,10 +66,6 @@ public class BlockchainReferenceTestTools {
       params.ignoreAll();
     }
 
-    // Known bad test.
-    params.ignore(
-        "RevertPrecompiledTouch(_storage)?_d(0|3)g0v0_(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
-
     // Consumes a huge amount of memory
     params.ignore("static_Call1MB1024Calldepth_d1g0v0_\\w+");
     params.ignore("ShanghaiLove_.*");
