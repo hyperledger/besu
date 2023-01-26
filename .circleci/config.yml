@@ -196,6 +196,7 @@ jobs:
           at: ~/project
       - run:
           name: Build
+          command: |
           no_output_timeout: 20m
             GRADLE_ARGS=$(ls -d **/src/test/java | egrep -v 'acceptance-tests'\
               | sed 's/^/:/' \
