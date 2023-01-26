@@ -195,7 +195,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: Build
+          name: Unit Tests Parallelized
           command: |
           no_output_timeout: 20m
             GRADLE_ARGS=$(ls -d **/src/test/java | egrep -v 'acceptance-tests'\
