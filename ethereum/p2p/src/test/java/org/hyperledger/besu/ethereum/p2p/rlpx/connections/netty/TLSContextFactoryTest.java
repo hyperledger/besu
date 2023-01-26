@@ -233,7 +233,7 @@ class TLSContextFactoryTest {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("softwareKeysData")
   void testConnectionSoftwareKeys(
-      final String testDescription,
+      final String ignoredTestDescription,
       final boolean testSuccess,
       final KeyStoreWrapper serverKeyStoreWrapper,
       final KeyStoreWrapper clientKeyStoreWrapper,
@@ -241,7 +241,6 @@ class TLSContextFactoryTest {
       final Optional<String> clientFailureMessage)
       throws Exception {
     testConnection(
-        testDescription,
         testSuccess,
         serverKeyStoreWrapper,
         clientKeyStoreWrapper,
@@ -252,7 +251,7 @@ class TLSContextFactoryTest {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("hardwareKeysData")
   void testConnectionHardwareKeys(
-      final String testDescription,
+      final String ignoredTestDescription,
       final boolean testSuccess,
       final KeyStoreWrapper serverKeyStoreWrapper,
       final KeyStoreWrapper clientKeyStoreWrapper,
@@ -260,7 +259,6 @@ class TLSContextFactoryTest {
       final Optional<String> clientFailureMessage)
       throws Exception {
     testConnection(
-        testDescription,
         testSuccess,
         serverKeyStoreWrapper,
         clientKeyStoreWrapper,
@@ -269,14 +267,12 @@ class TLSContextFactoryTest {
   }
 
   private void testConnection(
-      final String scenario,
       final boolean testSuccess,
       final KeyStoreWrapper serverKeyStoreWrapper,
       final KeyStoreWrapper clientKeyStoreWrapper,
       final Optional<String> serverFailureMessage,
       final Optional<String> clientFailureMessage)
       throws Exception {
-    StringBuilder logBuilder = new StringBuilder(scenario).append("\n");
     final CountDownLatch serverLatch = new CountDownLatch(MAX_NUMBER_MESSAGES);
     final CountDownLatch clientLatch = new CountDownLatch(MAX_NUMBER_MESSAGES);
     server = startServer(serverKeyStoreWrapper, serverLatch);
@@ -292,21 +288,6 @@ class TLSContextFactoryTest {
         client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0)).sync();
         serverLatch.await(2, TimeUnit.SECONDS);
         assertThat(client.getChannelFuture().channel().isActive()).isFalse();
-
-        if (server.getCause().isPresent()) {
-          logBuilder
-              .append("Server Exception: ")
-              .append(server.getCause().get().getMessage())
-              .append("\n");
-        }
-
-        if (client.getCause().isPresent()) {
-          logBuilder
-              .append("Client Exception: ")
-              .append(client.getCause().get().getMessage())
-              .append("\n");
-          LOG.info("Client Exception:", client.getCause().get());
-        }
 
         if (serverFailureMessage.isPresent()) {
           assertThat(server.getCause()).isNotEmpty();
@@ -325,9 +306,6 @@ class TLSContextFactoryTest {
         // NOOP
       }
     }
-
-    logBuilder.append("*******");
-    LOG.info(logBuilder.toString());
   }
 
   private Server startServer(final KeyStoreWrapper keyStoreWrapper, final CountDownLatch latch)
