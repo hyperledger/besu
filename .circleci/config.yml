@@ -196,8 +196,8 @@ jobs:
           at: ~/project
       - run:
           name: Unit Tests Parallelized
-          command: |
           no_output_timeout: 20m
+          command: |
             GRADLE_ARGS=$(ls -d **/src/test/java | egrep -v 'acceptance-tests'\
               | sed 's/^/:/' \
               | sed 's@/src/test/java@@' \
