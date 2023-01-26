@@ -297,7 +297,6 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
   private HttpResponseStatus statusCodeFromError(final JsonRpcError error) {
     switch (error) {
       case INVALID_REQUEST:
-      case INVALID_PARAMS:
       case PARSE_ERROR:
         return HttpResponseStatus.BAD_REQUEST;
       default:
