@@ -110,7 +110,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
           protocolContext
               .getBlockchain()
               .getTotalDifficultyByHash(blockHeader.getParentHash())
-              .orElseThrow();
+              .orElse(Difficulty.ZERO);
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
       Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
       debugLambda(

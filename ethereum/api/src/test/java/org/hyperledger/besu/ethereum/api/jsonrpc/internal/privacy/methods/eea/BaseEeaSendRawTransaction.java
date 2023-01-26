@@ -84,6 +84,7 @@ public class BaseEeaSendRawTransaction {
                   Byte.parseByte("1")),
           Bytes.fromBase64String(MOCK_ORION_KEY),
           Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
+          Optional.empty(),
           Optional.empty());
 
   final Transaction PUBLIC_PLUGIN_TRANSACTION =
@@ -103,6 +104,7 @@ public class BaseEeaSendRawTransaction {
                   Byte.parseByte("0")),
           Bytes.fromBase64String(MOCK_ORION_KEY),
           Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
+          Optional.empty(),
           Optional.empty());
 
   final Transaction PUBLIC_OFF_CHAIN_TRANSACTION =
@@ -122,6 +124,7 @@ public class BaseEeaSendRawTransaction {
                   Byte.parseByte("1")),
           Bytes.fromBase64String(MOCK_ORION_KEY),
           Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
+          Optional.empty(),
           Optional.empty());
 
   final JsonRpcRequestContext validPrivateForTransactionRequest =

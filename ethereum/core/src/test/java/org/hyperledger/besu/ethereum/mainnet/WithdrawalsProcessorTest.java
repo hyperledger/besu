@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 class WithdrawalsProcessorTest {
 
   @Test
-  void defaultProcessor_shouldProcessEmptyWithdrawalsWithoutChangingWorldState() {
+  void shouldProcessEmptyWithdrawalsWithoutChangingWorldState() {
     final MutableWorldState worldState =
         createWorldStateWithAccounts(List.of(entry("0x1", 1), entry("0x2", 2), entry("0x3", 3)));
     final MutableWorldState originalState = worldState.copy();
@@ -51,7 +51,7 @@ class WithdrawalsProcessorTest {
   }
 
   @Test
-  void defaultProcessor_shouldProcessWithdrawalsUpdatingExistingAccountsBalance() {
+  void shouldProcessWithdrawalsUpdatingExistingAccountsBalance() {
     final MutableWorldState worldState =
         createWorldStateWithAccounts(List.of(entry("0x1", 1), entry("0x2", 2), entry("0x3", 3)));
     final WorldUpdater updater = worldState.updater();
@@ -79,7 +79,7 @@ class WithdrawalsProcessorTest {
   }
 
   @Test
-  void defaultProcessor_shouldProcessWithdrawalsUpdatingEmptyAccountsBalance() {
+  void shouldProcessWithdrawalsUpdatingEmptyAccountsBalance() {
     final MutableWorldState worldState = createWorldStateWithAccounts(Collections.emptyList());
     final WorldUpdater updater = worldState.updater();
 
@@ -104,6 +104,27 @@ class WithdrawalsProcessorTest {
         .isEqualTo(GWei.of(200).getAsWei());
   }
 
+  @Test
+  void shouldDeleteEmptyAccounts() {
+    final MutableWorldState worldState = createWorldStateWithAccounts(List.of(entry("0x1", 0)));
+    final WorldUpdater updater = worldState.updater();
+
+    final List<Withdrawal> withdrawals =
+        List.of(
+            new Withdrawal(
+                UInt64.valueOf(100), UInt64.valueOf(1000), Address.fromHexString("0x1"), GWei.ZERO),
+            new Withdrawal(
+                UInt64.valueOf(200),
+                UInt64.valueOf(2000),
+                Address.fromHexString("0x2"),
+                GWei.ZERO));
+    final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+    withdrawalsProcessor.processWithdrawals(withdrawals, updater);
+
+    assertThat(worldState.get(Address.fromHexString("0x1"))).isNull();
+    assertThat(worldState.get(Address.fromHexString("0x2"))).isNull();
+  }
+
   private MutableWorldState createWorldStateWithAccounts(
       final List<Map.Entry<String, Integer>> accountBalances) {
     final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
@@ -111,7 +132,7 @@ class WithdrawalsProcessorTest {
     accountBalances.forEach(
         entry ->
             updater.createAccount(
-                Address.fromHexString(entry.getKey()), 1, Wei.of(entry.getValue())));
+                Address.fromHexString(entry.getKey()), 0, Wei.of(entry.getValue())));
     updater.commit();
     return worldState;
   }

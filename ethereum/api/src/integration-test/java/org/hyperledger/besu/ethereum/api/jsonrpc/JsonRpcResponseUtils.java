@@ -172,29 +172,26 @@ public class JsonRpcResponseUtils {
       final String s) {
 
     final Transaction transaction =
-        new Transaction(
-            transactionType,
-            unsignedLong(nonce),
-            Optional.of(Wei.fromHexString(gasPrice)),
-            Optional.empty(),
-            Optional.empty(),
-            unsignedLong(gas),
-            Optional.ofNullable(address(toAddress)),
-            wei(value),
-            SignatureAlgorithmFactory.getInstance()
-                .createSignature(
-                    Bytes.fromHexString(r).toUnsignedBigInteger(),
-                    Bytes.fromHexString(s).toUnsignedBigInteger(),
-                    Bytes.fromHexString(v)
-                        .toUnsignedBigInteger()
-                        .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
-                        .byteValueExact()),
-            bytes(input),
-            Optional.empty(),
-            address(fromAddress),
-            Optional.empty(),
-            Optional.of(bigInteger(v)),
-            Optional.empty());
+        Transaction.builder()
+            .type(transactionType)
+            .nonce(unsignedLong(nonce))
+            .gasPrice(Wei.fromHexString(gasPrice))
+            .gasLimit(unsignedLong(gas))
+            .to(address(toAddress))
+            .value(wei(value))
+            .signature(
+                SignatureAlgorithmFactory.getInstance()
+                    .createSignature(
+                        Bytes.fromHexString(r).toUnsignedBigInteger(),
+                        Bytes.fromHexString(s).toUnsignedBigInteger(),
+                        Bytes.fromHexString(v)
+                            .toUnsignedBigInteger()
+                            .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
+                            .byteValueExact()))
+            .payload(bytes(input))
+            .sender(address(fromAddress))
+            .v(bigInteger(v))
+            .build();
 
     return new TransactionCompleteResult(
         new TransactionWithMetadata(
