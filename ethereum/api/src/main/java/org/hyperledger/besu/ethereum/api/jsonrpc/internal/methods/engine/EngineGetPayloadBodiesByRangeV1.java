@@ -23,8 +23,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
+import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -65,21 +67,27 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
         () -> count);
 
     final Blockchain blockchain = protocolContext.getBlockchain();
+    final Object reqId = request.getRequest().getId();
+
+    //request is past head of chain
+    if(blockchain.getChainHeadBlockNumber() < startBlockNumber){
+      return new JsonRpcSuccessResponse(reqId, new EngineGetPayloadBodiesResultV1(Collections.EMPTY_LIST));
+    }
 
     final long latestKnownBlockNumber = blockchain.getChainHeadBlockNumber();
     final long upperBound = startBlockNumber + count;
     final long endExclusiveBlockNumber =
         latestKnownBlockNumber < upperBound ? latestKnownBlockNumber + 1 : upperBound;
 
-    return new JsonRpcSuccessResponse(
-        request.getRequest().getId(),
-        blockResultFactory.payloadBodiesCompleteV1(
+    EngineGetPayloadBodiesResultV1 engineGetPayloadBodiesResultV1 = blockResultFactory.payloadBodiesCompleteV1(
             LongStream.range(startBlockNumber, endExclusiveBlockNumber)
-                .mapToObj(
-                    blockNumber ->
-                        blockchain
-                            .getBlockHashByNumber(blockNumber)
-                            .flatMap(blockchain::getBlockBody))
-                .collect(Collectors.toList())));
+                    .mapToObj(
+                            blockNumber ->
+                                    blockchain
+                                            .getBlockHashByNumber(blockNumber)
+                                            .flatMap(blockchain::getBlockBody))
+                    .collect(Collectors.toList()));
+
+    return new JsonRpcSuccessResponse(reqId,engineGetPayloadBodiesResultV1);
   }
 }
