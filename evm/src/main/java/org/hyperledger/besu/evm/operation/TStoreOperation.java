@@ -1,5 +1,5 @@
 /*
- * Copyright Besu Contributors
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,8 +21,15 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * Implements the TLOAD operation defined in EIP-1153
+ */
 public class TStoreOperation extends AbstractOperation {
 
+  /**
+   * TLoad operation
+   * @param gasCalculator gas calculator for costing
+   */
   public TStoreOperation(final GasCalculator gasCalculator) {
     super(0xb4, "TSTORE", 2, 0, gasCalculator);
   }

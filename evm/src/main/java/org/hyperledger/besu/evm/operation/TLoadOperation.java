@@ -1,5 +1,5 @@
 /*
- * Copyright Besu Contributors
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,8 +24,15 @@ import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * Implements the TLOAD operation defined in EIP-1153
+ */
 public class TLoadOperation extends AbstractOperation {
 
+  /**
+   * TLoad operation
+   * @param gasCalculator gas calculator for costing
+   */
   public TLoadOperation(final GasCalculator gasCalculator) {
     super(0xb3, "TLOAD", 1, 1, gasCalculator);
   }
