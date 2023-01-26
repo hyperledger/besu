@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_FRAME_SIZE;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_MAX_MESSAGE_FRAME;
 
+import com.google.common.base.Suppliers;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -69,7 +70,11 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       final MetricsSystem metricsSystem,
       final Supplier<TLSContextFactory> tlsContextFactorySupplier) {
     super(nodeKey, config, localNode, eventDispatcher, metricsSystem);
-    this.tlsContextFactorySupplier = Optional.ofNullable(tlsContextFactorySupplier);
+    if (tlsContextFactorySupplier != null) {
+      this.tlsContextFactorySupplier = Optional.of(Suppliers.memoize(tlsContextFactorySupplier::get));
+    } else {
+      this.tlsContextFactorySupplier = Optional.empty();
+    }
   }
 
   @Override
