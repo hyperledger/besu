@@ -187,6 +187,27 @@ jobs:
             ./gradlew --no-daemon build
       - capture_test_results
 
+  unitTestsParallelized:
+    parallelism: 6
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Build
+          no_output_timeout: 20m
+            GRADLE_ARGS=$(ls -d **/src/test/java | egrep -v 'acceptance-tests'\
+              | sed 's/^/:/' \
+              | sed 's@/src/test/java@@' \
+              | sed 's@/@:@' \
+              | sed 's@$@:test@' \
+              | circleci tests split --split-by=timings)
+            # Format the arguments to "./gradlew test"
+            echo "Prepared arguments for Gradle: $GRADLE_ARGS"
+            ./gradlew --no-daemon $GRADLE_ARGS
+      - capture_test_results
+
   integrationTests:
     executor: xl_machine_executor
     steps:
@@ -378,77 +399,9 @@ workflows:
       - unitTests:
            requires:
             - assemble
-      - testWindows:
+      - unitTestsParallelized:
           requires:
             - assemble
-      - referenceTests:
-          requires:
-            - assemble
-      - integrationTests:
-          requires:
-            - assemble
-      - acceptanceTests:
-          requires:
-            - assemble
-      - buildDocker:
-          requires:
-            - assemble
-      - buildArm64Docker:
-          requires:
-            - assemble
-      - publish:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
-          requires:
-            - assemble
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
-            - buildDocker
-      - publishDocker:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
-          requires:
-            - assemble
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
-            - buildDocker
-          context:
-            - besu-dockerhub-rw
-      - publishArm64Docker:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
-          requires:
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
-            - buildArm64Docker
-          context:
-            - besu-dockerhub-rw
-      - manifestDocker:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
-          requires:
-            - publishDocker
-            - publishArm64Docker
-          context:
-            - besu-dockerhub-rw
 
   nightly:
     triggers:
