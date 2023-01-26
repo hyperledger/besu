@@ -42,8 +42,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -240,13 +242,14 @@ public class MessageFrame {
   private final Map<String, Object> contextVariables;
   private final Optional<List<Hash>> versionedHashes;
 
+  private final Table<Address, Bytes32, Bytes32> transientStorage = HashBasedTable.create();
+
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
   private Operation currentOperation;
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
   private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
-  private Optional<StorageEntry> maybeUpdatedTransientStorage = Optional.empty();
 
   /**
    * Builder builder.
@@ -862,16 +865,6 @@ public class MessageFrame {
   }
 
   /**
-   * Transient storage was updated.
-   *
-   * @param storageAddress the transient storage address
-   * @param value the value
-   */
-  public void transientStorageWasUpdated(final UInt256 storageAddress, final Bytes value) {
-    maybeUpdatedTransientStorage = Optional.of(new StorageEntry(storageAddress, value));
-  }
-
-  /**
    * Accumulate a log.
    *
    * @param log The log to accumulate
@@ -1317,13 +1310,33 @@ public class MessageFrame {
     return maybeUpdatedStorage;
   }
 
-  /**
-   * Gets maybe updated transient storage.
-   *
-   * @return the maybe updated transient storage
-   */
-  public Optional<StorageEntry> getMaybeUpdatedTransientStorage() {
-    return maybeUpdatedTransientStorage;
+  public Bytes32 getTransientStorageValue(final Address accountAddress, final Bytes32 slot) {
+    Bytes32 data = transientStorage.get(accountAddress, slot);
+
+    if (data != null) {
+      return data;
+    }
+
+    if (parentMessageFrame != null) {
+      data = parentMessageFrame.getTransientStorageValue(accountAddress, slot);
+    }
+    if (data == null) {
+      data = Bytes32.ZERO;
+    }
+    transientStorage.put(accountAddress, slot, data);
+
+    return data;
+  }
+
+  public void setTransientStorageValue(
+      final Address accountAddress, final Bytes32 slot, final Bytes32 value) {
+    transientStorage.put(accountAddress, slot, value);
+  }
+
+  public void commitTransientStorage() {
+    if (parentMessageFrame != null) {
+      parentMessageFrame.transientStorage.putAll(transientStorage);
+    }
   }
 
   /**
@@ -1339,7 +1352,6 @@ public class MessageFrame {
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
     maybeUpdatedStorage = Optional.empty();
-    maybeUpdatedTransientStorage = Optional.empty();
   }
 
   /** The MessageFrame Builder. */

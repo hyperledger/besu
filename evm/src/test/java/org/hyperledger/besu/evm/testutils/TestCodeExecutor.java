@@ -85,7 +85,7 @@ public class TestCodeExecutor {
     return initialFrame;
   }
 
-  public void deployContract(
+  public static void deployContract(
       final WorldUpdater worldUpdater, final Address contractAddress, final String codeHexString) {
     var updater = worldUpdater.updater();
     final MutableAccount contract = updater.getOrCreate(contractAddress).getMutable();

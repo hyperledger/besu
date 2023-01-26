@@ -312,12 +312,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public UInt256 getTransientStorageValue(final UInt256 key) {
-      // Transient state isn't persistent
-      return UInt256.ZERO;
-    }
-
-    @Override
     public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
         final Bytes32 startKeyHash, final int limit) {
       final NavigableMap<Bytes32, AccountStorageEntry> storageEntries = new TreeMap<>();
@@ -441,7 +435,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
             serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
-        updated.clearTransientStorage();
       }
     }
   }

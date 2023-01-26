@@ -111,7 +111,6 @@ public class DebugTraceTransactionTest {
             Optional.empty(),
             false,
             Optional.empty(),
-            Optional.empty(),
             Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
@@ -176,7 +175,6 @@ public class DebugTraceTransactionTest {
             0,
             Optional.empty(),
             false,
-            Optional.empty(),
             Optional.empty(),
             Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);

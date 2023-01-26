@@ -52,7 +52,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private Bytes code;
 
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
-  private final Map<UInt256, UInt256> updatedTransientStorage = new HashMap<>();
 
   BonsaiAccount(
       final BonsaiWorldView context,
@@ -104,7 +103,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.codeHash = toCopy.codeHash;
     this.code = toCopy.code;
     updatedStorage.putAll(toCopy.updatedStorage);
-    updatedTransientStorage.putAll(toCopy.updatedTransientStorage);
 
     this.mutable = mutable;
   }
@@ -119,7 +117,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.codeHash = tracked.getCodeHash();
     this.code = tracked.getCode();
     updatedStorage.putAll(tracked.getUpdatedStorage());
-    updatedTransientStorage.putAll(tracked.getUpdatedTransientStorage());
+
     this.mutable = true;
   }
 
@@ -245,22 +243,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public void clearStorage() {
     updatedStorage.clear();
-    clearTransientStorage();
-  }
-
-  @Override
-  public void clearTransientStorage() {
-    updatedTransientStorage.clear();
   }
 
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
     return updatedStorage;
-  }
-
-  @Override
-  public Map<UInt256, UInt256> getUpdatedTransientStorage() {
-    return updatedTransientStorage;
   }
 
   @Override
@@ -322,22 +309,5 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
         throw new IllegalStateException(context + ": Storage Roots differ");
       }
     }
-  }
-
-  @Override
-  public UInt256 getTransientStorageValue(final UInt256 key) {
-    if (updatedTransientStorage.containsKey(key)) {
-      return updatedTransientStorage.get(key);
-    } else {
-      return UInt256.ZERO;
-    }
-  }
-
-  @Override
-  public void setTransientStorageValue(final UInt256 key, final UInt256 value) {
-    if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
-    }
-    updatedTransientStorage.put(key, value);
   }
 }

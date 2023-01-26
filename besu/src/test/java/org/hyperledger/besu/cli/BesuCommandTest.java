@@ -4971,20 +4971,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void assertThatEnablingExperimentalEIPsWorks() {
-    parseCommand("--Xeip1153-enabled=true");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(ExperimentalEIPs.eip1153Enabled).isTrue();
-  }
-
-  @Test
-  public void assertThatDisablingExperimentalEIPsWorks() {
-    parseCommand("--Xeip1153-enabled=false");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(ExperimentalEIPs.eip1153Enabled).isFalse();
-  }
-
-  @Test
   public void assertThatDefaultHttpTimeoutSecondsWorks() {
     parseCommand();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

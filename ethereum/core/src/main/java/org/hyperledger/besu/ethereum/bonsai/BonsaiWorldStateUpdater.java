@@ -326,8 +326,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
               if (tracked.getStorageWasCleared()) {
                 tracked.setStorageWasCleared(false); // storage already cleared for this transaction
               }
-
-              tracked.clearTransientStorage();
             });
   }
 

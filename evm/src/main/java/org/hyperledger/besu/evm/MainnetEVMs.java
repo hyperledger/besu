@@ -793,19 +793,19 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerShanghaiOperations(registry, gasCalculator, chainID);
 
+    // EIP-4844
+    registry.put(new DataHashOperation(gasCalculator));
+
+    // TSTORE/TLOAD
+    registry.put(new TStoreOperation(gasCalculator));
+    registry.put(new TLoadOperation(gasCalculator));
+
     // EOFV1
     registry.put(new RelativeJumpOperation(gasCalculator));
     registry.put(new RelativeJumpIfOperation(gasCalculator));
     registry.put(new RelativeJumpVectorOperation(gasCalculator));
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
-
-    // TSTORE/TLOAD
-    registry.put(new TStoreOperation(gasCalculator));
-    registry.put(new TLoadOperation(gasCalculator));
-
-    // EIP-4844
-    registry.put(new DataHashOperation(gasCalculator));
   }
 
   /**

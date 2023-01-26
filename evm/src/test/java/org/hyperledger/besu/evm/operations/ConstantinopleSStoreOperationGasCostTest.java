@@ -69,6 +69,7 @@ public class ConstantinopleSStoreOperationGasCostTest {
             gasLimit,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
+    System.out.println(gasLimit - frame.getRemainingGas());
     assertThat(frame.getRemainingGas()).isEqualTo(gasLimit - expectedGasUsed);
     assertThat(frame.getGasRefund()).isEqualTo(expectedGasRefund);
   }

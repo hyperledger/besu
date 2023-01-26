@@ -674,16 +674,4 @@ public class DefaultMutableWorldStateTest {
     worldState.persist(null);
     assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
   }
-
-  @Test
-  public void setTransientStorageValue_ZeroValue() {
-    final MutableWorldState worldState = createEmpty();
-    final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
-    account.setBalance(Wei.of(100000));
-    account.setTransientStorageValue(UInt256.ZERO, UInt256.ZERO);
-    updater.commit();
-    assertThat(worldState.get(ADDRESS).getTransientStorageValue(UInt256.ZERO))
-        .isEqualTo(UInt256.ZERO);
-  }
 }

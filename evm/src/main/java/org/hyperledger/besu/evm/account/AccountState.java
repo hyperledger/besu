@@ -113,15 +113,6 @@ public interface AccountState {
   UInt256 getOriginalStorageValue(UInt256 key);
 
   /**
-   * Retrieves a value in the account transient storage given its key.
-   *
-   * @param key the key to retrieve in the account storage.
-   * @return the value associated to {@code key} in the account storage. Note that this is never
-   *     {@code null}, but 0 acts as a default value.
-   */
-  UInt256 getTransientStorageValue(UInt256 key);
-
-  /**
    * Whether the account is "empty".
    *
    * <p>An account is defined as empty if:

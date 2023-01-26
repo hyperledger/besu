@@ -58,7 +58,6 @@ public class TraceFrame {
   private final boolean virtualOperation;
   private final Optional<MemoryEntry> maybeUpdatedMemory;
   private final Optional<StorageEntry> maybeUpdatedStorage;
-  private final Optional<StorageEntry> maybeUpdatedTransientStorage;
   private OptionalLong precompiledGasCost;
 
   public TraceFrame(
@@ -84,8 +83,7 @@ public class TraceFrame {
       final Optional<Bytes32[]> stackPostExecution,
       final boolean virtualOperation,
       final Optional<MemoryEntry> maybeUpdatedMemory,
-      final Optional<StorageEntry> maybeUpdatedStorage,
-      final Optional<StorageEntry> maybeUpdatedTransientStorage) {
+      final Optional<StorageEntry> maybeUpdatedStorage) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -109,7 +107,6 @@ public class TraceFrame {
     this.virtualOperation = virtualOperation;
     this.maybeUpdatedMemory = maybeUpdatedMemory;
     this.maybeUpdatedStorage = maybeUpdatedStorage;
-    this.maybeUpdatedTransientStorage = maybeUpdatedTransientStorage;
     precompiledGasCost = OptionalLong.empty();
   }
 
@@ -230,10 +227,6 @@ public class TraceFrame {
 
   public Optional<StorageEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
-  }
-
-  public Optional<StorageEntry> getMaybeUpdatedTransientStorage() {
-    return maybeUpdatedTransientStorage;
   }
 
   public OptionalLong getPrecompiledGasCost() {

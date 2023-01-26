@@ -116,9 +116,4 @@ public class WrappedEvmAccount implements EvmAccount {
       final Bytes32 startKeyHash, final int limit) {
     return mutableAccount.storageEntriesFrom(startKeyHash, limit);
   }
-
-  @Override
-  public UInt256 getTransientStorageValue(final UInt256 key) {
-    return mutableAccount.getTransientStorageValue(key);
-  }
 }

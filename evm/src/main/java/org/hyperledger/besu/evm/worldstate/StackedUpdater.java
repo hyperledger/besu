@@ -105,7 +105,6 @@ public class StackedUpdater<W extends WorldView, A extends Account>
         existing.clearStorage();
       }
       update.getUpdatedStorage().forEach(existing::setStorageValue);
-      update.getUpdatedTransientStorage().forEach(existing::setTransientStorageValue);
     }
   }
 

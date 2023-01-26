@@ -27,7 +27,6 @@ import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -43,7 +42,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  *
  * <p>Note that in practice this only track the modified value of the nonce and balance, but doesn't
  * remind if those were modified or not (the reason being that any modification of an account imply
- * the underlying trie node will have to be updated, and so knowing if the nonce and balance were
+ * the underlying trie node will have to be updated, and so knowing if the nonce and balance where
  * updated or not doesn't matter, we just need their new value).
  *
  * @param <A> the type parameter
@@ -65,7 +64,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   private final NavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
   private boolean transactionBoundary = false;
-  private final Map<UInt256, UInt256> updatedTransientStorage;
 
   /**
    * Instantiates a new Update tracking account.
@@ -83,7 +81,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
     this.updatedCode = Bytes.EMPTY;
     this.updatedStorage = new TreeMap<>();
-    this.updatedTransientStorage = new HashMap<>();
   }
 
   /**
@@ -105,7 +102,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     this.balance = account.getBalance();
 
     this.updatedStorage = new TreeMap<>();
-    this.updatedTransientStorage = new HashMap<>();
   }
 
   /**
@@ -150,17 +146,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
     return updatedStorage;
-  }
-
-  /**
-   * A map of the transient storage entries that were modified.
-   *
-   * @return a map containing all entries that have been modified. This <b>may</b> contain entries
-   *     with a value of 0 to signify deletion.
-   */
-  @Override
-  public Map<UInt256, UInt256> getUpdatedTransientStorage() {
-    return updatedTransientStorage;
   }
 
   @Override
@@ -287,12 +272,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   public void clearStorage() {
     storageWasCleared = true;
     updatedStorage.clear();
-    clearTransientStorage();
-  }
-
-  @Override
-  public void clearTransientStorage() {
-    updatedTransientStorage.clear();
   }
 
   /**
@@ -316,44 +295,16 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Override
   public String toString() {
     String storage = updatedStorage.isEmpty() ? "[not updated]" : updatedStorage.toString();
-    String transientStorage =
-        updatedTransientStorage.isEmpty() ? "[not updated]" : updatedTransientStorage.toString();
     if (updatedStorage.isEmpty() && storageWasCleared) {
       storage = "[cleared]";
-      transientStorage = "[cleared]";
     }
     return String.format(
-        "%s -> {nonce: %s, balance:%s, code:%s, storage:%s, transientStorage:%s }",
-        address,
-        nonce,
-        balance,
-        updatedCode == null ? "[not updated]" : updatedCode,
-        storage,
-        transientStorage);
+        "%s -> {nonce: %s, balance:%s, code:%s, storage:%s }",
+        address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage);
   }
 
   @Override
   public MutableAccount getMutable() throws ModificationNotAllowedException {
     return this;
-  }
-
-  @Override
-  public UInt256 getTransientStorageValue(final UInt256 key) {
-    final UInt256 value = updatedTransientStorage.get(key);
-    if (value != null) {
-      return value;
-    }
-    if (storageWasCleared) {
-      return UInt256.ZERO;
-    }
-
-    // We haven't updated the key-value yet, so either it's a new account and it doesn't have the
-    // key, or we should query the underlying storage for its existing value (which might be 0).
-    return account == null ? UInt256.ZERO : account.getTransientStorageValue(key);
-  }
-
-  @Override
-  public void setTransientStorageValue(final UInt256 key, final UInt256 value) {
-    updatedTransientStorage.put(key, value);
   }
 }

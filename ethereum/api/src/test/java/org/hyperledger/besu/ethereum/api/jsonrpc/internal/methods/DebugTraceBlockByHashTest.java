@@ -83,7 +83,6 @@ public class DebugTraceBlockByHashTest {
             Optional.empty(),
             false,
             Optional.empty(),
-            Optional.empty(),
             Optional.empty());
 
     final TransactionProcessingResult transaction1Result = mock(TransactionProcessingResult.class);

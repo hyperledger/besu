@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -35,12 +34,11 @@ public class TLoadOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final long cost = gasCalculator().getTransientLoadOperationGasCost();
     try {
-      final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
-      final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
+      final Bytes32 slot = UInt256.fromBytes(frame.popStackItem());
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
-        frame.pushStackItem(account.getTransientStorageValue(UInt256.fromBytes(key)));
+        frame.pushStackItem(frame.getTransientStorageValue(frame.getRecipientAddress(), slot));
 
         return new OperationResult(cost, null);
       }
