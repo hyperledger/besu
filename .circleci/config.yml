@@ -198,11 +198,13 @@ jobs:
           name: Unit Tests Parallelized
           no_output_timeout: 20m
           command: |
-            GRADLE_ARGS=$(ls -d **/src/test/java | egrep -v 'acceptance-tests'\
+            GRADLE_TARGETS=$(ls -d **/src/test/java | egrep -v 'acceptance-tests'\
               | sed 's/^/:/' \
               | sed 's@/src/test/java@@' \
               | sed 's@/@:@' \
-              | sed 's@$@:test@' \
+              | sed 's@$@:test@')
+            echo "Gradle Targets: $GRADLE_TARGETS"
+            GRADLE_ARGS=$(echo $GRADLE_TARGETS \
               | circleci tests split --split-by=timings)
             # Format the arguments to "./gradlew test"
             echo "Prepared arguments for Gradle: $GRADLE_ARGS"
