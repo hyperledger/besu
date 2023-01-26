@@ -1312,6 +1312,7 @@ public class MessageFrame {
 
   /**
    * Gets the transient storage value, including values from parent frames if not set
+   *
    * @param accountAddress The address of the executing context
    * @param slot the slot to retrieve
    * @return the data value read
@@ -1336,6 +1337,7 @@ public class MessageFrame {
 
   /**
    * Gets the transient storage value, including values from parent frames if not set
+   *
    * @param accountAddress The address of the executing context
    * @param slot the slot to set
    * @param value the value to set in the transient store
@@ -1345,9 +1347,7 @@ public class MessageFrame {
     transientStorage.put(accountAddress, slot, value);
   }
 
-  /**
-   * Writes the transient storage to the parent frame, if one exists
-   */
+  /** Writes the transient storage to the parent frame, if one exists */
   public void commitTransientStorage() {
     if (parentMessageFrame != null) {
       parentMessageFrame.transientStorage.putAll(transientStorage);

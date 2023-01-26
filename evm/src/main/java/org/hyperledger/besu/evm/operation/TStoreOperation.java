@@ -21,13 +21,12 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * Implements the TLOAD operation defined in EIP-1153
- */
+/** Implements the TLOAD operation defined in EIP-1153 */
 public class TStoreOperation extends AbstractOperation {
 
   /**
    * TLoad operation
+   *
    * @param gasCalculator gas calculator for costing
    */
   public TStoreOperation(final GasCalculator gasCalculator) {
