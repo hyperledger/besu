@@ -91,9 +91,6 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
       }
     }
 
-    accountTrie.commit(
-        (location, hash, value) ->
-            archive.getCachedMerkleTrieLoader().cacheAccountStateTrieNode(hash, value));
     // TODO write to a cache and then generate a layer update from that and the
     // DB tx updates.  Right now it is just DB updates.
     return Hash.wrap(accountTrie.getRootHash());
@@ -135,9 +132,6 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
 
       final BonsaiAccount accountUpdated = accountValue.getUpdated();
       if (accountUpdated != null) {
-        storageTrie.commit(
-            (location, hash, value) ->
-                archive.getCachedMerkleTrieLoader().cacheAccountStorageTrieNode(hash, value));
         final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
         accountUpdated.setStorageRoot(newStorageRoot);
       }
