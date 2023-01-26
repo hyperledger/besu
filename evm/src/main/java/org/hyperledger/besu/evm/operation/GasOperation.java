@@ -20,10 +20,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Gas operation. */
 public class GasOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Gas operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public GasOperation(final GasCalculator gasCalculator) {
-    super(0x5A, "GAS", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x5A, "GAS", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

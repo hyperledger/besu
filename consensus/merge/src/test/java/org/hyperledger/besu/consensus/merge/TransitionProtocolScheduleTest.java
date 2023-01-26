@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.Optional;
 
@@ -42,10 +45,13 @@ public class TransitionProtocolScheduleTest {
   @Mock MergeContext mergeContext;
   @Mock ProtocolSchedule preMergeProtocolSchedule;
   @Mock ProtocolSchedule postMergeProtocolSchedule;
+
+  @Mock TimestampSchedule timestampSchedule;
   @Mock BlockHeader blockHeader;
 
   private static final Difficulty TTD = Difficulty.of(100L);
   private static final long BLOCK_NUMBER = 29L;
+  private static final long TIMESTAMP = 1L;
   private TransitionProtocolSchedule transitionProtocolSchedule;
 
   @Before
@@ -53,10 +59,13 @@ public class TransitionProtocolScheduleTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
     when(mergeContext.getTerminalTotalDifficulty()).thenReturn(TTD);
+    when(blockHeader.getTimestamp()).thenReturn(TIMESTAMP);
+    when(timestampSchedule.getByTimestamp(TIMESTAMP)).thenReturn(Optional.empty());
 
     transitionProtocolSchedule =
         new TransitionProtocolSchedule(
-            preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
+            preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext, timestampSchedule);
+    transitionProtocolSchedule.setProtocolContext(protocolContext);
   }
 
   @Test
@@ -64,7 +73,7 @@ public class TransitionProtocolScheduleTest {
     when(mergeContext.getFinalized()).thenReturn(Optional.of(mock(BlockHeader.class)));
     when(blockHeader.getNumber()).thenReturn(BLOCK_NUMBER);
 
-    transitionProtocolSchedule.getByBlockHeader(protocolContext, blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPostMergeProtocolScheduleReturned();
   }
@@ -76,7 +85,7 @@ public class TransitionProtocolScheduleTest {
 
     when(blockHeader.getNumber()).thenReturn(BLOCK_NUMBER);
 
-    transitionProtocolSchedule.getByBlockHeader(protocolContext, blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -95,7 +104,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(95L)));
 
-    transitionProtocolSchedule.getByBlockHeader(protocolContext, blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -114,7 +123,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(95L)));
 
-    transitionProtocolSchedule.getByBlockHeader(protocolContext, blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -133,7 +142,58 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(105L)));
 
-    transitionProtocolSchedule.getByBlockHeader(protocolContext, blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+
+    verifyPostMergeProtocolScheduleReturned();
+  }
+
+  @Test
+  public void getByBlockHeader_returnsTimestampScheduleIfPresent() {
+    when(timestampSchedule.getByTimestamp(TIMESTAMP))
+        .thenReturn(Optional.of(mock(ProtocolSpec.class)));
+
+    assertThat(transitionProtocolSchedule.getByBlockHeader(blockHeader)).isNotNull();
+
+    verify(timestampSchedule).getByTimestamp(TIMESTAMP);
+    verifyNoMergeScheduleInteractions();
+  }
+
+  @Test
+  public void getByBlockNumber_returnsTimestampScheduleIfPresent() {
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
+    when(timestampSchedule.getByBlockHeader(blockHeader)).thenReturn(mock(ProtocolSpec.class));
+
+    assertThat(transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER)).isNotNull();
+
+    verify(timestampSchedule).getByBlockHeader(blockHeader);
+    verifyNoMergeScheduleInteractions();
+  }
+
+  @Test
+  public void getByBlockNumber_delegatesToPreMergeScheduleWhenBlockNotFound() {
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.empty());
+    when(mergeContext.isPostMerge()).thenReturn(false);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPreMergeProtocolScheduleReturned();
+  }
+
+  @Test
+  public void getByBlockNumber_delegatesToPostMergeScheduleWhenBlockNotFound() {
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.empty());
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPostMergeProtocolScheduleReturned();
+  }
+
+  @Test
+  public void getByBlockNumber_delegatesToPostMergeScheduleWhenTimestampScheduleDoesNotExist() {
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
 
     verifyPostMergeProtocolScheduleReturned();
   }
@@ -146,5 +206,10 @@ public class TransitionProtocolScheduleTest {
   private void verifyPostMergeProtocolScheduleReturned() {
     verify(postMergeProtocolSchedule).getByBlockNumber(BLOCK_NUMBER);
     verifyNoInteractions(preMergeProtocolSchedule);
+  }
+
+  private void verifyNoMergeScheduleInteractions() {
+    verifyNoInteractions(preMergeProtocolSchedule);
+    verifyNoInteractions(postMergeProtocolSchedule);
   }
 }

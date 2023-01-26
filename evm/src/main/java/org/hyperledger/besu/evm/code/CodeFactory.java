@@ -21,16 +21,25 @@ import org.hyperledger.besu.evm.Code;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Code factory. */
 public final class CodeFactory {
 
+  /** The constant EOF_LEAD_BYTE. */
   public static final byte EOF_LEAD_BYTE = -17; // 0xEF in signed byte form
-
-  public static final int MAX_KNOWN_CODE_VERSION = 1;
 
   private CodeFactory() {
     // factory class, no instantiations.
   }
 
+  /**
+   * Create Code.
+   *
+   * @param bytes the bytes
+   * @param codeHash the code hash
+   * @param maxEofVersion the max eof version
+   * @param inCreateOperation the in create operation
+   * @return the code
+   */
   public static Code createCode(
       final Bytes bytes,
       final Hash codeHash,
@@ -59,18 +68,24 @@ public final class CodeFactory {
         if (version != 1) {
           return new CodeInvalid(codeHash, bytes, "Unsupported EOF Version: " + version);
         }
+
         final EOFLayout layout = EOFLayout.parseEOF(bytes);
         if (!layout.isValid()) {
           return new CodeInvalid(
               codeHash, bytes, "Invalid EOF Layout: " + layout.getInvalidReason());
         }
-        final long[] jumpMap =
-            OpcodesV1.validateAndCalculateJumpDests(layout.getSections()[EOFLayout.SECTION_CODE]);
-        if (jumpMap != null) {
-          return new CodeV1(codeHash, layout, jumpMap);
-        } else {
-          return new CodeInvalid(codeHash, bytes, "Opcode Validation Failed");
+
+        final String codeValidationError = CodeV1Validation.validateCode(layout);
+        if (codeValidationError != null) {
+          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + codeValidationError);
         }
+
+        final String stackValidationError = CodeV1Validation.validateStack(layout);
+        if (stackValidationError != null) {
+          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + stackValidationError);
+        }
+
+        return new CodeV1(codeHash, layout);
       } else {
         return new CodeV0(bytes, codeHash);
       }

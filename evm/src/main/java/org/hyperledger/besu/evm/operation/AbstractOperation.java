@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 /**
@@ -27,27 +26,35 @@ public abstract class AbstractOperation implements Operation {
   private final String name;
   private final int stackItemsConsumed;
   private final int stackItemsProduced;
-  private final int opSize;
   private final GasCalculator gasCalculator;
 
-  protected static final OperationResult ILLEGAL_STATE_CHANGE =
-      new OperationResult(0L, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-
+  /**
+   * Instantiates a new Abstract operation.
+   *
+   * @param opcode the opcode
+   * @param name the name
+   * @param stackItemsConsumed the stack items consumed
+   * @param stackItemsProduced the stack items produced
+   * @param gasCalculator the gas calculator
+   */
   protected AbstractOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final int opSize,
       final GasCalculator gasCalculator) {
     this.opcode = opcode & 0xff;
     this.name = name;
     this.stackItemsConsumed = stackItemsConsumed;
     this.stackItemsProduced = stackItemsProduced;
-    this.opSize = opSize;
     this.gasCalculator = gasCalculator;
   }
 
+  /**
+   * Gets Gas calculator.
+   *
+   * @return the gas calculator
+   */
   protected GasCalculator gasCalculator() {
     return gasCalculator;
   }
@@ -70,10 +77,5 @@ public abstract class AbstractOperation implements Operation {
   @Override
   public int getStackItemsProduced() {
     return stackItemsProduced;
-  }
-
-  @Override
-  public int getOpSize() {
-    return opSize;
   }
 }

@@ -24,10 +24,16 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
+/** The Self destruct operation. */
 public class SelfDestructOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Self destruct operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public SelfDestructOperation(final GasCalculator gasCalculator) {
-    super(0xFF, "SELFDESTRUCT", 1, 0, 1, gasCalculator);
+    super(0xFF, "SELFDESTRUCT", 1, 0, gasCalculator);
   }
 
   @Override

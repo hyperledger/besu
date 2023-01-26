@@ -34,6 +34,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Round change message validator. */
 public class RoundChangeMessageValidator {
 
   private static final String ERROR_PREFIX = "Invalid RoundChange Message";
@@ -47,6 +48,16 @@ public class RoundChangeMessageValidator {
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
 
+  /**
+   * Instantiates a new Round change message validator.
+   *
+   * @param roundChangePayloadValidator the round change payload validator
+   * @param quorumMessageCount the quorum message count
+   * @param chainHeight the chain height
+   * @param validators the validators
+   * @param blockValidator the block validator
+   * @param protocolContext the protocol context
+   */
   public RoundChangeMessageValidator(
       final RoundChangePayloadValidator roundChangePayloadValidator,
       final long quorumMessageCount,
@@ -62,6 +73,12 @@ public class RoundChangeMessageValidator {
     this.protocolContext = protocolContext;
   }
 
+  /**
+   * Validate.
+   *
+   * @param msg the Round Change msg
+   * @return the boolean
+   */
   public boolean validate(final RoundChange msg) {
 
     if (!roundChangePayloadValidator.validate(msg.getSignedPayload())) {

@@ -23,10 +23,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Call data copy operation. */
 public class CallDataCopyOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Call data copy operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CallDataCopyOperation(final GasCalculator gasCalculator) {
-    super(0x37, "CALLDATACOPY", 3, 0, 1, gasCalculator);
+    super(0x37, "CALLDATACOPY", 3, 0, gasCalculator);
   }
 
   @Override

@@ -53,6 +53,12 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
   }
 
   @Override
+  public void reset() {
+    super.reset();
+    prioritizedTransactions.clear();
+  }
+
+  @Override
   public void manageBlockAdded(final Block block) {
     // nothing to do
   }

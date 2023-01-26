@@ -45,6 +45,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
     return chainId;
   }
 
+  @Override
   public void putMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
     final ScheduledProtocolSpec scheduledProtocolSpec =
         new ScheduledProtocolSpec(blockNumber, protocolSpec);
@@ -70,6 +71,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
     return null;
   }
 
+  @Override
   public String listMilestones() {
     return protocolSpecs.stream()
         .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))

@@ -57,7 +57,7 @@ public class JsonRpcHttpServiceParameterizedTest extends JsonRpcHttpServiceTestB
 
   @Test
   public void invalidJsonShouldReturnParseError() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, requestJson);
+    final RequestBody body = RequestBody.create(requestJson, JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(400);

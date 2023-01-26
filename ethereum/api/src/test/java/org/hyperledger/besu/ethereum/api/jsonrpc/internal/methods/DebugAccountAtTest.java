@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugAccountAt
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.evm.account.Account;
@@ -55,6 +56,7 @@ class DebugAccountAtTest {
   @Mock private BlockTracer blockTracer;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata;
+  @Mock private BlockHeader blockHeader;
   @Mock private TransactionWithMetadata transactionWithMetadata;
   @Mock private BlockTrace blockTrace;
   @Mock private TransactionTrace transactionTrace;
@@ -77,7 +79,7 @@ class DebugAccountAtTest {
 
   @Test
   void testBlockNotFoundResponse() {
-    Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.empty());
+    Mockito.when(blockchainQueries.getBlockHeaderByHash(any())).thenReturn(Optional.empty());
 
     final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
@@ -91,7 +93,7 @@ class DebugAccountAtTest {
 
   @Test
   void testInvalidParamsResponseEmptyList() {
-    Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
+    setupMockBlock();
     Mockito.when(blockWithMetadata.getTransactions()).thenReturn(Collections.emptyList());
 
     final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
@@ -106,7 +108,7 @@ class DebugAccountAtTest {
 
   @Test
   void testInvalidParamsResponseNegative() {
-    Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
+    setupMockBlock();
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
@@ -122,7 +124,7 @@ class DebugAccountAtTest {
 
   @Test
   void testInvalidParamsResponseTooHigh() {
-    Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
+    setupMockBlock();
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
@@ -138,7 +140,7 @@ class DebugAccountAtTest {
 
   @Test
   void testTransactionNotFoundResponse() {
-    Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
+    setupMockBlock();
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
@@ -155,6 +157,7 @@ class DebugAccountAtTest {
   @Test
   void testNoAccountFoundResponse() {
     setupMockTransaction();
+    setupMockBlock();
 
     final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
@@ -179,6 +182,7 @@ class DebugAccountAtTest {
 
     setupMockTransaction();
     setupMockAccount();
+    setupMockBlock();
 
     Mockito.when(account.getCode()).thenReturn(code);
     Mockito.when(account.getNonce()).thenReturn(nonce);
@@ -216,5 +220,11 @@ class DebugAccountAtTest {
     Mockito.when(transactionTrace.getTransaction()).thenReturn(transaction);
     Mockito.when(transactionWithMetadata.getTransaction()).thenReturn(transaction);
     Mockito.when(transaction.getHash()).thenReturn(Hash.ZERO);
+  }
+
+  private void setupMockBlock() {
+    Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
+    Mockito.when(blockchainQueries.getBlockHeaderByHash(any()))
+        .thenReturn(Optional.of(blockHeader));
   }
 }

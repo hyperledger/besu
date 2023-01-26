@@ -359,7 +359,8 @@ public class EthEstimateGasTest {
         null,
         Wei.ZERO,
         Bytes.EMPTY,
-        isStrict);
+        isStrict,
+        null);
   }
 
   private CallParameter modifiedLegacyTransactionCallParameter(final Wei gasPrice) {
@@ -371,7 +372,8 @@ public class EthEstimateGasTest {
         Optional.empty(),
         Optional.empty(),
         Wei.ZERO,
-        Bytes.EMPTY);
+        Bytes.EMPTY,
+        Optional.empty());
   }
 
   private CallParameter eip1559TransactionCallParameter() {
@@ -388,7 +390,8 @@ public class EthEstimateGasTest {
         Wei.fromHexString("0x10"),
         Wei.ZERO,
         Bytes.EMPTY,
-        false);
+        false,
+        null);
   }
 
   private CallParameter modifiedEip1559TransactionCallParameter() {
@@ -400,7 +403,8 @@ public class EthEstimateGasTest {
         Optional.of(Wei.fromHexString("0x10")),
         Optional.of(Wei.fromHexString("0x10")),
         Wei.ZERO,
-        Bytes.EMPTY);
+        Bytes.EMPTY,
+        Optional.empty());
   }
 
   private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {

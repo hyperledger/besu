@@ -41,6 +41,7 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
 import java.util.List;
 
+import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -168,6 +169,11 @@ public interface GasCalculator {
       Account recipient,
       Address contract);
 
+  /**
+   * Gets additional call stipend.
+   *
+   * @return the additional call stipend
+   */
   long getAdditionalCallStipend();
 
   /**
@@ -348,22 +354,24 @@ public interface GasCalculator {
   /**
    * Returns the cost for an SSTORE operation.
    *
-   * @param account the account that storage will be changed in
-   * @param key the key the new value is to be stored under
    * @param newValue the new value to be stored
+   * @param currentValue the supplier of the current value
+   * @param originalValue the supplier of the original value
    * @return the gas cost for the SSTORE operation
    */
-  long calculateStorageCost(Account account, UInt256 key, UInt256 newValue);
+  long calculateStorageCost(
+      UInt256 newValue, Supplier<UInt256> currentValue, Supplier<UInt256> originalValue);
 
   /**
    * Returns the refund amount for an SSTORE operation.
    *
-   * @param account the account that storage will be changed in
-   * @param key the key the new value is to be stored under
    * @param newValue the new value to be stored
+   * @param currentValue the supplier of the current value
+   * @param originalValue the supplier of the original value
    * @return the gas refund for the SSTORE operation
    */
-  long calculateStorageRefundAmount(Account account, UInt256 key, UInt256 newValue);
+  long calculateStorageRefundAmount(
+      UInt256 newValue, Supplier<UInt256> currentValue, Supplier<UInt256> originalValue);
 
   /**
    * Returns the refund amount for deleting an account in a {@link SelfDestructOperation}.
@@ -411,6 +419,12 @@ public interface GasCalculator {
     return false;
   }
 
+  /**
+   * Mod exp gas cost.
+   *
+   * @param input the input
+   * @return the long
+   */
   default long modExpGasCost(final Bytes input) {
     return 0L;
   }

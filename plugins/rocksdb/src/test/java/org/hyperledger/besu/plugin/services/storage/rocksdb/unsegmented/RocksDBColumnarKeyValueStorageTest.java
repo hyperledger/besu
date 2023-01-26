@@ -15,9 +15,11 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
@@ -29,7 +31,9 @@ import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transactio
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -177,9 +181,91 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     store.close();
   }
 
+  @Test
+  public void dbShouldIgnoreExperimentalSegmentsIfNotExisted() throws Exception {
+    final Path testPath = folder.newFolder().toPath();
+    // Create new db should ignore experimental column family
+    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
+        createSegmentedStore(
+            testPath,
+            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            List.of(TestSegment.EXPERIMENTAL));
+    store.close();
+
+    // new db will be backward compatible with db without knowledge of experimental column family
+    store =
+        createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
+    store.close();
+  }
+
+  @Test
+  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted() throws Exception {
+    final Path testPath = folder.newFolder().toPath();
+    // Create new db with experimental column family
+    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
+        createSegmentedStore(
+            testPath,
+            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            List.of());
+    store.close();
+
+    // new db will not be backward compatible with db without knowledge of experimental column
+    // family
+    try {
+      createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
+      fail("DB without knowledge of experimental column family should fail");
+    } catch (StorageException e) {
+      assertThat(e.getMessage()).contains("Column families not opened");
+    }
+
+    // Even if the column family is marked as ignored, as long as it exists, it will not be ignored
+    // and the db opens normally
+    store =
+        createSegmentedStore(
+            testPath,
+            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            List.of(TestSegment.EXPERIMENTAL));
+    store.close();
+  }
+
+  @Test
+  public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded() throws Exception {
+    final Path testPath = folder.newFolder().toPath();
+    // Create new db should ignore experimental column family
+    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
+        createSegmentedStore(
+            testPath,
+            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            List.of(TestSegment.EXPERIMENTAL));
+    store.close();
+
+    // new db will be backward compatible with db without knowledge of experimental column family
+    store =
+        createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
+    store.close();
+
+    // Create new db without ignoring experimental colum family will add column to db
+    store =
+        createSegmentedStore(
+            testPath,
+            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            List.of());
+    store.close();
+
+    // Now, the db will be backward incompatible with db without knowledge of experimental column
+    // family
+    try {
+      createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
+      fail("DB without knowledge of experimental column family should fail");
+    } catch (StorageException e) {
+      assertThat(e.getMessage()).contains("Column families not opened");
+    }
+  }
+
   public enum TestSegment implements SegmentIdentifier {
     FOO(new byte[] {1}),
-    BAR(new byte[] {2});
+    BAR(new byte[] {2}),
+    EXPERIMENTAL(new byte[] {3});
 
     private final byte[] id;
     private final String nameAsUtf8;
@@ -205,6 +291,18 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     return new RocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
+        new NoOpMetricsSystem(),
+        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+  }
+
+  private SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+      final Path path,
+      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> ignorableSegments) {
+    return new RocksDBColumnarKeyValueStorage(
+        new RocksDBConfigurationBuilder().databaseDir(path).build(),
+        segments,
+        ignorableSegments,
         new NoOpMetricsSystem(),
         RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
   }

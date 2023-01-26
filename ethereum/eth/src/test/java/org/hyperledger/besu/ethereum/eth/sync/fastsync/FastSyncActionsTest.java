@@ -454,12 +454,16 @@ public class FastSyncActionsTest {
     when(genesisConfig.getTerminalBlockNumber()).thenReturn(OptionalLong.of(10L));
 
     final Optional<ForkchoiceEvent> finalizedEvent =
-        Optional.of(new ForkchoiceEvent(null, null, blockchain.getBlockHashByNumber(2L).get()));
+        Optional.of(
+            new ForkchoiceEvent(
+                null,
+                blockchain.getBlockHashByNumber(3L).get(),
+                blockchain.getBlockHashByNumber(2L).get()));
 
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromFinalizedBlock(
+            new PivotSelectorFromSafeBlock(
                 blockchainSetupUtil.getProtocolContext(),
                 blockchainSetupUtil.getProtocolSchedule(),
                 ethContext,
@@ -471,13 +475,13 @@ public class FastSyncActionsTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.downloadPivotBlockHeader(
-            new FastSyncState(finalizedEvent.get().getFinalizedBlockHash()));
+            new FastSyncState(finalizedEvent.get().getSafeBlockHash()));
     assertThat(result).isNotCompleted();
 
     final RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
     peer.respond(responder);
 
-    assertThat(result).isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(2).get()));
+    assertThat(result).isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(3).get()));
   }
 
   private FastSyncActions createFastSyncActions(

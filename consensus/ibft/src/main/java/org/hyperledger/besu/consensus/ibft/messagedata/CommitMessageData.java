@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Commit message data. */
 public class CommitMessageData extends AbstractBftMessageData {
 
   private static final int MESSAGE_CODE = IbftV2.COMMIT;
@@ -28,15 +29,32 @@ public class CommitMessageData extends AbstractBftMessageData {
     super(data);
   }
 
+  /**
+   * Instantiate CommitMessageData from message data.
+   *
+   * @param messageData the message data
+   * @return the commit message data
+   */
   public static CommitMessageData fromMessageData(final MessageData messageData) {
     return fromMessageData(
         messageData, MESSAGE_CODE, CommitMessageData.class, CommitMessageData::new);
   }
 
+  /**
+   * Decode.
+   *
+   * @return the commit
+   */
   public Commit decode() {
     return Commit.decode(data);
   }
 
+  /**
+   * Create commit message data.
+   *
+   * @param commit the commit
+   * @return the commit message data
+   */
   public static CommitMessageData create(final Commit commit) {
     return new CommitMessageData(commit.encode());
   }

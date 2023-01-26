@@ -22,9 +22,10 @@ import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
+import java.util.Optional;
 import javax.inject.Named;
 
 class CliqueGenesisFileModule extends GenesisFileModule {
@@ -38,8 +39,9 @@ class CliqueGenesisFileModule extends GenesisFileModule {
   }
 
   @Override
-  ProtocolSchedule provideProtocolSchedule(
+  HeaderBasedProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
+      @Named("Fork") final Optional<String> fork,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     // dagger can handle this magic one day
     return CliqueProtocolSchedule.create(

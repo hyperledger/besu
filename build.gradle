@@ -20,7 +20,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.spotless' version '6.10.0'
+  id 'com.diffplug.spotless' version '6.12.0'
   id 'com.github.ben-manes.versions' version '0.42.0'
   id 'com.github.hierynomus.license' version '0.16.1-fix'
   id 'com.jfrog.artifactory' version '4.28.3'
@@ -83,7 +83,7 @@ allprojects {
   version = rootProject.version
 
   jacoco {
-    toolVersion = '0.8.7'
+    toolVersion = '0.8.8'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -109,7 +109,7 @@ allprojects {
     }
     maven {
       url 'https://artifacts.consensys.net/public/maven/maven/'
-      content { includeGroupByRegex('tech\\.pegasys\\..*') }
+      content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
     }
     maven {
       url 'https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/'
@@ -131,7 +131,7 @@ allprojects {
       target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
-      googleJavaFormat('1.10.0')
+      googleJavaFormat('1.15.0')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
@@ -160,7 +160,7 @@ allprojects {
     ]
 
     options.errorprone {
-      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*)'
+      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*|build/.*/annotation-output/.*)'
 
       // Our equals need to be symmetric, this checker doesn't respect that.
       check('EqualsGetClass', CheckSeverity.OFF)
@@ -261,7 +261,19 @@ allprojects {
   }
 
   javadoc {
-    options.addStringOption('Xdoclint:all', '-quiet')
+    options.addBooleanOption('Xdoclint:all', true)
+    // disable doc lint checking for generated code and acceptance tests dsl.
+    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
+      '-org.hyperledger.besu.tests.acceptance.*,' +
+      '-org.hyperledger.besu.tests.web3j.generated,' +
+      // TODO: these are temporary disabled (ethereum and sub modules), it should be removed in a future PR.
+      '-org.hyperledger.besu.ethereum,' +
+      '-org.hyperledger.besu.ethereum.*,' +
+      '-org.hyperledger.besu.ethstats.*,' +
+      '-org.hyperledger.besu.evmtool',
+      true)
+    options.addStringOption('Xmaxerrs','65535')
+    options.addStringOption('Xmaxwarns','65535')
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
@@ -344,6 +356,7 @@ subprojects {
       testClassesDirs = sourceSets.integrationTest.output.classesDirs
       classpath = sourceSets.integrationTest.runtimeClasspath
       outputs.upToDateWhen { false }
+      useJUnitPlatform {}
     }
   }
 
@@ -605,7 +618,9 @@ artifactoryPublish {
 }
 
 def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-def dockerImageName = project.hasProperty("dockerImageName") ? project.getProperty("dockerImageName") : "hyperledger/besu"
+def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
+def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
+def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
   "openjdk-11",
   "openjdk-11-debug",
@@ -639,18 +654,24 @@ task distDocker {
   def dockerBuildDir = "build/docker-besu/"
 
   doLast {
-    for (def variant in dockerVariants) {
+    for (def jvmVariant in dockerVariants) {
       copy {
-        from file("${projectDir}/docker/${variant}/Dockerfile")
+        from file("${projectDir}/docker/${jvmVariant}/Dockerfile")
         into(dockerBuildDir)
       }
       exec {
-        def image = "${dockerImageName}:${dockerBuildVersion}-${variant}"
+        def image = "${dockerImageName}:${dockerBuildVersion}-${jvmVariant}"
+        def dockerPlatform = ""
+        if (project.hasProperty('docker-platform')){
+          dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
+          println "Building for platform ${project.getProperty('docker-platform')}"
+        }
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
       }
     }
+
     // tag the "default" (which is the variant in the zero position)
     exec {
       executable "sh"
@@ -684,41 +705,6 @@ task testDocker {
   }
 }
 
-task acceptanceTestsQuorum {
-  /**
-   * Tags Description
-   *
-   * Basic tests for private and public tx: basic
-   * Start a Besu/EthSigner/Tessera network with IBFT2: networks/typical-besu::ibft2
-   *
-   * Filter only for spam tests supported by Besu: (spam && raw)
-   * Not available features in Besu: privacy-enhancements-disabled, extension, mps
-   * Not available RPC methods in Besu: async, storage-root, personal-api-signed
-   *
-   * Ignored for now (privacy-polishing): eth-api-signed, nosupport
-   *
-   * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
-   */
-  def tags = "(basic && !nosupport && !mps && !(spam && !raw) && !eth-api-signed && !privacy-enhancements-disabled && !async && !extension && !storage-root && !personal-api-signed) || networks/typical-besu::ibft2"
-
-  doLast {
-    exec {
-      def variant = "openjdk-latest"
-      def variantDirectory = "${buildDir}/quorum-at/${variant}"
-      def dataDirectory = "${variantDirectory}/data"
-      def reportsDirectory = "${variantDirectory}/reports"
-      new File(dataDirectory).mkdirs()
-      new File(reportsDirectory).mkdirs()
-
-      def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
-      def dockerEnv = "--env LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG --env TF_VAR_besu_docker_image='{name=\"${image}-${variant}\",local=true}'"
-      def dockerVolumes = "-v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory}"
-      executable "sh"
-      args "-c", "docker run ${dockerEnv} --rm --network host ${dockerVolumes} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"${tags}\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
-    }
-  }
-}
-
 task dockerUpload {
   dependsOn distDocker
   def architecture = System.getenv('architecture')
@@ -730,10 +716,9 @@ task dockerUpload {
   }
 
   def isInterimBuild = (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
-  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
 
   if (!isInterimBuild) {
-    additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -759,8 +744,32 @@ task dockerUpload {
   }
 }
 
-task manifestDocker {
+task dockerUploadRelease {
+  def archs = ["arm64", "amd64"]
+  def image = "${dockerImageName}:${dockerBuildVersion}"
 
+  doLast {
+    for (def architecture in archs) {
+      for (def variant in dockerVariants) {
+        def variantImage = "${image}-${variant}"
+        exec {
+          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+          executable "sh"
+          args "-c", cmd
+        }
+      }
+
+      exec {
+        def archImage = "${image}-${architecture}"
+        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+  }
+}
+
+task manifestDocker {
   def image = "${dockerImageName}:${dockerBuildVersion}"
   def archs = ["arm64", "amd64"]
   def tags = ["${image}"]
@@ -770,7 +779,6 @@ task manifestDocker {
   }
 
   if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
-    tags.add("${dockerImageName}:latest")
     tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -795,6 +803,33 @@ task manifestDocker {
         executable "sh"
         args "-c", cmd
       }
+    }
+  }
+}
+
+task manifestDockerRelease {
+  def archs = ["arm64", "amd64"]
+  def baseTag = "${dockerImageName}:latest";
+
+  doLast {
+    for (def variant in dockerVariants) {
+      def variantImage = "${baseTag}-${variant}"
+      def targets = ""
+      archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+
+      exec {
+        def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+
+    exec {
+      def targets = ""
+      archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
+      def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
+      executable "sh"
+      args "-c", cmd
     }
   }
 }
@@ -865,15 +900,16 @@ def calculateVersion() {
   return version
 }
 
-def getCheckedOutGitCommitHash() {
+
+def getCheckedOutGitCommitHash(length = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
     if (!file(gitFolder).isDirectory()) {
       // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
       // Read the file, cut off the front, and trim the whitespace.
-      gitFolder = file(gitFolder).text.substring(8).trim() + "/"
+      gitFolder = file(gitFolder).text.substring(length).trim() + "/"
     }
-    def takeFromHash = 8
+    def takeFromHash = length
     /*
      * '.git/HEAD' contains either
      *      in case of detached head: the currently checked out commit hash

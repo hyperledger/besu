@@ -23,10 +23,12 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Metrics open telemetry push service. */
 public class MetricsOtelPushService implements MetricsService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsOtelPushService.class);
 
+  /** Instantiates a new Metrics open telemetry push service. */
   public MetricsOtelPushService() {}
 
   @Override

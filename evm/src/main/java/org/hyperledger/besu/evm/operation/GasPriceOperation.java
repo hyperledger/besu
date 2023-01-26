@@ -19,10 +19,16 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Gas price operation. */
 public class GasPriceOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Gas price operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public GasPriceOperation(final GasCalculator gasCalculator) {
-    super(0x3A, "GASPRICE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x3A, "GASPRICE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

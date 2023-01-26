@@ -16,6 +16,7 @@ package org.hyperledger.besu.crypto;
 
 import org.hyperledger.besu.nativelib.secp256r1.LibSECP256R1;
 import org.hyperledger.besu.nativelib.secp256r1.Signature;
+import org.hyperledger.besu.nativelib.secp256r1.besuNativeEC.BesuNativeEC;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -25,15 +26,29 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.signers.DSAKCalculator;
 import org.bouncycastle.crypto.signers.RandomDSAKCalculator;
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The SECP256R1 implementation. */
 public class SECP256R1 extends AbstractSECP256 {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SECP256R1.class);
+
+  /** The constant CURVE_NAME. */
   public static final String CURVE_NAME = "secp256r1";
-  private boolean useNative = true;
+
+  private boolean useNative;
   private final LibSECP256R1 libSECP256R1 = new LibSECP256R1();
 
+  /** Instantiates a new SECP256R1. */
   public SECP256R1() {
     super(CURVE_NAME, SecP256R1Curve.q);
+    try {
+      useNative = BesuNativeEC.INSTANCE != null;
+    } catch (UnsatisfiedLinkError ule) {
+      LOG.info("secp256r1 native precompile not available: {}", ule.getMessage());
+      useNative = false;
+    }
   }
 
   @Override

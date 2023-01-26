@@ -26,6 +26,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The No nonce rule. */
 public class NoNonceRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoNonceRule.class);

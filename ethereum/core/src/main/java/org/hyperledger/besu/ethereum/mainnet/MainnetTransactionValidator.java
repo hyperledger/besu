@@ -32,8 +32,6 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
 
-import com.google.common.primitives.Longs;
-
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
  *
@@ -52,6 +50,8 @@ public class MainnetTransactionValidator {
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
   private final boolean goQuorumCompatibilityMode;
+
+  private final int maxInitcodeSize;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
@@ -78,7 +78,8 @@ public class MainnetTransactionValidator {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        quorumCompatibilityMode);
+        quorumCompatibilityMode,
+        Integer.MAX_VALUE);
   }
 
   public MainnetTransactionValidator(
@@ -87,13 +88,15 @@ public class MainnetTransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
-      final boolean goQuorumCompatibilityMode) {
+      final boolean goQuorumCompatibilityMode,
+      final int maxInitcodeSize) {
     this.gasCalculator = gasCalculator;
     this.feeMarket = feeMarket;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
     this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
+    this.maxInitcodeSize = maxInitcodeSize;
   }
 
   /**
@@ -159,19 +162,6 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
     }
 
-    if (transaction
-            .getGasPrice()
-            .or(transaction::getMaxFeePerGas)
-            .orElse(Wei.ZERO)
-            .getAsBigInteger()
-            .multiply(new BigInteger(1, Longs.toByteArray(transaction.getGasLimit())))
-            .bitLength()
-        > 256) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.UPFRONT_FEE_TOO_HIGH,
-          "gasLimit x price must be less than 2^256");
-    }
-
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
@@ -182,6 +172,14 @@ public class MainnetTransactionValidator {
           String.format(
               "intrinsic gas cost %s exceeds gas limit %s",
               intrinsicGasCost, transaction.getGasLimit()));
+    }
+
+    if (transaction.isContractCreation() && transaction.getPayload().size() > maxInitcodeSize) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INITCODE_TOO_LARGE,
+          String.format(
+              "Initcode size of %d exceeds maximum size of %s",
+              transaction.getPayload().size(), maxInitcodeSize));
     }
 
     return ValidationResult.valid();

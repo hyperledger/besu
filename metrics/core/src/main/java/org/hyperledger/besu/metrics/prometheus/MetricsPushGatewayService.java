@@ -30,6 +30,7 @@ import io.prometheus.client.exporter.PushGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Metrics push gateway service. */
 public class MetricsPushGatewayService implements MetricsService {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsPushGatewayService.class);
 
@@ -38,6 +39,12 @@ public class MetricsPushGatewayService implements MetricsService {
   private final MetricsConfiguration config;
   private final MetricsSystem metricsSystem;
 
+  /**
+   * Instantiates a new Metrics push gateway service.
+   *
+   * @param configuration the configuration
+   * @param metricsSystem the metrics system
+   */
   public MetricsPushGatewayService(
       final MetricsConfiguration configuration, final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;

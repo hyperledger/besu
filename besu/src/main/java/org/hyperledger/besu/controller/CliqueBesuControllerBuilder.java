@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Clique consensus controller builder. */
 public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(CliqueBesuControllerBuilder.class);

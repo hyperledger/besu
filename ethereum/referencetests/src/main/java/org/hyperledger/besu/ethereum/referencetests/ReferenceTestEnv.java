@@ -74,6 +74,8 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
+        null, // withdrawalsRoot
+        null,
         new MainnetBlockHeaderFunctions());
   }
 

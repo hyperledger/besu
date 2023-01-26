@@ -23,10 +23,16 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
+/** The Call code operation. */
 public class CallCodeOperation extends AbstractCallOperation {
 
+  /**
+   * Instantiates a new Call code operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CallCodeOperation(final GasCalculator gasCalculator) {
-    super(0xF2, "CALLCODE", 7, 1, 1, gasCalculator);
+    super(0xF2, "CALLCODE", 7, 1, gasCalculator);
   }
 
   @Override

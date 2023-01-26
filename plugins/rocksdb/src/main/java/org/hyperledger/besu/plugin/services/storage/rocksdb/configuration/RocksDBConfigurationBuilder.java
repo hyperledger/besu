@@ -22,6 +22,7 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 
 import java.nio.file.Path;
 
+/** The RocksDb configuration builder. */
 public class RocksDBConfigurationBuilder {
 
   private Path databaseDir;
@@ -32,41 +33,89 @@ public class RocksDBConfigurationBuilder {
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
 
+  /**
+   * Database dir.
+   *
+   * @param databaseDir the database dir
+   * @return the rocks db configuration builder
+   */
   public RocksDBConfigurationBuilder databaseDir(final Path databaseDir) {
     this.databaseDir = databaseDir;
     return this;
   }
 
+  /**
+   * Max open files.
+   *
+   * @param maxOpenFiles the max open files
+   * @return the rocks db configuration builder
+   */
   public RocksDBConfigurationBuilder maxOpenFiles(final int maxOpenFiles) {
     this.maxOpenFiles = maxOpenFiles;
     return this;
   }
 
+  /**
+   * Label.
+   *
+   * @param label the label
+   * @return the rocks db configuration builder
+   */
   public RocksDBConfigurationBuilder label(final String label) {
     this.label = label;
     return this;
   }
 
+  /**
+   * Cache capacity.
+   *
+   * @param cacheCapacity the cache capacity
+   * @return the rocks db configuration builder
+   */
   public RocksDBConfigurationBuilder cacheCapacity(final long cacheCapacity) {
     this.cacheCapacity = cacheCapacity;
     return this;
   }
 
+  /**
+   * Max background compactions.
+   *
+   * @param maxBackgroundCompactions the max background compactions
+   * @return the rocks db configuration builder
+   */
   public RocksDBConfigurationBuilder maxBackgroundCompactions(final int maxBackgroundCompactions) {
     this.maxBackgroundCompactions = maxBackgroundCompactions;
     return this;
   }
 
+  /**
+   * Background thread count.
+   *
+   * @param backgroundThreadCount the background thread count
+   * @return the rocks db configuration builder
+   */
   public RocksDBConfigurationBuilder backgroundThreadCount(final int backgroundThreadCount) {
     this.backgroundThreadCount = backgroundThreadCount;
     return this;
   }
 
+  /**
+   * Is high spec.
+   *
+   * @param isHighSpec the is high spec
+   * @return the rocks db configuration builder
+   */
   public RocksDBConfigurationBuilder isHighSpec(final boolean isHighSpec) {
     this.isHighSpec = isHighSpec;
     return this;
   }
 
+  /**
+   * From.
+   *
+   * @param configuration the configuration
+   * @return the rocks db configuration builder
+   */
   public static RocksDBConfigurationBuilder from(final RocksDBFactoryConfiguration configuration) {
     return new RocksDBConfigurationBuilder()
         .backgroundThreadCount(configuration.getBackgroundThreadCount())
@@ -76,6 +125,11 @@ public class RocksDBConfigurationBuilder {
         .isHighSpec(configuration.isHighSpec());
   }
 
+  /**
+   * Build rocks db configuration.
+   *
+   * @return the rocks db configuration
+   */
   public RocksDBConfiguration build() {
     return new RocksDBConfiguration(
         databaseDir,

@@ -20,13 +20,34 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 
+/** The interface Base ibft block height manager. */
 public interface BaseIbftBlockHeightManager extends BaseBlockHeightManager {
 
+  /**
+   * Handle proposal payload.
+   *
+   * @param proposal the proposal
+   */
   void handleProposalPayload(Proposal proposal);
 
+  /**
+   * Handle prepare payload.
+   *
+   * @param prepare the prepare
+   */
   void handlePreparePayload(Prepare prepare);
 
+  /**
+   * Handle commit payload.
+   *
+   * @param commit the commit
+   */
   void handleCommitPayload(Commit commit);
 
+  /**
+   * Handle round change payload.
+   *
+   * @param roundChange the round change
+   */
   void handleRoundChangePayload(RoundChange roundChange);
 }

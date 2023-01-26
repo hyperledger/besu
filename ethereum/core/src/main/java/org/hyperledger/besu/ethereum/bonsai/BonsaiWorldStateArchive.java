@@ -115,7 +115,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
-    this.useSnapshots = useSnapshots;
+    // TODO: https://github.com/hyperledger/besu/issues/4641
+    // useSnapshots is disabled for now
+    this.useSnapshots = false;
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
@@ -276,11 +278,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         } catch (final Exception e) {
           // if we fail we must clean up the updater
           bonsaiUpdater.reset();
-          LOG.debug("Archive rolling failed for block hash " + blockHash, e);
+          LOG.debug("State rolling failed for block hash " + blockHash, e);
           return Optional.empty();
         }
       } catch (final RuntimeException re) {
-        LOG.debug("Archive rolling failed for block hash " + blockHash, re);
+        LOG.error("Archive rolling failed for block hash " + blockHash, re);
         return Optional.empty();
       }
     }

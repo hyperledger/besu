@@ -15,65 +15,64 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
+
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Byzantium gas calculator. */
 public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
-  private static final BigInteger GQUADDIVISOR = BigInteger.valueOf(20);
-  private static final BigInteger WORD_SIZE = BigInteger.valueOf(32);
-  private static final BigInteger BITS_IN_BYTE = BigInteger.valueOf(8);
+  private static final int GQUADDIVISOR = 20;
+  private static final int WORD_SIZE = 32;
+  private static final int BITS_IN_BYTE = 8;
 
-  public static final BigInteger MAX_FIRST_EXPONENT_BYTES = BigInteger.valueOf(32);
-  public static final int MAX_GAS_BITS = 63;
+  /** The constant MAX_FIRST_EXPONENT_BYTES. */
+  public static final int MAX_FIRST_EXPONENT_BYTES = 32;
 
   @Override
   public long modExpGasCost(final Bytes input) {
-    final BigInteger baseLength =
-        BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
-    final BigInteger exponentLength =
+    final long baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
+    final long exponentLength =
         BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
-    final BigInteger modulusLength =
+    final long modulusLength =
         BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
-    final BigInteger exponentOffset =
-        BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
-    final int firstExponentBytesCap = exponentLength.min(MAX_FIRST_EXPONENT_BYTES).intValue();
+    final long exponentOffset =
+        clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
+    final long firstExponentBytesCap = Math.min(exponentLength, MAX_FIRST_EXPONENT_BYTES);
     final BigInteger firstExpBytes =
         BigIntegerModularExponentiationPrecompiledContract.extractParameter(
-            input, exponentOffset, firstExponentBytesCap);
-    final BigInteger adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
-    final BigInteger multiplicationComplexity =
+            input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+    final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
+    final long multiplicationComplexity =
         BigIntegerModularExponentiationPrecompiledContract.multiplicationComplexity(
-            baseLength.max(modulusLength));
-    final BigInteger gasRequirement =
-        multiplicationComplexity
-            .multiply(adjustedExponentLength.max(BigInteger.ONE))
-            .divide(GQUADDIVISOR);
-
-    // Gas price is so large it will not fit in a Gas type, so a
-    // very very very unlikely high gas price is used instead.
-    if (gasRequirement.bitLength() > MAX_GAS_BITS) {
-      return Long.MAX_VALUE;
-    } else {
-      return gasRequirement.longValueExact();
-    }
+            Math.max(baseLength, modulusLength));
+    long numerator = clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1));
+    return (numerator == Long.MAX_VALUE) ? Long.MAX_VALUE : numerator / GQUADDIVISOR;
   }
 
-  public static BigInteger adjustedExponentLength(
-      final BigInteger exponentLength, final BigInteger firstExpBytes) {
-    final BigInteger bitLength = bitLength(firstExpBytes);
-    if (exponentLength.compareTo(WORD_SIZE) <= 0) {
+  /**
+   * Adjusted exponent length.
+   *
+   * @param exponentLength the exponent length
+   * @param firstExpBytes the first exp bytes
+   * @return the long
+   */
+  public static long adjustedExponentLength(
+      final long exponentLength, final BigInteger firstExpBytes) {
+    final int bitLength = bitLength(firstExpBytes);
+    if (exponentLength < WORD_SIZE) {
       return bitLength;
     } else {
-      return BITS_IN_BYTE.multiply(exponentLength.subtract(WORD_SIZE)).add(bitLength);
+      return clampedAdd(clampedMultiply(BITS_IN_BYTE, (exponentLength - WORD_SIZE)), bitLength);
     }
   }
 
-  private static BigInteger bitLength(final BigInteger n) {
-    return n.compareTo(BigInteger.ZERO) == 0
-        ? BigInteger.ZERO
-        : BigInteger.valueOf(n.bitLength() - 1L);
+  private static int bitLength(final BigInteger n) {
+    return n.compareTo(BigInteger.ZERO) == 0 ? 0 : (n.bitLength() - 1);
   }
 }

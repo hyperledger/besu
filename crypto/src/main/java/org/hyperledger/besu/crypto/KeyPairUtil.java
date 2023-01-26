@@ -32,11 +32,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Key pair util. */
 public class KeyPairUtil {
   private static final Logger LOG = LoggerFactory.getLogger(KeyPairUtil.class);
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  /**
+   * Load resource file string.
+   *
+   * @param resourcePath the resource path
+   * @return the string
+   */
   public static String loadResourceFile(final String resourcePath) {
     try {
       URL path = KeyPairUtil.class.getClassLoader().getResource(resourcePath);
@@ -46,6 +53,12 @@ public class KeyPairUtil {
     }
   }
 
+  /**
+   * Load key pair from resource.
+   *
+   * @param resourcePath the resource path
+   * @return the key pair
+   */
   public static KeyPair loadKeyPairFromResource(final String resourcePath) {
     final KeyPair keyPair;
     String keyData = loadResourceFile(resourcePath);
@@ -60,6 +73,12 @@ public class KeyPairUtil {
     return keyPair;
   }
 
+  /**
+   * Load key pair.
+   *
+   * @param keyFile the key file
+   * @return the key pair
+   */
   public static KeyPair loadKeyPair(final File keyFile) {
 
     final KeyPair key;
@@ -82,10 +101,22 @@ public class KeyPairUtil {
     return key;
   }
 
+  /**
+   * Load key pair.
+   *
+   * @param directory the directory
+   * @return the key pair
+   */
   public static KeyPair loadKeyPair(final Path directory) {
     return loadKeyPair(getDefaultKeyFile(directory));
   }
 
+  /**
+   * Store key file.
+   *
+   * @param keyPair the key pair
+   * @param homeDirectory the home directory
+   */
   public static void storeKeyFile(final KeyPair keyPair, final Path homeDirectory) {
     try {
       storeKeyPair(keyPair, getDefaultKeyFile(homeDirectory));
@@ -94,14 +125,32 @@ public class KeyPairUtil {
     }
   }
 
+  /**
+   * Gets default key file.
+   *
+   * @param directory the directory
+   * @return the default key file
+   */
   public static File getDefaultKeyFile(final Path directory) {
     return directory.resolve("key").toFile();
   }
 
+  /**
+   * Load key pair.
+   *
+   * @param file the file
+   * @return the key pair
+   */
   public static KeyPair load(final File file) {
     return SIGNATURE_ALGORITHM.get().createKeyPair(loadPrivateKey(file));
   }
 
+  /**
+   * Load secp private key.
+   *
+   * @param file the file
+   * @return the secp private key
+   */
   static SECPPrivateKey loadPrivateKey(final File file) {
     try {
       final List<String> info = Files.readAllLines(file.toPath());
@@ -114,6 +163,13 @@ public class KeyPairUtil {
     }
   }
 
+  /**
+   * Store key pair.
+   *
+   * @param keyPair the key pair
+   * @param file the file
+   * @throws IOException the io exception
+   */
   static void storeKeyPair(final KeyPair keyPair, final File file) throws IOException {
     final File privateKeyDir = file.getParentFile();
     privateKeyDir.mkdirs();

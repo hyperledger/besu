@@ -180,9 +180,9 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void traceReporting() {
-
+    // longer timeout since at 30s this test is flaky
     WaitUtils.waitFor(
-        30,
+        60,
         () -> {
           // call the json RPC endpoint to generate a trace.
           net.netVersion().verify(metricsNode);
@@ -203,7 +203,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
   public void traceReportingWithTraceId() {
     Duration timeout = Duration.ofSeconds(1);
     WaitUtils.waitFor(
-        30,
+        60,
         () -> {
           OpenTelemetry openTelemetry =
               OpenTelemetrySdk.builder()

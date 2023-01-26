@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Json genesis config options. */
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
@@ -52,10 +53,23 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   private final TransitionsConfigOptions transitions;
 
+  /**
+   * From json object json genesis config options.
+   *
+   * @param configRoot the config root
+   * @return the json genesis config options
+   */
   public static JsonGenesisConfigOptions fromJsonObject(final ObjectNode configRoot) {
     return fromJsonObjectWithOverrides(configRoot, emptyMap());
   }
 
+  /**
+   * From json object with overrides json genesis config options.
+   *
+   * @param configRoot the config root
+   * @param configOverrides the config overrides
+   * @return the json genesis config options
+   */
   static JsonGenesisConfigOptions fromJsonObjectWithOverrides(
       final ObjectNode configRoot, final Map<String, String> configOverrides) {
     final TransitionsConfigOptions transitionsConfigOptions;
@@ -73,6 +87,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return new TransitionsConfigOptions(transitionsNode.get());
   }
 
+  /**
+   * Instantiates a new Json genesis config options.
+   *
+   * @param maybeConfig the optional config
+   * @param configOverrides the config overrides map
+   * @param transitionsConfig the transitions configuration
+   */
   JsonGenesisConfigOptions(
       final ObjectNode maybeConfig,
       final Map<String, String> configOverrides,
@@ -279,13 +300,23 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getShandongBlockNumber() {
-    return getOptionalLong("shandongblock");
+  public OptionalLong getShanghaiTime() {
+    return getOptionalLong("shanghaitime");
   }
 
   @Override
-  public OptionalLong getEIP1153BlockNumber() {
-    return getOptionalLong("eip1153Block");
+  public OptionalLong getCancunTime() {
+    return getOptionalLong("cancuntime");
+  }
+
+  @Override
+  public OptionalLong getFutureEipsTime() {
+    return getOptionalLong("futureeipstime");
+  }
+
+  @Override
+  public OptionalLong getExperimentalEipsTime() {
+    return getOptionalLong("experimentaleipstime");
   }
 
   @Override
@@ -438,10 +469,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
-    getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
-    getEIP1153BlockNumber().ifPresent(l -> builder.put("eip1153Block", l));
+    getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
+    getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
+    getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
+    getExperimentalEipsTime().ifPresent(l -> builder.put("experimentalEipsTime", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -546,7 +579,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public List<Long> getForks() {
+  public List<Long> getForkBlockNumbers() {
     Stream<OptionalLong> forkBlockNumbers =
         Stream.of(
             getHomesteadBlockNumber(),
@@ -563,8 +596,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getArrowGlacierBlockNumber(),
             getGrayGlacierBlockNumber(),
             getMergeNetSplitBlockNumber(),
-            getShandongBlockNumber(),
-            getEIP1153BlockNumber(),
+            getShanghaiTime(),
+            getCancunTime(),
+            getFutureEipsTime(),
+            getExperimentalEipsTime(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),
@@ -579,6 +614,19 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers
+        .filter(OptionalLong::isPresent)
+        .map(OptionalLong::getAsLong)
+        .distinct()
+        .sorted()
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<Long> getForkBlockTimestamps() {
+    Stream<OptionalLong> forkBlockTimestamps = Stream.of(getShanghaiTime(), getCancunTime());
+    // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
+
+    return forkBlockTimestamps
         .filter(OptionalLong::isPresent)
         .map(OptionalLong::getAsLong)
         .distinct()

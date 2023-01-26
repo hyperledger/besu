@@ -30,6 +30,7 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/** The GoQuorum enclave. */
 public class GoQuorumEnclave {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -37,10 +38,20 @@ public class GoQuorumEnclave {
 
   private final RequestTransmitter requestTransmitter;
 
+  /**
+   * Instantiates a new GoQuorum enclave.
+   *
+   * @param requestTransmitter the request transmitter
+   */
   public GoQuorumEnclave(final RequestTransmitter requestTransmitter) {
     this.requestTransmitter = requestTransmitter;
   }
 
+  /**
+   * Up check.
+   *
+   * @return the boolean
+   */
   public boolean upCheck() {
     try {
       final String upcheckResponse =
@@ -51,6 +62,14 @@ public class GoQuorumEnclave {
     }
   }
 
+  /**
+   * Send payload.
+   *
+   * @param payload the payload
+   * @param privateFrom the private from
+   * @param privateFor the private for
+   * @return the send response
+   */
   public SendResponse send(
       final byte[] payload, final String privateFrom, final List<String> privateFor) {
     final GoQuorumSendRequest request = new GoQuorumSendRequest(payload, privateFrom, privateFor);
@@ -61,6 +80,13 @@ public class GoQuorumEnclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class, 201));
   }
 
+  /**
+   * Send signed transaction.
+   *
+   * @param txLookupId the tx lookup id
+   * @param privateFor the private for
+   * @return the send response
+   */
   public SendResponse sendSignedTransaction(
       final byte[] txLookupId, final List<String> privateFor) {
     final GoQuorumSendSignedRequest request = new GoQuorumSendSignedRequest(txLookupId, privateFor);
@@ -71,6 +97,12 @@ public class GoQuorumEnclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class, 201));
   }
 
+  /**
+   * Store raw payload.
+   *
+   * @param payload the payload
+   * @return the store raw response
+   */
   public StoreRawResponse storeRaw(final String payload) {
     final GoQuorumStoreRawRequest request = new GoQuorumStoreRawRequest(payload);
     return post(
@@ -80,6 +112,12 @@ public class GoQuorumEnclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, StoreRawResponse.class, 200));
   }
 
+  /**
+   * Receive GoQuorum response.
+   *
+   * @param payloadKey the payload key
+   * @return the go quorum receive response
+   */
   public GoQuorumReceiveResponse receive(final String payloadKey) {
     return get(
         JSON,

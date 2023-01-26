@@ -49,6 +49,12 @@ public class BadBlockManager {
     }
   }
 
+  public void reset() {
+    this.badBlocks.invalidateAll();
+    this.badHeaders.invalidateAll();
+    this.latestValidHashes.invalidateAll();
+  }
+
   /**
    * Return all invalid blocks
    *

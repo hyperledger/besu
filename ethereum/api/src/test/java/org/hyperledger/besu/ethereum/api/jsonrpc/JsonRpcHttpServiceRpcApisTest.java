@@ -54,6 +54,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,19 +74,18 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JsonRpcHttpServiceRpcApisTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private final Vertx vertx = Vertx.vertx();
   private final OkHttpClient client = new OkHttpClient();
@@ -103,13 +103,13 @@ public class JsonRpcHttpServiceRpcApisTest {
   private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
   private final NatService natService = new NatService(Optional.empty());
 
-  @Before
+  @BeforeEach
   public void before() {
     configuration = JsonRpcConfiguration.createDefault();
     configuration.setPort(0);
   }
 
-  @After
+  @AfterEach
   public void after() {
     service.stop().join();
   }
@@ -120,8 +120,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -134,8 +134,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -149,8 +149,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -168,8 +168,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -223,14 +223,14 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath(),
+                    folder,
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
-            folder.newFolder().toPath(),
+            folder,
             config,
             new NoOpMetricsSystem(),
             natService,
@@ -278,7 +278,8 @@ public class JsonRpcHttpServiceRpcApisTest {
             .metricsSystem(new NoOpMetricsSystem())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .blockchain(blockchain)
-            .forks(Collections.emptyList())
+            .blockNumberForks(Collections.emptyList())
+            .timestampForks(Collections.emptyList())
             .build();
 
     p2pNetwork.start();
@@ -328,14 +329,14 @@ public class JsonRpcHttpServiceRpcApisTest {
                     metricsConfiguration,
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath(),
+                    folder,
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
-            folder.newFolder().toPath(),
+            folder,
             jsonRpcConfiguration,
             new NoOpMetricsSystem(),
             natService,
@@ -412,7 +413,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   public RequestBody createNetServicesRequestBody() {
     final String id = "123";
     return RequestBody.create(
-        JSON, "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}");
+        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}", JSON);
   }
 
   public JsonRpcHttpService getJsonRpcHttpService(final boolean[] enabledNetServices)

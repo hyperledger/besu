@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/** The Rpc endpoint service implementation. */
 public class RpcEndpointServiceImpl implements RpcEndpointService {
   private final Map<String, Function<PluginRpcRequest, ?>> rpcMethods = new HashMap<>();
 
@@ -43,6 +44,12 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
     rpcMethods.put(namespace + "_" + functionName, function);
   }
 
+  /**
+   * Gets plugin methods.
+   *
+   * @param namespaces the namespaces collection
+   * @return the Json Rpc Methods from plugins
+   */
   public Map<String, ? extends JsonRpcMethod> getPluginMethods(
       final Collection<String> namespaces) {
     return rpcMethods.entrySet().stream()
@@ -56,6 +63,12 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
         .collect(Collectors.toMap(PluginJsonRpcMethod::getName, e -> e));
   }
 
+  /**
+   * Checks if RPC methods belongs to a namespace
+   *
+   * @param namespace the namespace to check against
+   * @return true if any of the RPC method starts with given namespace, false otherwise.
+   */
   public boolean hasNamespace(final String namespace) {
     return rpcMethods.keySet().stream()
         .anyMatch(key -> key.toUpperCase().startsWith(namespace.toUpperCase()));

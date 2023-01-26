@@ -34,6 +34,21 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
 
   @Test
+  public void ensureTruncateDoesNotCauseSegfault() {
+
+    var preTruncatedWorldState = archive.getMutable(null, genesisState.getBlock().getHash(), false);
+    assertThat(preTruncatedWorldState)
+        .isPresent(); // really just assert that we have not segfaulted after truncating
+    bonsaiWorldStateStorage.clear();
+    var postTruncatedWorldState =
+        archive.getMutable(null, genesisState.getBlock().getHash(), false);
+    assertThat(postTruncatedWorldState).isEmpty();
+    // assert that trying to access pre-worldstate does not segfault after truncating
+    preTruncatedWorldState.get().get(Address.fromHexString(accounts.get(0).getAddress()));
+    assertThat(true).isTrue();
+  }
+
+  @Test
   public void testIsolatedFromHead_behindHead() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
     // assert we can mutate head without mutating the isolated snapshot

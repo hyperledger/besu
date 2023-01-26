@@ -94,6 +94,13 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
               .reversed());
 
   @Override
+  public void reset() {
+    super.reset();
+    prioritizedTransactionsStaticRange.clear();
+    prioritizedTransactionsDynamicRange.clear();
+  }
+
+  @Override
   public void manageBlockAdded(final Block block) {
     block.getHeader().getBaseFee().ifPresent(this::updateBaseFee);
   }

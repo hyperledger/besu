@@ -23,16 +23,29 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/** The Proposal payload. */
 public class ProposalPayload extends IbftPayload {
   private static final int TYPE = IbftV2.PROPOSAL;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
 
+  /**
+   * Instantiates a new Proposal payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   */
   public ProposalPayload(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     this.roundIdentifier = roundIdentifier;
     this.digest = digest;
   }
 
+  /**
+   * Read from rlp input and return proposal payload.
+   *
+   * @param rlpInput the rlp input
+   * @return the proposal payload
+   */
   public static ProposalPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
@@ -50,6 +63,11 @@ public class ProposalPayload extends IbftPayload {
     rlpOutput.endList();
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return digest;
   }

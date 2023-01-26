@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Ibft payload. */
 public abstract class IbftPayload implements Payload {
 
   @Override

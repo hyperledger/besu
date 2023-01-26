@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -39,8 +41,64 @@ import org.mockito.stubbing.Answer;
 public class ProtocolScheduleBuilderTest {
 
   @Mock GenesisConfigOptions configOptions;
-
   @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
+  private static final BigInteger CHAIN_ID = BigInteger.ONE;
+  private ProtocolScheduleBuilder builder;
+
+  @Before
+  public void setup() {
+    builder =
+        new ProtocolScheduleBuilder(
+            configOptions,
+            CHAIN_ID,
+            ProtocolSpecAdapters.create(0, Function.identity()),
+            new PrivacyParameters(),
+            false,
+            false,
+            EvmConfiguration.DEFAULT);
+  }
+
+  @Test
+  public void createProtocolScheduleInOrder() {
+    when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(1L));
+    when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(2L));
+    when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(13L));
+    when(configOptions.getMergeNetSplitBlockNumber()).thenReturn(OptionalLong.of(15L));
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
+    assertThat(protocolSchedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
+    assertThat(protocolSchedule.getByBlockNumber(1).getName()).isEqualTo("Homestead");
+    assertThat(protocolSchedule.getByBlockNumber(2).getName()).isEqualTo("DaoRecoveryInit");
+    assertThat(protocolSchedule.getByBlockNumber(3).getName()).isEqualTo("DaoRecoveryTransition");
+    assertThat(protocolSchedule.getByBlockNumber(12).getName()).isEqualTo("Homestead");
+    assertThat(protocolSchedule.getByBlockNumber(13).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockNumber(14).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockNumber(15).getName()).isEqualTo("ParisFork");
+    assertThat(protocolSchedule.getByBlockNumber(50).getName()).isEqualTo("ParisFork");
+  }
+
+  @Test
+  public void createProtocolScheduleOverlappingUsesLatestFork() {
+    when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(0L));
+    when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(0L));
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
+    assertThat(protocolSchedule.getByBlockNumber(0).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockNumber(1).getName()).isEqualTo("Byzantium");
+  }
+
+  @Test
+  public void createProtocolScheduleOutOfOrderThrows() {
+    when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
+    when(configOptions.getArrowGlacierBlockNumber()).thenReturn(OptionalLong.of(12L));
+    when(configOptions.getGrayGlacierBlockNumber()).thenReturn(OptionalLong.of(11L));
+    assertThatThrownBy(() -> builder.createProtocolSchedule())
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage(
+            "Genesis Config Error: 'GrayGlacier' is scheduled for block 11 but it must be on or after block 12.");
+  }
 
   @Test
   public void modifierInsertedBetweenBlocksIsAppliedToLaterAndCreatesInterimMilestone() {
@@ -52,7 +110,7 @@ public class ProtocolScheduleBuilderTest {
     final ProtocolScheduleBuilder builder =
         new ProtocolScheduleBuilder(
             configOptions,
-            BigInteger.ONE,
+            CHAIN_ID,
             ProtocolSpecAdapters.create(2, modifier),
             new PrivacyParameters(),
             false,
@@ -81,7 +139,7 @@ public class ProtocolScheduleBuilderTest {
     final ProtocolScheduleBuilder builder =
         new ProtocolScheduleBuilder(
             configOptions,
-            BigInteger.ONE,
+            CHAIN_ID,
             ProtocolSpecAdapters.create(2, modifier),
             new PrivacyParameters(),
             false,
@@ -110,7 +168,7 @@ public class ProtocolScheduleBuilderTest {
     final ProtocolScheduleBuilder builder =
         new ProtocolScheduleBuilder(
             configOptions,
-            BigInteger.ONE,
+            CHAIN_ID,
             ProtocolSpecAdapters.create(5, modifier),
             new PrivacyParameters(),
             false,

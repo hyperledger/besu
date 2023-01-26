@@ -28,7 +28,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TLoadOperation extends AbstractOperation {
 
   public TLoadOperation(final GasCalculator gasCalculator) {
-    super(0xb3, "TLOAD", 1, 1, 1, gasCalculator);
+    super(0xb3, "TLOAD", 1, 1, gasCalculator);
   }
 
   @Override

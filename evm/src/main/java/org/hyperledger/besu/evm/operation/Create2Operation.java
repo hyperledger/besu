@@ -25,12 +25,19 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Create2 operation. */
 public class Create2Operation extends AbstractCreateOperation {
 
   private static final Bytes PREFIX = Bytes.fromHexString("0xFF");
 
-  public Create2Operation(final GasCalculator gasCalculator) {
-    super(0xF5, "CREATE2", 4, 1, 1, gasCalculator);
+  /**
+   * Instantiates a new Create2 operation.
+   *
+   * @param gasCalculator the gas calculator
+   * @param maxInitcodeSize Maximum init code size
+   */
+  public Create2Operation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
+    super(0xF5, "CREATE2", 4, 1, gasCalculator, maxInitcodeSize);
   }
 
   @Override

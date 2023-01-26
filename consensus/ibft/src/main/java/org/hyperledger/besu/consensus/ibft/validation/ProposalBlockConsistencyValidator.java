@@ -24,11 +24,20 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Proposal block consistency validator. */
 public class ProposalBlockConsistencyValidator {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(ProposalBlockConsistencyValidator.class);
 
+  /**
+   * Validate proposal matches block.
+   *
+   * @param signedPayload the signed payload
+   * @param proposedBlock the proposed block
+   * @param bftBlockInterface the bft block interface
+   * @return the boolean
+   */
   public boolean validateProposalMatchesBlock(
       final SignedData<ProposalPayload> signedPayload,
       final Block proposedBlock,

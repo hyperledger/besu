@@ -24,12 +24,18 @@ import java.util.function.Function;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Block hash operation. */
 public class BlockHashOperation extends AbstractFixedCostOperation {
 
   private static final int MAX_RELATIVE_BLOCK = 255;
 
+  /**
+   * Instantiates a new Block hash operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public BlockHashOperation(final GasCalculator gasCalculator) {
-    super(0x40, "BLOCKHASH", 1, 1, 1, gasCalculator, gasCalculator.getBlockHashOperationGasCost());
+    super(0x40, "BLOCKHASH", 1, 1, gasCalculator, gasCalculator.getBlockHashOperationGasCost());
   }
 
   @Override

@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Rocks db key value storage factory. */
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
@@ -58,25 +59,81 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private final Supplier<RocksDBFactoryConfiguration> configuration;
   private final List<SegmentIdentifier> segments;
+  private final List<SegmentIdentifier> ignorableSegments;
 
+  /**
+   * Instantiates a new RocksDb key value storage factory.
+   *
+   * @param configuration the configuration
+   * @param segments the segments
+   * @param ignorableSegments the ignorable segments
+   * @param defaultVersion the default version
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   */
+  public RocksDBKeyValueStorageFactory(
+      final Supplier<RocksDBFactoryConfiguration> configuration,
+      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> ignorableSegments,
+      final int defaultVersion,
+      final RocksDBMetricsFactory rocksDBMetricsFactory) {
+    this.configuration = configuration;
+    this.segments = segments;
+    this.ignorableSegments = ignorableSegments;
+    this.defaultVersion = defaultVersion;
+    this.rocksDBMetricsFactory = rocksDBMetricsFactory;
+  }
+
+  /**
+   * Instantiates a new RocksDb key value storage factory.
+   *
+   * @param configuration the configuration
+   * @param segments the segments
+   * @param defaultVersion the default version
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   */
   public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments,
       final int defaultVersion,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
-    this.configuration = configuration;
-    this.segments = segments;
-    this.defaultVersion = defaultVersion;
-    this.rocksDBMetricsFactory = rocksDBMetricsFactory;
+    this(configuration, segments, List.of(), defaultVersion, rocksDBMetricsFactory);
   }
 
+  /**
+   * Instantiates a new Rocks db key value storage factory.
+   *
+   * @param configuration the configuration
+   * @param segments the segments
+   * @param ignorableSegments the ignorable segments
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   */
+  public RocksDBKeyValueStorageFactory(
+      final Supplier<RocksDBFactoryConfiguration> configuration,
+      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> ignorableSegments,
+      final RocksDBMetricsFactory rocksDBMetricsFactory) {
+    this(configuration, segments, ignorableSegments, DEFAULT_VERSION, rocksDBMetricsFactory);
+  }
+
+  /**
+   * Instantiates a new Rocks db key value storage factory.
+   *
+   * @param configuration the configuration
+   * @param segments the segments
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   */
   public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
-    this(configuration, segments, DEFAULT_VERSION, rocksDBMetricsFactory);
+    this(configuration, segments, List.of(), DEFAULT_VERSION, rocksDBMetricsFactory);
   }
 
+  /**
+   * Gets default version.
+   *
+   * @return the default version
+   */
   int getDefaultVersion() {
     return defaultVersion;
   }
@@ -123,7 +180,11 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
             segmentedStorage =
                 new RocksDBColumnarKeyValueStorage(
-                    rocksDBConfiguration, segmentsForVersion, metricsSystem, rocksDBMetricsFactory);
+                    rocksDBConfiguration,
+                    segmentsForVersion,
+                    ignorableSegments,
+                    metricsSystem,
+                    rocksDBMetricsFactory);
           }
           final RocksDbSegmentIdentifier rocksSegment =
               segmentedStorage.getSegmentIdentifierByName(segment);
@@ -140,6 +201,12 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     }
   }
 
+  /**
+   * Storage path.
+   *
+   * @param commonConfiguration the common configuration
+   * @return the path
+   */
   protected Path storagePath(final BesuConfiguration commonConfiguration) {
     return commonConfiguration.getStoragePath();
   }

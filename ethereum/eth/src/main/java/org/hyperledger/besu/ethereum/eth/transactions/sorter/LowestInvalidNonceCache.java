@@ -126,6 +126,11 @@ class LowestInvalidNonceCache {
         + '}';
   }
 
+  public void reset() {
+    lowestInvalidKnownNonceBySender.clear();
+    evictionOrder.clear();
+  }
+
   private static class InvalidNonceStatus implements Comparable<InvalidNonceStatus> {
 
     final Address address;

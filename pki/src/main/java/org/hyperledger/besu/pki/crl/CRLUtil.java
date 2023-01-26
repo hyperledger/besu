@@ -25,8 +25,15 @@ import java.security.cert.X509CRL;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** The CRL util. */
 public class CRLUtil {
 
+  /**
+   * Load CRLs cert store.
+   *
+   * @param path the path
+   * @return the cert store
+   */
   public static CertStore loadCRLs(final String path) {
     try {
       final List<X509CRL> crls =

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,19 +35,31 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Transition coordinator. */
 public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     implements MergeMiningCoordinator {
 
   private final MiningCoordinator miningCoordinator;
   private final MergeMiningCoordinator mergeCoordinator;
 
+  /**
+   * Instantiates a new Transition coordinator.
+   *
+   * @param miningCoordinator the mining coordinator
+   * @param mergeCoordinator the merge coordinator
+   */
   public TransitionCoordinator(
       final MiningCoordinator miningCoordinator, final MiningCoordinator mergeCoordinator) {
-    super(miningCoordinator, mergeCoordinator);
+    super(miningCoordinator, mergeCoordinator, PostMergeContext.get());
     this.miningCoordinator = miningCoordinator;
     this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;
   }
 
+  /**
+   * Gets merge coordinator.
+   *
+   * @return the merge coordinator
+   */
   public MergeMiningCoordinator getMergeCoordinator() {
     return mergeCoordinator;
   }
@@ -132,8 +146,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
       final BlockHeader parentHeader,
       final Long timestamp,
       final Bytes32 prevRandao,
-      final Address feeRecipient) {
-    return mergeCoordinator.preparePayload(parentHeader, timestamp, prevRandao, feeRecipient);
+      final Address feeRecipient,
+      final Optional<List<Withdrawal>> withdrawals) {
+    return mergeCoordinator.preparePayload(
+        parentHeader, timestamp, prevRandao, feeRecipient, withdrawals);
   }
 
   @Override
@@ -148,12 +164,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead,
-      final Hash finalizedBlockHash,
-      final Hash safeBlockHash,
-      final Optional<PayloadAttributes> maybePayloadAttributes) {
-    return mergeCoordinator.updateForkChoice(
-        newHead, finalizedBlockHash, safeBlockHash, maybePayloadAttributes);
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
+    return mergeCoordinator.updateForkChoice(newHead, finalizedBlockHash, safeBlockHash);
   }
 
   @Override

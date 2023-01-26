@@ -37,6 +37,11 @@ public class PlatformDetector {
   private static String _arch;
   private static String _glibc;
 
+  /**
+   * Gets OS type.
+   *
+   * @return the OS type
+   */
   public static String getOSType() {
     if (_osType == null) {
       detect();
@@ -44,6 +49,11 @@ public class PlatformDetector {
     return _osType;
   }
 
+  /**
+   * Gets OS.
+   *
+   * @return the OS
+   */
   public static String getOS() {
     if (_os == null) {
       detect();
@@ -51,6 +61,11 @@ public class PlatformDetector {
     return _os;
   }
 
+  /**
+   * Gets Arch.
+   *
+   * @return the Arch
+   */
   public static String getArch() {
     if (_arch == null) {
       detect();
@@ -58,6 +73,11 @@ public class PlatformDetector {
     return _arch;
   }
 
+  /**
+   * Gets VM.
+   *
+   * @return the VM
+   */
   public static String getVM() {
     if (_vm == null) {
       detect();
@@ -65,6 +85,11 @@ public class PlatformDetector {
     return _vm;
   }
 
+  /**
+   * Gets Glibc version.
+   *
+   * @return the Glibc version
+   */
   public static String getGlibc() {
     if (_glibc == null) {
       detectGlibc();
@@ -184,6 +209,13 @@ public class PlatformDetector {
     return UNKNOWN;
   }
 
+  /**
+   * Normalize VM version string.
+   *
+   * @param javaVendor the java vendor
+   * @param javaVmName the java vm name
+   * @return the string
+   */
   static String normalizeVM(final String javaVendor, final String javaVmName) {
     if (javaVmName.contains("graalvm") || javaVendor.contains("graalvm")) {
       return "graalvm";
@@ -218,6 +250,12 @@ public class PlatformDetector {
     return "-" + javaVendor + "-" + javaVmName;
   }
 
+  /**
+   * Normalize java version string.
+   *
+   * @param javaVersion the java version
+   * @return the string
+   */
   static String normalizeJavaVersion(final String javaVersion) {
     // These are already normalized.
     return System.getProperty(javaVersion);

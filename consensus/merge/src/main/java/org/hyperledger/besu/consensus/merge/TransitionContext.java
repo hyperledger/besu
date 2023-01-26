@@ -17,17 +17,26 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
 
+/** The Transition context. */
 public class TransitionContext implements MergeContext {
+  /** The Pre merge context. */
   final ConsensusContext preMergeContext;
+  /** The Post merge context. */
   final MergeContext postMergeContext;
 
+  /**
+   * Instantiates a new Transition context.
+   *
+   * @param preMergeContext the pre merge context
+   * @param postMergeContext the post merge context
+   */
   public TransitionContext(
       final ConsensusContext preMergeContext, final MergeContext postMergeContext) {
     this.preMergeContext = preMergeContext;
@@ -131,12 +140,18 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public void putPayloadById(final PayloadIdentifier payloadId, final Block block) {
-    postMergeContext.putPayloadById(payloadId, block);
+  public void putPayloadById(
+      final PayloadIdentifier payloadId, final BlockWithReceipts blockWithReceipts) {
+    postMergeContext.putPayloadById(payloadId, blockWithReceipts);
   }
 
   @Override
-  public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
+  public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
     return postMergeContext.retrieveBlockById(payloadId);
+  }
+
+  @Override
+  public boolean isCheckpointPostMergeSync() {
+    return false;
   }
 }

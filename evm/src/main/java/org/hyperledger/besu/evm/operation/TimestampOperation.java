@@ -20,10 +20,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Timestamp operation. */
 public class TimestampOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Timestamp operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public TimestampOperation(final GasCalculator gasCalculator) {
-    super(0x42, "TIMESTAMP", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x42, "TIMESTAMP", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

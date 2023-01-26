@@ -21,13 +21,25 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+/** The Qbft payload. */
 public abstract class QbftPayload implements Payload {
 
+  /**
+   * Write consensus round.
+   *
+   * @param out the out
+   */
   protected void writeConsensusRound(final RLPOutput out) {
     out.writeLongScalar(getRoundIdentifier().getSequenceNumber());
     out.writeIntScalar(getRoundIdentifier().getRoundNumber());
   }
 
+  /**
+   * Read consensus round.
+   *
+   * @param in the rlp input
+   * @return the consensus round identifier
+   */
   protected static ConsensusRoundIdentifier readConsensusRound(final RLPInput in) {
     return new ConsensusRoundIdentifier(in.readLongScalar(), in.readIntScalar());
   }

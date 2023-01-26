@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
@@ -312,7 +313,9 @@ public class ChainStateTest {
   public void chainIsBetterThan_chainStateIsLighterAndShorter() {
     final ChainState chainState = new ChainState();
     updateChainState(chainState, Difficulty.of(50), 50);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, Difficulty.of(100), 100);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getHash()).thenReturn(Hash.ZERO);
+    final ChainHead chainHead = new ChainHead(blockHeader, Difficulty.of(100), 100);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isFalse();
   }
@@ -321,7 +324,9 @@ public class ChainStateTest {
   public void chainIsBetterThan_chainStateIsHeavierAndShorter() {
     final ChainState chainState = new ChainState();
     updateChainState(chainState, Difficulty.of(100), 50);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, Difficulty.of(50), 100);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getHash()).thenReturn(Hash.ZERO);
+    final ChainHead chainHead = new ChainHead(blockHeader, Difficulty.of(50), 100);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }
@@ -330,7 +335,9 @@ public class ChainStateTest {
   public void chainIsBetterThan_chainStateIsLighterAndTaller() {
     final ChainState chainState = new ChainState();
     updateChainState(chainState, Difficulty.of(50), 100);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, Difficulty.of(100), 50);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getHash()).thenReturn(Hash.ZERO);
+    final ChainHead chainHead = new ChainHead(blockHeader, Difficulty.of(100), 50);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }
@@ -339,7 +346,9 @@ public class ChainStateTest {
   public void chainIsBetterThan_chainStateIsHeavierAndTaller() {
     final ChainState chainState = new ChainState();
     updateChainState(chainState, Difficulty.of(100), 100);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, Difficulty.of(50), 50);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getHash()).thenReturn(Hash.ZERO);
+    final ChainHead chainHead = new ChainHead(blockHeader, Difficulty.of(50), 50);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }

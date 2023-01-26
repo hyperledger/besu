@@ -12,13 +12,13 @@
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Antoine Toulme   | atoulme          | atoulme          |
-| Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
+| Gabriel Fukushima| gfukushima       | gfukushima       |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
@@ -27,7 +27,6 @@
 | Mark Terry       | mark-terry       | m.terry          |
 | Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
-| Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Stefan Pingel    | pinges           | pinges           |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
@@ -39,6 +38,7 @@
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
+| Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
@@ -46,6 +46,7 @@
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
+| Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+/** The Die hard gas calculator. */
 public class DieHardGasCalculator extends TangerineWhistleGasCalculator {
   private static final long EXP_OPERATION_BYTE_GAS_COST = 50L;
 

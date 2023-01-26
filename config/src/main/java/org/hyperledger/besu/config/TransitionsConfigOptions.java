@@ -26,22 +26,39 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 
+/** The Transitions config options. */
 public class TransitionsConfigOptions {
 
+  /** The constant DEFAULT. */
   public static final TransitionsConfigOptions DEFAULT =
       new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private final ObjectNode customForkConfigRoot;
 
+  /**
+   * Instantiates a new Transitions config options.
+   *
+   * @param customForkConfigRoot the custom fork config root
+   */
   @JsonCreator
   public TransitionsConfigOptions(final ObjectNode customForkConfigRoot) {
     this.customForkConfigRoot = customForkConfigRoot;
   }
 
+  /**
+   * Gets ibft forks.
+   *
+   * @return the ibft forks
+   */
   public List<BftFork> getIbftForks() {
     return getBftForks("ibft2", BftFork::new);
   }
 
+  /**
+   * Gets qbft forks.
+   *
+   * @return the qbft forks
+   */
   public List<QbftFork> getQbftForks() {
     return getBftForks("qbft", QbftFork::new);
   }

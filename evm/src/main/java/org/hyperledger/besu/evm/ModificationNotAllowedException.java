@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.evm;
 
+/** The Modification not allowed exception. */
 public class ModificationNotAllowedException extends RuntimeException {
+  /** Instantiates a new Modification not allowed exception. */
   public ModificationNotAllowedException() {
     super("This account may not be modified");
   }

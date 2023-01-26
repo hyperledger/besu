@@ -22,6 +22,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
+/** The Metrics cli options. */
 public class MetricsCLIOptions implements CLIOptions<MetricsConfiguration.Builder> {
   private static final String TIMERS_ENABLED_FLAG = "--Xmetrics-timers-enabled";
   private static final String IDLE_TIMEOUT_FLAG = "--Xmetrics-idle-timeout";
@@ -43,10 +44,21 @@ public class MetricsCLIOptions implements CLIOptions<MetricsConfiguration.Builde
 
   private MetricsCLIOptions() {}
 
+  /**
+   * Create metrics cli options.
+   *
+   * @return the metrics cli options
+   */
   public static MetricsCLIOptions create() {
     return new MetricsCLIOptions();
   }
 
+  /**
+   * From configuration metrics cli options.
+   *
+   * @param config the config
+   * @return the metrics cli options
+   */
   public static MetricsCLIOptions fromConfiguration(final MetricsConfiguration config) {
     final MetricsCLIOptions metricsOptions = create();
     metricsOptions.timersEnabled = config.isTimersEnabled();

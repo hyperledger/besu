@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Proposal validator. */
 public class ProposalValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProposalValidator.class);
@@ -56,6 +57,17 @@ public class ProposalValidator {
   private final Address expectedProposer;
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Proposal validator.
+   *
+   * @param blockValidator the block validator
+   * @param protocolContext the protocol context
+   * @param quorumMessageCount the quorum message count
+   * @param validators the validators
+   * @param roundIdentifier the round identifier
+   * @param expectedProposer the expected proposer
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public ProposalValidator(
       final BlockValidator blockValidator,
       final ProtocolContext protocolContext,
@@ -73,6 +85,12 @@ public class ProposalValidator {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
+  /**
+   * Validate.
+   *
+   * @param msg the Proposal msg
+   * @return the boolean
+   */
   public boolean validate(final Proposal msg) {
 
     final ProposalPayloadValidator payloadValidator =
@@ -287,6 +305,14 @@ public class ProposalValidator {
     return true;
   }
 
+  /**
+   * All messages target round boolean.
+   *
+   * @param <T> the type parameter
+   * @param payloads the payloads
+   * @param requiredRound the required round
+   * @return the boolean
+   */
   public static <T extends Payload> boolean allMessagesTargetRound(
       final Collection<SignedData<T>> payloads, final ConsensusRoundIdentifier requiredRound) {
     return payloads.stream()

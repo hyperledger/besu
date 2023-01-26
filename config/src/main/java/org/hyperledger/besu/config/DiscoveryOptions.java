@@ -21,18 +21,31 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/** The Discovery options. */
 public class DiscoveryOptions {
+  /** The constant DEFAULT. */
   public static final DiscoveryOptions DEFAULT =
       new DiscoveryOptions(JsonUtil.createEmptyObjectNode());
+
   private static final String ENODES_KEY = "bootnodes";
   private static final String DNS_KEY = "dns";
 
   private final ObjectNode discoveryConfigRoot;
 
+  /**
+   * Instantiates a new Discovery options.
+   *
+   * @param discoveryConfigRoot the discovery config root
+   */
   public DiscoveryOptions(final ObjectNode discoveryConfigRoot) {
     this.discoveryConfigRoot = discoveryConfigRoot;
   }
 
+  /**
+   * Gets boot nodes.
+   *
+   * @return optional list of boot nodes
+   */
   public Optional<List<String>> getBootNodes() {
     final Optional<ArrayNode> bootNodesArray =
         JsonUtil.getArrayNode(discoveryConfigRoot, ENODES_KEY);
@@ -54,6 +67,11 @@ public class DiscoveryOptions {
     return Optional.of(bootNodes);
   }
 
+  /**
+   * Gets discovery dns url.
+   *
+   * @return the discovery dns url
+   */
   public Optional<String> getDiscoveryDnsUrl() {
     return JsonUtil.getString(discoveryConfigRoot, DNS_KEY);
   }

@@ -22,9 +22,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Static utility methods to work with VM words (that is, {@link Bytes32} values). */
-public abstract class Words {
-  private Words() {}
-
+public interface Words {
   /**
    * Creates a new word containing the provided address.
    *
@@ -32,7 +30,7 @@ public abstract class Words {
    * @return A VM word containing {@code address} (left-padded as according to the VM specification
    *     (Appendix H. of the Yellow paper)).
    */
-  public static UInt256 fromAddress(final Address address) {
+  static UInt256 fromAddress(final Address address) {
     return UInt256.fromBytes(Bytes32.leftPad(address));
   }
 
@@ -43,18 +41,7 @@ public abstract class Words {
    * @return An address build from the right-most 160-bits of the {@code bytes} (as according to the
    *     VM specification (Appendix H. of the Yellow paper)).
    */
-  public static Address toAddress(final Bytes32 bytes) {
-    return Address.wrap(bytes.slice(bytes.size() - Address.SIZE, Address.SIZE));
-  }
-
-  /**
-   * Extract an address from the provided address.
-   *
-   * @param bytes The word to extract the address from.
-   * @return An address build from the right-most 160-bits of the {@code bytes} (as according to the
-   *     VM specification (Appendix H. of the Yellow paper)).
-   */
-  public static Address toAddress(final Bytes bytes) {
+  static Address toAddress(final Bytes bytes) {
     final int size = bytes.size();
     if (size < 20) {
       final MutableBytes result = MutableBytes.create(20);
@@ -77,7 +64,7 @@ public abstract class Words {
    * @param input the input to check.
    * @return the number of (32 bytes) words that {@code input} spans.
    */
-  public static int numWords(final Bytes input) {
+  static int numWords(final Bytes input) {
     // m/n round up == (m + n - 1)/n: http://www.cs.nott.ac.uk/~psarb2/G51MPC/slides/NumberLogic.pdf
     return (input.size() + Bytes32.SIZE - 1) / Bytes32.SIZE;
   }
@@ -89,7 +76,7 @@ public abstract class Words {
    * @param uint the unsigned integer
    * @return the least of the integer value or Long.MAX_VALUE
    */
-  public static long clampedToLong(final Bytes uint) {
+  static long clampedToLong(final Bytes uint) {
     if (uint.size() <= 8) {
       final long result = uint.toLong();
       return result < 0 ? Long.MAX_VALUE : result;
@@ -106,13 +93,30 @@ public abstract class Words {
   }
 
   /**
+   * The value of the long as though it was representing an unsigned integer, however if the value
+   * is out of range it will return the number at the end of the range.
+   *
+   * @param l the signed integer
+   * @return The int value, or Integer.MAX_VALUE if too large or Integer.MIN_VALUE if to small.
+   */
+  static int clampedToInt(final long l) {
+    if (l > Integer.MAX_VALUE) {
+      return Integer.MAX_VALUE;
+    } else if (l < Integer.MIN_VALUE) {
+      return Integer.MIN_VALUE;
+    } else {
+      return (int) l;
+    }
+  }
+
+  /**
    * Adds a and b, but if an underflow/overflow occurs return the Long max/min value
    *
    * @param a first value
    * @param b second value
    * @return value of a plus b if no over/underflows or Long.MAX_VALUE/Long.MIN_VALUE otherwise
    */
-  public static long clampedAdd(final long a, final long b) {
+  static long clampedAdd(final long a, final long b) {
     try {
       return Math.addExact(a, b);
     } catch (final ArithmeticException ae) {
@@ -127,11 +131,27 @@ public abstract class Words {
    * @param b second value
    * @return value of a times b if no over/underflows or Long.MAX_VALUE/Long.MIN_VALUE otherwise
    */
-  public static long clampedMultiply(final long a, final long b) {
+  static long clampedMultiply(final long a, final long b) {
     try {
       return Math.multiplyExact(a, b);
     } catch (final ArithmeticException ae) {
       return ((a ^ b) < 0) ? Long.MIN_VALUE : Long.MAX_VALUE;
+    }
+  }
+
+  /**
+   * Multiplies a and b, but if an underflow/overflow occurs return the Integer max/min value
+   *
+   * @param a first value
+   * @param b second value
+   * @return value of a times b if no over/underflows or Integer.MAX_VALUE/Integer.MIN_VALUE
+   *     otherwise
+   */
+  static int clampedMultiply(final int a, final int b) {
+    try {
+      return Math.multiplyExact(a, b);
+    } catch (final ArithmeticException ae) {
+      return ((a ^ b) < 0) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
     }
   }
 
@@ -142,7 +162,35 @@ public abstract class Words {
    * @param b second value
    * @return a if, as an unsigned integer, a is less than b; otherwise b.
    */
-  public static long unsignedMin(final long a, final long b) {
+  static long unsignedMin(final long a, final long b) {
     return Long.compareUnsigned(a, b) < 0 ? a : b;
+  }
+
+  /**
+   * Read big endian u16.
+   *
+   * @param index the index
+   * @param array the array
+   * @return the int
+   */
+  static int readBigEndianU16(final int index, final byte[] array) {
+    if (index + 1 >= array.length) {
+      throw new IndexOutOfBoundsException();
+    }
+    return ((array[index] & 0xff) << 8) | (array[index + 1] & 0xff);
+  }
+
+  /**
+   * Read big endian i16.
+   *
+   * @param index the index
+   * @param array the array
+   * @return the int
+   */
+  static int readBigEndianI16(final int index, final byte[] array) {
+    if (index + 1 >= array.length) {
+      throw new IndexOutOfBoundsException();
+    }
+    return (array[index] << 8) | (array[index + 1] & 0xff);
   }
 }

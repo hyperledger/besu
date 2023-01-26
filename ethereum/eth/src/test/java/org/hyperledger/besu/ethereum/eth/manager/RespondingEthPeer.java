@@ -189,7 +189,9 @@ public class RespondingEthPeer {
     }
   }
 
-  /** @return True if any requests were processed */
+  /**
+   * @return True if any requests were processed
+   */
   public boolean respond(final Responder responder) {
     // Respond to queued messages
     final List<OutgoingMessage> currentMessages = new ArrayList<>();

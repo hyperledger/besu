@@ -18,14 +18,19 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeCapabilities;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdated;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayload;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayload;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.Map;
 import java.util.Optional;
@@ -37,12 +42,14 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final BlockResultFactory blockResultFactory = new BlockResultFactory();
 
   private final Optional<MergeMiningCoordinator> mergeCoordinator;
+  private final TimestampSchedule timestampSchedule;
   private final ProtocolContext protocolContext;
   private final EthPeers ethPeers;
   private final Vertx consensusEngineServer;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
+      final TimestampSchedule timestampSchedule,
       final ProtocolContext protocolContext,
       final EthPeers ethPeers,
       final Vertx consensusEngineServer) {
@@ -50,7 +57,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
             .map(MergeMiningCoordinator.class::cast);
-
+    this.timestampSchedule = timestampSchedule;
     this.protocolContext = protocolContext;
     this.ethPeers = ethPeers;
     this.consensusEngineServer = consensusEngineServer;
@@ -67,22 +74,47 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
     if (mergeCoordinator.isPresent()) {
       return mapOf(
-          new EngineGetPayload(
+          new EngineGetPayloadV1(
               consensusEngineServer,
               protocolContext,
               mergeCoordinator.get(),
               blockResultFactory,
               engineQosTimer),
-          new EngineNewPayload(
+          new EngineGetPayloadV2(
               consensusEngineServer,
+              protocolContext,
+              mergeCoordinator.get(),
+              blockResultFactory,
+              engineQosTimer),
+          new EngineNewPayloadV1(
+              consensusEngineServer,
+              timestampSchedule,
               protocolContext,
               mergeCoordinator.get(),
               ethPeers,
               engineQosTimer),
-          new EngineForkchoiceUpdated(
-              consensusEngineServer, protocolContext, mergeCoordinator.get(), engineQosTimer),
+          new EngineNewPayloadV2(
+              consensusEngineServer,
+              timestampSchedule,
+              protocolContext,
+              mergeCoordinator.get(),
+              ethPeers,
+              engineQosTimer),
+          new EngineForkchoiceUpdatedV1(
+              consensusEngineServer,
+              timestampSchedule,
+              protocolContext,
+              mergeCoordinator.get(),
+              engineQosTimer),
+          new EngineForkchoiceUpdatedV2(
+              consensusEngineServer,
+              timestampSchedule,
+              protocolContext,
+              mergeCoordinator.get(),
+              engineQosTimer),
           new EngineExchangeTransitionConfiguration(
-              consensusEngineServer, protocolContext, engineQosTimer));
+              consensusEngineServer, protocolContext, engineQosTimer),
+          new EngineExchangeCapabilities(consensusEngineServer, protocolContext, engineQosTimer));
     } else {
       return mapOf(
           new EngineExchangeTransitionConfiguration(

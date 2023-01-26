@@ -22,12 +22,19 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Push0 operation. */
 public class Push0Operation extends AbstractFixedCostOperation {
 
+  /** The Push0 operation success result. */
   static final OperationResult push0Success = new OperationResult(2, null);
 
+  /**
+   * Instantiates a new Push 0 operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public Push0Operation(final GasCalculator gasCalculator) {
-    super(PUSH_BASE, "PUSH0", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(PUSH_BASE, "PUSH0", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
@@ -35,6 +42,12 @@ public class Push0Operation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs push0 operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     frame.pushStackItem(Bytes.EMPTY);
     return push0Success;

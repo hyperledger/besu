@@ -19,8 +19,14 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
+/** The Clique proposals. */
 public class CliqueProposals extends AbstractVoteProposerMethod implements JsonRpcMethod {
 
+  /**
+   * Instantiates a new Clique proposals.
+   *
+   * @param validatorProvider the validator provider
+   */
   public CliqueProposals(final ValidatorProvider validatorProvider) {
     super(validatorProvider);
   }

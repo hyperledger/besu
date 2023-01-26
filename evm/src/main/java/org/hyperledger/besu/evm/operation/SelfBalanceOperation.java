@@ -22,10 +22,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Self balance operation. */
 public class SelfBalanceOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Self balance operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public SelfBalanceOperation(final GasCalculator gasCalculator) {
-    super(0x47, "SELFBALANCE", 0, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x47, "SELFBALANCE", 0, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

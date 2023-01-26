@@ -61,7 +61,8 @@ public class FastDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
-      final Clock clock) {
+      final Clock clock,
+      final boolean isResync) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -80,13 +81,17 @@ public class FastDownloaderFactory {
 
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
-    if (fastSyncState.getPivotBlockHeader().isEmpty()
+
+    if (isResync) {
+      worldStateStorage.clear();
+    } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
           "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
     }
+
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       worldStateStorage.clearFlatDatabase();
     } else {

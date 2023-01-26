@@ -19,19 +19,54 @@ import java.math.BigInteger;
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:
  * https://github.com/ethereum/py_ecc/blob/master/py_ecc/bn128/bn128_field_elements.py
+ *
+ * @param <T> the type parameter
  */
 @SuppressWarnings("rawtypes")
 public interface FieldPoint<T extends FieldPoint> {
 
+  /**
+   * Is infinity boolean.
+   *
+   * @return the boolean
+   */
   boolean isInfinity();
 
+  /**
+   * Add t.
+   *
+   * @param other the other
+   * @return the t
+   */
   T add(T other);
 
+  /**
+   * Multiply t.
+   *
+   * @param other the other
+   * @return the t
+   */
   T multiply(T other);
 
+  /**
+   * Multiply t.
+   *
+   * @param n the n
+   * @return the t
+   */
   T multiply(BigInteger n);
 
+  /**
+   * Doub t.
+   *
+   * @return the t
+   */
   T doub();
 
+  /**
+   * Negate t.
+   *
+   * @return the t
+   */
   T negate();
 }

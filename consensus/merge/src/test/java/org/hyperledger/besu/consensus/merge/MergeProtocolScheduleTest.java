@@ -18,14 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class MergeProtocolScheduleTest {
@@ -60,11 +57,7 @@ public class MergeProtocolScheduleTest {
     assertThat(london.getBlockReward()).isEqualTo(Wei.ZERO);
     assertThat(london.isSkipZeroBlockRewards()).isTrue();
 
-    Bytes diffOp = Bytes.fromHexString("0x44");
-    var op =
-        london
-            .getEvm()
-            .operationAtOffset(CodeFactory.createCode(diffOp, Hash.hash(diffOp), 0, false), 0);
+    var op = london.getEvm().getOperationsUnsafe()[0x44];
     assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
   }
 }

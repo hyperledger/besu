@@ -31,10 +31,20 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * The Bft message.
+ *
+ * @param <P> the type of Payload
+ */
 public class BftMessage<P extends Payload> implements Authored, RoundSpecific {
 
   private final SignedData<P> payload;
 
+  /**
+   * Instantiates a new Bft message.
+   *
+   * @param payload the payload
+   */
   public BftMessage(final SignedData<P> payload) {
     this.payload = payload;
   }
@@ -49,24 +59,52 @@ public class BftMessage<P extends Payload> implements Authored, RoundSpecific {
     return payload.getPayload().getRoundIdentifier();
   }
 
+  /**
+   * Encode.
+   *
+   * @return the bytes
+   */
   public Bytes encode() {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     payload.writeTo(rlpOut);
     return rlpOut.encoded();
   }
 
+  /**
+   * Gets signed payload.
+   *
+   * @return the signed payload
+   */
   public SignedData<P> getSignedPayload() {
     return payload;
   }
 
+  /**
+   * Gets message type.
+   *
+   * @return the message type
+   */
   public int getMessageType() {
     return payload.getPayload().getMessageType();
   }
 
+  /**
+   * Gets payload.
+   *
+   * @return the payload
+   */
   protected P getPayload() {
     return payload.getPayload();
   }
 
+  /**
+   * Read payload.
+   *
+   * @param <T> the type parameter of Payload
+   * @param rlpInput the rlp input
+   * @param decoder the decoder
+   * @return the signed data
+   */
   protected static <T extends Payload> SignedData<T> readPayload(
       final RLPInput rlpInput, final Function<RLPInput, T> decoder) {
     rlpInput.enterList();

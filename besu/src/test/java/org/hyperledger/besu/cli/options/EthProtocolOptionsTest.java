@@ -140,6 +140,30 @@ public class EthProtocolOptionsTest
             "Invalid value for option '--Xewp-max-get-node-data': cannot convert '-16' to PositiveNumber");
   }
 
+  @Test
+  public void parsesValidEthMaxProtocol() {
+    final TestBesuCommand cmd = parseCommand("--Xeth-capability-max", "66");
+
+    final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
+    final EthProtocolConfiguration config = options.toDomainObject();
+    assertThat(config.getMaxEthCapability()).isEqualTo(66);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesValidEthMinProtocol() {
+    final TestBesuCommand cmd = parseCommand("--Xeth-capability-min", "66");
+
+    final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
+    final EthProtocolConfiguration config = options.toDomainObject();
+    assertThat(config.getMinEthCapability()).isEqualTo(66);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Override
   EthProtocolConfiguration createDefaultDomainObject() {
     return EthProtocolConfiguration.builder().build();
@@ -154,6 +178,8 @@ public class EthProtocolOptionsTest
         .maxGetReceipts(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2)
         .maxGetNodeData(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2)
         .maxGetPooledTransactions(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2)
+        .maxEthCapability(EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY)
+        .minEthCapability(EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY)
         .build();
   }
 

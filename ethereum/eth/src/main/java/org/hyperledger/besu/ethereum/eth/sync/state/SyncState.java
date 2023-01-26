@@ -319,4 +319,9 @@ public class SyncState {
   public boolean isInitialSyncPhaseDone() {
     return isInitialSyncPhaseDone;
   }
+
+  public void markInitialSyncRestart() {
+    isInitialSyncPhaseDone = false;
+    completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncRestart);
+  }
 }

@@ -33,28 +33,36 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   private final SnappedKeyValueStorage codeSnap;
   private final SnappedKeyValueStorage storageSnap;
   private final SnappedKeyValueStorage trieBranchSnap;
+  private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
+  private final BonsaiSnapshotWorldStateKeyValueStorage snapshotWorldStateStorage;
 
   private BonsaiSnapshotWorldState(
       final BonsaiWorldStateArchive archive,
-      final BonsaiSnapshotWorldStateKeyValueStorage snapshotWorldStateStorage) {
+      final BonsaiSnapshotWorldStateKeyValueStorage snapshotWorldStateStorage,
+      final BonsaiWorldStateKeyValueStorage parentWorldStateStorage) {
     super(archive, snapshotWorldStateStorage);
+    this.snapshotWorldStateStorage = snapshotWorldStateStorage;
     this.accountSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.accountStorage;
     this.codeSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.codeStorage;
     this.storageSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.storageStorage;
     this.trieBranchSnap = (SnappedKeyValueStorage) snapshotWorldStateStorage.trieBranchStorage;
+    this.parentWorldStateStorage = parentWorldStateStorage;
   }
 
   public static BonsaiSnapshotWorldState create(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage) {
     return new BonsaiSnapshotWorldState(
-        archive,
-        new BonsaiSnapshotWorldStateKeyValueStorage(
-            ((SnappableKeyValueStorage) parentWorldStateStorage.accountStorage).takeSnapshot(),
-            ((SnappableKeyValueStorage) parentWorldStateStorage.codeStorage).takeSnapshot(),
-            ((SnappableKeyValueStorage) parentWorldStateStorage.storageStorage).takeSnapshot(),
-            ((SnappableKeyValueStorage) parentWorldStateStorage.trieBranchStorage).takeSnapshot(),
-            parentWorldStateStorage.trieLogStorage));
+            archive,
+            new BonsaiSnapshotWorldStateKeyValueStorage(
+                ((SnappableKeyValueStorage) parentWorldStateStorage.accountStorage).takeSnapshot(),
+                ((SnappableKeyValueStorage) parentWorldStateStorage.codeStorage).takeSnapshot(),
+                ((SnappableKeyValueStorage) parentWorldStateStorage.storageStorage).takeSnapshot(),
+                ((SnappableKeyValueStorage) parentWorldStateStorage.trieBranchStorage)
+                    .takeSnapshot(),
+                parentWorldStateStorage.trieLogStorage),
+            parentWorldStateStorage)
+        .subscribeToParentStorage();
   }
 
   @Override
@@ -69,20 +77,29 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   public MutableWorldState copy() {
     // return a clone-based copy of worldstate storage
     return new BonsaiSnapshotWorldState(
-        archive,
-        new BonsaiSnapshotWorldStateKeyValueStorage(
-            accountSnap.cloneFromSnapshot(),
-            codeSnap.cloneFromSnapshot(),
-            storageSnap.cloneFromSnapshot(),
-            trieBranchSnap.cloneFromSnapshot(),
-            worldStateStorage.trieLogStorage));
+            archive,
+            new BonsaiSnapshotWorldStateKeyValueStorage(
+                accountSnap.cloneFromSnapshot(),
+                codeSnap.cloneFromSnapshot(),
+                storageSnap.cloneFromSnapshot(),
+                trieBranchSnap.cloneFromSnapshot(),
+                worldStateStorage.trieLogStorage),
+            parentWorldStateStorage)
+        .subscribeToParentStorage();
   }
 
   @Override
   public void close() throws Exception {
-    accountSnap.close();
-    codeSnap.close();
-    storageSnap.close();
-    trieBranchSnap.close();
+    snapshotWorldStateStorage.close();
+  }
+
+  @Override
+  public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
+    return snapshotWorldStateStorage;
+  }
+
+  protected BonsaiSnapshotWorldState subscribeToParentStorage() {
+    snapshotWorldStateStorage.subscribeToParentStorage(parentWorldStateStorage);
+    return this;
   }
 }

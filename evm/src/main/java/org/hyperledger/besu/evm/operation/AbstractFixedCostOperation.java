@@ -23,23 +23,37 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 
+/** The Abstract fixed cost operation. */
 abstract class AbstractFixedCostOperation extends AbstractOperation {
 
+  /** The Success response. */
   protected final OperationResult successResponse;
+  /** The Out of gas response. */
   protected final OperationResult outOfGasResponse;
+
   private final OperationResult underflowResponse;
   private final OperationResult overflowResponse;
+  /** The Gas cost. */
   protected final long gasCost;
 
+  /**
+   * Instantiates a new Abstract fixed cost operation.
+   *
+   * @param opcode the opcode
+   * @param name the name
+   * @param stackItemsConsumed the stack items consumed
+   * @param stackItemsProduced the stack items produced
+   * @param gasCalculator the gas calculator
+   * @param fixedCost the fixed cost
+   */
   protected AbstractFixedCostOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final int opSize,
       final GasCalculator gasCalculator,
       final long fixedCost) {
-    super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
+    super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
     gasCost = fixedCost;
     successResponse = new OperationResult(gasCost, null);
     outOfGasResponse = new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
@@ -63,5 +77,12 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
     }
   }
 
+  /**
+   * Execute fixed cost operation.
+   *
+   * @param frame the frame
+   * @param evm the evm
+   * @return the operation result
+   */
   protected abstract OperationResult executeFixedCostOperation(MessageFrame frame, EVM evm);
 }

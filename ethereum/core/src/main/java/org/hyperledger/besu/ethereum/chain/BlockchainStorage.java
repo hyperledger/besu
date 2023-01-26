@@ -72,7 +72,15 @@ public interface BlockchainStorage {
 
     void removeBlockHash(long blockNumber);
 
+    void removeBlockHeader(final Hash blockHash);
+
+    void removeBlockBody(final Hash blockHash);
+
+    void removeTransactionReceipts(final Hash blockHash);
+
     void removeTransactionLocation(Hash transactionHash);
+
+    void removeTotalDifficulty(final Hash blockHash);
 
     void commit();
 

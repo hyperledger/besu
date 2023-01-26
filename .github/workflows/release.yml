@@ -1,0 +1,17 @@
+name: release besu
+on:
+  release:
+    types: released
+jobs:
+  dockerPromoteX64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to DockerHub
+        run: echo '${{ secrets.DOCKER_PASSWORD_RW }}' | docker login -u '${{ secrets.DOCKER_USER_RW }}' --password-stdin
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Docker upload
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ secrets.DOCKER_ORG }}" dockerUploadRelease
+      - name: Docker manifest
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ secrets.DOCKER_ORG }}" manifestDockerRelease

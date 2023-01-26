@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -261,14 +262,18 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   @MustBeClosed
   public MutableWorldState copy() {
     // return an in-memory worldstate that is based on a persisted snapshot for this blockhash.
-    return archive
-        .getMutableSnapshot(this.blockHash())
-        .map(BonsaiSnapshotWorldState.class::cast)
-        .map(snapshot -> new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage()))
-        .orElseThrow(
-            () ->
-                new StorageException(
-                    "Unable to copy Layered Worldstate for " + blockHash().toHexString()));
+    try (SnapshotMutableWorldState snapshot =
+        archive
+            .getMutableSnapshot(this.blockHash())
+            .map(SnapshotMutableWorldState.class::cast)
+            .orElseThrow(
+                () ->
+                    new StorageException(
+                        "Unable to copy Layered Worldstate for " + blockHash().toHexString()))) {
+      return new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage());
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   @Override

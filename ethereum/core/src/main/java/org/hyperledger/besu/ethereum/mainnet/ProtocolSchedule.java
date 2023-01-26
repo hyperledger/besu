@@ -14,23 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
-import java.math.BigInteger;
-import java.util.Optional;
 import java.util.stream.Stream;
 
-public interface ProtocolSchedule {
+public interface ProtocolSchedule
+    extends HeaderBasedProtocolSchedule, PrivacySupportingProtocolSchedule {
 
   ProtocolSpec getByBlockNumber(long number);
 
   Stream<Long> streamMilestoneBlocks();
 
-  Optional<BigInteger> getChainId();
-
-  void setTransactionFilter(TransactionFilter transactionFilter);
-
-  void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      WorldStateArchive publicWorldStateArchive);
+  @Override
+  default ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    return getByBlockNumber(blockHeader.getNumber());
+  }
 }

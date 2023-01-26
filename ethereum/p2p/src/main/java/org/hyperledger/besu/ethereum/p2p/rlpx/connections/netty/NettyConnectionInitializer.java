@@ -193,7 +193,9 @@ public class NettyConnectionInitializer
     return connectionFuture;
   }
 
-  /** @return a channel initializer for outbound connections */
+  /**
+   * @return a channel initializer for outbound connections
+   */
   @Nonnull
   private ChannelInitializer<SocketChannel> outboundChannelInitializer(
       final Peer peer, final CompletableFuture<PeerConnection> connectionFuture) {
@@ -211,7 +213,9 @@ public class NettyConnectionInitializer
     };
   }
 
-  /** @return a channel initializer for inbound connections */
+  /**
+   * @return a channel initializer for inbound connections
+   */
   private ChannelInitializer<SocketChannel> inboundChannelInitializer() {
     return new ChannelInitializer<SocketChannel>() {
       @Override

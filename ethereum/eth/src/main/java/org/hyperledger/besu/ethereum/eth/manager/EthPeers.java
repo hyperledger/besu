@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
+
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -157,8 +160,8 @@ public class EthPeers {
 
   public void dispatchMessage(
       final EthPeer peer, final EthMessage ethMessage, final String protocolName) {
-    peer.dispatch(ethMessage, protocolName);
-    if (peer.hasAvailableRequestCapacity()) {
+    Optional<RequestManager> maybeRequestManager = peer.dispatch(ethMessage, protocolName);
+    if (maybeRequestManager.isPresent() && peer.hasAvailableRequestCapacity()) {
       reattemptPendingPeerRequests();
     }
   }
@@ -170,8 +173,9 @@ public class EthPeers {
   @VisibleForTesting
   void reattemptPendingPeerRequests() {
     synchronized (this) {
+      final List<EthPeer> peers = streamAvailablePeers().collect(Collectors.toList());
       final Iterator<PendingPeerRequest> iterator = pendingRequests.iterator();
-      while (iterator.hasNext()) {
+      while (iterator.hasNext() && peers.stream().anyMatch(EthPeer::hasAvailableRequestCapacity)) {
         final PendingPeerRequest request = iterator.next();
         if (request.attemptExecution()) {
           pendingRequests.remove(request);
@@ -244,6 +248,22 @@ public class EthPeers {
 
   public Comparator<EthPeer> getBestChainComparator() {
     return bestPeerComparator;
+  }
+
+  public void disconnectWorstUselessPeer() {
+    streamAvailablePeers()
+        .sorted(getBestChainComparator())
+        .findFirst()
+        .ifPresent(
+            peer -> {
+              infoLambda(
+                  LOG,
+                  "disconnecting peer {}. Waiting for better peers. Current {} of max {}",
+                  peer::toString,
+                  this::peerCount,
+                  this::getMaxPeers);
+              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+            });
   }
 
   @FunctionalInterface

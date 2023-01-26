@@ -20,24 +20,54 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.DelegatingBytes32;
 
+/** The Log topic. */
 public class LogTopic extends DelegatingBytes32 {
 
+  /**
+   * Instantiates a new Log topic.
+   *
+   * @param bytes the bytes
+   */
   protected LogTopic(final Bytes bytes) {
     super(bytes);
   }
 
+  /**
+   * Create log topic.
+   *
+   * @param bytes the bytes
+   * @return the log topic
+   */
   public static LogTopic create(final Bytes bytes) {
     return new LogTopic(bytes);
   }
 
+  /**
+   * Wrap log topic.
+   *
+   * @param bytes the bytes
+   * @return the log topic
+   */
   public static LogTopic wrap(final Bytes bytes) {
     return new LogTopic(bytes);
   }
 
+  /**
+   * Instantiate Log Topic from copy of bytes.
+   *
+   * @param bytes the bytes
+   * @return the log topic
+   */
   public static LogTopic of(final Bytes bytes) {
     return new LogTopic(bytes.copy());
   }
 
+  /**
+   * Instantiate Log Topic from hex string
+   *
+   * @param str the str
+   * @return the log topic
+   */
   public static LogTopic fromHexString(final String str) {
     return str == null ? null : LogTopic.create(Bytes.fromHexString(str));
   }

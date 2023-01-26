@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The Eth network config. */
 public class EthNetworkConfig {
 
   private final String genesisConfig;
@@ -37,6 +38,14 @@ public class EthNetworkConfig {
   private final List<EnodeURL> bootNodes;
   private final String dnsDiscoveryUrl;
 
+  /**
+   * Instantiates a new Eth network config.
+   *
+   * @param genesisConfig the genesis config
+   * @param networkId the network id
+   * @param bootNodes the boot nodes
+   * @param dnsDiscoveryUrl the dns discovery url
+   */
   public EthNetworkConfig(
       final String genesisConfig,
       final BigInteger networkId,
@@ -50,18 +59,38 @@ public class EthNetworkConfig {
     this.dnsDiscoveryUrl = dnsDiscoveryUrl;
   }
 
+  /**
+   * Gets genesis config.
+   *
+   * @return the genesis config
+   */
   public String getGenesisConfig() {
     return genesisConfig;
   }
 
+  /**
+   * Gets network id.
+   *
+   * @return the network id
+   */
   public BigInteger getNetworkId() {
     return networkId;
   }
 
+  /**
+   * Gets boot nodes.
+   *
+   * @return the boot nodes
+   */
   public List<EnodeURL> getBootNodes() {
     return bootNodes;
   }
 
+  /**
+   * Gets dns discovery url.
+   *
+   * @return the dns discovery url
+   */
   public String getDnsDiscoveryUrl() {
     return dnsDiscoveryUrl;
   }
@@ -100,6 +129,12 @@ public class EthNetworkConfig {
         + '}';
   }
 
+  /**
+   * Gets network config.
+   *
+   * @param networkName the network name
+   * @return the network config
+   */
   public static EthNetworkConfig getNetworkConfig(final NetworkName networkName) {
     final String genesisContent = jsonConfig(networkName.getGenesisFile());
     final GenesisConfigOptions genesisConfigOptions =
@@ -128,10 +163,17 @@ public class EthNetworkConfig {
     }
   }
 
+  /**
+   * Json config string.
+   *
+   * @param network the network
+   * @return the string
+   */
   public static String jsonConfig(final NetworkName network) {
     return jsonConfig(network.getGenesisFile());
   }
 
+  /** The type Builder. */
   public static class Builder {
 
     private String dnsDiscoveryUrl;
@@ -139,6 +181,11 @@ public class EthNetworkConfig {
     private BigInteger networkId;
     private List<EnodeURL> bootNodes;
 
+    /**
+     * Instantiates a new Builder.
+     *
+     * @param ethNetworkConfig the eth network config
+     */
     public Builder(final EthNetworkConfig ethNetworkConfig) {
       this.genesisConfig = ethNetworkConfig.genesisConfig;
       this.networkId = ethNetworkConfig.networkId;
@@ -146,26 +193,55 @@ public class EthNetworkConfig {
       this.dnsDiscoveryUrl = ethNetworkConfig.dnsDiscoveryUrl;
     }
 
+    /**
+     * Sets genesis config.
+     *
+     * @param genesisConfig the genesis config
+     * @return the genesis config
+     */
     public Builder setGenesisConfig(final String genesisConfig) {
       this.genesisConfig = genesisConfig;
       return this;
     }
 
+    /**
+     * Sets network id.
+     *
+     * @param networkId the network id
+     * @return the network id
+     */
     public Builder setNetworkId(final BigInteger networkId) {
       this.networkId = networkId;
       return this;
     }
 
+    /**
+     * Sets boot nodes.
+     *
+     * @param bootNodes the boot nodes
+     * @return the boot nodes
+     */
     public Builder setBootNodes(final List<EnodeURL> bootNodes) {
       this.bootNodes = bootNodes;
       return this;
     }
 
+    /**
+     * Sets dns discovery url.
+     *
+     * @param dnsDiscoveryUrl the dns discovery url
+     * @return the dns discovery url
+     */
     public Builder setDnsDiscoveryUrl(final String dnsDiscoveryUrl) {
       this.dnsDiscoveryUrl = dnsDiscoveryUrl;
       return this;
     }
 
+    /**
+     * Build eth network config.
+     *
+     * @return the eth network config
+     */
     public EthNetworkConfig build() {
       return new EthNetworkConfig(genesisConfig, networkId, bootNodes, dnsDiscoveryUrl);
     }

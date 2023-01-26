@@ -37,17 +37,26 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
 
+  /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  /**
+   * Instantiates a new Abstract call operation.
+   *
+   * @param opcode the opcode
+   * @param name the name
+   * @param stackItemsConsumed the stack items consumed
+   * @param stackItemsProduced the stack items produced
+   * @param gasCalculator the gas calculator
+   */
   AbstractCallOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final int opSize,
       final GasCalculator gasCalculator) {
-    super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
+    super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
   }
 
   /**
@@ -186,38 +195,54 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             ? CodeV0.EMPTY_CODE
             : evm.getCode(contract.getCodeHash(), contract.getCode());
 
-    final MessageFrame childFrame =
-        MessageFrame.builder()
-            .type(MessageFrame.Type.MESSAGE_CALL)
-            .messageFrameStack(frame.getMessageFrameStack())
-            .worldUpdater(frame.getWorldUpdater().updater())
-            .initialGas(gasAvailableForChildCall(frame))
-            .address(address(frame))
-            .originator(frame.getOriginatorAddress())
-            .contract(to)
-            .gasPrice(frame.getGasPrice())
-            .inputData(inputData)
-            .sender(sender(frame))
-            .value(value(frame))
-            .apparentValue(apparentValue(frame))
-            .code(code)
-            .blockValues(frame.getBlockValues())
-            .depth(frame.getMessageStackDepth() + 1)
-            .isStatic(isStatic(frame))
-            .completer(child -> complete(frame, child))
-            .miningBeneficiary(frame.getMiningBeneficiary())
-            .blockHashLookup(frame.getBlockHashLookup())
-            .maxStackSize(frame.getMaxStackSize())
-            .build();
-    frame.incrementRemainingGas(cost);
+    if (code.isValid()) {
+      final MessageFrame childFrame =
+          MessageFrame.builder()
+              .type(MessageFrame.Type.MESSAGE_CALL)
+              .messageFrameStack(frame.getMessageFrameStack())
+              .worldUpdater(frame.getWorldUpdater().updater())
+              .initialGas(gasAvailableForChildCall(frame))
+              .address(address(frame))
+              .originator(frame.getOriginatorAddress())
+              .contract(to)
+              .gasPrice(frame.getGasPrice())
+              .inputData(inputData)
+              .sender(sender(frame))
+              .value(value(frame))
+              .apparentValue(apparentValue(frame))
+              .code(code)
+              .blockValues(frame.getBlockValues())
+              .depth(frame.getMessageStackDepth() + 1)
+              .isStatic(isStatic(frame))
+              .completer(child -> complete(frame, child))
+              .miningBeneficiary(frame.getMiningBeneficiary())
+              .blockHashLookup(frame.getBlockHashLookup())
+              .maxStackSize(frame.getMaxStackSize())
+              .build();
+      frame.incrementRemainingGas(cost);
 
-    frame.getMessageFrameStack().addFirst(childFrame);
-    frame.setState(MessageFrame.State.CODE_SUSPENDED);
-    return new OperationResult(cost, null, 0);
+      frame.getMessageFrameStack().addFirst(childFrame);
+      frame.setState(MessageFrame.State.CODE_SUSPENDED);
+      return new OperationResult(cost, null, 0);
+    } else {
+      return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
+    }
   }
 
+  /**
+   * Calculates Cost.
+   *
+   * @param frame the frame
+   * @return the long
+   */
   protected abstract long cost(final MessageFrame frame);
 
+  /**
+   * Complete.
+   *
+   * @param frame the frame
+   * @param childFrame the child frame
+   */
   public void complete(final MessageFrame frame, final MessageFrame childFrame) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 

@@ -303,6 +303,7 @@ public class BlockDataGenerator {
             .extraData(options.getExtraData(bytes32()))
             .mixHash(hash())
             .nonce(blockNonce)
+            .withdrawalsRoot(options.getWithdrawalsRoot(null))
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
     options.getBaseFee(Optional.of(Wei.of(uint256(2)))).ifPresent(blockHeaderBuilder::baseFee);
@@ -327,7 +328,8 @@ public class BlockDataGenerator {
       defaultTxs.add(transaction(options.getTransactionTypes()));
     }
 
-    return new BlockBody(options.getTransactions(defaultTxs), ommers);
+    return new BlockBody(
+        options.getTransactions(defaultTxs), ommers, options.getWithdrawals(Optional.empty()));
   }
 
   private BlockHeader ommer() {
@@ -335,7 +337,9 @@ public class BlockDataGenerator {
   }
 
   private TransactionType transactionType() {
-    return transactionType(TransactionType.values());
+    // TODO: when TransactionType.EIP4844 is fully supported, revert this.
+    return transactionType(
+        TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
   }
 
   private TransactionType transactionType(final TransactionType... transactionTypes) {
@@ -371,6 +375,8 @@ public class BlockDataGenerator {
         return eip1559Transaction(payload, to);
       case ACCESS_LIST:
         return accessListTransaction(payload, to);
+      case BLOB:
+        return blobTransaction(payload, to);
       default:
         throw new RuntimeException(
             String.format(
@@ -420,6 +426,22 @@ public class BlockDataGenerator {
         .signAndBuild(generateKeyPair());
   }
 
+  private Transaction blobTransaction(final Bytes payload, final Address to) {
+    return Transaction.builder()
+        .type(TransactionType.BLOB)
+        .nonce(random.nextLong())
+        .maxPriorityFeePerGas(Wei.wrap(bytesValue(4)))
+        .maxFeePerGas(Wei.wrap(bytesValue(4)))
+        .gasLimit(positiveLong())
+        .to(to)
+        .value(Wei.of(positiveLong()))
+        .payload(payload)
+        .chainId(BigInteger.ONE)
+        .maxFeePerDataGas(Wei.of(1))
+        .versionedHashes(List.of(Hash.fromHexStringLenient("0x29")))
+        .signAndBuild(generateKeyPair());
+  }
+
   private Transaction frontierTransaction(final Bytes payload, final Address to) {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
@@ -441,7 +463,11 @@ public class BlockDataGenerator {
   }
 
   public Set<Transaction> transactions(final int n) {
-    return transactions(n, TransactionType.values());
+    return transactions(
+        n,
+        new TransactionType[] {
+          TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+        });
   }
 
   public Set<Transaction> transactionsWithAllTypes() {
@@ -451,7 +477,11 @@ public class BlockDataGenerator {
   public Set<Transaction> transactionsWithAllTypes(final int atLeast) {
     checkArgument(atLeast >= 0);
     final HashSet<TransactionType> remainingTransactionTypes =
-        new HashSet<>(Set.of(TransactionType.values()));
+        new HashSet<>(
+            Set.of(
+                new TransactionType[] {
+                  TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+                }));
     final HashSet<Transaction> transactions = new HashSet<>();
     while (transactions.size() < atLeast || !remainingTransactionTypes.isEmpty()) {
       final Transaction newTransaction = transaction();
@@ -619,6 +649,8 @@ public class BlockDataGenerator {
     private Optional<Difficulty> difficulty = Optional.empty();
     private final List<Transaction> transactions = new ArrayList<>();
     private final List<BlockHeader> ommers = new ArrayList<>();
+
+    private Optional<Optional<List<Withdrawal>>> withdrawals = Optional.empty();
     private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
     private Optional<Hash> receiptsRoot = Optional.empty();
@@ -627,9 +659,15 @@ public class BlockDataGenerator {
     private Optional<Long> timestamp = Optional.empty();
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
-    private TransactionType[] transactionTypes = TransactionType.values();
+    private TransactionType[] transactionTypes = {
+      TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+    };
     private Optional<Address> coinbase = Optional.empty();
     private Optional<Optional<Wei>> maybeBaseFee = Optional.empty();
+
+    private Optional<Hash> withdrawalsRoot = Optional.empty();
+
+    private Optional<Optional<Wei>> maybeMaxFeePerDataGas = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -687,6 +725,15 @@ public class BlockDataGenerator {
       return timestamp;
     }
 
+    public Hash getWithdrawalsRoot(final Hash defaultValue) {
+      return withdrawalsRoot.orElse(defaultValue);
+    }
+
+    public Optional<List<Withdrawal>> getWithdrawals(
+        final Optional<List<Withdrawal>> defaultValue) {
+      return withdrawals.orElse(defaultValue);
+    }
+
     public boolean hasTransactions() {
       return hasTransactions;
     }
@@ -707,6 +754,11 @@ public class BlockDataGenerator {
 
     public BlockOptions addTransaction(final Collection<Transaction> txs) {
       return addTransaction(txs.toArray(new Transaction[] {}));
+    }
+
+    public BlockOptions setWithdrawals(final Optional<List<Withdrawal>> withdrawals) {
+      this.withdrawals = Optional.of(withdrawals);
+      return this;
     }
 
     public BlockOptions setBlockNumber(final long blockNumber) {
@@ -789,6 +841,20 @@ public class BlockDataGenerator {
 
     public BlockOptions setBaseFee(final Optional<Wei> baseFee) {
       this.maybeBaseFee = Optional.of(baseFee);
+      return this;
+    }
+
+    public BlockOptions setWithdrawalsRoot(final Hash withdrawalsRoot) {
+      this.withdrawalsRoot = Optional.of(withdrawalsRoot);
+      return this;
+    }
+
+    public Optional<Wei> getMaxFeePerDataGas(final Optional<Wei> defaultValue) {
+      return maybeMaxFeePerDataGas.orElse(defaultValue);
+    }
+
+    public BlockOptions setMaxFeePerDataGas(final Optional<Wei> maxFeePerDataGas) {
+      this.maybeMaxFeePerDataGas = Optional.of(maxFeePerDataGas);
       return this;
     }
   }

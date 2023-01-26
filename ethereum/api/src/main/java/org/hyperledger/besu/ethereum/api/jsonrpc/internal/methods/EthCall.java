@@ -61,12 +61,18 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
 
   @Override
   protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
-    JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
     final BlockHeader header = blockchainQueries.get().getBlockHeaderByHash(blockHash).orElse(null);
 
     if (header == null) {
       return errorResponse(request, BLOCK_NOT_FOUND);
     }
+    return resultByBlockHeader(request, header);
+  }
+
+  @Override
+  protected Object resultByBlockHeader(
+      final JsonRpcRequestContext request, final BlockHeader header) {
+    JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
 
     return transactionSimulator
         .process(

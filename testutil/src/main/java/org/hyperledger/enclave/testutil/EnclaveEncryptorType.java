@@ -14,11 +14,20 @@
  */
 package org.hyperledger.enclave.testutil;
 
+/** The enum Enclave encryptor type. */
 public enum EnclaveEncryptorType {
+  /** Nacl enclave encryptor type. */
   NACL,
+  /** Ec enclave encryptor type. */
   EC,
+  /** Noop enclave encryptor type. */
   NOOP;
 
+  /**
+   * To tessera encryptor config json string.
+   *
+   * @return the string
+   */
   public String toTesseraEncryptorConfigJSON() {
     switch (this) {
       case NACL:

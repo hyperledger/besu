@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
   private static final Logger LOG = LoggerFactory.getLogger(BaseFeeBlockBodyValidator.class);
 
-  public BaseFeeBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
+  public BaseFeeBlockBodyValidator(final HeaderBasedProtocolSchedule protocolSchedule) {
     super(protocolSchedule);
   }
 
@@ -54,7 +54,7 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
     final List<Transaction> transactions = body.getTransactions();
     final TransactionPriceCalculator transactionPriceCalculator =
         protocolSchedule
-            .getByBlockNumber(block.getHeader().getNumber())
+            .getByBlockHeader(block.getHeader())
             .getFeeMarket()
             .getTransactionPriceCalculator();
 

@@ -18,12 +18,19 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Pop operation. */
 public class PopOperation extends AbstractFixedCostOperation {
 
+  /** The Pop operation success result. */
   static final OperationResult popSuccess = new OperationResult(2, null);
 
+  /**
+   * Instantiates a new Pop operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public PopOperation(final GasCalculator gasCalculator) {
-    super(0x50, "POP", 1, 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x50, "POP", 1, 0, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
@@ -32,6 +39,12 @@ public class PopOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs Pop operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     frame.popStackItem();
     return popSuccess;

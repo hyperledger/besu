@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import static java.util.Collections.emptyList;
+
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
@@ -25,6 +27,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -36,11 +40,12 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,9 +55,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
-
-  private static final BlockBody BODY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList());
 
   private final Block block;
   private final List<GenesisAccount> genesisAccounts;
@@ -81,14 +83,20 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
+      final GenesisConfigFile config, final HeaderBasedProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts =
         parseAllocations(config).collect(Collectors.toList());
     final Block block =
         new Block(
             buildHeader(config, calculateGenesisStateHash(genesisAccounts), protocolSchedule),
-            BODY);
+            buildBody(config));
     return new GenesisState(block, genesisAccounts);
+  }
+
+  private static BlockBody buildBody(final GenesisConfigFile config) {
+    final Optional<List<Withdrawal>> withdrawals =
+        isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+    return new BlockBody(emptyList(), emptyList(), withdrawals);
   }
 
   public Block getBlock() {
@@ -135,7 +143,7 @@ public final class GenesisState {
   private static BlockHeader buildHeader(
       final GenesisConfigFile genesis,
       final Hash genesisRootHash,
-      final ProtocolSchedule protocolSchedule) {
+      final HeaderBasedProtocolSchedule protocolSchedule) {
 
     return BlockHeaderBuilder.create()
         .parentHash(parseParentHash(genesis))
@@ -155,6 +163,7 @@ public final class GenesisState {
         .nonce(parseNonce(genesis))
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
         .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
+        .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
 
@@ -212,6 +221,14 @@ public final class GenesisState {
     return Long.parseUnsignedLong(nonce, 16);
   }
 
+  private static boolean isShanghaiAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
+    if (shanghaiTimestamp.isPresent()) {
+      return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
+    }
+    return false;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -263,16 +280,13 @@ public final class GenesisState {
 
     private Map<UInt256, UInt256> parseStorage(final Map<String, String> storage) {
       final Map<UInt256, UInt256> parsedStorage = new HashMap<>();
-      storage
-          .entrySet()
-          .forEach(
-              entry -> {
-                final UInt256 key =
-                    withNiceErrorMessage("storage key", entry.getKey(), UInt256::fromHexString);
-                final UInt256 value =
-                    withNiceErrorMessage("storage value", entry.getValue(), UInt256::fromHexString);
-                parsedStorage.put(key, value);
-              });
+      storage.forEach(
+          (key1, value1) -> {
+            final UInt256 key = withNiceErrorMessage("storage key", key1, UInt256::fromHexString);
+            final UInt256 value =
+                withNiceErrorMessage("storage value", value1, UInt256::fromHexString);
+            parsedStorage.put(key, value);
+          });
 
       return parsedStorage;
     }

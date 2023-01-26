@@ -22,13 +22,19 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Jump operation. */
 public class JumpOperation extends AbstractFixedCostOperation {
 
   private final Operation.OperationResult invalidJumpResponse;
   private final OperationResult jumpResponse;
 
+  /**
+   * Instantiates a new Jump operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public JumpOperation(final GasCalculator gasCalculator) {
-    super(0x56, "JUMP", 2, 0, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(0x56, "JUMP", 2, 0, gasCalculator, gasCalculator.getMidTierGasCost());
     invalidJumpResponse =
         new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
     jumpResponse = new OperationResult(gasCost, null, 0);

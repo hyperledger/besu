@@ -41,22 +41,38 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
 
+/** The Abstract secp256. */
 public abstract class AbstractSECP256 implements SignatureAlgorithm {
 
+  /** The constant PRIVATE_KEY_BYTE_LENGTH. */
   protected static final int PRIVATE_KEY_BYTE_LENGTH = 32;
+  /** The constant PUBLIC_KEY_BYTE_LENGTH. */
   protected static final int PUBLIC_KEY_BYTE_LENGTH = 64;
+  /** The constant SIGNATURE_BYTE_LENGTH. */
   protected static final int SIGNATURE_BYTE_LENGTH = 65;
 
+  /** The constant PROVIDER. */
   public static final String PROVIDER = "BC";
 
+  /** The Curve. */
   protected final ECDomainParameters curve;
+  /** The Half curve order. */
   protected final BigInteger halfCurveOrder;
 
+  /** The Key pair generator. */
   protected final KeyPairGenerator keyPairGenerator;
+  /** The Curve order. */
   protected final BigInteger curveOrder;
 
+  /** The Prime. */
   final BigInteger prime;
 
+  /**
+   * Instantiates a new Abstract secp 256.
+   *
+   * @param curveName the curve name
+   * @param prime the prime
+   */
   protected AbstractSECP256(final String curveName, final BigInteger prime) {
     this.prime = prime;
     Security.addProvider(new BouncyCastleProvider());
@@ -215,8 +231,20 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
     return PROVIDER;
   }
 
+  /**
+   * Gets K calculator.
+   *
+   * @return the K Calculator
+   */
   public abstract DSAKCalculator getKCalculator();
 
+  /**
+   * Decompress key ec point.
+   *
+   * @param xBN the x bn
+   * @param yBit the y bit
+   * @return the ec point
+   */
   // Decompress a compressed public key (x co-ord and low-bit of y-coord).
   protected ECPoint decompressKey(final BigInteger xBN, final boolean yBit) {
     final X9IntegerConverter x9 = new X9IntegerConverter();

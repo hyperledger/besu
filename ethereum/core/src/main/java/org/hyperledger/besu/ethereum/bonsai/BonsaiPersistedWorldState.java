@@ -35,6 +35,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
@@ -72,11 +73,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             (addr, value) ->
                 archive
                     .getCachedMerkleTrieLoader()
-                    .preLoadAccount(worldStateStorage, worldStateRootHash, addr),
+                    .preLoadAccount(getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
                 archive
                     .getCachedMerkleTrieLoader()
-                    .preLoadStorageSlot(worldStateStorage, addr, value));
+                    .preLoadStorageSlot(getWorldStateStorage(), addr, value));
   }
 
   public BonsaiWorldStateArchive getArchive() {
@@ -282,6 +283,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater = worldStateStorage.updater();
+    Runnable saveTrieLog = () -> {};
 
     try {
       final Hash newWorldStateRootHash = calculateRootHash(stateUpdater, localUpdater);
@@ -296,9 +298,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                   + " calculated "
                   + newWorldStateRootHash.toHexString());
         }
-        archive
-            .getTrieLogManager()
-            .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
+        saveTrieLog =
+            () ->
+                archive
+                    .getTrieLogManager()
+                    .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader, this);
+
         stateUpdater
             .getTrieBranchStorageTransaction()
             .put(WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
@@ -317,6 +322,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (success) {
         stateUpdater.commit();
         updater.reset();
+        saveTrieLog.run();
       } else {
         stateUpdater.rollback();
         updater.reset();
@@ -419,6 +425,15 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
     return worldStateStorage
         .getStorageValueBySlotHash(Hash.hash(address), slotHash)
+        .map(UInt256::fromBytes);
+  }
+
+  public Optional<UInt256> getStorageValueBySlotHash(
+      final Supplier<Optional<Hash>> storageRootSupplier,
+      final Address address,
+      final Hash slotHash) {
+    return worldStateStorage
+        .getStorageValueBySlotHash(storageRootSupplier, Hash.hash(address), slotHash)
         .map(UInt256::fromBytes);
   }
 

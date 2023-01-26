@@ -15,9 +15,12 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -38,6 +41,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final Bytes extraData;
 
+  protected final Hash withdrawalsRoot;
+
   protected SealableBlockHeader(
       final Hash parentHash,
       final Hash ommersHash,
@@ -53,7 +58,9 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long timestamp,
       final Bytes extraData,
       final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao) {
+      final Bytes32 mixHashOrPrevRandao,
+      final Hash withdrawalsRoot,
+      final DataGas excessDataGas) {
     super(
         parentHash,
         coinbase,
@@ -62,10 +69,12 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         gasLimit,
         timestamp,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        excessDataGas);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;
+    this.withdrawalsRoot = withdrawalsRoot;
     this.receiptsRoot = receiptsRoot;
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
@@ -133,5 +142,14 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Bytes getExtraData() {
     return extraData;
+  }
+
+  /**
+   * Returns the block withdrawals root hash.
+   *
+   * @return the block withdrawals root hash
+   */
+  public Optional<Hash> getWithdrawalsRoot() {
+    return Optional.ofNullable(withdrawalsRoot);
   }
 }

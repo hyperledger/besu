@@ -19,10 +19,16 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Coinbase operation. */
 public class CoinbaseOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Coinbase operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CoinbaseOperation(final GasCalculator gasCalculator) {
-    super(0x41, "COINBASE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x41, "COINBASE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

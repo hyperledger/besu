@@ -84,6 +84,7 @@ public class PrivCallTest {
             null,
             Wei.ZERO,
             Bytes.EMPTY,
+            null,
             null);
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
 
@@ -110,7 +111,7 @@ public class PrivCallTest {
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
-            null, Address.fromHexString("0x0"), null, null, null, null, null, null, null);
+            null, Address.fromHexString("0x0"), null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -189,6 +190,7 @@ public class PrivCallTest {
         null,
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         null);
   }
 

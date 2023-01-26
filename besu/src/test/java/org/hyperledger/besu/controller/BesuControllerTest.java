@@ -27,11 +27,16 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalLong;
 
+import com.google.common.io.Resources;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -48,7 +53,8 @@ public class BesuControllerTest {
   @Test
   public void missingQbftStartBlock() {
     mockGenesisConfigForMigration("ibft2", OptionalLong.empty());
-    assertThatThrownBy(() -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile))
+    assertThatThrownBy(
+            () -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Missing QBFT startBlock config in genesis file");
   }
@@ -56,7 +62,8 @@ public class BesuControllerTest {
   @Test
   public void invalidQbftStartBlock() {
     mockGenesisConfigForMigration("ibft2", OptionalLong.of(-1L));
-    assertThatThrownBy(() -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile))
+    assertThatThrownBy(
+            () -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Invalid QBFT startBlock config in genesis file");
   }
@@ -67,7 +74,8 @@ public class BesuControllerTest {
     when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
     // explicitly not setting isIbftLegacy() or isIbft2() for genesisConfigOptions
 
-    assertThatThrownBy(() -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile))
+    assertThatThrownBy(
+            () -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage(
             "Invalid genesis migration config. Migration is supported from IBFT (legacy) or IBFT2 to QBFT)");
@@ -79,7 +87,7 @@ public class BesuControllerTest {
     mockGenesisConfigForMigration("ibft2", OptionalLong.of(qbftStartBlock));
 
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisConfig(genesisConfigFile);
+        new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL);
 
     assertThat(besuControllerBuilder).isInstanceOf(ConsensusScheduleBesuControllerBuilder.class);
 
@@ -99,7 +107,7 @@ public class BesuControllerTest {
     mockGenesisConfigForMigration("ibftLegacy", OptionalLong.of(qbftStartBlock));
 
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisConfig(genesisConfigFile);
+        new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL);
 
     assertThat(besuControllerBuilder).isInstanceOf(ConsensusScheduleBesuControllerBuilder.class);
 
@@ -136,5 +144,55 @@ public class BesuControllerTest {
 
     when(genesisConfigOptions.getQbftConfigOptions()).thenReturn(qbftConfigOptions);
     when(qbftConfigOptions.getStartBlock()).thenReturn(startBlock);
+  }
+
+  @Test
+  public void postMergeCheckpointSyncUsesMergeControllerBuilder() throws IOException {
+    final GenesisConfigFile postMergeGenesisFile =
+        GenesisConfigFile.fromConfig(
+            Resources.toString(
+                Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
+                StandardCharsets.UTF_8));
+
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder()
+            .fromGenesisConfig(postMergeGenesisFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+
+    assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
+  }
+
+  @Test
+  public void postMergeCheckpointSyncWithTotalDifficultyEqualsTTDUsesTransitionControllerBuilder()
+      throws IOException {
+    final GenesisConfigFile mergeAtGenesisFile =
+        GenesisConfigFile.fromConfig(
+            Resources.toString(
+                Resources.getResource(
+                    "invalid_post_merge_checkpoint_total_difficulty_same_as_TTD.json"),
+                StandardCharsets.UTF_8));
+
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder()
+            .fromGenesisConfig(mergeAtGenesisFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+
+    assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
+  }
+
+  @Test
+  public void preMergeCheckpointSyncUsesTransitionControllerBuilder() {
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder()
+            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+
+    assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
+  }
+
+  @Test
+  public void nonCheckpointSyncUsesTransitionControllerBuild() {
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder()
+            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.X_SNAP);
+
+    assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
 }

@@ -269,7 +269,7 @@ public class SyncStatusNodePermissioningProviderTest {
             .listeningPort(9999)
             .disableDiscovery()
             .ipAddress(
-                InetAddress.getLocalHost().getHostName(),
+                InetAddress.getLocalHost().getCanonicalHostName(),
                 ImmutableEnodeDnsConfiguration.builder()
                     .dnsEnabled(true)
                     .updateEnabled(true)
@@ -283,7 +283,7 @@ public class SyncStatusNodePermissioningProviderTest {
             .listeningPort(9999)
             .disableDiscovery()
             .ipAddress(
-                "127.0.0.1",
+                InetAddress.getLocalHost().getHostAddress(),
                 ImmutableEnodeDnsConfiguration.builder()
                     .dnsEnabled(true)
                     .updateEnabled(true)

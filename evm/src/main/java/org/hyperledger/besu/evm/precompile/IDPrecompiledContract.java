@@ -21,8 +21,14 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The ID precompiled contract. */
 public class IDPrecompiledContract extends AbstractPrecompiledContract {
 
+  /**
+   * Instantiates a new ID precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public IDPrecompiledContract(final GasCalculator gasCalculator) {
     super("ID", gasCalculator);
   }

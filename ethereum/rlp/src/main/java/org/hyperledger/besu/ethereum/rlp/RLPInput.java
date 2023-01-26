@@ -23,6 +23,7 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /**
  * An input used to decode data in RLP encoding.
@@ -164,6 +165,16 @@ public interface RLPInput {
    *     list (and {@link #leaveList()} hasn't been called) or if the next item has leading zeros.
    */
   BigInteger readBigIntegerScalar();
+
+  /**
+   * Reads a scalar from the input and return is as a {@link UInt64}.
+   *
+   * @return The next scalar item of this input as a {@link UInt64}.
+   * @throws RLPException if the next item to read is a list, the input is at the end of its current
+   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
+   *     fit a {@link UInt64} or has leading zeros.
+   */
+  UInt64 readUInt64Scalar();
 
   /**
    * Reads a scalar from the input and return is as a {@link UInt256}.

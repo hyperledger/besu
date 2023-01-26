@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
@@ -45,11 +45,25 @@ public class IbftBlockCreator extends AbstractBlockCreator {
 
   private final KeyPair nodeKeys;
 
+  /**
+   * Instantiates a new Ibft block creator.
+   *
+   * @param coinbase the coinbase
+   * @param targetGasLimitSupplier the target gas limit supplier
+   * @param extraDataCalculator the extra data calculator
+   * @param pendingTransactions the pending transactions
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param nodeKeys the node keys
+   * @param minTransactionGasPrice the min transaction gas price
+   * @param minBlockOccupancyRatio the min block occupancy ratio
+   * @param parentHeader the parent header
+   */
   public IbftBlockCreator(
       final Address coinbase,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final KeyPair nodeKeys,

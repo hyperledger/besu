@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
@@ -35,7 +36,7 @@ import io.prometheus.client.guava.cache.CacheMetricsCollector;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class CachedMerkleTrieLoader {
+public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
@@ -67,7 +68,7 @@ public class CachedMerkleTrieLoader {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Hash worldStateRootHash,
       final Address account) {
-    final long worldStateSubscriberId = worldStateStorage.subscribe();
+    final long storageSubscriberId = worldStateStorage.subscribe(this);
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
@@ -83,7 +84,7 @@ public class CachedMerkleTrieLoader {
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
     } finally {
-      worldStateStorage.unSubscribe(worldStateSubscriberId);
+      worldStateStorage.unSubscribe(storageSubscriberId);
     }
   }
 
@@ -100,7 +101,7 @@ public class CachedMerkleTrieLoader {
       final Address account,
       final Hash slotHash) {
     final Hash accountHash = Hash.hash(account);
-    final long worldStateSubscriberId = worldStateStorage.subscribe();
+    final long storageSubscriberId = worldStateStorage.subscribe(this);
     try {
       worldStateStorage
           .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
@@ -125,7 +126,7 @@ public class CachedMerkleTrieLoader {
                 }
               });
     } finally {
-      worldStateStorage.unSubscribe(worldStateSubscriberId);
+      worldStateStorage.unSubscribe(storageSubscriberId);
     }
   }
 

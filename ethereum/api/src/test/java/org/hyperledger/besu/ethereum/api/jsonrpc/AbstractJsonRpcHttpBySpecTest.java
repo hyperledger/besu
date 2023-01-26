@@ -123,7 +123,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
     final ObjectNode specNode = (ObjectNode) objectMapper.readTree(json);
     final String rawRequestBody = specNode.get("request").toString();
 
-    final RequestBody requestBody = RequestBody.create(JSON, rawRequestBody);
+    final RequestBody requestBody = RequestBody.create(rawRequestBody, JSON);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
     try (final Response resp = client.newCall(request).execute()) {

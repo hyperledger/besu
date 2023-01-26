@@ -22,12 +22,13 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.Optional;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -62,8 +63,9 @@ public class GenesisFileModule {
 
   @Singleton
   @Provides
-  ProtocolSchedule provideProtocolSchedule(
+  HeaderBasedProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
+      @Named("Fork") final Optional<String> fork,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     throw new RuntimeException("Abstract");
   }
@@ -71,7 +73,8 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   GenesisState provideGenesisState(
-      final GenesisConfigFile genesisConfigFile, final ProtocolSchedule protocolSchedule) {
+      final GenesisConfigFile genesisConfigFile,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
     return GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
   }
 

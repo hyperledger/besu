@@ -24,6 +24,8 @@ import java.util.Arrays;
  *
  * <p>The operand stack is responsible for storing the current operands that the EVM can execute. It
  * is assumed to have a fixed size.
+ *
+ * @param <T> the type parameter
  */
 public class FixedStack<T> {
 
@@ -33,6 +35,7 @@ public class FixedStack<T> {
 
   private int top;
 
+  /** The Underflow exception. */
   public static class UnderflowException extends RuntimeException {
     // Don't create a stack trace since these are not "errors" per say but are using exceptions to
     // throw rare control flow conditions (EVM stack overflow) that are expected to be seen in
@@ -44,6 +47,7 @@ public class FixedStack<T> {
     }
   }
 
+  /** The Overflow exception. */
   public static class OverflowException extends RuntimeException {
     // Don't create a stack trace since these are not "errors" per say but are using exceptions to
     // throw rare control flow conditions (EVM stack overflow) that are expected to be seen in
@@ -55,6 +59,12 @@ public class FixedStack<T> {
     }
   }
 
+  /**
+   * Instantiates a new Fixed stack.
+   *
+   * @param maxSize the max size
+   * @param klass the klass
+   */
   @SuppressWarnings("unchecked")
   public FixedStack(final int maxSize, final Class<T> klass) {
     checkArgument(maxSize >= 0, "max size must be non-negative");
@@ -64,6 +74,12 @@ public class FixedStack<T> {
     this.top = -1;
   }
 
+  /**
+   * Get operand.
+   *
+   * @param offset the offset
+   * @return the operand
+   */
   public T get(final int offset) {
     if (offset < 0 || offset >= size()) {
       throw new UnderflowException();
@@ -72,6 +88,11 @@ public class FixedStack<T> {
     return entries[top - offset];
   }
 
+  /**
+   * Pop operand.
+   *
+   * @return the operand
+   */
   public T pop() {
     if (top < 0) {
       throw new UnderflowException();
@@ -83,6 +104,19 @@ public class FixedStack<T> {
   }
 
   /**
+   * Peek and return type T.
+   *
+   * @return the T entry
+   */
+  public T peek() {
+    if (top < 0) {
+      return null;
+    } else {
+      return entries[top];
+    }
+  }
+
+  /**
    * Pops the specified number of operands from the stack.
    *
    * @param items the number of operands to pop off the stack
@@ -90,20 +124,49 @@ public class FixedStack<T> {
    * @throws UnderflowException when the items to pop is greater than {@link #size()}
    */
   public void bulkPop(final int items) {
-    if (items < 0) {
-      throw new IllegalArgumentException(
-          String.format("requested number of items to bulk pop (%d) is negative", items));
-    }
     checkArgument(items > 0, "number of items to pop must be greater than 0");
     if (items > size()) {
       throw new UnderflowException();
     }
 
-    for (int i = 0; i < items; ++i) {
-      pop();
+    Arrays.fill(entries, top - items + 1, top + 1, null);
+    top -= items;
+  }
+
+  /**
+   * Trims the "middle" section of items out of the stack. Items below the cutpoint remains, and of
+   * the items above only the itemsToKeep items remain. All items in the middle are removed.
+   *
+   * @param cutPoint Point at which to start removing items
+   * @param itemsToKeep itemsToKeep Number of items on top to place at the cutPoint
+   * @throws IllegalArgumentException if the cutPoint or items to keep is negative.
+   * @throws UnderflowException If there are less than itemsToKeep above the cutPoint
+   */
+  public void preserveTop(final int cutPoint, final int itemsToKeep) {
+    checkArgument(cutPoint >= 0, "cutPoint must be positive");
+    checkArgument(itemsToKeep >= 0, "itemsToKeep must be positive");
+    if (itemsToKeep == 0) {
+      if (cutPoint < size()) {
+        bulkPop(top - cutPoint);
+      }
+    } else {
+      int targetSize = cutPoint + itemsToKeep;
+      int currentSize = size();
+      if (targetSize > currentSize) {
+        throw new UnderflowException();
+      } else if (targetSize < currentSize) {
+        System.arraycopy(entries, currentSize - itemsToKeep, entries, cutPoint, itemsToKeep);
+        Arrays.fill(entries, targetSize, currentSize, null);
+        top = targetSize - 1;
+      }
     }
   }
 
+  /**
+   * Push operand.
+   *
+   * @param operand the operand
+   */
   public void push(final T operand) {
     final int nextTop = top + 1;
     if (nextTop == maxSize) {
@@ -113,6 +176,12 @@ public class FixedStack<T> {
     top = nextTop;
   }
 
+  /**
+   * Set operand.
+   *
+   * @param offset the offset
+   * @param operand the operand
+   */
   public void set(final int offset, final T operand) {
     if (offset < 0) {
       throw new UnderflowException();
@@ -123,6 +192,11 @@ public class FixedStack<T> {
     entries[top - offset] = operand;
   }
 
+  /**
+   * Size of entries.
+   *
+   * @return the size
+   */
   public int size() {
     return top + 1;
   }
@@ -152,10 +226,20 @@ public class FixedStack<T> {
     return Arrays.deepEquals(this.entries, that.entries);
   }
 
+  /**
+   * Is stack full.
+   *
+   * @return the boolean
+   */
   public boolean isFull() {
     return top + 1 >= maxSize;
   }
 
+  /**
+   * Is stack empty.
+   *
+   * @return the boolean
+   */
   public boolean isEmpty() {
     return top < 0;
   }

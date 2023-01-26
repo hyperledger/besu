@@ -16,12 +16,20 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.datatypes.Hash;
 
+/** The Forkchoice event. */
 public class ForkchoiceEvent {
 
   private final Hash headBlockHash;
   private final Hash safeBlockHash;
   private final Hash finalizedBlockHash;
 
+  /**
+   * Instantiates a new Forkchoice event.
+   *
+   * @param headBlockHash the head block hash
+   * @param safeBlockHash the safe block hash
+   * @param finalizedBlockHash the finalized block hash
+   */
   public ForkchoiceEvent(
       final Hash headBlockHash, final Hash safeBlockHash, final Hash finalizedBlockHash) {
     this.headBlockHash = headBlockHash;
@@ -29,18 +37,47 @@ public class ForkchoiceEvent {
     this.safeBlockHash = safeBlockHash;
   }
 
+  /**
+   * Has valid finalized block hash.
+   *
+   * @return the boolean
+   */
   public boolean hasValidFinalizedBlockHash() {
     return !finalizedBlockHash.equals(Hash.ZERO);
   }
 
+  /**
+   * Has valid safe block hash
+   *
+   * @return boolean
+   */
+  public boolean hasValidSafeBlockHash() {
+    return !safeBlockHash.equals(Hash.ZERO);
+  }
+
+  /**
+   * Gets head block hash.
+   *
+   * @return the head block hash
+   */
   public Hash getHeadBlockHash() {
     return headBlockHash;
   }
 
+  /**
+   * Gets finalized block hash.
+   *
+   * @return the finalized block hash
+   */
   public Hash getFinalizedBlockHash() {
     return finalizedBlockHash;
   }
 
+  /**
+   * Gets safe block hash.
+   *
+   * @return the safe block hash
+   */
   public Hash getSafeBlockHash() {
     return safeBlockHash;
   }

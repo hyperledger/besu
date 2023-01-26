@@ -28,6 +28,7 @@ import java.util.OptionalLong;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Stub genesis config options. */
 public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   private OptionalLong homesteadBlockNumber = OptionalLong.empty();
@@ -44,8 +45,10 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
-  private OptionalLong shandongBlockNumber = OptionalLong.empty();
-  private OptionalLong eip1153BlockNumber = OptionalLong.empty();
+  private OptionalLong shanghaiTime = OptionalLong.empty();
+  private OptionalLong cancunTime = OptionalLong.empty();
+  private OptionalLong futureEipsTime = OptionalLong.empty();
+  private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
@@ -219,13 +222,23 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getShandongBlockNumber() {
-    return shandongBlockNumber;
+  public OptionalLong getShanghaiTime() {
+    return shanghaiTime;
   }
 
   @Override
-  public OptionalLong getEIP1153BlockNumber() {
-    return eip1153BlockNumber;
+  public OptionalLong getCancunTime() {
+    return cancunTime;
+  }
+
+  @Override
+  public OptionalLong getFutureEipsTime() {
+    return futureEipsTime;
+  }
+
+  @Override
+  public OptionalLong getExperimentalEipsTime() {
+    return experimentalEipsTime;
   }
 
   @Override
@@ -348,8 +361,10 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
-    getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
-    getEIP1153BlockNumber().ifPresent(l -> builder.put("eip1153Block", l));
+    getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
+    getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
+    getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
+    getExperimentalEipsTime().ifPresent(l -> builder.put("experimentalEipsTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
     // classic fork blocks
@@ -419,201 +434,462 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public List<Long> getForks() {
+  public List<Long> getForkBlockNumbers() {
     return Collections.emptyList();
   }
 
+  @Override
+  public List<Long> getForkBlockTimestamps() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * Homestead block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {
     homesteadBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Dao fork block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions daoForkBlock(final long blockNumber) {
     daoForkBlock = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Eip 150 block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions eip150Block(final long blockNumber) {
     tangerineWhistleBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Eip 158 block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions eip158Block(final long blockNumber) {
     spuriousDragonBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Byzantium block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions byzantiumBlock(final long blockNumber) {
     byzantiumBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Constantinople block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions constantinopleBlock(final long blockNumber) {
     constantinopleBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Petersburg block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions petersburgBlock(final long blockNumber) {
     petersburgBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Istanbul block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions istanbulBlock(final long blockNumber) {
     istanbulBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Muir glacier block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions muirGlacierBlock(final long blockNumber) {
     muirGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Berlin block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions berlinBlock(final long blockNumber) {
     berlinBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * London block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions londonBlock(final long blockNumber) {
     londonBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Arrow glacier block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions arrowGlacierBlock(final long blockNumber) {
     arrowGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Gray glacier block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions grayGlacierBlock(final long blockNumber) {
     grayGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Merge net split block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions mergeNetSplitBlock(final long blockNumber) {
     mergeNetSplitBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
-  public StubGenesisConfigOptions shandongBlock(final long blockNumber) {
-    shandongBlockNumber = OptionalLong.of(blockNumber);
+  /**
+   * Shanghai time stub genesis config options.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions shanghaiTime(final long timestamp) {
+    shanghaiTime = OptionalLong.of(timestamp);
     return this;
   }
 
-  public StubGenesisConfigOptions eip1153Block(final long blockNumber) {
-    eip1153BlockNumber = OptionalLong.of(blockNumber);
+  /**
+   * Cancun time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions cancunTime(final long timestamp) {
+    cancunTime = OptionalLong.of(timestamp);
     return this;
   }
 
+  /**
+   * Future EIPs Time block.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions futureEipsTime(final long blockNumber) {
+    futureEipsTime = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  /**
+   * Experimental EIPs Time block.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions experimentalEipsTime(final long blockNumber) {
+    experimentalEipsTime = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  /**
+   * Terminal total difficulty stub genesis config options.
+   *
+   * @param updatedTerminalTotalDifficulty the updated terminal total difficulty
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions terminalTotalDifficulty(
       final UInt256 updatedTerminalTotalDifficulty) {
     terminalTotalDifficulty = Optional.of(updatedTerminalTotalDifficulty);
     return this;
   }
 
+  /**
+   * Terminal block number stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions terminalBlockNumber(final long blockNumber) {
     terminalBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Terminal block hash stub genesis config options.
+   *
+   * @param blockHash the block hash
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions terminalBlockHash(final Hash blockHash) {
     terminalBlockHash = Optional.of(blockHash);
     return this;
   }
 
+  /**
+   * Base fee per gas stub genesis config options.
+   *
+   * @param baseFeeOverride the base fee override
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions baseFeePerGas(final long baseFeeOverride) {
     baseFeePerGas = Optional.of(Wei.of(baseFeeOverride));
     return this;
   }
 
+  /**
+   * Classic fork block stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions classicForkBlock(final long blockNumber) {
     classicForkBlock = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Ecip 1015 stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions ecip1015(final long blockNumber) {
     ecip1015BlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Die hard stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions dieHard(final long blockNumber) {
     diehardBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Gotham stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions gotham(final long blockNumber) {
     gothamBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Defuse difficulty bomb stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions defuseDifficultyBomb(final long blockNumber) {
     defuseDifficultyBombBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Atlantis stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions atlantis(final long blockNumber) {
     atlantisBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Agharta stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions agharta(final long blockNumber) {
     aghartaBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Phoenix stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions phoenix(final long blockNumber) {
     phoenixBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Thanos stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions thanos(final long blockNumber) {
     thanosBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Magneto stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions magneto(final long blockNumber) {
     magnetoBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Mystique stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions mystique(final long blockNumber) {
     mystiqueBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Ecip 1049 stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions ecip1049(final long blockNumber) {
     ecip1049BlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
+  /**
+   * Chain id stub genesis config options.
+   *
+   * @param chainId the chain id
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions chainId(final BigInteger chainId) {
     this.chainId = Optional.ofNullable(chainId);
     return this;
   }
 
+  /**
+   * Contract size limit stub genesis config options.
+   *
+   * @param contractSizeLimit the contract size limit
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions contractSizeLimit(final int contractSizeLimit) {
     this.contractSizeLimit = OptionalInt.of(contractSizeLimit);
     return this;
   }
 
+  /**
+   * Stack size limit stub genesis config options.
+   *
+   * @param stackSizeLimit the stack size limit
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions stackSizeLimit(final int stackSizeLimit) {
     this.stackSizeLimit = OptionalInt.of(stackSizeLimit);
     return this;
   }
 
+  /**
+   * Ec curve stub genesis config options.
+   *
+   * @param ecCurve the ec curve
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions ecCurve(final Optional<String> ecCurve) {
     this.ecCurve = ecCurve;
     return this;
   }
 
+  /**
+   * Qbft config options stub genesis config options.
+   *
+   * @param qbftConfigOptions the qbft config options
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions qbftConfigOptions(final QbftConfigOptions qbftConfigOptions) {
     this.qbftConfigOptions = qbftConfigOptions;
     return this;
   }
 
+  /**
+   * Bft config options stub genesis config options.
+   *
+   * @param bftConfigOptions the bft config options
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions bftConfigOptions(final BftConfigOptions bftConfigOptions) {
     this.bftConfigOptions = bftConfigOptions;
     return this;
   }
 
+  /**
+   * Transitions stub genesis config options.
+   *
+   * @param transitions the transitions
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions transitions(final TransitionsConfigOptions transitions) {
     this.transitions = transitions;
     return this;

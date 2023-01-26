@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -413,7 +414,7 @@ public abstract class JsonBlockImporterTest {
       throws IOException {
     final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()
-        .fromGenesisConfig(genesisConfigFile)
+        .fromGenesisConfig(genesisConfigFile, SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())

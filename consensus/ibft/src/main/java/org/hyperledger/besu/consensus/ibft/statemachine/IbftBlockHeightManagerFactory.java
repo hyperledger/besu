@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+/** The Ibft block height manager factory. */
 public class IbftBlockHeightManagerFactory {
 
   private final IbftRoundFactory roundFactory;
@@ -27,6 +28,14 @@ public class IbftBlockHeightManagerFactory {
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
 
+  /**
+   * Instantiates a new Ibft block height manager factory.
+   *
+   * @param finalState the final state
+   * @param roundFactory the round factory
+   * @param messageValidatorFactory the message validator factory
+   * @param messageFactory the message factory
+   */
   public IbftBlockHeightManagerFactory(
       final BftFinalState finalState,
       final IbftRoundFactory roundFactory,
@@ -38,6 +47,12 @@ public class IbftBlockHeightManagerFactory {
     this.messageFactory = messageFactory;
   }
 
+  /**
+   * Create base ibft block height manager.
+   *
+   * @param parentHeader the parent header
+   * @return the base ibft block height manager
+   */
   public BaseIbftBlockHeightManager create(final BlockHeader parentHeader) {
     if (finalState.isLocalNodeValidator()) {
       return createFullBlockHeightManager(parentHeader);

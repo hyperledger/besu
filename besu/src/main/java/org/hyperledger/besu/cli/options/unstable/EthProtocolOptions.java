@@ -24,6 +24,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
+/** The Eth protocol CLI options. */
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
   private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
   private static final String MAX_GET_HEADERS_FLAG = "--Xewp-max-get-headers";
@@ -33,6 +34,9 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
   private static final String LEGACY_ETH_64_FORK_ID_ENABLED =
       "--compatibility-eth64-forkid-enabled";
+
+  private static final String MAX_CAPABILITY = "--Xeth-capability-max";
+  private static final String MIN_CAPABILITY = "--Xeth-capability-min";
 
   @CommandLine.Option(
       hidden = true,
@@ -95,12 +99,37 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private Boolean legacyEth64ForkIdEnabled =
       EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {MAX_CAPABILITY},
+      paramLabel = "<INTEGER>",
+      description = "Max protocol version to support")
+  private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {MIN_CAPABILITY},
+      paramLabel = "<INTEGER>",
+      description = "Min protocol version to support")
+  private int minEthCapability = EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY;
+
   private EthProtocolOptions() {}
 
+  /**
+   * Create eth protocol options.
+   *
+   * @return the eth protocol options
+   */
   public static EthProtocolOptions create() {
     return new EthProtocolOptions();
   }
 
+  /**
+   * From config eth protocol options.
+   *
+   * @param config the config
+   * @return the eth protocol options
+   */
   public static EthProtocolOptions fromConfig(final EthProtocolConfiguration config) {
     final EthProtocolOptions options = create();
     options.maxMessageSize = PositiveNumber.fromInt(config.getMaxMessageSize());
@@ -110,6 +139,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
     options.maxGetNodeData = PositiveNumber.fromInt(config.getMaxGetNodeData());
     options.maxGetPooledTransactions = PositiveNumber.fromInt(config.getMaxGetPooledTransactions());
     options.legacyEth64ForkIdEnabled = config.isLegacyEth64ForkIdEnabled();
+    options.maxEthCapability = config.getMaxEthCapability();
+    options.minEthCapability = config.getMinEthCapability();
     return options;
   }
 
@@ -123,6 +154,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         .maxGetNodeData(maxGetNodeData)
         .maxGetPooledTransactions(maxGetPooledTransactions)
         .legacyEth64ForkIdEnabled(legacyEth64ForkIdEnabled)
+        .maxEthCapability(maxEthCapability)
+        .minEthCapability(minEthCapability)
         .build();
   }
 

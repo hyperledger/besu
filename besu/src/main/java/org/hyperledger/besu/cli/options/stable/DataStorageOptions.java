@@ -29,6 +29,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine.Option;
 
+/** The Data storage CLI options. */
 public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> {
 
   private static final String DATA_STORAGE_FORMAT = "--data-storage-format";
@@ -63,6 +64,11 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       arity = "1")
   private final Boolean bonsaiUseSnapshots = DEFAULT_BONSAI_USE_SNAPSHOTS;
 
+  /**
+   * Create data storage options.
+   *
+   * @return the data storage options
+   */
   public static DataStorageOptions create() {
     return new DataStorageOptions();
   }
@@ -87,6 +93,11 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         bonsaiUseSnapshots.toString());
   }
 
+  /**
+   * Normalize data storage format string.
+   *
+   * @return the normalized string
+   */
   public String normalizeDataStorageFormat() {
     return StringUtils.capitalize(dataStorageFormat.toString().toLowerCase());
   }

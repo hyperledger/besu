@@ -30,24 +30,46 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
- * WorldView} provided in the constructor in memory.
+ * WorldView}* provided in the constructor in memory.
  *
  * <p>Concrete implementation have to implement the {@link #commit()} method.
+ *
+ * @param <W> the type parameter
+ * @param <A> the type parameter
  */
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
     implements WorldUpdater {
 
   private final W world;
 
+  /** The Updated accounts. */
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
+  /** The Deleted accounts. */
   protected Set<Address> deletedAccounts = Collections.synchronizedSet(new HashSet<>());
 
+  /**
+   * Instantiates a new Abstract world updater.
+   *
+   * @param world the world
+   */
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
   }
 
+  /**
+   * Gets for mutation.
+   *
+   * @param address the address
+   * @return the for mutation
+   */
   protected abstract A getForMutation(Address address);
 
+  /**
+   * Track update tracking account.
+   *
+   * @param account the account
+   * @return the update tracking account
+   */
   protected UpdateTrackingAccount<A> track(final UpdateTrackingAccount<A> account) {
     final Address address = account.getAddress();
     updatedAccounts.put(address, account);
@@ -105,8 +127,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   /**
    * Creates an updater that buffer updates on top of this updater.
    *
-   * <p>
-   *
    * @return a new updater on top of this updater. Updates made to the returned object will become
    *     visible on this updater when the returned updater is committed. Note however that updates
    *     to this updater <b>may or may not</b> be reflected to the created updater, so it is
@@ -155,6 +175,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     return deletedAccounts;
   }
 
+  /** Reset. */
   protected void reset() {
     updatedAccounts.clear();
     deletedAccounts.clear();

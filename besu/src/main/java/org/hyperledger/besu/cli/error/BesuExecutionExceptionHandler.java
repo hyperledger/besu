@@ -18,6 +18,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.IExecutionExceptionHandler;
 import picocli.CommandLine.Model.CommandSpec;
 
+/** Custom Execution Exception Handler used by PicoCLI framework. */
 public class BesuExecutionExceptionHandler implements IExecutionExceptionHandler {
   @Override
   public int handleExecutionException(

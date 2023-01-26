@@ -20,8 +20,14 @@ import java.io.File;
 
 import picocli.CommandLine;
 
+/** The Node private key file Cli option. */
 public class NodePrivateKeyFileOption {
 
+  /**
+   * Create node private key file option.
+   *
+   * @return the node private key file option
+   */
   public static NodePrivateKeyFileOption create() {
     return new NodePrivateKeyFileOption();
   }
@@ -33,6 +39,11 @@ public class NodePrivateKeyFileOption {
           "The node's private key file (default: a file named \"key\" in the Besu data directory)")
   private final File nodePrivateKeyFile = null;
 
+  /**
+   * Gets node private key file.
+   *
+   * @return the node private key file
+   */
   public File getNodePrivateKeyFile() {
     return nodePrivateKeyFile;
   }

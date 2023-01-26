@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountRa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugBatchSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetBadBlocks;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugMetrics;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugResyncWorldstate;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugSetHead;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugStandardTraceBadBlockToFile;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugStandardTraceBlockToFile;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -53,6 +55,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolSchedule protocolSchedule;
   private final ObservableMetricsSystem metricsSystem;
   private final TransactionPool transactionPool;
+  private final Synchronizer synchronizer;
   private final Path dataDir;
 
   DebugJsonRpcMethods(
@@ -61,12 +64,14 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ProtocolSchedule protocolSchedule,
       final ObservableMetricsSystem metricsSystem,
       final TransactionPool transactionPool,
+      final Synchronizer synchronizer,
       final Path dataDir) {
     this.blockchainQueries = blockchainQueries;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.metricsSystem = metricsSystem;
     this.transactionPool = transactionPool;
+    this.synchronizer = synchronizer;
     this.dataDir = dataDir;
   }
 
@@ -88,6 +93,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugAccountRange(blockchainQueries),
         new DebugStorageRangeAt(blockchainQueries, blockReplay),
         new DebugMetrics(metricsSystem),
+        new DebugResyncWorldstate(protocolSchedule, protocolContext.getBlockchain(), synchronizer),
         new DebugTraceBlock(
             () -> new BlockTracer(blockReplay),
             ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),

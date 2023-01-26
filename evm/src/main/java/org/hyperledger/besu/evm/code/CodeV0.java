@@ -24,8 +24,10 @@ import org.hyperledger.besu.evm.operation.PushOperation;
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The CodeV0. */
 public class CodeV0 implements Code {
 
+  /** The constant EMPTY_CODE. */
   public static final CodeV0 EMPTY_CODE = new CodeV0(Bytes.EMPTY, Hash.EMPTY);
 
   /** The bytes representing the code. */
@@ -37,6 +39,9 @@ public class CodeV0 implements Code {
   /** Used to cache valid jump destinations. */
   private long[] validJumpDestinations;
 
+  /** Code section info for the legacy code */
+  private final CodeSection codeSectionZero;
+
   /**
    * Public constructor.
    *
@@ -46,6 +51,7 @@ public class CodeV0 implements Code {
   CodeV0(final Bytes bytes, final Hash codeHash) {
     this.bytes = bytes;
     this.codeHash = codeHash;
+    this.codeSectionZero = new CodeSection(bytes.size(), 0, -1, -1, 0);
   }
 
   /**
@@ -80,12 +86,7 @@ public class CodeV0 implements Code {
   }
 
   @Override
-  public Bytes getCodeBytes() {
-    return getContainerBytes();
-  }
-
-  @Override
-  public Bytes getContainerBytes() {
+  public Bytes getBytes() {
     return bytes;
   }
 
@@ -118,6 +119,30 @@ public class CodeV0 implements Code {
     return true;
   }
 
+  @Override
+  public CodeSection getCodeSection(final int section) {
+    if (section == 0) {
+      return codeSectionZero;
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public int getCodeSectionCount() {
+    return 1;
+  }
+
+  @Override
+  public int getEofVersion() {
+    return 0;
+  }
+
+  /**
+   * Calculate jump destination.
+   *
+   * @return the long [ ]
+   */
   long[] calculateJumpDests() {
     final int size = getSize();
     final long[] bitmap = new long[(size >> 6) + 1];

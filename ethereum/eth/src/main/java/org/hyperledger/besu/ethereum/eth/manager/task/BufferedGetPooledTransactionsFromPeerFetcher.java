@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ScheduledFuture;
 
 import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.Queues;
@@ -48,17 +49,20 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private final PeerTransactionTracker transactionTracker;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
+  private final ScheduledFuture<?> scheduledFuture;
   private final EthPeer peer;
   private final Queue<Hash> txAnnounces;
   private final Counter alreadySeenTransactionsCounter;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
       final EthContext ethContext,
+      final ScheduledFuture<?> scheduledFuture,
       final EthPeer peer,
       final TransactionPool transactionPool,
       final PeerTransactionTracker transactionTracker,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
+    this.scheduledFuture = scheduledFuture;
     this.peer = peer;
     this.transactionPool = transactionPool;
     this.transactionTracker = transactionTracker;
@@ -73,6 +77,10 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
                 "Total number of received transactions already seen",
                 "source")
             .labels(HASHES);
+  }
+
+  public ScheduledFuture<?> getScheduledFuture() {
+    return scheduledFuture;
   }
 
   public void requestTransactions() {

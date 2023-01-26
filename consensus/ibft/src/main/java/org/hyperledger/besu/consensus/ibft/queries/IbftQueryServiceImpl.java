@@ -29,10 +29,18 @@ import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Ibft query service. */
 public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQueryService {
 
   private final BftBlockInterface blockInterface;
 
+  /**
+   * Instantiates a new Ibft query service.
+   *
+   * @param blockInterface the block interface
+   * @param blockchain the blockchain
+   * @param nodeKey the node key
+   */
   public IbftQueryServiceImpl(
       final BftBlockInterface blockInterface, final Blockchain blockchain, final NodeKey nodeKey) {
     super(blockInterface, blockchain, nodeKey);

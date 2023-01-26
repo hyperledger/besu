@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
@@ -68,7 +69,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>This class is safe for use across multiple threads.
  */
-public abstract class AbstractPendingTransactionsSorter {
+public abstract class AbstractPendingTransactionsSorter implements PendingTransactions {
   private static final int DEFAULT_LOWEST_INVALID_KNOWN_NONCE_CACHE = 10_000;
   private static final Logger LOG =
       LoggerFactory.getLogger(AbstractPendingTransactionsSorter.class);
@@ -134,6 +135,14 @@ public abstract class AbstractPendingTransactionsSorter {
         pendingTransactions::size);
   }
 
+  @Override
+  public void reset() {
+    pendingTransactions.clear();
+    transactionsBySender.clear();
+    lowestInvalidKnownNonceCache.reset();
+  }
+
+  @Override
   public void evictOldTransactions() {
     final Instant removeTransactionsBefore =
         clock.instant().minus(poolConfig.getPendingTxRetentionPeriod(), ChronoUnit.HOURS);
@@ -147,6 +156,7 @@ public abstract class AbstractPendingTransactionsSorter {
             });
   }
 
+  @Override
   public List<Transaction> getLocalTransactions() {
     return pendingTransactions.values().stream()
         .filter(PendingTransaction::isReceivedFromLocalSource)
@@ -154,6 +164,7 @@ public abstract class AbstractPendingTransactionsSorter {
         .collect(Collectors.toList());
   }
 
+  @Override
   public TransactionAddedStatus addRemoteTransaction(
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
@@ -176,6 +187,7 @@ public abstract class AbstractPendingTransactionsSorter {
     return transactionAddedStatus;
   }
 
+  @Override
   public TransactionAddedStatus addLocalTransaction(
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
     final TransactionAddedStatus transactionAdded =
@@ -188,11 +200,13 @@ public abstract class AbstractPendingTransactionsSorter {
     return transactionAdded;
   }
 
+  @Override
   public void removeTransaction(final Transaction transaction) {
     removeTransaction(transaction, false);
     notifyTransactionDropped(transaction);
   }
 
+  @Override
   public void transactionAddedToBlock(final Transaction transaction) {
     removeTransaction(transaction, true);
     lowestInvalidKnownNonceCache.registerValidTransaction(transaction);
@@ -212,6 +226,7 @@ public abstract class AbstractPendingTransactionsSorter {
   // block could end up with transactions of the new type.
   // This seems like it would be very rare but worth it to document that we don't handle that case
   // right now.
+  @Override
   public void selectTransactions(final TransactionSelector selector) {
     synchronized (lock) {
       final Set<Transaction> transactionsToRemove = new HashSet<>();
@@ -322,43 +337,53 @@ public abstract class AbstractPendingTransactionsSorter {
     transactionDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
   }
 
+  @Override
   public long maxSize() {
     return poolConfig.getTxPoolMaxSize();
   }
 
+  @Override
   public int size() {
     return pendingTransactions.size();
   }
 
+  @Override
   public boolean containsTransaction(final Hash transactionHash) {
     return pendingTransactions.containsKey(transactionHash);
   }
 
+  @Override
   public Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
     return Optional.ofNullable(pendingTransactions.get(transactionHash))
         .map(PendingTransaction::getTransaction);
   }
 
+  @Override
   public Set<PendingTransaction> getPendingTransactions() {
     return new HashSet<>(pendingTransactions.values());
   }
 
+  @Override
   public long subscribePendingTransactions(final PendingTransactionListener listener) {
     return pendingTransactionSubscribers.subscribe(listener);
   }
 
+  @Override
   public void unsubscribePendingTransactions(final long id) {
     pendingTransactionSubscribers.unsubscribe(id);
   }
 
+  @Override
   public long subscribeDroppedTransactions(final PendingTransactionDroppedListener listener) {
     return transactionDroppedListeners.subscribe(listener);
   }
 
+  @Override
   public void unsubscribeDroppedTransactions(final long id) {
     transactionDroppedListeners.unsubscribe(id);
   }
 
+  @Override
   public OptionalLong getNextNonceForSender(final Address sender) {
     final PendingTransactionsForSender pendingTransactionsForSender =
         transactionsBySender.get(sender);
@@ -367,6 +392,7 @@ public abstract class AbstractPendingTransactionsSorter {
         : pendingTransactionsForSender.maybeNextNonce();
   }
 
+  @Override
   public abstract void manageBlockAdded(final Block block);
 
   private void removeTransaction(final Transaction transaction, final boolean addedToBlock) {
@@ -438,6 +464,7 @@ public abstract class AbstractPendingTransactionsSorter {
     }
   }
 
+  @Override
   public String toTraceLog(
       final boolean withTransactionsBySender, final boolean withLowestInvalidNonce) {
     synchronized (lock) {
@@ -482,6 +509,7 @@ public abstract class AbstractPendingTransactionsSorter {
     }
   }
 
+  @Override
   public List<Transaction> signalInvalidAndGetDependentTransactions(final Transaction transaction) {
     final long invalidNonce = lowestInvalidKnownNonceCache.registerInvalidTransaction(transaction);
 
@@ -504,18 +532,8 @@ public abstract class AbstractPendingTransactionsSorter {
     return List.of();
   }
 
+  @Override
   public boolean isLocalSender(final Address sender) {
     return localSenders.contains(sender);
-  }
-
-  public enum TransactionSelectionResult {
-    DELETE_TRANSACTION_AND_CONTINUE,
-    CONTINUE,
-    COMPLETE_OPERATION
-  }
-
-  @FunctionalInterface
-  public interface TransactionSelector {
-    TransactionSelectionResult evaluateTransaction(final Transaction transaction);
   }
 }

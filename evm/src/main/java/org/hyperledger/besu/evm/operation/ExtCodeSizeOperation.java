@@ -26,12 +26,24 @@ import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Ext code size operation. */
 public class ExtCodeSizeOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Ext code size operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public ExtCodeSizeOperation(final GasCalculator gasCalculator) {
-    super(0x3B, "EXTCODESIZE", 1, 1, 1, gasCalculator);
+    super(0x3B, "EXTCODESIZE", 1, 1, gasCalculator);
   }
 
+  /**
+   * Cost of Ext code size operation.
+   *
+   * @param accountIsWarm the account is warm
+   * @return the long
+   */
   protected long cost(final boolean accountIsWarm) {
     return gasCalculator().getExtCodeSizeOperationGasCost()
         + (accountIsWarm

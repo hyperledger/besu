@@ -22,8 +22,9 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 
+import java.util.Optional;
 import javax.inject.Named;
 
 class QBFTGenesisFileModule extends GenesisFileModule {
@@ -35,8 +36,9 @@ class QBFTGenesisFileModule extends GenesisFileModule {
   }
 
   @Override
-  ProtocolSchedule provideProtocolSchedule(
+  HeaderBasedProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
+      @Named("Fork") final Optional<String> fork,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(configOptions);

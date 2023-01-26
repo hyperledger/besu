@@ -24,7 +24,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
  * <br>
  * You must register a {@link PrivacyPluginPayloadProvider} when using this plugin and can
  * optionally register a {@link PrivateMarkerTransactionFactory} and a {@link
- * PrivacyGroupGenesisProvider}
+ * PrivacyGroupGenesisProvider}*
  */
 public interface PrivacyPluginService extends BesuService {
 
@@ -35,6 +35,11 @@ public interface PrivacyPluginService extends BesuService {
    */
   void setPayloadProvider(PrivacyPluginPayloadProvider privacyPluginPayloadProvider);
 
+  /**
+   * Gets payload provider.
+   *
+   * @return the payload provider
+   */
   PrivacyPluginPayloadProvider getPayloadProvider();
 
   /**
@@ -47,6 +52,11 @@ public interface PrivacyPluginService extends BesuService {
   void setPrivateMarkerTransactionFactory(
       PrivateMarkerTransactionFactory privateMarkerTransactionFactory);
 
+  /**
+   * Gets private marker transaction factory.
+   *
+   * @return the private marker transaction factory
+   */
   PrivateMarkerTransactionFactory getPrivateMarkerTransactionFactory();
 
   /**
@@ -57,6 +67,11 @@ public interface PrivacyPluginService extends BesuService {
    */
   void setPrivacyGroupAuthProvider(PrivacyGroupAuthProvider privacyGroupAuthProvider);
 
+  /**
+   * Gets privacy group auth provider.
+   *
+   * @return the privacy group auth provider
+   */
   PrivacyGroupAuthProvider getPrivacyGroupAuthProvider();
 
   /**
@@ -66,5 +81,10 @@ public interface PrivacyPluginService extends BesuService {
    */
   void setPrivacyGroupGenesisProvider(PrivacyGroupGenesisProvider privacyGroupAuthProvider);
 
+  /**
+   * Gets privacy group genesis provider.
+   *
+   * @return the privacy group genesis provider
+   */
   PrivacyGroupGenesisProvider getPrivacyGroupGenesisProvider();
 }

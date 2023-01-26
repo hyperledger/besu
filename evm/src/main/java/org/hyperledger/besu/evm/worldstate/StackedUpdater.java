@@ -20,9 +20,20 @@ import org.hyperledger.besu.evm.account.Account;
 import java.util.ArrayList;
 import java.util.Collection;
 
+/**
+ * The Stacked updater.
+ *
+ * @param <W> the WorldView type parameter
+ * @param <A> the Account type parameter
+ */
 public class StackedUpdater<W extends WorldView, A extends Account>
     extends AbstractWorldUpdater<AbstractWorldUpdater<W, A>, UpdateTrackingAccount<A>> {
 
+  /**
+   * Instantiates a new Stacked updater.
+   *
+   * @param world the world
+   */
   public StackedUpdater(final AbstractWorldUpdater<W, A> world) {
     super(world);
   }
@@ -98,6 +109,7 @@ public class StackedUpdater<W extends WorldView, A extends Account>
     }
   }
 
+  /** Mark transaction boundary. */
   public void markTransactionBoundary() {
     getUpdatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
   }

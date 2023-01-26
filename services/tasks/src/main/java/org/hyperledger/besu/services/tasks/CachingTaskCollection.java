@@ -20,9 +20,16 @@ import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
 
+/**
+ * The Caching task collection.
+ *
+ * @param <T> the type parameter
+ */
 public class CachingTaskCollection<T> implements TaskCollection<T> {
 
+  /** The constant DEFAULT_CACHE_SIZE. */
   public static final int DEFAULT_CACHE_SIZE = 1_000_000;
+
   private final int maxCacheSize;
 
   // The underlying collection
@@ -36,11 +43,22 @@ public class CachingTaskCollection<T> implements TaskCollection<T> {
 
   private boolean closed = false;
 
+  /**
+   * Instantiates a new Caching task collection.
+   *
+   * @param collection the collection
+   * @param maxCacheSize the max cache size
+   */
   public CachingTaskCollection(final TaskCollection<T> collection, final int maxCacheSize) {
     this.wrappedCollection = collection;
     this.maxCacheSize = maxCacheSize;
   }
 
+  /**
+   * Instantiates a new Caching task collection.
+   *
+   * @param collection the collection
+   */
   public CachingTaskCollection(final TaskCollection<T> collection) {
     this(collection, DEFAULT_CACHE_SIZE);
   }
@@ -83,6 +101,11 @@ public class CachingTaskCollection<T> implements TaskCollection<T> {
     return wrappedCollection.size() + cache.size();
   }
 
+  /**
+   * Cache size.
+   *
+   * @return the cache size
+   */
   public synchronized int cacheSize() {
     return outstandingTasks.size() + cache.size();
   }
@@ -92,7 +115,9 @@ public class CachingTaskCollection<T> implements TaskCollection<T> {
     return size() == 0;
   }
 
-  /** @return True if all tasks have been removed and processed. */
+  /**
+   * @return True if all tasks have been removed and processed.
+   */
   @Override
   public synchronized boolean allTasksCompleted() {
     return cacheSize() == 0 && wrappedCollection.allTasksCompleted();

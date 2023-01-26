@@ -19,15 +19,26 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The Find privacy group request. */
 public class FindPrivacyGroupRequest {
 
   private final List<String> addresses;
 
+  /**
+   * Instantiates a new Find privacy group request.
+   *
+   * @param addresses the addresses
+   */
   @JsonCreator
   public FindPrivacyGroupRequest(@JsonProperty("addresses") final List<String> addresses) {
     this.addresses = addresses;
   }
 
+  /**
+   * Addresses list.
+   *
+   * @return the list
+   */
   @JsonProperty("addresses")
   public List<String> addresses() {
     return addresses;

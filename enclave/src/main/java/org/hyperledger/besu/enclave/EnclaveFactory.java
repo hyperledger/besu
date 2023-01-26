@@ -29,16 +29,28 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.PfxOptions;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 
+/** The Enclave factory. */
 public class EnclaveFactory {
 
   private final Vertx vertx;
   private static final int CONNECT_TIMEOUT = 1000;
   private static final boolean TRUST_CA = false;
 
+  /**
+   * Instantiates a new Enclave factory.
+   *
+   * @param vertx the vertx
+   */
   public EnclaveFactory(final Vertx vertx) {
     this.vertx = vertx;
   }
 
+  /**
+   * Create enclave.
+   *
+   * @param enclaveUri the enclave uri
+   * @return the enclave
+   */
   public Enclave createVertxEnclave(final URI enclaveUri) {
     final HttpClientOptions clientOptions = createNonTlsClientOptions(enclaveUri);
 
@@ -48,6 +60,15 @@ public class EnclaveFactory {
     return new Enclave(vertxTransmitter);
   }
 
+  /**
+   * Create enclave.
+   *
+   * @param enclaveUri the enclave uri
+   * @param privacyKeyStoreFile the privacy key store file
+   * @param privacyKeyStorePasswordFile the privacy key store password file
+   * @param privacyAllowlistFile the privacy allowlist file
+   * @return the enclave
+   */
   public Enclave createVertxEnclave(
       final URI enclaveUri,
       final Path privacyKeyStoreFile,
@@ -64,6 +85,12 @@ public class EnclaveFactory {
     return new Enclave(vertxTransmitter);
   }
 
+  /**
+   * Create GoQuorum enclave.
+   *
+   * @param enclaveUri the enclave uri
+   * @return the GoQuorum enclave
+   */
   public GoQuorumEnclave createGoQuorumEnclave(final URI enclaveUri) {
     final HttpClientOptions clientOptions = createNonTlsClientOptions(enclaveUri);
 
@@ -73,6 +100,15 @@ public class EnclaveFactory {
     return new GoQuorumEnclave(vertxTransmitter);
   }
 
+  /**
+   * Create GoQuorum enclave.
+   *
+   * @param enclaveUri the enclave uri
+   * @param privacyKeyStoreFile the privacy key store file
+   * @param privacyKeyStorePasswordFile the privacy key store password file
+   * @param privacyAllowlistFile the privacy allowlist file
+   * @return the go quorum enclave
+   */
   public GoQuorumEnclave createGoQuorumEnclave(
       final URI enclaveUri,
       final Path privacyKeyStoreFile,
@@ -137,6 +173,13 @@ public class EnclaveFactory {
     return new PfxOptions().setPassword(password).setPath(keystoreFile.toString());
   }
 
+  /**
+   * Read secret from file.
+   *
+   * @param path the path
+   * @return the string
+   * @throws IOException the io exception
+   */
   static String readSecretFromFile(final Path path) throws IOException {
     final String password =
         Files.asCharSource(path.toFile(), StandardCharsets.UTF_8).readFirstLine();

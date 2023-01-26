@@ -50,6 +50,7 @@ import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.TesseraTestHarness;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
@@ -123,7 +124,10 @@ public class PrivacyPrecompiledContractIntegrationTest {
         TesseraTestHarnessFactory.create(
             "enclave",
             Files.createTempDirectory(folder, "enclave"),
-            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_1.key"),
+            new EnclaveKeyConfiguration(
+                new String[] {"enclave_key_0.pub"},
+                new String[] {"enclave_key_1.key"},
+                EnclaveEncryptorType.NOOP),
             Optional.empty());
 
     testHarness.start();

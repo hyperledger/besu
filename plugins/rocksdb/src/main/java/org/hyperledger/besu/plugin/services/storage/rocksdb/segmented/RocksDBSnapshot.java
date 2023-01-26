@@ -36,12 +36,12 @@ class RocksDBSnapshot {
     this.dbSnapshot = db.getSnapshot();
   }
 
-  Snapshot markAndUseSnapshot() {
+  synchronized Snapshot markAndUseSnapshot() {
     usages.incrementAndGet();
     return dbSnapshot;
   }
 
-  void unMarkSnapshot() {
+  synchronized void unMarkSnapshot() {
     if (usages.decrementAndGet() < 1) {
       db.releaseSnapshot(dbSnapshot);
       dbSnapshot.close();

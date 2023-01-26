@@ -354,7 +354,7 @@ public class FlatTraceGenerator {
 
     // set value for contract creation TXes, CREATE, and CREATE2
     if (actionBuilder.getCallType() == null && traceFrame.getMaybeCode().isPresent()) {
-      actionBuilder.init(traceFrame.getMaybeCode().get().getContainerBytes().toHexString());
+      actionBuilder.init(traceFrame.getMaybeCode().get().getBytes().toHexString());
       resultBuilder.code(outputData.toHexString());
       if (currentContext.isCreateOp()) {
         // this is from a CREATE/CREATE2, so add code deposit cost.
@@ -460,7 +460,7 @@ public class FlatTraceGenerator {
 
     traceFrame
         .getMaybeCode()
-        .map(Code::getContainerBytes)
+        .map(Code::getBytes)
         .map(Bytes::toHexString)
         .ifPresent(subTraceActionBuilder::init);
 

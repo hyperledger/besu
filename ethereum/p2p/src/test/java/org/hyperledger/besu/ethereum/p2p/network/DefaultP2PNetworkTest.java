@@ -52,6 +52,7 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -407,6 +408,8 @@ public final class DefaultP2PNetworkTest {
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Capability.create("eth", 63))
-        .storageProvider(new InMemoryKeyValueStorageProvider());
+        .storageProvider(new InMemoryKeyValueStorageProvider())
+        .blockNumberForks(Collections.emptyList())
+        .timestampForks(Collections.emptyList());
   }
 }

@@ -18,12 +18,19 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Jump dest operation. */
 public class JumpDestOperation extends AbstractFixedCostOperation {
 
+  /** The constant OPCODE. */
   public static final int OPCODE = 0x5B;
 
+  /**
+   * Instantiates a new Jump dest operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public JumpDestOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "JUMPDEST", 0, 0, 1, gasCalculator, gasCalculator.getJumpDestOperationGasCost());
+    super(OPCODE, "JUMPDEST", 0, 0, gasCalculator, gasCalculator.getJumpDestOperationGasCost());
   }
 
   @Override

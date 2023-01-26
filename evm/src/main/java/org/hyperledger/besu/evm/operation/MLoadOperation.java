@@ -23,10 +23,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The M load operation. */
 public class MLoadOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new M load operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public MLoadOperation(final GasCalculator gasCalculator) {
-    super(0x51, "MLOAD", 1, 1, 1, gasCalculator);
+    super(0x51, "MLOAD", 1, 1, gasCalculator);
   }
 
   @Override

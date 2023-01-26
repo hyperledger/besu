@@ -66,7 +66,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
         assignedPeer
             .filter(u -> getRetryCount() == 1) // first try with the assigned peer if present
             .map(Optional::of)
-            .orElseGet(this::selectNextPeer); // otherwise select a new one from the pool
+            .orElseGet(this::selectNextPeer); // otherwise, select a new one from the pool
 
     if (maybePeer.isEmpty()) {
       traceLambda(
@@ -138,6 +138,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     final EthPeers peers = getEthContext().getEthPeers();
     // If we are at max connections, then refresh peers disconnecting one of the failed peers,
     // or the least useful
+
     if (peers.peerCount() >= peers.getMaxPeers()) {
       failedPeers.stream()
           .filter(peer -> !peer.isDisconnected())
@@ -145,7 +146,12 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
           .or(() -> peers.streamAvailablePeers().sorted(peers.getBestChainComparator()).findFirst())
           .ifPresent(
               peer -> {
-                debugLambda(LOG, "Refresh peers disconnecting peer {}", peer::toString);
+                debugLambda(
+                    LOG,
+                    "Refresh peers disconnecting peer {}. Waiting for better peers. Current {} of max {}",
+                    peer::toString,
+                    peers::peerCount,
+                    peers::getMaxPeers);
                 peer.disconnect(DisconnectReason.USELESS_PEER);
               });
     }

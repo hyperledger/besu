@@ -18,13 +18,21 @@ import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
+/** The Istanbul100 sub protocol. */
 public class Istanbul100SubProtocol implements SubProtocol {
 
+  /** The constant NAME. */
   public static String NAME = "istanbul";
+  /** The constant ISTANBUL_100. */
   public static final Capability ISTANBUL_100 = Capability.create(NAME, 100);
 
   private static final Istanbul100SubProtocol INSTANCE = new Istanbul100SubProtocol();
 
+  /**
+   * Get istanbul100 sub protocol.
+   *
+   * @return the istanbul100 sub protocol
+   */
   public static Istanbul100SubProtocol get() {
     return INSTANCE;
   }

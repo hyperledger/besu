@@ -30,12 +30,19 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Ibft get validators by block hash. */
 public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(IbftGetValidatorsByBlockHash.class);
 
   private final Blockchain blockchain;
   private final BlockInterface blockInterface;
 
+  /**
+   * Instantiates a new Ibft get validators by block hash.
+   *
+   * @param blockchain the blockchain
+   * @param blockInterface the block interface
+   */
   public IbftGetValidatorsByBlockHash(
       final Blockchain blockchain, final BlockInterface blockInterface) {
     this.blockchain = blockchain;

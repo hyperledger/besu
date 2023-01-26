@@ -49,10 +49,6 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   private final Map<UInt256, UInt256> storage = new HashMap<>();
   private final Map<UInt256, UInt256> transientStorage = new HashMap<>();
 
-  public ToyAccount(final Address address, final long nonce, final Wei balance) {
-    this(null, address, nonce, balance, Bytes.EMPTY);
-  }
-
   public ToyAccount(
       final Account parent,
       final Address address,
@@ -100,8 +96,10 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   public UInt256 getStorageValue(final UInt256 key) {
     if (storage.containsKey(key)) {
       return storage.get(key);
-    } else {
+    } else if (parent != null) {
       return getOriginalStorageValue(key);
+    } else {
+      return UInt256.ZERO;
     }
   }
 
@@ -110,7 +108,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
     if (parent != null) {
       return parent.getStorageValue(key);
     } else {
-      return UInt256.ZERO;
+      return getStorageValue(key);
     }
   }
 
@@ -171,6 +169,8 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   public UInt256 getTransientStorageValue(final UInt256 key) {
     if (transientStorage.containsKey(key)) {
       return transientStorage.get(key);
+    } else if (parent != null) {
+      return parent.getTransientStorageValue(key);
     } else {
       return UInt256.ZERO;
     }

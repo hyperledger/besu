@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -56,7 +56,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MergeReorgTest implements MergeGenesisConfigHelper {
 
-  @Mock AbstractPendingTransactionsSorter mockSorter;
+  @Mock PendingTransactions mockPendingTransactions;
 
   private MergeCoordinator coordinator;
 
@@ -88,7 +88,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             protocolContext,
             mockProtocolSchedule,
             CompletableFuture::runAsync,
-            mockSorter,
+            mockPendingTransactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardSyncContext.class));
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());

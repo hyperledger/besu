@@ -16,9 +16,20 @@ package org.hyperledger.besu.consensus.common.bft.network;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
+/** The interface Peer connection tracker. */
 public interface PeerConnectionTracker {
 
+  /**
+   * Add.
+   *
+   * @param newConnection the new connection
+   */
   void add(final PeerConnection newConnection);
 
+  /**
+   * Remove.
+   *
+   * @param removedConnection the removed connection
+   */
   void remove(final PeerConnection removedConnection);
 }

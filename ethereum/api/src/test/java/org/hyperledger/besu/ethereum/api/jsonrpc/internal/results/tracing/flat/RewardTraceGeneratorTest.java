@@ -92,7 +92,8 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            Optional.empty());
+            Optional.empty(),
+            protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =
@@ -151,7 +152,8 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            eraRounds);
+            eraRounds,
+            protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =

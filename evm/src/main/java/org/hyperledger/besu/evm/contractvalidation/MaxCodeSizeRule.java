@@ -19,22 +19,30 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Max code size rule. */
 public class MaxCodeSizeRule implements ContractValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(MaxCodeSizeRule.class);
 
   private final int maxCodeSize;
 
+  /**
+   * Instantiates a new Max code size rule.
+   *
+   * @param maxCodeSize the max code size
+   */
   MaxCodeSizeRule(final int maxCodeSize) {
     this.maxCodeSize = maxCodeSize;
   }
 
   @Override
-  public Optional<ExceptionalHaltReason> validate(final MessageFrame frame) {
-    final int contractCodeSize = frame.getOutputData().size();
+  public Optional<ExceptionalHaltReason> validate(
+      final Bytes contractCode, final MessageFrame frame) {
+    final int contractCodeSize = contractCode.size();
     if (contractCodeSize <= maxCodeSize) {
       return Optional.empty();
     } else {
@@ -46,6 +54,12 @@ public class MaxCodeSizeRule implements ContractValidationRule {
     }
   }
 
+  /**
+   * Instantiate ContractValidationRule.
+   *
+   * @param maxCodeSize the max code size
+   * @return the contract validation rule
+   */
   public static ContractValidationRule of(final int maxCodeSize) {
     return new MaxCodeSizeRule(maxCodeSize);
   }

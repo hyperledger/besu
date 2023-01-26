@@ -27,12 +27,18 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
 
+/** The Vertx request transmitter. */
 public class VertxRequestTransmitter implements RequestTransmitter {
 
   private static final String APPLICATION_JSON = "application/json";
   private final HttpClient client;
   private static final long REQUEST_TIMEOUT_MS = 5000L;
 
+  /**
+   * Instantiates a new Vertx request transmitter.
+   *
+   * @param httpClient the http client
+   */
   public VertxRequestTransmitter(final HttpClient httpClient) {
     this.client = httpClient;
   }
@@ -68,6 +74,18 @@ public class VertxRequestTransmitter implements RequestTransmitter {
         withAcceptJsonHeader);
   }
 
+  /**
+   * Send request operation.
+   *
+   * @param <T> the type parameter
+   * @param method the method
+   * @param contentType the content type
+   * @param content the content
+   * @param endpoint the endpoint
+   * @param responseHandler the response handler
+   * @param withAcceptJsonHeader the with accept json header
+   * @return the t
+   */
   protected <T> T sendRequest(
       final HttpMethod method,
       final Optional<String> contentType,

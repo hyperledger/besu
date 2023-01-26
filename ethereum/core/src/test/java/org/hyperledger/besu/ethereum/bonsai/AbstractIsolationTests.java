@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -73,6 +73,7 @@ import org.junit.rules.TemporaryFolder;
 
 public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateArchive archive;
+  protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
   final Function<String, KeyPair> asKeyPair =
       key ->
@@ -83,7 +84,7 @@ public abstract class AbstractIsolationTests {
   protected final GenesisState genesisState =
       GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-  protected final AbstractPendingTransactionsSorter sorter =
+  protected final PendingTransactions sorter =
       new GasPricePendingTransactionsSorter(
           ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build(),
           Clock.systemUTC(),
@@ -107,11 +108,12 @@ public abstract class AbstractIsolationTests {
 
   @Before
   public void createStorage() {
-    //    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
+    bonsaiWorldStateStorage =
+        (BonsaiWorldStateKeyValueStorage)
+            createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
     archive =
         new BonsaiWorldStateArchive(
-            (BonsaiWorldStateKeyValueStorage)
-                createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI),
+            bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),
             shouldUseSnapshots(),
@@ -171,7 +173,7 @@ public abstract class AbstractIsolationTests {
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
-        final AbstractPendingTransactionsSorter pendingTransactions,
+        final PendingTransactions pendingTransactions,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
         final Wei minTransactionGasPrice,
@@ -194,7 +196,7 @@ public abstract class AbstractIsolationTests {
         final BlockHeader parentHeader,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final AbstractPendingTransactionsSorter sorter) {
+        final PendingTransactions sorter) {
       return new TestBlockCreator(
           Address.ZERO,
           __ -> Address.ZERO,

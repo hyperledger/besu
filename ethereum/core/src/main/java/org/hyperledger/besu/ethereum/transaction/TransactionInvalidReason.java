@@ -37,6 +37,7 @@ public enum TransactionInvalidReason {
   TRANSACTION_ALREADY_KNOWN,
   TRANSACTION_REPLACEMENT_UNDERPRICED,
   MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
+  INITCODE_TOO_LARGE,
   // Private Transaction Invalid Reasons
   PRIVATE_TRANSACTION_FAILED,
   PRIVATE_NONCE_TOO_LOW,
@@ -48,7 +49,7 @@ public enum TransactionInvalidReason {
   PRIVATE_VALUE_NOT_ZERO,
   PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE,
   INTERNAL_ERROR,
-  // Quroum Compatibility Invalid Reasons
+  // Quorum Compatibility Invalid Reasons
   GAS_PRICE_MUST_BE_ZERO,
   ETHER_VALUE_NOT_SUPPORTED,
   UPFRONT_FEE_TOO_HIGH,

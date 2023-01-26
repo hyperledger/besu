@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -49,10 +50,16 @@ public class TransactionEncoder {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    encodeForWire(transactionType, encodeOpaqueBytes(transaction), rlpOutput);
+  }
+
+  public static void encodeForWire(
+      final TransactionType transactionType, final Bytes opaqueBytes, final RLPOutput rlpOutput) {
+    checkNotNull(transactionType, "Transaction type was not specified.");
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      encodeFrontier(transaction, rlpOutput);
+      rlpOutput.writeRaw(opaqueBytes);
     } else {
-      rlpOutput.writeBytes(encodeOpaqueBytes(transaction));
+      rlpOutput.writeBytes(opaqueBytes);
     }
   }
 
@@ -176,6 +183,11 @@ public class TransactionEncoder {
             accessListEntryRLPOutput.endList();
           });
     }
+  }
+
+  public static void writeBlobVersionedHashes(
+      final RLPOutput rlpOutput, final List<Hash> versionedHashes) {
+    // ToDo 4844: implement
   }
 
   private static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {

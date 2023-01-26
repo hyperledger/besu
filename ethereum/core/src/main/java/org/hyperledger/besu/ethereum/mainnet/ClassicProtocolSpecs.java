@@ -120,14 +120,16 @@ public class ClassicProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                goQuorumPrivacyParameters) ->
+                goQuorumPrivacyParameters,
+                protocolSchedule) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
                     transactionReceiptFactory,
                     blockReward,
                     miningBeneficiaryCalculator,
                     skipZeroBlockRewards,
-                    ecip1017EraRounds))
+                    ecip1017EraRounds,
+                    protocolSchedule))
         .name("Gotham");
   }
 

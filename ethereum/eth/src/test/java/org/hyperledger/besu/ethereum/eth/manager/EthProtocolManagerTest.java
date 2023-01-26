@@ -83,7 +83,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -1116,7 +1115,8 @@ public final class EthProtocolManagerTest {
             protocolContext.getWorldStateArchive(),
             transactionPool,
             EthProtocolConfiguration.defaultConfig(),
-            new ForkIdManager(blockchain, Collections.emptyList(), true))) {
+            new ForkIdManager(
+                blockchain, Collections.emptyList(), Collections.emptyList(), true))) {
 
       assertThat(ethManager.getForkIdAsBytesList()).isEmpty();
     }
@@ -1124,14 +1124,70 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void shouldUseRightCapabilityDependingOnSyncMode() {
-    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH67);
-    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH67);
+    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH68);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66);
   }
 
+  @Test
+  public void shouldRespectFlagForMaxCapability() {
+
+    // Test with max capability = 65. should respect flag
+    final EthProtocolConfiguration configuration =
+        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V65).build();
+
+    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH65, configuration);
+    /* Eth67 does not support fast sync, see EIP-4938 */
+    assertHighestCapability(SyncMode.FAST, EthProtocol.ETH65, configuration);
+  }
+
+  @Test
+  public void shouldRespectFlagForMinCapability() {
+
+    // If min cap = v64, should not contain v63
+    final EthProtocolConfiguration configuration =
+        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V64).build();
+
+    final EthProtocolManager ethManager = createEthManager(SyncMode.X_SNAP, configuration);
+
+    assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH64);
+    assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH63);
+  }
+
+  @Test
+  public void shouldRespectProtocolForMaxCapabilityIfFlagGreaterThanProtocol() {
+
+    // Test with max capability = 67. should respect protocol
+    final EthProtocolConfiguration configuration =
+        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V67).build();
+
+    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH67, configuration);
+    /* Eth67 does not support fast sync, see EIP-4938 */
+    assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66, configuration);
+  }
+
   private void assertHighestCapability(final SyncMode syncMode, final Capability capability) {
+    assertHighestCapability(syncMode, capability, EthProtocolConfiguration.defaultConfig());
+  }
+
+  private void assertHighestCapability(
+      final SyncMode syncMode,
+      final Capability capability,
+      final EthProtocolConfiguration ethProtocolConfiguration) {
+
+    final EthProtocolManager ethManager = createEthManager(syncMode, ethProtocolConfiguration);
+
+    assertThat(capability.getVersion()).isEqualTo(ethManager.getHighestProtocolVersion());
+  }
+
+  private EthProtocolManager createEthManager(
+      final SyncMode syncMode, final EthProtocolConfiguration ethProtocolConfiguration) {
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
     when(syncConfig.getSyncMode()).thenReturn(syncMode);
     try (final EthProtocolManager ethManager =
@@ -1140,7 +1196,7 @@ public final class EthProtocolManagerTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
+            ethProtocolConfiguration,
             mock(EthPeers.class),
             mock(EthMessages.class),
             mock(EthContext.class),
@@ -1150,11 +1206,7 @@ public final class EthProtocolManagerTest {
             mock(EthScheduler.class),
             mock(ForkIdManager.class))) {
 
-      final Capability highestCapability =
-          ethManager.getSupportedCapabilities().stream()
-              .max(Comparator.comparing(Capability::getVersion))
-              .get();
-      assertThat(capability.equals(highestCapability)).isTrue();
+      return ethManager;
     }
   }
 }

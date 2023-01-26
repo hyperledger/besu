@@ -72,7 +72,7 @@ public class TxPoolBesuPendingTransactionsTest {
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
     final Set<TransactionPendingResult> result =
         (Set<TransactionPendingResult>) actualResponse.getResult();
-    assertThat(result.size()).isEqualTo(4);
+    assertThat(result.size()).isEqualTo(this.pendingTransactions.getPendingTransactions().size());
   }
 
   @Test

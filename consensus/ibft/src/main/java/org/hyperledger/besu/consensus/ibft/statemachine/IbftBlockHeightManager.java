@@ -74,6 +74,17 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
 
   private IbftRound currentRound;
 
+  /**
+   * Instantiates a new Ibft block height manager.
+   *
+   * @param parentHeader the parent header
+   * @param finalState the final state
+   * @param roundChangeManager the round change manager
+   * @param ibftRoundFactory the ibft round factory
+   * @param clock the clock
+   * @param messageValidatorFactory the message validator factory
+   * @param messageFactory the message factory
+   */
   public IbftBlockHeightManager(
       final BlockHeader parentHeader,
       final BftFinalState finalState,
@@ -275,9 +286,13 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
     return PRIOR_ROUND;
   }
 
+  /** The enum Message age. */
   public enum MessageAge {
+    /** Prior round message age. */
     PRIOR_ROUND,
+    /** Current round message age. */
     CURRENT_ROUND,
+    /** Future round message age. */
     FUTURE_ROUND
   }
 }

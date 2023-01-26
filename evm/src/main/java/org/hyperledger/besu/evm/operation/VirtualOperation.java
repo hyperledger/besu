@@ -18,10 +18,16 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+/** The Virtual operation. */
 public class VirtualOperation implements Operation {
 
   private final Operation delegate;
 
+  /**
+   * Instantiates a new Virtual operation.
+   *
+   * @param delegate the delegate
+   */
   public VirtualOperation(final Operation delegate) {
     this.delegate = delegate;
   }
@@ -50,11 +56,6 @@ public class VirtualOperation implements Operation {
   @Override
   public int getStackItemsProduced() {
     return delegate.getStackItemsProduced();
-  }
-
-  @Override
-  public int getOpSize() {
-    return delegate.getOpSize();
   }
 
   @Override

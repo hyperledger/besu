@@ -152,11 +152,15 @@ dependencyManagement {
     }
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
-
-    dependency 'org.hyperledger.besu:bls12-381:0.6.1'
-    dependency 'org.hyperledger.besu:secp256k1:0.6.1'
-    dependency 'org.hyperledger.besu:secp256r1:0.6.1'
-    dependency 'org.hyperledger.besu:blake2bf:0.6.1'
+    dependency 'tech.pegasys:jc-kzg-4844:0.1.0'
+    dependencySet(group: 'org.hyperledger.besu', version: '0.7.1') {
+      entry 'arithmetic'
+      entry 'ipa-multipoint'
+      entry 'bls12-381'
+      entry 'secp256k1'
+      entry 'secp256r1'
+      entry 'blake2bf'
+    }
 
     dependency 'org.immutables:value-annotations:2.9.0'
     dependency 'org.immutables:value:2.9.0'

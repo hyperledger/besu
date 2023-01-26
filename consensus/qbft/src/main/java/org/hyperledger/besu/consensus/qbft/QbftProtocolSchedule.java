@@ -34,6 +34,17 @@ import java.util.Optional;
 /** Defines the protocol behaviours for a blockchain using a QBFT consensus mechanism. */
 public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param qbftForksSchedule the qbft forks schedule
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
@@ -51,6 +62,15 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
             evmConfiguration);
   }
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param qbftForksSchedule the qbft forks schedule
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
@@ -65,6 +85,15 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
         evmConfiguration);
   }
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param qbftForksSchedule the qbft forks schedule
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,

@@ -94,6 +94,7 @@ import com.google.common.base.Suppliers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Qbft Besu controller builder. */
 public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(QbftBesuControllerBuilder.class);

@@ -21,10 +21,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Call data size operation. */
 public class CallDataSizeOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Call data size operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CallDataSizeOperation(final GasCalculator gasCalculator) {
-    super(0x36, "CALLDATASIZE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x36, "CALLDATASIZE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

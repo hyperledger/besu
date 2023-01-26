@@ -37,6 +37,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
 
+/** The Cms creator. */
 public class CmsCreator {
 
   static {
@@ -48,6 +49,12 @@ public class CmsCreator {
   private final String certificateAlias;
   private final KeyStoreWrapper keyStore;
 
+  /**
+   * Instantiates a new Cms creator.
+   *
+   * @param keyStore the key store
+   * @param certificateAlias the certificate alias
+   */
   public CmsCreator(final KeyStoreWrapper keyStore, final String certificateAlias) {
     this.keyStore = keyStore;
     this.certificateAlias = certificateAlias;

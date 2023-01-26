@@ -21,33 +21,65 @@ import java.util.OptionalLong;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
+/** The Checkpoint config options. */
 public class CheckpointConfigOptions {
 
+  /** The constant DEFAULT. */
   public static final CheckpointConfigOptions DEFAULT =
       new CheckpointConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private final ObjectNode checkpointConfigRoot;
 
+  /**
+   * Instantiates a new Checkpoint config options.
+   *
+   * @param checkpointConfigRoot the checkpoint config root
+   */
   CheckpointConfigOptions(final ObjectNode checkpointConfigRoot) {
     this.checkpointConfigRoot = checkpointConfigRoot;
   }
 
+  /**
+   * Gets total difficulty.
+   *
+   * @return the total difficulty
+   */
   public Optional<String> getTotalDifficulty() {
     return JsonUtil.getString(checkpointConfigRoot, "totaldifficulty");
   }
 
+  /**
+   * Gets number.
+   *
+   * @return the number
+   */
   public OptionalLong getNumber() {
     return JsonUtil.getLong(checkpointConfigRoot, "number");
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   public Optional<String> getHash() {
     return JsonUtil.getString(checkpointConfigRoot, "hash");
   }
 
+  /**
+   * Is valid option.
+   *
+   * @return true if total difficulty, number and hash is present.
+   */
   public boolean isValid() {
     return getTotalDifficulty().isPresent() && getNumber().isPresent() && getHash().isPresent();
   }
 
+  /**
+   * As map.
+   *
+   * @return the map
+   */
   Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getTotalDifficulty().ifPresent(l -> builder.put("totaldifficulty", l));

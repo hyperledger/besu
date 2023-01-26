@@ -49,12 +49,18 @@ import org.slf4j.LoggerFactory;
 public class KubernetesNatManager extends AbstractNatManager {
   private static final Logger LOG = LoggerFactory.getLogger(KubernetesNatManager.class);
 
+  /** The constant DEFAULT_BESU_SERVICE_NAME_FILTER. */
   public static final String DEFAULT_BESU_SERVICE_NAME_FILTER = "besu";
 
   private String internalAdvertisedHost;
   private final String besuServiceNameFilter;
   private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
 
+  /**
+   * Instantiates a new Kubernetes nat manager.
+   *
+   * @param besuServiceNameFilter the besu service name filter
+   */
   public KubernetesNatManager(final String besuServiceNameFilter) {
     super(NatMethod.KUBERNETES);
     this.besuServiceNameFilter = besuServiceNameFilter;
@@ -92,6 +98,12 @@ public class KubernetesNatManager extends AbstractNatManager {
     }
   }
 
+  /**
+   * Update using besu service. Visible for testing.
+   *
+   * @param service the service
+   * @throws RuntimeException the runtime exception
+   */
   @VisibleForTesting
   void updateUsingBesuService(final V1Service service) throws RuntimeException {
     try {

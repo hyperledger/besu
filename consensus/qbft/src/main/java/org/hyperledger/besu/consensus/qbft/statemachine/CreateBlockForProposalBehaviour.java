@@ -17,8 +17,15 @@ package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import org.hyperledger.besu.ethereum.core.Block;
 
+/** The functional interface Create block for proposal behaviour. */
 @FunctionalInterface
 public interface CreateBlockForProposalBehaviour {
 
+  /**
+   * Create block.
+   *
+   * @param headerTimeStampSeconds the header time stamp seconds
+   * @return the block
+   */
   Block create(long headerTimeStampSeconds);
 }

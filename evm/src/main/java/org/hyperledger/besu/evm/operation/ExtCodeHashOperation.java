@@ -26,12 +26,24 @@ import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Ext code hash operation. */
 public class ExtCodeHashOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Ext code hash operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public ExtCodeHashOperation(final GasCalculator gasCalculator) {
-    super(0x3F, "EXTCODEHASH", 1, 1, 1, gasCalculator);
+    super(0x3F, "EXTCODEHASH", 1, 1, gasCalculator);
   }
 
+  /**
+   * Cost of Ext code hash operation.
+   *
+   * @param accountIsWarm the account is warm
+   * @return the long
+   */
   protected long cost(final boolean accountIsWarm) {
     return gasCalculator().extCodeHashOperationGasCost()
         + (accountIsWarm

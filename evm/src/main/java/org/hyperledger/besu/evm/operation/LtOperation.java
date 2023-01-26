@@ -20,12 +20,19 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The LT operation. */
 public class LtOperation extends AbstractFixedCostOperation {
 
+  /** The LT operation success result. */
   static final OperationResult ltSuccess = new OperationResult(3, null);
 
+  /**
+   * Instantiates a new LT operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public LtOperation(final GasCalculator gasCalculator) {
-    super(0x10, "LT", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x10, "LT", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
@@ -34,6 +41,12 @@ public class LtOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs LT operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());

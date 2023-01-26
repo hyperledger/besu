@@ -16,10 +16,19 @@ package org.hyperledger.besu.metrics;
 
 /** Enumeration of metrics protocols supported by Besu. */
 public enum MetricsProtocol {
+  /** Prometheus metrics protocol. */
   PROMETHEUS,
+  /** Open telemetry metrics protocol. */
   OPENTELEMETRY,
+  /** None metrics protocol. */
   NONE;
 
+  /**
+   * Create Metrics Protocol from String representation.
+   *
+   * @param str the string representation of message protocol
+   * @return the metrics protocol
+   */
   public static MetricsProtocol fromString(final String str) {
     for (final MetricsProtocol mode : MetricsProtocol.values()) {
       if (mode.name().equalsIgnoreCase(str)) {

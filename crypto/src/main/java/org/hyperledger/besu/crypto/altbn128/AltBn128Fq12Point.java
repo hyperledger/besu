@@ -22,10 +22,21 @@ import java.util.Arrays;
  */
 public class AltBn128Fq12Point extends AbstractFieldPoint<AltBn128Fq12Point> {
 
+  /**
+   * G 12 alt bn 128 fq 12 point.
+   *
+   * @return the alt bn 128 fq 12 point
+   */
   public static AltBn128Fq12Point g12() {
     return twist(AltBn128Fq2Point.g2());
   }
 
+  /**
+   * Twist alt bn 128 fq 12 point.
+   *
+   * @param p the p
+   * @return the alt bn 128 fq 12 point
+   */
   public static AltBn128Fq12Point twist(final AltBn128Fq2Point p) {
     final Fq2 x = p.getX();
     final Fq2 y = p.getY();
@@ -52,14 +63,30 @@ public class AltBn128Fq12Point extends AbstractFieldPoint<AltBn128Fq12Point> {
     return Fq12.create(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   }
 
+  /**
+   * Instantiates a new Alt bn 128 fq 12 point.
+   *
+   * @param x the x
+   * @param y the y
+   */
   public AltBn128Fq12Point(final Fq12 x, final Fq12 y) {
     super(x, y);
   }
 
+  /**
+   * Gets x.
+   *
+   * @return the x
+   */
   public Fq12 getX() {
     return (Fq12) x;
   }
 
+  /**
+   * Gets y.
+   *
+   * @return the y
+   */
   public Fq12 getY() {
     return (Fq12) y;
   }

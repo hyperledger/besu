@@ -16,18 +16,23 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.BLAKE2B_F_COMPRESSION;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
 
+import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Berlin gas calculator. */
 public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // new constants for EIP-2929
@@ -35,18 +40,23 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   private static final long COLD_ACCOUNT_ACCESS_COST = 2600L;
   protected static final long WARM_STORAGE_READ_COST = 100L;
   private static final long ACCESS_LIST_ADDRESS_COST = 2400L;
+  /** The constant ACCESS_LIST_STORAGE_COST. */
   protected static final long ACCESS_LIST_STORAGE_COST = 1900L;
 
   // redefinitions for EIP-2929
   private static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
+  /** The constant SSTORE_RESET_GAS. */
   protected static final long SSTORE_RESET_GAS = 5000L - COLD_SLOAD_COST;
 
   // unchanged from Istanbul
   private static final long SSTORE_SET_GAS = 20_000L;
   private static final long SSTORE_CLEARS_SCHEDULE = 15_000L;
 
+  /** The constant SSTORE_SET_GAS_LESS_SLOAD_GAS. */
   protected static final long SSTORE_SET_GAS_LESS_SLOAD_GAS = SSTORE_SET_GAS - SLOAD_GAS;
+  /** The constant SSTORE_RESET_GAS_LESS_SLOAD_GAS. */
   protected static final long SSTORE_RESET_GAS_LESS_SLOAD_GAS = SSTORE_RESET_GAS - SLOAD_GAS;
+
   private static final long NEGATIVE_SSTORE_CLEARS_SCHEDULE = -SSTORE_CLEARS_SCHEDULE;
 
   // unchanged from Frontier
@@ -54,10 +64,16 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   private final int maxPrecompile;
 
+  /**
+   * Instantiates a new Berlin gas calculator.
+   *
+   * @param maxPrecompile the max precompile
+   */
   protected BerlinGasCalculator(final int maxPrecompile) {
     this.maxPrecompile = maxPrecompile;
   }
 
+  /** Instantiates a new Berlin gas calculator. */
   public BerlinGasCalculator() {
     this(BLAKE2B_F_COMPRESSION.toArrayUnsafe()[19]);
   }
@@ -160,15 +176,17 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
-    final UInt256 currentValue = account.getStorageValue(key);
-    if (currentValue.equals(newValue)) {
+    final UInt256 localCurrentValue = currentValue.get();
+    if (localCurrentValue.equals(newValue)) {
       return SLOAD_GAS;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
-      if (originalValue.equals(currentValue)) {
-        return originalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
+      final UInt256 localOriginalValue = originalValue.get();
+      if (localOriginalValue.equals(localCurrentValue)) {
+        return localOriginalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
       } else {
         return SLOAD_GAS;
       }
@@ -179,15 +197,17 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageRefundAmount(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
-    final UInt256 currentValue = account.getStorageValue(key);
-    if (currentValue.equals(newValue)) {
+    final UInt256 localCurrentValue = currentValue.get();
+    if (localCurrentValue.equals(newValue)) {
       return 0L;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
-      if (originalValue.equals(currentValue)) {
-        if (originalValue.isZero()) {
+      final UInt256 localOriginalValue = originalValue.get();
+      if (localOriginalValue.equals(localCurrentValue)) {
+        if (localOriginalValue.isZero()) {
           return 0L;
         } else if (newValue.isZero()) {
           return SSTORE_CLEARS_SCHEDULE;
@@ -196,18 +216,18 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
         }
       } else {
         long refund = 0L;
-        if (!originalValue.isZero()) {
-          if (currentValue.isZero()) {
+        if (!localOriginalValue.isZero()) {
+          if (localCurrentValue.isZero()) {
             refund = NEGATIVE_SSTORE_CLEARS_SCHEDULE;
           } else if (newValue.isZero()) {
             refund = SSTORE_CLEARS_SCHEDULE;
           }
         }
 
-        if (originalValue.equals(newValue)) {
+        if (localOriginalValue.equals(newValue)) {
           refund =
               refund
-                  + (originalValue.isZero()
+                  + (localOriginalValue.isZero()
                       ? SSTORE_SET_GAS_LESS_SLOAD_GAS
                       : SSTORE_RESET_GAS_LESS_SLOAD_GAS);
         }
@@ -218,38 +238,29 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   @Override
   public long modExpGasCost(final Bytes input) {
-    final BigInteger baseLength =
-        BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
-    final BigInteger exponentLength =
+    final long baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
+    final long exponentLength =
         BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
-    final BigInteger modulusLength =
+    final long modulusLength =
         BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
-    final BigInteger exponentOffset =
-        BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
-    final int firstExponentBytesCap =
-        exponentLength.min(ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES).intValue();
+    final long exponentOffset =
+        clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
+    final long firstExponentBytesCap =
+        Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
     final BigInteger firstExpBytes =
         BigIntegerModularExponentiationPrecompiledContract.extractParameter(
-            input, exponentOffset, firstExponentBytesCap);
-    final BigInteger adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
-    final BigInteger multiplicationComplexity =
-        modulusLength
-            .max(baseLength)
-            .add(BigInteger.valueOf(7))
-            .divide(BigInteger.valueOf(8))
-            .pow(2);
+            input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+    final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
+    long multiplicationComplexity = (Math.max(modulusLength, baseLength) + 7L) / 8L;
+    multiplicationComplexity =
+        Words.clampedMultiply(multiplicationComplexity, multiplicationComplexity);
 
-    final BigInteger gasRequirement =
-        multiplicationComplexity
-            .multiply(adjustedExponentLength.max(BigInteger.ONE))
-            .divide(BigInteger.valueOf(3));
-
-    // Gas price is so large it will not fit in a Gas type, so a
-    // very very very unlikely high gas price is used instead.
-    if (gasRequirement.bitLength() > ByzantiumGasCalculator.MAX_GAS_BITS) {
-      return Long.MAX_VALUE;
-    } else {
-      return Math.max(gasRequirement.longValueExact(), 200L);
+    long gasRequirement =
+        clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
+    if (gasRequirement != Long.MAX_VALUE) {
+      gasRequirement /= 3;
     }
+
+    return Math.max(gasRequirement, 200L);
   }
 }

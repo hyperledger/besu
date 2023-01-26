@@ -21,10 +21,16 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Return operation. */
 public class ReturnOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Return operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public ReturnOperation(final GasCalculator gasCalculator) {
-    super(0xF3, "RETURN", 2, 0, 1, gasCalculator);
+    super(0xF3, "RETURN", 2, 0, gasCalculator);
   }
 
   @Override

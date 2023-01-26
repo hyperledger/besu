@@ -100,7 +100,7 @@ public class StateTestVersionedTransaction {
       @JsonDeserialize(using = StateTestAccessListDeserializer.class) @JsonProperty("accessLists")
           final List<List<AccessListEntry>> maybeAccessLists) {
 
-    this.nonce = Long.decode(nonce);
+    this.nonce = Bytes.fromHexStringLenient(nonce).toLong();
     this.gasPrice = Optional.ofNullable(gasPrice).map(Wei::fromHexString).orElse(null);
     this.maxFeePerGas = Optional.ofNullable(maxFeePerGas).map(Wei::fromHexString).orElse(null);
     this.maxPriorityFeePerGas =

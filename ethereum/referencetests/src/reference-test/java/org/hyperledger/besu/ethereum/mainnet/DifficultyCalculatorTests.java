@@ -53,16 +53,6 @@ public class DifficultyCalculatorTests {
               GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
         ),
         Arguments.of(
-          "/BasicTests/difficultyRopsten.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig(
-                      Resources.toString(
-                          GenesisConfigFile.class.getResource("/ropsten.json"),
-                          StandardCharsets.UTF_8))
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        ),
-        Arguments.of(
           "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().grayGlacierBlock(15050000))

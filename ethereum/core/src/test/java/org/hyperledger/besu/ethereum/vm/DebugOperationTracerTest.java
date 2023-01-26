@@ -57,7 +57,7 @@ public class DebugOperationTracerTest {
   // @Mock private OperationTracer.ExecuteOperation executeOperationAction;
 
   private final Operation anOperation =
-      new AbstractOperation(0x02, "MUL", 2, 1, 1, null) {
+      new AbstractOperation(0x02, "MUL", 2, 1, null) {
         @Override
         public OperationResult execute(final MessageFrame frame, final EVM evm) {
           return new OperationResult(20L, null);

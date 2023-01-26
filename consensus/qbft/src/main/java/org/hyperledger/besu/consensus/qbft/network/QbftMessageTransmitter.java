@@ -40,6 +40,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Qbft message transmitter. */
 public class QbftMessageTransmitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(QbftMessageTransmitter.class);
@@ -47,12 +48,26 @@ public class QbftMessageTransmitter {
   private final MessageFactory messageFactory;
   private final ValidatorMulticaster multicaster;
 
+  /**
+   * Instantiates a new Qbft message transmitter.
+   *
+   * @param messageFactory the message factory
+   * @param multicaster the multicaster
+   */
   public QbftMessageTransmitter(
       final MessageFactory messageFactory, final ValidatorMulticaster multicaster) {
     this.messageFactory = messageFactory;
     this.multicaster = multicaster;
   }
 
+  /**
+   * Multicast proposal.
+   *
+   * @param roundIdentifier the round identifier
+   * @param block the block
+   * @param roundChanges the round changes
+   * @param prepares the prepares
+   */
   public void multicastProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
@@ -70,6 +85,12 @@ public class QbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast prepare.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   */
   public void multicastPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     try {
       final Prepare data = messageFactory.createPrepare(roundIdentifier, digest);
@@ -82,6 +103,13 @@ public class QbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast commit.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @param commitSeal the commit seal
+   */
   public void multicastCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
@@ -97,6 +125,12 @@ public class QbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast round change.
+   *
+   * @param roundIdentifier the round identifier
+   * @param preparedRoundCertificate the prepared round certificate
+   */
   public void multicastRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedCertificate> preparedRoundCertificate) {

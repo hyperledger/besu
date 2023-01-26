@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.code.CodeSection;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -30,20 +31,12 @@ public interface Code {
   int getSize();
 
   /**
-   * Gets the code bytes. For legacy code it is the whole container. For V1 it is the code section
-   * alone.
-   *
-   * @return the code bytes
-   */
-  Bytes getCodeBytes();
-
-  /**
    * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
    * the same as getCodeBytes, for V1 it is the entire container, not just the data section.
    *
    * @return container bytes.
    */
-  Bytes getContainerBytes();
+  Bytes getBytes();
 
   /**
    * Hash of the entire container
@@ -66,4 +59,27 @@ public interface Code {
    * @return isValid
    */
   boolean isValid();
+
+  /**
+   * The Code Section Info associated with a code section. If the code does not support sections or
+   * an out-of-section code is requested null will be returned.
+   *
+   * @param section the section number to retrieve.
+   * @return The code section, or null of there is no associated section
+   */
+  CodeSection getCodeSection(final int section);
+
+  /**
+   * The number of code sections in this container.
+   *
+   * @return 1 for legacy, count for valid, zero for invalid.
+   */
+  int getCodeSectionCount();
+
+  /**
+   * Returns the EOF version of the code. Legacy code is version 0, invalid code -1.
+   *
+   * @return The version of hte ode.
+   */
+  int getEofVersion();
 }

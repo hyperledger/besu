@@ -147,6 +147,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The builder for Runner class. */
 public class RunnerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(RunnerBuilder.class);
@@ -195,26 +196,56 @@ public class RunnerBuilder {
   private boolean legacyForkIdEnabled;
   private Optional<Long> rpcMaxLogsRange;
 
+  /**
+   * Add Vertx.
+   *
+   * @param vertx the vertx instance
+   * @return runner builder
+   */
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
     return this;
   }
 
+  /**
+   * Add Besu controller.
+   *
+   * @param besuController the besu controller
+   * @return the runner builder
+   */
   public RunnerBuilder besuController(final BesuController besuController) {
     this.besuController = besuController;
     return this;
   }
 
+  /**
+   * P2p enabled.
+   *
+   * @param p2pEnabled the p 2 p enabled
+   * @return the runner builder
+   */
   public RunnerBuilder p2pEnabled(final boolean p2pEnabled) {
     this.p2pEnabled = p2pEnabled;
     return this;
   }
 
+  /**
+   * TLSConfiguration p2pTLSConfiguration.
+   *
+   * @param p2pTLSConfiguration the TLSConfiguration p2pTLSConfiguration
+   * @return the runner builder
+   */
   public RunnerBuilder p2pTLSConfiguration(final TLSConfiguration p2pTLSConfiguration) {
     this.p2pTLSConfiguration = Optional.of(p2pTLSConfiguration);
     return this;
   }
 
+  /**
+   * Optional TLSConfiguration p2pTLSConfiguration.
+   *
+   * @param p2pTLSConfiguration the TLSConfiguration p2pTLSConfiguration
+   * @return the runner builder
+   */
   public RunnerBuilder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
     if (null != p2pTLSConfiguration) {
       this.p2pTLSConfiguration = p2pTLSConfiguration;
@@ -222,188 +253,403 @@ public class RunnerBuilder {
     return this;
   }
 
+  /**
+   * Enable Discovery.
+   *
+   * @param discovery the discovery
+   * @return the runner builder
+   */
   public RunnerBuilder discovery(final boolean discovery) {
     this.discovery = discovery;
     return this;
   }
 
+  /**
+   * Add Eth network config.
+   *
+   * @param ethNetworkConfig the eth network config
+   * @return the runner builder
+   */
   public RunnerBuilder ethNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
     this.ethNetworkConfig = ethNetworkConfig;
     return this;
   }
 
+  /**
+   * Add Networking configuration.
+   *
+   * @param networkingConfiguration the networking configuration
+   * @return the runner builder
+   */
   public RunnerBuilder networkingConfiguration(
       final NetworkingConfiguration networkingConfiguration) {
     this.networkingConfiguration = networkingConfiguration;
     return this;
   }
 
+  /**
+   * Add P2p advertised host.
+   *
+   * @param p2pAdvertisedHost the P2P advertised host
+   * @return the runner builder
+   */
   public RunnerBuilder p2pAdvertisedHost(final String p2pAdvertisedHost) {
     this.p2pAdvertisedHost = p2pAdvertisedHost;
     return this;
   }
 
+  /**
+   * Add P2P Listener interface ip/host name.
+   *
+   * @param ip the ip
+   * @return the runner builder
+   */
   public RunnerBuilder p2pListenInterface(final String ip) {
     checkArgument(!isNull(ip), "Invalid null value supplied for p2pListenInterface");
     this.p2pListenInterface = ip;
     return this;
   }
 
+  /**
+   * Add P2P listen port.
+   *
+   * @param p2pListenPort the p 2 p listen port
+   * @return the runner builder
+   */
   public RunnerBuilder p2pListenPort(final int p2pListenPort) {
     this.p2pListenPort = p2pListenPort;
     return this;
   }
 
+  /**
+   * Add Nat method.
+   *
+   * @param natMethod the nat method
+   * @return the runner builder
+   */
   public RunnerBuilder natMethod(final NatMethod natMethod) {
     this.natMethod = natMethod;
     return this;
   }
 
+  /**
+   * Add Nat manager service name.
+   *
+   * @param natManagerServiceName the nat manager service name
+   * @return the runner builder
+   */
   public RunnerBuilder natManagerServiceName(final String natManagerServiceName) {
     this.natManagerServiceName = natManagerServiceName;
     return this;
   }
 
+  /**
+   * Enable Nat method fallback.
+   *
+   * @param natMethodFallbackEnabled the nat method fallback enabled
+   * @return the runner builder
+   */
   public RunnerBuilder natMethodFallbackEnabled(final boolean natMethodFallbackEnabled) {
     this.natMethodFallbackEnabled = natMethodFallbackEnabled;
     return this;
   }
 
+  /**
+   * Add Max peers.
+   *
+   * @param maxPeers the max peers
+   * @return the runner builder
+   */
   public RunnerBuilder maxPeers(final int maxPeers) {
     this.maxPeers = maxPeers;
     return this;
   }
 
+  /**
+   * Enable Limit remote wire connections.
+   *
+   * @param limitRemoteWireConnectionsEnabled the limit remote wire connections enabled
+   * @return the runner builder
+   */
   public RunnerBuilder limitRemoteWireConnectionsEnabled(
       final boolean limitRemoteWireConnectionsEnabled) {
     this.limitRemoteWireConnectionsEnabled = limitRemoteWireConnectionsEnabled;
     return this;
   }
 
+  /**
+   * Add Fraction remote connections allowed.
+   *
+   * @param fractionRemoteConnectionsAllowed the fraction remote connections allowed
+   * @return the runner builder
+   */
   public RunnerBuilder fractionRemoteConnectionsAllowed(
       final float fractionRemoteConnectionsAllowed) {
     this.fractionRemoteConnectionsAllowed = fractionRemoteConnectionsAllowed;
     return this;
   }
 
+  /**
+   * Enable Random peer priority.
+   *
+   * @param randomPeerPriority the random peer priority
+   * @return the runner builder
+   */
   public RunnerBuilder randomPeerPriority(final boolean randomPeerPriority) {
     this.randomPeerPriority = randomPeerPriority;
     return this;
   }
 
+  /**
+   * Add Ethstats url.
+   *
+   * @param ethstatsUrl the ethstats url
+   * @return the runner builder
+   */
   public RunnerBuilder ethstatsUrl(final String ethstatsUrl) {
     this.ethstatsUrl = ethstatsUrl;
     return this;
   }
 
+  /**
+   * Add Ethstats contact.
+   *
+   * @param ethstatsContact the ethstats contact
+   * @return the runner builder
+   */
   public RunnerBuilder ethstatsContact(final String ethstatsContact) {
     this.ethstatsContact = ethstatsContact;
     return this;
   }
 
+  /**
+   * Add Json RPC configuration.
+   *
+   * @param jsonRpcConfiguration the json rpc configuration
+   * @return the runner builder
+   */
   public RunnerBuilder jsonRpcConfiguration(final JsonRpcConfiguration jsonRpcConfiguration) {
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     return this;
   }
 
+  /**
+   * Add Engine json RPC configuration.
+   *
+   * @param engineJsonRpcConfiguration the engine json rpc configuration
+   * @return the runner builder
+   */
   public RunnerBuilder engineJsonRpcConfiguration(
       final JsonRpcConfiguration engineJsonRpcConfiguration) {
     this.engineJsonRpcConfiguration = Optional.ofNullable(engineJsonRpcConfiguration);
     return this;
   }
 
+  /**
+   * Add GraphQl configuration.
+   *
+   * @param graphQLConfiguration the graph ql configuration
+   * @return the runner builder
+   */
   public RunnerBuilder graphQLConfiguration(final GraphQLConfiguration graphQLConfiguration) {
     this.graphQLConfiguration = graphQLConfiguration;
     return this;
   }
 
+  /**
+   * Add Web socket configuration.
+   *
+   * @param webSocketConfiguration the web socket configuration
+   * @return the runner builder
+   */
   public RunnerBuilder webSocketConfiguration(final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
     return this;
   }
 
+  /**
+   * Add Api configuration.
+   *
+   * @param apiConfiguration the api configuration
+   * @return the runner builder
+   */
   public RunnerBuilder apiConfiguration(final ApiConfiguration apiConfiguration) {
     this.apiConfiguration = apiConfiguration;
     return this;
   }
 
+  /**
+   * Add Permissioning configuration.
+   *
+   * @param permissioningConfiguration the permissioning configuration
+   * @return the runner builder
+   */
   public RunnerBuilder permissioningConfiguration(
       final Optional<PermissioningConfiguration> permissioningConfiguration) {
     this.permissioningConfiguration = permissioningConfiguration;
     return this;
   }
 
+  /**
+   * Add pid path.
+   *
+   * @param pidPath the pid path
+   * @return the runner builder
+   */
   public RunnerBuilder pidPath(final Path pidPath) {
     this.pidPath = Optional.ofNullable(pidPath);
     return this;
   }
 
+  /**
+   * Add Data dir.
+   *
+   * @param dataDir the data dir
+   * @return the runner builder
+   */
   public RunnerBuilder dataDir(final Path dataDir) {
     this.dataDir = dataDir;
     return this;
   }
 
+  /**
+   * Add list of Banned node id.
+   *
+   * @param bannedNodeIds the banned node ids
+   * @return the runner builder
+   */
   public RunnerBuilder bannedNodeIds(final Collection<Bytes> bannedNodeIds) {
     this.bannedNodeIds.addAll(bannedNodeIds);
     return this;
   }
 
+  /**
+   * Add Metrics configuration.
+   *
+   * @param metricsConfiguration the metrics configuration
+   * @return the runner builder
+   */
   public RunnerBuilder metricsConfiguration(final MetricsConfiguration metricsConfiguration) {
     this.metricsConfiguration = metricsConfiguration;
     return this;
   }
 
+  /**
+   * Add Metrics system.
+   *
+   * @param metricsSystem the metrics system
+   * @return the runner builder
+   */
   public RunnerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     return this;
   }
 
+  /**
+   * Add Permissioning service.
+   *
+   * @param permissioningService the permissioning service
+   * @return the runner builder
+   */
   public RunnerBuilder permissioningService(final PermissioningServiceImpl permissioningService) {
     this.permissioningService = permissioningService;
     return this;
   }
 
+  /**
+   * Add Static nodes collection.
+   *
+   * @param staticNodes the static nodes
+   * @return the runner builder
+   */
   public RunnerBuilder staticNodes(final Collection<EnodeURL> staticNodes) {
     this.staticNodes = staticNodes;
     return this;
   }
 
+  /**
+   * Add Node identity string.
+   *
+   * @param identityString the identity string
+   * @return the runner builder
+   */
   public RunnerBuilder identityString(final Optional<String> identityString) {
     this.identityString = identityString;
     return this;
   }
 
+  /**
+   * Add Besu plugin context.
+   *
+   * @param besuPluginContext the besu plugin context
+   * @return the runner builder
+   */
   public RunnerBuilder besuPluginContext(final BesuPluginContextImpl besuPluginContext) {
     this.besuPluginContext = besuPluginContext;
     return this;
   }
 
+  /**
+   * Enable Auto log bloom caching.
+   *
+   * @param autoLogBloomCaching the auto log bloom caching
+   * @return the runner builder
+   */
   public RunnerBuilder autoLogBloomCaching(final boolean autoLogBloomCaching) {
     this.autoLogBloomCaching = autoLogBloomCaching;
     return this;
   }
 
+  /**
+   * Add Storage provider.
+   *
+   * @param storageProvider the storage provider
+   * @return the runner builder
+   */
   public RunnerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
     return this;
   }
 
+  /**
+   * Add Rpc endpoint service.
+   *
+   * @param rpcEndpointService the rpc endpoint service
+   * @return the runner builder
+   */
   public RunnerBuilder rpcEndpointService(final RpcEndpointServiceImpl rpcEndpointService) {
     this.rpcEndpointServiceImpl = rpcEndpointService;
     return this;
   }
 
+  /**
+   * Add Json Rpc Ipc configuration.
+   *
+   * @param jsonRpcIpcConfiguration the json rpc ipc configuration
+   * @return the runner builder
+   */
   public RunnerBuilder jsonRpcIpcConfiguration(
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration) {
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
     return this;
   }
 
+  /**
+   * Add Rpc max logs range.
+   *
+   * @param rpcMaxLogsRange the rpc max logs range
+   * @return the runner builder
+   */
   public RunnerBuilder rpcMaxLogsRange(final Long rpcMaxLogsRange) {
     this.rpcMaxLogsRange = rpcMaxLogsRange > 0 ? Optional.of(rpcMaxLogsRange) : Optional.empty();
     return this;
   }
 
+  /**
+   * Build Runner instance.
+   *
+   * @return the runner
+   */
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
@@ -498,7 +744,8 @@ public class RunnerBuilder {
                 .storageProvider(storageProvider)
                 .p2pTLSConfiguration(p2pTLSConfiguration)
                 .blockchain(context.getBlockchain())
-                .forks(besuController.getGenesisConfigOptions().getForks())
+                .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
+                .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
                 .build();
 
     final NetworkRunner networkRunner =
@@ -964,6 +1211,13 @@ public class RunnerBuilder {
     }
   }
 
+  /**
+   * Gets fixed nodes. Visible for testing.
+   *
+   * @param someFixedNodes the fixed nodes
+   * @param moreFixedNodes nodes added to fixed nodes
+   * @return the fixed and more nodes combined
+   */
   @VisibleForTesting
   public static Collection<EnodeURL> getFixedNodes(
       final Collection<EnodeURL> someFixedNodes, final Collection<EnodeURL> moreFixedNodes) {
@@ -1175,15 +1429,32 @@ public class RunnerBuilder {
     return MetricsService.create(vertx, configuration, metricsSystem);
   }
 
+  /**
+   * Gets minimum peers.
+   *
+   * @return the minimum peers
+   */
   public int getMinPeers() {
     return minPeers;
   }
 
+  /**
+   * Add Minimum peers.
+   *
+   * @param minPeers the minimum peers
+   * @return the runner builder
+   */
   public RunnerBuilder minPeers(final int minPeers) {
     this.minPeers = minPeers;
     return this;
   }
 
+  /**
+   * Add Legacy fork id.
+   *
+   * @param legacyEth64ForkIdEnabled the legacy eth64 fork id enabled
+   * @return the runner builder
+   */
   public RunnerBuilder legacyForkId(final boolean legacyEth64ForkIdEnabled) {
     this.legacyForkIdEnabled = legacyEth64ForkIdEnabled;
     return this;

@@ -42,7 +42,9 @@ import org.slf4j.LoggerFactory;
 public class IbftExtraData implements ParsedExtraData {
   private static final Logger LOG = LoggerFactory.getLogger(IbftExtraData.class);
 
+  /** The constant EXTRA_VANITY_LENGTH. */
   public static final int EXTRA_VANITY_LENGTH = 32;
+
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -51,6 +53,14 @@ public class IbftExtraData implements ParsedExtraData {
   private final SECPSignature proposerSeal;
   private final Collection<Address> validators;
 
+  /**
+   * Instantiates a new Ibft extra data.
+   *
+   * @param vanityData the vanity data
+   * @param seals the seals
+   * @param proposerSeal the proposer seal
+   * @param validators the validators
+   */
   public IbftExtraData(
       final Bytes vanityData,
       final Collection<SECPSignature> seals,
@@ -67,6 +77,12 @@ public class IbftExtraData implements ParsedExtraData {
     this.validators = validators;
   }
 
+  /**
+   * Decode header and return ibft extra data.
+   *
+   * @param header the header
+   * @return the ibft extra data
+   */
   public static IbftExtraData decode(final BlockHeader header) {
     final Object inputExtraData = header.getParsedExtraData();
     if (inputExtraData instanceof IbftExtraData) {
@@ -78,6 +94,12 @@ public class IbftExtraData implements ParsedExtraData {
     return decodeRaw(header.getExtraData());
   }
 
+  /**
+   * Decode raw input and return ibft extra data.
+   *
+   * @param input the input
+   * @return the ibft extra data
+   */
   static IbftExtraData decodeRaw(final Bytes input) {
     checkArgument(
         input.size() > EXTRA_VANITY_LENGTH,
@@ -103,6 +125,11 @@ public class IbftExtraData implements ParsedExtraData {
     return data.isZero() ? null : SIGNATURE_ALGORITHM.get().decodeSignature(data);
   }
 
+  /**
+   * Encode extra data to bytes.
+   *
+   * @return the bytes
+   */
   public Bytes encode() {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
@@ -118,19 +145,39 @@ public class IbftExtraData implements ParsedExtraData {
     return Bytes.wrap(vanityData, encoder.encoded());
   }
 
+  /**
+   * Gets vanity data.
+   *
+   * @return the vanity data
+   */
   // Accessors
   public Bytes getVanityData() {
     return vanityData;
   }
 
+  /**
+   * Gets seals.
+   *
+   * @return the seals
+   */
   public Collection<SECPSignature> getSeals() {
     return seals;
   }
 
+  /**
+   * Gets proposer seal.
+   *
+   * @return the proposer seal
+   */
   public SECPSignature getProposerSeal() {
     return proposerSeal;
   }
 
+  /**
+   * Gets validators.
+   *
+   * @return the validators
+   */
   public Collection<Address> getValidators() {
     return validators;
   }

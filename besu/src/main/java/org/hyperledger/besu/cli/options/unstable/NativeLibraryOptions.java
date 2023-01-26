@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import picocli.CommandLine;
 
+/** The Native library CLI options. */
 public class NativeLibraryOptions {
 
   @CommandLine.Option(
@@ -45,19 +46,57 @@ public class NativeLibraryOptions {
       arity = "1")
   private final Boolean nativeBlake2bf = Boolean.TRUE;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xmodexp-native-enabled"},
+      description =
+          "Per default a native library is used for modexp. "
+              + "If the Java implementation should be used instead, this option must be set to false",
+      arity = "1")
+  private final Boolean nativeModExp = Boolean.TRUE;
+
+  /**
+   * Create native library options.
+   *
+   * @return the native library options
+   */
   public static NativeLibraryOptions create() {
     return new NativeLibraryOptions();
   }
 
+  /**
+   * Whether native secp is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
   public Boolean getNativeSecp() {
     return nativeSecp;
   }
 
+  /**
+   * Whether native Altbn128 is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
   public Boolean getNativeAltbn128() {
     return nativeAltbn128;
   }
 
+  /**
+   * Whether native blake2bf is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
   public Boolean getNativeBlake2bf() {
     return nativeBlake2bf;
+  }
+
+  /**
+   * Whether native mod exp is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
+  public Boolean getNativeModExp() {
+    return nativeModExp;
   }
 }

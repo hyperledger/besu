@@ -28,8 +28,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.RunLast;
 
+/** Besu bootstrap class. */
 public final class Besu {
 
+  /**
+   * The main entrypoint to Besu application
+   *
+   * @param args command line arguments.
+   */
   public static void main(final String... args) {
     final Logger logger = setupLogging();
 

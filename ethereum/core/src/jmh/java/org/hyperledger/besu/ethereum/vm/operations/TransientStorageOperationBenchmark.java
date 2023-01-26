@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.EIP1153GasCalculator;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -68,7 +68,7 @@ public class TransientStorageOperationBenchmark {
   @Setup
   public void prepare() throws Exception {
     operationBenchmarkHelper = OperationBenchmarkHelper.create();
-    EIP1153GasCalculator gasCalculator = new EIP1153GasCalculator();
+    CancunGasCalculator gasCalculator = new CancunGasCalculator();
     tstore = new TStoreOperation(gasCalculator);
     tload = new TLoadOperation(gasCalculator);
     frame = createMessageFrame(Address.fromHexString("0x18675309"));

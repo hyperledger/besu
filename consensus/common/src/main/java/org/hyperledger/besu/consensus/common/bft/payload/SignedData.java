@@ -26,12 +26,25 @@ import java.util.StringJoiner;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * The type Signed data.
+ *
+ * @param <M> the type parameter of Payload
+ */
 public class SignedData<M extends Payload> implements Authored {
 
   private final Address sender;
   private final SECPSignature signature;
   private final M unsignedPayload;
 
+  /**
+   * Create signed data.
+   *
+   * @param <T> the type parameter
+   * @param payload the payload
+   * @param signature the signature
+   * @return the signed data
+   */
   public static <T extends Payload> SignedData<T> create(
       final T payload, final SECPSignature signature) {
     final Hash msgHash = payload.hashForSignature();
@@ -49,10 +62,20 @@ public class SignedData<M extends Payload> implements Authored {
     return sender;
   }
 
+  /**
+   * Gets payload.
+   *
+   * @return the payload
+   */
   public M getPayload() {
     return unsignedPayload;
   }
 
+  /**
+   * Write to.
+   *
+   * @param output the output
+   */
   public void writeTo(final RLPOutput output) {
     output.startList();
     unsignedPayload.writeTo(output);
@@ -60,6 +83,11 @@ public class SignedData<M extends Payload> implements Authored {
     output.endList();
   }
 
+  /**
+   * Encode.
+   *
+   * @return the bytes
+   */
   public Bytes encode() {
     final BytesValueRLPOutput rlpEncode = new BytesValueRLPOutput();
     writeTo(rlpEncode);

@@ -29,13 +29,19 @@ import org.rocksdb.HistogramType;
 import org.rocksdb.Statistics;
 import org.rocksdb.TickerType;
 
+/** The Rocks db stats. */
 public class RocksDBStats {
 
+  /** The Labels. */
   static final List<String> LABELS = Collections.singletonList("quantile");
+  /** The Label 50. */
   static final List<String> LABEL_50 = Collections.singletonList("0.5");
+  /** The Label 95. */
   static final List<String> LABEL_95 = Collections.singletonList("0.95");
+  /** The Label 99. */
   static final List<String> LABEL_99 = Collections.singletonList("0.99");
 
+  /** The constant TICKERS. */
   // Tickers - RocksDB equivalent of counters
   static final TickerType[] TICKERS = {
     TickerType.BLOCK_CACHE_ADD,
@@ -134,6 +140,7 @@ public class RocksDBStats {
     TickerType.NUMBER_MULTIGET_KEYS_FOUND,
   };
 
+  /** The constant HISTOGRAMS. */
   // Histograms - treated as prometheus summaries
   static final HistogramType[] HISTOGRAMS = {
     HistogramType.DB_GET,
@@ -169,6 +176,13 @@ public class RocksDBStats {
     HistogramType.READ_NUM_MERGE_OPERANDS,
   };
 
+  /**
+   * Register rocks db metrics.
+   *
+   * @param stats the stats
+   * @param metricsSystem the metrics system
+   * @param category the category
+   */
   public static void registerRocksDBMetrics(
       final Statistics stats,
       final PrometheusMetricsSystem metricsSystem,

@@ -21,11 +21,17 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Eth synchronizer updater. */
 public class EthSynchronizerUpdater implements SynchronizerUpdater {
 
   private static final Logger LOG = LoggerFactory.getLogger(EthSynchronizerUpdater.class);
   private final EthPeers ethPeers;
 
+  /**
+   * Instantiates a new Eth synchronizer updater.
+   *
+   * @param ethPeers the eth peers
+   */
   public EthSynchronizerUpdater(final EthPeers ethPeers) {
     this.ethPeers = ethPeers;
   }

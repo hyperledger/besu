@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
+import java.util.Optional;
 
 public class BlockWithMetadata<T, O> {
 
@@ -26,6 +28,7 @@ public class BlockWithMetadata<T, O> {
   private final List<O> ommers;
   private final Difficulty totalDifficulty;
   private final int size;
+  private final Optional<List<Withdrawal>> withdrawals;
 
   /**
    * @param header The block header
@@ -40,11 +43,22 @@ public class BlockWithMetadata<T, O> {
       final List<O> ommers,
       final Difficulty totalDifficulty,
       final int size) {
+    this(header, transactions, ommers, totalDifficulty, size, Optional.empty());
+  }
+
+  public BlockWithMetadata(
+      final BlockHeader header,
+      final List<T> transactions,
+      final List<O> ommers,
+      final Difficulty totalDifficulty,
+      final int size,
+      final Optional<List<Withdrawal>> withdrawals) {
     this.header = header;
     this.transactions = transactions;
     this.ommers = ommers;
     this.totalDifficulty = totalDifficulty;
     this.size = size;
+    this.withdrawals = withdrawals;
   }
 
   public BlockHeader getHeader() {
@@ -65,5 +79,9 @@ public class BlockWithMetadata<T, O> {
 
   public int getSize() {
     return size;
+  }
+
+  public Optional<List<Withdrawal>> getWithdrawals() {
+    return withdrawals;
   }
 }

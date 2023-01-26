@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -29,15 +31,31 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.math.BigInteger;
 import java.util.Optional;
 
+/** The Merge protocol schedule. */
 public class MergeProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(1);
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
     return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
@@ -56,6 +74,43 @@ public class MergeProtocolSchedule {
             config.isQuorum(),
             EvmConfiguration.DEFAULT)
         .createProtocolSchedule();
+  }
+
+  /**
+   * Create timestamp schedule.
+   *
+   * @param config the config
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @return the timestamp schedule
+   */
+  public static TimestampSchedule createTimestamp(
+      final GenesisConfigOptions config,
+      final PrivacyParameters privacyParameters,
+      final boolean isRevertReasonEnabled) {
+    return new TimestampScheduleBuilder(
+            config,
+            DEFAULT_CHAIN_ID,
+            ProtocolSpecAdapters.create(
+                config.getShanghaiTime().orElse(0),
+                MergeProtocolSchedule::applyMergeSpecificModificationsForShanghai),
+            privacyParameters,
+            isRevertReasonEnabled,
+            config.isQuorum(),
+            EvmConfiguration.DEFAULT)
+        .createTimestampSchedule();
+  }
+
+  // TODO Withdrawals remove this as part of https://github.com/hyperledger/besu/issues/4788
+  private static ProtocolSpecBuilder applyMergeSpecificModificationsForShanghai(
+      final ProtocolSpecBuilder specBuilder) {
+
+    return specBuilder
+        .blockProcessorBuilder(MergeBlockProcessor::new)
+        .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
+        .blockReward(Wei.ZERO)
+        .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
+        .skipZeroBlockRewards(true);
   }
 
   private static ProtocolSpecBuilder applyMergeSpecificModifications(

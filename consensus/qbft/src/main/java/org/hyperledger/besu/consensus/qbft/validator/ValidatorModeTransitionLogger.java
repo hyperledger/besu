@@ -26,6 +26,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Validator mode transition logger. */
 public class ValidatorModeTransitionLogger {
 
   private static final Logger LOG = LoggerFactory.getLogger(ValidatorModeTransitionLogger.class);
@@ -33,11 +34,22 @@ public class ValidatorModeTransitionLogger {
   private final ForksSchedule<QbftConfigOptions> forksSchedule;
   private final Consumer<String> msgConsumer;
 
+  /**
+   * Instantiates a new Validator mode transition logger.
+   *
+   * @param forksSchedule the forks schedule
+   */
   public ValidatorModeTransitionLogger(final ForksSchedule<QbftConfigOptions> forksSchedule) {
     this.forksSchedule = forksSchedule;
     this.msgConsumer = LOG::info;
   }
 
+  /**
+   * Instantiates a new Validator mode transition logger.
+   *
+   * @param forksSchedule the forks schedule
+   * @param msgConsumer the msg consumer
+   */
   @VisibleForTesting
   ValidatorModeTransitionLogger(
       final ForksSchedule<QbftConfigOptions> forksSchedule, final Consumer<String> msgConsumer) {
@@ -45,6 +57,11 @@ public class ValidatorModeTransitionLogger {
     this.msgConsumer = msgConsumer;
   }
 
+  /**
+   * Log transition change.
+   *
+   * @param parentHeader the parent header
+   */
   public void logTransitionChange(final BlockHeader parentHeader) {
     final ForkSpec<QbftConfigOptions> currentForkSpec =
         forksSchedule.getFork(parentHeader.getNumber());

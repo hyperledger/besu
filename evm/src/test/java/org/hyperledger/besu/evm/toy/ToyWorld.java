@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class ToyWorld implements WorldUpdater {
 
   ToyWorld parent;
@@ -58,7 +60,16 @@ public class ToyWorld implements WorldUpdater {
 
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    ToyAccount account = new ToyAccount(address, nonce, balance);
+    return createAccount(null, address, nonce, balance, Bytes.EMPTY);
+  }
+
+  public EvmAccount createAccount(
+      final Account parentAccount,
+      final Address address,
+      final long nonce,
+      final Wei balance,
+      final Bytes code) {
+    ToyAccount account = new ToyAccount(parentAccount, address, nonce, balance, code);
     accounts.put(address, account);
     return account;
   }
@@ -68,7 +79,17 @@ public class ToyWorld implements WorldUpdater {
     if (accounts.containsKey(address)) {
       return accounts.get(address);
     } else if (parent != null) {
-      return parent.getAccount(address);
+      Account parentAccount = parent.getAccount(address);
+      if (parentAccount == null) {
+        return null;
+      } else {
+        return createAccount(
+            parentAccount,
+            parentAccount.getAddress(),
+            parentAccount.getNonce(),
+            parentAccount.getBalance(),
+            parentAccount.getCode());
+      }
     } else {
       return null;
     }
@@ -99,7 +120,9 @@ public class ToyWorld implements WorldUpdater {
 
   @Override
   public void commit() {
-    parent.accounts.putAll(accounts);
+    if (parent != null) {
+      parent.accounts.putAll(accounts);
+    }
   }
 
   @Override

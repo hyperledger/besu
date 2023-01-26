@@ -589,6 +589,7 @@ public class TransactionSimulatorTest {
         Optional.of(maxFeePerGas),
         Optional.of(maxPriorityFeePerGas),
         Wei.of(0),
-        Bytes.EMPTY);
+        Bytes.EMPTY,
+        Optional.empty());
   }
 }

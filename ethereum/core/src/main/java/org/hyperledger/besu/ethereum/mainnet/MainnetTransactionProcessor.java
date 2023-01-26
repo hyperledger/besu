@@ -37,6 +37,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
@@ -44,7 +45,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -377,6 +377,7 @@ public class MainnetTransactionProcessor {
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
+                .versionedHashes(transaction.getVersionedHashes())
                 .code(
                     contractCreationProcessor.getCodeFromEVM(
                         Hash.hash(initCodeBytes), initCodeBytes))
@@ -391,6 +392,7 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
+                .versionedHashes(transaction.getVersionedHashes())
                 .code(
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
@@ -400,8 +402,13 @@ public class MainnetTransactionProcessor {
 
       messageFrameStack.addFirst(initialFrame);
 
-      while (!messageFrameStack.isEmpty()) {
-        process(messageFrameStack.peekFirst(), operationTracer);
+      if (initialFrame.getCode().isValid()) {
+        while (!messageFrameStack.isEmpty()) {
+          process(messageFrameStack.peekFirst(), operationTracer);
+        }
+      } else {
+        initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        initialFrame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INVALID_CODE));
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -455,7 +462,7 @@ public class MainnetTransactionProcessor {
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
       if (clearEmptyAccounts) {
-        clearAccountsThatAreEmpty(worldState);
+        worldState.clearAccountsThatAreEmpty();
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -479,11 +486,6 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionValidator getTransactionValidator() {
     return transactionValidator;
-  }
-
-  private static void clearAccountsThatAreEmpty(final WorldUpdater worldState) {
-    new ArrayList<>(worldState.getTouchedAccounts())
-        .stream().filter(Account::isEmpty).forEach(a -> worldState.deleteAccount(a.getAddress()));
   }
 
   protected void process(final MessageFrame frame, final OperationTracer operationTracer) {

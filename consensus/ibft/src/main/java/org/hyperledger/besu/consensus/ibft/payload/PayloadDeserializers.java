@@ -20,8 +20,15 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+/** The Payload deserializers. */
 public class PayloadDeserializers {
 
+  /**
+   * Read signed proposal payload from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the signed data
+   */
   public static SignedData<ProposalPayload> readSignedProposalPayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
@@ -32,6 +39,12 @@ public class PayloadDeserializers {
     return from(unsignedMessageData, signature);
   }
 
+  /**
+   * Read signed prepare payload from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the signed data
+   */
   public static SignedData<PreparePayload> readSignedPreparePayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
@@ -42,6 +55,12 @@ public class PayloadDeserializers {
     return from(unsignedMessageData, signature);
   }
 
+  /**
+   * Read signed commit payload from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the signed data
+   */
   public static SignedData<CommitPayload> readSignedCommitPayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
@@ -52,6 +71,12 @@ public class PayloadDeserializers {
     return from(unsignedMessageData, signature);
   }
 
+  /**
+   * Read signed round change payload from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the signed data
+   */
   public static SignedData<RoundChangePayload> readSignedRoundChangePayloadFrom(
       final RLPInput rlpInput) {
 
@@ -63,11 +88,25 @@ public class PayloadDeserializers {
     return from(unsignedMessageData, signature);
   }
 
+  /**
+   * Create signed payload data from unsigned message data.
+   *
+   * @param <M> the type parameter
+   * @param unsignedMessageData the unsigned message data
+   * @param signature the signature
+   * @return the signed data
+   */
   protected static <M extends Payload> SignedData<M> from(
       final M unsignedMessageData, final SECPSignature signature) {
     return SignedData.create(unsignedMessageData, signature);
   }
 
+  /**
+   * Read signature from signed message.
+   *
+   * @param signedMessage the signed message
+   * @return the secp signature
+   */
   protected static SECPSignature readSignature(final RLPInput signedMessage) {
     return signedMessage.readBytes(SignatureAlgorithmFactory.getInstance()::decodeSignature);
   }

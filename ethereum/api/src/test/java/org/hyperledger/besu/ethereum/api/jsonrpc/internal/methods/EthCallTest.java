@@ -20,8 +20,10 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -64,9 +66,13 @@ public class EthCallTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
 
+  @Mock private BlockHeader blockHeader;
+
   @Before
   public void setUp() {
     method = new EthCall(blockchainQueries, transactionSimulator);
+    blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
   }
 
   @Test
@@ -81,10 +87,11 @@ public class EthCallTest {
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
-        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
 
     final JsonRpcResponse response = method.response(request);
 
@@ -95,7 +102,7 @@ public class EthCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(null, null, null, null, null, null, null, null, null);
+        new JsonCallParameter(null, null, null, null, null, null, null, null, Boolean.FALSE, null);
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -103,9 +110,6 @@ public class EthCallTest {
     mockTransactionProcessorSuccessResult(Bytes.of());
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
-        .thenReturn(Optional.of(mock(BlockHeader.class)));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -121,14 +125,17 @@ public class EthCallTest {
     mockTransactionProcessorSuccessResult(Bytes.of(1));
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
-        .thenReturn(Optional.of(mock(BlockHeader.class)));
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
 
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionSimulator).process(eq(callParameter()), any(), any(), any());
+    verify(blockchainQueries, atLeastOnce()).getBlockchain();
+    verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
@@ -136,14 +143,15 @@ public class EthCallTest {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
-        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
 
     method.response(request);
 
-    verify(blockchainQueries).getBlockHeaderByHash(eq(Hash.ZERO));
+    verify(blockchainQueries, atLeastOnce()).getBlockchain();
     verify(transactionSimulator).process(any(), any(), any(), any());
   }
 
@@ -151,12 +159,38 @@ public class EthCallTest {
   public void shouldUseCorrectBlockNumberWhenEarliest() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "earliest");
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
     when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
     method.response(request);
 
     verify(blockchainQueries).getBlockHeaderByHash(eq(Hash.ZERO));
+    verify(transactionSimulator).process(any(), any(), any(), any());
+  }
+
+  @Test
+  public void shouldUseCorrectBlockNumberWhenSafe() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "safe");
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
+    when(blockchainQueries.safeBlockHeader()).thenReturn(Optional.of(blockHeader));
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
+    method.response(request);
+
+    verify(blockchainQueries).getBlockHeaderByHash(Hash.ZERO);
+    verify(blockchainQueries).safeBlockHeader();
+    verify(transactionSimulator).process(any(), any(), any(), any());
+  }
+
+  @Test
+  public void shouldUseCorrectBlockNumberWhenFinalized() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "finalized");
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
+    when(blockchainQueries.finalizedBlockHeader()).thenReturn(Optional.of(blockHeader));
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
+    method.response(request);
+
+    verify(blockchainQueries).getBlockHeaderByHash(Hash.ZERO);
+    verify(blockchainQueries).finalizedBlockHeader();
     verify(transactionSimulator).process(any(), any(), any(), any());
   }
 
@@ -181,67 +215,66 @@ public class EthCallTest {
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, BLOCK_NOT_FOUND);
 
-    JsonRpcResponse response = method.response(request);
+    final JsonRpcResponse response = method.response(request);
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verify(blockchainQueries).headBlockNumber();
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZero() {
-    JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.empty(), true);
+  public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZero() {
+    final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), true);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
-    JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), true);
+  public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
+    final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZero() {
-    JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.empty(), false);
+  public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZero() {
+    final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), false);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
-    JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), false);
+  public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
+    final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenFeesAreZero() {
-    JsonCallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), true);
+  public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenFeesAreZero() {
+    final JsonCallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenFeesAreZero() {
-    JsonCallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), false);
+  public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenFeesAreZero() {
+    final JsonCallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
-  private void internalAutoSelectIsAllowedExeecdBalance(
+  private void internalAutoSelectIsAllowedExceedingBalance(
       final JsonCallParameter callParameter,
       final Optional<Wei> baseFee,
-      final boolean isAllowedExeedingBalance) {
+      final boolean isAllowedExceedingBalance) {
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
 
-    BlockHeader blockHeader = mock(BlockHeader.class);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(baseFee);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
 
     method.response(request);
 
-    TransactionValidationParams transactionValidationParams =
+    final TransactionValidationParams transactionValidationParams =
         ImmutableTransactionValidationParams.builder()
             .from(TransactionValidationParams.transactionSimulator())
-            .isAllowExceedingBalance(isAllowedExeedingBalance)
+            .isAllowExceedingBalance(isAllowedExceedingBalance)
             .build();
 
     verify(transactionSimulator).process(any(), eq(transactionValidationParams), any(), any());
@@ -262,6 +295,7 @@ public class EthCallTest {
         maxPriorityFeesPerGas,
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         null);
   }
 

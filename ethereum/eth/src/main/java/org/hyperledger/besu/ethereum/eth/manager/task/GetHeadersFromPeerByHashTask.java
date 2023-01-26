@@ -91,7 +91,11 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          LOG.debug("Requesting {} headers from peer {}.", count, peer);
+          LOG.debug(
+              "Requesting {} headers (hash {}...) from peer {}.",
+              count,
+              referenceHash.slice(0, 6),
+              peer);
           return peer.getHeadersByHash(referenceHash, count, skip, reverse);
         });
   }

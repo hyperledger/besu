@@ -15,4 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-public interface SnapshotMutableWorldState extends MutableWorldState, AutoCloseable {}
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+
+public interface SnapshotMutableWorldState extends MutableWorldState, AutoCloseable {
+  BonsaiWorldStateKeyValueStorage getWorldStateStorage();
+}

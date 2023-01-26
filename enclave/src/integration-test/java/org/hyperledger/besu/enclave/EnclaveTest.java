@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.TesseraTestHarness;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
@@ -47,11 +48,11 @@ public class EnclaveTest {
 
   private static final String PAYLOAD = "a wonderful transaction";
   private static final String MOCK_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
-  private static Enclave enclave;
+  private Enclave enclave;
   private Vertx vertx;
   private EnclaveFactory factory;
 
-  private static TesseraTestHarness testHarness;
+  private TesseraTestHarness testHarness;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -62,7 +63,10 @@ public class EnclaveTest {
         TesseraTestHarnessFactory.create(
             "enclave",
             Files.createTempDirectory(folder, "enclave"),
-            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_0.key"),
+            new EnclaveKeyConfiguration(
+                new String[] {"enclave_key_0.pub"},
+                new String[] {"enclave_key_0.key"},
+                EnclaveEncryptorType.NOOP),
             Optional.empty());
 
     testHarness.start();

@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -66,5 +69,22 @@ public class ProtocolScheduleTest {
     protocolSchedule.putMilestone(0, spec1);
     protocolSchedule.putMilestone(0, spec2);
     assertThat(protocolSchedule.getByBlockNumber(0)).isSameAs(spec2);
+  }
+
+  @Test
+  public void getByBlockHeader_defaultMethodShouldUseGetByBlockNumber() {
+    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+
+    final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(CHAIN_ID);
+    protocolSchedule.putMilestone(0, spec1);
+    protocolSchedule.putMilestone(1, spec2);
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getNumber()).thenReturn(1L);
+
+    final ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
+
+    assertThat(spec).isEqualTo(spec2);
   }
 }

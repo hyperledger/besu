@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
+/** The Qbft round factory. */
 public class QbftRoundFactory {
 
   private final BftFinalState finalState;
@@ -39,6 +40,17 @@ public class QbftRoundFactory {
   private final MessageFactory messageFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Qbft round factory.
+   *
+   * @param finalState the final state
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param minedBlockObservers the mined block observers
+   * @param messageValidatorFactory the message validator factory
+   * @param messageFactory the message factory
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public QbftRoundFactory(
       final BftFinalState finalState,
       final ProtocolContext protocolContext,
@@ -57,6 +69,13 @@ public class QbftRoundFactory {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
+  /**
+   * Create new round qbft round.
+   *
+   * @param parentHeader the parent header
+   * @param round the round
+   * @return the qbft round
+   */
   public QbftRound createNewRound(final BlockHeader parentHeader, final int round) {
     long nextBlockHeight = parentHeader.getNumber() + 1;
     final ConsensusRoundIdentifier roundIdentifier =
@@ -71,6 +90,13 @@ public class QbftRoundFactory {
     return createNewRoundWithState(parentHeader, roundState);
   }
 
+  /**
+   * Create new Qbft round with state.
+   *
+   * @param parentHeader the parent header
+   * @param roundState the round state
+   * @return the qbft round
+   */
   public QbftRound createNewRoundWithState(
       final BlockHeader parentHeader, final RoundState roundState) {
     final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();

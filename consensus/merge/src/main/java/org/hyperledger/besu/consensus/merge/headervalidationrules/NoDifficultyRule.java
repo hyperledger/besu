@@ -26,6 +26,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The No difficulty rule. */
 public class NoDifficultyRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoDifficultyRule.class);

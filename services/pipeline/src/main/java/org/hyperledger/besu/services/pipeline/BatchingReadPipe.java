@@ -21,6 +21,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * The Batching read pipe.
+ *
+ * @param <T> the type parameter
+ */
 public class BatchingReadPipe<T> implements ReadPipe<List<T>> {
 
   private final ReadPipe<T> input;
@@ -28,11 +33,26 @@ public class BatchingReadPipe<T> implements ReadPipe<List<T>> {
   private final Counter batchCounter;
   private final Function<List<T>, Integer> stopBatchCondition;
 
+  /**
+   * Instantiates a new Batching read pipe.
+   *
+   * @param input the input
+   * @param maximumBatchSize the maximum batch size
+   * @param batchCounter the batch counter
+   */
   public BatchingReadPipe(
       final ReadPipe<T> input, final int maximumBatchSize, final Counter batchCounter) {
     this(input, maximumBatchSize, batchCounter, ts -> maximumBatchSize - ts.size());
   }
 
+  /**
+   * Instantiates a new Batching read pipe.
+   *
+   * @param input the input
+   * @param maximumBatchSize the maximum batch size
+   * @param batchCounter the batch counter
+   * @param batchEndCondition the batch end condition
+   */
   public BatchingReadPipe(
       final ReadPipe<T> input,
       final int maximumBatchSize,

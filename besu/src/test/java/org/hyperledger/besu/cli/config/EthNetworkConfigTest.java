@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SHANDONG_BOOTSTRAP_NODES;
 
 import java.math.BigInteger;
 
@@ -58,19 +57,27 @@ public class EthNetworkConfigTest {
   }
 
   @Test
-  public void testDefaultShandongConfig() {
-    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.SHANDONG);
-    assertThat(config.getDnsDiscoveryUrl()).isNull();
-    assertThat(config.getBootNodes()).isEqualTo(SHANDONG_BOOTSTRAP_NODES);
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337903));
-  }
-
-  @Test
   public void testDefaultDevConfig() {
     EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.DEV);
     assertThat(config.getDnsDiscoveryUrl()).isNull();
     assertThat(config.getBootNodes()).isEmpty();
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2018));
+  }
+
+  @Test
+  public void testDefaultFutureConfig() {
+    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.FUTURE_EIPS);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getBootNodes()).isEmpty();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2022));
+  }
+
+  @Test
+  public void testDefaultExperimentalConfig() {
+    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.EXPERIMENTAL_EIPS);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getBootNodes()).isEmpty();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2023));
   }
 
   @Test

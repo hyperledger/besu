@@ -18,17 +18,35 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+/** The interface Operation. */
 public interface Operation {
 
+  /** The Operation result. */
   class OperationResult {
+    /** The Gas cost. */
     final long gasCost;
+    /** The Halt reason. */
     final ExceptionalHaltReason haltReason;
+    /** The increment. */
     final int pcIncrement;
 
+    /**
+     * Instantiates a new Operation result.
+     *
+     * @param gasCost the gas cost
+     * @param haltReason the halt reason
+     */
     public OperationResult(final long gasCost, final ExceptionalHaltReason haltReason) {
       this(gasCost, haltReason, 1);
     }
 
+    /**
+     * Instantiates a new Operation result.
+     *
+     * @param gasCost the gas cost
+     * @param haltReason the halt reason
+     * @param pcIncrement the increment
+     */
     public OperationResult(
         final long gasCost, final ExceptionalHaltReason haltReason, final int pcIncrement) {
       this.gasCost = gasCost;
@@ -36,14 +54,29 @@ public interface Operation {
       this.pcIncrement = pcIncrement;
     }
 
+    /**
+     * Gets gas cost.
+     *
+     * @return the gas cost
+     */
     public long getGasCost() {
       return gasCost;
     }
 
+    /**
+     * Gets halt reason.
+     *
+     * @return the halt reason
+     */
     public ExceptionalHaltReason getHaltReason() {
       return haltReason;
     }
 
+    /**
+     * Gets increment.
+     *
+     * @return the increment
+     */
     public int getPcIncrement() {
       return pcIncrement;
     }
@@ -63,15 +96,33 @@ public interface Operation {
    */
   OperationResult execute(final MessageFrame frame, final EVM evm);
 
+  /**
+   * Gets opcode.
+   *
+   * @return the opcode
+   */
   int getOpcode();
 
+  /**
+   * Gets name.
+   *
+   * @return the name
+   */
   String getName();
 
+  /**
+   * Gets stack items consumed.
+   *
+   * @return the stack items consumed
+   */
   int getStackItemsConsumed();
 
+  /**
+   * Gets stack items produced.
+   *
+   * @return the stack items produced
+   */
   int getStackItemsProduced();
-
-  int getOpSize();
 
   /**
    * Determines whether this operation has been virtually added to the contract code. For instance

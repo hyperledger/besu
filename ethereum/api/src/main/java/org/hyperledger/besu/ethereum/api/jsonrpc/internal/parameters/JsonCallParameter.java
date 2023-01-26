@@ -19,7 +19,9 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.json.HexLongDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.evm.AccessListEntry;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -49,7 +51,8 @@ public class JsonCallParameter extends CallParameter {
       @JsonProperty("value") final Wei value,
       @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
           final Bytes payload,
-      @JsonProperty("strict") final Boolean strict) {
+      @JsonProperty("strict") final Boolean strict,
+      @JsonProperty("accessList") final List<AccessListEntry> accessList) {
     super(
         from,
         to,
@@ -58,7 +61,8 @@ public class JsonCallParameter extends CallParameter {
         Optional.ofNullable(maxPriorityFeePerGas),
         Optional.ofNullable(maxFeePerGas),
         value,
-        payload);
+        payload,
+        Optional.ofNullable(accessList));
     this.strict = Optional.ofNullable(strict);
   }
 

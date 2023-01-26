@@ -20,11 +20,13 @@ import org.rocksdb.RocksDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The RocksDb util. */
 public class RocksDbUtil {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDbUtil.class);
 
   private RocksDbUtil() {}
 
+  /** Load native library. */
   public static void loadNativeLibrary() {
     try {
       RocksDB.loadLibrary();

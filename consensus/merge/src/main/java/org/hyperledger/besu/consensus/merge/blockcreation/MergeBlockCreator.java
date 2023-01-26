@@ -23,7 +23,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collections;
@@ -33,13 +34,28 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Merge block creator. */
 public class MergeBlockCreator extends AbstractBlockCreator {
 
+  /**
+   * Instantiates a new Merge block creator.
+   *
+   * @param coinbase the coinbase
+   * @param targetGasLimitSupplier the target gas limit supplier
+   * @param extraDataCalculator the extra data calculator
+   * @param pendingTransactions the pending transactions
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param minTransactionGasPrice the min transaction gas price
+   * @param miningBeneficiary the mining beneficiary
+   * @param minBlockOccupancyRatio the min block occupancy ratio
+   * @param parentHeader the parent header
+   */
   MergeBlockCreator(
       final Address coinbase,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
@@ -59,13 +75,24 @@ public class MergeBlockCreator extends AbstractBlockCreator {
         parentHeader);
   }
 
+  /**
+   * Create block and return block creation result.
+   *
+   * @param maybeTransactions the maybe transactions
+   * @param random the random
+   * @param timestamp the timestamp
+   * @param withdrawals optional list of withdrawals
+   * @return the block creation result
+   */
   public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Bytes32 random,
-      final long timestamp) {
+      final long timestamp,
+      final Optional<List<Withdrawal>> withdrawals) {
     return createBlock(
         maybeTransactions,
         Optional.of(Collections.emptyList()),
+        withdrawals,
         Optional.of(random),
         timestamp,
         false);

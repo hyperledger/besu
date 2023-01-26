@@ -53,7 +53,7 @@ public class TransactionTest {
   private static MainnetTransactionValidator transactionValidator(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
         .getByName(name)
-        .getByBlockNumber(0)
+        .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
         .getTransactionValidator();
   }
 
@@ -61,7 +61,7 @@ public class TransactionTest {
 
   public static Stream<Arguments> getTestParametersForConfig() {
     return JsonTestParameters.create(TransactionTestCaseSpec.class)
-        .generator((name, spec, collector) -> collector.add(name, spec, true))
+        .generator((name, fullPath, spec, collector) -> collector.add(name, fullPath, spec, true))
         .generate(TEST_CONFIG_FILE_DIR_PATH).stream().map(params -> Arguments.of(params[0], params[1]));
   }
 

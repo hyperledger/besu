@@ -20,10 +20,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The PC operation. */
 public class PCOperation extends AbstractFixedCostOperation {
 
+  /**
+   * Instantiates a new Pc operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public PCOperation(final GasCalculator gasCalculator) {
-    super(0x58, "PC", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x58, "PC", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

@@ -44,6 +44,7 @@ import org.bouncycastle.util.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Cms validator. */
 public class CmsValidator {
 
   static {
@@ -56,6 +57,11 @@ public class CmsValidator {
 
   private final KeyStoreWrapper truststore;
 
+  /**
+   * Instantiates a new Cms validator.
+   *
+   * @param truststore the truststore
+   */
   public CmsValidator(final KeyStoreWrapper truststore) {
     this.truststore = truststore;
   }

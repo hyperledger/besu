@@ -19,8 +19,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.time.Instant;
@@ -41,6 +43,8 @@ public class BlockHeaderBuilder {
   private Hash stateRoot;
 
   private Hash transactionsRoot;
+
+  private Hash withdrawalsRoot = null;
 
   private Hash receiptsRoot;
 
@@ -68,8 +72,30 @@ public class BlockHeaderBuilder {
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
 
+  private DataGas excessDataGas = null;
+
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
+  }
+
+  public static BlockHeaderBuilder createDefault() {
+    return new BlockHeaderBuilder()
+        .parentHash(Hash.EMPTY)
+        .coinbase(Address.ZERO)
+        .difficulty(Difficulty.ONE)
+        .number(0)
+        .gasLimit(30_000_000)
+        .timestamp(0)
+        .ommersHash(Hash.EMPTY_LIST_HASH)
+        .stateRoot(Hash.EMPTY_TRIE_HASH)
+        .transactionsRoot(Hash.EMPTY)
+        .receiptsRoot(Hash.EMPTY)
+        .logsBloom(LogsBloomFilter.empty())
+        .gasUsed(0)
+        .extraData(Bytes.EMPTY)
+        .mixHash(Hash.EMPTY)
+        .nonce(0)
+        .blockHeaderFunctions(new MainnetBlockHeaderFunctions());
   }
 
   public static BlockHeaderBuilder fromHeader(final BlockHeader header) {
@@ -90,7 +116,9 @@ public class BlockHeaderBuilder {
         .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
         .nonce(header.getNonce())
-        .prevRandao(header.getPrevRandao().orElse(null));
+        .prevRandao(header.getPrevRandao().orElse(null))
+        .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
+        .excessDataGas(header.getExcessDataGas().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -111,6 +139,8 @@ public class BlockHeaderBuilder {
             .extraData(fromBuilder.extraData)
             .baseFee(fromBuilder.baseFee)
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
+            .withdrawalsRoot(fromBuilder.withdrawalsRoot)
+            .excessDataGas(fromBuilder.excessDataGas)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -136,6 +166,8 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         nonce.getAsLong(),
+        withdrawalsRoot,
+        excessDataGas,
         blockHeaderFunctions);
   }
 
@@ -150,7 +182,8 @@ public class BlockHeaderBuilder {
         gasLimit,
         timestamp,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        excessDataGas);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -171,7 +204,9 @@ public class BlockHeaderBuilder {
         timestamp,
         extraData,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        withdrawalsRoot,
+        excessDataGas);
   }
 
   private void validateBlockHeader() {
@@ -211,6 +246,7 @@ public class BlockHeaderBuilder {
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    processableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     return this;
   }
 
@@ -231,6 +267,8 @@ public class BlockHeaderBuilder {
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
+    sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     return this;
   }
 
@@ -338,6 +376,17 @@ public class BlockHeaderBuilder {
     if (prevRandao != null) {
       this.mixHashOrPrevRandao = prevRandao;
     }
+    return this;
+  }
+
+  public BlockHeaderBuilder withdrawalsRoot(final Hash hash) {
+    this.withdrawalsRoot = hash;
+    return this;
+  }
+
+  public BlockHeaderBuilder excessDataGas(final DataGas excessDataGas) {
+    checkArgument(gasLimit >= 0L);
+    this.excessDataGas = excessDataGas;
     return this;
   }
 }

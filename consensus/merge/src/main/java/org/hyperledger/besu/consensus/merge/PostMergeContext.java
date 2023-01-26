@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
@@ -36,14 +37,19 @@ import com.google.common.collect.EvictingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Post merge context. */
 public class PostMergeContext implements MergeContext {
   private static final Logger LOG = LoggerFactory.getLogger(PostMergeContext.class);
+  /** The Max blocks in progress. */
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
   private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
 
-  private static final Comparator<Block> compareByGasUsedDesc =
-      Comparator.comparingLong((Block block) -> block.getHeader().getGasUsed()).reversed();
+  private static final Comparator<BlockWithReceipts> compareByGasUsedDesc =
+      Comparator.comparingLong(
+              (BlockWithReceipts blockWithReceipts) ->
+                  blockWithReceipts.getBlock().getHeader().getGasUsed())
+          .reversed();
 
   private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
@@ -63,18 +69,35 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
+  private boolean isCheckpointPostMergeSync;
 
+  // TODO: cleanup - isChainPruningEnabled will not be required after
+  // https://github.com/hyperledger/besu/pull/4703 is merged.
+  private boolean isChainPruningEnabled = false;
+
+  /** Instantiates a new Post merge context. */
   @VisibleForTesting
   PostMergeContext() {
     this(Difficulty.ZERO);
   }
 
+  /**
+   * Instantiates a new Post merge context.
+   *
+   * @param difficulty the difficulty
+   */
   @VisibleForTesting
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
+    this.isCheckpointPostMergeSync = false;
   }
 
+  /**
+   * Get post merge context.
+   *
+   * @return the post merge context
+   */
   public static PostMergeContext get() {
     if (singleton.get() == null) {
       singleton.compareAndSet(null, new PostMergeContext());
@@ -135,7 +158,9 @@ public class PostMergeContext implements MergeContext {
     return Optional.ofNullable(syncState.get()).map(s -> !s.isInSync()).orElse(Boolean.TRUE)
         // this is necessary for when we do not have a sync target yet, like at startup.
         // not being stopped at ttd implies we are syncing.
-        && !syncState.get().hasReachedTerminalDifficulty().orElse(Boolean.FALSE);
+        && Optional.ofNullable(syncState.get())
+            .map(s -> !(s.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)))
+            .orElse(Boolean.TRUE);
   }
 
   @Override
@@ -205,39 +230,43 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void putPayloadById(final PayloadIdentifier payloadId, final Block newBlock) {
+  public void putPayloadById(
+      final PayloadIdentifier payloadId, final BlockWithReceipts newBlockWithReceipts) {
     synchronized (blocksInProgress) {
-      final Optional<Block> maybeCurrBestBlock = retrieveBlockById(payloadId);
+      final Optional<BlockWithReceipts> maybeCurrBestBlock = retrieveBlockById(payloadId);
 
       maybeCurrBestBlock.ifPresentOrElse(
           currBestBlock -> {
-            if (compareByGasUsedDesc.compare(newBlock, currBestBlock) < 0) {
+            if (compareByGasUsedDesc.compare(newBlockWithReceipts, currBestBlock) < 0) {
               debugLambda(
                   LOG,
                   "New proposal for payloadId {} {} is better than the previous one {}",
                   payloadId::toString,
-                  () -> logBlockProposal(newBlock),
-                  () -> logBlockProposal(currBestBlock));
+                  () -> logBlockProposal(newBlockWithReceipts.getBlock()),
+                  () -> logBlockProposal(currBestBlock.getBlock()));
               blocksInProgress.removeAll(
                   retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
-              blocksInProgress.add(new PayloadTuple(payloadId, newBlock));
+              blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts));
             }
           },
-          () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlock)));
+          () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts)));
 
       debugLambda(
           LOG,
           "Current best proposal for payloadId {} {}",
           payloadId::toString,
-          () -> retrieveBlockById(payloadId).map(bb -> logBlockProposal(bb)).orElse("N/A"));
+          () ->
+              retrieveBlockById(payloadId)
+                  .map(bb -> logBlockProposal(bb.getBlock()))
+                  .orElse("N/A"));
     }
   }
 
   @Override
-  public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
+  public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
     synchronized (blocksInProgress) {
       return retrieveTuplesById(payloadId)
-          .map(tuple -> tuple.block)
+          .map(tuple -> tuple.blockWithReceipts)
           .sorted(compareByGasUsedDesc)
           .findFirst();
     }
@@ -257,12 +286,47 @@ public class PostMergeContext implements MergeContext {
   }
 
   private static class PayloadTuple {
+    /** The Payload identifier. */
     final PayloadIdentifier payloadIdentifier;
-    final Block block;
+    /** The Block with receipts. */
+    final BlockWithReceipts blockWithReceipts;
 
-    PayloadTuple(final PayloadIdentifier payloadIdentifier, final Block block) {
+    /**
+     * Instantiates a new Payload tuple.
+     *
+     * @param payloadIdentifier the payload identifier
+     * @param blockWithReceipts the block with receipts
+     */
+    PayloadTuple(
+        final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts) {
       this.payloadIdentifier = payloadIdentifier;
-      this.block = block;
+      this.blockWithReceipts = blockWithReceipts;
     }
+  }
+
+  @Override
+  public void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {
+    this.isChainPruningEnabled = isChainPruningEnabled;
+  }
+
+  @Override
+  public boolean isChainPruningEnabled() {
+    return isChainPruningEnabled;
+  }
+
+  /**
+   * Sets checkpoint post merge sync.
+   *
+   * @param isCheckpointPostMergeSync the is checkpoint post merge sync
+   * @return the checkpoint post merge sync
+   */
+  public PostMergeContext setCheckpointPostMergeSync(final boolean isCheckpointPostMergeSync) {
+    this.isCheckpointPostMergeSync = isCheckpointPostMergeSync;
+    return this;
+  }
+
+  @Override
+  public boolean isCheckpointPostMergeSync() {
+    return this.isCheckpointPostMergeSync;
   }
 }

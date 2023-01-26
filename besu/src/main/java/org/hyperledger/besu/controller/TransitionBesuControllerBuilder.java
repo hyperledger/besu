@@ -26,10 +26,12 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -70,12 +72,20 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Transition besu controller builder. */
 public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   private final BesuControllerBuilder preMergeBesuControllerBuilder;
   private final MergeBesuControllerBuilder mergeBesuControllerBuilder;
 
   private static final Logger LOG = LoggerFactory.getLogger(TransitionBesuControllerBuilder.class);
+  private TransitionProtocolSchedule transitionProtocolSchedule;
 
+  /**
+   * Instantiates a new Transition besu controller builder.
+   *
+   * @param preMergeBesuControllerBuilder the pre merge besu controller builder
+   * @param mergeBesuControllerBuilder the merge besu controller builder
+   */
   public TransitionBesuControllerBuilder(
       final BesuControllerBuilder preMergeBesuControllerBuilder,
       final MergeBesuControllerBuilder mergeBesuControllerBuilder) {
@@ -165,9 +175,26 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    return new TransitionProtocolSchedule(
-        preMergeBesuControllerBuilder.createProtocolSchedule(),
-        mergeBesuControllerBuilder.createProtocolSchedule());
+    transitionProtocolSchedule =
+        new TransitionProtocolSchedule(
+            preMergeBesuControllerBuilder.createProtocolSchedule(),
+            mergeBesuControllerBuilder.createProtocolSchedule(),
+            PostMergeContext.get(),
+            mergeBesuControllerBuilder.createTimestampProtocolSchedule());
+    return transitionProtocolSchedule;
+  }
+
+  @Override
+  protected ProtocolContext createProtocolContext(
+      final MutableBlockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule,
+      final ConsensusContextFactory consensusContextFactory) {
+    final ProtocolContext protocolContext =
+        super.createProtocolContext(
+            blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+    transitionProtocolSchedule.setProtocolContext(protocolContext);
+    return protocolContext;
   }
 
   @Override

@@ -27,9 +27,15 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Bft block hashing. */
 public class BftBlockHashing {
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Bft block hashing.
+   *
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public BftBlockHashing(final BftExtraDataCodec bftExtraDataCodec) {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
@@ -53,6 +59,12 @@ public class BftBlockHashing {
             bftExtraDataCodec));
   }
 
+  /**
+   * Calculate data hash for committed seal hash.
+   *
+   * @param header the header
+   * @return the hash
+   */
   public Hash calculateDataHashForCommittedSeal(final BlockHeader header) {
     final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
     return Hash.hash(
@@ -94,6 +106,14 @@ public class BftBlockHashing {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Serialize header bytes.
+   *
+   * @param header the header
+   * @param extraDataSerializer the extra data serializer
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the bytes
+   */
   public static Bytes serializeHeader(
       final BlockHeader header,
       final Supplier<Bytes> extraDataSerializer,

@@ -28,20 +28,42 @@ public class Fq implements FieldElement<Fq> {
 
   private static final BigInteger TWO = BigInteger.valueOf(2);
 
+  /**
+   * fq that represents 0.
+   *
+   * @return the fq
+   */
   public static Fq zero() {
     return create(0);
   }
 
+  /**
+   * fq that represents 1.
+   *
+   * @return the fq
+   */
   public static Fq one() {
     return create(1);
   }
 
   private final BigInteger n;
 
+  /**
+   * Create fq.
+   *
+   * @param n the n
+   * @return the fq
+   */
   public static Fq create(final BigInteger n) {
     return new Fq(n);
   }
 
+  /**
+   * Create fq.
+   *
+   * @param n the n
+   * @return the fq
+   */
   static Fq create(final long n) {
     return create(BigInteger.valueOf(n));
   }
@@ -50,6 +72,11 @@ public class Fq implements FieldElement<Fq> {
     this.n = n;
   }
 
+  /**
+   * To bytes.
+   *
+   * @return the bytes
+   */
   public Bytes toBytes() {
     return Bytes.wrap(n.toByteArray()).trimLeadingZeros();
   }

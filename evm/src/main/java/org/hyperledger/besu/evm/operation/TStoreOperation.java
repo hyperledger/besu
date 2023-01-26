@@ -24,8 +24,11 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class TStoreOperation extends AbstractOperation {
 
+  protected final OperationResult illegalStateChangeResponse =
+      new OperationResult(0L, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+
   public TStoreOperation(final GasCalculator gasCalculator) {
-    super(0xb4, "TSTORE", 2, 0, 1, gasCalculator);
+    super(0xb4, "TSTORE", 2, 0, gasCalculator);
   }
 
   @Override
@@ -37,7 +40,7 @@ public class TStoreOperation extends AbstractOperation {
     final MutableAccount account =
         frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getMutable();
     if (account == null) {
-      return ILLEGAL_STATE_CHANGE;
+      return illegalStateChangeResponse;
     }
 
     final long cost = gasCalculator().getTransientStoreOperationGasCost();

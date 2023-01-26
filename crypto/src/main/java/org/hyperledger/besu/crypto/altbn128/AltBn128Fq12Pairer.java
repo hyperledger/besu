@@ -33,6 +33,13 @@ public class AltBn128Fq12Pairer {
       new BigInteger(
           "21888242871839275222246405745257275088548364400416034343698204186575808495617");
 
+  /**
+   * Pair fq 12.
+   *
+   * @param p the p
+   * @param q the q
+   * @return the fq 12
+   */
   public static Fq12 pair(final AltBn128Point p, final AltBn128Fq2Point q) {
     return millerLoop(cast(p), twist(q));
   }
@@ -78,6 +85,12 @@ public class AltBn128Fq12Pairer {
     return f;
   }
 
+  /**
+   * Finalize fq 12.
+   *
+   * @param f the f
+   * @return the fq 12
+   */
   public static Fq12 finalize(final Fq12 f) {
     return f.power(FieldElement.FIELD_MODULUS.pow(12).subtract(BigInteger.ONE).divide(CURVE_ORDER));
   }

@@ -57,7 +57,7 @@ public class ProtocolSpecBuilder {
   private Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
-  private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
+  private Function<HeaderBasedProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
   private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
       precompileContractRegistryBuilder;
@@ -72,6 +72,10 @@ public class ProtocolSpecBuilder {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
+  private WithdrawalsValidator withdrawalsValidator =
+      new WithdrawalsValidator.ProhibitedWithdrawals();
+  private WithdrawalsProcessor withdrawalsProcessor;
+
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -137,7 +141,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder blockBodyValidatorBuilder(
-      final Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder) {
+      final Function<HeaderBasedProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder) {
     this.blockBodyValidatorBuilder = blockBodyValidatorBuilder;
     return this;
   }
@@ -243,7 +247,17 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
+  public ProtocolSpecBuilder withdrawalsValidator(final WithdrawalsValidator withdrawalsValidator) {
+    this.withdrawalsValidator = withdrawalsValidator;
+    return this;
+  }
+
+  public ProtocolSpecBuilder withdrawalsProcessor(final WithdrawalsProcessor withdrawalsProcessor) {
+    this.withdrawalsProcessor = withdrawalsProcessor;
+    return this;
+  }
+
+  public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
@@ -288,54 +302,23 @@ public class ProtocolSpecBuilder {
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
     final BlockHeaderValidator blockHeaderValidator =
-        blockHeaderValidatorBuilder
-            .apply(feeMarket)
-            .difficultyCalculator(difficultyCalculator)
-            .build();
+        createBlockHeaderValidator(blockHeaderValidatorBuilder);
 
     final BlockHeaderValidator ommerHeaderValidator =
-        ommerHeaderValidatorBuilder
-            .apply(feeMarket)
-            .difficultyCalculator(difficultyCalculator)
-            .build();
+        createBlockHeaderValidator(ommerHeaderValidatorBuilder);
+
     final BlockBodyValidator blockBodyValidator = blockBodyValidatorBuilder.apply(protocolSchedule);
 
-    BlockProcessor blockProcessor =
-        blockProcessorBuilder.apply(
-            transactionProcessor,
-            transactionReceiptFactory,
-            blockReward,
-            miningBeneficiaryCalculator,
-            skipZeroBlockRewards,
-            privacyParameters.getGoQuorumPrivacyParameters());
+    BlockProcessor blockProcessor = createBlockProcessor(transactionProcessor, protocolSchedule);
     // Set private Tx Processor
-    PrivateTransactionProcessor privateTransactionProcessor = null;
+    PrivateTransactionProcessor privateTransactionProcessor =
+        createPrivateTransactionProcessor(
+            transactionValidator,
+            contractCreationProcessor,
+            messageCallProcessor,
+            precompileContractRegistry);
+
     if (privacyParameters.isEnabled()) {
-      final PrivateTransactionValidator privateTransactionValidator =
-          privateTransactionValidatorBuilder.apply();
-      privateTransactionProcessor =
-          privateTransactionProcessorBuilder.apply(
-              transactionValidator,
-              contractCreationProcessor,
-              messageCallProcessor,
-              privateTransactionValidator);
-
-      if (privacyParameters.isPrivacyPluginEnabled()) {
-        final PrivacyPluginPrecompiledContract privacyPluginPrecompiledContract =
-            (PrivacyPluginPrecompiledContract) precompileContractRegistry.get(PLUGIN_PRIVACY);
-        privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
-            privateTransactionProcessor);
-      } else if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
-        final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
-            (FlexiblePrivacyPrecompiledContract) precompileContractRegistry.get(FLEXIBLE_PRIVACY);
-        flexiblePrivacyPrecompiledContract.setPrivateTransactionProcessor(
-            privateTransactionProcessor);
-      } else {
-        final PrivacyPrecompiledContract privacyPrecompiledContract =
-            (PrivacyPrecompiledContract) precompileContractRegistry.get(DEFAULT_PRIVACY);
-        privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
-      }
-
       blockProcessor =
           new PrivacyBlockProcessor(
               blockProcessor,
@@ -378,7 +361,65 @@ public class ProtocolSpecBuilder {
         gasLimitCalculator,
         feeMarket,
         badBlockManager,
-        Optional.ofNullable(powHasher));
+        Optional.ofNullable(powHasher),
+        withdrawalsValidator,
+        Optional.ofNullable(withdrawalsProcessor));
+  }
+
+  private PrivateTransactionProcessor createPrivateTransactionProcessor(
+      final MainnetTransactionValidator transactionValidator,
+      final AbstractMessageProcessor contractCreationProcessor,
+      final AbstractMessageProcessor messageCallProcessor,
+      final PrecompileContractRegistry precompileContractRegistry) {
+    PrivateTransactionProcessor privateTransactionProcessor = null;
+    if (privacyParameters.isEnabled()) {
+      final PrivateTransactionValidator privateTransactionValidator =
+          privateTransactionValidatorBuilder.apply();
+      privateTransactionProcessor =
+          privateTransactionProcessorBuilder.apply(
+              transactionValidator,
+              contractCreationProcessor,
+              messageCallProcessor,
+              privateTransactionValidator);
+
+      if (privacyParameters.isPrivacyPluginEnabled()) {
+        final PrivacyPluginPrecompiledContract privacyPluginPrecompiledContract =
+            (PrivacyPluginPrecompiledContract) precompileContractRegistry.get(PLUGIN_PRIVACY);
+        privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
+            privateTransactionProcessor);
+      } else if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
+        final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
+            (FlexiblePrivacyPrecompiledContract) precompileContractRegistry.get(FLEXIBLE_PRIVACY);
+        flexiblePrivacyPrecompiledContract.setPrivateTransactionProcessor(
+            privateTransactionProcessor);
+      } else {
+        final PrivacyPrecompiledContract privacyPrecompiledContract =
+            (PrivacyPrecompiledContract) precompileContractRegistry.get(DEFAULT_PRIVACY);
+        privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
+      }
+    }
+    return privateTransactionProcessor;
+  }
+
+  private BlockProcessor createBlockProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final HeaderBasedProtocolSchedule protocolSchedule) {
+    return blockProcessorBuilder.apply(
+        transactionProcessor,
+        transactionReceiptFactory,
+        blockReward,
+        miningBeneficiaryCalculator,
+        skipZeroBlockRewards,
+        privacyParameters.getGoQuorumPrivacyParameters(),
+        protocolSchedule);
+  }
+
+  private BlockHeaderValidator createBlockHeaderValidator(
+      final Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder) {
+    return blockHeaderValidatorBuilder
+        .apply(feeMarket)
+        .difficultyCalculator(difficultyCalculator)
+        .build();
   }
 
   public interface TransactionProcessorBuilder {
@@ -408,7 +449,8 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
+        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
+        HeaderBasedProtocolSchedule protocolSchedule);
   }
 
   public interface BlockValidatorBuilder {

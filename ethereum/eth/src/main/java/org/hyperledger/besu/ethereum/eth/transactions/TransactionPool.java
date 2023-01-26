@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -54,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -72,16 +72,17 @@ public class TransactionPool implements BlockAddedObserver {
 
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
-  private final AbstractPendingTransactionsSorter pendingTransactions;
+  private final PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBroadcaster transactionBroadcaster;
   private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final TransactionPoolConfiguration configuration;
+  private final AtomicBoolean isPoolEnabled = new AtomicBoolean(true);
 
   public TransactionPool(
-      final AbstractPendingTransactionsSorter pendingTransactions,
+      final PendingTransactions pendingTransactions,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
@@ -108,6 +109,10 @@ public class TransactionPool implements BlockAddedObserver {
 
   void handleConnect(final EthPeer peer) {
     transactionBroadcaster.relayTransactionPoolTo(peer);
+  }
+
+  public void reset() {
+    pendingTransactions.reset();
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
@@ -222,9 +227,11 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     LOG.trace("Block added event {}", event);
-    event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
-    pendingTransactions.manageBlockAdded(event.getBlock());
-    reAddTransactions(event.getRemovedTransactions());
+    if (isPoolEnabled.get()) {
+      event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
+      pendingTransactions.manageBlockAdded(event.getBlock());
+      reAddTransactions(event.getRemovedTransactions());
+    }
   }
 
   private void reAddTransactions(final List<Transaction> reAddTransactions) {
@@ -253,7 +260,7 @@ public class TransactionPool implements BlockAddedObserver {
         .getTransactionValidator();
   }
 
-  public AbstractPendingTransactionsSorter getPendingTransactions() {
+  public PendingTransactions getPendingTransactions() {
     return pendingTransactions;
   }
 
@@ -316,10 +323,18 @@ public class TransactionPool implements BlockAddedObserver {
           "EIP-1559 transaction are not allowed yet");
     }
 
-    try (var worldState =
+    try (final var worldState =
         protocolContext
             .getWorldStateArchive()
-            .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
+            .getMutable(
+                chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getBlockHash(), false)
+            .map(
+                ws -> {
+                  if (!ws.isPersistable()) {
+                    return ws.copy();
+                  }
+                  return ws;
+                })
             .orElseThrow()) {
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(
@@ -396,7 +411,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public interface TransactionBatchAddedListener {
 
-    void onTransactionsAdded(Iterable<Transaction> transactions);
+    void onTransactionsAdded(Collection<Transaction> transactions);
   }
 
   private static class ValidationResultAndAccount {
@@ -425,5 +440,17 @@ public class TransactionPool implements BlockAddedObserver {
     static ValidationResultAndAccount invalid(final TransactionInvalidReason reason) {
       return new ValidationResultAndAccount(ValidationResult.invalid(reason));
     }
+  }
+
+  public void setEnabled() {
+    isPoolEnabled.set(true);
+  }
+
+  public void setDisabled() {
+    isPoolEnabled.set(false);
+  }
+
+  public boolean isEnabled() {
+    return isPoolEnabled.get();
   }
 }

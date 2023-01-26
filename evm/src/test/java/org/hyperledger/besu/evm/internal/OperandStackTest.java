@@ -111,4 +111,58 @@ public class OperandStackTest {
     assertThat(stack.get(1)).isEqualTo(Bytes32.fromHexString("0x02"));
     assertThat(stack.get(2)).isEqualTo(Bytes32.fromHexString("0x04"));
   }
+
+  @Test
+  public void bulkPop() {
+    final OperandStack stack = new OperandStack(8);
+    stack.push(UInt256.fromHexString("0x01"));
+    stack.push(UInt256.fromHexString("0x02"));
+    stack.push(UInt256.fromHexString("0x03"));
+    stack.push(UInt256.fromHexString("0x04"));
+    stack.push(UInt256.fromHexString("0x05"));
+    stack.push(UInt256.fromHexString("0x06"));
+    stack.push(UInt256.fromHexString("0x07"));
+    stack.push(UInt256.fromHexString("0x08"));
+    assertThat(stack.size()).isEqualTo(8);
+    stack.bulkPop(2);
+    assertThat(stack.get(0)).isEqualTo(Bytes32.fromHexString("0x06"));
+    stack.bulkPop(6);
+    assertThat(stack.isEmpty()).isTrue();
+  }
+
+  @Test
+  public void preserveTop() {
+    final OperandStack stack = new OperandStack(8);
+    stack.push(UInt256.fromHexString("0x01"));
+    stack.push(UInt256.fromHexString("0x02"));
+    stack.push(UInt256.fromHexString("0x03"));
+    stack.push(UInt256.fromHexString("0x04"));
+    stack.push(UInt256.fromHexString("0x05"));
+    stack.push(UInt256.fromHexString("0x06"));
+    stack.push(UInt256.fromHexString("0x07"));
+    stack.push(UInt256.fromHexString("0x08"));
+    assertThat(stack.size()).isEqualTo(8);
+    stack.preserveTop(6, 1);
+    assertThat(stack.get(0)).isEqualTo(Bytes32.fromHexString("0x08"));
+    assertThat(stack.get(1)).isEqualTo(Bytes32.fromHexString("0x06"));
+    assertThat(stack.size()).isEqualTo(7);
+    stack.preserveTop(1, 3);
+    assertThat(stack.get(0)).isEqualTo(Bytes32.fromHexString("0x08"));
+    assertThat(stack.get(1)).isEqualTo(Bytes32.fromHexString("0x06"));
+    assertThat(stack.get(2)).isEqualTo(Bytes32.fromHexString("0x05"));
+    assertThat(stack.get(3)).isEqualTo(Bytes32.fromHexString("0x01"));
+    assertThat(stack.size()).isEqualTo(4);
+
+    stack.preserveTop(4, 0);
+    assertThat(stack.size()).isEqualTo(4);
+    assertThatThrownBy(() -> stack.preserveTop(4, 2)).isInstanceOf(UnderflowException.class);
+    stack.preserveTop(2, 2);
+    assertThat(stack.size()).isEqualTo(4);
+    stack.preserveTop(0, 2);
+    assertThat(stack.get(0)).isEqualTo(Bytes32.fromHexString("0x08"));
+    assertThat(stack.get(1)).isEqualTo(Bytes32.fromHexString("0x06"));
+
+    assertThatThrownBy(() -> stack.preserveTop(5, 1)).isInstanceOf(UnderflowException.class);
+    assertThatThrownBy(() -> stack.preserveTop(1, 5)).isInstanceOf(UnderflowException.class);
+  }
 }

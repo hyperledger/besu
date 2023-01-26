@@ -23,12 +23,19 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Shl (Shift Left) operation. */
 public class ShlOperation extends AbstractFixedCostOperation {
 
+  /** The Shl operation success result. */
   static final OperationResult shlSuccess = new OperationResult(3, null);
 
+  /**
+   * Instantiates a new Shl operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public ShlOperation(final GasCalculator gasCalculator) {
-    super(0x1b, "SHL", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1b, "SHL", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
@@ -37,6 +44,12 @@ public class ShlOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs Shift Left operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     Bytes shiftAmount = frame.popStackItem();
     if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {

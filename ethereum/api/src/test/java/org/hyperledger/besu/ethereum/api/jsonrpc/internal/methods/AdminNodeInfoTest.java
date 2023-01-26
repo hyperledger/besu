@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
@@ -62,13 +63,13 @@ public class AdminNodeInfoTest {
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private NatService natService;
+  @Mock private BlockHeader blockHeader;
 
   private AdminNodeInfo method;
 
   private final Bytes nodeId =
       Bytes.fromHexString(
           "0x0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
-  private final ChainHead testChainHead = new ChainHead(Hash.EMPTY, Difficulty.ONE, 1L);
   private final GenesisConfigOptions genesisConfigOptions =
       new StubGenesisConfigOptions().chainId(BigInteger.valueOf(2019));
   private final DefaultPeer defaultPeer =
@@ -82,6 +83,9 @@ public class AdminNodeInfoTest {
 
   @Before
   public void setup() {
+    when(blockHeader.getHash()).thenReturn(Hash.EMPTY);
+    final ChainHead testChainHead = new ChainHead(blockHeader, Difficulty.ONE, 1L);
+
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
@@ -132,7 +136,7 @@ public class AdminNodeInfoTest {
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) response;
-    assertThat(actual.getResult()).isEqualTo(expected);
+    assertThat(actual.getResult()).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -183,7 +187,7 @@ public class AdminNodeInfoTest {
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) response;
-    assertThat(actual.getResult()).isEqualTo(expected);
+    assertThat(actual.getResult()).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -228,7 +232,7 @@ public class AdminNodeInfoTest {
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) response;
-    assertThat(actual.getResult()).isEqualTo(expected);
+    assertThat(actual.getResult()).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -274,7 +278,7 @@ public class AdminNodeInfoTest {
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) response;
-    assertThat(actual.getResult()).isEqualTo(expected);
+    assertThat(actual.getResult()).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -321,7 +325,7 @@ public class AdminNodeInfoTest {
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) response;
-    assertThat(actual.getResult()).isEqualTo(expected);
+    assertThat(actual.getResult()).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test

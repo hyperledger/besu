@@ -32,6 +32,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.STATE
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TOTAL_DIFFICULTY;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TRANSACTION_ROOT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.WITHDRAWALS_ROOT;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -67,12 +68,16 @@ public class JsonRpcResponseUtils {
   /** Hex is base 16 */
   private static final int HEX_RADIX = 16;
 
-  /** @param values hex encoded values. */
+  /**
+   * @param values hex encoded values.
+   */
   public JsonRpcResponse response(final Map<JsonRpcResponseKey, String> values) {
     return response(values, new ArrayList<>());
   }
 
-  /** @param values hex encoded values. */
+  /**
+   * @param values hex encoded values.
+   */
   public JsonRpcResponse response(
       final Map<JsonRpcResponseKey, String> values, final List<TransactionResult> transactions) {
 
@@ -96,7 +101,8 @@ public class JsonRpcResponseUtils {
         values.containsKey(BASEFEE) ? Wei.of(unsignedInt256(values.get(BASEFEE))) : null;
     final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
-
+    final Hash withdrawalsRoot =
+        values.containsKey(WITHDRAWALS_ROOT) ? hash(values.get(WITHDRAWALS_ROOT)) : null;
     final List<JsonNode> ommers = new ArrayList<>();
 
     final BlockHeader header =
@@ -117,6 +123,8 @@ public class JsonRpcResponseUtils {
             baseFee,
             mixHash,
             nonce,
+            withdrawalsRoot,
+            null, // ToDo 4844: set with the value of excess_data_gas field
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(
@@ -164,28 +172,26 @@ public class JsonRpcResponseUtils {
       final String s) {
 
     final Transaction transaction =
-        new Transaction(
-            transactionType,
-            unsignedLong(nonce),
-            Optional.of(Wei.fromHexString(gasPrice)),
-            Optional.empty(),
-            Optional.empty(),
-            unsignedLong(gas),
-            Optional.ofNullable(address(toAddress)),
-            wei(value),
-            SignatureAlgorithmFactory.getInstance()
-                .createSignature(
-                    Bytes.fromHexString(r).toUnsignedBigInteger(),
-                    Bytes.fromHexString(s).toUnsignedBigInteger(),
-                    Bytes.fromHexString(v)
-                        .toUnsignedBigInteger()
-                        .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
-                        .byteValueExact()),
-            bytes(input),
-            Optional.empty(),
-            address(fromAddress),
-            Optional.empty(),
-            Optional.of(bigInteger(v)));
+        Transaction.builder()
+            .type(transactionType)
+            .nonce(unsignedLong(nonce))
+            .gasPrice(Wei.fromHexString(gasPrice))
+            .gasLimit(unsignedLong(gas))
+            .to(address(toAddress))
+            .value(wei(value))
+            .signature(
+                SignatureAlgorithmFactory.getInstance()
+                    .createSignature(
+                        Bytes.fromHexString(r).toUnsignedBigInteger(),
+                        Bytes.fromHexString(s).toUnsignedBigInteger(),
+                        Bytes.fromHexString(v)
+                            .toUnsignedBigInteger()
+                            .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
+                            .byteValueExact()))
+            .payload(bytes(input))
+            .sender(address(fromAddress))
+            .v(bigInteger(v))
+            .build();
 
     return new TransactionCompleteResult(
         new TransactionWithMetadata(

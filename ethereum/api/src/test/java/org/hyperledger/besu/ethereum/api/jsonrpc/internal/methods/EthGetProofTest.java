@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProof
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -89,7 +90,9 @@ class EthGetProofTest {
     final JsonRpcRequestContext request = requestWithParams(null, null, "latest");
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockchainQueries.getBlockchain().getChainHead().getBlockHeader()).thenReturn(blockHeader);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
 
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
@@ -101,7 +104,9 @@ class EthGetProofTest {
     final JsonRpcRequestContext request = requestWithParams(address.toString(), null, "latest");
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockchainQueries.getBlockchain().getChainHead().getBlockHeader()).thenReturn(blockHeader);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
 
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
@@ -176,7 +181,8 @@ class EthGetProofTest {
     assertThat(result).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(result.getNonce()).isEqualTo("0xfffffffffffffffe");
     assertThat(result.getStorageProof().size()).isGreaterThan(0);
-    assertThat(result.getStorageProof().get(0).getKey()).isEqualTo(storageKey.toShortHexString());
+    assertThat(result.getStorageProof().get(0).getKey())
+        .isEqualTo(storageKey.trimLeadingZeros().toHexString());
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

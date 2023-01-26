@@ -31,12 +31,14 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedWriter;
@@ -46,13 +48,18 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -72,7 +79,7 @@ import picocli.CommandLine.Option;
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
-    subcommands = {StateTestSubCommand.class})
+    subcommands = {StateTestSubCommand.class, CodeValidateSubCommand.class})
 public class EvmToolCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(EvmToolCommand.class);
@@ -81,7 +88,11 @@ public class EvmToolCommand implements Runnable {
       names = {"--code"},
       paramLabel = "<code>",
       description = "Byte stream of code to be executed.")
-  private final Bytes codeHexString = Bytes.EMPTY;
+  void setBytes(final String optionValue) {
+    codeBytes = Bytes.fromHexString(optionValue.replace(" ", ""));
+  }
+
+  private Bytes codeBytes = Bytes.EMPTY;
 
   @Option(
       names = {"--gas"},
@@ -126,6 +137,12 @@ public class EvmToolCommand implements Runnable {
   final Boolean showJsonResults = false;
 
   @Option(
+      names = {"--json-alloc"},
+      description = "Output the final allocations after a run.",
+      scope = INHERIT)
+  final Boolean showJsonAlloc = false;
+
+  @Option(
       names = {"--nomemory"},
       description = "Disable showing the full memory output for each op.",
       scope = INHERIT)
@@ -146,6 +163,7 @@ public class EvmToolCommand implements Runnable {
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
 
+  static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
   private PrintWriter out =
       new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
@@ -203,10 +221,11 @@ public class EvmToolCommand implements Runnable {
       Log4j2ConfiguratorUtil.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int remainingIters = this.repeat;
       Log4j2ConfiguratorUtil.setLevel(
-          "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
-      final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
+          "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
+      final ProtocolSpec protocolSpec =
+          component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
       Log4j2ConfiguratorUtil.setLevel(
-          "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
+          "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
       final Transaction tx =
           new Transaction(
               0,
@@ -217,6 +236,7 @@ public class EvmToolCommand implements Runnable {
               null,
               callData,
               sender,
+              Optional.empty(),
               Optional.empty());
 
       final long intrinsicGasCost =
@@ -232,7 +252,11 @@ public class EvmToolCommand implements Runnable {
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
-      Code code = evm.getCode(Hash.hash(codeHexString), codeHexString);
+      Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
+      if (!code.isValid()) {
+        out.println(((CodeInvalid) code).getInvalidReason());
+        return;
+      }
       final Stopwatch stopwatch = Stopwatch.createUnstarted();
       long lastTime = 0;
       do {
@@ -298,15 +322,68 @@ public class EvmToolCommand implements Runnable {
                     .put("gasUser", "0x" + Long.toHexString(evmGas))
                     .put("timens", lastTime)
                     .put("time", lastTime / 1000)
-                    .put("gasTotal", "0x" + Long.toHexString(evmGas)));
+                    .put("gasTotal", "0x" + Long.toHexString(evmGas))
+                    .put("output", messageFrame.getOutputData().toHexString()));
           }
         }
         lastTime = stopwatch.elapsed().toNanos();
         stopwatch.reset();
+        if (showJsonAlloc && lastLoop) {
+          updater.commit();
+          WorldState worldState = component.getWorldState();
+          dumpWorldState(worldState, out);
+        }
       } while (remainingIters-- > 0);
 
     } catch (final IOException e) {
       LOG.error("Unable to create Genesis module", e);
     }
+  }
+
+  public static void dumpWorldState(final WorldState worldState, final PrintWriter out) {
+    out.println("{");
+    worldState
+        .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+        .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
+        .forEach(
+            account -> {
+              out.println(
+                  " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
+              if (account.getCode() != null && account.getCode().size() > 0) {
+                out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
+              }
+              var storageEntries = account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              if (!storageEntries.isEmpty()) {
+                out.println("  \"storage\": {");
+                out.println(
+                    STORAGE_JOINER.join(
+                        storageEntries.values().stream()
+                            .map(
+                                accountStorageEntry ->
+                                    "   \""
+                                        + accountStorageEntry
+                                            .getKey()
+                                            .map(UInt256::toHexString)
+                                            .orElse("-")
+                                        + "\": \""
+                                        + accountStorageEntry.getValue().toHexString()
+                                        + "\"")
+                            .collect(Collectors.toList())));
+                out.println("  },");
+              }
+              out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
+              if (account.getNonce() > 0) {
+                out.println(",");
+                out.println(
+                    "  \"nonce\": \""
+                        + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
+                        + "\"");
+              } else {
+                out.println();
+              }
+              out.println(" },");
+            });
+    out.println("}");
+    out.flush();
   }
 }

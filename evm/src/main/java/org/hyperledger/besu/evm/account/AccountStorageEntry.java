@@ -22,6 +22,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Account storage entry. */
 public class AccountStorageEntry {
 
   private final UInt256 value;
@@ -35,16 +36,39 @@ public class AccountStorageEntry {
     this.value = value;
   }
 
+  /**
+   * Create account storage entry.
+   *
+   * @param value the value
+   * @param keyHash the key hash
+   * @param key the key
+   * @return the account storage entry
+   */
   public static AccountStorageEntry create(
       final UInt256 value, final Bytes32 keyHash, final UInt256 key) {
     return create(value, keyHash, Optional.ofNullable(key));
   }
 
+  /**
+   * Create account storage entry.
+   *
+   * @param value the value
+   * @param keyHash the key hash
+   * @param key the key
+   * @return the account storage entry
+   */
   public static AccountStorageEntry create(
       final UInt256 value, final Bytes32 keyHash, final Optional<UInt256> key) {
     return new AccountStorageEntry(value, keyHash, key);
   }
 
+  /**
+   * Create account storage entry for key and value.
+   *
+   * @param key the key
+   * @param value the value
+   * @return the account storage entry
+   */
   public static AccountStorageEntry forKeyAndValue(final UInt256 key, final UInt256 value) {
     return create(value, Hash.hash(key), key);
   }
@@ -71,6 +95,11 @@ public class AccountStorageEntry {
     return keyHash;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public UInt256 getValue() {
     return value;
   }

@@ -23,12 +23,19 @@ import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Div operation. */
 public class DivOperation extends AbstractFixedCostOperation {
 
+  /** The Div success. */
   static final OperationResult divSuccess = new OperationResult(5, null);
 
+  /**
+   * Instantiates a new Div operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public DivOperation(final GasCalculator gasCalculator) {
-    super(0x04, "DIV", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x04, "DIV", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
@@ -37,6 +44,12 @@ public class DivOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Performs Div operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
 
     final Bytes value0 = frame.popStackItem();

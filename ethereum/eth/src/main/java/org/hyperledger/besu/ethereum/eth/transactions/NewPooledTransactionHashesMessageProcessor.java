@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -97,7 +98,7 @@ public class NewPooledTransactionHashesMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactions();
+      final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactionHashes();
 
       traceLambda(
           LOG,
@@ -110,14 +111,21 @@ public class NewPooledTransactionHashesMessageProcessor {
           scheduledTasks.computeIfAbsent(
               peer,
               ethPeer -> {
-                ethContext
-                    .getScheduler()
-                    .scheduleFutureTask(
-                        new FetcherCreatorTask(peer),
-                        transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
+                final ScheduledFuture<?> scheduledFuture =
+                    ethContext
+                        .getScheduler()
+                        .scheduleFutureTaskWithFixedDelay(
+                            new FetcherCreatorTask(peer),
+                            transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod(),
+                            transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
 
                 return new BufferedGetPooledTransactionsFromPeerFetcher(
-                    ethContext, peer, transactionPool, transactionTracker, metricsSystem);
+                    ethContext,
+                    scheduledFuture,
+                    peer,
+                    transactionPool,
+                    transactionTracker,
+                    metricsSystem);
               });
 
       bufferedTask.addHashes(
@@ -145,9 +153,10 @@ public class NewPooledTransactionHashesMessageProcessor {
     @Override
     public void run() {
       if (peer != null) {
-        final BufferedGetPooledTransactionsFromPeerFetcher fetcher = scheduledTasks.remove(peer);
-        if (!peer.isDisconnected()) {
-          fetcher.requestTransactions();
+        if (peer.isDisconnected()) {
+          scheduledTasks.remove(peer).getScheduledFuture().cancel(true);
+        } else if (peer.hasAvailableRequestCapacity()) {
+          scheduledTasks.get(peer).requestTransactions();
         }
       }
     }

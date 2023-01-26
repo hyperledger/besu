@@ -31,26 +31,46 @@ import com.google.common.base.Joiner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Standard json tracer. */
 public class StandardJsonTracer implements OperationTracer {
 
   private static final Joiner commaJoiner = Joiner.on(',');
   private final PrintStream out;
   private final boolean showMemory;
   private int pc;
+  private int section;
   private List<String> stack;
   private String gas;
   private Bytes memory;
   private int memorySize;
 
+  /**
+   * Instantiates a new Standard json tracer.
+   *
+   * @param out the out
+   * @param showMemory the show memory
+   */
   public StandardJsonTracer(final PrintStream out, final boolean showMemory) {
     this.out = out;
     this.showMemory = showMemory;
   }
 
+  /**
+   * Short as hex string.
+   *
+   * @param number the number
+   * @return the string
+   */
   public static String shortNumber(final UInt256 number) {
     return number.isZero() ? "0x0" : number.toShortHexString();
   }
 
+  /**
+   * Long number as hex string.
+   *
+   * @param number the number
+   * @return the string
+   */
   public static String shortNumber(final long number) {
     return "0x" + Long.toHexString(number);
   }
@@ -65,7 +85,10 @@ public class StandardJsonTracer implements OperationTracer {
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
-    pc = messageFrame.getPC();
+    pc =
+        messageFrame.getPC()
+            - messageFrame.getCode().getCodeSection(messageFrame.getSection()).getEntryPoint();
+    section = messageFrame.getSection();
     gas = shortNumber(messageFrame.getRemainingGas());
     memorySize = messageFrame.memoryWordSize() * 32;
     if (showMemory) {
@@ -84,6 +107,9 @@ public class StandardJsonTracer implements OperationTracer {
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
     sb.append("\"pc\":").append(pc).append(",");
+    if (section > 0) {
+      sb.append("\"section\":").append(section).append(",");
+    }
     sb.append("\"op\":").append(opcode).append(",");
     sb.append("\"gas\":\"").append(gas).append("\",");
     sb.append("\"gasCost\":\"").append(shortNumber(executeResult.getGasCost())).append("\",");
