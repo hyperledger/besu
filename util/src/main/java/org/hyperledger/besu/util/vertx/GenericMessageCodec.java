@@ -25,12 +25,22 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 import org.slf4j.Logger;
 
+/**
+ * With a message codec you can pass any other type across the Vert.x event bus. This class can be
+ * used as a generic message codec for any class.
+ *
+ * @param <T> the type of the message
+ */
 public class GenericMessageCodec<T> implements MessageCodec<T, T> {
   private final Class<T> objectClass;
 
   @SuppressWarnings("PrivateStaticFinalLoggers")
   private final Logger logger;
 
+  /**
+   * @param objectClass the type of the message
+   * @param logger the logger to output errors
+   */
   public GenericMessageCodec(final Class<T> objectClass, final Logger logger) {
     this.objectClass = objectClass;
     this.logger = logger;
