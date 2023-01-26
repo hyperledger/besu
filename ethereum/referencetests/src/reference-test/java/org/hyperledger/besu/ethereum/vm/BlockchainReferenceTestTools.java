@@ -56,19 +56,15 @@ public class BlockchainReferenceTestTools {
   private static final JsonTestParameters<?, ?> params =
       JsonTestParameters.create(BlockchainReferenceTestCaseSpec.class)
           .generator(
-              (testName, spec, collector) -> {
+              (testName, fullPath, spec, collector) -> {
                 final String eip = spec.getNetwork();
-                collector.add(testName + "[" + eip + "]", spec, NETWORKS_TO_RUN.contains(eip));
+                collector.add(testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
               });
 
   static {
     if (NETWORKS_TO_RUN.isEmpty()) {
       params.ignoreAll();
     }
-
-    // Known bad test.
-    params.ignore(
-        "RevertPrecompiledTouch(_storage)?_d(0|3)g0v0_(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
 
     // Consumes a huge amount of memory
     params.ignore("static_Call1MB1024Calldepth_d1g0v0_\\w+");
@@ -85,6 +81,9 @@ public class BlockchainReferenceTestTools {
     // chain head.
     // Perfectly valid test pre-merge.
     params.ignore("UncleFromSideChain_Merge");
+
+    // EIP tests are explicitly meant to be works-in-progress with known failing tests
+    params.ignore("/EIPTests/");
   }
 
   private BlockchainReferenceTestTools() {
