@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.ssz.SSZ;
 import org.apache.tuweni.ssz.SSZFixedSizeTypeList;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256s;
@@ -1015,25 +1016,30 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<List<AccessListEntry>> accessList,
       final List<Hash> versionedHashes) {
-    final Bytes encoded =
-        RLP.encode(
-            rlpOutput -> {
-              rlpOutput.startList();
-              eip1559PreimageFields(
-                  nonce,
-                  maxPriorityFeePerGas,
-                  maxFeePerGas,
-                  gasLimit,
-                  to,
-                  value,
-                  payload,
-                  chainId,
-                  accessList,
-                  rlpOutput);
-              rlpOutput.writeUInt256Scalar(maxFeePerDataGas);
-              TransactionEncoder.writeBlobVersionedHashes(rlpOutput, versionedHashes);
-              rlpOutput.endList();
-            });
+
+    var blobTransaction = new TransactionNetworkPayload.SingedBlobTransaction.BlobTransaction();
+    chainId.ifPresent(id -> blobTransaction.setChainId(UInt256.valueOf(id)));
+    blobTransaction.setNonce(nonce);
+    blobTransaction.setMaxPriorityFeePerGas(maxPriorityFeePerGas.toUInt256());
+    blobTransaction.setMaxFeePerGas(maxFeePerGas.toUInt256());
+    blobTransaction.setMaxFeePerDataGas(maxFeePerDataGas.toUInt256());
+    blobTransaction.setGas(gasLimit);
+    blobTransaction.setAddress(to);
+    blobTransaction.setValue(value.toUInt256());
+    blobTransaction.setData(payload);
+    accessList.ifPresent(
+        al -> {
+          var list = blobTransaction.getAccessList();
+          al.forEach(
+              accessListEntry -> {
+                var tuple = new TransactionNetworkPayload.SingedBlobTransaction.AccessTuple();
+                tuple.setAddress(accessListEntry.getAddress());
+                tuple.setStorageKeys(accessListEntry.getStorageKeys());
+                list.add(tuple);
+              });
+        });
+    blobTransaction.setBlobVersionedHashes(versionedHashes);
+    Bytes encoded = SSZ.encode(blobTransaction::writeTo);
     return Bytes.concatenate(Bytes.of(TransactionType.BLOB.getSerializedType()), encoded);
   }
 
