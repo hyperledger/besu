@@ -87,12 +87,13 @@ public class TestCodeExecutor {
 
   public void deployContract(
       final WorldUpdater worldUpdater, final Address contractAddress, final String codeHexString) {
-    final MutableAccount contract = worldUpdater.getOrCreate(contractAddress).getMutable();
+    var updater = worldUpdater.updater();
+    final MutableAccount contract = updater.getOrCreate(contractAddress).getMutable();
 
     contract.setNonce(0);
     contract.clearStorage();
     contract.setCode(Bytes.fromHexStringLenient(codeHexString));
-    worldUpdater.updater().commit();
+    updater.commit();
   }
 
   public static WorldUpdater createInitialWorldState(final Consumer<MutableAccount> accountSetup) {
@@ -103,6 +104,6 @@ public class TestCodeExecutor {
         worldState.getOrCreate(TestCodeExecutor.SENDER_ADDRESS).getMutable();
     accountSetup.accept(senderAccount);
     worldState.commit();
-    return toyWorld;
+    return toyWorld.updater();
   }
 }
