@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 import java.util.Arrays;
@@ -56,6 +57,8 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
     engineCallListener.executionEngineCalled();
 
+    final Object reqId = request.getRequest().getId();
+
     final List<Hash> blockHashes =
         Arrays.stream(request.getRequest().getParams())
             .map(String::valueOf)
@@ -65,9 +68,10 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
     traceLambda(LOG, "{} parameters: blockHashes {}", () -> getName(), () -> blockHashes);
 
     final Blockchain blockchain = protocolContext.getBlockchain();
-    return new JsonRpcSuccessResponse(
-        request.getRequest().getId(),
-        blockResultFactory.payloadBodiesCompleteV1(
-            blockHashes.stream().map(blockchain::getBlockBody).collect(Collectors.toList())));
+
+    final EngineGetPayloadBodiesResultV1 engineGetPayloadBodiesResultV1 = blockResultFactory.payloadBodiesCompleteV1(
+            blockHashes.stream().map(blockchain::getBlockBody).collect(Collectors.toList()));
+
+    return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV1);
   }
 }
