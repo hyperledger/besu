@@ -46,6 +46,7 @@ import io.opentelemetry.context.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -161,8 +162,6 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
     JsonObject jsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
     lazyTraceLogger(jsonRequest::toString);
 
-    //    final String methodName = jsonRequest.getString("method");
-
     vertx
         .eventBus()
         .request(
@@ -233,7 +232,10 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
         .onFailure(
             e -> {
               LOG.error("Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
-              handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
+              handleJsonRpcError(
+                  ctx,
+                  getRequestId(ctx),
+                  JsonRpcError.fromCode(((ReplyException) e).failureCode()));
             });
   }
 

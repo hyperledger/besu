@@ -263,4 +263,14 @@ public enum JsonRpcError {
     }
     return null;
   }
+
+  public static JsonRpcError fromCode(final int code) {
+    for (final JsonRpcError error : JsonRpcError.values()) {
+      if (error.code == code) {
+        return error;
+      }
+    }
+
+    return null;
+  }
 }
