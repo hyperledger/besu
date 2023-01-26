@@ -58,7 +58,8 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
 
     final List<Hash> blockHashes =
         Arrays.stream(request.getRequest().getParams())
-            .map(Hash.class::cast)
+            .map(String::valueOf)
+            .map(Hash::fromHexString)
             .collect(Collectors.toList());
 
     traceLambda(LOG, "{} parameters: blockHashes {}", () -> getName(), () -> blockHashes);
