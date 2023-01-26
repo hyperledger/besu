@@ -36,6 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.ssz.SSZ;
 import org.apache.tuweni.ssz.SSZWriter;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
 
 public class TransactionEncoder {
   private static final Logger LOG = getLogger(Encoder.class);
@@ -75,6 +76,7 @@ public class TransactionEncoder {
           TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeWithBlobs));
 
   public static void encodeWithBlobs(final Transaction transaction, final SSZWriter rlpOutput) {
+    LOG.trace("Encoding transaction with blobs {}", transaction);
     var payload = new TransactionNetworkPayload();
     var blobsWithCommitments = transaction.getBlobsWithCommitments();
     if (blobsWithCommitments.isPresent()) {
@@ -90,6 +92,7 @@ public class TransactionEncoder {
   }
 
   public static void encodeWithoutBlobs(final Transaction transaction, final SSZWriter rlpOutput) {
+    LOG.trace("Encoding transaction without blobs {}", transaction);
     var signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
     populatedSignedBlobTransaction(transaction, signedBlobTransaction);
     signedBlobTransaction.writeTo(rlpOutput);
