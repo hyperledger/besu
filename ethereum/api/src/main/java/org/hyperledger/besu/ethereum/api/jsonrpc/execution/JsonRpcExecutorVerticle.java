@@ -85,6 +85,7 @@ public class JsonRpcExecutorVerticle extends AbstractVerticle {
         && jsonArray.size() > jsonRpcConfiguration.getMaxBatchSize()) {
       requestMessage.fail(
           EXCEEDS_RPC_MAX_BATCH_SIZE.getCode(), EXCEEDS_RPC_MAX_BATCH_SIZE.getMessage());
+      return;
     }
 
     JsonRpcResponse[] jsonRpcBatchResponses = new JsonRpcResponse[jsonArray.size()];
