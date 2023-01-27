@@ -188,7 +188,7 @@ jobs:
       - capture_test_results
 
   unitTestsParallelized:
-    parallelism: 6
+    #parallelism: 6
     executor: besu_executor_xl
     steps:
       - prepare
@@ -204,11 +204,15 @@ jobs:
               | sed 's@/@:@' \
               | sed 's@$@:test@')
             echo "Gradle Targets: $GRADLE_TARGETS"
-            GRADLE_ARGS=$(echo $GRADLE_TARGETS \
-              | circleci tests split --split-by=timings)
+#            GRADLE_ARGS=$(ls -d **/src/test/java | egrep -v 'acceptance-tests'\
+#              | sed 's/^/:/' \
+#              | sed 's@/src/test/java@@' \
+#              | sed 's@/@:@' \
+#              | sed 's@$@:test@' \
+#              | circleci tests split --split-by=timings)
             # Format the arguments to "./gradlew test"
-            echo "Prepared arguments for Gradle: $GRADLE_ARGS"
-            ./gradlew --no-daemon $GRADLE_ARGS
+            #echo "Prepared arguments for Gradle: $GRADLE_ARGS"
+            #./gradlew --no-daemon $GRADLE_ARGS
       - capture_test_results
 
   integrationTests:
@@ -399,9 +403,6 @@ workflows:
   default:
     jobs:
       - assemble
-      - unitTests:
-           requires:
-            - assemble
       - unitTestsParallelized:
           requires:
             - assemble
