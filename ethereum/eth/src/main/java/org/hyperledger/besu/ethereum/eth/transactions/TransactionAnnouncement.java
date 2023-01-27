@@ -40,7 +40,7 @@ public class TransactionAnnouncement {
     this(
         checkNotNull(transaction, "Transaction cannot be null").getHash(),
         transaction.getType(),
-        (long) transaction.getSize());
+        (long) transaction.getNetworkSize().orElseThrow());
   }
 
   public TransactionAnnouncement(final Hash hash, final TransactionType type, final Long size) {
