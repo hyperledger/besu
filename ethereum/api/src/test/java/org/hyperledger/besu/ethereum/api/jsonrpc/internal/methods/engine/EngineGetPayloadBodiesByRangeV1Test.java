@@ -299,7 +299,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   }
 
   @Test
-  public void ShouldReturnEmptyPayloadForRequestsPastCurrentHead(){
+  public void ShouldReturnEmptyPayloadForRequestsPastCurrentHead() {
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(123));
     final JsonRpcResponse resp = resp(125, 3);
@@ -308,7 +308,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   }
 
   @Test
-  public void ShouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks(){
+  public void ShouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks() {
     final long apiLimit = MAX_BLOCKS_ALLOWED;
     final int overApiLimit = (int) apiLimit + 10;
     final JsonRpcResponse resp = resp(1337, overApiLimit);
@@ -337,8 +337,8 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   private JsonRpcError fromErrorResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     return Optional.of(resp)
-            .map(JsonRpcErrorResponse.class::cast)
-            .map(JsonRpcErrorResponse::getError)
-            .get();
+        .map(JsonRpcErrorResponse.class::cast)
+        .map(JsonRpcErrorResponse::getError)
+        .get();
   }
 }

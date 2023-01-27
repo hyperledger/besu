@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod {
-  //TODO benchmark this number
+  // TODO benchmark this number
   protected static final long MAX_BLOCKS_ALLOWED = 64L;
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByHashV1.class);
   private final BlockResultFactory blockResultFactory;
@@ -71,13 +71,14 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
 
     traceLambda(LOG, "{} parameters: blockHashes {}", () -> getName(), () -> blockHashes);
 
-    if(blockHashes.size() > MAX_BLOCKS_ALLOWED){
+    if (blockHashes.size() > MAX_BLOCKS_ALLOWED) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
     }
 
     final Blockchain blockchain = protocolContext.getBlockchain();
 
-    final EngineGetPayloadBodiesResultV1 engineGetPayloadBodiesResultV1 = blockResultFactory.payloadBodiesCompleteV1(
+    final EngineGetPayloadBodiesResultV1 engineGetPayloadBodiesResultV1 =
+        blockResultFactory.payloadBodiesCompleteV1(
             blockHashes.stream().map(blockchain::getBlockBody).collect(Collectors.toList()));
 
     return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV1);

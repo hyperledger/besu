@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
-import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -38,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV1.class);
-  //TODO benchmark this number
+  // TODO benchmark this number
   protected static final long MAX_BLOCKS_ALLOWED = 64L;
   private final BlockResultFactory blockResultFactory;
 
@@ -71,34 +70,35 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
         () -> startBlockNumber,
         () -> count);
 
-    if(count > MAX_BLOCKS_ALLOWED){
+    if (count > MAX_BLOCKS_ALLOWED) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
     }
 
     final Blockchain blockchain = protocolContext.getBlockchain();
     final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
 
-    //request startBlockNumber is past head of chain
-    if(chainHeadBlockNumber < startBlockNumber){
-      //Empty List of payloadBodies
+    // request startBlockNumber is past head of chain
+    if (chainHeadBlockNumber < startBlockNumber) {
+      // Empty List of payloadBodies
       return new JsonRpcSuccessResponse(reqId, new EngineGetPayloadBodiesResultV1());
     }
 
     final long upperBound = startBlockNumber + count;
 
-    //if we've received request from blocks past the head we exclude those from the query
+    // if we've received request from blocks past the head we exclude those from the query
     final long endExclusiveBlockNumber =
-            chainHeadBlockNumber < upperBound ? chainHeadBlockNumber + 1 : upperBound;
+        chainHeadBlockNumber < upperBound ? chainHeadBlockNumber + 1 : upperBound;
 
-    EngineGetPayloadBodiesResultV1 engineGetPayloadBodiesResultV1 = blockResultFactory.payloadBodiesCompleteV1(
+    EngineGetPayloadBodiesResultV1 engineGetPayloadBodiesResultV1 =
+        blockResultFactory.payloadBodiesCompleteV1(
             LongStream.range(startBlockNumber, endExclusiveBlockNumber)
-                    .mapToObj(
-                            blockNumber ->
-                                    blockchain
-                                            .getBlockHashByNumber(blockNumber)
-                                            .flatMap(blockchain::getBlockBody))
-                    .collect(Collectors.toList()));
+                .mapToObj(
+                    blockNumber ->
+                        blockchain
+                            .getBlockHashByNumber(blockNumber)
+                            .flatMap(blockchain::getBlockBody))
+                .collect(Collectors.toList()));
 
-    return new JsonRpcSuccessResponse(reqId,engineGetPayloadBodiesResultV1);
+    return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV1);
   }
 }

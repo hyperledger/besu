@@ -40,11 +40,9 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
@@ -227,13 +225,13 @@ public class EngineGetPayloadBodiesByHashV1Test {
   }
 
   @Test
-  public void ShouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks(){
+  public void ShouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks() {
     final long apiLimit = MAX_BLOCKS_ALLOWED;
-    final int overLimit = (int)apiLimit + 10;
+    final int overLimit = (int) apiLimit + 10;
     final Hash[] arrayHash = new Hash[overLimit];
 
-    //TODO something more efficient than this must exist
-    for(int i = 0; i < overLimit; i++){
+    // TODO something more efficient than this must exist
+    for (int i = 0; i < overLimit; i++) {
       arrayHash[i] = Hash.wrap(Bytes32.random());
     }
 
@@ -261,8 +259,8 @@ public class EngineGetPayloadBodiesByHashV1Test {
   private JsonRpcError fromErrorResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     return Optional.of(resp)
-            .map(JsonRpcErrorResponse.class::cast)
-            .map(JsonRpcErrorResponse::getError)
-            .get();
+        .map(JsonRpcErrorResponse.class::cast)
+        .map(JsonRpcErrorResponse::getError)
+        .get();
   }
 }
