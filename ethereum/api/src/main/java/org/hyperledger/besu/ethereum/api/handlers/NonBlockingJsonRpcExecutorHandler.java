@@ -235,7 +235,8 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
               handleJsonRpcError(
                   ctx,
                   getRequestId(ctx),
-                  JsonRpcError.fromCode(((ReplyException) e).failureCode()));
+                  JsonRpcError.fromCodeAndMessage(
+                      ((ReplyException) e).failureCode(), e.getMessage()));
             });
   }
 
@@ -266,7 +267,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
 
   private String getRequestField(final RoutingContext ctx, final String fieldName) {
     if (!ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name())) {
-      return "";
+      return null;
     }
 
     final JsonObject jsonObject = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());

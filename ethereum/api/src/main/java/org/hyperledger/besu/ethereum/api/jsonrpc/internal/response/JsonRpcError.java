@@ -264,9 +264,9 @@ public enum JsonRpcError {
     return null;
   }
 
-  public static JsonRpcError fromCode(final int code) {
+  public static JsonRpcError fromCodeAndMessage(final int code, final String message) {
     for (final JsonRpcError error : JsonRpcError.values()) {
-      if (error.code == code) {
+      if (error.code == code && error.message.equals(message)) {
         return error;
       }
     }
