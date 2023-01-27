@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalP
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,12 @@ import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({"payloadBodies"})
 public class EngineGetPayloadBodiesResultV1 {
+
   private final List<PayloadBody> payloadBodies;
+
+  public EngineGetPayloadBodiesResultV1() {
+    this.payloadBodies = Collections.<PayloadBody>emptyList();
+  }
 
   public EngineGetPayloadBodiesResultV1(final List<PayloadBody> payloadBody) {
     this.payloadBodies = payloadBody;
