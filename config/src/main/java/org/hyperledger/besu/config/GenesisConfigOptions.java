@@ -72,6 +72,13 @@ public interface GenesisConfigOptions {
   boolean isClique();
 
   /**
+   * Is pos boolean.
+   *
+   * @return the boolean
+   */
+  boolean isPos();
+
+  /**
    * Is consensus migration boolean.
    *
    * @return the boolean
@@ -135,6 +142,13 @@ public interface GenesisConfigOptions {
    * @return the ethash config options
    */
   EthashConfigOptions getEthashConfigOptions();
+
+  /**
+   * Gets pos config options.
+   *
+   * @return the pos config options
+   */
+  PosConfigOptions getPosConfigOptions();
 
   /**
    * Gets keccak 256 config options.

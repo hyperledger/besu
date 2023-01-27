@@ -38,6 +38,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
+  private static final String POS_CONFIG_KEY = "pos";
   private static final String KECCAK256_CONFIG_KEY = "keccak256";
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
@@ -145,6 +146,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isPos() {
+    return configRoot.has(POS_CONFIG_KEY);
+  }
+
+  @Override
   public boolean isIbft2() {
     return configRoot.has(IBFT2_CONFIG_KEY);
   }
@@ -202,6 +208,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, ETHASH_CONFIG_KEY)
         .map(EthashConfigOptions::new)
         .orElse(EthashConfigOptions.DEFAULT);
+  }
+
+  @Override
+  public PosConfigOptions getPosConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, POS_CONFIG_KEY)
+        .map(ignore -> new PosConfigOptions())
+        .orElse(PosConfigOptions.DEFAULT);
   }
 
   @Override
