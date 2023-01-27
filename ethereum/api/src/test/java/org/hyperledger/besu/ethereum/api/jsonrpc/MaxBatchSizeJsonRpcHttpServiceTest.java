@@ -23,7 +23,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.After;
 import org.junit.Test;
 
 public class MaxBatchSizeJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
@@ -31,11 +30,6 @@ public class MaxBatchSizeJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBa
   private void initMaxBatchSize(final int rpcMaxBatchSize) throws Exception {
     maxBatchSize = rpcMaxBatchSize;
     initServerAndClient();
-  }
-
-  @After
-  public void shutdownServerAfterEveryTest() {
-    shutdownServer();
   }
 
   @Test

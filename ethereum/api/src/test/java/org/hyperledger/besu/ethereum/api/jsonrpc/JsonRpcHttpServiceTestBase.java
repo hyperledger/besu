@@ -91,6 +91,10 @@ public class JsonRpcHttpServiceTestBase {
   protected static int maxBatchSize = 10;
 
   public static void initServerAndClient() throws Exception {
+    if (service != null) {
+      shutdownServer();
+    }
+
     peerDiscoveryMock = mock(P2PNetwork.class);
     ethPeersMock = mock(EthPeers.class);
     blockchain = mock(Blockchain.class);

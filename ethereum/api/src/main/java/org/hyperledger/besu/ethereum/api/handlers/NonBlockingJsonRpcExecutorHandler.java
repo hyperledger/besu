@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -150,7 +151,13 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
   }
 
   public void stop() {
-    verticleDeploymentIds.forEach(deploymentId -> vertx.undeploy(deploymentId));
+    verticleDeploymentIds.forEach(
+        deploymentId -> {
+          final CompletableFuture<Void> resultFuture = new CompletableFuture<>();
+          vertx.undeploy(deploymentId).onSuccess(handler -> resultFuture.complete(null));
+
+          resultFuture.join();
+        });
   }
 
   private void processRequestBodyAsObject(

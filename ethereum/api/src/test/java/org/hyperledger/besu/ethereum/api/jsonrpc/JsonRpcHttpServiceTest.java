@@ -58,7 +58,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
@@ -67,6 +66,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
   @BeforeClass
   public static void setup() throws Exception {
+    maxBatchSize = 10;
     initServerAndClient();
   }
 
@@ -75,12 +75,6 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     config.setPort(0);
     config.setHostsAllowlist(Collections.singletonList("*"));
     return config;
-  }
-
-  /** Tears down the HTTP server. */
-  @AfterClass
-  public static void shutdownServer() {
-    service.stop().join();
   }
 
   @Test
