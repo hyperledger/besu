@@ -95,6 +95,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
+
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
+
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
@@ -132,7 +135,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       worldStateUpdater.commit();
 
-      currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
+      final long dataGasUsed =
+          protocolSpec.getGasCalculator().dataGasCost(transaction.getBlobCount());
+
+      currentGasUsed += transaction.getGasLimit() - result.getGasRemaining() - dataGasUsed;
       final TransactionReceipt transactionReceipt =
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
@@ -140,7 +146,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
-        protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
+        protocolSpec.getWithdrawalsProcessor();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
       maybeWithdrawalsProcessor
           .get()
