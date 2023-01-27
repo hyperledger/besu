@@ -149,7 +149,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       worldStateUpdater.commit();
 
-      currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
+      final long dataGasUsed =
+          protocolSpec.getGasCalculator().dataGasCost(transaction.getBlobCount());
+
+      currentGasUsed += transaction.getGasLimit() - result.getGasRemaining() - dataGasUsed;
       final TransactionReceipt transactionReceipt =
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
