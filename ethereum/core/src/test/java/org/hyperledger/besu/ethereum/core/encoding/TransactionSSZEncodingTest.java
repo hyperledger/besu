@@ -20,6 +20,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.io.IOException;
@@ -103,7 +104,7 @@ public class TransactionSSZEncodingTest {
   }
 
   private static String generateNameWithoutblobs(final InputWithoutBlobs input) {
-    return " chainId: " + input.getChainId();
+    return " hash: " + input.getHash();
   }
 
   @ParameterizedTest(name = "[{index}] {0}")
@@ -131,6 +132,7 @@ public class TransactionSSZEncodingTest {
 
     assertThat(transaction).isNotNull();
     assertThat(transaction.getPayload()).isNotNull();
+    assertThat(transaction.getHash()).isEqualTo(Hash.fromHexString(input.getHash()));
     final Bytes encodedBytes = TransactionEncoder.encodeOpaqueBytes(transaction);
     assertThat(encodedBytes).isNotNull();
     assertThat(encodedBytes.toHexString()).isEqualTo(rawTransaction);
@@ -263,14 +265,14 @@ public class TransactionSSZEncodingTest {
   }
 
   public static class InputWithoutBlobs {
-    String chainId;
+    String hash;
 
-    public String getChainId() {
-      return chainId;
+    public String getHash() {
+      return hash;
     }
 
-    public void setChainId(final String chainId) {
-      this.chainId = chainId;
+    public void setHash(final String hash) {
+      this.hash = hash;
     }
   }
 }
