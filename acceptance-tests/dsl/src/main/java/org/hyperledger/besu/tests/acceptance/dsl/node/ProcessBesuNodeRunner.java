@@ -418,8 +418,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         .put(
             "JAVA_OPTS",
             "-Djava.security.properties="
-                + "acceptance-tests/tests/build/resources/test/acceptanceTesting.security " +
-                    "-Djavax.net.debug=ssl,handshake");
+                + "acceptance-tests/tests/build/resources/test/acceptanceTesting.security");
     // add additional environment variables
     processBuilder.environment().putAll(node.getEnvironment());
     try {

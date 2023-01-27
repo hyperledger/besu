@@ -44,10 +44,10 @@ public class PkiKeystoreConfigurationFactory {
   /*
    PKCS11 config files
   */
-  final String NSSCONFIG_PATH_STRING = "/pki-certs/%s/nss.cfg";
+  final String NSSCONFIG_PATH_STRING = "/pki-certs/%s/pkcs11.cfg";
   final String NSSPIN_PATH_STRING = "/pki-certs/%s/nsspin.txt";
-  final String TRUSTSTORE_PATH_STRING = "/pki-certs/%s/truststore.jks";
-  final String CRL_PATH_STRING = "/pki-certs/%s/crl.pem";
+  final String TRUSTSTORE_PATH_STRING = "/pki-certs/truststore/truststore.p12";
+  final String CRL_PATH_STRING = "/pki-certs/ca_certs/crl/crl.pem";
 
   /*
    Software keystore config
@@ -78,10 +78,10 @@ public class PkiKeystoreConfigurationFactory {
               PKCS11Utils.initNSSConfigFile(
                   readResourceAsPath(String.format(NSSCONFIG_PATH_STRING, name))))
           .withKeyStorePasswordPath(readResourceAsPath(String.format(NSSPIN_PATH_STRING, name)))
-          .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_JKS)
-          .withTrustStorePath(readResourceAsPath(String.format(TRUSTSTORE_PATH_STRING, name)))
+          .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12)
+          .withTrustStorePath(readResourceAsPath(TRUSTSTORE_PATH_STRING))
           .withTrustStorePasswordPath(readResourceAsPath(String.format(NSSPIN_PATH_STRING, name)))
-          .withCrlFilePath(readResourceAsPath(String.format(CRL_PATH_STRING, name)))
+          .withCrlFilePath(readResourceAsPath(CRL_PATH_STRING))
           .withCertificateAlias(name);
 
     } catch (Exception e) {

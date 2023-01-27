@@ -25,87 +25,73 @@ import java.util.List;
 
 public class PkiQbftAcceptanceTestParameterization {
 
-  public static List<Object[]> getFactories() {
-    final List<Object[]> ret = new ArrayList<>();
+    public static List<Object[]> getFactories() {
+      final List<Object[]> ret = new ArrayList<>();
 
-    /*
-     BLOCK CREATION
-    */
+      /*
+       BLOCK CREATION
+      */
 
-    ret.add(
-        new Object[] {
-          "qbft-pki-jks",
-          new PkiQbftAcceptanceTestParameterization(
-              BesuNodeFactory::createPkiQbftJKSNode,
-              BesuNodeFactory::createPkiQbftJKSNodeWithValidators)
-        });
-
-    ret.add(
-        new Object[] {
-          "qbft-pki-pkcs12",
-          new PkiQbftAcceptanceTestParameterization(
-              BesuNodeFactory::createPkiQbftPKCS12Node,
-              BesuNodeFactory::createPkiQbftPKCS12NodeWithValidators)
-        });
-
-    if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
       ret.add(
           new Object[] {
-            "qbft-pki-pkcs11",
+            "qbft-pki-jks",
             new PkiQbftAcceptanceTestParameterization(
-                BesuNodeFactory::createPkiQbftPKCS11Node,
-                BesuNodeFactory::createPkiQbftPKCS11NodeWithValidators)
+                BesuNodeFactory::createPkiQbftJKSNode,
+                BesuNodeFactory::createPkiQbftJKSNodeWithValidators)
           });
-    }
 
-    /*
-     TLS
-    */
-
-    ret.add(
-        new Object[] {
-          "qbft-tls-jks",
-          new PkiQbftAcceptanceTestParameterization(
-              BesuNodeFactory::createQbftNodeWithTLSJKS,
-              BesuNodeFactory::createQbftTLSJKSNodeWithValidators)
-        });
-
-    ret.add(
-        new Object[] {
-          "qbft-tls-pkcs12",
-          new PkiQbftAcceptanceTestParameterization(
-              BesuNodeFactory::createQbftNodeWithTLSPKCS12,
-              BesuNodeFactory::createQbftTLSPKCS12NodeWithValidators)
-        });
-
-    if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
       ret.add(
           new Object[] {
-            "qbft-tls-pkcs11",
+            "qbft-pki-pkcs12",
             new PkiQbftAcceptanceTestParameterization(
-                BesuNodeFactory::createQbftNodeWithTLSPKCS11,
-                BesuNodeFactory::createQbftTLSPKCS11NodeWithValidators)
+                BesuNodeFactory::createPkiQbftPKCS12Node,
+                BesuNodeFactory::createPkiQbftPKCS12NodeWithValidators)
           });
+
+      if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
+        ret.add(
+            new Object[] {
+              "qbft-pki-pkcs11",
+              new PkiQbftAcceptanceTestParameterization(
+                  BesuNodeFactory::createPkiQbftPKCS11Node,
+                  BesuNodeFactory::createPkiQbftPKCS11NodeWithValidators)
+            });
+      }
+
+      /*
+       TLS
+      */
+
+      ret.add(
+          new Object[] {
+            "qbft-tls-jks",
+            new PkiQbftAcceptanceTestParameterization(
+                BesuNodeFactory::createQbftNodeWithTLSJKS,
+                BesuNodeFactory::createQbftTLSJKSNodeWithValidators)
+          });
+
+      ret.add(
+          new Object[] {
+            "qbft-tls-pkcs12",
+            new PkiQbftAcceptanceTestParameterization(
+                BesuNodeFactory::createQbftNodeWithTLSPKCS12,
+                BesuNodeFactory::createQbftTLSPKCS12NodeWithValidators)
+          });
+
+      if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
+        ret.add(
+            new Object[] {
+              "qbft-tls-pkcs11",
+              new PkiQbftAcceptanceTestParameterization(
+                  BesuNodeFactory::createQbftNodeWithTLSPKCS11,
+                  BesuNodeFactory::createQbftTLSPKCS11NodeWithValidators)
+            });
+      }
+
+
+
+      return ret;
     }
-
-
-
-    return ret;
-  }
-
-//  public static List<Object[]> getFactories() {
-//    final List<Object[]> ret = new ArrayList<>();
-//
-//    ret.add(
-//          new Object[] {
-//            "qbft-tls-pkcs11",
-//            new PkiQbftAcceptanceTestParameterization(
-//                BesuNodeFactory::createQbftNodeWithTLSPKCS11,
-//                BesuNodeFactory::createQbftTLSPKCS11NodeWithValidators)
-//          });
-//
-//    return ret;
-//  }
 
   @FunctionalInterface
   public interface NodeCreator {
