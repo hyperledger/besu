@@ -169,14 +169,14 @@ public final class RunnerBuilderTest {
             .build();
     runner.startEthereumMainLoop();
 
-    final EnodeURL expectedEodeURL =
+    final EnodeURL expectedEnodeURL =
         EnodeURLImpl.builder()
             .ipAddress(p2pAdvertisedHost)
             .discoveryPort(0)
             .listeningPort(p2pListenPort)
             .nodeId(besuController.getNodeKey().getPublicKey().getEncoded())
             .build();
-    assertThat(runner.getLocalEnode().orElseThrow()).isEqualTo(expectedEodeURL);
+    assertThat(runner.getLocalEnode().orElseThrow()).isEqualTo(expectedEnodeURL);
   }
 
   @Test
