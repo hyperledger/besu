@@ -401,6 +401,9 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
+      - acceptanceTestsNonMainnet:
+          requires:
+            - assemble
       - buildDocker:
           requires:
             - assemble
