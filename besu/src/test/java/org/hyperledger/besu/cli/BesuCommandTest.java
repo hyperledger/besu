@@ -1318,7 +1318,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).discovery(eq(false));
     verify(mockRunnerBuilder).build();
 
-
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -4403,8 +4402,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void
       privateMarkerTransactionSigningKeyFileNotCanNotBeUsedWithPluginPrivateMarkerTransactionFactory()
           throws IOException {
-    when(privacyPluginService.getPrivateMarkerTransactionFactory()).thenReturn(
-        mock(PrivateMarkerTransactionFactory.class));
+    when(privacyPluginService.getPrivateMarkerTransactionFactory())
+        .thenReturn(mock(PrivateMarkerTransactionFactory.class));
     final Path toml =
         createTempFile(
             "key",
@@ -4418,8 +4417,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         toml.toString());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-//    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).startsWith("--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies");
+    //    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies");
   }
 
   @Test

@@ -95,16 +95,17 @@ public final class RunnerBuilderTest {
   @Rule public TemporaryFolder dataDir = new TemporaryFolder();
 
   @Mock BesuController besuController;
+  @Mock ProtocolSchedule protocolSchedule;
+  @Mock ProtocolContext protocolContext;
   @Mock Vertx vertx;
+  private NodeKey nodeKey;
 
   @Before
   public void setup() {
     final SubProtocolConfiguration subProtocolConfiguration = mock(SubProtocolConfiguration.class);
     final EthProtocolManager ethProtocolManager = mock(EthProtocolManager.class);
     final EthContext ethContext = mock(EthContext.class);
-    final ProtocolContext protocolContext = mock(ProtocolContext.class);
-    final NodeKey nodeKey =
-        new NodeKey(new KeyPairSecurityModule(new SECP256K1().generateKeyPair()));
+    nodeKey = new NodeKey(new KeyPairSecurityModule(new SECP256K1().generateKeyPair()));
 
     when(subProtocolConfiguration.getProtocolManagers())
         .thenReturn(
@@ -127,7 +128,7 @@ public final class RunnerBuilderTest {
     when(besuController.getProtocolManager()).thenReturn(ethProtocolManager);
     when(besuController.getSubProtocolConfiguration()).thenReturn(subProtocolConfiguration);
     when(besuController.getProtocolContext()).thenReturn(protocolContext);
-    when(besuController.getProtocolSchedule()).thenReturn(mock(ProtocolSchedule.class));
+    when(besuController.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(besuController.getNodeKey()).thenReturn(nodeKey);
     when(besuController.getMiningParameters()).thenReturn(mock(MiningParameters.class));
     when(besuController.getPrivacyParameters()).thenReturn(mock(PrivacyParameters.class));
@@ -174,7 +175,7 @@ public final class RunnerBuilderTest {
             .ipAddress(p2pAdvertisedHost)
             .discoveryPort(0)
             .listeningPort(p2pListenPort)
-            .nodeId(besuController.getNodeKey().getPublicKey().getEncoded())
+            .nodeId(nodeKey.getPublicKey().getEncoded())
             .build();
     assertThat(runner.getLocalEnode().orElseThrow()).isEqualTo(expectedEnodeURL);
   }
@@ -186,9 +187,9 @@ public final class RunnerBuilderTest {
     final int p2pListenPort = 30301;
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     final Block genesisBlock = gen.genesisBlock();
-    final MutableBlockchain blockchain =
+    final MutableBlockchain inMemoryBlockchain =
         createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
-    when(besuController.getProtocolContext().getBlockchain()).thenReturn(blockchain);
+    when(protocolContext.getBlockchain()).thenReturn(inMemoryBlockchain);
     final Runner runner =
         new RunnerBuilder()
             .discovery(true)
@@ -212,15 +213,16 @@ public final class RunnerBuilderTest {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     runner.startEthereumMainLoop();
-    when(besuController.getProtocolSchedule().streamMilestoneBlocks())
-        .thenAnswer(__ -> Stream.of(1L, 2L));
+
+    when(protocolSchedule.streamMilestoneBlocks()).thenAnswer(__ -> Stream.of(1L, 2L));
+
     for (int i = 0; i < 2; ++i) {
       final Block block =
           gen.block(
               BlockDataGenerator.BlockOptions.create()
                   .setBlockNumber(1 + i)
-                  .setParentHash(blockchain.getChainHeadHash()));
-      blockchain.appendBlock(block, gen.receipts(block));
+                  .setParentHash(inMemoryBlockchain.getChainHeadHash()));
+      inMemoryBlockchain.appendBlock(block, gen.receipts(block));
       assertThat(
               storageProvider
                   .getStorageBySegmentIdentifier(BLOCKCHAIN)
@@ -400,7 +402,8 @@ public final class RunnerBuilderTest {
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
-    final MiningParameters mockMiningParams = besuController.getMiningParameters();
+    final MiningParameters mockMiningParams = mock(MiningParameters.class);
+    when(besuController.getMiningParameters()).thenReturn(mockMiningParams);
     when(mockMiningParams.isStratumMiningEnabled()).thenReturn(true);
     final TransitionCoordinator mockTransitionCoordinator =
         spy(
