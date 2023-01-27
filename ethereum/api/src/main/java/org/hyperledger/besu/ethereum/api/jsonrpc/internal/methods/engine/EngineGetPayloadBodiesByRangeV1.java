@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV1.class);
   //TODO benchmark this number
-  private static final long MAX_BLOCKS_ALLOWED = 64L;
+  protected static final long MAX_BLOCKS_ALLOWED = 64L;
   private final BlockResultFactory blockResultFactory;
 
   public EngineGetPayloadBodiesByRangeV1(
@@ -62,6 +62,7 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
 
     final long startBlockNumber = request.getRequiredParameter(0, Long.class);
     final long count = request.getRequiredParameter(1, Long.class);
+    final Object reqId = request.getRequest().getId();
 
     traceLambda(
         LOG,
@@ -70,13 +71,12 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
         () -> startBlockNumber,
         () -> count);
 
-    final Blockchain blockchain = protocolContext.getBlockchain();
-    final Object reqId = request.getRequest().getId();
-    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
-
     if(count > MAX_BLOCKS_ALLOWED){
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
     }
+
+    final Blockchain blockchain = protocolContext.getBlockchain();
+    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
 
     //request startBlockNumber is past head of chain
     if(chainHeadBlockNumber < startBlockNumber){

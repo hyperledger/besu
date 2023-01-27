@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod {
   //TODO benchmark this number
-  private static final long MAX_BLOCKS_ALLOWED = 64L;
+  protected static final long MAX_BLOCKS_ALLOWED = 64L;
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByHashV1.class);
   private final BlockResultFactory blockResultFactory;
 
