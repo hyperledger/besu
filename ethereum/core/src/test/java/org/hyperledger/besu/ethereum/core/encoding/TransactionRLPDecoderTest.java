@@ -116,6 +116,6 @@ class TransactionRLPDecoderTest {
     // Decode bytes into a transaction
     final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
     // Bytes size should be equal to transaction size
-    assertThat(transaction.getSize()).isEqualTo(bytes.size());
+    assertThat(transaction.getNetworkSize()).isEqualTo(bytes.size());
   }
 }

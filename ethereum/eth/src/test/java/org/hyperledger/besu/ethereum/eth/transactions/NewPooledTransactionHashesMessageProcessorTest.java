@@ -366,7 +366,8 @@ public class NewPooledTransactionHashesMessageProcessorTest {
       final TransactionAnnouncement announcement = announcementList.get(list.indexOf(transaction));
       assertThat(announcement.getHash()).isEqualTo(transaction.getHash());
       assertThat(announcement.getType()).hasValue(transaction.getType());
-      assertThat(announcement.getSize()).hasValue((long) transaction.getSize());
+      assertThat(announcement.getSize())
+          .hasValue((long) transaction.getNetworkSize().orElseThrow());
     }
   }
 
