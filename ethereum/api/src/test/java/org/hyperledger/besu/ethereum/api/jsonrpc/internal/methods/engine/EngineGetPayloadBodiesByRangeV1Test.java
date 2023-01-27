@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1.MAX_BLOCKS_ALLOWED;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -26,6 +28,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -294,6 +298,24 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     assertThat(result.getPayloadBodies().size()).isEqualTo(3);
   }
 
+  @Test
+  public void ShouldReturnEmptyPayloadForRequestsPastCurrentHead(){
+
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(123));
+    final JsonRpcResponse resp = resp(125, 3);
+    final var result = fromSuccessResp(resp);
+    assertThat(result.getPayloadBodies()).isEqualTo(Collections.EMPTY_LIST);
+  }
+
+  @Test
+  public void ShouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks(){
+    final long apiLimit = MAX_BLOCKS_ALLOWED;
+    final int overApiLimit = (int) apiLimit + 10;
+    final JsonRpcResponse resp = resp(1337, overApiLimit);
+    final var result = fromErrorResp(resp);
+    assertThat(result.getCode()).isEqualTo(INVALID_RANGE_REQUEST_TOO_LARGE.getCode());
+  }
+
   private JsonRpcResponse resp(final long startBlockNumber, final long range) {
     return method.response(
         new JsonRpcRequestContext(
@@ -310,5 +332,13 @@ public class EngineGetPayloadBodiesByRangeV1Test {
         .map(JsonRpcSuccessResponse::getResult)
         .map(EngineGetPayloadBodiesResultV1.class::cast)
         .get();
+  }
+
+  private JsonRpcError fromErrorResp(final JsonRpcResponse resp) {
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    return Optional.of(resp)
+            .map(JsonRpcErrorResponse.class::cast)
+            .map(JsonRpcErrorResponse::getError)
+            .get();
   }
 }
