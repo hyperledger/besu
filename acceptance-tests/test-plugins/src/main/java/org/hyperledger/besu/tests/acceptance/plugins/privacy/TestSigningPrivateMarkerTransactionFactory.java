@@ -43,7 +43,7 @@ public class TestSigningPrivateMarkerTransactionFactory implements PrivateMarker
   KeyPair aliceFixedSigningKey;
   Address sender;
 
-  public void setSigningKeyEnbaled(final String privateMarkerTransactionSigningKey) {
+  public void setSigningKeyEnabled(final String privateMarkerTransactionSigningKey) {
     final SignatureAlgorithm algorithm = SignatureAlgorithmFactory.getInstance();
     final SECPPrivateKey privateKey =
         algorithm.createPrivateKey(Bytes32.fromHexString(privateMarkerTransactionSigningKey));
