@@ -39,8 +39,6 @@ import org.bouncycastle.operator.DigestCalculatorProvider;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** The Cms creator. */
 public class CmsCreator {
