@@ -206,7 +206,7 @@ jobs:
               | circleci tests split --split-by=timings)
             # Format the arguments to "./gradlew test"
             echo "Prepared arguments for Gradle: $GRADLE_ARGS"
-            ./gradlew --no-daemon $GRADLE_ARGS
+            ./gradlew --no-daemon $GRADLE_ARGS --debug
       - capture_test_results
 
   integrationTests:
