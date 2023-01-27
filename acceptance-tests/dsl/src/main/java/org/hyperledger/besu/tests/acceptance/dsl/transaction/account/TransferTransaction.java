@@ -35,7 +35,7 @@ import org.web3j.utils.Numeric;
 
 public class TransferTransaction implements Transaction<Hash> {
 
-  /** Price for each for each GAS units in this transaction (wei). */
+  /** Price for each GAS units in this transaction (wei). */
   private static final BigInteger MINIMUM_GAS_PRICE = BigInteger.valueOf(1000);
 
   /** Number of GAS units that the transaction will cost. */
