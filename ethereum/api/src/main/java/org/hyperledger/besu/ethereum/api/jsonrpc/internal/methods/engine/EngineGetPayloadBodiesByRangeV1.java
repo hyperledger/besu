@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
@@ -36,6 +38,8 @@ import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV1.class);
+  //TODO benchmark this number
+  private static final long MAX_BLOCKS_ALLOWED = 64L;
   private final BlockResultFactory blockResultFactory;
 
   public EngineGetPayloadBodiesByRangeV1(
@@ -68,16 +72,23 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
 
     final Blockchain blockchain = protocolContext.getBlockchain();
     final Object reqId = request.getRequest().getId();
+    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
 
-    //request is past head of chain
-    if(blockchain.getChainHeadBlockNumber() < startBlockNumber){
-      return new JsonRpcSuccessResponse(reqId, new EngineGetPayloadBodiesResultV1(Collections.EMPTY_LIST));
+    if(count > MAX_BLOCKS_ALLOWED){
+      return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
     }
 
-    final long latestKnownBlockNumber = blockchain.getChainHeadBlockNumber();
+    //request startBlockNumber is past head of chain
+    if(chainHeadBlockNumber < startBlockNumber){
+      //Empty List of payloadBodies
+      return new JsonRpcSuccessResponse(reqId, new EngineGetPayloadBodiesResultV1());
+    }
+
     final long upperBound = startBlockNumber + count;
+
+    //if we've received request from blocks past the head we exclude those from the query
     final long endExclusiveBlockNumber =
-        latestKnownBlockNumber < upperBound ? latestKnownBlockNumber + 1 : upperBound;
+            chainHeadBlockNumber < upperBound ? chainHeadBlockNumber + 1 : upperBound;
 
     EngineGetPayloadBodiesResultV1 engineGetPayloadBodiesResultV1 = blockResultFactory.payloadBodiesCompleteV1(
             LongStream.range(startBlockNumber, endExclusiveBlockNumber)
