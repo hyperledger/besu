@@ -19,6 +19,7 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 
+/** POS config options. */
 public class PosConfigOptions {
   /** The constant DEFAULT. */
   public static final PosConfigOptions DEFAULT = new PosConfigOptions();
