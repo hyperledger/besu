@@ -336,14 +336,12 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
 
-      if (configOptions.isPos()) {
-        return builder.genesisConfigFile(genesisConfig);
-      }
-
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
-        // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block
-        if (isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions)) {
+        // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block or if using
+        // pos at genesis
+        if ((isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions))
+            || configOptions.isPos()) {
           return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
         } else {
           // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
