@@ -106,7 +106,7 @@ public class Transaction
   // Caches the hash used to uniquely identify the transaction.
   protected volatile Hash hash;
   // Caches the size in bytes of the encoded transaction.
-  protected volatile int size = -1;
+  protected volatile Optional<Integer> networkSize = Optional.empty();
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -686,20 +686,26 @@ public class Transaction
    *
    * @return the size in bytes of the encoded transaction.
    */
-  public int getSize() {
-    if (size == -1) {
+  public Optional<Integer> getNetworkSize() {
+    if (networkSize.isEmpty()) {
       memoizeHashAndSize();
     }
-    return size;
+    return networkSize;
   }
 
   private void memoizeHashAndSize() {
     final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
     hash = Hash.hash(bytes);
 
-    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
-    size = rlpOutput.encodedSize();
+    if (transactionType.supportsBlob()) {
+      if (getBlobsWithCommitments().isPresent()) {
+        networkSize = Optional.of(TransactionEncoder.encodeOpaqueBytesForNetwork(this).size());
+      }
+    } else {
+      final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+      TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
+      networkSize = Optional.of(rlpOutput.encodedSize());
+    }
   }
 
   /**
