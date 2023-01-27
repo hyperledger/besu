@@ -302,7 +302,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
     public static class Data implements SSZReadable, SSZWritable {
       public static final int MAX_CALL_DATA_SIZE = 16777216; // 2**24
 
-      Bytes data;
+      Bytes data = Bytes.EMPTY;
 
       @Override
       public boolean isFixed() {
@@ -319,7 +319,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
       @Override
       public void writeTo(final SSZWriter writer) {
-        if (data != null) {
+        if (data != Bytes.EMPTY) {
           writer.writeBytes(data);
         }
       }
