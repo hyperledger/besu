@@ -69,6 +69,5 @@ public class RetryingGetBlockFromPeersTaskTest
   public void completesWhenPeerReturnsPartialResult()
       throws ExecutionException, InterruptedException {
     super.completesWhenPeerReturnsPartialResult();
-    fail("Sally testing that a failing test is visible");
   }
 }
