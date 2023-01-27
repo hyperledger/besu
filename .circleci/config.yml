@@ -188,7 +188,7 @@ jobs:
       - capture_test_results
 
   unitTestsParallelized:
-    #parallelism: 6
+    parallelism: 6
     executor: besu_executor_xl
     steps:
       - prepare
