@@ -45,6 +45,11 @@ public class BlockTracer {
     return blockReplay.block(block, prepareReplayAction(tracer));
   }
 
+  public Optional<StreamBlockTrace> streamTrace(
+      final Block block, final DebugOperationTracer tracer) {
+    return blockReplay.streamBlock(block, prepareReplayAction(tracer));
+  }
+
   private BlockReplay.TransactionAction<TransactionTrace> prepareReplayAction(
       final DebugOperationTracer tracer) {
     return (transaction, header, blockchain, mutableWorldState, transactionProcessor) -> {

@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -84,7 +85,7 @@ public class TraceFilter extends TraceBlock {
   @Override
   protected void generateTracesFromTransactionTraceAndBlock(
       final Optional<FilterParameter> maybeFilterParameter,
-      final List<TransactionTrace> transactionTraces,
+      final Stream<TransactionTrace> transactionTraces,
       final Block block,
       final ArrayNodeWrapper arrayNode) {
 

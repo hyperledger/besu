@@ -15,6 +15,7 @@
 - Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
 
 ### Bug Fixes
+- Fix for out of memory exception on trace_block and trace_replayBlockTransactions RPC methods [#3786](https://github.com/hyperledger/besu/issues/3786)
 
 ## 23.1.0
 
