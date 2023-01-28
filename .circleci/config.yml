@@ -184,7 +184,14 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon build
+            GRADLE_ARGS=$(ls -d **/**/src/test/java | egrep -v 'acceptance-tests'\
+              | sed 's/^/:/' \
+              | sed 's@/src/test/java@@' \
+              | sed 's@/@:@' \
+              | sed 's@$@:test@' )
+            # Format the arguments to "./gradlew test"
+            echo "Prepared arguments for Gradle: $GRADLE_ARGS"
+            ./gradlew --no-daemon $GRADLE_ARGS --info
       - capture_test_results
 
   unitTestsParallelized:
