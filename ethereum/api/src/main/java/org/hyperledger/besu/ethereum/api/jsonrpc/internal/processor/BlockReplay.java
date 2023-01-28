@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class BlockReplay {
 
@@ -65,6 +66,26 @@ public class BlockReplay {
                               transactionProcessor))
                   .collect(Collectors.toList());
           return Optional.of(new BlockTrace(transactionTraces));
+        });
+  }
+
+  public Optional<StreamBlockTrace> streamBlock(
+      final Block block, final TransactionAction<TransactionTrace> action) {
+    return performActionWithBlock(
+        block.getHeader(),
+        block.getBody(),
+        (body, header, blockchain, mutableWorldState, transactionProcessor) -> {
+          Stream<TransactionTrace> transactionTraces =
+              body.getTransactions().stream()
+                  .map(
+                      transaction ->
+                          action.performAction(
+                              transaction,
+                              header,
+                              blockchain,
+                              mutableWorldState,
+                              transactionProcessor));
+          return Optional.of(new StreamBlockTrace(transactionTraces));
         });
   }
 

@@ -21,6 +21,7 @@ tests are updated to use EC private keys instead of RSA keys.
 - Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
 
 ### Bug Fixes
+- Fix for out of memory exception on trace_block and trace_replayBlockTransactions RPC methods [#3786](https://github.com/hyperledger/besu/issues/3786)
 
 ## 23.1.0
 

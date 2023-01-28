@@ -30,9 +30,9 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -91,7 +91,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
     blockTracerSupplier
         .get()
-        .trace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
+        .streamTrace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
         .ifPresent(
             blockTrace ->
                 generateTracesFromTransactionTraceAndBlock(
@@ -104,7 +104,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
   protected void generateTracesFromTransactionTraceAndBlock(
       final Optional<FilterParameter> filterParameter,
-      final List<TransactionTrace> transactionTraces,
+      final Stream<TransactionTrace> transactionTraces,
       final Block block,
       final ArrayNodeWrapper resultArrayNode) {
     transactionTraces.forEach(
