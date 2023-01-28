@@ -78,7 +78,6 @@ public class RoundStateTest {
       validators.add(Util.publicKeyToAddress(newNodeKey.getPublicKey()));
       validatorMessageFactories.add(new MessageFactory(newNodeKey));
     }
-    when(block.getHash()).thenReturn(blockHash);
   }
 
   @Test
