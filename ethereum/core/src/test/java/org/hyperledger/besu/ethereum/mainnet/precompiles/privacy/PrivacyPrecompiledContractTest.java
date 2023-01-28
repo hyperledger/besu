@@ -70,7 +70,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 
 @SuppressWarnings("MockNotUsedInProduction")
 public class PrivacyPrecompiledContractTest {
