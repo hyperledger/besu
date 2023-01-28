@@ -57,7 +57,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
-    when(tempDataDir).thenReturn(tempDataDir);
+    when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
     when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
 
     final RocksDBKeyValueStorageFactory storageFactory =
