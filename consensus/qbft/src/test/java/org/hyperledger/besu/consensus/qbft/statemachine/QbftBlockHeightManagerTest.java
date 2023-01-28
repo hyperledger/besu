@@ -166,7 +166,7 @@ public class QbftBlockHeightManagerTest {
               final int round = invocation.getArgument(1);
               final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, round);
               final RoundState createdRoundState =
-                  new RoundState(roundId, finalState.getQuorum(), messageValidator);
+                  new RoundState(roundId, 3, messageValidator);
               return new QbftRound(
                   createdRoundState,
                   blockCreator,

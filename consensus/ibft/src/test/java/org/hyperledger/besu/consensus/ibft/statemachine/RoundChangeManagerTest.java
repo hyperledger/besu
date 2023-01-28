@@ -76,10 +76,6 @@ public class RoundChangeManagerTest {
     validators.add(Util.publicKeyToAddress(validator1Key.getPublicKey()));
     validators.add(Util.publicKeyToAddress(validator2Key.getPublicKey()));
 
-    final BlockValidator blockValidator = mock(BlockValidator.class);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(Optional.empty()));
-
     final RoundChangePayloadValidator.MessageValidatorForHeightFactory messageValidatorFactory =
         mock(RoundChangePayloadValidator.MessageValidatorForHeightFactory.class);
 
