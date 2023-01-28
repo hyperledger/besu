@@ -47,7 +47,7 @@ public class PkiKeystoreConfigurationFactory {
   final String NSSCONFIG_PATH_STRING = "/pki-certs/%s/pkcs11.cfg";
   final String NSSPIN_PATH_STRING = "/pki-certs/%s/nsspin.txt";
   final String TRUSTSTORE_PATH_STRING = "/pki-certs/truststore/truststore.p12";
-  final String CRL_PATH_STRING = "/pki-certs/ca_certs/crl/crl.pem";
+  final String CRL_PATH_STRING = "/pki-certs/crl/crl.pem";
 
   /*
    Software keystore config

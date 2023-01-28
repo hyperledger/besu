@@ -369,7 +369,7 @@ public class BesuNodeConfigurationBuilder {
     try {
       final String nsspin = "/pki-certs/%s/nsspin.txt";
       final String truststore = "/pki-certs/truststore/truststore.p12";
-      final String crl = "/pki-certs/ca_certs/crl/crl.pem";
+      final String crl = "/pki-certs/crl/crl.pem";
       switch (type) {
         case KEYSTORE_TYPE_JKS:
           builder
