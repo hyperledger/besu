@@ -404,6 +404,9 @@ workflows:
   default:
     jobs:
       - assemble
+      - unitTests:
+          requires:
+            - assemble
       - unitTestsParallelized:
           requires:
             - assemble
