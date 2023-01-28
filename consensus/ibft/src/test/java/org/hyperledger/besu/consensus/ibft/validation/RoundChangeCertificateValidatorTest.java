@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.ibft.validation;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

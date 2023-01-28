@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -28,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -42,8 +40,6 @@ public class PrivDeletePrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String PRIVACY_GROUP_ID = "privacyGroupId";
 
-  private final Enclave enclave = mock(Enclave.class);
-  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
   private final User user =
       new UserImpl(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), new JsonObject());
@@ -52,8 +48,6 @@ public class PrivDeletePrivacyGroupTest {
 
   @Before
   public void setUp() {
-    when(privacyParameters.getEnclave()).thenReturn(enclave);
-    when(privacyParameters.isEnabled()).thenReturn(true);
     request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "priv_deletePrivacyGroup", new Object[] {PRIVACY_GROUP_ID}),

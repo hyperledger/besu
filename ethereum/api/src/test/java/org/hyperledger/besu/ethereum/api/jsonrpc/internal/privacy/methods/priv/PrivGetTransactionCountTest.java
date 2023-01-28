@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -38,7 +37,6 @@ import java.util.stream.Stream;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -47,7 +45,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 class PrivGetTransactionCountTest {
 
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
-  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
 
   private static final String PRIVACY_GROUP_ID = "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=";
@@ -58,11 +55,6 @@ class PrivGetTransactionCountTest {
       new UserImpl(
           new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), new JsonObject()) {};
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
-
-  @BeforeEach
-  public void setup() {
-    when(privacyParameters.isEnabled()).thenReturn(true);
-  }
 
   @ParameterizedTest(name = "{index}: {1}")
   @MethodSource({"provideNonces"})

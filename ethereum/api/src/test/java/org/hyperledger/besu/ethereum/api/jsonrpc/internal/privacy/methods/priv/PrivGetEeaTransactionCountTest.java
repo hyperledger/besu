@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -50,7 +49,6 @@ class PrivGetEeaTransactionCountTest {
     "QzHuACXpfhoGAgrQriWJcDJ6MrUwcCvutKMoAn9KplQ="
   };
 
-  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
   private JsonRpcRequestContext request;
 
@@ -60,7 +58,6 @@ class PrivGetEeaTransactionCountTest {
 
   @BeforeEach
   public void setup() {
-    when(privacyParameters.isEnabled()).thenReturn(true);
     final Object[] jsonBody = new Object[] {address.toString(), ENCLAVE_PUBLIC_KEY, PRIVATE_FOR};
     request =
         new JsonRpcRequestContext(

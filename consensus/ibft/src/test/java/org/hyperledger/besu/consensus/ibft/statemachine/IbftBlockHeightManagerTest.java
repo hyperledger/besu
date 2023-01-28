@@ -159,8 +159,7 @@ public class IbftBlockHeightManagerTest {
             invocation -> {
               final int round = invocation.getArgument(1);
               final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, round);
-              final RoundState createdRoundState =
-                  new RoundState(roundId, 3, messageValidator);
+              final RoundState createdRoundState = new RoundState(roundId, 3, messageValidator);
               return new IbftRound(
                   createdRoundState,
                   blockCreator,
