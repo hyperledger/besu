@@ -70,13 +70,15 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
+@SuppressWarnings("MockNotUsedInProduction")
 public class PrivacyPrecompiledContractTest {
 
   private final String actual = "Test String";
   private final Bytes privateTransactionLookupId = Bytes.wrap(actual.getBytes(UTF_8));
   private MessageFrame messageFrame;
-  private Blockchain blockchain;
+  private final Blockchain blockchain = mock(Blockchain.class);
   private final String DEFAULT_OUTPUT = "0x01";
   final String PAYLOAD_TEST_PRIVACY_GROUP_ID = "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
@@ -121,7 +123,6 @@ public class PrivacyPrecompiledContractTest {
         .thenReturn(new PrivateBlockMetadata(Collections.emptyList()));
 
     messageFrame = mock(MessageFrame.class);
-    blockchain = mock(Blockchain.class);
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block genesis = blockGenerator.genesisBlock();
     final Block block =
