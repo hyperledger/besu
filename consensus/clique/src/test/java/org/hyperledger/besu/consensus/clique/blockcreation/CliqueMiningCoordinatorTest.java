@@ -57,6 +57,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("DirectInvocationOnMock")
 public class CliqueMiningCoordinatorTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -80,10 +81,10 @@ public class CliqueMiningCoordinatorTest {
   @Mock private CliqueBlockMiner blockMiner;
   @Mock private SyncState syncState;
   @Mock private ValidatorProvider validatorProvider;
+  @Mock private BlockHeader blockHeader;
 
   @BeforeEach
   public void setup() {
-
     headerTestFixture.number(1);
     Block genesisBlock = createEmptyBlock(0, Hash.ZERO, proposerKeys); // not normally signed but ok
     blockChain = createInMemoryBlockchain(genesisBlock);
@@ -101,7 +102,7 @@ public class CliqueMiningCoordinatorTest {
     // As the head of the blockChain is 0 (which effectively doesn't have a signer, all validators
     // are able to propose.
 
-    when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
+    when(blockMiner.getParentHeader()).thenReturn(blockHeader);
 
     // Note also - validators is an hard-ordered LIST, thus in-turn will follow said list - block_1
     // should be created by proposer.
