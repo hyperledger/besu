@@ -138,7 +138,7 @@ public class PrivateStorageMigrationTest {
     migration.migratePrivateStorage();
 
     // check that for every block we have the existing mapping
-    for (long i = 0; i <= verify(blockchain.getChainHeadBlockNumber()); i++) {
+    for (long i = 0; i <= blockchain.getChainHeadBlockNumber(); i++) {
       final Optional<PrivacyGroupHeadBlockMap> pgHeadMapAfterMigration =
           privateStateStorage.getPrivacyGroupHeadBlockMap(
               blockchain.getBlockByNumber(i).get().getHash());
