@@ -57,7 +57,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
-    when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
+    when(tempDataDir).thenReturn(tempDataDir);
     when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
 
     final RocksDBKeyValueStorageFactory storageFactory =
@@ -67,8 +67,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).getVersion())
-        .isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
   }
 
   @Test
