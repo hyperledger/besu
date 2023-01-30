@@ -457,6 +457,9 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
   @Test
   public void ethGetUncleCountByBlockNumberPendingNoData() throws Exception {
+    when(blockchainQueries.headBlockNumber()).thenReturn(0L);
+    when(blockchainQueries.getOmmerCount(eq(0L))).thenReturn(Optional.of(0));
+
     final String id = "123";
     final String params = "\"params\": [\"pending\"]";
     final RequestBody body =
@@ -1901,6 +1904,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Address address = gen.address();
     final String mockStorage = "0x0000000000000000000000000000000000000000000000000000000000000006";
+
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     final BlockHeader blockHeader = mock(BlockHeader.class);
@@ -2011,6 +2015,12 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
   @Test
   public void ethGetStorageAtInvalidParameterStorageIndex() throws Exception {
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
+
     // Setup mocks to return a block
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Address address = gen.address();
