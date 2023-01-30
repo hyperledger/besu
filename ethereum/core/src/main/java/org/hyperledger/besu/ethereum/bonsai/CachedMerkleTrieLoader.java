@@ -96,14 +96,14 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
     CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateStorage, account, slotHash));
   }
 
-  public void preLoadAccountTrie(final StoredMerklePatriciaTrie trie) {
+  public void preLoadAccountTrie(final StoredMerklePatriciaTrie<Bytes, Bytes> trie) {
     CompletableFuture.runAsync(() ->
             trie.commit(
                     (location, hash, value) ->
                             this.cacheAccountStateTrieNode(hash, value)));
   }
 
-  public void preLoadStorageTrie(final StoredMerklePatriciaTrie trie) {
+  public void preLoadStorageTrie(final StoredMerklePatriciaTrie<Bytes, Bytes> trie) {
     CompletableFuture.runAsync(() ->
             trie.commit(
                     (location, hash, value) ->
