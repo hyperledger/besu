@@ -245,20 +245,20 @@ public class EthPeer implements Comparable<EthPeer> {
    *
    * @param messageData the data to send
    * @param protocolName the protocol to use for sending
-   * @param connection the connection to use for sending
+   * @param conToUse the connection to use for sending
    * @return the response stream from the peer
    * @throws PeerNotConnected if the peer is not connected
    */
   public RequestManager.ResponseStream send(
-      final MessageData messageData, final String protocolName, final PeerConnection connection)
+      final MessageData messageData, final String protocolName, final PeerConnection conToUse)
       throws PeerNotConnected {
-    if (connection.getAgreedCapabilities().stream()
+    if (conToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
       LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this);
       return null;
     }
     if (permissioningProviders.stream()
-        .anyMatch(p -> !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode()))) {
+        .anyMatch(p -> !p.isMessagePermitted(conToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
           "Permissioning blocked sending of message code {} to {}", messageData.getCode(), this);
       if (LOG.isDebugEnabled()) {
@@ -267,7 +267,7 @@ public class EthPeer implements Comparable<EthPeer> {
             permissioningProviders.stream()
                 .filter(
                     p ->
-                        !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode())));
+                        !p.isMessagePermitted(conToUse.getRemoteEnode(), messageData.getCode())));
       }
       return null;
     }
@@ -290,7 +290,7 @@ public class EthPeer implements Comparable<EthPeer> {
       }
     }
 
-    connection.sendForProtocol(protocolName, messageData);
+    conToUse.sendForProtocol(protocolName, messageData);
     return null;
   }
 
@@ -405,7 +405,7 @@ public class EthPeer implements Comparable<EthPeer> {
     final int messageCode = ethMessage.getData().getCode();
     reputation.resetTimeoutCount(messageCode);
 
-    Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
+    final Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
     requestManager.ifPresentOrElse(
         localRequestManager -> localRequestManager.dispatchResponse(ethMessage),
         () -> {
@@ -460,7 +460,6 @@ public class EthPeer implements Comparable<EthPeer> {
   public void registerStatusSent(final PeerConnection connection) {
     synchronized (this) {
       connectionsWithSentStatusMessage.add(Integer.valueOf(connection.hashCode()));
-      LOG.info("adding connection with hash code {} to status sent", connection.hashCode());
       maybeExecuteStatusesExchangedCallback(connection);
     }
   }
@@ -470,42 +469,38 @@ public class EthPeer implements Comparable<EthPeer> {
       final Difficulty td,
       final int protocolVersion,
       final PeerConnection connection) {
-    synchronized (this) {
       chainHeadState.statusReceived(hash, td);
       lastProtocolVersion.set(protocolVersion);
       statusHasBeenReceivedFromPeer.set(true);
+    synchronized (this) {
       connectionsWithReceivedStatusMessage.add(Integer.valueOf(connection.hashCode()));
-      LOG.info("adding connection with hash code {} to status received", connection.hashCode());
       maybeExecuteStatusesExchangedCallback(connection);
     }
   }
 
   private void maybeExecuteStatusesExchangedCallback(final PeerConnection newConnection) {
-    final Integer hashCode = Integer.valueOf(newConnection.hashCode());
-    LOG.info("checking connection with hash code {}", hashCode);
+    final Integer newConnectionHashCode = Integer.valueOf(newConnection.hashCode());
     synchronized (this) {
-      if (connectionsWithReceivedStatusMessage.contains(hashCode)
-          && connectionsWithSentStatusMessage.contains(hashCode)) {
+      if (connectionsWithReceivedStatusMessage.contains(newConnectionHashCode)
+              && connectionsWithSentStatusMessage.contains(newConnectionHashCode)) {
         if (!this.connection.equals(newConnection)) {
-          // figure out which connection to keep
-          if (compareDuplicateConnections(this.connection, newConnection) > 0) {
-            final PeerConnection oldConnection = this.connection;
+          if (readyForRequests.get()) {
+            // We have two connections that are ready for requests, figure out which connection to keep
+            if (compareDuplicateConnections(this.connection, newConnection) > 0) {
+              final PeerConnection oldConnection = this.connection;
+              this.connection = newConnection;
+              LOG.debug("Changed connection from {} to {}", oldConnection, newConnection);
+            }
+          } else {
+            // use the new connection for now, as it is ready for requests, which the "old" one is not
             this.connection = newConnection;
-            LOG.info("Changed connection from {} to {}", oldConnection, newConnection);
           }
         }
-        final int actualHashCode = this.connection.hashCode();
-        if (connectionsWithReceivedStatusMessage.contains(actualHashCode)
-            && connectionsWithSentStatusMessage.contains(actualHashCode)) {
-          readyForRequests.set(true);
-          if (onStatusesExchanged == null) {
-            return;
-          } else {
-            LOG.info("Executing callback connected to peer {}", this.id);
-            LOG.debug(
-                "Status message exchange successful with a peer on a matching chain. {}", this);
-            onStatusesExchanged.accept(this);
-          }
+        readyForRequests.set(true);
+        if (onStatusesExchanged != null) {
+          // this callback could be called multiple times
+          LOG.debug("Status message exchange successful. {}", this);
+          onStatusesExchanged.accept(this);
         }
       }
     }

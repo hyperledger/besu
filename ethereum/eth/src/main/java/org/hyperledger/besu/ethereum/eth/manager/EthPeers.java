@@ -515,9 +515,8 @@ public class EthPeers {
       // Disconnect if too many peers
       if (!canExceedPeerLimits(peer.getConnection()) && peerCount() >= peerUpperBound) {
         LOG.debug(
-            "Too many peers. Disconnect incoming connection: {} currentCount {}, max {}",
+            "Too many peers. Disconnect connection: {}, max connections {}",
             peer.getConnection(),
-            peerCount(),
             peerUpperBound);
         peer.getConnection().disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
         return false;

@@ -110,7 +110,7 @@ public class BftProtocolManager implements ProtocolManager {
 
   @Override
   public boolean shouldConnect(final Peer peer, final boolean incoming) {
-    return false; // for now the EthProtocolManager should take care of this
+    return false; // for now the EthProtocolManager takes care of this
   }
 
   @Override
@@ -118,8 +118,7 @@ public class BftProtocolManager implements ProtocolManager {
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
-    peers.remove(
-        peerConnection); // Do we have to check that this connection is the actual connection
+    peers.remove(peerConnection);
   }
 
   @Override

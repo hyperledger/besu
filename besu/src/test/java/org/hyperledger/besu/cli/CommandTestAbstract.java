@@ -378,7 +378,7 @@ public abstract class CommandTestAbstract {
     // reset GlobalOpenTelemetry
     GlobalOpenTelemetry.resetForTest();
 
-    TestBesuCommand besuCommand = getTestBesuCommand(testType);
+    final TestBesuCommand besuCommand = getTestBesuCommand(testType);
     besuCommands.add(besuCommand);
 
     final File defaultKeyFile =

@@ -170,7 +170,7 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn(Optional.of(UInt256.valueOf(1500L)));
 
-    Difficulty terminalTotalDifficulty =
+    final Difficulty terminalTotalDifficulty =
         visitWithMockConfigs(new MergeBesuControllerBuilder())
             .build()
             .getProtocolContext()
@@ -182,9 +182,9 @@ public class MergeBesuControllerBuilderTest {
 
   @Test
   public void assertConfiguredBlock() {
-    Blockchain mockChain = mock(Blockchain.class);
+    final Blockchain mockChain = mock(Blockchain.class);
     when(mockChain.getBlockHeader(anyLong())).thenReturn(Optional.of(mock(BlockHeader.class)));
-    MergeContext mergeContext =
+    final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
             mockChain,
             mock(WorldStateArchive.class),
@@ -206,10 +206,10 @@ public class MergeBesuControllerBuilderTest {
                 mock(WorldStateArchive.class),
                 this.besuControllerBuilder.createProtocolSchedule()));
     assertThat(mergeContext).isNotNull();
-    Difficulty over = Difficulty.of(10000L);
-    Difficulty under = Difficulty.of(10L);
+    final Difficulty over = Difficulty.of(10000L);
+    final Difficulty under = Difficulty.of(10L);
 
-    BlockHeader parent =
+    final BlockHeader parent =
         headerGenerator
             .difficulty(under)
             .parentHash(genesisState.getBlock().getHash())
@@ -219,7 +219,7 @@ public class MergeBesuControllerBuilderTest {
             .buildHeader();
     blockchain.appendBlock(new Block(parent, BlockBody.empty()), Collections.emptyList());
 
-    BlockHeader terminal =
+    final BlockHeader terminal =
         headerGenerator
             .difficulty(over)
             .parentHash(parent.getHash())
@@ -234,9 +234,9 @@ public class MergeBesuControllerBuilderTest {
 
   @Test
   public void assertNoFinalizedBlockWhenNotStored() {
-    Blockchain mockChain = mock(Blockchain.class);
+    final Blockchain mockChain = mock(Blockchain.class);
     when(mockChain.getFinalized()).thenReturn(Optional.empty());
-    MergeContext mergeContext =
+    final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
             mockChain,
             mock(WorldStateArchive.class),
@@ -253,7 +253,7 @@ public class MergeBesuControllerBuilderTest {
     when(mockChain.getFinalized()).thenReturn(Optional.of(finalizedHeader.getHash()));
     when(mockChain.getBlockHeader(finalizedHeader.getHash()))
         .thenReturn(Optional.of(finalizedHeader));
-    MergeContext mergeContext =
+    final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
             mockChain,
             mock(WorldStateArchive.class),

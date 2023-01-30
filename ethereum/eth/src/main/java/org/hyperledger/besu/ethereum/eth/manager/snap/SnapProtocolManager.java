@@ -140,7 +140,7 @@ public class SnapProtocolManager implements ProtocolManager {
 
   @Override
   public boolean shouldConnect(final Peer peer, final boolean incoming) {
-    return false; // should be fine for now, as the EthManager is taking care of this
+    return false; // EthManager is taking care of this for now
   }
 
   @Override

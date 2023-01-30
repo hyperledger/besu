@@ -41,7 +41,7 @@ public class NetPeerCountTransaction implements Transaction<BigInteger> {
         LOG.info("Error in result: {}", result.getError().getMessage());
         throw new RuntimeException(result.getError().getMessage());
       }
-      LOG.info("Result: {}", result.getQuantity());
+      LOG.debug("Result: {}", result.getQuantity());
       return result.getQuantity();
     } catch (final IOException e) {
       throw new RuntimeException(e);

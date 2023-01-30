@@ -117,8 +117,8 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
     for (final BesuPlugin plugin : serviceLoader) {
       try {
-        LOG.info("Register plugin of type {}.", plugin.getClass().getName());
         plugin.register(this);
+        LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
         addPluginVersion(plugin);
       } catch (final Exception e) {
         LOG.error(

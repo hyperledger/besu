@@ -64,10 +64,6 @@ public class RetryingGetBlocksFromPeersTask
   @Override
   protected CompletableFuture<PeerTaskResult<List<Block>>> executeTaskOnCurrentPeer(
       final EthPeer currentPeer) {
-    //    if (currentPeer.chainState().getEstimatedHeight() < headers.get(0).getNumber()) {
-    //      return CompletableFuture.failedFuture(new RuntimeException("current peer height less
-    // than requested block"));
-    //    }
     final GetBodiesFromPeerTask getBodiesTask =
         GetBodiesFromPeerTask.forHeaders(
             protocolSchedule, getEthContext(), headers, getMetricsSystem());
