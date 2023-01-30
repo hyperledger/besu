@@ -79,7 +79,7 @@ commands:
           command: |
             ./gradlew --no-daemon jacocoTestReport
       - run:
-          name: Gather test results
+          name: Gather test coverage results
           when: always
           command: |
             FILES=`find . -name test-results`
@@ -94,6 +94,26 @@ commands:
           path: build/test-results
       - store_artifacts:
           path: besu/build/reports/jacoco
+
+  capture_unit_test_logs:
+    description: "Capture unit test logs"
+    steps:
+      - run:
+          name: Gather unit test results
+          when: always
+          command: |
+            FILES=`find . -name reports`
+            for FILE in $FILES
+            do
+              MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/reports@\1@'`
+              TARGET="build/reports/$MODULE"
+              mkdir -p "$TARGET"
+              cp -rf ${FILE}/*/* "$TARGET"
+            done
+      - store_test_results:
+          path: build/reports
+      - store_artifacts:
+          path: besu/build/reports/unit-tests
 
   capture_test_logs:
     description: "Capture test logs"
@@ -193,6 +213,7 @@ jobs:
             echo "Prepared arguments for Gradle: $GRADLE_ARGS"
             ./gradlew --no-daemon $GRADLE_ARGS --info
       - capture_test_results
+      - capture_unit_test_logs
 
   unitTestsParallelized:
     parallelism: 6
@@ -215,6 +236,7 @@ jobs:
             echo "Prepared arguments for Gradle: $GRADLE_ARGS"
             ./gradlew --no-daemon $GRADLE_ARGS --info
       - capture_test_results
+      - capture_unit_test_logs
 
   integrationTests:
     executor: xl_machine_executor
