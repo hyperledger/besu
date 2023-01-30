@@ -112,8 +112,6 @@ commands:
             done
       - store_test_results:
           path: build/junit
-      - store_artifacts:
-          path: besu/build/junit
 
   capture_test_logs:
     description: "Capture test logs"
