@@ -766,22 +766,22 @@ public abstract class MainnetProtocolSpecs {
                         MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-            // we need to flip the Warm Coinbase flag for EIP-3651 warm coinbase
-            .transactionProcessorBuilder(
-                    (gasCalculator,
-                     transactionValidator,
-                     contractCreationProcessor,
-                     messageCallProcessor) ->
-                            new MainnetTransactionProcessor(
-                                    gasCalculator,
-                                    transactionValidator,
-                                    contractCreationProcessor,
-                                    messageCallProcessor,
-                                    true,
-                                    true,
-                                    stackSizeLimit,
-                                    cancunFeeMarket,
-                                    CoinbaseFeePriceCalculator.eip1559()))
+        // use Cancun fee market
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    cancunFeeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
         // change to check for max data gas per block for EIP-4844
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->

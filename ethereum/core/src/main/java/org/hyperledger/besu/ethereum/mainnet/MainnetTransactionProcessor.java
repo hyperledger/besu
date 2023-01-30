@@ -334,14 +334,13 @@ public class MainnetTransactionProcessor {
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
 
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas - dataGas;
+      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - data)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
-          accessListGas,
-          dataGas);
+          accessListGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
