@@ -106,14 +106,14 @@ commands:
             for FILE in $FILES
             do
               MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/reports@\1@'`
-              TARGET="build/reports/$MODULE"
+              TARGET="build/junit-reports/$MODULE"
               mkdir -p "$TARGET"
               cp -rf ${FILE}/*/* "$TARGET"
             done
       - store_test_results:
-          path: build/reports
+          path: build/junit-reports
       - store_artifacts:
-          path: besu/build/reports/unit-tests
+          path: besu/build/reports/junit
 
   capture_test_logs:
     description: "Capture test logs"
@@ -216,7 +216,7 @@ jobs:
       - capture_unit_test_logs
 
   unitTestsParallelized:
-    parallelism: 6
+    parallelism: 2
     executor: besu_executor_xl
     steps:
       - prepare
@@ -232,9 +232,9 @@ jobs:
               | sed 's@/@:@' \
               | sed 's@$@:test@' \
               | circleci tests split --split-by=timings)
-            # Format the arguments to "./gradlew test"
+            # Format the arguments to "./gradlew"
             echo "Prepared arguments for Gradle: $GRADLE_ARGS"
-            ./gradlew --no-daemon $GRADLE_ARGS --info
+            ./gradlew --no-daemon $GRADLE_ARGS
       - capture_test_results
       - capture_unit_test_logs
 
