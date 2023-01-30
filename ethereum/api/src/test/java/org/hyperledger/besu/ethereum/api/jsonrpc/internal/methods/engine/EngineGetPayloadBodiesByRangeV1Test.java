@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1.MAX_REQUEST_BLOCKS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE;
 import static org.mockito.Mockito.when;
 
@@ -73,14 +74,6 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   @Test
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_getPayloadBodiesByRangeV1");
-  }
-
-  @Test
-  public void shouldReturnEmptyPayloadBodiesWithZeroRange() {
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(130));
-    final var resp = resp(123, 0);
-    final EngineGetPayloadBodiesResultV1 result = fromSuccessResp(resp);
-    assertThat(result.getPayloadBodies().isEmpty()).isTrue();
   }
 
   @Test
@@ -314,6 +307,20 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     final JsonRpcResponse resp = resp(1337, overApiLimit);
     final var result = fromErrorResp(resp);
     assertThat(result.getCode()).isEqualTo(INVALID_RANGE_REQUEST_TOO_LARGE.getCode());
+  }
+
+  @Test
+  public void shouldReturnInvalidParamsIfStartIsZero() {
+    final JsonRpcResponse resp = resp(0, 1337);
+    final var result = fromErrorResp(resp);
+    assertThat(result.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+  }
+
+  @Test
+  public void shouldReturnInvalidParamsIfCountIsZero() {
+    final JsonRpcResponse resp = resp(1337, 0);
+    final var result = fromErrorResp(resp);
+    assertThat(result.getCode()).isEqualTo(INVALID_PARAMS.getCode());
   }
 
   private JsonRpcResponse resp(final long startBlockNumber, final long range) {
