@@ -15,8 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1.MAX_REQUEST_BLOCKS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -66,8 +67,9 @@ public class EngineGetPayloadBodiesByHashV1Test {
   public void before() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method =
-        new EngineGetPayloadBodiesByHashV1(
-            vertx, protocolContext, blockResultFactory, engineCallListener);
+        spy(
+            new EngineGetPayloadBodiesByHashV1(
+                vertx, protocolContext, blockResultFactory, engineCallListener));
   }
 
   @Test
@@ -226,16 +228,13 @@ public class EngineGetPayloadBodiesByHashV1Test {
 
   @Test
   public void shouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks() {
-    final long apiLimit = MAX_REQUEST_BLOCKS;
-    final int overLimit = (int) apiLimit + 10;
-    final Hash[] arrayHash = new Hash[overLimit];
+    final Hash blockHash1 = Hash.wrap(Bytes32.random());
+    final Hash blockHash2 = Hash.wrap(Bytes32.random());
+    final Hash[] hashes = new Hash[] {blockHash1, blockHash2};
 
-    // TODO something more efficient than this must exist
-    for (int i = 0; i < overLimit; i++) {
-      arrayHash[i] = Hash.wrap(Bytes32.random());
-    }
+    doReturn(1).when(method).getMaxRequestBlocks();
 
-    final JsonRpcResponse resp = resp(arrayHash);
+    final JsonRpcResponse resp = resp(hashes);
     final var result = fromErrorResp(resp);
     assertThat(result.getCode()).isEqualTo(INVALID_RANGE_REQUEST_TOO_LARGE.getCode());
   }

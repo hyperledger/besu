@@ -37,8 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV1.class);
-  // TODO benchmark this number
-  protected static final int MAX_REQUEST_BLOCKS = 1024;
+  private static final int MAX_REQUEST_BLOCKS = 1024;
   private final BlockResultFactory blockResultFactory;
 
   public EngineGetPayloadBodiesByRangeV1(
@@ -70,11 +69,11 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
         () -> startBlockNumber,
         () -> count);
 
-    if(startBlockNumber < 1 || count < 1){
+    if (startBlockNumber < 1 || count < 1) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_PARAMS);
     }
 
-    if (count > MAX_REQUEST_BLOCKS) {
+    if (count > getMaxRequestBlocks()) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
     }
 
@@ -104,5 +103,9 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
                 .collect(Collectors.toList()));
 
     return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV1);
+  }
+
+  protected int getMaxRequestBlocks() {
+    return MAX_REQUEST_BLOCKS;
   }
 }

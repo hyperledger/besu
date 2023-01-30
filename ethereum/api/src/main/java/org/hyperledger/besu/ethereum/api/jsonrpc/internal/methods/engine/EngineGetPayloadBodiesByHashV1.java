@@ -38,8 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod {
-  // TODO benchmark this number
-  protected static final int MAX_REQUEST_BLOCKS = 1024;
+
+  private static final int MAX_REQUEST_BLOCKS = 1024;
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByHashV1.class);
   private final BlockResultFactory blockResultFactory;
 
@@ -71,7 +71,7 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
 
     traceLambda(LOG, "{} parameters: blockHashes {}", () -> getName(), () -> blockHashes);
 
-    if (blockHashes.size() > MAX_REQUEST_BLOCKS ) {
+    if (blockHashes.size() > getMaxRequestBlocks()) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
     }
 
@@ -84,4 +84,7 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
     return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV1);
   }
 
+  protected int getMaxRequestBlocks() {
+    return MAX_REQUEST_BLOCKS;
+  }
 }
