@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1.MAX_BLOCKS_ALLOWED;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1.MAX_REQUEST_BLOCKS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE;
 import static org.mockito.Mockito.when;
 
@@ -225,8 +225,8 @@ public class EngineGetPayloadBodiesByHashV1Test {
   }
 
   @Test
-  public void ShouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks() {
-    final long apiLimit = MAX_BLOCKS_ALLOWED;
+  public void shouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks() {
+    final long apiLimit = MAX_REQUEST_BLOCKS;
     final int overLimit = (int) apiLimit + 10;
     final Hash[] arrayHash = new Hash[overLimit];
 
