@@ -327,7 +327,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         new ArrayList<>(
             List.of(block.getHeader().getNumber(), block.getBody().getTransactions().size()));
     if (block.getBody().getWithdrawals().isPresent()) {
-      message.append(" / %s ws");
+      message.append(" / %d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
     message.append(" / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d");
