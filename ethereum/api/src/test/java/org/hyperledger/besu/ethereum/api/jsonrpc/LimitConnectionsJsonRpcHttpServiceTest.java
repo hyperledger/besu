@@ -22,13 +22,13 @@ import java.io.IOException;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 public class LimitConnectionsJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
-  @BeforeClass
-  public static void initLimitedServerAndClient() throws Exception {
+  @Before
+  public void initLimitedServerAndClient() throws Exception {
     maxConnections = 2;
     initServerAndClient();
   }

@@ -58,19 +58,18 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
 public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    maxBatchSize = 10;
+  @Before
+  public void setup() throws Exception {
     initServerAndClient();
   }
 
-  protected static JsonRpcConfiguration createJsonRpcConfig() {
+  protected JsonRpcConfiguration createJsonRpcConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     config.setHostsAllowlist(Collections.singletonList("*"));

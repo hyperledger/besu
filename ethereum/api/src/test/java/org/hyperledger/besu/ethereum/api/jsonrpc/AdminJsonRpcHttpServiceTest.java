@@ -37,7 +37,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +45,8 @@ import org.slf4j.LoggerFactory;
 public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(AdminJsonRpcHttpServiceTest.class);
 
-  @BeforeClass
-  public static void setup() throws Exception {
+  @Before
+  public void setup() throws Exception {
     initServerAndClient();
   }
 

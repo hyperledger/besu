@@ -24,8 +24,7 @@ import java.util.Collection;
 import io.vertx.core.json.JsonObject;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,15 +38,9 @@ public class JsonRpcHttpServiceParameterizedTest extends JsonRpcHttpServiceTestB
     this.requestJson = requestJson;
   }
 
-  @BeforeClass
-  public static void setup() throws Exception {
+  @Before
+  public void setup() throws Exception {
     initServerAndClient();
-  }
-
-  /** Tears down the HTTP server. */
-  @AfterClass
-  public static void shutdownServer() {
-    service.stop().join();
   }
 
   @Parameterized.Parameters

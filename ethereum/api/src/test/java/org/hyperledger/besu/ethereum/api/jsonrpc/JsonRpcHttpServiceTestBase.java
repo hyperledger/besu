@@ -59,7 +59,7 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
@@ -68,29 +68,33 @@ public class JsonRpcHttpServiceTestBase {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
-  private static final Vertx vertx = Vertx.vertx();
+  private final Vertx vertx = Vertx.vertx();
 
-  protected static Map<String, JsonRpcMethod> rpcMethods;
-  protected static JsonRpcHttpService service;
-  protected static OkHttpClient client;
-  protected static String baseUrl;
-  protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-  protected static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  protected static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
-  protected static P2PNetwork peerDiscoveryMock;
-  protected static EthPeers ethPeersMock;
-  protected static Blockchain blockchain;
-  protected static BlockchainQueries blockchainQueries;
-  protected static ChainHead chainHead;
-  protected static Synchronizer synchronizer;
-  protected static final Collection<String> JSON_RPC_APIS =
+  protected Map<String, JsonRpcMethod> rpcMethods;
+  protected JsonRpcHttpService service;
+  protected OkHttpClient client;
+  protected String baseUrl;
+  protected final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+  protected final String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  protected final BigInteger CHAIN_ID = BigInteger.valueOf(123);
+  protected P2PNetwork peerDiscoveryMock;
+  protected EthPeers ethPeersMock;
+  protected Blockchain blockchain;
+  protected BlockchainQueries blockchainQueries;
+  protected ChainHead chainHead;
+  protected Synchronizer synchronizer;
+  protected final Collection<String> JSON_RPC_APIS =
       Arrays.asList(
           RpcApis.ETH.name(), RpcApis.NET.name(), RpcApis.WEB3.name(), RpcApis.ADMIN.name());
-  protected static final NatService natService = new NatService(Optional.empty());
-  protected static int maxConnections = 80;
-  protected static int maxBatchSize = 10;
+  protected final NatService natService = new NatService(Optional.empty());
+  protected int maxConnections = 80;
+  protected final int DEFAULT_MAX_BATCH_SIZE = 10;
 
-  public static void initServerAndClient() throws Exception {
+  public void initServerAndClient() throws Exception {
+    initServerAndClient(DEFAULT_MAX_BATCH_SIZE);
+  }
+
+  public void initServerAndClient(final int maxBatchSize) throws Exception {
     if (service != null) {
       shutdownServer();
     }
@@ -138,7 +142,7 @@ public class JsonRpcHttpServiceTestBase {
                     ethPeersMock,
                     vertx,
                     Optional.empty()));
-    service = createJsonRpcHttpService(createLimitedJsonRpcConfig());
+    service = createJsonRpcHttpService(createLimitedJsonRpcConfig(maxBatchSize));
     service.start().join();
 
     // Build an OkHttp client.
@@ -146,7 +150,7 @@ public class JsonRpcHttpServiceTestBase {
     baseUrl = service.url();
   }
 
-  protected static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config)
+  protected JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config)
       throws Exception {
     return new JsonRpcHttpService(
         vertx,
@@ -159,11 +163,15 @@ public class JsonRpcHttpServiceTestBase {
         HealthService.ALWAYS_HEALTHY);
   }
 
-  protected static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
+  protected JsonRpcHttpService createJsonRpcHttpService() throws Exception {
+    return createJsonRpcHttpService(DEFAULT_MAX_BATCH_SIZE);
+  }
+
+  protected JsonRpcHttpService createJsonRpcHttpService(final int maxBatchSize) throws Exception {
     return new JsonRpcHttpService(
         vertx,
         folder.newFolder().toPath(),
-        createLimitedJsonRpcConfig(),
+        createLimitedJsonRpcConfig(maxBatchSize),
         new NoOpMetricsSystem(),
         natService,
         rpcMethods,
@@ -171,7 +179,7 @@ public class JsonRpcHttpServiceTestBase {
         HealthService.ALWAYS_HEALTHY);
   }
 
-  private static JsonRpcConfiguration createLimitedJsonRpcConfig() {
+  private JsonRpcConfiguration createLimitedJsonRpcConfig(final int maxBatchSize) {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     config.setHostsAllowlist(Collections.singletonList("*"));
@@ -189,8 +197,8 @@ public class JsonRpcHttpServiceTestBase {
   }
 
   /** Tears down the HTTP server. */
-  @AfterClass
-  public static void shutdownServer() {
+  @After
+  public void shutdownServer() {
     service.stop().join();
   }
 }

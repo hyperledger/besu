@@ -23,20 +23,21 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.junit.After;
 import org.junit.Test;
 
 public class MaxBatchSizeJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
-  private void initMaxBatchSize(final int rpcMaxBatchSize) throws Exception {
-    maxBatchSize = rpcMaxBatchSize;
-    initServerAndClient();
+  @After
+  public void cleanUp() {
+    shutdownServer();
   }
 
   @Test
   public void shouldNotReturnErrorWhenConfigIsDisabled() throws Exception {
 
     // disable batch size
-    initMaxBatchSize(-1);
+    initServerAndClient(-1);
 
     // Create a batch request with 2 requests
     final RequestBody body =
@@ -59,7 +60,7 @@ public class MaxBatchSizeJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBa
   public void shouldReturnErrorWhenBatchRequestGreaterThanConfig() throws Exception {
 
     // set max batch size
-    initMaxBatchSize(1);
+    initServerAndClient(1);
 
     // Create a batch request with 2 requests
     final RequestBody body =
