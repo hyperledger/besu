@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV1.class);
   // TODO benchmark this number
-  protected static final long MAX_BLOCKS_ALLOWED = 64L;
+  protected static final int MAX_REQUEST_BLOCKS = 1024;
   private final BlockResultFactory blockResultFactory;
 
   public EngineGetPayloadBodiesByRangeV1(
@@ -70,14 +70,18 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
         () -> startBlockNumber,
         () -> count);
 
-    if (count > MAX_BLOCKS_ALLOWED) {
+    if(startBlockNumber < 1 || count < 1){
+      return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_PARAMS);
+    }
+
+    if (count > MAX_REQUEST_BLOCKS) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
     }
 
     final Blockchain blockchain = protocolContext.getBlockchain();
     final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
 
-    // request startBlockNumber is past head of chain
+    // request startBlockNumber is beyond head of chain
     if (chainHeadBlockNumber < startBlockNumber) {
       // Empty List of payloadBodies
       return new JsonRpcSuccessResponse(reqId, new EngineGetPayloadBodiesResultV1());
@@ -85,7 +89,7 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
 
     final long upperBound = startBlockNumber + count;
 
-    // if we've received request from blocks past the head we exclude those from the query
+    // if we've received request from blocks beyond the head we exclude those from the query
     final long endExclusiveBlockNumber =
         chainHeadBlockNumber < upperBound ? chainHeadBlockNumber + 1 : upperBound;
 
