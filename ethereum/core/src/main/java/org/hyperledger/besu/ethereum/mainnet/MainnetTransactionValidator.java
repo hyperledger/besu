@@ -134,6 +134,7 @@ public class MainnetTransactionValidator {
     if (!signatureResult.isValid()) {
       return signatureResult;
     }
+
     if (transaction.getType().equals(TransactionType.BLOB)
         && transaction.getBlobsWithCommitments().isPresent()) {
       final ValidationResult<TransactionInvalidReason> blobsResult =
@@ -200,11 +201,6 @@ public class MainnetTransactionValidator {
             TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
             "max priority fee per gas cannot be greater than max fee per gas");
       }
-    }
-
-    if (transaction.getNonce() == MAX_NONCE) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
     }
 
     if (transaction.getType().supportsBlob()) {
