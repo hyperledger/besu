@@ -106,14 +106,14 @@ commands:
             for FILE in $FILES
             do
               MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/reports@\1@'`
-              TARGET="build/junit-reports/$MODULE"
+              TARGET="build/junit/$MODULE"
               mkdir -p "$TARGET"
               cp -rf ${FILE}/*/* "$TARGET"
             done
       - store_test_results:
-          path: build/junit-reports
+          path: build/junit
       - store_artifacts:
-          path: besu/build/reports/junit
+          path: besu/build/junit
 
   capture_test_logs:
     description: "Capture test logs"
