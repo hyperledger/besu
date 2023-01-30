@@ -178,7 +178,7 @@ public class TransactionSimulator {
       final OperationTracer operationTracer,
       final BlockHeader header,
       final WorldUpdater updater) {
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final Address senderAddress =
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
@@ -204,7 +204,9 @@ public class TransactionSimulator {
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
     final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockHeader(blockHeaderToProcess).getTransactionProcessor();
+        protocolSchedule
+            .getByBlockNumber(blockHeaderToProcess.getNumber())
+            .getTransactionProcessor();
 
     final Optional<Transaction> maybeTransaction =
         buildTransaction(
