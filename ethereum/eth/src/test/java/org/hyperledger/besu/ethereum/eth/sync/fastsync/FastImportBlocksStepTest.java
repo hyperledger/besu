@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
@@ -37,13 +38,13 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FastImportBlocksStepTest {
 
   @Mock private ProtocolSchedule protocolSchedule;
@@ -52,11 +53,12 @@ public class FastImportBlocksStepTest {
   @Mock private BlockImporter blockImporter;
   @Mock private ValidationPolicy validationPolicy;
   @Mock private ValidationPolicy ommerValidationPolicy;
+  @Mock private BlockHeader pivotHeader;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
   private FastImportBlocksStep importBlocksStep;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -65,7 +67,12 @@ public class FastImportBlocksStepTest {
 
     importBlocksStep =
         new FastImportBlocksStep(
-            protocolSchedule, protocolContext, validationPolicy, ommerValidationPolicy, null);
+            protocolSchedule,
+            protocolContext,
+            validationPolicy,
+            ommerValidationPolicy,
+            null,
+            pivotHeader);
   }
 
   @Test
