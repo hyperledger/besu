@@ -14,6 +14,7 @@
 - Add implementation for engine_exchangeCapabilities [#4997](https://github.com/hyperledger/besu/pull/4997)
 - Add implementation for engine_getPayloadBodiesByRangeV1 and engine_getPayloadBodiesByHashV1 [#4980](https://github.com/hyperledger/besu/pull/4980)
 - Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
+- Add DebugGetRawBlock and DebugGetRawHeader RPC methods [#5011](https://github.com/hyperledger/besu/pull/5011)  
 
 ### Bug Fixes
 

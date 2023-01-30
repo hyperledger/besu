@@ -46,7 +46,8 @@ public enum RpcMethod {
   DEBUG_TRACE_TRANSACTION("debug_traceTransaction"),
   DEBUG_BATCH_RAW_TRANSACTION("debug_batchSendRawTransaction"),
   DEBUG_GET_BAD_BLOCKS("debug_getBadBlocks"),
-
+  DEBUG_GET_RAW_HEADER("debug_getRawHeader"),
+  DEBUG_GET_RAW_BLOCK("debug_getRawBlock"),
   ENGINE_GET_PAYLOAD_V1("engine_getPayloadV1"),
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
   ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
