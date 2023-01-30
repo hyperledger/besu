@@ -38,8 +38,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
 
-  private static final int ACCOUNT_CACHE_SIZE = 100_000;
-  private static final int STORAGE_CACHE_SIZE = 200_000;
+  private static final int ACCOUNT_CACHE_SIZE = 200_000;
+  private static final int STORAGE_CACHE_SIZE = 400_000;
   private final Cache<Bytes, Bytes> accountNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
   private final Cache<Bytes, Bytes> storageNodes =
