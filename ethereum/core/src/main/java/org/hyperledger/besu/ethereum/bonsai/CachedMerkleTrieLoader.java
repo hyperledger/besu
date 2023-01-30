@@ -39,7 +39,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
-  private static final int STORAGE_CACHE_SIZE = 1_000_000;
+  private static final int STORAGE_CACHE_SIZE = 200_000;
   private final Cache<Bytes, Bytes> accountNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
   private final Cache<Bytes, Bytes> storageNodes =
@@ -94,6 +94,20 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
       final Address account,
       final Hash slotHash) {
     CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateStorage, account, slotHash));
+  }
+
+  public void preLoadAccountTrie(final StoredMerklePatriciaTrie trie) {
+    CompletableFuture.runAsync(() ->
+            trie.commit(
+                    (location, hash, value) ->
+                            this.cacheAccountStateTrieNode(hash, value)));
+  }
+
+  public void preLoadStorageTrie(final StoredMerklePatriciaTrie trie) {
+    CompletableFuture.runAsync(() ->
+            trie.commit(
+                    (location, hash, value) ->
+                            this.cacheAccountStorageTrieNode(hash, value)));
   }
 
   @VisibleForTesting
