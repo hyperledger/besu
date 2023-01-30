@@ -322,7 +322,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {
     final StringBuilder message = new StringBuilder();
-    List<Object> messageArgs =
+    final List<Object> messageArgs =
         new ArrayList<>(
             List.of(block.getHeader().getNumber(), block.getBody().getTransactions().size()));
     message.append("Imported #%,d / %d tx");
