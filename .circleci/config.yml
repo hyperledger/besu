@@ -102,7 +102,7 @@ commands:
           name: Gather unit test results
           when: always
           command: |
-            FILES=`find . -name reports`
+            FILES=`find . -name reports | egrep -v "^./build/reports"`
             for FILE in $FILES
             do
               MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/reports@\1@'`
