@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -40,6 +41,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -259,11 +261,10 @@ public class BlockchainReferenceTestCaseSpec {
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)));
-      // input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions),
-      // input.isEndOfCurrentList()
-      //         ? Optional.empty()
-      //           : Optional.of(input.readList(Withdrawal::readFrom))));
+              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
+              input.isEndOfCurrentList()
+                  ? Optional.empty()
+                  : Optional.of(input.readList(Withdrawal::readFrom)));
       return new Block(header, body);
     }
   }
