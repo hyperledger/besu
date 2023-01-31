@@ -62,7 +62,7 @@ public class JsonRpcExecutorVerticle extends AbstractVerticle {
   private void handleJsonRpcExecutorObjectRequest(
       final Message<JsonRpcExecutorObjectRequest> requestMessage) {
     final JsonRpcExecutorObjectRequest request = requestMessage.body();
-    LOG.trace("Received executorRequest {}", request);
+    LOG.trace("Received {}", request);
 
     final JsonRpcResponse jsonRpcResponse =
         jsonRpcExecutor.execute(

@@ -348,15 +348,8 @@ public class JsonRpcHttpService {
         .handler(
             HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods));
 
-    //    if (methodName == null
-    //        || methodName.startsWith("priv_")
-    //        || methodName.startsWith("eea_")
-    //        || methodName.startsWith("clique_")
-    //        || methodName.startsWith("ibft_")
-    //        || methodName.startsWith("perm_")
-    //        || methodName.startsWith("qbft_")) {
-    //      ctx.next();
-    //    }
+    // if RPC methods in the priv or eea namespace are used ALL RPC requests need to be
+    // blocking. Otherwise, those methods while not be able to properly process the requests
     if (rpcMethods.keySet().stream()
         .anyMatch(rpcMethod -> rpcMethod.startsWith("priv_") || rpcMethod.startsWith("eea_"))) {
       mainRoute.blockingHandler(

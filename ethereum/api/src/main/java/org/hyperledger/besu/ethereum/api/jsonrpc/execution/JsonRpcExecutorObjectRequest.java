@@ -36,4 +36,9 @@ public class JsonRpcExecutorObjectRequest extends JsonRpcExecutorRequest {
   public JsonObject getJsonObject() {
     return jsonObject;
   }
+
+  @Override
+  public String toString() {
+    return "JsonRpcExecutorObjectRequest: " + jsonObject.encodePrettily();
+  }
 }
