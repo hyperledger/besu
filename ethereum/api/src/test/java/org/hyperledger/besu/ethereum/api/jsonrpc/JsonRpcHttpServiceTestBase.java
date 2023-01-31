@@ -167,7 +167,8 @@ public class JsonRpcHttpServiceTestBase {
     return createJsonRpcHttpServiceWithMaxBatchSize(DEFAULT_MAX_BATCH_SIZE);
   }
 
-  protected JsonRpcHttpService createJsonRpcHttpServiceWithMaxBatchSize(final int maxBatchSize) throws Exception {
+  protected JsonRpcHttpService createJsonRpcHttpServiceWithMaxBatchSize(final int maxBatchSize)
+      throws Exception {
     return new JsonRpcHttpService(
         vertx,
         folder.newFolder().toPath(),

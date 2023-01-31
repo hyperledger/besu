@@ -79,6 +79,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
     this.vertx = vertx;
 
     try {
+      // register request classes
       vertx
           .eventBus()
           .registerDefaultCodec(
@@ -87,6 +88,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
           .registerDefaultCodec(
               JsonRpcExecutorArrayRequest.class,
               new GenericMessageCodec<>(JsonRpcExecutorArrayRequest.class, LOG));
+      // register response classes
       vertx
           .eventBus()
           .registerDefaultCodec(
