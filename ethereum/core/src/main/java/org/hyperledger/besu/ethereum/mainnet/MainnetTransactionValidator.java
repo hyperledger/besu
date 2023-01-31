@@ -186,11 +186,6 @@ public class MainnetTransactionValidator {
       }
     }
 
-    if (transaction.getNonce() == MAX_NONCE) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
-    }
-
     if (transaction.getType().supportsBlob()) {
       final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
       if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {

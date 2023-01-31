@@ -26,7 +26,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -365,7 +364,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   .getTransactions()
                   .isEmpty()) {
                 // this is called by the first empty block
-                doThrow(new MerkleTrieException("lock")) // first fail
+                doCallRealMethod() // first work
+                    .doThrow(new MerkleTrieException("lock")) // second fail
                     .doCallRealMethod() // then work
                     .when(blockchain)
                     .getBlockHeader(any());
