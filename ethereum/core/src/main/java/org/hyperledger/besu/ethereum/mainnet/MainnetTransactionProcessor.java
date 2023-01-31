@@ -20,9 +20,11 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
@@ -252,7 +254,7 @@ public class MainnetTransactionProcessor {
   }
 
   public TransactionProcessingResult processTransaction(
-      final Blockchain ignoredBlockchain,
+      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -288,15 +290,22 @@ public class MainnetTransactionProcessor {
 
       final MutableAccount senderMutableAccount = sender.getMutable();
       final long previousNonce = senderMutableAccount.incrementNonce();
-      final Wei transactionGasPrice =
-          feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
-      final Wei dataGasPrice =
-          feeMarket.getTransactionPriceCalculator().dataPrice(transaction, blockHeader);
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
           senderAddress,
           previousNonce,
           sender.getNonce());
+
+      final Wei transactionGasPrice =
+          feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
+      final Wei dataGasPrice =
+          feeMarket
+              .getTransactionPriceCalculator()
+              .dataPrice(
+                  blockchain
+                      .getBlockHeader(blockHeader.getParentHash())
+                      .flatMap(BlockHeader::getExcessDataGas)
+                      .orElse(DataGas.ZERO));
 
       final long dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
 
@@ -333,14 +342,13 @@ public class MainnetTransactionProcessor {
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
 
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas - dataGas;
+      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - data)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
-          accessListGas,
-          dataGas);
+          accessListGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -434,9 +442,9 @@ public class MainnetTransactionProcessor {
       // after the other so that if it is the same account somehow, we end up with the right result)
       final long selfDestructRefund =
           gasCalculator.getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
-      final long refundGas = initialFrame.getGasRefund() + selfDestructRefund;
-      final long refunded = refunded(transaction, initialFrame.getRemainingGas(), refundGas);
-      final Wei refundedWei = transactionGasPrice.multiply(refunded);
+      final long baseRefundGas = initialFrame.getGasRefund() + selfDestructRefund;
+      final long refundedGas = refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
+      final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
       senderMutableAccount.incrementBalance(refundedWei);
 
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
@@ -444,25 +452,26 @@ public class MainnetTransactionProcessor {
       if (!worldState.getClass().equals(GoQuorumMutablePrivateWorldStateUpdater.class)) {
         // if this is not a private GoQuorum transaction we have to update the coinbase
         final var coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
-        final long coinbaseFee = transaction.getGasLimit() - refunded;
+        final long usedGas = transaction.getGasLimit() - refundedGas;
+        final CoinbaseFeePriceCalculator coinbaseCalculator;
         if (blockHeader.getBaseFee().isPresent()) {
           final Wei baseFee = blockHeader.getBaseFee().get();
           if (transactionGasPrice.compareTo(baseFee) < 0) {
             return TransactionProcessingResult.failed(
                 gasUsedByTransaction,
-                refunded,
+                refundedGas,
                 ValidationResult.invalid(
                     TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                     "transaction price must be greater than base fee"),
                 Optional.empty());
           }
+          coinbaseCalculator = coinbaseFeePriceCalculator;
+        } else {
+          coinbaseCalculator = CoinbaseFeePriceCalculator.frontier();
         }
-        final CoinbaseFeePriceCalculator coinbaseCalculator =
-            blockHeader.getBaseFee().isPresent()
-                ? coinbaseFeePriceCalculator
-                : CoinbaseFeePriceCalculator.frontier();
+
         final Wei coinbaseWeiDelta =
-            coinbaseCalculator.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+            coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
@@ -477,12 +486,12 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.successful(
             initialFrame.getLogs(),
             gasUsedByTransaction,
-            refunded,
+            refundedGas,
             initialFrame.getOutputData(),
             validationResult);
       } else {
         return TransactionProcessingResult.failed(
-            gasUsedByTransaction, refunded, validationResult, initialFrame.getRevertReason());
+            gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
@@ -515,7 +524,7 @@ public class MainnetTransactionProcessor {
 
   protected long refunded(
       final Transaction transaction, final long gasRemaining, final long gasRefund) {
-    // Integer truncation takes care of the the floor calculation needed after the divide.
+    // Integer truncation takes care of the floor calculation needed after the divide.
     final long maxRefundAllowance =
         (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
     final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);

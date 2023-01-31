@@ -726,6 +726,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
 
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
@@ -765,6 +766,22 @@ public abstract class MainnetProtocolSpecs {
                         MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        // use Cancun fee market
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    cancunFeeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
         // change to check for max data gas per block for EIP-4844
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
