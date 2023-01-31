@@ -211,17 +211,6 @@ public class MainnetTransactionValidator {
       }
     }
 
-    if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
-      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
-            String.format(
-                "total data gas %d exceeds max data gas per block %d",
-                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
-      }
-    }
-
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())

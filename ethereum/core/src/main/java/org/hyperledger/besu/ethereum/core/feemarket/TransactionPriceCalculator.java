@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.core.feemarket;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.math.BigInteger;
@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 public interface TransactionPriceCalculator {
   Wei price(Transaction transaction, Optional<Wei> maybeFee);
 
-  default Wei dataPrice(final Transaction transaction, final ProcessableBlockHeader blockHeader) {
+  default Wei dataPrice(final DataGas excessDataGas) {
     return Wei.ZERO;
   }
 
@@ -37,11 +37,6 @@ public interface TransactionPriceCalculator {
     @Override
     public Wei price(final Transaction transaction, final Optional<Wei> maybeFee) {
       return transaction.getGasPrice().orElse(Wei.ZERO);
-    }
-
-    @Override
-    public Wei dataPrice(final Transaction transaction, final ProcessableBlockHeader blockHeader) {
-      return Wei.ZERO;
     }
   }
 
@@ -73,17 +68,14 @@ public interface TransactionPriceCalculator {
     }
 
     @Override
-    public Wei dataPrice(final Transaction transaction, final ProcessableBlockHeader blockHeader) {
-      final var excessDataGas = blockHeader.getExcessDataGas().orElseThrow();
-
+    public Wei dataPrice(final DataGas excessDataGas) {
       final var dataGasPrice =
           Wei.of(
               fakeExponential(
                   minDataGasPrice, excessDataGas.toBigInteger(), dataGasPriceUpdateFraction));
       traceLambda(
           LOG,
-          "block #{} parentExcessDataGas: {} dataGasPrice: {}",
-          blockHeader::getNumber,
+          "parentExcessDataGas: {} dataGasPrice: {}",
           excessDataGas::toShortHexString,
           dataGasPrice::toHexString);
 
@@ -92,14 +84,15 @@ public interface TransactionPriceCalculator {
 
     private BigInteger fakeExponential(
         final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
-      BigInteger i = BigInteger.ONE;
+      int i = 1;
       BigInteger output = BigInteger.ZERO;
       BigInteger numeratorAccumulator = factor.multiply(denominator);
-      while (numeratorAccumulator.compareTo(BigInteger.ZERO) > 0) {
+      while (numeratorAccumulator.signum() > 0) {
         output = output.add(numeratorAccumulator);
         numeratorAccumulator =
-            (numeratorAccumulator.multiply(numerator)).divide(denominator.multiply(i));
-        i = i.add(BigInteger.ONE);
+            (numeratorAccumulator.multiply(numerator))
+                .divide(denominator.multiply(BigInteger.valueOf(i)));
+        ++i;
       }
       return output.divide(denominator);
     }
