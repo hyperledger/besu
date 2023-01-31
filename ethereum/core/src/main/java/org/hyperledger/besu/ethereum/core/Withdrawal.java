@@ -16,9 +16,15 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class Withdrawal implements org.hyperledger.besu.plugin.data.Withdrawal {
@@ -33,6 +39,18 @@ public class Withdrawal implements org.hyperledger.besu.plugin.data.Withdrawal {
     this.validatorIndex = validatorIndex;
     this.address = address;
     this.amount = amount;
+  }
+
+  public static Withdrawal readFrom(final Bytes rlpBytes) {
+    return readFrom(RLP.input(rlpBytes));
+  }
+
+  public static Withdrawal readFrom(final RLPInput rlpInput) {
+    return WithdrawalDecoder.decode(rlpInput);
+  }
+
+  public void writeTo(final RLPOutput out) {
+    WithdrawalEncoder.encode(this, out);
   }
 
   @Override

@@ -109,7 +109,7 @@ allprojects {
     }
     maven {
       url 'https://artifacts.consensys.net/public/maven/maven/'
-      content { includeGroupByRegex('tech\\.pegasys\\..*') }
+      content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
     }
     maven {
       url 'https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/'

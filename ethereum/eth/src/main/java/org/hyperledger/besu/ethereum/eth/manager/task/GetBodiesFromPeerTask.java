@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
@@ -127,43 +128,52 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     return Optional.of(blocks);
   }
 
-  private static class BodyIdentifier {
+  static class BodyIdentifier {
     private final Bytes32 transactionsRoot;
     private final Bytes32 ommersHash;
+    private final Bytes32 withdrawalsRoot;
 
-    public BodyIdentifier(final Bytes32 transactionsRoot, final Bytes32 ommersHash) {
+    public BodyIdentifier(
+        final Bytes32 transactionsRoot, final Bytes32 ommersHash, final Bytes32 withdrawalsRoot) {
       this.transactionsRoot = transactionsRoot;
       this.ommersHash = ommersHash;
+      this.withdrawalsRoot = withdrawalsRoot;
     }
 
     public BodyIdentifier(final BlockBody body) {
-      this(body.getTransactions(), body.getOmmers());
+      this(body.getTransactions(), body.getOmmers(), body.getWithdrawals());
     }
 
-    public BodyIdentifier(final List<Transaction> transactions, final List<BlockHeader> ommers) {
-      this(BodyValidation.transactionsRoot(transactions), BodyValidation.ommersHash(ommers));
+    public BodyIdentifier(
+        final List<Transaction> transactions,
+        final List<BlockHeader> ommers,
+        final Optional<List<Withdrawal>> withdrawals) {
+      this(
+          BodyValidation.transactionsRoot(transactions),
+          BodyValidation.ommersHash(ommers),
+          withdrawals.map(BodyValidation::withdrawalsRoot).orElse(null));
     }
 
     public BodyIdentifier(final BlockHeader header) {
-      this(header.getTransactionsRoot(), header.getOmmersHash());
+      this(
+          header.getTransactionsRoot(),
+          header.getOmmersHash(),
+          header.getWithdrawalsRoot().orElse(null));
     }
 
     @Override
     public boolean equals(final Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      final BodyIdentifier that = (BodyIdentifier) o;
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      BodyIdentifier that = (BodyIdentifier) o;
       return Objects.equals(transactionsRoot, that.transactionsRoot)
-          && Objects.equals(ommersHash, that.ommersHash);
+          && Objects.equals(ommersHash, that.ommersHash)
+          && Objects.equals(withdrawalsRoot, that.withdrawalsRoot);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(transactionsRoot, ommersHash);
+      return Objects.hash(transactionsRoot, ommersHash, withdrawalsRoot);
     }
   }
 }

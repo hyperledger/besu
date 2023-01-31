@@ -18,6 +18,7 @@ import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +30,8 @@ import oshi.hardware.HardwareAbstractionLayer;
 /** The Configuration overview builder. */
 public class ConfigurationOverviewBuilder {
   private String network;
+  private BigInteger networkId;
+  private boolean hasCustomGenesis;
   private String dataStorage;
   private String syncMode;
   private Integer rpcPort;
@@ -45,6 +48,28 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setNetwork(final String network) {
     this.network = network;
+    return this;
+  }
+
+  /**
+   * Sets whether a networkId has been specified
+   *
+   * @param networkId the specified networkId
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setNetworkId(final BigInteger networkId) {
+    this.networkId = networkId;
+    return this;
+  }
+
+  /**
+   * Sets whether a custom genesis has been specified.
+   *
+   * @param hasCustomGenesis a boolean representing whether a custom genesis file was specified
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setHasCustomGenesis(final boolean hasCustomGenesis) {
+    this.hasCustomGenesis = hasCustomGenesis;
     return this;
   }
 
@@ -135,8 +160,17 @@ public class ConfigurationOverviewBuilder {
     lines.add("");
     lines.add("Configuration:");
 
-    if (network != null) {
+    // Don't include the default network if a genesis file has been supplied
+    if (network != null && !hasCustomGenesis) {
       lines.add("Network: " + network);
+    }
+
+    if (hasCustomGenesis) {
+      lines.add("Network: Custom genesis file specified");
+    }
+
+    if (networkId != null) {
+      lines.add("Network Id: " + networkId);
     }
 
     if (dataStorage != null) {

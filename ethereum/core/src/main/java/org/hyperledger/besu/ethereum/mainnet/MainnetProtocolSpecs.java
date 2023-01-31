@@ -744,6 +744,7 @@ public abstract class MainnetProtocolSpecs {
                         MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .name("Cancun");
   }
 

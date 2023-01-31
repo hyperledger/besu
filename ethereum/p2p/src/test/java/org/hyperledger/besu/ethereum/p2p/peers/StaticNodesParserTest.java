@@ -32,16 +32,15 @@ import java.util.Set;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.json.DecodeException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class StaticNodesParserTest {
 
   // NOTE: The invalid_static_nodes file is identical to the valid, however one node's port is set
   // to "A".
 
-  // First peer ion the valid_static_nodes file.
+  // First peer in the valid_static_nodes file.
   private final List<EnodeURL> validFileItems =
       Lists.newArrayList(
           EnodeURLImpl.builder()
@@ -69,7 +68,7 @@ public class StaticNodesParserTest {
               .discoveryAndListeningPorts(30306)
               .build());
 
-  @Rule public TemporaryFolder testFolder = new TemporaryFolder();
+  @TempDir private static Path testFolder;
 
   @Test
   public void validFileLoadsWithExpectedEnodes() throws IOException, URISyntaxException {
@@ -174,13 +173,11 @@ public class StaticNodesParserTest {
 
   @Test
   public void nonJsonFileThrowsAnException() throws IOException {
-    final File tempFile = testFolder.newFile("file.txt");
-    tempFile.deleteOnExit();
-    Files.write(tempFile.toPath(), "This Is Not Json".getBytes(Charset.forName("UTF-8")));
+    final Path tempFile = Files.createTempFile(testFolder, "file", "txt");
+    Files.write(tempFile, "This Is Not Json".getBytes(Charset.forName("UTF-8")));
 
     assertThatThrownBy(
-            () ->
-                StaticNodesParser.fromPath(tempFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG))
+            () -> StaticNodesParser.fromPath(tempFile, EnodeDnsConfiguration.DEFAULT_CONFIG))
         .isInstanceOf(DecodeException.class);
   }
 
@@ -195,11 +192,10 @@ public class StaticNodesParserTest {
 
   @Test
   public void cacheIsCreatedIfFileExistsButIsEmpty() throws IOException {
-    final File tempFile = testFolder.newFile("file.txt");
-    tempFile.deleteOnExit();
+    final Path tempFile = Files.createTempFile(testFolder, "file", "txt");
 
     final Set<EnodeURL> enodes =
-        StaticNodesParser.fromPath(tempFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG);
+        StaticNodesParser.fromPath(tempFile, EnodeDnsConfiguration.DEFAULT_CONFIG);
     assertThat(enodes.size()).isZero();
   }
 }

@@ -86,6 +86,8 @@ public interface DefaultCommandValues {
   int DEFAULT_P2P_PEER_LOWER_BOUND = 25;
   /** The constant DEFAULT_HTTP_MAX_CONNECTIONS. */
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
+  /** The constant DEFAULT_HTTP_MAX_BATCH_SIZE. */
+  int DEFAULT_HTTP_MAX_BATCH_SIZE = 1;
   /** The constant DEFAULT_WS_MAX_CONNECTIONS. */
   int DEFAULT_WS_MAX_CONNECTIONS = 80;
   /** The constant DEFAULT_WS_MAX_FRAME_SIZE. */

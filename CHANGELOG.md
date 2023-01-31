@@ -3,12 +3,17 @@
 ## 23.1.1
 
 ### Breaking Changes
+- Add a new CLI option to limit the number of requests in a single RPC batch request. Default=1 [#4965](https://github.com/hyperledger/besu/pull/4965)
 
 - Changed JsonRpc http service to return the error -32602 (Invalid params) with a 200 http status code
 
 ### Additions and Improvements
 - Added option to evm CLI tool to allow code execution at specific forks [#4913](https://github.com/hyperledger/besu/pull/4913)
 - Improve get account performance by using the world state updater cache [#4897](https://github.com/hyperledger/besu/pull/4897)
+- Add new KZG precompile and option to override the trusted setup being used [#4822](https://github.com/hyperledger/besu/issues/4822)
+- Add implementation for eth_createAccessList RPC method [#4942](https://github.com/hyperledger/besu/pull/4942)
+- Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
+- Add DebugGetRawBlock and DebugGetRawHeader RPC methods [#5011](https://github.com/hyperledger/besu/pull/5011)  
 
 ### Bug Fixes
 
@@ -20,6 +25,7 @@
 - Support for new DATAHASH opcode as part of EIP-4844 [#4823](https://github.com/hyperledger/besu/issues/4823)
 - Send only hash announcement for blob transaction type [#4940](https://github.com/hyperledger/besu/pull/4940)
 - Add `excess_data_gas` field to block header [#4958](https://github.com/hyperledger/besu/pull/4958)
+- Add `max_fee_per_data_gas` field to transaction [#4970](https://github.com/hyperledger/besu/pull/4970)
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
