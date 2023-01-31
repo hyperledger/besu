@@ -319,7 +319,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       stop();
       fastSyncDownloader.get().deleteFastSyncState();
     }
-    LOG.info("Starting the state healing");
+    LOG.info("#########################################\n\nBesu has identified a problem with its worldstate database. Your node will fetch the correct data from peers to repair the problem. Starting the sync pipeline...\n\n#########################################");
     this.syncState.markInitialSyncRestart();
     this.syncState.markResyncNeeded();
     maybeAccountToRepair.ifPresent(
