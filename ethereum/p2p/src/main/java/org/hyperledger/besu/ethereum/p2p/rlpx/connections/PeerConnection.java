@@ -129,7 +129,13 @@ public interface PeerConnection {
    *
    * @return the time when this connection was initiated.
    */
-  public long getInitiatedAt();
+  long getInitiatedAt();
 
-  public boolean inboundInitiated();
+  boolean inboundInitiated();
+
+  void setStatusSent();
+
+  void setStatusReceived();
+
+  boolean getStatusExchanged();
 }

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.CapabilityMultiplexer;
@@ -35,7 +33,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +53,8 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final LabelledMetric<Counter> outboundMessagesCounter;
   private final long initiatedAt;
   private final boolean inboundInitiated;
+  private boolean statusSent;
+  private boolean statusReceived;
 
   protected AbstractPeerConnection(
       final Peer peer,
@@ -81,10 +80,9 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     this.connectionEventDispatcher = connectionEventDispatcher;
     this.outboundMessagesCounter = outboundMessagesCounter;
     this.inboundInitiated = inboundInitiated;
-
     this.initiatedAt = System.currentTimeMillis();
 
-    LOG.info("New PeerConnection ({}) established with peer {}", this, peer.getId());
+    LOG.debug("New PeerConnection ({}) established with peer {}", this, peer.getId());
   }
 
   @Override
@@ -166,14 +164,9 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
-      debugLambda(
-          LOG,
-          "DISCONNECTING connection {}, with stack trace: {}",
-          () -> this,
-          () -> ExceptionUtils.getStackTrace(new RuntimeException("here")));
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
-      LOG.debug("Disconnecting connection {}, reason {}", this, reason);
+      LOG.debug("Disconnecting connection {}, reason {}", System.identityHashCode(this), reason);
       closeConnection();
     }
   }
@@ -219,6 +212,21 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public int hashCode() {
     return Objects.hash(connectionId, peer);
+  }
+
+  @Override
+  public void setStatusSent() {
+    this.statusSent = true;
+  }
+
+  @Override
+  public void setStatusReceived() {
+    this.statusReceived = true;
+  }
+
+  @Override
+  public boolean getStatusExchanged() {
+    return statusReceived && statusSent;
   }
 
   @Override

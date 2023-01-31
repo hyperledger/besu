@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.rlpx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -79,7 +78,7 @@ public class RlpxAgent {
   private Callable<Stream<PeerConnection>> getAllActiveConnectionsCallback;
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
       CacheBuilder.newBuilder()
-          .expireAfterWrite(Duration.ofSeconds(10L))
+          .expireAfterWrite(Duration.ofSeconds(20L))
           .concurrencyLevel(1)
           .build();
 
@@ -164,7 +163,7 @@ public class RlpxAgent {
     }
   }
 
-  public Stream<? extends PeerConnection> streamActiveConnections() {
+  public Stream<PeerConnection> streamActiveConnections() {
     try {
       return getAllActiveConnectionsCallback.call();
     } catch (final Exception e) {
@@ -185,20 +184,6 @@ public class RlpxAgent {
       return;
     }
     peerStream.forEach(this::connect);
-  }
-
-  private String logConnectionsByIdToString() {
-    final String connectionsList;
-    try {
-      connectionsList =
-          getAllActiveConnectionsCallback
-              .call()
-              .map(PeerConnection::toString)
-              .collect(Collectors.joining(",\n"));
-    } catch (final Exception e) {
-      throw new RuntimeException(e);
-    }
-    return getConnectionCount() + " ConnectionsById {\n" + connectionsList + "}";
   }
 
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
@@ -279,15 +264,7 @@ public class RlpxAgent {
 
   private void setupListeners() {
     connectionInitializer.subscribeIncomingConnect(this::handleIncomingConnection);
-    connectionEvents.subscribeDisconnect(this::handleDisconnect);
     peerPermissions.subscribeUpdate(this::handlePermissionsUpdate);
-  }
-
-  private void handleDisconnect(
-      final PeerConnection peerConnection,
-      final DisconnectReason disconnectReason,
-      final boolean initiatedByPeer) {
-    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
   }
 
   private void handlePermissionsUpdate(
@@ -351,8 +328,7 @@ public class RlpxAgent {
 
   private void handleIncomingConnection(final PeerConnection peerConnection) {
     // TODO: when we get here, we are already connected and have spent the time and effort to go
-    // through the handshake. We might want to put in a check before doing the handshake if we want
-    // to connect to that peer at that time
+    // through the handshake (expensive). We might want to put in a check before doing the handshake
     final Peer peer = peerConnection.getPeer();
     // Deny connection if our local node isn't ready
     if (!localNode.isReady()) {

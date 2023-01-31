@@ -1970,7 +1970,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 || rpcEndpointServiceImpl.hasNamespace(apiName);
 
     if (!jsonRPCHttpOptionGroup.rpcHttpApis.stream().allMatch(configuredApis)) {
-      final List<String> invalidHttpApis = new ArrayList<String>(jsonRPCHttpOptionGroup.rpcHttpApis);
+      final List<String> invalidHttpApis =
+          new ArrayList<String>(jsonRPCHttpOptionGroup.rpcHttpApis);
       invalidHttpApis.removeAll(VALID_APIS);
       throw new ParameterException(
           this.commandLine,
@@ -1979,12 +1980,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (!jsonRPCWebsocketOptionGroup.rpcWsApis.stream().allMatch(configuredApis)) {
-      final List<String> invalidWsApis = new ArrayList<String>(jsonRPCWebsocketOptionGroup.rpcWsApis);
+      final List<String> invalidWsApis =
+          new ArrayList<String>(jsonRPCWebsocketOptionGroup.rpcWsApis);
       invalidWsApis.removeAll(VALID_APIS);
       throw new ParameterException(
           this.commandLine,
-          "Invalid value for option '--rpc-ws-api': invalid entries found "
-              + invalidWsApis);
+          "Invalid value for option '--rpc-ws-api': invalid entries found " + invalidWsApis);
     }
 
     final boolean validHttpApiMethods =

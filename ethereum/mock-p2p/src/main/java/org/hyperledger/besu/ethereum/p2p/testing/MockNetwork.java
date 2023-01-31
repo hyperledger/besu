@@ -241,6 +241,8 @@ public final class MockNetwork {
     private final Peer to;
 
     private final MockNetwork network;
+    private boolean statusSent;
+    private boolean statusReceived;
 
     MockPeerConnection(final Peer source, final Peer target, final MockNetwork network) {
       from = source;
@@ -321,6 +323,21 @@ public final class MockNetwork {
     @Override
     public boolean inboundInitiated() {
       return false;
+    }
+
+    @Override
+    public void setStatusSent() {
+      this.statusSent = true;
+    }
+
+    @Override
+    public void setStatusReceived() {
+      this.statusReceived = true;
+    }
+
+    @Override
+    public boolean getStatusExchanged() {
+      return statusSent && statusReceived;
     }
   }
 }

@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.MockPeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MockSubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -184,38 +185,21 @@ public final class DefaultP2PNetworkTest {
     verify(rlpxAgent, times(1)).connect(peer);
   }
 
-  //  @Test
-  //  public void checkMaintainedConnectionPeers_connectedPeer() {
-  //    final DefaultP2PNetwork network = network();
-  //    final Peer peer = PeerTestHelper.createPeer();
-  //
-  //    network.start();
-  //
-  //    maintainedPeers.add(peer);
-  //
-  //    // Don't connect to an already connected peer
-  //    final CompletableFuture<PeerConnection> connectionFuture =
-  //        CompletableFuture.completedFuture(MockPeerConnection.create(peer));
-  //    when(rlpxAgent.getPeerConnection(peer)).thenReturn(Optional.of(connectionFuture));
-  //    network.checkMaintainedConnectionPeers();
-  //    verify(rlpxAgent, times(0)).connect(peer);
-  //  }
-  //
-  //  @Test
-  //  public void checkMaintainedConnectionPeers_connectingPeer() {
-  //    final DefaultP2PNetwork network = network();
-  //    final Peer peer = PeerTestHelper.createPeer();
-  //
-  //    network.start();
-  //
-  //    maintainedPeers.add(peer);
-  //
-  //    // Don't connect when connection is already pending.
-  //    final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();
-  //    when(rlpxAgent.getPeerConnection(peer)).thenReturn(Optional.of(connectionFuture));
-  //    network.checkMaintainedConnectionPeers();
-  //    verify(rlpxAgent, times(0)).connect(peer);
-  //  }
+  @Test
+  public void checkMaintainedConnectionPeers_connectedPeer() {
+    final DefaultP2PNetwork network = network();
+    final Peer peer = PeerTestHelper.createPeer();
+
+    network.start();
+
+    maintainedPeers.add(peer);
+
+    // Don't connect to an already connected peer
+    when(rlpxAgent.streamActiveConnections())
+        .thenReturn(Stream.of(MockPeerConnection.create(peer)));
+    network.checkMaintainedConnectionPeers();
+    verify(rlpxAgent, times(0)).connect(peer);
+  }
 
   @Test
   public void beforeStartingNetworkEnodeURLShouldNotBePresent() {

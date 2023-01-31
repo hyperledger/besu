@@ -123,10 +123,10 @@ task acceptanceTest(type: Test) {
 }
 task acceptanceTestMainnet(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-  exclude '**/bft/**'
-  exclude '**/clique/**'
+  //  exclude '**/bft/**'
+  //  exclude '**/clique/**'
   //  exclude '**/permissioning/**' TODO: exclude again before merge
-  exclude '**/privacy/**'
+  //  exclude '**/privacy/**'
 
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())

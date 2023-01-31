@@ -40,6 +40,8 @@ public class MockPeerConnection implements PeerConnection {
   private final Peer peer;
   private final PeerInfo peerInfo;
   private Optional<DisconnectReason> disconnectReason = Optional.empty();
+  private boolean statusSent;
+  private boolean statusReceived;
 
   public MockPeerConnection(final Set<Capability> caps, final PeerSendHandler onSend) {
     this.caps = caps;
@@ -124,6 +126,21 @@ public class MockPeerConnection implements PeerConnection {
   @Override
   public boolean isDisconnected() {
     return disconnected;
+  }
+
+  @Override
+  public void setStatusSent() {
+    this.statusSent = true;
+  }
+
+  @Override
+  public void setStatusReceived() {
+    this.statusReceived = true;
+  }
+
+  @Override
+  public boolean getStatusExchanged() {
+    return statusSent && statusReceived;
   }
 
   @FunctionalInterface

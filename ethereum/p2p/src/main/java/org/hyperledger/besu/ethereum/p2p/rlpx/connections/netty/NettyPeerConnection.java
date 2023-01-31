@@ -32,11 +32,8 @@ import java.util.concurrent.Callable;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 final class NettyPeerConnection extends AbstractPeerConnection {
-  private static final Logger LOG = LoggerFactory.getLogger(NettyPeerConnection.class);
 
   private final ChannelHandlerContext ctx;
 
@@ -63,13 +60,8 @@ final class NettyPeerConnection extends AbstractPeerConnection {
     ctx.channel()
         .closeFuture()
         .addListener(
-            f -> {
-              LOG.info(
-                  "Channel for connection {} with peer {} has been closed",
-                  this.hashCode(),
-                  this.getPeer().getId());
-              terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
-            });
+            f ->
+                terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, false));
   }
 
   @Override

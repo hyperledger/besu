@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.time.Clock;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -71,9 +70,6 @@ public class EthPeer implements Comparable<EthPeer> {
   private PeerConnection connection;
 
   private final int maxTrackedSeenBlocks = 300;
-
-  private final List<Integer> connectionsWithSentStatusMessage = new ArrayList<Integer>();
-  private final List<Integer> connectionsWithReceivedStatusMessage = new ArrayList<Integer>();
 
   private final Set<Hash> knownBlocks =
       Collections.newSetFromMap(
@@ -266,8 +262,7 @@ public class EthPeer implements Comparable<EthPeer> {
             "Permissioning blocked by providers {}",
             permissioningProviders.stream()
                 .filter(
-                    p ->
-                        !p.isMessagePermitted(conToUse.getRemoteEnode(), messageData.getCode())));
+                    p -> !p.isMessagePermitted(conToUse.getRemoteEnode(), messageData.getCode())));
       }
       return null;
     }
@@ -459,7 +454,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void registerStatusSent(final PeerConnection connection) {
     synchronized (this) {
-      connectionsWithSentStatusMessage.add(Integer.valueOf(connection.hashCode()));
+      connection.setStatusSent();
       maybeExecuteStatusesExchangedCallback(connection);
     }
   }
@@ -469,30 +464,30 @@ public class EthPeer implements Comparable<EthPeer> {
       final Difficulty td,
       final int protocolVersion,
       final PeerConnection connection) {
-      chainHeadState.statusReceived(hash, td);
-      lastProtocolVersion.set(protocolVersion);
-      statusHasBeenReceivedFromPeer.set(true);
+    chainHeadState.statusReceived(hash, td);
+    lastProtocolVersion.set(protocolVersion);
+    statusHasBeenReceivedFromPeer.set(true);
     synchronized (this) {
-      connectionsWithReceivedStatusMessage.add(Integer.valueOf(connection.hashCode()));
+      connection.setStatusReceived();
       maybeExecuteStatusesExchangedCallback(connection);
     }
   }
 
   private void maybeExecuteStatusesExchangedCallback(final PeerConnection newConnection) {
-    final Integer newConnectionHashCode = Integer.valueOf(newConnection.hashCode());
     synchronized (this) {
-      if (connectionsWithReceivedStatusMessage.contains(newConnectionHashCode)
-              && connectionsWithSentStatusMessage.contains(newConnectionHashCode)) {
+      if (newConnection.getStatusExchanged()) {
         if (!this.connection.equals(newConnection)) {
           if (readyForRequests.get()) {
-            // We have two connections that are ready for requests, figure out which connection to keep
+            // We have two connections that are ready for requests, figure out which connection to
+            // keep
             if (compareDuplicateConnections(this.connection, newConnection) > 0) {
               final PeerConnection oldConnection = this.connection;
               this.connection = newConnection;
               LOG.debug("Changed connection from {} to {}", oldConnection, newConnection);
             }
           } else {
-            // use the new connection for now, as it is ready for requests, which the "old" one is not
+            // use the new connection for now, as it is ready for requests, which the "old" one is
+            // not
             this.connection = newConnection;
           }
         }
