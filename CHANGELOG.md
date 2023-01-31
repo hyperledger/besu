@@ -5,6 +5,7 @@
 ### Breaking Changes
 - Add a new CLI option to limit the number of requests in a single RPC batch request. Default=1 [#4965](https://github.com/hyperledger/besu/pull/4965)
 - Changed JsonRpc http service to return the error -32602 (Invalid params) with a 200 http status code
+- Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
 - PKCS11 with nss module (PKCS11 based HSM can be used in DevP2P TLS and QBFT PKI) does not work with RSA keys 
 in Java 17. SoftHSM is tested manually and working. (Other PKCS11 HSM are not tested). The relevant unit and acceptance 
 tests are updated to use EC private keys instead of RSA keys.
