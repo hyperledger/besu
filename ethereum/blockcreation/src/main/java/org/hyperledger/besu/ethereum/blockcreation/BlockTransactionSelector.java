@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -267,7 +268,7 @@ public class BlockTransactionSelector {
           .lessThan(
               feeMarket
                   .getTransactionPriceCalculator()
-                  .dataPrice(transaction, processableBlockHeader))) {
+                  .dataPrice(processableBlockHeader.getExcessDataGas().orElse(DataGas.ZERO)))) {
         return true;
       }
     }
