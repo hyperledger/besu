@@ -19,8 +19,6 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
-import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -35,8 +33,8 @@ class LeafNode<V> implements Node<V> {
   private final V value;
   private final NodeFactory<V> nodeFactory;
   private final Function<V, Bytes> valueSerializer;
-  private WeakReference<Bytes> rlp;
-  private SoftReference<Bytes32> hash;
+  private Optional<Bytes> rlp;
+  private Optional<Bytes32> hash;
   private boolean dirty = false;
 
   LeafNode(
@@ -48,6 +46,8 @@ class LeafNode<V> implements Node<V> {
     this.location = Optional.ofNullable(location);
     this.path = path;
     this.value = value;
+    this.rlp = Optional.empty();
+    this.hash = Optional.empty();
     this.nodeFactory = nodeFactory;
     this.valueSerializer = valueSerializer;
   }
@@ -60,6 +60,8 @@ class LeafNode<V> implements Node<V> {
     this.location = Optional.empty();
     this.path = path;
     this.value = value;
+    this.rlp = Optional.empty();
+    this.hash = Optional.empty();
     this.nodeFactory = nodeFactory;
     this.valueSerializer = valueSerializer;
   }
@@ -101,20 +103,14 @@ class LeafNode<V> implements Node<V> {
 
   @Override
   public Bytes getRlp() {
-    if (rlp != null) {
-      final Bytes encoded = rlp.get();
-      if (encoded != null) {
-        return encoded;
-      }
-    }
-
+    if (rlp.isPresent()) return rlp.get();
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeBytes(CompactEncoding.encode(path));
     out.writeBytes(valueSerializer.apply(value));
     out.endList();
     final Bytes encoded = out.encoded();
-    rlp = new WeakReference<>(encoded);
+    rlp = Optional.of(encoded);
     return encoded;
   }
 
@@ -129,14 +125,9 @@ class LeafNode<V> implements Node<V> {
 
   @Override
   public Bytes32 getHash() {
-    if (hash != null) {
-      final Bytes32 hashed = hash.get();
-      if (hashed != null) {
-        return hashed;
-      }
-    }
+    if (hash.isPresent()) return hash.get();
     final Bytes32 hashed = keccak256(getRlp());
-    hash = new SoftReference<>(hashed);
+    hash = Optional.of(hashed);
     return hashed;
   }
 
