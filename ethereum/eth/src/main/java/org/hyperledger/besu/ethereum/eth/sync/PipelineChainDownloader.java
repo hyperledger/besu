@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
@@ -157,8 +157,9 @@ public class PipelineChainDownloader implements ChainDownloader {
     if (!syncTargetManager.shouldContinueDownloading()) {
       return CompletableFuture.completedFuture(null);
     }
+
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
-    debugLambda(
+    infoLambda(
         LOG,
         "Starting download pipeline for sync target {}, common ancestor {} ({})",
         () -> target,

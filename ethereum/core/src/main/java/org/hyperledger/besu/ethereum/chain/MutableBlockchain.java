@@ -56,8 +56,6 @@ public interface MutableBlockchain extends Blockchain {
 
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
 
-  void moveHeadToLastSafeBlock();
-
   /**
    * Rolls back the canonical chainhead to the specified block number.
    *

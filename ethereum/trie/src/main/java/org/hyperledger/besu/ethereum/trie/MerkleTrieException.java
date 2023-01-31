@@ -39,6 +39,7 @@ public class MerkleTrieException extends RuntimeException {
     super(message);
     this.hash = hash;
     this.location = location;
+    this.maybeAddress = Optional.empty();
   }
 
   public MerkleTrieException(final String message, final Exception cause) {
@@ -51,9 +52,9 @@ public class MerkleTrieException extends RuntimeException {
       final Bytes32 hash,
       final Bytes location) {
     super(message);
-    this.maybeAddress = maybeAddress;
     this.hash = hash;
     this.location = location;
+    this.maybeAddress = maybeAddress;
   }
 
   public Optional<Address> getMaybeAddress() {

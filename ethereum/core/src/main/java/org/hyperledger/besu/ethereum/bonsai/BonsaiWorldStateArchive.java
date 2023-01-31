@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 import static org.hyperledger.besu.ethereum.bonsai.LayeredTrieLogManager.RETAINED_LAYERS;
 
@@ -28,16 +27,21 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -283,6 +287,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         }
       } catch (final RuntimeException re) {
         LOG.error("Archive rolling failed for block hash " + blockHash, re);
+        System.out.println(worldStateStorage.getWorldStateBlockHash() + " " + blockHash);
         return Optional.empty();
       }
     }
@@ -300,6 +305,60 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   @Override
   public MutableWorldState getMutable() {
     return persistedState;
+  }
+
+  public void prepareStateHealing(final Address address, final Bytes location) {
+    final Set<Bytes> keysToDelete = new HashSet<>();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
+    final Hash accountHash = Hash.hash(address);
+    final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+        new StoredMerklePatriciaTrie<>(
+            (l, h) -> {
+              final Optional<Bytes> node = worldStateStorage.getAccountStateTrieNode(l, h);
+              if (node.isPresent()) {
+                keysToDelete.add(l);
+              }
+              return node;
+            },
+            persistedState.worldStateRootHash,
+            Function.identity(),
+            Function.identity());
+    try {
+      accountTrie
+          .get(accountHash)
+          .map(RLP::input)
+          .map(StateTrieAccountValue::readFrom)
+          .ifPresent(
+              account -> {
+                final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+                    new StoredMerklePatriciaTrie<>(
+                        (l, h) -> {
+                          Optional<Bytes> node =
+                              worldStateStorage.getAccountStorageTrieNode(accountHash, l, h);
+                          if (node.isPresent()) {
+                            keysToDelete.add(Bytes.concatenate(accountHash, l));
+                          }
+                          return node;
+                        },
+                        account.getStorageRoot(),
+                        Function.identity(),
+                        Function.identity());
+                try {
+                  storageTrie.getPath(location);
+                } catch (Exception eA) {
+                  LOG.warn("Invalid slot found for account {} at location {}", address, location);
+                  // ignore
+                }
+              });
+    } catch (Exception eA) {
+      LOG.warn("Invalid node for account {} at location {}", address, location);
+      // ignore
+    }
+    keysToDelete.forEach(bytes -> updater.removeAccountStateTrieNode(bytes, null));
+    updater.commit();
+
+    trieLogManager.reset();
+    worldStateStorage.clearFlatDatabase();
   }
 
   public TrieLogManager getTrieLogManager() {
@@ -323,15 +382,5 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final List<UInt256> accountStorageKeys) {
     // FIXME we can do proofs for layered tries and the persisted trie
     return Optional.empty();
-  }
-
-  public void useFallbackNodeFinder(final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
-    checkNotNull(fallbackNodeFinder);
-    worldStateStorage.useFallbackNodeFinder(fallbackNodeFinder);
-  }
-
-  @Override
-  public void reset() {
-    trieLogManager.reset();
   }
 }

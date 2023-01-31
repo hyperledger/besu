@@ -209,12 +209,6 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public void pruneInconsistentPath(
-      final Address address, final Bytes location, final boolean isSlot) {
-    // not prune when we are using layered worldstate
-  }
-
-  @Override
   public Account get(final Address address) {
     // this must be iterative and lambda light because the stack may blow up
     // mainly because we don't have tail calls.

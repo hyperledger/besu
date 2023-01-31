@@ -175,7 +175,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         return bonsaiAccountFunction.apply(bonsaiValue);
       }
     } catch (MerkleTrieException e) {
-      pruneInconsistentPath(address, e.getLocation(), false);
       throw new MerkleTrieException(
           e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
     }
@@ -398,8 +397,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
             });
         return valueUInt;
       } catch (MerkleTrieException e) {
-        System.out.println("found invalid node " + address + " " + slotHash);
-        pruneInconsistentPath(address, e.getLocation(), true);
         throw new MerkleTrieException(
             e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
       }
@@ -438,12 +435,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     final Map<Bytes32, Bytes> results = wrappedWorldView().getAllAccountStorage(address, rootHash);
     storageToUpdate.get(address).forEach((key, value) -> results.put(key, value.getUpdated()));
     return results;
-  }
-
-  @Override
-  public void pruneInconsistentPath(
-      final Address address, final Bytes location, final boolean isSlot) {
-    wrappedWorldView().pruneInconsistentPath(address, location, isSlot);
   }
 
   public TrieLogLayer generateTrieLog(final Hash blockHash) {

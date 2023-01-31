@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -157,6 +158,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     try {
       worldState.persist(blockHeader);
+    } catch (MerkleTrieException e) {
+      LOG.trace("Merkle trie exception during Transaction processing ", e);
+      throw e;
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
       return new BlockProcessingResult(Optional.empty(), e);

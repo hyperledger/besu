@@ -23,6 +23,8 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * Naive implementation of Synchronizer used by retesteth. Because retesteth is not implemented in
  * the test module, it has no access to mockito. This class provides a minimum implementation needed
@@ -51,7 +53,8 @@ public class DummySynchronizer implements Synchronizer {
   }
 
   @Override
-  public boolean healWorldState(final Optional<Address> maybeAccountToRepair) {
+  public boolean healWorldState(
+      final Optional<Address> maybeAccountToRepair, final Bytes location) {
     return false;
   }
 

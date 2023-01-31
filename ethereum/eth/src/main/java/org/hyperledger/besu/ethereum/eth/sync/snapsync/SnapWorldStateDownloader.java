@@ -151,6 +151,11 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           snapContext.getCurrentAccountRange();
       final HashSet<Bytes> inconsistentAccounts = snapContext.getInconsistentAccounts();
 
+      worldStateStorage.clearFlatDatabase();
+      snapContext.clear();
+      snapContext.addInconsistentAccount(
+          Bytes.fromHexString(
+              "0x11dc2aa6ca99d414466a4b22b8aa7feadbd27b38f67caecd4557d6ea657231b5"));
       if (!currentAccountRange.isEmpty()) { // continue to download worldstate ranges
         newDownloadState.setInconsistentAccounts(inconsistentAccounts);
         snapContext

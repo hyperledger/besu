@@ -170,10 +170,9 @@ public class MainnetBlockValidator implements BlockValidator {
     } catch (MerkleTrieException ex) {
       context
           .getSynchronizer()
-          .ifPresent(synchronizer -> synchronizer.healWorldState(ex.getMaybeAddress()));
-      var retval = new BlockProcessingResult(Optional.empty(), ex);
-      handleAndLogImportFailure(block, retval);
-      return retval;
+          .ifPresent(
+              synchronizer -> synchronizer.healWorldState(ex.getMaybeAddress(), ex.getLocation()));
+      return new BlockProcessingResult(Optional.empty(), ex);
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
       handleAndLogImportFailure(block, retval);

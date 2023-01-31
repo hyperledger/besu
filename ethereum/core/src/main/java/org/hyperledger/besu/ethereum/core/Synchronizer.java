@@ -21,6 +21,8 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /** Provides an interface to block synchronization processes. */
 public interface Synchronizer {
 
@@ -43,7 +45,7 @@ public interface Synchronizer {
 
   boolean resyncWorldState();
 
-  boolean healWorldState(final Optional<Address> maybeAccountToRepair);
+  boolean healWorldState(final Optional<Address> maybeAccountToRepair, final Bytes location);
 
   long subscribeSyncStatus(final BesuEvents.SyncStatusListener listener);
 

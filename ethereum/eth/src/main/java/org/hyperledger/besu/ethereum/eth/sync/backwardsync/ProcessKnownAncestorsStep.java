@@ -20,8 +20,10 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -47,16 +49,34 @@ public class ProcessKnownAncestorsStep {
   protected void processKnownAncestors() {
     while (backwardChain.getFirstAncestorHeader().isPresent()) {
       BlockHeader header = backwardChain.getFirstAncestorHeader().orElseThrow();
-      if (context.getProtocolContext().getBlockchain().contains(header.getHash())) {
+      final long chainHeadBlockNumber =
+          context.getProtocolContext().getBlockchain().getChainHeadBlockNumber();
+      if (context.getProtocolContext().getBlockchain().contains(header.getHash())
+          && header.getNumber() <= chainHeadBlockNumber) {
         debugLambda(
             LOG,
             "Block {} is already imported, we can ignore it for the sync process",
             () -> header.toLogString());
         backwardChain.dropFirstHeader();
-      } else if (context.getProtocolContext().getBlockchain().contains(header.getParentHash())
-          && backwardChain.isTrusted(header.getHash())) {
-        debugLambda(LOG, "Importing trusted block {}", header::toLogString);
-        context.saveBlock(backwardChain.getTrustedBlock(header.getHash()));
+      } else if (context.getProtocolContext().getBlockchain().contains(header.getParentHash())) {
+        if (backwardChain.isTrusted(header.getHash())) {
+          debugLambda(LOG, "Importing trusted block {}", header::toLogString);
+          context.saveBlock(backwardChain.getTrustedBlock(header.getHash()));
+        } else {
+          Optional<Block> blockByHash =
+              context.getProtocolContext().getBlockchain().getBlockByHash(header.getHash());
+          if (blockByHash.isPresent()) {
+            debugLambda(LOG, "Importing already saved block {}", header::toLogString);
+            context
+                .getProtocolContext()
+                .getBlockchain()
+                .getBlockByHash(header.getHash())
+                .ifPresent(context::saveBlock);
+            backwardChain.dropFirstHeader();
+          } else {
+            return;
+          }
+        }
       } else {
         debugLambda(LOG, "First unprocessed header is {}", header::toLogString);
         return;

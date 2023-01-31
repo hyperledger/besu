@@ -50,8 +50,6 @@ public interface BonsaiWorldView extends WorldView {
    */
   Map<Bytes32, Bytes> getAllAccountStorage(Address address, Hash rootHash);
 
-  void pruneInconsistentPath(final Address address, final Bytes location, final boolean isSlot);
-
   static Bytes encodeTrieValue(final Bytes bytes) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeBytes(bytes.trimLeadingZeros());
