@@ -111,7 +111,7 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
    * @return Wei
    */
   public Wei getAsWei() {
-    return Wei.of(getAsBigInteger().multiply(BigInteger.TEN.pow(9)));
+    return Wei.of(getAsBigInteger().multiply(BigInteger.valueOf(1_000_000_000L)));
   }
 
   @Override
