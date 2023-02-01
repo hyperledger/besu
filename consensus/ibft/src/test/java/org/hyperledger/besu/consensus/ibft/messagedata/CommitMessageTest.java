@@ -57,7 +57,7 @@ public class CommitMessageTest {
     when(messageData.getCode()).thenReturn(IbftV2.COMMIT);
     CommitMessageData commitMessage = CommitMessageData.fromMessageData(messageData);
 
-    assertThat(commitMessage.getData()).isEqualTo(messageData.getData());
+    assertThat(commitMessage.getData()).isEqualTo(messageBytes);
     assertThat(commitMessage.getCode()).isEqualTo(IbftV2.COMMIT);
   }
 

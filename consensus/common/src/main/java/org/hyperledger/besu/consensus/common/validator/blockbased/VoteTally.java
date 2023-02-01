@@ -110,6 +110,8 @@ class VoteTally {
   }
 
   /**
+   * The validator addresses
+   *
    * @return The collection of validators after the voting at the most recent block has been
    *     finalised.
    */

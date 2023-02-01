@@ -69,7 +69,7 @@ public class GeneralStateReferenceTestTools {
   private static final JsonTestParameters<?, ?> params =
       JsonTestParameters.create(GeneralStateTestCaseSpec.class, GeneralStateTestCaseEipSpec.class)
           .generator(
-              (testName, stateSpec, collector) -> {
+              (testName, fullPath, stateSpec, collector) -> {
                 final String prefix = testName + "-";
                 for (final Map.Entry<String, List<GeneralStateTestCaseEipSpec>> entry :
                     stateSpec.finalStateSpecs().entrySet()) {
@@ -77,10 +77,10 @@ public class GeneralStateReferenceTestTools {
                   final boolean runTest = EIPS_TO_RUN.contains(eip);
                   final List<GeneralStateTestCaseEipSpec> eipSpecs = entry.getValue();
                   if (eipSpecs.size() == 1) {
-                    collector.add(prefix + eip, eipSpecs.get(0), runTest);
+                    collector.add(prefix + eip, fullPath, eipSpecs.get(0), runTest);
                   } else {
                     for (int i = 0; i < eipSpecs.size(); i++) {
-                      collector.add(prefix + eip + '[' + i + ']', eipSpecs.get(i), runTest);
+                      collector.add(prefix + eip + '[' + i + ']', fullPath, eipSpecs.get(i), runTest);
                     }
                   }
                 }
@@ -91,13 +91,6 @@ public class GeneralStateReferenceTestTools {
       params.ignoreAll();
     }
 
-    // Known incorrect test.
-    params.ignore(
-        "RevertPrecompiledTouch(_storage)?-(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
-
-    // Gas integer value is too large to construct a valid transaction.
-    params.ignore("OverflowGasRequire");
-
     // Consumes a huge amount of memory
     params.ignore("static_Call1MB1024Calldepth-\\w");
     params.ignore("ShanghaiLove_.*");
@@ -105,6 +98,9 @@ public class GeneralStateReferenceTestTools {
     // Don't do time consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul-.*");
+
+    // EIP tests are explicitly meant to be works-in-progress with known failing tests
+    params.ignore("/EIPTests/");
   }
 
   private GeneralStateReferenceTestTools() {
@@ -152,13 +148,17 @@ public class GeneralStateReferenceTestTools {
             new BlockHashLookup(blockHeader, blockchain),
             false,
             TransactionValidationParams.processingBlock());
-    if (!result.isInvalid()) {
-      final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
-      if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.getFork())) {
-        worldStateUpdater.deleteAccount(coinbase.getAddress());
-      }
-      worldStateUpdater.commit();
+    if (result.isInvalid()) {
+      assertThat(spec.getExpectException()).isNotNull();
+      return;
     }
+    assertThat(spec.getExpectException()).withFailMessage("Exception was expected - " + spec.getExpectException()).isNull();
+
+    final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
+    if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.getFork())) {
+      worldStateUpdater.deleteAccount(coinbase.getAddress());
+    }
+    worldStateUpdater.commit();
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();

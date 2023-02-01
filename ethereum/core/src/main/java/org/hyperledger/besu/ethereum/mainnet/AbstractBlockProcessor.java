@@ -145,9 +145,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
-      maybeWithdrawalsProcessor
-          .get()
-          .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
+      try {
+        maybeWithdrawalsProcessor
+            .get()
+            .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
+      } catch (final Exception e) {
+        LOG.error("failed processing withdrawals", e);
+        return new BlockProcessingResult(Optional.empty(), e);
+      }
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

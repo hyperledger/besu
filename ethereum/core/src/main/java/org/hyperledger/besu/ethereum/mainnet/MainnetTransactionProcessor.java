@@ -47,7 +47,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -480,7 +479,7 @@ public class MainnetTransactionProcessor {
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
       if (clearEmptyAccounts) {
-        clearAccountsThatAreEmpty(worldState);
+        worldState.clearAccountsThatAreEmpty();
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -504,11 +503,6 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionValidator getTransactionValidator() {
     return transactionValidator;
-  }
-
-  private static void clearAccountsThatAreEmpty(final WorldUpdater worldState) {
-    new ArrayList<>(worldState.getTouchedAccounts())
-        .stream().filter(Account::isEmpty).forEach(a -> worldState.deleteAccount(a.getAddress()));
   }
 
   protected void process(final MessageFrame frame, final OperationTracer operationTracer) {

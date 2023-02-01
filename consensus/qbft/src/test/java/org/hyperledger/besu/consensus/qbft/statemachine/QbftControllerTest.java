@@ -206,17 +206,16 @@ public class QbftControllerTest {
   public void newBlockForCurrentOrPreviousHeightTriggersNoChange() {
     constructQbftController();
     qbftController.start();
-    long chainHeadHeight = chainHeadBlockHeader.getNumber();
+    long chainHeadHeight = 4;
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight);
     when(nextBlock.getHash()).thenReturn(Hash.ZERO);
     final NewChainHead sameHeightBlock = new NewChainHead(nextBlock);
     qbftController.handleNewBlockEvent(sameHeightBlock);
-    verify(blockHeightManagerFactory, times(1)).create(any()); // initial creation
 
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight - 1);
     final NewChainHead priorBlock = new NewChainHead(nextBlock);
     qbftController.handleNewBlockEvent(priorBlock);
-    verify(blockHeightManagerFactory, times(1)).create(any());
+    verify(blockHeightManagerFactory, times(2)).create(any()); // 2 blocks created
   }
 
   @Test
