@@ -38,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("DirectInvocationOnMock")
 public class GoQuorumEthGetQuorumPayloadTest {
 
   @Mock GoQuorumEthGetQuorumPayload method;

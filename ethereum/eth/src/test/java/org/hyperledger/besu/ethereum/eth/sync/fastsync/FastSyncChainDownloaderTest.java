@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.TOO_MANY_PEERS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -55,7 +54,6 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class FastSyncChainDownloaderTest {
 
-  private final FastSyncValidationPolicy validationPolicy = mock(FastSyncValidationPolicy.class);
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
 
   protected ProtocolSchedule protocolSchedule;
@@ -81,7 +79,6 @@ public class FastSyncChainDownloaderTest {
 
   @Before
   public void setup() {
-    when(validationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT_SKIP_DETACHED);
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();

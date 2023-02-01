@@ -57,7 +57,7 @@ public class RoundChangeMessageTest {
     when(messageData.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
     RoundChangeMessageData roundChangeMessage = RoundChangeMessageData.fromMessageData(messageData);
 
-    assertThat(roundChangeMessage.getData()).isEqualTo(messageData.getData());
+    assertThat(roundChangeMessage.getData()).isEqualTo(messageBytes);
     assertThat(roundChangeMessage.getCode()).isEqualTo(IbftV2.ROUND_CHANGE);
   }
 
