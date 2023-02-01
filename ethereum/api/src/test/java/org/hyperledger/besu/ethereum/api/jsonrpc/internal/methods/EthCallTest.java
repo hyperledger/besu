@@ -86,7 +86,7 @@ public class EthCallTest {
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
     when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
 
     final BlockHeader blockHeader = mock(BlockHeader.class);
@@ -109,7 +109,7 @@ public class EthCallTest {
 
     mockTransactionProcessorSuccessResult(Bytes.of());
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
 
     final JsonRpcResponse response = method.response(request);
 
@@ -124,7 +124,7 @@ public class EthCallTest {
         new JsonRpcSuccessResponse(null, Bytes.of(1).toString());
     mockTransactionProcessorSuccessResult(Bytes.of(1));
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
 
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
@@ -142,7 +142,7 @@ public class EthCallTest {
   public void shouldUseCorrectBlockNumberWhenLatest() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
     when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
 
     final BlockHeader blockHeader = mock(BlockHeader.class);
@@ -266,7 +266,7 @@ public class EthCallTest {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(baseFee);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
     when(chainHead.getBlockHeader()).thenReturn(blockHeader);
 
     method.response(request);

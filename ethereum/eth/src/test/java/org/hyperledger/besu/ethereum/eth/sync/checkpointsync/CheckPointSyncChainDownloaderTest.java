@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,7 +32,6 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -57,7 +55,6 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class CheckPointSyncChainDownloaderTest {
 
-  private final FastSyncValidationPolicy validationPolicy = mock(FastSyncValidationPolicy.class);
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
 
   protected ProtocolSchedule protocolSchedule;
@@ -84,7 +81,6 @@ public class CheckPointSyncChainDownloaderTest {
 
   @Before
   public void setup() {
-    when(validationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT_SKIP_DETACHED);
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
