@@ -34,6 +34,9 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
   /** The constant MAX_GWEI. */
   public static final GWei MAX_GWEI = of(UInt64.MAX_VALUE);
 
+  /** The constant GWEI_TO_WEI_MULTIPLIER. */
+  private static final BigInteger GWEI_TO_WEI_MULTIPLIER = BigInteger.valueOf(1_000_000_000L);
+
   /**
    * Instantiates a new GWei.
    *
@@ -111,7 +114,7 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
    * @return Wei
    */
   public Wei getAsWei() {
-    return Wei.of(getAsBigInteger().multiply(BigInteger.valueOf(1_000_000_000L)));
+    return Wei.of(getAsBigInteger().multiply(GWEI_TO_WEI_MULTIPLIER));
   }
 
   @Override

@@ -284,49 +284,48 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                             new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
-              if (!updatedAccount.getUpdatedStorage().isEmpty()) {
-                final StorageConsumingMap<BonsaiValue<UInt256>> pendingStorageUpdates =
-                    storageToUpdate.computeIfAbsent(
-                        updatedAddress,
-                        __ ->
-                            new StorageConsumingMap<>(
-                                updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
-                if (tracked.getStorageWasCleared()) {
-                  storageToClear.add(updatedAddress);
-                  pendingStorageUpdates.clear();
-                }
+              // This is especially to avoid unnecessary computation for withdrawals
+              if (updatedAccount.getUpdatedStorage().isEmpty()) return;
+              final StorageConsumingMap<BonsaiValue<UInt256>> pendingStorageUpdates =
+                  storageToUpdate.computeIfAbsent(
+                      updatedAddress,
+                      __ ->
+                          new StorageConsumingMap<>(
+                              updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
+              if (tracked.getStorageWasCleared()) {
+                storageToClear.add(updatedAddress);
+                pendingStorageUpdates.clear();
+              }
 
-                final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-                    new TreeSet<>(Map.Entry.comparingByKey());
-                entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
+              final TreeSet<Map.Entry<UInt256, UInt256>> entries =
+                  new TreeSet<>(Map.Entry.comparingByKey());
+              entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
-                // parallel stream here may cause database corruption
-                entries.forEach(
-                    storageUpdate -> {
-                      final UInt256 keyUInt = storageUpdate.getKey();
-                      final Hash slotHash = Hash.hash(keyUInt);
-                      final UInt256 value = storageUpdate.getValue();
-                      final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
-                      if (pendingValue == null) {
-                        pendingStorageUpdates.put(
-                            slotHash,
-                            new BonsaiValue<>(
-                                updatedAccount.getOriginalStorageValue(keyUInt), value));
-                      } else {
-                        pendingValue.setUpdated(value);
-                      }
-                    });
+              // parallel stream here may cause database corruption
+              entries.forEach(
+                  storageUpdate -> {
+                    final UInt256 keyUInt = storageUpdate.getKey();
+                    final Hash slotHash = Hash.hash(keyUInt);
+                    final UInt256 value = storageUpdate.getValue();
+                    final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
+                    if (pendingValue == null) {
+                      pendingStorageUpdates.put(
+                          slotHash,
+                          new BonsaiValue<>(
+                              updatedAccount.getOriginalStorageValue(keyUInt), value));
+                    } else {
+                      pendingValue.setUpdated(value);
+                    }
+                  });
 
-                updatedAccount.getUpdatedStorage().clear();
+              updatedAccount.getUpdatedStorage().clear();
 
-                if (pendingStorageUpdates.isEmpty()) {
-                  storageToUpdate.remove(updatedAddress);
-                }
+              if (pendingStorageUpdates.isEmpty()) {
+                storageToUpdate.remove(updatedAddress);
+              }
 
-                if (tracked.getStorageWasCleared()) {
-                  tracked.setStorageWasCleared(
-                      false); // storage already cleared for this transaction
-                }
+              if (tracked.getStorageWasCleared()) {
+                tracked.setStorageWasCleared(false); // storage already cleared for this transaction
               }
             });
   }

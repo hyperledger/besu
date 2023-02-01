@@ -14,7 +14,6 @@
 - Add implementation for eth_createAccessList RPC method [#4942](https://github.com/hyperledger/besu/pull/4942)
 - Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
 - Add DebugGetRawBlock and DebugGetRawHeader RPC methods [#5011](https://github.com/hyperledger/besu/pull/5011)  
-- Improve withdrawals processing performance [#5026](https://github.com/hyperledger/besu/pull/5026)
 
 ### Bug Fixes
 
