@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.handlers;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_ARRAY;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_OBJECT;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonResponseStreamer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
@@ -173,49 +174,51 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
     JsonObject jsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
     lazyTraceLogger(jsonRequest::toString);
 
-    vertx.executeBlocking(
-        promise -> {
-          final JsonRpcResponse result =
-              blockingJsonRpcExecutor.execute(
-                  user,
-                  tracer,
-                  spanContext,
-                  () -> !ctx.response().closed(),
-                  jsonRequest,
-                  req -> req.mapTo(JsonRpcRequest.class));
-          promise.complete(result);
-        },
-        res -> {
-          try {
-            handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) res.result());
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        });
+    final String method = jsonRequest.getString("method");
+    if (method == null || method.startsWith("priv_") || method.startsWith("eea_")) {
+      vertx.executeBlocking(
+          promise -> {
+            final JsonRpcResponse result =
+                blockingJsonRpcExecutor.execute(
+                    user,
+                    tracer,
+                    spanContext,
+                    () -> !ctx.response().closed(),
+                    jsonRequest,
+                    req -> req.mapTo(JsonRpcRequest.class));
+            promise.complete(result);
+          },
+          res -> {
+            try {
+              handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) res.result());
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          });
+      return;
+    }
 
-    //    vertx
-    //        .eventBus()
-    //        .request(
-    //            RPC_EXECUTE_OBJECT.getAddress(),
-    //            new JsonRpcExecutorObjectRequest(
-    //                user, spanContext, () -> !ctx.response().closed(), jsonRequest))
-    //        .onSuccess(
-    //            msg -> {
-    //              try {
-    //                handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) msg.body());
-    //              } catch (IOException e) {
-    //                LOG.error(
-    //                    "Error while processing {}: {}", getRequestMethodName(ctx),
-    // e.getMessage());
-    //                handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
-    //              }
-    //            })
-    //        .onFailure(
-    //            e -> {
-    //              LOG.error("Error while processing {}: {}", getRequestMethodName(ctx),
-    // e.getMessage());
-    //              handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
-    //            });
+    vertx
+        .eventBus()
+        .request(
+            RPC_EXECUTE_OBJECT.getAddress(),
+            new JsonRpcExecutorObjectRequest(
+                user, spanContext, () -> !ctx.response().closed(), jsonRequest))
+        .onSuccess(
+            msg -> {
+              try {
+                handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) msg.body());
+              } catch (IOException e) {
+                LOG.error(
+                    "Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
+                handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
+              }
+            })
+        .onFailure(
+            e -> {
+              LOG.error("Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
+              handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
+            });
   }
 
   private void handleRpcExecutorObjectResponse(
