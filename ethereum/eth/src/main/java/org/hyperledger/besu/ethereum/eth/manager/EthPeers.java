@@ -122,6 +122,11 @@ public class EthPeers {
         "pending_peer_requests_current",
         "Number of peer requests currently pending because peers are busy",
         pendingRequests::size);
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.ETHEREUM,
+        "peer_limit",
+        "The maximum number of peers this node allows to connect",
+        () -> peerUpperBound);
   }
 
   public void registerNewConnection(

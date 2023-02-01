@@ -182,7 +182,7 @@ public class AbstractPeerConnectionTest {
           multiplexer,
           connectionEventDispatcher,
           outboundMessagesCounter,
-          true); // TODO: this probably needs a unit test
+          true);
     }
 
     @Override

@@ -34,10 +34,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Duration;
@@ -46,11 +44,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
@@ -72,13 +72,12 @@ public class RlpxAgent {
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
-  private final Counter connectedPeersCounter;
-
   private Callable<Stream<PeerConnection>> getAllConnectionsCallback;
   private Callable<Stream<PeerConnection>> getAllActiveConnectionsCallback;
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
       CacheBuilder.newBuilder()
-          .expireAfterWrite(Duration.ofSeconds(20L))
+          .expireAfterWrite(
+              Duration.ofSeconds(30L)) // we will at most try to connect every 30 seconds
           .concurrencyLevel(1)
           .build();
 
@@ -87,25 +86,12 @@ public class RlpxAgent {
       final PeerConnectionEvents connectionEvents,
       final ConnectionInitializer connectionInitializer,
       final PeerRlpxPermissions peerPermissions,
-      final PeerPrivileges peerPrivileges,
-      final int upperBoundConnections,
-      final MetricsSystem metricsSystem) {
+      final PeerPrivileges peerPrivileges) {
     this.localNode = localNode;
     this.connectionEvents = connectionEvents;
     this.connectionInitializer = connectionInitializer;
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
-
-    // Setup metrics
-    connectedPeersCounter =
-        metricsSystem.createCounter(
-            BesuMetricCategory.PEERS, "connected_total", "Total number of peers connected");
-
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.ETHEREUM,
-        "peer_limit",
-        "The maximum number of peers this node allows to connect",
-        () -> upperBoundConnections);
 
     // placeholders for callbacks
     if (getAllActiveConnectionsCallback == null) {
@@ -155,7 +141,7 @@ public class RlpxAgent {
     return connectionInitializer.stop();
   }
 
-  public Stream<? extends PeerConnection> streamConnections() {
+  public Stream<PeerConnection> streamConnections() {
     try {
       return getAllConnectionsCallback.call();
     } catch (final Exception e) {
@@ -192,6 +178,16 @@ public class RlpxAgent {
           .call()
           .filter(c -> c.getPeer().getId().equals(peerId))
           .forEach(c -> c.disconnect(reason));
+      final CompletableFuture<PeerConnection> peerConnectionCompletableFuture =
+          getMapOfCompletableFutures().get(peerId);
+      if (peerConnectionCompletableFuture != null) {
+        if (!peerConnectionCompletableFuture.isDone()) {
+          peerConnectionCompletableFuture.cancel(true);
+        } else if (!peerConnectionCompletableFuture.isCompletedExceptionally()
+            && !peerConnectionCompletableFuture.isCancelled()) {
+          peerConnectionCompletableFuture.get().disconnect(reason);
+        }
+      }
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -229,23 +225,25 @@ public class RlpxAgent {
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture;
     if (checkWhetherToConnect(peer, false)) {
       try {
-        peerConnectionCompletableFuture =
-            peersConnectingCache.get(peer.getId(), () -> getPeerConnectionCompletableFuture(peer));
+        synchronized (this) {
+          peerConnectionCompletableFuture =
+              peersConnectingCache.get(
+                  peer.getId(), () -> createPeerConnectionCompletableFuture(peer));
+        }
       } catch (final ExecutionException e) {
         throw new RuntimeException(e);
       }
     } else {
       final String errorMsg =
-          "None of the ProtocolManagers want to connect to peer " + peer.getId();
+          "None of the ProtocolManagers wants to connect to peer " + peer.getId();
       LOG.debug(errorMsg);
       return CompletableFuture.failedFuture((new RuntimeException(errorMsg)));
     }
-
     return peerConnectionCompletableFuture;
   }
 
   @NotNull
-  private CompletableFuture<PeerConnection> getPeerConnectionCompletableFuture(final Peer peer) {
+  private CompletableFuture<PeerConnection> createPeerConnectionCompletableFuture(final Peer peer) {
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture =
         initiateOutboundConnection(peer);
     peerConnectionCompletableFuture.whenComplete(
@@ -274,7 +272,7 @@ public class RlpxAgent {
       return;
     }
 
-    final Stream<? extends PeerConnection> connectionsToCheck;
+    final Stream<PeerConnection> connectionsToCheck;
     if (peers.isPresent()) {
       final List<Bytes> changedPeersIds =
           peers.get().stream().map(p -> p.getId()).collect(Collectors.toList());
@@ -370,8 +368,12 @@ public class RlpxAgent {
   }
 
   private void dispatchConnect(final PeerConnection connection) {
-    connectedPeersCounter.inc();
     connectSubscribers.forEach(c -> c.onConnect(connection));
+  }
+
+  @VisibleForTesting
+  public ConcurrentMap<Bytes, CompletableFuture<PeerConnection>> getMapOfCompletableFutures() {
+    return peersConnectingCache.asMap();
   }
 
   public static class Builder {
@@ -415,13 +417,7 @@ public class RlpxAgent {
       final PeerRlpxPermissions rlpxPermissions =
           new PeerRlpxPermissions(localNode, peerPermissions);
       return new RlpxAgent(
-          localNode,
-          connectionEvents,
-          connectionInitializer,
-          rlpxPermissions,
-          peerPrivileges,
-          config.getPeerUpperBound(),
-          metricsSystem);
+          localNode, connectionEvents, connectionInitializer, rlpxPermissions, peerPrivileges);
     }
 
     private void validate() {

@@ -81,6 +81,7 @@ public class RetestethContext {
   private static final PoWHasher NO_WORK_HASHER =
       (final long nonce, final long number, EpochCalculator epochCalc, final Bytes headerHash) ->
           new PoWSolution(nonce, Hash.ZERO, UInt256.ZERO, Hash.ZERO);
+  public static final int MAX_PEERS = 25;
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
@@ -202,9 +203,9 @@ public class RetestethContext {
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             localNodeKey,
-            25,
-            25,
-            25,
+            MAX_PEERS,
+            MAX_PEERS,
+            MAX_PEERS,
             false);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 

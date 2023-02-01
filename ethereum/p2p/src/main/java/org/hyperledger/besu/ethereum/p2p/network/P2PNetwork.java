@@ -111,7 +111,7 @@ public interface P2PNetwork extends Closeable {
    * disconnected even if it is not in the maintained peer list. See {@link
    * #addMaintainedConnectionPeer(Peer)} for details on the maintained peer list.
    *
-   * @param peer The peer to which connections are not longer required
+   * @param peer The peer to which connections are no longer required
    * @return boolean representing whether the peer was removed from the maintained peer list
    */
   boolean removeMaintainedConnectionPeer(final Peer peer);

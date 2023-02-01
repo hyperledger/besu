@@ -139,6 +139,61 @@ public class P2PPlainNetworkTest {
     }
   }
 
+  /**
+   * Tests that max peers setting is honoured and inbound connections that would exceed the limit
+   * are correctly disconnected.
+   *
+   * @throws Exception On Failure
+   */
+  @Test
+  public void limitMaxPeers() throws Exception {
+    final NodeKey nodeKey = NodeKeyUtils.generate();
+    final int maxPeers = 1;
+    final NetworkingConfiguration listenerConfig =
+        NetworkingConfiguration.create()
+            .setDiscovery(DiscoveryConfiguration.create().setActive(false))
+            .setRlpx(
+                RlpxConfiguration.create()
+                    .setBindPort(0)
+                    .setPeerUpperBound(maxPeers)
+                    .setSupportedProtocols(MockSubProtocol.create()));
+    try (final P2PNetwork listener =
+            builder("partner1client1").nodeKey(nodeKey).config(listenerConfig).build();
+        final P2PNetwork connector1 = builder("partner1client1").build();
+        final P2PNetwork connector2 = builder("partner2client1").build()) {
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector1.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector2.getRlpxAgent().subscribeConnectRequest((p, d) -> false);
+
+      // Setup listener and first connection
+      listener.start();
+      connector1.start();
+      final EnodeURL listenerEnode = listener.getLocalEnode().get();
+      final Bytes listenId = listenerEnode.getNodeId();
+      final int listenPort = listenerEnode.getListeningPort().get();
+
+      final Peer listeningPeer = createPeer(listenId, listenPort);
+      Assertions.assertThat(
+              connector1
+                  .connect(listeningPeer)
+                  .get(30L, TimeUnit.SECONDS)
+                  .getPeerInfo()
+                  .getNodeId())
+          .isEqualTo(listenId);
+
+      // Setup second connection and check that connection is not accepted
+      final CompletableFuture<PeerConnection> peerFuture = new CompletableFuture<>();
+      final CompletableFuture<DisconnectReason> reasonFuture = new CompletableFuture<>();
+      connector2.subscribeDisconnect(
+          (peerConnection, reason, initiatedByPeer) -> {
+            peerFuture.complete(peerConnection);
+            reasonFuture.complete(reason);
+          });
+      connector2.start();
+      Assertions.assertThat(connector2.connect(listeningPeer)).isCompletedExceptionally();
+    }
+  }
+
   @Test
   public void rejectPeerWithNoSharedCaps() throws Exception {
     final NodeKey listenerNodeKey = NodeKeyUtils.generate();
