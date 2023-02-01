@@ -208,7 +208,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         codeValue.setUpdated(null);
       } else {
         wrappedWorldView()
-            .getCode(deletedAddress)
+            .getCode(
+                deletedAddress,
+                Optional.ofNullable(accountValue)
+                    .map(BonsaiValue::getPrior)
+                    .map(BonsaiAccount::getCodeHash)
+                    .orElse(Hash.EMPTY))
             .ifPresent(
                 deletedCode ->
                     codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null)));
@@ -258,9 +263,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
               final BonsaiAccount updatedAccount;
+              final BonsaiValue<BonsaiAccount> updatedAccountValue =
+                  accountsToUpdate.get(updatedAddress);
               if (tracked.getWrappedAccount() == null) {
-                final BonsaiValue<BonsaiAccount> updatedAccountValue =
-                    accountsToUpdate.get(updatedAddress);
                 updatedAccount = new BonsaiAccount(this, tracked);
                 tracked.setWrappedAccount(updatedAccount);
                 if (updatedAccountValue == null) {
@@ -288,7 +293,16 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                     codeToUpdate.computeIfAbsent(
                         updatedAddress,
                         addr ->
-                            new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
+                            new BonsaiValue<>(
+                                wrappedWorldView()
+                                    .getCode(
+                                        addr,
+                                        Optional.ofNullable(updatedAccountValue)
+                                            .map(BonsaiValue::getPrior)
+                                            .map(BonsaiAccount::getCodeHash)
+                                            .orElse(Hash.EMPTY))
+                                    .orElse(null),
+                                null));
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
 
@@ -337,10 +351,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   }
 
   @Override
-  public Optional<Bytes> getCode(final Address address) {
+  public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
     final BonsaiValue<Bytes> localCode = codeToUpdate.get(address);
     if (localCode == null) {
-      return wrappedWorldView().getCode(address);
+      return wrappedWorldView().getCode(address, codeHash);
     } else {
       return Optional.ofNullable(localCode.getUpdated());
     }
@@ -611,7 +625,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     }
     BonsaiValue<Bytes> codeValue = codeToUpdate.get(address);
     if (codeValue == null) {
-      final Bytes storedCode = wrappedWorldView().getCode(address).orElse(Bytes.EMPTY);
+      final Bytes storedCode =
+          wrappedWorldView().getCode(address, Hash.hash(expectedCode)).orElse(Bytes.EMPTY);
       if (!storedCode.isEmpty()) {
         codeValue = new BonsaiValue<>(storedCode, storedCode);
         codeToUpdate.put(address, codeValue);

@@ -74,7 +74,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
-    return codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    return codeStorage
+        .get(accountHash.toArrayUnsafe())
+        .map(Bytes::wrap)
+        .filter(b -> Hash.hash(b).equals(codeHash));
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
@@ -105,12 +108,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      final Optional<Bytes> value =
-          trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
-      if (value.isPresent()) {
-        return value.filter(b -> Hash.hash(b).equals(nodeHash));
-      }
-      return Optional.empty();
+      return trieBranchStorage
+          .get(location.toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
@@ -120,14 +121,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      final Optional<Bytes> value =
-          trieBranchStorage
-              .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-              .map(Bytes::wrap);
-      if (value.isPresent()) {
-        return value.filter(b -> Hash.hash(b).equals(nodeHash));
-      }
-      return Optional.empty();
+      return trieBranchStorage
+          .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
@@ -197,6 +194,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             .get(WORLD_ROOT_HASH_KEY)
             .map(Bytes32::wrap)
             .filter(hash -> hash.equals(rootHash))
+            .map(Bytes32::wrap)
             .isPresent()
         || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
   }
@@ -208,6 +206,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     codeStorage.clear();
     storageStorage.clear();
     trieBranchStorage.clear();
+    trieLogStorage.clear();
+  }
+
+  @Override
+  public void clearTrieLog() {
+    subscribers.forEach(BonsaiStorageSubscriber::onClearTrieLog);
     trieLogStorage.clear();
   }
 
@@ -412,6 +416,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     default void onClearStorage() {}
 
     default void onClearFlatDatabaseStorage() {}
+
+    default void onClearTrieLog() {}
 
     default void onCloseStorage() {}
   }

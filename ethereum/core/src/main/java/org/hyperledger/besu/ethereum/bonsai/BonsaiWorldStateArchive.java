@@ -286,8 +286,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           return Optional.empty();
         }
       } catch (final RuntimeException re) {
-        LOG.error("Archive rolling failed for block hash " + blockHash, re);
-        System.out.println(worldStateStorage.getWorldStateBlockHash() + " " + blockHash);
+        LOG.trace("Archive rolling failed for block hash " + blockHash, re);
         return Optional.empty();
       }
     }
@@ -356,9 +355,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     }
     keysToDelete.forEach(bytes -> updater.removeAccountStateTrieNode(bytes, null));
     updater.commit();
-
     trieLogManager.reset();
-    worldStateStorage.clearFlatDatabase();
   }
 
   public TrieLogManager getTrieLogManager() {

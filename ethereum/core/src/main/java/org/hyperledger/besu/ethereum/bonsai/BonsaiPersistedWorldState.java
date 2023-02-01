@@ -85,6 +85,13 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     return archive;
   }
 
+  public static void main(final String[] args) {
+    System.out.println(
+        Hash.hash(Bytes.fromHexString("0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B")));
+    // 0xdb009cb36ce41a340c885fb1dc35eae09fa2271f582f552e615192ba682041e9
+    // 0x0d0b0000090c
+  }
+
   @Override
   public MutableWorldState copy() {
     BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =
@@ -99,8 +106,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public Optional<Bytes> getCode(@Nonnull final Address address) {
-    return worldStateStorage.getCode(null, Hash.hash(address));
+  public Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash) {
+    return worldStateStorage.getCode(codeHash, Hash.hash(address));
   }
 
   public void setArchiveStateUnSafe(final BlockHeader blockHeader) {

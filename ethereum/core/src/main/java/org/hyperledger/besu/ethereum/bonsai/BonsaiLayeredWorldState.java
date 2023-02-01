@@ -87,7 +87,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public Optional<Bytes> getCode(final Address address) {
+  public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
     BonsaiLayeredWorldState currentLayer = this;
     while (currentLayer != null) {
       final Optional<Bytes> maybeCode = currentLayer.trieLog.getCode(address);
@@ -104,7 +104,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       } else if (currentLayer.getNextWorldView().get() instanceof BonsaiLayeredWorldState) {
         currentLayer = (BonsaiLayeredWorldState) currentLayer.getNextWorldView().get();
       } else {
-        return currentLayer.getNextWorldView().get().getCode(address);
+        return currentLayer.getNextWorldView().get().getCode(address, codeHash);
       }
     }
     return Optional.empty();

@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -66,7 +65,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   private Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
   private final ProtocolContext protocolContext;
-  private final WorldStateStorage worldStateStorage;
   private final PivotBlockSelector pivotBlockSelector;
   private final SyncTerminationCondition terminationCondition;
 
@@ -89,7 +87,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.protocolContext = protocolContext;
-    this.worldStateStorage = worldStateStorage;
     this.terminationCondition = terminationCondition;
 
     ChainHeadTracker.trackChainHeadForPeers(
@@ -196,13 +193,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                 .orElse(TrailingPeerRequirements.UNRESTRICTED));
   }
 
-  public static void main(final String[] args) {
-    System.out.println(
-        Hash.hash(Bytes.fromHexString("0x07865c6E87B9F70255377e024ace6630C1Eaa37F")));
-    // 0x94a7742412c4b5ce46e1f5c5e9b14e937226165c67f858d221023bdabb000e0b
-    // 0x09040a07070402
-  }
-
   @Override
   public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
@@ -305,7 +295,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     // recreate fast sync with resync and start
     this.syncState.markInitialSyncRestart();
     this.syncState.markResyncNeeded();
-    this.worldStateStorage.clear();
     this.fastSyncDownloader = this.fastSyncFactory.get();
     start();
     return true;
@@ -319,7 +308,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       stop();
       fastSyncDownloader.get().deleteFastSyncState();
     }
-    LOG.info("#########################################\n\nBesu has identified a problem with its worldstate database. Your node will fetch the correct data from peers to repair the problem. Starting the sync pipeline...\n\n#########################################");
+    LOG.info("Starting the state healing");
     this.syncState.markInitialSyncRestart();
     this.syncState.markResyncNeeded();
     maybeAccountToRepair.ifPresent(
@@ -331,6 +320,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
           }
           this.syncState.markAccountToRepair(maybeAccountToRepair);
         });
+
     this.fastSyncDownloader = this.fastSyncFactory.get();
     start();
     return true;
