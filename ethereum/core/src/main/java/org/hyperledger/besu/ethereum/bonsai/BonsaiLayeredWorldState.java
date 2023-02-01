@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import com.google.errorprone.annotations.MustBeClosed;
@@ -39,8 +41,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A World State backed first by trie log layer and then by another world state. */
-public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
+public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState, BonsaiStorageSubscriber {
   private Optional<BonsaiWorldView> nextWorldView;
+  private final AtomicLong worldStateSubscription;
   protected final long height;
   protected final TrieLogLayer trieLog;
   private final Hash worldStateRootHash;
@@ -61,6 +64,11 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
     this.height = height;
     this.worldStateRootHash = worldStateRootHash;
     this.trieLog = trieLog;
+    this.worldStateSubscription = new AtomicLong(nextWorldView
+            .filter(world -> world instanceof BonsaiPersistedWorldState)
+            .map(BonsaiPersistedWorldState.class::cast)
+            .map(ws -> ws.worldStateStorage.subscribe(this))
+            .orElse(Long.MAX_VALUE));
   }
 
   public Optional<BonsaiWorldView> getNextWorldView() {
@@ -75,7 +83,16 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   public void setNextWorldView(final Optional<BonsaiWorldView> nextWorldView) {
+    maybeUnSubscribe();
     this.nextWorldView = nextWorldView;
+  }
+
+  private void maybeUnSubscribe() {
+    if (worldStateSubscription.get() != Long.MAX_VALUE) {
+      nextWorldView.map(BonsaiPersistedWorldState.class::cast)
+              .ifPresent(ws -> ws.worldStateStorage.unSubscribe(worldStateSubscription.get()));
+      worldStateSubscription.set(Long.MAX_VALUE);
+    }
   }
 
   public TrieLogLayer getTrieLog() {
