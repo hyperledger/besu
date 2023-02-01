@@ -57,7 +57,7 @@ public class PrepareMessageTest {
     when(messageData.getCode()).thenReturn(IbftV2.PREPARE);
     PrepareMessageData prepareMessage = PrepareMessageData.fromMessageData(messageData);
 
-    assertThat(prepareMessage.getData()).isEqualTo(messageData.getData());
+    assertThat(prepareMessage.getData()).isEqualTo(messageBytes);
     assertThat(prepareMessage.getCode()).isEqualTo(IbftV2.PREPARE);
   }
 

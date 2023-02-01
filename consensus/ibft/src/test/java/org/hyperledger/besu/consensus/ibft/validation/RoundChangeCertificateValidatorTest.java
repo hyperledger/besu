@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.ibft.validation;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +46,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings("DirectInvocationOnMock")
 public class RoundChangeCertificateValidatorTest {
 
   private final NodeKey proposerKey = NodeKeyUtils.generate();
@@ -62,7 +62,6 @@ public class RoundChangeCertificateValidatorTest {
 
   private final MessageValidatorForHeightFactory validatorFactory =
       mock(MessageValidatorForHeightFactory.class);
-  private final SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
   final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
   final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataEncoder);
 
@@ -124,9 +123,6 @@ public class RoundChangeCertificateValidatorTest {
                     Lists.newArrayList(
                         validatorMessageFactory.createPrepare(
                             prevRound, proposedBlock.getHash()))))));
-
-    // The prepare Message in the RoundChange Cert will be deemed illegal.
-    when(signedDataValidator.validatePrepare(any())).thenReturn(false);
 
     assertThat(
             validator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
