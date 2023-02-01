@@ -281,8 +281,6 @@ public class SnapWorldDownloadStateTest {
   public void shouldWaitingBlockchainWhenTooBehind() {
     when(snapSyncState.isHealInProgress()).thenReturn(true);
 
-    assertThat(snapSyncState.isWaitingBlockchain()).isFalse();
-
     downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
     when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
 

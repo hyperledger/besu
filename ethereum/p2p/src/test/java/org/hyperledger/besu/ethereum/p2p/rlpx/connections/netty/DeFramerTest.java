@@ -353,7 +353,7 @@ public class DeFramerTest {
     when(framer.deframe(any()))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
-    when(ctx.channel().remoteAddress()).thenReturn(null);
+    when(channel.remoteAddress()).thenReturn(null);
     final ChannelFuture future = NettyMocks.channelFuture(true);
     when(ctx.writeAndFlush(any())).thenReturn(future);
     final List<Object> out = new ArrayList<>();

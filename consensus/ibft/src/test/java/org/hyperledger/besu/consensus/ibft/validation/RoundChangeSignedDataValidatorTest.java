@@ -44,6 +44,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings("DirectInvocationOnMock")
 public class RoundChangeSignedDataValidatorTest {
 
   private final NodeKey proposerKey = NodeKeyUtils.generate();
