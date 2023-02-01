@@ -342,13 +342,15 @@ public class BlockTransactionSelector {
         transaction.isGoQuorumPrivateTransaction(
             transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
+    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+
     final long gasUsedByTransaction =
-        isGoQuorumPrivateTransaction ? 0 : transaction.getGasLimit() - result.getGasRemaining();
+        isGoQuorumPrivateTransaction
+            ? 0
+            : transaction.getGasLimit() + dataGasUsed - result.getGasRemaining();
 
     final long cumulativeGasUsed =
         transactionSelectionResult.getCumulativeGasUsed() + gasUsedByTransaction;
-
-    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
     transactionSelectionResult.update(
         transaction,
