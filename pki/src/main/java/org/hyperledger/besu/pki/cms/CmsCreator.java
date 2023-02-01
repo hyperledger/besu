@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.CMSProcessableByteArray;
@@ -87,7 +88,7 @@ public class CmsCreator {
 
       final ContentSigner contentSigner =
           new JcaContentSignerBuilder(
-                  getPreferredSignatureAlgorithm(x509Certificates.get(0).getPublicKey()))
+                  getPreferredSignatureAlgorithm(keyStore.getPublicKey(certificateAlias)))
               .build(privateKey);
 
       final CMSSignedDataGenerator cmsGenerator = new CMSSignedDataGenerator();
@@ -112,7 +113,8 @@ public class CmsCreator {
     }
   }
 
-  private static String getPreferredSignatureAlgorithm(final PublicKey pub) {
+  @VisibleForTesting
+  public static String getPreferredSignatureAlgorithm(final PublicKey pub) {
     switch (pub.getAlgorithm()) {
       case "EC" -> {
         final EllipticCurve curve = ((ECPublicKey) pub).getParams().getCurve();

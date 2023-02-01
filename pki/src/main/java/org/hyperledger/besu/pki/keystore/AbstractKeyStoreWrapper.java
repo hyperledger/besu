@@ -52,6 +52,10 @@ public abstract class AbstractKeyStoreWrapper implements KeyStoreWrapper {
     }
   }
 
+  protected AbstractKeyStoreWrapper(final Collection<X509CRL> crls) {
+    this.crls = crls;
+  }
+
   @Override
   public Collection<X509CRL> getCRLs() {
     return crls;

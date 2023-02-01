@@ -24,6 +24,7 @@ import static org.hyperledger.besu.pki.util.TestCertificateUtils.issueCertificat
 
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
+import org.hyperledger.besu.pki.util.TestCertificateUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -113,7 +114,7 @@ public class PkiKeystoreConfigurationFactory {
     // Only create the truststore if this is the first time this method is being called
     if (caKeyPair == null) {
       try {
-        caKeyPair = createKeyPair();
+        caKeyPair = createKeyPair(TestCertificateUtils.Algorithm.RSA);
         caCertificate = createSelfSignedCertificate("ca", notBefore(), notAfter(), caKeyPair);
 
         final KeyStore truststore = KeyStore.getInstance(type);
@@ -136,7 +137,7 @@ public class PkiKeystoreConfigurationFactory {
       createTrustStore(type);
     }
 
-    final KeyPair kp = createKeyPair();
+    final KeyPair kp = createKeyPair(TestCertificateUtils.Algorithm.RSA);
     final X509Certificate certificate =
         issueCertificate(caCertificate, caKeyPair, "validator", notBefore(), notAfter(), kp, false);
 
