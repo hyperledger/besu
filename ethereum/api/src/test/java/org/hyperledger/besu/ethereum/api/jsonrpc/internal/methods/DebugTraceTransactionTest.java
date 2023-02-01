@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -56,7 +55,6 @@ public class DebugTraceTransactionTest {
       new DebugTraceTransaction(blockchain, transactionTracer);
   private final Transaction transaction = mock(Transaction.class);
 
-  private final BlockHeader blockHeader = mock(BlockHeader.class);
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   private final Hash transactionHash =
@@ -118,7 +116,6 @@ public class DebugTraceTransactionTest {
     when(transaction.getGasLimit()).thenReturn(100L);
     when(result.getGasRemaining()).thenReturn(27L);
     when(result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(blockHeader.getNumber()).thenReturn(12L);
     when(blockchain.headBlockNumber()).thenReturn(12L);
     when(blockchain.transactionByHash(transactionHash))
         .thenReturn(Optional.of(transactionWithMetadata));
@@ -183,7 +180,6 @@ public class DebugTraceTransactionTest {
     when(transaction.getGasLimit()).thenReturn(100L);
     when(result.getGasRemaining()).thenReturn(27L);
     when(result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(blockHeader.getNumber()).thenReturn(12L);
     when(blockchain.headBlockNumber()).thenReturn(12L);
     when(blockchain.transactionByHash(transactionHash)).thenReturn(Optional.empty());
     when(transactionTracer.traceTransaction(

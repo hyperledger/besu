@@ -130,12 +130,12 @@ public class TransactionLogBloomCacherTest {
 
     createLogBloomCache(logBloom);
 
-    createBlock(3L);
+    final BlockHeader header = createBlock(3L);
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 3);
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(3).get(), Optional.empty(), Optional.of(logBloom));
+        header, Optional.empty(), Optional.of(logBloom));
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 4);
     assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
@@ -154,7 +154,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.empty(), Optional.of(logBloom));
+        blockHeaders.get(4), Optional.empty(), Optional.of(logBloom));
 
     for (int i = 0; i < 5; i++) {
       assertThat(blockHeaders.get(i).getLogsBloom().toArray())
@@ -195,7 +195,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.empty(), Optional.of(logBloom));
+        firstBranch.get(4), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
     for (int i = 0; i < 5; i++) {
       assertThat(firstBranch.get(i).getLogsBloom().toArray())
@@ -210,7 +210,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), blockchain.getBlockHeader(1), Optional.of(logBloom));
+        forkBranch.get(4), Optional.of(firstBranch.get(1)), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
     for (int i = 0; i < 5; i++) {
       assertThat(forkBranch.get(i).getLogsBloom().toArray())
@@ -218,7 +218,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(1).get(), Optional.empty(), Optional.of(logBloom));
+        forkBranch.get(1), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 2);
 
     assertThat(cacheDir.getRoot().list().length).isEqualTo(1);

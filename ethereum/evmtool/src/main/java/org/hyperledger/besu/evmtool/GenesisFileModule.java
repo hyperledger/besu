@@ -63,6 +63,7 @@ public class GenesisFileModule {
 
   @Singleton
   @Provides
+  @SuppressWarnings("UnusedVariable")
   HeaderBasedProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("Fork") final Optional<String> fork,

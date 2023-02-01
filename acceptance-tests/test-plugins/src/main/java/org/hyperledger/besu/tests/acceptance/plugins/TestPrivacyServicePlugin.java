@@ -68,7 +68,7 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
 
     if (signingEnabled) {
       pluginService.setPrivateMarkerTransactionFactory(privateMarkerTransactionFactory);
-      privateMarkerTransactionFactory.setSigningKeyEnbaled(signingKey);
+      privateMarkerTransactionFactory.setSigningKeyEnabled(signingKey);
     }
   }
 

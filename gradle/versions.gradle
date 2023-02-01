@@ -21,8 +21,8 @@ dependencyManagement {
       entry 'antlr4-runtime'
     }
 
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.4.2'
-    dependencySet(group:'com.fasterxml.jackson.core', version:'2.13.4') {
+    dependencySet(group:'com.fasterxml.jackson.core', version:'2.14.1') {
+      entry 'jackson-databind'
       entry 'jackson-datatype'
       entry 'jackson-datatype-jdk8'
     }
@@ -41,7 +41,7 @@ dependencyManagement {
       entry'dagger'
     }
 
-    dependencySet(group: 'com.google.errorprone', version: '2.14.0') {
+    dependencySet(group: 'com.google.errorprone', version: '2.18.0') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'
@@ -71,7 +71,7 @@ dependencyManagement {
       entry 'grpc-stub'
     }
 
-    dependency 'io.kubernetes:client-java:15.0.1'
+    dependency 'io.kubernetes:client-java:17.0.0'
 
     dependency 'io.netty:netty-all:4.1.78.Final'
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.50.Final'
