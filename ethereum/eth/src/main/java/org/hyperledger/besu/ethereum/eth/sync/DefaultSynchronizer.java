@@ -196,8 +196,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   @Override
   public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
-      LOG.info(
-          "#########################################\n\nBesu has identified a problem with its worldstate database. Your node will fetch the correct data from peers to repair the problem. Starting the sync pipeline...\n\n#########################################");
+      LOG.info("Starting synchronizer.");
       blockPropagationManager.ifPresent(
           manager -> {
             if (!manager.isRunning()) {
@@ -309,7 +308,11 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       stop();
       fastSyncDownloader.get().deleteFastSyncState();
     }
-    LOG.info("Starting the state healing");
+    LOG.info(
+        "\n\n#########################################"
+            + "\n\nBesu has identified a problem with its worldstate database."
+            + "\n\nYour node will fetch the correct data from peers to repair the problem. Starting the sync pipeline..."
+            + "\n\n#########################################");
     this.syncState.markInitialSyncRestart();
     this.syncState.markResyncNeeded();
     maybeAccountToRepair.ifPresent(
