@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
@@ -67,7 +68,8 @@ public class GoQuorumBlockProcessorTest {
 
   @Before
   public void setup() {
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
+        .thenReturn(protocolSpec);
     goQuorumPrivacyParameters =
         new GoQuorumPrivacyParameters(goQuorumEnclave, "123", goQuorumPrivateStorage, null);
   }
