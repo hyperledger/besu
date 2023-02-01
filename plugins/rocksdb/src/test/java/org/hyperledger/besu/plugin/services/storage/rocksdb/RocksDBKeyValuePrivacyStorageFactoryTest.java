@@ -67,17 +67,11 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).maybePrivacyVersion())
-        .isNotEmpty();
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).getVersion())
-        .isEqualTo(0);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(0);
 
-    assertThat(
-            DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath())
-                .maybePrivacyVersion()
-                .get())
-        .isEqualTo(0);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get()).isEqualTo(0);
   }
 
   @Test
@@ -98,16 +92,11 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).maybePrivacyVersion())
-        .isNotEmpty();
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).getVersion())
-        .isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
 
-    assertThat(
-            DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath())
-                .maybePrivacyVersion()
-                .get())
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
         .isEqualTo(DEFAULT_PRIVACY_VERSION);
   }
 
@@ -125,24 +114,18 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).maybePrivacyVersion())
-        .isEmpty();
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isEmpty();
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).getVersion())
-        .isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
 
     final RocksDBKeyValuePrivacyStorageFactory privacyStorageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(storageFactory);
 
     privacyStorageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).maybePrivacyVersion())
-        .isNotEmpty();
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
-    assertThat(
-            DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath())
-                .maybePrivacyVersion()
-                .get())
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
         .isEqualTo(DEFAULT_PRIVACY_VERSION);
   }
 }

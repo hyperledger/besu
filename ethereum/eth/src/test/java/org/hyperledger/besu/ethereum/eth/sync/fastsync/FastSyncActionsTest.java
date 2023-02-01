@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -24,7 +23,6 @@ import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -67,7 +65,6 @@ public class FastSyncActionsTest {
       new SynchronizerConfiguration.Builder().syncMode(SyncMode.FAST).fastSyncPivotDistance(1000);
 
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
-  private final FastSyncStateStorage fastSyncStateStorage = mock(FastSyncStateStorage.class);
   private final AtomicInteger timeoutCount = new AtomicInteger(0);
   private SynchronizerConfiguration syncConfig = syncConfigBuilder.build();
   private FastSyncActions fastSyncActions;
@@ -135,8 +132,6 @@ public class FastSyncActionsTest {
   @Test
   public void selectPivotBlockShouldUseExistingPivotBlockIfAvailable() {
     final BlockHeader pivotHeader = new BlockHeaderTestFixture().number(1024).buildHeader();
-    when(fastSyncStateStorage.loadState(any(BlockHeaderFunctions.class)))
-        .thenReturn(new FastSyncState(pivotHeader));
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
 
     final CompletableFuture<FastSyncState> result =
