@@ -37,6 +37,7 @@ public class StandardJsonTracer implements OperationTracer {
   private static final Joiner commaJoiner = Joiner.on(',');
   private final PrintStream out;
   private final boolean showMemory;
+  private final boolean showReturnData;
   private int pc;
   private int section;
   private List<String> stack;
@@ -48,11 +49,14 @@ public class StandardJsonTracer implements OperationTracer {
    * Instantiates a new Standard json tracer.
    *
    * @param out the out
-   * @param showMemory the show memory
+   * @param showMemory show memory in trace lines
+   * @param showReturnData show return data in trace lines
    */
-  public StandardJsonTracer(final PrintStream out, final boolean showMemory) {
+  public StandardJsonTracer(
+      final PrintStream out, final boolean showMemory, final boolean showReturnData) {
     this.out = out;
     this.showMemory = showMemory;
+    this.showReturnData = showReturnData;
   }
 
   /**
@@ -91,8 +95,10 @@ public class StandardJsonTracer implements OperationTracer {
     section = messageFrame.getSection();
     gas = shortNumber(messageFrame.getRemainingGas());
     memorySize = messageFrame.memoryWordSize() * 32;
-    if (showMemory) {
+    if (showMemory && memorySize > 0) {
       memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
+    } else {
+      memory = null;
     }
   }
 
@@ -113,21 +119,28 @@ public class StandardJsonTracer implements OperationTracer {
     sb.append("\"op\":").append(opcode).append(",");
     sb.append("\"gas\":\"").append(gas).append("\",");
     sb.append("\"gasCost\":\"").append(shortNumber(executeResult.getGasCost())).append("\",");
-    if (showMemory) {
+    if (memory != null) {
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
     }
     sb.append("\"memSize\":").append(memorySize).append(",");
     sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
-    sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
+    if (showReturnData && returnData.size() > 0) {
+      sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
+    }
     sb.append("\"depth\":").append(depth).append(",");
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
-    sb.append("\"opName\":\"").append(currentOp.getName()).append("\",");
-    sb.append("\"error\":\"")
-        .append(
-            executeResult.getHaltReason() == null
-                ? (quoteEscape(messageFrame.getRevertReason().orElse(Bytes.EMPTY)))
-                : executeResult.getHaltReason().getDescription())
-        .append("\"}");
+    sb.append("\"opName\":\"").append(currentOp.getName()).append("\"");
+    if (executeResult.getHaltReason() != null) {
+      sb.append("\",error\":\"")
+          .append(executeResult.getHaltReason().getDescription())
+          .append("\"}");
+    } else if (messageFrame.getRevertReason().isPresent()) {
+      sb.append("\",error\":\"")
+          .append(quoteEscape(messageFrame.getRevertReason().orElse(Bytes.EMPTY)))
+          .append("\"}");
+    } else {
+      sb.append("}");
+    }
     out.println(sb);
   }
 
@@ -172,5 +185,21 @@ public class StandardJsonTracer implements OperationTracer {
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
     // precompile calls are not part of the standard trace
+  }
+
+  @Override
+  public void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {
+    final StringBuilder sb = new StringBuilder(1024);
+    sb.append("{");
+    if (output.size() > 0) {
+      sb.append("\"output\":\"").append(output.toShortHexString()).append("\",");
+    } else {
+      sb.append("\"output\":\"\",");
+    }
+    sb.append("\"gasUsed\":\"")
+        .append(Bytes.ofUnsignedLong(gasUsed).toShortHexString())
+        .append("\",");
+    sb.append("\"time\":").append(timeNs).append("}");
+    out.println(sb);
   }
 }

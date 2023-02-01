@@ -79,7 +79,7 @@ import picocli.CommandLine.Option;
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
-    subcommands = {StateTestSubCommand.class, CodeValidateSubCommand.class})
+    subcommands = {CodeValidateSubCommand.class, StateTestSubCommand.class, T8nSubCommand.class})
 public class EvmToolCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(EvmToolCommand.class);
@@ -131,7 +131,7 @@ public class EvmToolCommand implements Runnable {
   private final Wei ethValue = Wei.ZERO;
 
   @Option(
-      names = {"--json"},
+      names = {"--json", "--trace"},
       description = "Trace each opcode as a json object.",
       scope = INHERIT)
   final Boolean showJsonResults = false;
@@ -143,10 +143,16 @@ public class EvmToolCommand implements Runnable {
   final Boolean showJsonAlloc = false;
 
   @Option(
-      names = {"--nomemory"},
-      description = "Disable showing the full memory output for each op.",
+      names = {"--memory", "--trace.memory"},
+      description = "Enable showing the full memory output in tracing for each op.",
       scope = INHERIT)
-  final Boolean noMemory = false;
+  final Boolean showMemory = false;
+
+  @Option(
+      names = {"--trace.returndata"},
+      description = "Enable showing the return data in tracing for each op.",
+      scope = INHERIT)
+  final Boolean showReturnData = false;
 
   @Option(
       names = {"--prestate", "--genesis"},
@@ -264,7 +270,7 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(System.out, !noMemory)
+                ? new StandardJsonTracer(System.out, showMemory, showReturnData)
                 : OperationTracer.NO_TRACING;
 
         var updater = component.getWorldUpdater();
@@ -299,18 +305,18 @@ public class EvmToolCommand implements Runnable {
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
           mcp.process(messageFrame, tracer);
-          if (lastLoop) {
-            if (messageFrame.getExceptionalHaltReason().isPresent()) {
-              out.println(messageFrame.getExceptionalHaltReason().get());
-            }
-            if (messageFrame.getRevertReason().isPresent()) {
-              out.println(new String(messageFrame.getRevertReason().get().toArray(), UTF_8));
-            }
-          }
           if (messageFrameStack.isEmpty()) {
             stopwatch.stop();
             if (lastTime == 0) {
               lastTime = stopwatch.elapsed().toNanos();
+            }
+            if (lastLoop) {
+              if (messageFrame.getExceptionalHaltReason().isPresent()) {
+                out.println(messageFrame.getExceptionalHaltReason().get());
+              }
+              if (messageFrame.getRevertReason().isPresent()) {
+                out.println(new String(messageFrame.getRevertReason().get().toArray(), UTF_8));
+              }
             }
           }
 

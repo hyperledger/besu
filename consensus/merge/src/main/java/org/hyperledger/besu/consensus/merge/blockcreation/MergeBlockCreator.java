@@ -51,7 +51,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
    * @param minBlockOccupancyRatio the min block occupancy ratio
    * @param parentHeader the parent header
    */
-  MergeBlockCreator(
+  public MergeBlockCreator(
       final Address coinbase,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,

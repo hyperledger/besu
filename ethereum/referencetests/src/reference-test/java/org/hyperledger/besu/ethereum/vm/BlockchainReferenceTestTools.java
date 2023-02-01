@@ -49,6 +49,7 @@ public class BlockchainReferenceTestTools {
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
+                + "Merge+3540+3670,Merge+3860,Merge+3855,"
                 + "London,Merge,Shanghai,Cancun,Prague,Osaka,Bogota");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }

@@ -175,7 +175,7 @@ public class StateTestSubCommand implements Runnable {
 
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
-            ? new StandardJsonTracer(output, !parentCommand.noMemory)
+            ? new StandardJsonTracer(output, parentCommand.showMemory, parentCommand.showReturnData)
             : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {

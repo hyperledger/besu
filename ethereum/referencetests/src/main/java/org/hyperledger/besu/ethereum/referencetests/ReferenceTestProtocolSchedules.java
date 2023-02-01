@@ -78,6 +78,18 @@ public class ReferenceTestProtocolSchedules {
         "Merge",
         createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0).baseFeePerGas(0x0a)));
     builder.put(
+        "Merge+3545+3670",
+        createTimestampSchedule(
+            new StubGenesisConfigOptions().shanghaiTime(0).baseFeePerGas(0x0a)));
+    builder.put(
+        "Merge+3860",
+        createTimestampSchedule(
+            new StubGenesisConfigOptions().shanghaiTime(0).baseFeePerGas(0x0a)));
+    builder.put(
+        "Merge+3855",
+        createTimestampSchedule(
+            new StubGenesisConfigOptions().shanghaiTime(0).baseFeePerGas(0x0a)));
+    builder.put(
         "Shanghai",
         createTimestampSchedule(
             new StubGenesisConfigOptions().shanghaiTime(0).baseFeePerGas(0x0a)));

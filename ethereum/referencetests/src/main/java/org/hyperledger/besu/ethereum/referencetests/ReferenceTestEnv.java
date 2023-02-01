@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A memory holder for testing. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -56,9 +57,10 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("currentNumber") final String number,
       @JsonProperty("currentBaseFee") final String baseFee,
       @JsonProperty("currentTimestamp") final String timestamp,
-      @JsonProperty("currentRandom") final String random) {
+      @JsonProperty("currentRandom") final String random,
+      @JsonProperty("previousHash") final String previousHash) {
     super(
-        generateTestBlockHash(Long.decode(number) - 1),
+        generateTestBlockHash(previousHash, number),
         Hash.EMPTY, // ommersHash
         Address.fromHexString(coinbase),
         Hash.EMPTY, // stateRoot
@@ -66,10 +68,10 @@ public class ReferenceTestEnv extends BlockHeader {
         Hash.EMPTY, // receiptsRoot
         new LogsBloomFilter(),
         Optional.ofNullable(difficulty).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
-        Long.decode(number),
-        Long.decode(gasLimit),
+        number == null ? 0 : Long.decode(number),
+        gasLimit == null ? 15_000_000L : Long.decode(gasLimit),
         0L,
-        Long.decode(timestamp),
+        timestamp == null ? 0L : Long.decode(timestamp),
         Bytes.EMPTY,
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
@@ -79,8 +81,16 @@ public class ReferenceTestEnv extends BlockHeader {
         new MainnetBlockHeaderFunctions());
   }
 
-  private static Hash generateTestBlockHash(final long number) {
-    final byte[] bytes = Long.toString(number).getBytes(UTF_8);
-    return Hash.hash(Bytes.wrap(bytes));
+  private static Hash generateTestBlockHash(final String previousHash, final String number) {
+    if (previousHash == null) {
+      if (number == null) {
+        return Hash.EMPTY;
+      } else {
+        final byte[] bytes = Long.toString(Long.decode(number) - 1).getBytes(UTF_8);
+        return Hash.hash(Bytes.wrap(bytes));
+      }
+    } else {
+      return Hash.wrap(Bytes32.fromHexString(previousHash));
+    }
   }
 }

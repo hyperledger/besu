@@ -100,16 +100,22 @@ public class EvmToyCommand implements Runnable {
   private final Wei ethValue = Wei.ZERO;
 
   @CommandLine.Option(
-      names = {"--json"},
+      names = {"--json", "--trace"},
       description = "Trace each opcode as a json object.",
       scope = ScopeType.INHERIT)
   final Boolean showJsonResults = false;
 
   @CommandLine.Option(
-      names = {"--nomemory"},
-      description = "Disable showing the full memory output for each op.",
+      names = {"--showMemory", "--trace.memory"},
+      description = "When tracing, show the full memory when not empty.",
       scope = ScopeType.INHERIT)
-  final Boolean noMemory = false;
+  final Boolean showMemory = false;
+
+  @CommandLine.Option(
+      names = {"--trace.returnData"},
+      description = "When tracing, show the return data when not empty.",
+      scope = ScopeType.INHERIT)
+  final Boolean showReturnData = false;
 
   @CommandLine.Option(
       names = {"--repeat"},
@@ -153,7 +159,7 @@ public class EvmToyCommand implements Runnable {
 
       final OperationTracer tracer = // You should have picked Mercy.
           lastLoop && showJsonResults
-              ? new StandardJsonTracer(System.out, !noMemory)
+              ? new StandardJsonTracer(System.out, showMemory, showReturnData)
               : OperationTracer.NO_TRACING;
 
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
