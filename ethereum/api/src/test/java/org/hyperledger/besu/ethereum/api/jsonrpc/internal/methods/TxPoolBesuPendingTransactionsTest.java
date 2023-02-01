@@ -49,10 +49,11 @@ public class TxPoolBesuPendingTransactionsTest {
   private TxPoolBesuPendingTransactions method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuPendingTransactions";
+  private Set<PendingTransaction> listTrx;
 
   @Before
   public void setUp() {
-    final Set<PendingTransaction> listTrx = getPendingTransactions();
+    listTrx = getPendingTransactions();
     method = new TxPoolBesuPendingTransactions(pendingTransactions);
     when(this.pendingTransactions.getPendingTransactions()).thenReturn(listTrx);
   }
@@ -72,7 +73,7 @@ public class TxPoolBesuPendingTransactionsTest {
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
     final Set<TransactionPendingResult> result =
         (Set<TransactionPendingResult>) actualResponse.getResult();
-    assertThat(result.size()).isEqualTo(this.pendingTransactions.getPendingTransactions().size());
+    assertThat(result.size()).isEqualTo(getPendingTransactions().size());
   }
 
   @Test
@@ -119,13 +120,7 @@ public class TxPoolBesuPendingTransactionsTest {
 
     final Map<String, String> fromFilter = new HashMap<>();
     fromFilter.put(
-        "eq",
-        pendingTransactions.getPendingTransactions().stream()
-            .findAny()
-            .get()
-            .getTransaction()
-            .getSender()
-            .toHexString());
+        "eq", listTrx.stream().findAny().get().getTransaction().getSender().toHexString());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
