@@ -196,7 +196,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   @Override
   public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
-      LOG.info("Starting synchronizer.");
+      LOG.info(
+          "#########################################\n\nBesu has identified a problem with its worldstate database. Your node will fetch the correct data from peers to repair the problem. Starting the sync pipeline...\n\n#########################################");
       blockPropagationManager.ifPresent(
           manager -> {
             if (!manager.isRunning()) {

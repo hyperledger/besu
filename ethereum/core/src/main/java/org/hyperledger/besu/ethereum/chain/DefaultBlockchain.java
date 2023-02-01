@@ -51,7 +51,6 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -366,13 +365,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     this.totalDifficulty = totalDifficulty;
     updater.setChainHead(blockHeader.getBlockHash());
     updater.commit();
-  }
-
-  public static void main(final String[] args) {
-    System.out.println(
-        Hash.hash(Bytes.fromHexString("0x2a457ac04754A83A5Bc6acba74a9ae74e6136967")));
-    // 0x14bcb8b0cd3aea39e98ff12fe6cbfab114ca5c8052def1981a3cc967835fcabf
-    // 0x01040b0c
   }
 
   private Difficulty calculateTotalDifficulty(final BlockHeader blockHeader) {
