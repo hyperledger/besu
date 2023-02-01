@@ -84,7 +84,7 @@ public class BlockResult implements JsonRpcResult {
   private final String withdrawalsRoot;
   private final List<WithdrawalParameter> withdrawals;
 
-  public <T extends TransactionResult> BlockResult(
+  public BlockResult(
       final BlockHeader header,
       final List<TransactionResult> transactions,
       final List<JsonNode> ommers,
@@ -93,7 +93,7 @@ public class BlockResult implements JsonRpcResult {
     this(header, transactions, ommers, totalDifficulty, size, false, Optional.empty());
   }
 
-  public <T extends TransactionResult> BlockResult(
+  public BlockResult(
       final BlockHeader header,
       final List<TransactionResult> transactions,
       final List<JsonNode> ommers,
