@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -91,6 +92,8 @@ public class EthPeers {
   private final Bytes localNodeId;
   private RlpxAgent rlpxAgent;
 
+  private final Counter connectedPeersCounter;
+
   public EthPeers(
       final String protocolName,
       final Clock clock,
@@ -127,6 +130,9 @@ public class EthPeers {
         "peer_limit",
         "The maximum number of peers this node allows to connect",
         () -> peerUpperBound);
+    connectedPeersCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.PEERS, "connected_total", "Total number of peers connected");
   }
 
   public void registerNewConnection(
@@ -398,6 +404,7 @@ public class EthPeers {
 
   private void ethPeerStatusExchanged(final EthPeer peer) {
     if (addPeerToEthPeers(peer)) {
+      connectedPeersCounter.inc();
       connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
     }
   }
