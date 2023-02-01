@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
@@ -131,8 +131,8 @@ public class JsonRpcJWTTest {
   @Test
   public void unauthenticatedWebsocketAllowedWithoutJWTAuth(final TestContext context) {
 
-    JsonRpcService jsonRpcService =
-        new JsonRpcService(
+    EngineJsonRpcService engineJsonRpcService =
+        new EngineJsonRpcService(
             vertx,
             bufferDir,
             jsonRpcConfiguration,
@@ -145,9 +145,9 @@ public class JsonRpcJWTTest {
             healthy,
             healthy);
 
-    jsonRpcService.start().join();
+    engineJsonRpcService.start().join();
 
-    final InetSocketAddress inetSocketAddress = jsonRpcService.socketAddress();
+    final InetSocketAddress inetSocketAddress = engineJsonRpcService.socketAddress();
     int listenPort = inetSocketAddress.getPort();
 
     final HttpClientOptions httpClientOptions =
@@ -184,15 +184,15 @@ public class JsonRpcJWTTest {
         });
 
     async.awaitSuccess(10000);
-    jsonRpcService.stop();
+    engineJsonRpcService.stop();
     httpClient.close();
   }
 
   @Test
   public void httpRequestWithDefaultHeaderAndValidJWTIsAccepted(final TestContext context) {
 
-    JsonRpcService jsonRpcService =
-        new JsonRpcService(
+    EngineJsonRpcService engineJsonRpcService =
+        new EngineJsonRpcService(
             vertx,
             bufferDir,
             jsonRpcConfiguration,
@@ -205,9 +205,9 @@ public class JsonRpcJWTTest {
             healthy,
             healthy);
 
-    jsonRpcService.start().join();
+    engineJsonRpcService.start().join();
 
-    final InetSocketAddress inetSocketAddress = jsonRpcService.socketAddress();
+    final InetSocketAddress inetSocketAddress = engineJsonRpcService.socketAddress();
     int listenPort = inetSocketAddress.getPort();
 
     final HttpClientOptions httpClientOptions =
@@ -248,7 +248,7 @@ public class JsonRpcJWTTest {
         });
 
     async.awaitSuccess(10000);
-    jsonRpcService.stop();
+    engineJsonRpcService.stop();
     httpClient.close();
   }
 
@@ -265,9 +265,9 @@ public class JsonRpcJWTTest {
       fail("didn't parse jwt");
     }
 
-    JsonRpcService jsonRpcService =
+    EngineJsonRpcService engineJsonRpcService =
         spy(
-            new JsonRpcService(
+            new EngineJsonRpcService(
                 vertx,
                 bufferDir,
                 strictHost,
@@ -280,9 +280,9 @@ public class JsonRpcJWTTest {
                 healthy,
                 healthy));
 
-    jsonRpcService.start().join();
+    engineJsonRpcService.start().join();
 
-    final InetSocketAddress inetSocketAddress = jsonRpcService.socketAddress();
+    final InetSocketAddress inetSocketAddress = engineJsonRpcService.socketAddress();
     int listenPort = inetSocketAddress.getPort();
 
     final HttpClientOptions httpClientOptions =
@@ -310,7 +310,7 @@ public class JsonRpcJWTTest {
         });
 
     async.awaitSuccess(10000);
-    jsonRpcService.stop();
+    engineJsonRpcService.stop();
 
     httpClient.close();
   }
@@ -328,9 +328,9 @@ public class JsonRpcJWTTest {
       fail("didn't parse jwt");
     }
 
-    JsonRpcService jsonRpcService =
+    EngineJsonRpcService engineJsonRpcService =
         spy(
-            new JsonRpcService(
+            new EngineJsonRpcService(
                 vertx,
                 bufferDir,
                 strictHost,
@@ -343,9 +343,9 @@ public class JsonRpcJWTTest {
                 healthy,
                 healthy));
 
-    jsonRpcService.start().join();
+    engineJsonRpcService.start().join();
 
-    final InetSocketAddress inetSocketAddress = jsonRpcService.socketAddress();
+    final InetSocketAddress inetSocketAddress = engineJsonRpcService.socketAddress();
     int listenPort = inetSocketAddress.getPort();
 
     final HttpClientOptions httpClientOptions =
@@ -377,7 +377,7 @@ public class JsonRpcJWTTest {
         });
 
     async.awaitSuccess(10000);
-    jsonRpcService.stop();
+    engineJsonRpcService.stop();
 
     httpClient.close();
   }
@@ -385,8 +385,8 @@ public class JsonRpcJWTTest {
   @Test
   public void httpRequestWithDefaultHeaderAndInvalidJWTIsDenied(final TestContext context) {
 
-    JsonRpcService jsonRpcService =
-        new JsonRpcService(
+    EngineJsonRpcService engineJsonRpcService =
+        new EngineJsonRpcService(
             vertx,
             bufferDir,
             jsonRpcConfiguration,
@@ -399,9 +399,9 @@ public class JsonRpcJWTTest {
             healthy,
             healthy);
 
-    jsonRpcService.start().join();
+    engineJsonRpcService.start().join();
 
-    final InetSocketAddress inetSocketAddress = jsonRpcService.socketAddress();
+    final InetSocketAddress inetSocketAddress = engineJsonRpcService.socketAddress();
     int listenPort = inetSocketAddress.getPort();
 
     final HttpClientOptions httpClientOptions =
@@ -427,7 +427,7 @@ public class JsonRpcJWTTest {
         });
 
     async.awaitSuccess(10000);
-    jsonRpcService.stop();
+    engineJsonRpcService.stop();
     httpClient.close();
   }
 }

@@ -17,7 +17,7 @@ package org.hyperledger.besu;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.api.query.cache.AutoTransactionLogBloomCachingService;
@@ -65,7 +65,7 @@ public class Runner implements AutoCloseable {
   private final Optional<EthStatsService> ethStatsService;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<JsonRpcHttpService> jsonRpc;
-  private final Optional<JsonRpcService> engineJsonRpc;
+  private final Optional<EngineJsonRpcService> engineJsonRpc;
   private final Optional<MetricsService> metrics;
   private final Optional<JsonRpcIpcService> ipcJsonRpc;
   private final Optional<Path> pidPath;
@@ -103,7 +103,7 @@ public class Runner implements AutoCloseable {
       final NetworkRunner networkRunner,
       final NatService natService,
       final Optional<JsonRpcHttpService> jsonRpc,
-      final Optional<JsonRpcService> engineJsonRpc,
+      final Optional<EngineJsonRpcService> engineJsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> webSocketRpc,
       final Optional<JsonRpcIpcService> ipcJsonRpc,
