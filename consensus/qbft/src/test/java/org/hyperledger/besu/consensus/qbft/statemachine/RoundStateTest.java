@@ -64,6 +64,7 @@ public class RoundStateTest {
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
 
   private final List<Address> validators = Lists.newArrayList();
+  private final Hash blockHash = Hash.fromHexStringLenient("1");
 
   @Mock private MessageValidator messageValidator;
 
@@ -77,7 +78,6 @@ public class RoundStateTest {
       validators.add(Util.publicKeyToAddress(newNodeKey.getPublicKey()));
       validatorMessageFactories.add(new MessageFactory(newNodeKey));
     }
-    when(block.getHash()).thenReturn(Hash.fromHexStringLenient("1"));
   }
 
   @Test
@@ -128,7 +128,7 @@ public class RoundStateTest {
             .get(0)
             .createCommit(
                 roundIdentifier,
-                block.getHash(),
+                blockHash,
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
@@ -147,13 +147,13 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
 
     final Prepare firstPrepare =
-        validatorMessageFactories.get(1).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(1).createPrepare(roundIdentifier, blockHash);
 
     final Prepare secondPrepare =
-        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, blockHash);
 
     final Prepare thirdPrepare =
-        validatorMessageFactories.get(0).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(0).createPrepare(roundIdentifier, blockHash);
 
     roundState.addPrepareMessage(firstPrepare);
     assertThat(roundState.isPrepared()).isFalse();
@@ -184,10 +184,10 @@ public class RoundStateTest {
   @Test
   public void invalidPriorPrepareMessagesAreDiscardedUponSubsequentProposal() {
     final Prepare firstPrepare =
-        validatorMessageFactories.get(1).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(1).createPrepare(roundIdentifier, blockHash);
 
     final Prepare secondPrepare =
-        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, blockHash);
 
     // RoundState has a quorum size of 3, meaning 1 proposal and 2 prepare are required to be
     // 'prepared'.
@@ -218,13 +218,13 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
 
     final Prepare firstPrepare =
-        validatorMessageFactories.get(1).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(1).createPrepare(roundIdentifier, blockHash);
 
     final Prepare secondPrepare =
-        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, blockHash);
 
     final Prepare thirdPrepare =
-        validatorMessageFactories.get(0).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(0).createPrepare(roundIdentifier, blockHash);
 
     final Proposal proposal =
         validatorMessageFactories
@@ -262,7 +262,7 @@ public class RoundStateTest {
             .get(1)
             .createCommit(
                 roundIdentifier,
-                block.getHash(),
+                blockHash,
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1));
@@ -272,7 +272,7 @@ public class RoundStateTest {
             .get(2)
             .createCommit(
                 roundIdentifier,
-                block.getHash(),
+                blockHash,
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(BigInteger.TEN, BigInteger.TEN, (byte) 1));
@@ -298,13 +298,13 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
 
     final Prepare firstPrepare =
-        validatorMessageFactories.get(1).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(1).createPrepare(roundIdentifier, blockHash);
 
     final Prepare secondPrepare =
-        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, blockHash);
 
     final Prepare duplicatePrepare =
-        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, blockHash);
 
     final Proposal proposal =
         validatorMessageFactories

@@ -84,6 +84,7 @@ public class DataStoreModule {
   @Provides
   @Singleton
   @Named("worldStatePreimage")
+  @SuppressWarnings("UnusedVariable")
   KeyValueStorage provideWorldStatePreimageKeyValueStorage(
       @Named("KeyValueStorageName") final String keyValueStorageName,
       final BesuConfiguration commonConfiguration,

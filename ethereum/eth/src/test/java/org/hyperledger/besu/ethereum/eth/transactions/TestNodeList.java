@@ -176,7 +176,7 @@ public class TestNodeList implements Closeable {
     checkNotNull(expected);
     checkArgument(
         expected.length == nodes.size(),
-        "Expected values for sd nodes, but got %s.",
+        "Expected values for %s nodes, but got %s.",
         expected.length,
         nodes.size());
     int errCnt = 0;

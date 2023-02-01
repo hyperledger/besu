@@ -127,6 +127,7 @@ public class PrivateStorageMigrationTest {
   }
 
   @Test
+  @SuppressWarnings("DirectInvocationOnMock")
   public void privateGroupHeadBlocKMapIsCopiedFromPreviousBlocks() {
     mockBlockchainWithZeroTransactions();
 
@@ -186,6 +187,7 @@ public class PrivateStorageMigrationTest {
   }
 
   @Test
+  @SuppressWarnings("DirectInvocationOnMock")
   public void migrationReprocessBlocksWithPMT() {
     final Transaction privateMarkerTransaction = createPrivateMarkerTransaction();
     mockBlockchainWithPrivateMarkerTransaction(privateMarkerTransaction);
