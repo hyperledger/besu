@@ -72,7 +72,6 @@ public class EngineAuthServiceTest {
           @Override
           public void handle(final Optional<User> event) {
             assertThat(event).isPresent();
-            assertThat(event.get()).isNotNull();
           }
         };
     auth.authenticate(token, authHandler);
