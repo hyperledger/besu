@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -131,8 +130,7 @@ public class TransitionControllerBuilderTest {
     var preMergeProtocolSpec = mock(ProtocolSpec.class);
     when(mergeContext.isPostMerge()).thenReturn(Boolean.FALSE);
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
-    when(preMergeProtocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(preMergeProtocolSpec);
+    when(preMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(preMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(mockBlock))
         .isEqualTo(preMergeProtocolSpec);
   }
@@ -142,8 +140,7 @@ public class TransitionControllerBuilderTest {
     var mockBlock = new BlockHeaderTestFixture().buildHeader();
     var postMergeProtocolSpec = mock(ProtocolSpec.class);
     when(mergeContext.getFinalized()).thenReturn(Optional.of(mockBlock));
-    when(postMergeProtocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(postMergeProtocolSpec);
+    when(postMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(postMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(mockBlock))
         .isEqualTo(postMergeProtocolSpec);
   }
@@ -166,8 +163,7 @@ public class TransitionControllerBuilderTest {
     when(mockBlockchain.getTotalDifficultyByHash(any()))
         .thenReturn(Optional.of(Difficulty.of(1335L)));
 
-    when(preMergeProtocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(preMergeProtocolSpec);
+    when(preMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(preMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(mockBlock))
         .isEqualTo(preMergeProtocolSpec);
   }
@@ -190,8 +186,7 @@ public class TransitionControllerBuilderTest {
     when(mockBlockchain.getTotalDifficultyByHash(any()))
         .thenReturn(Optional.of(Difficulty.of(1337L)));
 
-    when(postMergeProtocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(postMergeProtocolSpec);
+    when(postMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(postMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(mockBlock))
         .isEqualTo(postMergeProtocolSpec);
   }
@@ -217,8 +212,7 @@ public class TransitionControllerBuilderTest {
     var preMergeProtocolSpec = mock(ProtocolSpec.class);
     when(preMergeProtocolSpec.getBlockHeaderValidator()).thenReturn(validator);
 
-    when(preMergeProtocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(preMergeProtocolSpec);
+    when(preMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(preMergeProtocolSpec);
 
     var mockParentBlock =
         new BlockHeaderTestFixture()

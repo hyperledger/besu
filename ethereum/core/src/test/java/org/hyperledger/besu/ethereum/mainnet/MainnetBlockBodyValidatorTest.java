@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -67,8 +66,7 @@ class MainnetBlockBodyValidatorTest {
                 .setWithdrawalsRoot(BodyValidation.withdrawalsRoot(withdrawals)));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
-    when(protocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getWithdrawalsValidator()).thenReturn(withdrawalsValidator);
     when(withdrawalsValidator.validateWithdrawals(Optional.of(withdrawals))).thenReturn(true);
     when(withdrawalsValidator.validateWithdrawalsRoot(block)).thenReturn(true);
@@ -95,8 +93,7 @@ class MainnetBlockBodyValidatorTest {
                 .setWithdrawalsRoot(BodyValidation.withdrawalsRoot(withdrawals)));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
-    when(protocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getWithdrawalsValidator()).thenReturn(withdrawalsValidator);
     when(withdrawalsValidator.validateWithdrawals(Optional.empty())).thenReturn(false);
 
@@ -122,8 +119,7 @@ class MainnetBlockBodyValidatorTest {
                 .setWithdrawals(Optional.of(withdrawals)));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
-    when(protocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getWithdrawalsValidator()).thenReturn(withdrawalsValidator);
     when(withdrawalsValidator.validateWithdrawals(Optional.of(withdrawals))).thenReturn(true);
     when(withdrawalsValidator.validateWithdrawalsRoot(block)).thenReturn(false);

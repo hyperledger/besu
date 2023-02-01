@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
@@ -189,12 +188,12 @@ public class TransitionProtocolScheduleTest {
   }
 
   private void verifyPreMergeProtocolScheduleReturned() {
-    verify(preMergeProtocolSchedule).getByBlockHeader(any(ProcessableBlockHeader.class));
+    verify(preMergeProtocolSchedule).getByBlockHeader(any());
     verifyNoInteractions(postMergeProtocolSchedule);
   }
 
   private void verifyPostMergeProtocolScheduleReturned() {
-    verify(postMergeProtocolSchedule).getByBlockHeader(any(ProcessableBlockHeader.class));
+    verify(postMergeProtocolSchedule).getByBlockHeader(any());
     verifyNoInteractions(preMergeProtocolSchedule);
   }
 

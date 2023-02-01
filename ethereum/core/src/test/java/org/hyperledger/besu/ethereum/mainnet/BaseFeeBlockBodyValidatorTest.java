@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -55,8 +54,7 @@ public class BaseFeeBlockBodyValidatorTest {
   public void setup() {
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
 
-    when(protocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 
     when(block.getHeader()).thenReturn(blockHeader);
 

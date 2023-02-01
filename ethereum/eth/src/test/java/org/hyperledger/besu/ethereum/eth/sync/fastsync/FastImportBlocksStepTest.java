@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
@@ -61,8 +60,7 @@ public class FastImportBlocksStepTest {
 
   @BeforeEach
   public void setUp() {
-    when(protocolSchedule.getByBlockHeader(any(ProcessableBlockHeader.class)))
-        .thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(FULL);
     when(ommerValidationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT);
