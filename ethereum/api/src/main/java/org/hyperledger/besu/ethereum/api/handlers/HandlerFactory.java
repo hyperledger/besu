@@ -58,7 +58,11 @@ public class HandlerFactory {
   }
 
   public static Handler<RoutingContext> jsonRpcExecutor(
-      final Vertx vertx, final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles) {
-    return new NonBlockingJsonRpcExecutorHandler(vertx, jsonRpcExecutorVerticles);
+      final Vertx vertx,
+      final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles,
+      final JsonRpcExecutor blockingJsonRpcExecutor,
+      final Tracer tracer) {
+    return new NonBlockingJsonRpcExecutorHandler(
+        vertx, jsonRpcExecutorVerticles, blockingJsonRpcExecutor, tracer);
   }
 }

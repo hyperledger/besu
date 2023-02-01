@@ -63,7 +63,8 @@ class JsonRpcExecutorVerticleTest {
             mockJsonRpcExecutor, mock(Tracer.class), mockJsonRpcConfiguration);
 
     nonBlockingJsonRpcExecutorHandler =
-        new NonBlockingJsonRpcExecutorHandler(vertx, List.of(jsonRpcExecutorVerticle));
+        new NonBlockingJsonRpcExecutorHandler(
+            vertx, List.of(jsonRpcExecutorVerticle), mockJsonRpcExecutor, mock(Tracer.class));
     await().atMost(5, TimeUnit.SECONDS).until(() -> vertx.deploymentIDs().size() == 1);
   }
 

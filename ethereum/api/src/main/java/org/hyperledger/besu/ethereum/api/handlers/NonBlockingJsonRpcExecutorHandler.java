@@ -15,13 +15,14 @@
 package org.hyperledger.besu.ethereum.api.handlers;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_ARRAY;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.EventBusAddress.RPC_EXECUTE_OBJECT;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonResponseStreamer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorArrayRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorObjectRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutorVerticle;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResponse;
@@ -42,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
@@ -73,10 +75,17 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
 
   private final List<String> verticleDeploymentIds = new ArrayList<>();
   private final Vertx vertx;
+  private final JsonRpcExecutor blockingJsonRpcExecutor;
+  private final Tracer tracer;
 
   public NonBlockingJsonRpcExecutorHandler(
-      final Vertx vertx, final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles) {
+      final Vertx vertx,
+      final List<JsonRpcExecutorVerticle> jsonRpcExecutorVerticles,
+      final JsonRpcExecutor blockingJsonRpcExecutor,
+      final Tracer tracer) {
     this.vertx = vertx;
+    this.blockingJsonRpcExecutor = blockingJsonRpcExecutor;
+    this.tracer = tracer;
 
     try {
       // register request classes
@@ -164,27 +173,49 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
     JsonObject jsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
     lazyTraceLogger(jsonRequest::toString);
 
-    vertx
-        .eventBus()
-        .request(
-            RPC_EXECUTE_OBJECT.getAddress(),
-            new JsonRpcExecutorObjectRequest(
-                user, spanContext, () -> !ctx.response().closed(), jsonRequest))
-        .onSuccess(
-            msg -> {
-              try {
-                handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) msg.body());
-              } catch (IOException e) {
-                LOG.error(
-                    "Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
-                handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
-              }
-            })
-        .onFailure(
-            e -> {
-              LOG.error("Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
-              handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
-            });
+    vertx.executeBlocking(
+        promise -> {
+          final JsonRpcResponse result =
+              blockingJsonRpcExecutor.execute(
+                  user,
+                  tracer,
+                  spanContext,
+                  () -> !ctx.response().closed(),
+                  jsonRequest,
+                  req -> req.mapTo(JsonRpcRequest.class));
+          promise.complete(result);
+        },
+        res -> {
+          try {
+            handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) res.result());
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
+
+    //    vertx
+    //        .eventBus()
+    //        .request(
+    //            RPC_EXECUTE_OBJECT.getAddress(),
+    //            new JsonRpcExecutorObjectRequest(
+    //                user, spanContext, () -> !ctx.response().closed(), jsonRequest))
+    //        .onSuccess(
+    //            msg -> {
+    //              try {
+    //                handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) msg.body());
+    //              } catch (IOException e) {
+    //                LOG.error(
+    //                    "Error while processing {}: {}", getRequestMethodName(ctx),
+    // e.getMessage());
+    //                handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
+    //              }
+    //            })
+    //        .onFailure(
+    //            e -> {
+    //              LOG.error("Error while processing {}: {}", getRequestMethodName(ctx),
+    // e.getMessage());
+    //              handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
+    //            });
   }
 
   private void handleRpcExecutorObjectResponse(
