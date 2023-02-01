@@ -52,6 +52,11 @@ public abstract class AbstractKeyStoreWrapper implements KeyStoreWrapper {
     }
   }
 
+  /**
+   * Instantiates a new Abstract key store wrapper.
+   *
+   * @param crls the collection of X509CRL instances
+   */
   protected AbstractKeyStoreWrapper(final Collection<X509CRL> crls) {
     this.crls = crls;
   }

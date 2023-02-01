@@ -113,6 +113,12 @@ public class CmsCreator {
     }
   }
 
+  /**
+   * Gets preferred signature algorithm for EC or RSA keys
+   *
+   * @param pub the public key
+   * @return the preferred signature algorithm
+   */
   @VisibleForTesting
   public static String getPreferredSignatureAlgorithm(final PublicKey pub) {
     switch (pub.getAlgorithm()) {
