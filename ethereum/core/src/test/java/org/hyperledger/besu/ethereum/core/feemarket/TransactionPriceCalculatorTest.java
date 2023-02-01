@@ -18,11 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.plugin.data.TransactionType.ACCESS_LIST;
 import static org.hyperledger.besu.plugin.data.TransactionType.EIP1559;
 import static org.hyperledger.besu.plugin.data.TransactionType.FRONTIER;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -136,9 +133,6 @@ public class TransactionPriceCalculatorTest {
 
   @Test
   public void assertThatCalculatorWorks() {
-    final ProcessableBlockHeader blockHeader = mock(ProcessableBlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(baseFee);
-
     assertThat(
             transactionPriceCalculator.price(
                 Transaction.builder()
@@ -149,7 +143,7 @@ public class TransactionPriceCalculatorTest {
                     .maxFeePerGas(maxFeePerGas)
                     .chainId(BigInteger.ONE)
                     .build(),
-                blockHeader.getBaseFee()))
+                baseFee))
         .isEqualByComparingTo(expectedPrice);
   }
 }
