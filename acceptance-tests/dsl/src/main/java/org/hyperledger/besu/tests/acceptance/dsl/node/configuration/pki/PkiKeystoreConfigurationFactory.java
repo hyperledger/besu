@@ -45,9 +45,9 @@ public class PkiKeystoreConfigurationFactory {
   /*
    PKCS11 config files
   */
-  final String NSSCONFIG_PATH_STRING = "/pki-certs/%s/pkcs11.cfg";
+  final String NSSCONFIG_PATH_STRING = "/pki-certs/%s/nss.cfg";
   final String NSSPIN_PATH_STRING = "/pki-certs/%s/nsspin.txt";
-  final String TRUSTSTORE_PATH_STRING = "/pki-certs/truststore/truststore.p12";
+  final String TRUSTSTORE_PATH_STRING = "/pki-certs/%s/truststore.p12";
   final String CRL_PATH_STRING = "/pki-certs/crl/crl.pem";
 
   /*
@@ -80,7 +80,7 @@ public class PkiKeystoreConfigurationFactory {
                   readResourceAsPath(String.format(NSSCONFIG_PATH_STRING, name))))
           .withKeyStorePasswordPath(readResourceAsPath(String.format(NSSPIN_PATH_STRING, name)))
           .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12)
-          .withTrustStorePath(readResourceAsPath(TRUSTSTORE_PATH_STRING))
+          .withTrustStorePath(readResourceAsPath(String.format(TRUSTSTORE_PATH_STRING, name)))
           .withTrustStorePasswordPath(readResourceAsPath(String.format(NSSPIN_PATH_STRING, name)))
           .withCrlFilePath(readResourceAsPath(CRL_PATH_STRING))
           .withCertificateAlias(name);

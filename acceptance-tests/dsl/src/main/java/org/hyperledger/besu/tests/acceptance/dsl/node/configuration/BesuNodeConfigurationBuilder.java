@@ -368,7 +368,7 @@ public class BesuNodeConfigurationBuilder {
     final TLSConfiguration.Builder builder = TLSConfiguration.Builder.tlsConfiguration();
     try {
       final String nsspin = "/pki-certs/%s/nsspin.txt";
-      final String truststore = "/pki-certs/truststore/truststore.p12";
+      final String truststore = "/pki-certs/%s/truststore.p12";
       final String crl = "/pki-certs/crl/crl.pem";
       switch (type) {
         case KEYSTORE_TYPE_JKS:
@@ -379,7 +379,7 @@ public class BesuNodeConfigurationBuilder {
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
               .withTrustStoreType(KEYSTORE_TYPE_PKCS12)
-              .withTrustStorePath(toPath(truststore))
+              .withTrustStorePath(toPath(String.format(truststore, name)))
               .withTrustStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withTrustStorePasswordPath(toPath(String.format(nsspin, name)))
@@ -393,7 +393,7 @@ public class BesuNodeConfigurationBuilder {
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
               .withTrustStoreType(KEYSTORE_TYPE_PKCS12)
-              .withTrustStorePath(toPath(truststore))
+              .withTrustStorePath(toPath(String.format(truststore, name)))
               .withTrustStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withTrustStorePasswordPath(toPath(String.format(nsspin, name)))
@@ -404,7 +404,7 @@ public class BesuNodeConfigurationBuilder {
               .withKeyStoreType(type)
               .withKeyStorePath(
                   PKCS11Utils.initNSSConfigFile(
-                      toPath(String.format("/pki-certs/%s/pkcs11.cfg", name))))
+                      toPath(String.format("/pki-certs/%s/nss.cfg", name))))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
