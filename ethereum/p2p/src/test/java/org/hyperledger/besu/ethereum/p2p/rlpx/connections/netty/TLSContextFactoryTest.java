@@ -57,27 +57,29 @@ import org.slf4j.LoggerFactory;
 
 class TLSContextFactoryTest {
 
-  // see resources/keys/tls_context_factory/README.md for setup details.
+  // see resources/keys/README.md for setup details.
   private static final String keystorePassword = "test123";
 
   private static final Logger LOG = LoggerFactory.getLogger(TLSContextFactoryTest.class);
 
   private static final int MAX_NUMBER_MESSAGES = 10;
-  private static final String AVOVADO_PKCS11 = "/keys/tls_context_factory/compa/avocado/pkcs11.cfg";
-  private static final String AVOCADO_KEYSTORE =
-      "/keys/tls_context_factory/compa/avocado/avocado.p12";
-  private static final String APRICOT_KEYSTORE =
-      "/keys/tls_context_factory/compa/apricot/apricot.p12";
-  private static final String CRL_PEM = "/keys/tls_context_factory/ca_certs/crl/crl.pem";
-  private static final String BANANA_KEYSTORE = "/keys/tls_context_factory/compb/banana/banana.p12";
-  private static final String COMPA_TRUSTSTORE = "/keys/tls_context_factory/compa/truststore.p12";
-  private static final String COMPB_TRUSTSTORE = "/keys/tls_context_factory/compb/truststore.p12";
-  private static final String BAD_APPLE_KEYSTORE =
-      "/keys/tls_context_factory/company420/badapple.p12";
-  private static final String COMPANY420_TRUSTSTORE =
-      "/keys/tls_context_factory/company420/truststore.p12";
-  private static final String BLUEBERRY_KEYSTORE =
-      "/keys/tls_context_factory/compb/blueberry/blueberry.p12";
+  private static final String CRL_PEM = "/keys/crl/crl.pem";
+  private static final String PARTNER1_CLIENT1_PKCS11 = "/keys/partner1client1/nss.cfg";
+  private static final String PARTNER1_CLIENT1_KEYSTORE = "/keys/partner1client1/client1.p12";
+  private static final String PARTNET1_CLIENT2_KEYSTORE = "/keys/partner1client2rvk/client2.p12";
+  private static final String PARTNER2_CLIENT1_KEYSTORE = "/keys/partner2client1/client1.p12";
+  private static final String PARTNER2_CLIENT2_KEYSTORE = "/keys/partner2client2rvk/client2.p12";
+  private static final String INVALIDPARTNER1_CLIENT1_KEYSTORE =
+      "/keys/invalidpartner1client1/client1.p12";
+
+  private static final String PARTNER1_CLIENT1_TRUSTSTORE = "/keys/partner1client1/truststore.p12";
+  private static final String PARTNET1_CLIENT2_TRUSTSTORE =
+      "/keys/partner1client2rvk/truststore.p12";
+  private static final String PARTNER2_CLIENT1_TRUSTSTORE = "/keys/partner2client1/truststore.p12";
+  private static final String PARTNER2_CLIENT2_TRUSTSTORE =
+      "/keys/partner2client2rvk/truststore.p12";
+  private static final String INVALIDPARTNER1_CLIENT1_TRUSTSTORE =
+      "/keys/invalidpartner1client1/truststore.p12";
 
   private Server server;
   private Client client;
@@ -86,26 +88,29 @@ class TLSContextFactoryTest {
     return Arrays.asList(
         new Object[][] {
           {
-            "PKCS11 server compa avocado -> PKCS12 client compb banana SuccessfulConnection",
+            "PKCS11 server Partner1 Client1 -> PKCS12 client Partner2 Client1 SuccessfulConnection",
             true,
-            getHardwareKeyStoreWrapper(AVOVADO_PKCS11, CRL_PEM),
-            getSoftwareKeyStoreWrapper(BANANA_KEYSTORE, COMPB_TRUSTSTORE, CRL_PEM),
+            getHardwareKeyStoreWrapper(PARTNER1_CLIENT1_PKCS11, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
             Optional.empty(),
             Optional.empty()
           },
           {
-            "PKCS11 server compa avocodo -> PKCS12 client company420 badapple FailedConnection",
+            "PKCS11 server Partner1 Client1 -> PKCS12 client InvalidPartner1 Client1 FailedConnection",
             false,
-            getHardwareKeyStoreWrapper(AVOVADO_PKCS11, CRL_PEM),
-            getSoftwareKeyStoreWrapper(BAD_APPLE_KEYSTORE, COMPANY420_TRUSTSTORE, null),
+            getHardwareKeyStoreWrapper(PARTNER1_CLIENT1_PKCS11, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                INVALIDPARTNER1_CLIENT1_KEYSTORE, INVALIDPARTNER1_CLIENT1_TRUSTSTORE, null),
             Optional.empty(),
             Optional.of("certificate_unknown")
           },
           {
-            "PKCS11 server compa avocodo -> PKCS12 client compb blueberry revoked FailedConnection",
+            "PKCS11 server Partner1 Client1 -> PKCS12 client Partner2 Client2 revoked FailedConnection",
             false,
-            getHardwareKeyStoreWrapper(AVOVADO_PKCS11, CRL_PEM),
-            getSoftwareKeyStoreWrapper(BLUEBERRY_KEYSTORE, COMPB_TRUSTSTORE, null),
+            getHardwareKeyStoreWrapper(PARTNER1_CLIENT1_PKCS11, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNER2_CLIENT2_KEYSTORE, PARTNER2_CLIENT2_TRUSTSTORE, null),
             Optional.of("Certificate revoked"),
             Optional.of("certificate_unknown")
           },
@@ -116,66 +121,82 @@ class TLSContextFactoryTest {
     return Arrays.asList(
         new Object[][] {
           {
-            "PKCS12 server compa avocado -> PKCS12 client compb banana SuccessfulConnection",
+            "PKCS12 server Partner1 Client1 -> PKCS12 client Partner2 Client1 SuccessfulConnection",
             true,
-            getSoftwareKeyStoreWrapper(AVOCADO_KEYSTORE, COMPA_TRUSTSTORE, CRL_PEM),
-            getSoftwareKeyStoreWrapper(BANANA_KEYSTORE, COMPB_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
             Optional.empty(),
             Optional.empty()
           },
           {
-            "PKCS12 server compb banana -> PKCS12 client compa avocado SuccessfulConnection",
+            "PKCS12 server Partner2 Client1 -> PKCS12 client Partner1 Client1 SuccessfulConnection",
             true,
-            getSoftwareKeyStoreWrapper(BANANA_KEYSTORE, COMPB_TRUSTSTORE, CRL_PEM),
-            getSoftwareKeyStoreWrapper(AVOCADO_KEYSTORE, COMPA_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
             Optional.empty(),
             Optional.empty()
           },
           {
-            "PKCS12 server compa avocado -> PKCS12 client company420 badapple FailedConnection",
+            "PKCS12 server Partner1 Client1 -> PKCS12 client InvalidPartner1 Client1 FailedConnection",
             false,
-            getSoftwareKeyStoreWrapper(AVOCADO_KEYSTORE, COMPA_TRUSTSTORE, CRL_PEM),
-            getSoftwareKeyStoreWrapper(BAD_APPLE_KEYSTORE, COMPANY420_TRUSTSTORE, null),
+            getSoftwareKeyStoreWrapper(
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                INVALIDPARTNER1_CLIENT1_KEYSTORE, INVALIDPARTNER1_CLIENT1_TRUSTSTORE, null),
             Optional.empty(),
             Optional.of("certificate_unknown")
           },
           {
-            "PKCS12 server company420 badapple -> PKCS12 client compa avocado FailedConnection",
+            "PKCS12 server InvalidPartner1 Client1 -> PKCS12 client Partner1 Client1 FailedConnection",
             false,
-            getSoftwareKeyStoreWrapper(BAD_APPLE_KEYSTORE, COMPANY420_TRUSTSTORE, null),
-            getSoftwareKeyStoreWrapper(AVOCADO_KEYSTORE, COMPA_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                INVALIDPARTNER1_CLIENT1_KEYSTORE, INVALIDPARTNER1_CLIENT1_TRUSTSTORE, null),
+            getSoftwareKeyStoreWrapper(
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
             Optional.of("certificate_unknown"),
             Optional.empty()
           },
           {
-            "PKCS12 server compa apricot (revoked) -> PKCS12 client compb banana FailedConnection",
+            "PKCS12 server Partner1 Client2 (revoked) -> PKCS12 client Partner2 Client1 FailedConnection",
             false,
-            getSoftwareKeyStoreWrapper(APRICOT_KEYSTORE, COMPA_TRUSTSTORE, null),
-            getSoftwareKeyStoreWrapper(BANANA_KEYSTORE, COMPB_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNET1_CLIENT2_KEYSTORE, PARTNET1_CLIENT2_TRUSTSTORE, null),
+            getSoftwareKeyStoreWrapper(
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
             Optional.empty(),
             Optional.of("Certificate revoked")
           },
           {
-            "PKCS12 server compb banana -> PKCS12 client compa apricot (revoked) FailedConnection",
+            "PKCS12 server Partner2 Client1 -> PKCS12 client Partner1 Client2 (revoked) FailedConnection",
             false,
-            getSoftwareKeyStoreWrapper(BANANA_KEYSTORE, COMPB_TRUSTSTORE, CRL_PEM),
-            getSoftwareKeyStoreWrapper(APRICOT_KEYSTORE, COMPA_TRUSTSTORE, null),
+            getSoftwareKeyStoreWrapper(
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNET1_CLIENT2_KEYSTORE, PARTNET1_CLIENT2_TRUSTSTORE, null),
             Optional.of("Certificate revoked"),
             Optional.of("certificate_unknown")
           },
           {
-            "PKCS12 server compb blueberry (revoked) -> PKCS12 client compa avocado FailedConnection",
+            "PKCS12 server Partner2 Client2 (revoked) -> PKCS12 client Partner1 Client1 FailedConnection",
             false,
-            getSoftwareKeyStoreWrapper(BLUEBERRY_KEYSTORE, COMPB_TRUSTSTORE, null),
-            getSoftwareKeyStoreWrapper(AVOCADO_KEYSTORE, COMPA_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNER2_CLIENT2_KEYSTORE, PARTNER2_CLIENT2_TRUSTSTORE, null),
+            getSoftwareKeyStoreWrapper(
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
             Optional.empty(),
             Optional.of("Certificate revoked"),
           },
           {
-            "PKCS12 server compa avocado -> PKCS12 client compb blueberry (revoked) FailedConnection",
+            "PKCS12 server Partner1 Client1 -> PKCS12 client Partner2 Client2 (revoked) FailedConnection",
             false,
-            getSoftwareKeyStoreWrapper(AVOCADO_KEYSTORE, COMPA_TRUSTSTORE, CRL_PEM),
-            getSoftwareKeyStoreWrapper(BLUEBERRY_KEYSTORE, COMPB_TRUSTSTORE, null),
+            getSoftwareKeyStoreWrapper(
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
+            getSoftwareKeyStoreWrapper(
+                PARTNER2_CLIENT2_KEYSTORE, PARTNER2_CLIENT2_TRUSTSTORE, null),
             Optional.of("Certificate revoked"),
             Optional.of("certificate_unknown")
           }
