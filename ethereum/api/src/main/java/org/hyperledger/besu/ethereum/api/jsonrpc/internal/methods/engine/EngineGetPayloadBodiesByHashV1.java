@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPaylo
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -63,14 +62,11 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
 
     final Object reqId = request.getRequest().getId();
 
-    List<Hash> blockHashes =
-        Arrays.stream(request.getRequest().getParams())
-            .map(Hash.class::cast)
-            .collect(Collectors.toList());
+    final Hash[] blockHashes = request.getRequiredParameter(0, Hash[].class);
 
     traceLambda(LOG, "{} parameters: blockHashes {}", () -> getName(), () -> blockHashes);
 
-    if (blockHashes.size() > getMaxRequestBlocks()) {
+    if (blockHashes.length > getMaxRequestBlocks()) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
     }
 
@@ -78,7 +74,7 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
 
     final EngineGetPayloadBodiesResultV1 engineGetPayloadBodiesResultV1 =
         blockResultFactory.payloadBodiesCompleteV1(
-            blockHashes.stream().map(blockchain::getBlockBody).collect(Collectors.toList()));
+            Arrays.stream(blockHashes).map(blockchain::getBlockBody).collect(Collectors.toList()));
 
     return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV1);
   }
