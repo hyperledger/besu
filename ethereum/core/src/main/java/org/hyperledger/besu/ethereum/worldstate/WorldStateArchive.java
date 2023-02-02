@@ -43,6 +43,8 @@ public interface WorldStateArchive {
 
   void setArchiveStateUnSafe(BlockHeader blockHeader);
 
+  void reset();
+
   Optional<Bytes> getNodeData(Hash hash);
 
   Optional<WorldStateProof> getAccountProof(

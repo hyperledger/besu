@@ -355,7 +355,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     }
     keysToDelete.forEach(bytes -> updater.removeAccountStateTrieNode(bytes, null));
     updater.commit();
-    trieLogManager.reset();
   }
 
   public TrieLogManager getTrieLogManager() {
@@ -365,6 +364,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   @Override
   public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
     persistedState.setArchiveStateUnSafe(blockHeader);
+  }
+
+  @Override
+  public void reset() {
+    trieLogManager.reset();
   }
 
   @Override

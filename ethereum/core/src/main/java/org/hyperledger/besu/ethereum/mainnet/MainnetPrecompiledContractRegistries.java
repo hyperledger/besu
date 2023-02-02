@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
-import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForBLS12;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForByzantium;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForCancun;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForFrontier;
@@ -29,39 +28,30 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompi
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 /** Provides the various precompiled contracts used on mainnet hard forks. */
-public abstract class MainnetPrecompiledContractRegistries {
+public interface MainnetPrecompiledContractRegistries {
 
-  private MainnetPrecompiledContractRegistries() {}
-
-  public static PrecompileContractRegistry frontier(
+  static PrecompileContractRegistry frontier(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
     populateForFrontier(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
-  public static PrecompileContractRegistry byzantium(
+  static PrecompileContractRegistry byzantium(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
     populateForByzantium(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
-  public static PrecompileContractRegistry istanbul(
+  static PrecompileContractRegistry istanbul(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
     populateForIstanbul(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
-  public static PrecompileContractRegistry bls12(
-      final PrecompiledContractConfiguration precompiledContractConfiguration) {
-    final PrecompileContractRegistry registry = new PrecompileContractRegistry();
-    populateForBLS12(registry, precompiledContractConfiguration.getGasCalculator());
-    return registry;
-  }
-
-  public static PrecompileContractRegistry cancun(
+  static PrecompileContractRegistry cancun(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
     populateForCancun(registry, precompiledContractConfiguration.getGasCalculator());

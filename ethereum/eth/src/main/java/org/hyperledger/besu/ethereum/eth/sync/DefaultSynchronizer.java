@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
@@ -41,9 +42,12 @@ import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.log.FramedLogMessage;
 
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -308,11 +312,13 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       stop();
       fastSyncDownloader.get().deleteFastSyncState();
     }
-    LOG.info(
-        "\n\n#########################################"
-            + "\n\nBesu has identified a problem with its worldstate database."
-            + "\n\nYour node will fetch the correct data from peers to repair the problem. Starting the sync pipeline..."
-            + "\n\n#########################################");
+
+    final List<String> lines = new ArrayList<>();
+    lines.add("Besu has identified a problem with its worldstate database.");
+    lines.add("Your node will fetch the correct data from peers to repair the problem.");
+    lines.add("Starting the sync pipeline...");
+    infoLambda(LOG, FramedLogMessage.generate(lines));
+
     this.syncState.markInitialSyncRestart();
     this.syncState.markResyncNeeded();
     maybeAccountToRepair.ifPresent(
@@ -324,7 +330,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
           }
           this.syncState.markAccountToRepair(maybeAccountToRepair);
         });
-
+    this.protocolContext.getWorldStateArchive().reset();
     this.fastSyncDownloader = this.fastSyncFactory.get();
     start();
     return true;
