@@ -401,6 +401,9 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
+      - acceptanceTestsNonMainnet: # Only for current PR, must be removed!
+          requires:
+            - assemble
       - buildDocker:
           requires:
             - assemble
