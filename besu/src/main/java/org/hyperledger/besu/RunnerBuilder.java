@@ -33,9 +33,9 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService;
@@ -876,7 +876,7 @@ public class RunnerBuilder {
     final SubscriptionManager subscriptionManager =
         createSubscriptionManager(vertx, transactionPool, blockchainQueries);
 
-    Optional<JsonRpcService> engineJsonRpcService = Optional.empty();
+    Optional<EngineJsonRpcService> engineJsonRpcService = Optional.empty();
     if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
       final Map<String, JsonRpcMethod> engineMethods =
           jsonRpcMethods(
@@ -923,7 +923,7 @@ public class RunnerBuilder {
 
       engineJsonRpcService =
           Optional.of(
-              new JsonRpcService(
+              new EngineJsonRpcService(
                   vertx,
                   dataDir,
                   engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
