@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -58,8 +60,14 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
     engineCallListener.executionEngineCalled();
 
-    final long startBlockNumber = request.getRequiredParameter(0, Long.class);
-    final long count = request.getRequiredParameter(1, Long.class);
+    final long startBlockNumber =
+        Optional.of(request.getRequiredParameter(0, UnsignedLongParameter.class))
+            .map(UnsignedLongParameter::getValue)
+            .orElse(0L);
+    final long count =
+        Optional.of(request.getRequiredParameter(1, UnsignedLongParameter.class))
+            .map(UnsignedLongParameter::getValue)
+            .orElse(0L);
     final Object reqId = request.getRequest().getId();
 
     traceLambda(
