@@ -73,6 +73,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
           .writerWithDefaultPrettyPrinter()
           .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
           .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+  private static final List BLOCKING_REQUESTS_NAMESPACES = List.of("eea_", "priv_");
 
   private final List<String> verticleDeploymentIds = new ArrayList<>();
   private final Vertx vertx;
@@ -174,30 +175,20 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
     JsonObject jsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
     lazyTraceLogger(jsonRequest::toString);
 
-    final String method = jsonRequest.getString("method");
-    if (method == null || method.startsWith("priv_") || method.startsWith("eea_")) {
-      vertx.executeBlocking(
-          promise -> {
-            final JsonRpcResponse result =
-                blockingJsonRpcExecutor.execute(
-                    user,
-                    tracer,
-                    spanContext,
-                    () -> !ctx.response().closed(),
-                    jsonRequest,
-                    req -> req.mapTo(JsonRpcRequest.class));
-            promise.complete(result);
-          },
-          res -> {
-            try {
-              handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) res.result());
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          });
+    if (isBlockingRequest(jsonRequest)) {
+      processRequestBodyAsObjectBlocking(ctx, response, user, spanContext, jsonRequest);
       return;
     }
 
+    processRequestBodyAsObjectNonBlocking(ctx, response, user, spanContext, jsonRequest);
+  }
+
+  private void processRequestBodyAsObjectNonBlocking(
+      final RoutingContext ctx,
+      final HttpServerResponse response,
+      final Optional<User> user,
+      final Context spanContext,
+      final JsonObject jsonRequest) {
     vertx
         .eventBus()
         .request(
@@ -219,6 +210,33 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
               LOG.error("Error while processing {}: {}", getRequestMethodName(ctx), e.getMessage());
               handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INTERNAL_ERROR);
             });
+  }
+
+  private void processRequestBodyAsObjectBlocking(
+      final RoutingContext ctx,
+      final HttpServerResponse response,
+      final Optional<User> user,
+      final Context spanContext,
+      final JsonObject jsonRequest) {
+    vertx.executeBlocking(
+        promise -> {
+          final JsonRpcResponse result =
+              blockingJsonRpcExecutor.execute(
+                  user,
+                  tracer,
+                  spanContext,
+                  () -> !ctx.response().closed(),
+                  jsonRequest,
+                  req -> req.mapTo(JsonRpcRequest.class));
+          promise.complete(result);
+        },
+        res -> {
+          try {
+            handleRpcExecutorObjectResponse(ctx, response, (JsonRpcResponse) res.result());
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   private void handleRpcExecutorObjectResponse(
@@ -248,6 +266,14 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
       throws IOException {
     final JsonArray jsonArray = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name());
     lazyTraceLogger(jsonArray::toString);
+
+    for (int i = 0; i < jsonArray.size(); i++) {
+      final JsonObject jsonObject = jsonArray.getJsonObject(i);
+      if (isBlockingRequest(jsonObject)) {
+        LOG.error("Methods of the namespaces {} cannot be processed in an array JSON request", BLOCKING_REQUESTS_NAMESPACES);
+        handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INVALID_REQUEST);
+      }
+    }
 
     vertx
         .eventBus()
@@ -318,6 +344,11 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
           .setStatusCode(statusCodeFromError(error).code())
           .end(Json.encode(new JsonRpcErrorResponse(id, error)));
     }
+  }
+
+  private boolean isBlockingRequest(final JsonObject jsonRequest) {
+    final String method = jsonRequest.getString("method");
+    return method == null || BLOCKING_REQUESTS_NAMESPACES.stream().anyMatch(namespace -> method.startsWith((String) namespace));
   }
 
   private HttpResponseStatus status(final JsonRpcResponse response) {

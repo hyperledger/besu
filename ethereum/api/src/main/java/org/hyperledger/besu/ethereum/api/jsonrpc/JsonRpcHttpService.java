@@ -348,21 +348,12 @@ public class JsonRpcHttpService {
         .handler(
             HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods));
 
-    // if RPC methods in the priv or eea namespace are used ALL RPC requests need to be
-    // blocking. Otherwise, those methods while not be able to properly process the requests
-    //    if (rpcMethods.keySet().stream()
-    //        .anyMatch(rpcMethod -> rpcMethod.startsWith("priv_") || rpcMethod.startsWith("eea_")))
-    // {
-    //      mainRoute.blockingHandler(
-    //          HandlerFactory.jsonRpcExecutor(createJsonRpcExecutor(), tracer, config), false);
-    //    } else {
     nonBlockingJsonRpcExecutorHandler =
         (NonBlockingJsonRpcExecutorHandler)
             HandlerFactory.jsonRpcExecutor(
                 vertx, createJsonRpcExecutorVerticle(4), createJsonRpcExecutor(), tracer);
 
     mainRoute.handler(nonBlockingJsonRpcExecutorHandler);
-    //    }
 
     if (maybeAuthenticationService.isPresent()) {
       router
