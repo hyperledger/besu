@@ -328,6 +328,13 @@ public class TransactionPool implements BlockAddedObserver {
             .getWorldStateArchive()
             .getMutable(
                 chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getBlockHash(), false)
+            .map(
+                ws -> {
+                  if (!ws.isPersistable()) {
+                    return ws.copy();
+                  }
+                  return ws;
+                })
             .orElseThrow()) {
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(
