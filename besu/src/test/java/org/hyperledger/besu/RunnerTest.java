@@ -261,7 +261,7 @@ public final class RunnerTest {
       final OkHttpClient client = new OkHttpClient();
       Awaitility.await()
           .ignoreExceptions()
-          .atMost(5L, TimeUnit.MINUTES)
+          .atMost(2L, TimeUnit.MINUTES)
           .untilAsserted(
               () -> {
                 final String baseUrl = String.format("http://%s:%s", listenHost, behindJsonRpcPort);

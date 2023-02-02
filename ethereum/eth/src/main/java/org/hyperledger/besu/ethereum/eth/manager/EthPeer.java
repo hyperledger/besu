@@ -237,24 +237,24 @@ public class EthPeer implements Comparable<EthPeer> {
 
   /**
    * This method is only used for sending the status message, as it is possible that we have
-   * multiple connections to the same peer at that time
+   * multiple connections to the same peer at that time.
    *
    * @param messageData the data to send
    * @param protocolName the protocol to use for sending
-   * @param conToUse the connection to use for sending
+   * @param connectionToUse the connection to use for sending
    * @return the response stream from the peer
    * @throws PeerNotConnected if the peer is not connected
    */
   public RequestManager.ResponseStream send(
-      final MessageData messageData, final String protocolName, final PeerConnection conToUse)
+      final MessageData messageData, final String protocolName, final PeerConnection connectionToUse)
       throws PeerNotConnected {
-    if (conToUse.getAgreedCapabilities().stream()
+    if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
       LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this);
       return null;
     }
     if (permissioningProviders.stream()
-        .anyMatch(p -> !p.isMessagePermitted(conToUse.getRemoteEnode(), messageData.getCode()))) {
+        .anyMatch(p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
           "Permissioning blocked sending of message code {} to {}", messageData.getCode(), this);
       if (LOG.isDebugEnabled()) {
@@ -262,7 +262,7 @@ public class EthPeer implements Comparable<EthPeer> {
             "Permissioning blocked by providers {}",
             permissioningProviders.stream()
                 .filter(
-                    p -> !p.isMessagePermitted(conToUse.getRemoteEnode(), messageData.getCode())));
+                    p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode())));
       }
       return null;
     }
@@ -285,7 +285,7 @@ public class EthPeer implements Comparable<EthPeer> {
       }
     }
 
-    conToUse.sendForProtocol(protocolName, messageData);
+    connectionToUse.sendForProtocol(protocolName, messageData);
     return null;
   }
 

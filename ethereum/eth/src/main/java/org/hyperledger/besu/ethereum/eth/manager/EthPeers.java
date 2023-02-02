@@ -69,7 +69,7 @@ public class EthPeers {
 
   private final Map<Bytes, EthPeer> connections = new ConcurrentHashMap<>();
 
-  private final Cache<PeerConnection, EthPeer> notReadyConnections =
+  private final Cache<PeerConnection, EthPeer> incompleteConnections =
       CacheBuilder.newBuilder()
           .expireAfterWrite(Duration.ofSeconds(20L))
           .concurrencyLevel(1)
@@ -142,7 +142,7 @@ public class EthPeers {
       EthPeer ethPeer = connections.get(id);
       if (ethPeer == null) {
         final Optional<EthPeer> peerInList =
-            notReadyConnections.asMap().values().stream()
+            incompleteConnections.asMap().values().stream()
                 .filter(p -> p.getId().equals(id))
                 .findFirst();
         ethPeer =
@@ -157,13 +157,13 @@ public class EthPeers {
                     permissioningProviders,
                     localNodeId));
       }
-      notReadyConnections.put(newConnection, ethPeer);
+      incompleteConnections.put(newConnection, ethPeer);
     }
   }
 
   @NotNull
-  private List<PeerConnection> getNotReadyConnections(final Bytes id) {
-    return notReadyConnections.asMap().keySet().stream()
+  private List<PeerConnection> getIncompleteConnections(final Bytes id) {
+    return incompleteConnections.asMap().keySet().stream()
         .filter(nrc -> nrc.getPeer().getId().equals(id))
         .collect(Collectors.toList());
   }
@@ -176,11 +176,10 @@ public class EthPeers {
 
   private boolean registerDisconnect(
       final Bytes id, final EthPeer peer, final PeerConnection connection) {
-    notReadyConnections.invalidate(connection);
+    incompleteConnections.invalidate(connection);
     boolean removed = false;
     if (peer != null && peer.getConnection().equals(connection)) {
-      if (!peerHasNonReadyConnection(id)) {
-        // make sure we do not remove the peer if there is a non ready connection to that peer
+      if (!peerHasIncompleteConnection(id)) {
         removed = connections.remove(id, peer);
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
         peer.handleDisconnect();
@@ -192,8 +191,8 @@ public class EthPeers {
     return removed;
   }
 
-  private boolean peerHasNonReadyConnection(final Bytes id) {
-    return getNotReadyConnections(id).stream().anyMatch(conn -> !conn.isDisconnected());
+  private boolean peerHasIncompleteConnection(final Bytes id) {
+    return getIncompleteConnections(id).stream().anyMatch(conn -> !conn.isDisconnected());
   }
 
   private void abortPendingRequestsAssignedToDisconnectedPeers() {
@@ -208,7 +207,7 @@ public class EthPeers {
 
   public EthPeer peer(final PeerConnection connection) {
     try {
-      return notReadyConnections.get(
+      return incompleteConnections.get(
           connection, () -> connections.get(connection.getPeer().getId()));
     } catch (final ExecutionException e) {
       throw new RuntimeException(e);
@@ -342,14 +341,14 @@ public class EthPeers {
   private Stream<PeerConnection> getAllConnections() {
     return Stream.concat(
             connections.values().stream().map(EthPeer::getConnection),
-            notReadyConnections.asMap().keySet().stream())
+            incompleteConnections.asMap().keySet().stream())
         .distinct()
         .filter(c -> !c.isDisconnected());
   }
 
-  public boolean shouldConnect(final Peer peer, final boolean incoming) {
-    if ((incoming && peerCount() >= peerUpperBound)
-        || (!incoming && peerCount() >= peerLowerBound)) {
+  public boolean shouldConnect(final Peer peer, final boolean inbound) {
+    if ((inbound && peerCount() >= peerUpperBound)
+        || (!inbound && peerCount() >= peerLowerBound)) {
       return false;
     }
     final Bytes id = peer.getId();
@@ -357,11 +356,10 @@ public class EthPeers {
     if (ethPeer != null && !ethPeer.isDisconnected()) {
       return false;
     }
-    final List<PeerConnection> notReadyConnections = getNotReadyConnections(id);
-    if (!notReadyConnections.isEmpty()) {
-      // we already have a connection that we have initiated that is getting ready
-      if (notReadyConnections.stream()
-          .anyMatch(c -> (c.inboundInitiated() == incoming) && !c.isDisconnected())) {
+    final List<PeerConnection> incompleteConnections = getIncompleteConnections(id);
+    if (!incompleteConnections.isEmpty()) {
+      if (incompleteConnections.stream()
+          .anyMatch(c -> (c.inboundInitiated() == inbound) && !c.isDisconnected())) {
         return false;
       }
     }

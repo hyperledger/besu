@@ -180,10 +180,10 @@ public class RlpxAgentTest {
     agent.subscribeConnect(connectionDispatch::onConnect);
 
     final Peer peer = createPeer();
-    final PeerConnection connection = connection(peer);
+    final PeerConnection connection = connection(peer, true);
     connectionInitializer.simulateIncomingConnection(connection);
 
-    assertThat(connectionDispatch.getDispatchNo()).isEqualTo(1);
+    assertThat(connectionDispatch.getDispatchCount()).isEqualTo(1);
   }
 
   @Test
@@ -207,10 +207,10 @@ public class RlpxAgentTest {
     final ConnectionDispatch connectionDispatch = new ConnectionDispatch();
     agent.subscribeConnect(connectionDispatch::onConnect);
     final Peer peer = createPeer();
-    final PeerConnection connection = connection(peer);
+    final PeerConnection connection = connection(peer, true);
     connectionInitializer.simulateIncomingConnection(connection);
 
-    assertThat(connectionDispatch.getDispatchNo()).isEqualTo(0);
+    assertThat(connectionDispatch.getDispatchCount()).isEqualTo(0);
   }
 
   @Test
@@ -264,7 +264,7 @@ public class RlpxAgentTest {
     startAgent();
 
     final Peer peer = createPeer();
-    final MockPeerConnection connection = connection(peer);
+    final MockPeerConnection connection = connection(peer, true);
     doReturn(false)
         .when(peerPermissions)
         .isPermitted(
@@ -334,7 +334,7 @@ public class RlpxAgentTest {
 
     doReturn(false)
         .when(peerPermissions)
-        .isPermitted(eq(localNode.getPeer()), eq(nonPermittedPeer), any());
+        .isPermitted(eq(localNode.getPeer()), eq(nonPermittedPeer), eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
     peerPermissions.testDispatchUpdate(true, Optional.empty());
 
     verify(nonPermittedConnection, times(1)).disconnect(any());
@@ -361,7 +361,7 @@ public class RlpxAgentTest {
 
     doReturn(false)
         .when(peerPermissions)
-        .isPermitted(eq(localNode.getPeer()), eq(nonPermittedPeer), any());
+        .isPermitted(eq(localNode.getPeer()), eq(nonPermittedPeer), eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
     peerPermissions.testDispatchUpdate(true, Optional.of(List.of(nonPermittedPeer)));
 
     assertThat(agent.getMapOfCompletableFutures().get(permittedPeer.getId())).isNotNull();
@@ -380,14 +380,14 @@ public class RlpxAgentTest {
     agent.subscribeConnect(connectionDispatch::onConnect);
 
     final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
-    final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer);
+    final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer, true);
     agent.setGetAllConnectionsCallback(
         () -> Stream.of(locallyInitiatedConnection, remotelyInitiatedConnection));
     connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
 
     // Sanity check
     assertThat(agent.getMapOfCompletableFutures().size()).isEqualTo(1); // outgoing connection
-    assertThat(connectionDispatch.getDispatchNo()).isEqualTo(2); // incoming and outgoing connection
+    assertThat(connectionDispatch.getDispatchCount()).isEqualTo(2); // incoming and outgoing connection
 
     doReturn(false)
         .when(peerPermissions)
@@ -412,18 +412,18 @@ public class RlpxAgentTest {
     agent.subscribeConnect(connectionDispatch::onConnect);
 
     final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
-    final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer);
+    final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer, true);
     agent.setGetAllConnectionsCallback(
         () -> Stream.of(locallyInitiatedConnection, remotelyInitiatedConnection));
     connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
 
     // Sanity check
     assertThat(agent.getMapOfCompletableFutures().size()).isEqualTo(1); // outgoing connection
-    assertThat(connectionDispatch.getDispatchNo()).isEqualTo(2); // incoming and outgoing connection
+    assertThat(connectionDispatch.getDispatchCount()).isEqualTo(2); // incoming and outgoing connection
 
     doReturn(false)
         .when(peerPermissions)
-        .isPermitted(eq(localNode.getPeer()), eq(locallyConnectedPeer), any());
+        .isPermitted(eq(localNode.getPeer()), eq(locallyConnectedPeer), eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
     peerPermissions.testDispatchUpdate(true, Optional.empty());
 
     assertThat(locallyInitiatedConnection.isDisconnected()).isTrue();
@@ -492,7 +492,7 @@ public class RlpxAgentTest {
     final AtomicReference<PeerConnection> connection = new AtomicReference<>();
     agent.subscribeConnect(connection::set);
 
-    connectionInitializer.simulateIncomingConnection(connection(peer));
+    connectionInitializer.simulateIncomingConnection(connection(peer, true));
 
     assertThat(connection.get()).isNotNull();
     assertThat(connection.get().getPeer()).isEqualTo(peer);
@@ -585,8 +585,8 @@ public class RlpxAgentTest {
         .build();
   }
 
-  private MockPeerConnection connection(final Peer peer) {
-    return MockPeerConnection.create(peer, peerConnectionEvents);
+  private MockPeerConnection connection(final Peer peer, final boolean inboundInitiated) {
+    return MockPeerConnection.create(peer, peerConnectionEvents, inboundInitiated);
   }
 
   private static class TestPeerPermissions extends PeerPermissions {
@@ -603,14 +603,14 @@ public class RlpxAgentTest {
   }
 
   private static class ConnectionDispatch {
-    private int dispatchNo;
+    private int dispatchCount;
 
     public void onConnect(final PeerConnection pc) {
-      this.dispatchNo++;
+      this.dispatchCount++;
     }
 
-    public int getDispatchNo() {
-      return dispatchNo;
+    public int getDispatchCount() {
+      return dispatchCount;
     }
   }
 }
