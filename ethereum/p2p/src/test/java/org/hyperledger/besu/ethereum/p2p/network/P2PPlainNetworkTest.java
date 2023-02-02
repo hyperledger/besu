@@ -69,7 +69,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class P2PPlainNetworkTest {
-  // See ethereum/p2p/src/test/resources/keys/tls_context_factory/README.md for certificates setup.
+  // See ethereum/p2p/src/test/resources/keys/README.md for certificates setup.
   private final Vertx vertx = Vertx.vertx();
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
@@ -87,8 +87,8 @@ public class P2PPlainNetworkTest {
   @Test
   public void handshaking() throws Exception {
     final NodeKey nodeKey = NodeKeyUtils.generate();
-    try (final P2PNetwork listener = builder("compa", "avocado").nodeKey(nodeKey).build();
-        final P2PNetwork connector = builder("compb", "banana").build()) {
+    try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
+        final P2PNetwork connector = builder("partner2client1").build()) {
 
       listener.start();
       connector.start();
@@ -109,8 +109,8 @@ public class P2PPlainNetworkTest {
   @Test
   public void preventMultipleConnections() throws Exception {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
-    try (final P2PNetwork listener = builder("compa", "avocado").nodeKey(listenNodeKey).build();
-        final P2PNetwork connector = builder("compb", "banana").build()) {
+    try (final P2PNetwork listener = builder("partner1client1").nodeKey(listenNodeKey).build();
+        final P2PNetwork connector = builder("partner2client1").build()) {
 
       listener.start();
       connector.start();
@@ -152,9 +152,9 @@ public class P2PPlainNetworkTest {
                     .setPeerUpperBound(maxPeers)
                     .setSupportedProtocols(MockSubProtocol.create()));
     try (final P2PNetwork listener =
-            builder("compa", "avocado").nodeKey(nodeKey).config(listenerConfig).build();
-        final P2PNetwork connector1 = builder("compa", "avocado").build();
-        final P2PNetwork connector2 = builder("compb", "banana").build()) {
+            builder("partner1client1").nodeKey(nodeKey).config(listenerConfig).build();
+        final P2PNetwork connector1 = builder("partner1client1").build();
+        final P2PNetwork connector2 = builder("partner2client1").build()) {
 
       // Setup listener and first connection
       listener.start();
@@ -205,12 +205,12 @@ public class P2PPlainNetworkTest {
     final SubProtocol subprotocol2 = MockSubProtocol.create("oth");
     final Capability cap2 = Capability.create(subprotocol2.getName(), 63);
     try (final P2PNetwork listener =
-            builder("compa", "avocado")
+            builder("partner1client1")
                 .nodeKey(listenerNodeKey)
                 .supportedCapabilities(cap1)
                 .build();
         final P2PNetwork connector =
-            builder("compb", "banana")
+            builder("partner2client1")
                 .nodeKey(connectorNodeKey)
                 .supportedCapabilities(cap2)
                 .build()) {
@@ -231,8 +231,8 @@ public class P2PPlainNetworkTest {
     final PeerPermissionsDenylist localDenylist = PeerPermissionsDenylist.create();
 
     try (final P2PNetwork localNetwork =
-            builder("compa", "avocado").peerPermissions(localDenylist).build();
-        final P2PNetwork remoteNetwork = builder("compb", "banana").build()) {
+            builder("partner1client1").peerPermissions(localDenylist).build();
+        final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
 
       localNetwork.start();
       remoteNetwork.start();
@@ -279,8 +279,8 @@ public class P2PPlainNetworkTest {
     when(peerPermissions.isPermitted(any(), any(), any())).thenReturn(true);
 
     try (final P2PNetwork localNetwork =
-            builder("compa", "avocado").peerPermissions(peerPermissions).build();
-        final P2PNetwork remoteNetwork = builder("compb", "banana").build()) {
+            builder("partner1client1").peerPermissions(peerPermissions).build();
+        final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
 
       localNetwork.start();
       remoteNetwork.start();
@@ -328,8 +328,8 @@ public class P2PPlainNetworkTest {
         new LargeMessageData(Bytes.of(buildPaddedMessage(threeTlsRecords)));
 
     final NodeKey nodeKey = NodeKeyUtils.generate();
-    try (final P2PNetwork listener = builder("compa", "avocado").nodeKey(nodeKey).build();
-        final P2PNetwork connector = builder("compb", "banana").build()) {
+    try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
+        final P2PNetwork connector = builder("partner2client1").build()) {
 
       final CompletableFuture<DisconnectReason> disconnectReasonFuture = new CompletableFuture<>();
       listener.subscribeDisconnect(
@@ -415,26 +415,26 @@ public class P2PPlainNetworkTest {
     }
   }
 
-  public Optional<TLSConfiguration> p2pTLSEnabled(final String company, final String client) {
-    final String parentPath = "/keys/tls_context_factory";
-    final String keystore = parentPath + "/%s/%s/%s.p12";
-    final String truststore = parentPath + "/%s/truststore.p12";
-    final String crl = parentPath + "/ca_certs/crl/crl.pem";
+  public Optional<TLSConfiguration> p2pTLSEnabled(final String clientDirName) {
+    final String parentPath = "/keys";
+    final String keystorePath = parentPath + "/%s/client1.p12";
+    final String truststorePath = parentPath + "/%s/truststore.p12";
+    final String crl = parentPath + "/crl/crl.pem";
     final TLSConfiguration.Builder builder = TLSConfiguration.Builder.tlsConfiguration();
     builder
         .withKeyStoreType(KEYSTORE_TYPE_PKCS12)
-        .withKeyStorePath(toPath(String.format(keystore, company, client, client)))
+        .withKeyStorePath(toPath(String.format(keystorePath, clientDirName)))
         .withKeyStorePasswordSupplier(() -> "test123")
         // .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
         .withTrustStoreType(KEYSTORE_TYPE_PKCS12)
-        .withTrustStorePath(toPath(String.format(truststore, company)))
+        .withTrustStorePath(toPath(String.format(truststorePath, clientDirName)))
         .withTrustStorePasswordSupplier(() -> "test123")
         .withCrlPath(toPath(crl));
 
     return Optional.of(builder.build());
   }
 
-  private DefaultP2PNetwork.Builder builder(final String company, final String client) {
+  private DefaultP2PNetwork.Builder builder(final String clientDirName) {
     final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
     final Block blockMock = mock(Block.class);
     when(blockMock.getHash()).thenReturn(Hash.ZERO);
@@ -443,7 +443,7 @@ public class P2PPlainNetworkTest {
         .vertx(vertx)
         .config(config)
         .nodeKey(NodeKeyUtils.generate())
-        .p2pTLSConfiguration(p2pTLSEnabled(company, client))
+        .p2pTLSConfiguration(p2pTLSEnabled(clientDirName))
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
         .storageProvider(new InMemoryKeyValueStorageProvider())
