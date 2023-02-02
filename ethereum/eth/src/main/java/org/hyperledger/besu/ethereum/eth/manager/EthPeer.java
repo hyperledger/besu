@@ -246,7 +246,9 @@ public class EthPeer implements Comparable<EthPeer> {
    * @throws PeerNotConnected if the peer is not connected
    */
   public RequestManager.ResponseStream send(
-      final MessageData messageData, final String protocolName, final PeerConnection connectionToUse)
+      final MessageData messageData,
+      final String protocolName,
+      final PeerConnection connectionToUse)
       throws PeerNotConnected {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
@@ -254,7 +256,8 @@ public class EthPeer implements Comparable<EthPeer> {
       return null;
     }
     if (permissioningProviders.stream()
-        .anyMatch(p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
+        .anyMatch(
+            p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
           "Permissioning blocked sending of message code {} to {}", messageData.getCode(), this);
       if (LOG.isDebugEnabled()) {
@@ -262,7 +265,9 @@ public class EthPeer implements Comparable<EthPeer> {
             "Permissioning blocked by providers {}",
             permissioningProviders.stream()
                 .filter(
-                    p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode())));
+                    p ->
+                        !p.isMessagePermitted(
+                            connectionToUse.getRemoteEnode(), messageData.getCode())));
       }
       return null;
     }

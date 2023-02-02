@@ -347,8 +347,7 @@ public class EthPeers {
   }
 
   public boolean shouldConnect(final Peer peer, final boolean inbound) {
-    if ((inbound && peerCount() >= peerUpperBound)
-        || (!inbound && peerCount() >= peerLowerBound)) {
+    if ((inbound && peerCount() >= peerUpperBound) || (!inbound && peerCount() >= peerLowerBound)) {
       return false;
     }
     final Bytes id = peer.getId();

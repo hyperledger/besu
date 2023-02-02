@@ -334,7 +334,10 @@ public class RlpxAgentTest {
 
     doReturn(false)
         .when(peerPermissions)
-        .isPermitted(eq(localNode.getPeer()), eq(nonPermittedPeer), eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
+        .isPermitted(
+            eq(localNode.getPeer()),
+            eq(nonPermittedPeer),
+            eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
     peerPermissions.testDispatchUpdate(true, Optional.empty());
 
     verify(nonPermittedConnection, times(1)).disconnect(any());
@@ -361,7 +364,10 @@ public class RlpxAgentTest {
 
     doReturn(false)
         .when(peerPermissions)
-        .isPermitted(eq(localNode.getPeer()), eq(nonPermittedPeer), eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
+        .isPermitted(
+            eq(localNode.getPeer()),
+            eq(nonPermittedPeer),
+            eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
     peerPermissions.testDispatchUpdate(true, Optional.of(List.of(nonPermittedPeer)));
 
     assertThat(agent.getMapOfCompletableFutures().get(permittedPeer.getId())).isNotNull();
@@ -387,7 +393,8 @@ public class RlpxAgentTest {
 
     // Sanity check
     assertThat(agent.getMapOfCompletableFutures().size()).isEqualTo(1); // outgoing connection
-    assertThat(connectionDispatch.getDispatchCount()).isEqualTo(2); // incoming and outgoing connection
+    assertThat(connectionDispatch.getDispatchCount())
+        .isEqualTo(2); // incoming and outgoing connection
 
     doReturn(false)
         .when(peerPermissions)
@@ -419,11 +426,15 @@ public class RlpxAgentTest {
 
     // Sanity check
     assertThat(agent.getMapOfCompletableFutures().size()).isEqualTo(1); // outgoing connection
-    assertThat(connectionDispatch.getDispatchCount()).isEqualTo(2); // incoming and outgoing connection
+    assertThat(connectionDispatch.getDispatchCount())
+        .isEqualTo(2); // incoming and outgoing connection
 
     doReturn(false)
         .when(peerPermissions)
-        .isPermitted(eq(localNode.getPeer()), eq(locallyConnectedPeer), eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
+        .isPermitted(
+            eq(localNode.getPeer()),
+            eq(locallyConnectedPeer),
+            eq(PeerPermissions.Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
     peerPermissions.testDispatchUpdate(true, Optional.empty());
 
     assertThat(locallyInitiatedConnection.isDisconnected()).isTrue();

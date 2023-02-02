@@ -233,7 +233,8 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
           final Response response = client.newCall(request).execute();
           try {
             assertThat(response.code()).isEqualTo(200);
-            final List<ResourceSpans> spans = new ArrayList<>(fakeTracesCollector.getReceivedSpans());
+            final List<ResourceSpans> spans =
+                new ArrayList<>(fakeTracesCollector.getReceivedSpans());
             assertThat(spans.isEmpty()).isFalse();
             final Span internalSpan = spans.get(0).getScopeSpans(0).getSpans(0);
             assertThat(internalSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_INTERNAL);

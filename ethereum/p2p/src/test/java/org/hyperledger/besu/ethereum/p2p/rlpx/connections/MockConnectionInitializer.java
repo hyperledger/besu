@@ -82,7 +82,8 @@ public class MockConnectionInitializer implements ConnectionInitializer {
       return CompletableFuture.completedFuture(mockPeerConnection);
     }
     if (autocompleteConnections) {
-      return CompletableFuture.completedFuture(MockPeerConnection.create(peer, eventDispatcher, false));
+      return CompletableFuture.completedFuture(
+          MockPeerConnection.create(peer, eventDispatcher, false));
     } else {
       final CompletableFuture<PeerConnection> future = new CompletableFuture<>();
       incompleteConnections.put(peer, future);

@@ -70,7 +70,9 @@ public class MockPeerConnection extends AbstractPeerConnection {
   }
 
   public static MockPeerConnection create(
-      final Peer peer, final PeerConnectionEventDispatcher eventDispatcher, final boolean inboundInitiated) {
+      final Peer peer,
+      final PeerConnectionEventDispatcher eventDispatcher,
+      final boolean inboundInitiated) {
     final List<SubProtocol> subProtocols = Arrays.asList(MockSubProtocol.create("eth"));
     final List<Capability> caps = Arrays.asList(Capability.create("eth", 63));
     final CapabilityMultiplexer multiplexer = new CapabilityMultiplexer(subProtocols, caps, caps);
