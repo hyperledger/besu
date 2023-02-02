@@ -63,7 +63,7 @@ public class PrivDistributeRawTransactionTest {
           new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), new JsonObject()) {};
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  @Mock private PrivDistributeRawTransaction method;
+  private PrivDistributeRawTransaction method;
   @Mock private PrivacyController privacyController;
 
   @Before

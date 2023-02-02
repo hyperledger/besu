@@ -100,9 +100,9 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JsonRpcService {
+public class EngineJsonRpcService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JsonRpcService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EngineJsonRpcService.class);
 
   private static final String SPAN_CONTEXT = "span_context";
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
@@ -152,7 +152,7 @@ public class JsonRpcService {
   private final HealthService readinessService;
 
   /**
-   * Construct a JsonRpcService to handle either http or websocket clients
+   * Construct a EngineJsonRpcService to handle either http or websocket clients
    *
    * @param vertx The vertx process that will be running this service
    * @param dataDir The data directory where requests can be buffered
@@ -166,7 +166,7 @@ public class JsonRpcService {
    * @param livenessService A service responsible for reporting whether this node is live
    * @param readinessService A service responsible for reporting whether this node has fully started
    */
-  public JsonRpcService(
+  public EngineJsonRpcService(
       final Vertx vertx,
       final Path dataDir,
       final JsonRpcConfiguration config,

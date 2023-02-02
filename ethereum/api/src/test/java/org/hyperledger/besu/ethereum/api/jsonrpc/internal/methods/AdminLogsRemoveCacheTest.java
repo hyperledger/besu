@@ -62,47 +62,24 @@ public class AdminLogsRemoveCacheTest {
 
   @Test
   public void testParameterized() {
-    when(blockchainQueries.headBlockNumber()).thenReturn(1000L);
+    long blockNumber = 1000L;
+    when(blockchainQueries.headBlockNumber()).thenReturn(blockNumber);
 
     final Object[][] testVector = {
-      {new String[] {}, 0L, blockchainQueries.headBlockNumber()},
+      {new String[] {}, 0L, blockNumber},
       {new String[] {"earliest"}, 0L, 0L},
-      {
-        new String[] {"latest"},
-        blockchainQueries.headBlockNumber(),
-        blockchainQueries.headBlockNumber()
-      },
-      {
-        new String[] {"pending"},
-        blockchainQueries.headBlockNumber(),
-        blockchainQueries.headBlockNumber()
-      },
+      {new String[] {"latest"}, blockNumber, blockNumber},
+      {new String[] {"pending"}, blockNumber, blockNumber},
       {new String[] {"0x50"}, 0x50L, 0x50L},
       {new String[] {"earliest", "earliest"}, 0L, 0L},
-      {new String[] {"earliest", "latest"}, 0L, blockchainQueries.headBlockNumber()},
-      {
-        new String[] {"latest", "latest"},
-        blockchainQueries.headBlockNumber(),
-        blockchainQueries.headBlockNumber()
-      },
-      {
-        new String[] {"pending", "latest"},
-        blockchainQueries.headBlockNumber(),
-        blockchainQueries.headBlockNumber()
-      },
-      {new String[] {"0x50", "latest"}, 0x50L, blockchainQueries.headBlockNumber()},
-      {new String[] {"earliest", "pending"}, 0L, blockchainQueries.headBlockNumber()},
-      {
-        new String[] {"latest", "pending"},
-        blockchainQueries.headBlockNumber(),
-        blockchainQueries.headBlockNumber()
-      },
-      {
-        new String[] {"pending", "pending"},
-        blockchainQueries.headBlockNumber(),
-        blockchainQueries.headBlockNumber()
-      },
-      {new String[] {"0x50", "pending"}, 0x50L, blockchainQueries.headBlockNumber()},
+      {new String[] {"earliest", "latest"}, 0L, blockNumber},
+      {new String[] {"latest", "latest"}, blockNumber, blockNumber},
+      {new String[] {"pending", "latest"}, blockNumber, blockNumber},
+      {new String[] {"0x50", "latest"}, 0x50L, blockNumber},
+      {new String[] {"earliest", "pending"}, 0L, blockNumber},
+      {new String[] {"latest", "pending"}, blockNumber, blockNumber},
+      {new String[] {"pending", "pending"}, blockNumber, blockNumber},
+      {new String[] {"0x50", "pending"}, 0x50L, blockNumber},
       {new String[] {"earliest", "0x100"}, 0L, 0x100L},
       {new String[] {"0x50", "0x100"}, 0x50L, 0x100L},
     };
