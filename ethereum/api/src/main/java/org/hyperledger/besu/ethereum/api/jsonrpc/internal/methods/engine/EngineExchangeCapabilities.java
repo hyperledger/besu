@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,10 +51,7 @@ public class EngineExchangeCapabilities extends ExecutionEngineJsonRpcMethod {
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     engineCallListener.executionEngineCalled();
 
-    final List<String> remoteCapabilities =
-        Arrays.stream(requestContext.getRequest().getParams())
-            .map(String::valueOf)
-            .collect(Collectors.toList());
+    final String[] remoteCapabilities = requestContext.getRequiredParameter(0, String[].class);
     final Object reqId = requestContext.getRequest().getId();
 
     traceLambda(LOG, "received remote capabilities: {}", () -> remoteCapabilities);
