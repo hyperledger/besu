@@ -349,11 +349,12 @@ public class EVM {
    * @return the code
    */
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {
-    Code result = codeCache.getIfPresent(codeHash);
+    Code result = codeHash == null ? null : codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result =
-          CodeFactory.createCode(codeBytes, codeHash, evmSpecVersion.getMaxEofVersion(), false);
-      codeCache.put(codeHash, result);
+      result = CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion(), false);
+      if (codeHash != null) {
+        codeCache.put(codeHash, result);
+      }
     }
     return result;
   }
