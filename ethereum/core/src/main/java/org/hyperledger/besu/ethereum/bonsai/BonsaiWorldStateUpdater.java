@@ -175,6 +175,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         return bonsaiAccountFunction.apply(bonsaiValue);
       }
     } catch (MerkleTrieException e) {
+      //need to throw to trigger the heal
       throw new MerkleTrieException(
           e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
     }
@@ -412,6 +413,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
             });
         return valueUInt;
       } catch (MerkleTrieException e) {
+        //need to throw to trigger the heal
         throw new MerkleTrieException(
             e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
       }
@@ -606,15 +608,21 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   private BonsaiValue<BonsaiAccount> loadAccountFromParent(
       final Address address, final BonsaiValue<BonsaiAccount> defaultValue) {
-    final Account parentAccount = wrappedWorldView().get(address);
-    if (parentAccount instanceof BonsaiAccount) {
-      final BonsaiAccount account = (BonsaiAccount) parentAccount;
-      final BonsaiValue<BonsaiAccount> loadedAccountValue =
-          new BonsaiValue<>(new BonsaiAccount(account), account);
-      accountsToUpdate.put(address, loadedAccountValue);
-      return loadedAccountValue;
-    } else {
-      return defaultValue;
+    try {
+      final Account parentAccount = wrappedWorldView().get(address);
+      if (parentAccount instanceof BonsaiAccount) {
+        final BonsaiAccount account = (BonsaiAccount) parentAccount;
+        final BonsaiValue<BonsaiAccount> loadedAccountValue =
+                new BonsaiValue<>(new BonsaiAccount(account), account);
+        accountsToUpdate.put(address, loadedAccountValue);
+        return loadedAccountValue;
+      } else {
+        return defaultValue;
+      }
+    }catch (MerkleTrieException e){
+      //need to throw to trigger the heal
+      throw new MerkleTrieException(
+              e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
     }
   }
 

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -279,7 +280,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
           LOG.debug("Archive rolling finished, now at {}", blockHash);
           return Optional.of(mutableState);
-        } catch (final Exception e) {
+        } catch (final MerkleTrieException re) {
+          //need to throw to trigger the heal
+          throw re;
+         } catch (final Exception e) {
           // if we fail we must clean up the updater
           bonsaiUpdater.reset();
           LOG.debug("State rolling failed for block hash " + blockHash, e);
@@ -287,6 +291,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         }
       } catch (final RuntimeException re) {
         LOG.trace("Archive rolling failed for block hash " + blockHash, re);
+        if(re instanceof MerkleTrieException) {
+          //need to throw to trigger the heal
+          throw re;
+        }
         return Optional.empty();
       }
     }

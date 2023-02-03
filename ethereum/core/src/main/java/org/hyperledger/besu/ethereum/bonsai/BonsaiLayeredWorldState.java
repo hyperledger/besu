@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -271,6 +272,8 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
                     new StorageException(
                         "Unable to copy Layered Worldstate for " + blockHash().toHexString()))) {
       return new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage());
+    } catch (MerkleTrieException ex) {
+      throw ex; //need to throw to trigger the heal
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

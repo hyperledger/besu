@@ -478,6 +478,7 @@ public class MainnetTransactionProcessor {
             gasUsedByTransaction, refunded, validationResult, initialFrame.getRevertReason());
       }
     } catch (final MerkleTrieException re) {
+      //need to throw to trigger the heal
       throw re;
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
