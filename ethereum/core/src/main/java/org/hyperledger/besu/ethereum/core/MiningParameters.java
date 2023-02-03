@@ -36,6 +36,9 @@ public class MiningParameters {
 
   public static final long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
 
+  public static final long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION =
+      Duration.ofMillis(500).toMillis();
+
   private final Optional<Address> coinbase;
   private final Optional<AtomicLong> targetGasLimit;
   private final Wei minTransactionGasPrice;
@@ -52,6 +55,7 @@ public class MiningParameters {
   private final long powJobTimeToLive;
   private final int maxOmmerDepth;
   private final long posBlockCreationMaxTime;
+  private final long posBlockCreationRepetitionMinDuration;
 
   private MiningParameters(
       final Address coinbase,
@@ -69,7 +73,8 @@ public class MiningParameters {
       final long remoteSealersTimeToLive,
       final long powJobTimeToLive,
       final int maxOmmerDepth,
-      final long posBlockCreationMaxTime) {
+      final long posBlockCreationMaxTime,
+      final long posBlockCreationRepetitionMinDuration) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.targetGasLimit = Optional.ofNullable(targetGasLimit).map(AtomicLong::new);
     this.minTransactionGasPrice = minTransactionGasPrice;
@@ -86,6 +91,7 @@ public class MiningParameters {
     this.powJobTimeToLive = powJobTimeToLive;
     this.maxOmmerDepth = maxOmmerDepth;
     this.posBlockCreationMaxTime = posBlockCreationMaxTime;
+    this.posBlockCreationRepetitionMinDuration = posBlockCreationRepetitionMinDuration;
   }
 
   public Optional<Address> getCoinbase() {
@@ -152,6 +158,10 @@ public class MiningParameters {
     return posBlockCreationMaxTime;
   }
 
+  public long getPosBlockCreationRepetitionMinDuration() {
+    return posBlockCreationRepetitionMinDuration;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -170,7 +180,8 @@ public class MiningParameters {
         && remoteSealersTimeToLive == that.remoteSealersTimeToLive
         && remoteSealersLimit == that.remoteSealersLimit
         && powJobTimeToLive == that.powJobTimeToLive
-        && posBlockCreationMaxTime == that.posBlockCreationMaxTime;
+        && posBlockCreationMaxTime == that.posBlockCreationMaxTime
+        && posBlockCreationRepetitionMinDuration == that.posBlockCreationRepetitionMinDuration;
   }
 
   @Override
@@ -189,7 +200,8 @@ public class MiningParameters {
         remoteSealersLimit,
         remoteSealersTimeToLive,
         powJobTimeToLive,
-        posBlockCreationMaxTime);
+        posBlockCreationMaxTime,
+        posBlockCreationRepetitionMinDuration);
   }
 
   @Override
@@ -227,6 +239,8 @@ public class MiningParameters {
         + powJobTimeToLive
         + ", posBlockCreationMaxTime="
         + posBlockCreationMaxTime
+        + ", posBlockCreationRepetitionMinDuration="
+        + posBlockCreationRepetitionMinDuration
         + '}';
   }
 
@@ -248,6 +262,9 @@ public class MiningParameters {
     private long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
     private int maxOmmerDepth = DEFAULT_MAX_OMMERS_DEPTH;
     private long posBlockCreationMaxTime = DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
+
+    private long posBlockCreationRepetitionMinDuration =
+        DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
 
     public Builder() {
       // zero arg
@@ -273,6 +290,8 @@ public class MiningParameters {
       this.powJobTimeToLive = existing.getPowJobTimeToLive();
       this.maxOmmerDepth = existing.getMaxOmmerDepth();
       this.posBlockCreationMaxTime = existing.getPosBlockCreationMaxTime();
+      this.posBlockCreationRepetitionMinDuration =
+          existing.getPosBlockCreationRepetitionMinDuration();
     }
 
     public Builder coinbase(final Address address) {
@@ -355,6 +374,12 @@ public class MiningParameters {
       return this;
     }
 
+    public Builder posBlockCreationRepetitionMinDuration(
+        final long posBlockCreationRepetitionMinDuration) {
+      this.posBlockCreationRepetitionMinDuration = posBlockCreationRepetitionMinDuration;
+      return this;
+    }
+
     public MiningParameters build() {
       return new MiningParameters(
           coinbase,
@@ -372,7 +397,8 @@ public class MiningParameters {
           remoteSealersTimeToLive,
           powJobTimeToLive,
           maxOmmerDepth,
-          posBlockCreationMaxTime);
+          posBlockCreationMaxTime,
+          posBlockCreationRepetitionMinDuration);
     }
   }
 }
