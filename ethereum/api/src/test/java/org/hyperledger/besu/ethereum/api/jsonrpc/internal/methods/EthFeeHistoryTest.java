@@ -69,14 +69,14 @@ public class EthFeeHistoryTest {
     // should fail because no required params given
     assertThatThrownBy(this::feeHistoryRequest).isInstanceOf(InvalidJsonRpcParameters.class);
     // should fail because newestBlock not given
-    assertThatThrownBy(() -> feeHistoryRequest(1)).isInstanceOf(InvalidJsonRpcParameters.class);
+    assertThatThrownBy(() -> feeHistoryRequest("0x1")).isInstanceOf(InvalidJsonRpcParameters.class);
     // should fail because blockCount not given
     assertThatThrownBy(() -> feeHistoryRequest("latest"))
         .isInstanceOf(InvalidJsonRpcParameters.class);
     // should pass because both required params given
-    feeHistoryRequest(1, "latest");
+    feeHistoryRequest("0x1", "latest");
     // should pass because both required params and optional param given
-    feeHistoryRequest(1, "latest", new double[] {1, 20.4});
+    feeHistoryRequest("0x1", "latest", new double[] {1, 20.4});
     // should pass because both required params and optional param given
     feeHistoryRequest("0x1", "latest", new double[] {1, 20.4});
   }
@@ -87,7 +87,7 @@ public class EthFeeHistoryTest {
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(eq(11L))).thenReturn(londonSpec);
     assertThat(
-            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
+            ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", new double[] {100.0}))
                 .getResult())
         .isEqualTo(
             FeeHistory.FeeHistoryResult.from(
@@ -104,7 +104,9 @@ public class EthFeeHistoryTest {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
-    assertThat(((JsonRpcErrorResponse) feeHistoryRequest(2, "11", new double[] {100.0})).getError())
+    assertThat(
+            ((JsonRpcErrorResponse) feeHistoryRequest("0x2", "11", new double[] {100.0}))
+                .getError())
         .isEqualTo(JsonRpcError.INVALID_PARAMS);
   }
 
@@ -114,11 +116,11 @@ public class EthFeeHistoryTest {
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     assertThat(
-            ((JsonRpcErrorResponse) feeHistoryRequest(0, "latest", new double[] {100.0}))
+            ((JsonRpcErrorResponse) feeHistoryRequest("0x0", "latest", new double[] {100.0}))
                 .getError())
         .isEqualTo(JsonRpcError.INVALID_PARAMS);
     assertThat(
-            ((JsonRpcErrorResponse) feeHistoryRequest(1025, "latest", new double[] {100.0}))
+            ((JsonRpcErrorResponse) feeHistoryRequest("0x401", "latest", new double[] {100.0}))
                 .getError())
         .isEqualTo(JsonRpcError.INVALID_PARAMS);
   }
@@ -130,7 +132,7 @@ public class EthFeeHistoryTest {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (ImmutableFeeHistoryResult)
-            ((JsonRpcSuccessResponse) feeHistoryRequest(20, "latest")).getResult();
+            ((JsonRpcSuccessResponse) feeHistoryRequest("0x14", "latest")).getResult();
     assertThat(Long.decode(result.getOldestBlock())).isEqualTo(0);
     assertThat(result.getBaseFeePerGas()).hasSize(12);
     assertThat(result.getGasUsedRatio()).hasSize(11);
@@ -144,7 +146,7 @@ public class EthFeeHistoryTest {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (FeeHistory.FeeHistoryResult)
-            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
+            ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest")).getResult();
     assertThat(Wei.fromHexString(result.getBaseFeePerGas().get(1)))
         .isEqualTo(FeeMarket.london(11).getInitialBasefee());
   }
@@ -162,7 +164,7 @@ public class EthFeeHistoryTest {
     blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
     final FeeHistory.FeeHistoryResult result =
         (FeeHistory.FeeHistoryResult)
-            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
+            ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", new double[] {100.0}))
                 .getResult();
     assertThat(result.getReward()).isEqualTo(List.of(List.of("0x0")));
   }
