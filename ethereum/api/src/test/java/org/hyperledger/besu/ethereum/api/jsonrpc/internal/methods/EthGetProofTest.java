@@ -89,9 +89,9 @@ class EthGetProofTest {
   void errorWhenNoAddressAccountSupplied() {
     final JsonRpcRequestContext request = requestWithParams(null, null, "latest");
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
     final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockchainQueries.getBlockchain().getChainHead().getBlockHeader()).thenReturn(blockHeader);
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
 
     Assertions.assertThatThrownBy(() -> method.response(request))
@@ -103,9 +103,9 @@ class EthGetProofTest {
   void errorWhenNoStorageKeysSupplied() {
     final JsonRpcRequestContext request = requestWithParams(address.toString(), null, "latest");
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
     final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockchainQueries.getBlockchain().getChainHead().getBlockHeader()).thenReturn(blockHeader);
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
 
     Assertions.assertThatThrownBy(() -> method.response(request))

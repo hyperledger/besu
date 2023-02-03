@@ -31,7 +31,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -51,7 +50,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -134,7 +132,6 @@ public class PrivacyReorgTest {
   private BesuController besuController;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
-  private RestrictedDefaultPrivacyController privacyController;
   private Enclave mockEnclave;
   private Transaction privacyMarkerTransaction;
 
@@ -176,9 +173,6 @@ public class PrivacyReorgTest {
             .build();
 
     privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
-    privacyController = mock(RestrictedDefaultPrivacyController.class);
-    when(privacyController.findPrivacyGroupByGroupId(any(), any()))
-        .thenReturn(Optional.of(new PrivacyGroup()));
 
     privateStateRootResolver =
         new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());

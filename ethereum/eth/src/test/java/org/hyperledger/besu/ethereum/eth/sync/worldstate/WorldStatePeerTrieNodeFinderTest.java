@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -30,8 +29,6 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.manager.PeerRequest;
-import org.hyperledger.besu.ethereum.eth.manager.RequestManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.task.SnapProtocolManagerTestUtil;
@@ -66,9 +63,6 @@ public class WorldStatePeerTrieNodeFinderTest {
   private EthProtocolManager ethProtocolManager;
   private SnapProtocolManager snapProtocolManager;
   private EthPeers ethPeers;
-  private final PeerRequest peerRequest = mock(PeerRequest.class);
-  private final RequestManager.ResponseStream responseStream =
-      mock(RequestManager.ResponseStream.class);
 
   @Before
   public void setup() throws Exception {
