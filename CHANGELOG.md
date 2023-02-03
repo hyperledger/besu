@@ -33,7 +33,7 @@ tests are updated to use EC private keys instead of RSA keys.
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
-
+- Bugfix forkchoiceUpdate reorgs to move the worldstate when re-org the chain [#5041](https://github.com/hyperledger/besu/pull/5041) 
 
 ## 23.1.0-RC1
 
