@@ -44,7 +44,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getCode_returnsEmpty() {
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(storage.getCode(null, Hash.EMPTY)).isEmpty();
+    assertThat(storage.getCode(Hash.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
   }
 
   @Test
@@ -85,7 +85,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .putCode(Hash.EMPTY, Bytes.EMPTY)
         .commit();
 
-    assertThat(storage.getCode(null, Hash.EMPTY)).contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getCode(Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE), Hash.EMPTY))
+        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
@@ -94,7 +95,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
-    assertThat(storage.getCode(null, Hash.EMPTY)).contains(bytes);
+    assertThat(storage.getCode(Hash.hash(bytes), Hash.EMPTY)).contains(bytes);
   }
 
   @Test
@@ -251,9 +252,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     updaterA.commit();
     updaterB.commit();
 
-    assertThat(storage.getCode(null, accountHashA)).contains(bytesA);
-    assertThat(storage.getCode(null, accountHashB)).contains(bytesB);
-    assertThat(storage.getCode(null, accountHashD)).contains(bytesC);
+    assertThat(storage.getCode(Hash.hash(bytesB), accountHashB)).contains(bytesB);
+    assertThat(storage.getCode(Hash.hash(bytesC), accountHashD)).contains(bytesC);
   }
 
   @Test

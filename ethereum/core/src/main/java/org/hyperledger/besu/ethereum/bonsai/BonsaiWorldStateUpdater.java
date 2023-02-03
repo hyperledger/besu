@@ -635,7 +635,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     BonsaiValue<Bytes> codeValue = codeToUpdate.get(address);
     if (codeValue == null) {
       final Bytes storedCode =
-          wrappedWorldView().getCode(address, Hash.hash(expectedCode)).orElse(Bytes.EMPTY);
+          wrappedWorldView()
+              .getCode(
+                  address, Optional.ofNullable(expectedCode).map(Hash::hash).orElse(Hash.EMPTY))
+              .orElse(Bytes.EMPTY);
       if (!storedCode.isEmpty()) {
         codeValue = new BonsaiValue<>(storedCode, storedCode);
         codeToUpdate.put(address, codeValue);

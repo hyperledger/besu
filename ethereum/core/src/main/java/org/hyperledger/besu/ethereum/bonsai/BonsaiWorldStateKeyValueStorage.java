@@ -74,10 +74,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
-    return codeStorage
-        .get(accountHash.toArrayUnsafe())
-        .map(Bytes::wrap)
-        .filter(b -> Hash.hash(b).equals(codeHash));
+    if (codeHash.equals(Hash.EMPTY)) {
+      return Optional.of(Bytes.EMPTY);
+    } else {
+      return codeStorage
+          .get(accountHash.toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(b -> Hash.hash(b).equals(codeHash));
+    }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
