@@ -26,20 +26,20 @@ import org.apache.tuweni.bytes.Bytes;
 @JsonPropertyOrder({"blockHash", "kzgs", "blobs"})
 public class BlobsBundleV1 {
 
-  private final Hash blockHash;
+  private final String blockHash;
 
   private final List<Bytes> kzgs;
 
   private final List<Bytes> blobs;
 
   public BlobsBundleV1(final Hash blockHash, final List<Bytes> kzgs, final List<Bytes> blobs) {
-    this.blockHash = blockHash;
+    this.blockHash = blockHash.toString();
     this.kzgs = kzgs;
     this.blobs = blobs;
   }
 
   @JsonGetter("blockHash")
-  public Hash getBlockHash() {
+  public String getBlockHash() {
     return blockHash;
   }
 
