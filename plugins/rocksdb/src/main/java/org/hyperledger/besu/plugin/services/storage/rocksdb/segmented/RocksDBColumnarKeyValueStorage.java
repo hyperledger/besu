@@ -91,8 +91,7 @@ public class RocksDBColumnarKeyValueStorage
   private final RocksDBMetrics metrics;
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
-  final private ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
-
+  private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
 
   /**
    * Instantiates a new RocksDb columnar key value storage.
