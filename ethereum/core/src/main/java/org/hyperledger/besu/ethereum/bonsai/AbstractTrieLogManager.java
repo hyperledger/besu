@@ -173,9 +173,4 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
       return rootWorldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
   }
-
-  @Override
-  public void reset() {
-    cachedWorldStatesByHash.clear();
-  }
 }

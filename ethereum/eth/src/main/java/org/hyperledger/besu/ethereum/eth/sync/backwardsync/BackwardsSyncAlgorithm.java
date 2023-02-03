@@ -90,7 +90,7 @@ public class BackwardsSyncAlgorithm implements BesuEvents.InitialSyncCompletionL
       return executeProcessKnownAncestors();
     }
 
-    if (blockchain.getChainHead().getHeight() > firstAncestorHeader.getNumber()) {
+    if (chainHeader.getNumber() > firstAncestorHeader.getNumber()) {
       debugLambda(
           LOG,
           "Backward reached below current chain head {} : {}",
@@ -98,8 +98,7 @@ public class BackwardsSyncAlgorithm implements BesuEvents.InitialSyncCompletionL
           firstAncestorHeader::toLogString);
     }
 
-    if (finalBlockConfirmation.ancestorHeaderReached(firstAncestorHeader)
-        && chainHeader.getHash().equals(firstAncestorHeader.getParentHash())) {
+    if (finalBlockConfirmation.ancestorHeaderReached(firstAncestorHeader)) {
       debugLambda(
           LOG,
           "Backward sync reached ancestor header with {}, starting forward sync",

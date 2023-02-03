@@ -191,12 +191,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return trieBranchStorage
-            .get(WORLD_ROOT_HASH_KEY)
-            .map(Bytes32::wrap)
-            .filter(hash -> hash.equals(rootHash))
-            .map(Bytes32::wrap)
-            .isPresent()
-        || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+        .get(WORLD_ROOT_HASH_KEY)
+        .map(Bytes32::wrap)
+        .map(hash -> hash.equals(rootHash) || trieLogStorage.containsKey(blockHash.toArrayUnsafe()))
+        .orElse(false);
   }
 
   @Override

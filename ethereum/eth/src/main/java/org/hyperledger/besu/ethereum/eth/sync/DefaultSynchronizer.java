@@ -330,7 +330,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
           }
           this.syncState.markAccountToRepair(maybeAccountToRepair);
         });
-    this.protocolContext.getWorldStateArchive().reset();
     this.fastSyncDownloader = this.fastSyncFactory.get();
     start();
     return true;

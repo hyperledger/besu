@@ -105,11 +105,11 @@ public class ForwardSyncStep {
     }
 
     for (Block block : blocks) {
-      final Optional<Block> parent =
+      final Optional<BlockHeader> parent =
           context
               .getProtocolContext()
               .getBlockchain()
-              .getBlockByHash(block.getHeader().getParentHash());
+              .getBlockHeader(block.getHeader().getParentHash());
 
       if (parent.isEmpty()) {
         context.halveBatchSize();

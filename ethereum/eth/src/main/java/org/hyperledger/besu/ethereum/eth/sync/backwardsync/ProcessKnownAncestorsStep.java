@@ -20,8 +20,10 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -49,18 +51,31 @@ public class ProcessKnownAncestorsStep {
       BlockHeader header = backwardChain.getFirstAncestorHeader().orElseThrow();
       final long chainHeadBlockNumber =
           context.getProtocolContext().getBlockchain().getChainHeadBlockNumber();
+      boolean isFirstUnProcessedHeader = true;
       if (context.getProtocolContext().getBlockchain().contains(header.getHash())
           && header.getNumber() <= chainHeadBlockNumber) {
         debugLambda(
             LOG,
             "Block {} is already imported, we can ignore it for the sync process",
-            () -> header.toLogString());
+            header::toLogString);
         backwardChain.dropFirstHeader();
-      } else if (context.getProtocolContext().getBlockchain().contains(header.getParentHash())
-          && backwardChain.isTrusted(header.getHash())) {
-        debugLambda(LOG, "Importing trusted block {}", header::toLogString);
-        context.saveBlock(backwardChain.getTrustedBlock(header.getHash()));
-      } else {
+        isFirstUnProcessedHeader = false;
+      } else if (context.getProtocolContext().getBlockchain().contains(header.getParentHash())) {
+        final boolean isTrustedBlock = backwardChain.isTrusted(header.getHash());
+        final Optional<Block> block =
+            isTrustedBlock
+                ? Optional.of(backwardChain.getTrustedBlock(header.getHash()))
+                : context.getProtocolContext().getBlockchain().getBlockByHash(header.getHash());
+        if (block.isPresent()) {
+          debugLambda(LOG, "Importing block {}", header::toLogString);
+          context.saveBlock(block.get());
+          if (isTrustedBlock) {
+            backwardChain.dropFirstHeader();
+            isFirstUnProcessedHeader = false;
+          }
+        }
+      }
+      if (isFirstUnProcessedHeader) {
         debugLambda(LOG, "First unprocessed header is {}", header::toLogString);
         return;
       }
