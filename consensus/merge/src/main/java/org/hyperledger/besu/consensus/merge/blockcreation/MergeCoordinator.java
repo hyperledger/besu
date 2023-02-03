@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import static java.util.stream.Collectors.joining;
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
@@ -60,6 +61,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -258,6 +260,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           payloadIdentifier);
       return payloadIdentifier;
     }
+    // it's a new payloadId so...
+    cancelAnyExistingBlockCreationTasks(payloadIdentifier);
 
     final MergeBlockCreator mergeBlockCreator =
         this.mergeBlockCreatorFactory.forParams(parentHeader, Optional.ofNullable(feeRecipient));
@@ -292,6 +296,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals);
 
     return payloadIdentifier;
+  }
+
+  private void cancelAnyExistingBlockCreationTasks(final PayloadIdentifier payloadIdentifier) {
+    if (blockCreationTask.size() > 0) {
+      String existingPayloadIdsBeingBuilt =
+          blockCreationTask.keySet().stream()
+              .map(PayloadIdentifier::toHexString)
+              .collect(joining(","));
+      LOG.warn(
+          "New payloadId {} received so cancelling block creation tasks for the following payloadIds: {}",
+          payloadIdentifier,
+          existingPayloadIdsBeingBuilt);
+      blockCreationTask.values().forEach(BlockCreationTask::cancel);
+    }
   }
 
   @Override
@@ -864,7 +882,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     return sw.toString();
   }
 
-  private boolean isBlockCreationCancelled(final PayloadIdentifier payloadId) {
+  @VisibleForTesting
+  boolean isBlockCreationCancelled(final PayloadIdentifier payloadId) {
     final BlockCreationTask job = blockCreationTask.get(payloadId);
     if (job == null) {
       return true;
