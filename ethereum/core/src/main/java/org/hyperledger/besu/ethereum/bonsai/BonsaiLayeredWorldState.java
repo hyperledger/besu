@@ -273,7 +273,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
                         "Unable to copy Layered Worldstate for " + blockHash().toHexString()))) {
       return new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage());
     } catch (MerkleTrieException ex) {
-      throw ex; //need to throw to trigger the heal
+      throw ex; // need to throw to trigger the heal
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

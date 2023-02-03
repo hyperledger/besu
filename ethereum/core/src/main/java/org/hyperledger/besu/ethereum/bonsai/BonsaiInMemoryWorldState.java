@@ -96,7 +96,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
           accountTrie.put(addressHash, accountValue);
         }
       } catch (MerkleTrieException e) {
-        //need to throw to trigger the heal
+        // need to throw to trigger the heal
         throw new MerkleTrieException(
             e.getMessage(), Optional.of(Address.wrap(accountKey)), e.getHash(), e.getLocation());
       }
@@ -144,7 +144,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
             storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
           }
         } catch (MerkleTrieException e) {
-          //need to throw to trigger the heal
+          // need to throw to trigger the heal
           throw new MerkleTrieException(
               e.getMessage(),
               Optional.of(Address.wrap(updatedAddress)),
