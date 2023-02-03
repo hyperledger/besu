@@ -4,7 +4,11 @@
 
 ### Breaking Changes
 - Add a new CLI option to limit the number of requests in a single RPC batch request. Default=1 [#4965](https://github.com/hyperledger/besu/pull/4965)
-- Changed JsonRpc http service to return the error -32602 (Invalid params) with a 200 http status code [#4967](https://github.com/hyperledger/besu/pull/4967)
+- Changed JsonRpc http service to return the error -32602 (Invalid params) with a 200 http status code
+- Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
+- PKCS11 with nss module (PKCS11 based HSM can be used in DevP2P TLS and QBFT PKI) does not work with RSA keys 
+in Java 17. SoftHSM is tested manually and working. (Other PKCS11 HSM are not tested). The relevant unit and acceptance 
+tests are updated to use EC private keys instead of RSA keys.
 
 ### Additions and Improvements
 - Added option to evm CLI tool to allow code execution at specific forks [#4913](https://github.com/hyperledger/besu/pull/4913)
@@ -14,7 +18,8 @@
 - Add implementation for engine_exchangeCapabilities [#4997](https://github.com/hyperledger/besu/pull/4997)
 - Add implementation for engine_getPayloadBodiesByRangeV1 and engine_getPayloadBodiesByHashV1 [#4980](https://github.com/hyperledger/besu/pull/4980)
 - Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
-- Add DebugGetRawBlock and DebugGetRawHeader RPC methods [#5011](https://github.com/hyperledger/besu/pull/5011)  
+- Add DebugGetRawBlock and DebugGetRawHeader RPC methods [#5011](https://github.com/hyperledger/besu/pull/5011)
+- Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
 
 ### Bug Fixes
 
