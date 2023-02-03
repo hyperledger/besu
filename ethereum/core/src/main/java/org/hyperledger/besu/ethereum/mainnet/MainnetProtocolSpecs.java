@@ -746,6 +746,7 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        .feeMarket(cancunFeeMarket)
         // gas calculator for EIP-4844 data gas
         .gasCalculator(CancunGasCalculator::new)
         // gas limit with EIP-4844 max data gas per block
