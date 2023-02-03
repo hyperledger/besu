@@ -24,6 +24,7 @@ import static org.hyperledger.besu.pki.util.TestCertificateUtils.issueCertificat
 
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
+import org.hyperledger.besu.pki.util.TestCertificateUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,8 +47,8 @@ public class PkiKeystoreConfigurationFactory {
   */
   final String NSSCONFIG_PATH_STRING = "/pki-certs/%s/nss.cfg";
   final String NSSPIN_PATH_STRING = "/pki-certs/%s/nsspin.txt";
-  final String TRUSTSTORE_PATH_STRING = "/pki-certs/%s/truststore.jks";
-  final String CRL_PATH_STRING = "/pki-certs/%s/crl.pem";
+  final String TRUSTSTORE_PATH_STRING = "/pki-certs/%s/truststore.p12";
+  final String CRL_PATH_STRING = "/pki-certs/crl/crl.pem";
 
   /*
    Software keystore config
@@ -78,10 +79,10 @@ public class PkiKeystoreConfigurationFactory {
               PKCS11Utils.initNSSConfigFile(
                   readResourceAsPath(String.format(NSSCONFIG_PATH_STRING, name))))
           .withKeyStorePasswordPath(readResourceAsPath(String.format(NSSPIN_PATH_STRING, name)))
-          .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_JKS)
+          .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12)
           .withTrustStorePath(readResourceAsPath(String.format(TRUSTSTORE_PATH_STRING, name)))
           .withTrustStorePasswordPath(readResourceAsPath(String.format(NSSPIN_PATH_STRING, name)))
-          .withCrlFilePath(readResourceAsPath(String.format(CRL_PATH_STRING, name)))
+          .withCrlFilePath(readResourceAsPath(CRL_PATH_STRING))
           .withCertificateAlias(name);
 
     } catch (Exception e) {
@@ -113,7 +114,7 @@ public class PkiKeystoreConfigurationFactory {
     // Only create the truststore if this is the first time this method is being called
     if (caKeyPair == null) {
       try {
-        caKeyPair = createKeyPair();
+        caKeyPair = createKeyPair(TestCertificateUtils.Algorithm.RSA);
         caCertificate = createSelfSignedCertificate("ca", notBefore(), notAfter(), caKeyPair);
 
         final KeyStore truststore = KeyStore.getInstance(type);
@@ -136,7 +137,7 @@ public class PkiKeystoreConfigurationFactory {
       createTrustStore(type);
     }
 
-    final KeyPair kp = createKeyPair();
+    final KeyPair kp = createKeyPair(TestCertificateUtils.Algorithm.RSA);
     final X509Certificate certificate =
         issueCertificate(caCertificate, caKeyPair, "validator", notBefore(), notAfter(), kp, false);
 

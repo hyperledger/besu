@@ -305,7 +305,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                                 null));
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
-
+              // This is especially to avoid unnecessary computation for withdrawals
+              if (updatedAccount.getUpdatedStorage().isEmpty()) return;
               final StorageConsumingMap<BonsaiValue<UInt256>> pendingStorageUpdates =
                   storageToUpdate.computeIfAbsent(
                       updatedAddress,

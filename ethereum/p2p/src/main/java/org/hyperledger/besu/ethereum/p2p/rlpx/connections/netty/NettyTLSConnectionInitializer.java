@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Suppliers;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
@@ -69,7 +70,12 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       final MetricsSystem metricsSystem,
       final Supplier<TLSContextFactory> tlsContextFactorySupplier) {
     super(nodeKey, config, localNode, eventDispatcher, metricsSystem);
-    this.tlsContextFactorySupplier = Optional.ofNullable(tlsContextFactorySupplier);
+    if (tlsContextFactorySupplier != null) {
+      this.tlsContextFactorySupplier =
+          Optional.of(Suppliers.memoize(tlsContextFactorySupplier::get));
+    } else {
+      this.tlsContextFactorySupplier = Optional.empty();
+    }
   }
 
   @Override
