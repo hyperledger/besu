@@ -564,7 +564,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     }
 
     debugLambda(LOG, "New head {} is a chain reorg, rewind chain head to it", newHead::toLogString);
-    return blockchain.rewindToBlock(newHead.getHash());
+    if (forwardWorldStateTo(newHead)) {
+      return blockchain.rewindToBlock(newHead.getHash());
+    }
+    return false;
   }
 
   private boolean forwardWorldStateTo(final BlockHeader newHead) {
