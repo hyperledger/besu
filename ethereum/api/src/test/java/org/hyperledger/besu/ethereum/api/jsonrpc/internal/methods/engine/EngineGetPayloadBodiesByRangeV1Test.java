@@ -109,7 +109,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     when(blockchain.getBlockHashByNumber(124)).thenReturn(Optional.of(blockHash2));
     when(blockchain.getBlockHashByNumber(125)).thenReturn(Optional.of(blockHash3));
 
-    final var resp = resp(123, 3);
+    final var resp = resp("0x7b", "0x3");
     final EngineGetPayloadBodiesResultV1 result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(3);
     assertThat(result.getPayloadBodies().get(0).getTransactions().size()).isEqualTo(1);
@@ -120,7 +120,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   @Test
   public void shouldReturnNullForUnknownNumber() {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(130));
-    final var resp = resp(123, 3);
+    final var resp = resp("0x7b", "0x3");
     final EngineGetPayloadBodiesResultV1 result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(3);
     assertThat(result.getPayloadBodies().get(0)).isNull();
@@ -150,7 +150,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     when(blockchain.getBlockHashByNumber(123)).thenReturn(Optional.of(blockHash1));
     when(blockchain.getBlockHashByNumber(125)).thenReturn(Optional.of(blockHash3));
 
-    final var resp = resp(123, 3);
+    final var resp = resp("0x7b", "0x3");
     final var result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(3);
     assertThat(result.getPayloadBodies().get(0).getTransactions().size()).isEqualTo(1);
@@ -183,7 +183,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     when(blockchain.getBlockHashByNumber(123)).thenReturn(Optional.of(blockHash1));
     when(blockchain.getBlockHashByNumber(124)).thenReturn(Optional.of(blockHash2));
 
-    final var resp = resp(123, 2);
+    final var resp = resp("0x7b", "0x2");
     final var result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(2);
     assertThat(result.getPayloadBodies().get(0).getTransactions().size()).isEqualTo(3);
@@ -223,7 +223,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     when(blockchain.getBlockHashByNumber(123)).thenReturn(Optional.of(blockHash1));
     when(blockchain.getBlockHashByNumber(124)).thenReturn(Optional.of(blockHash2));
 
-    final var resp = resp(123, 2);
+    final var resp = resp("0x7b", "0x2");
     final var result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(2);
     assertThat(result.getPayloadBodies().get(0).getTransactions().size()).isEqualTo(3);
@@ -251,7 +251,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(shanghaiBlockBody));
     when(blockchain.getBlockHashByNumber(123)).thenReturn(Optional.of(blockHash1));
 
-    final var resp = resp(123, 3);
+    final var resp = resp("0x7b", "0x3");
     final var result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(1);
   }
@@ -288,7 +288,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
     when(blockchain.getBlockHashByNumber(124)).thenReturn(Optional.of(blockHash2));
     when(blockchain.getBlockHashByNumber(125)).thenReturn(Optional.of(blockHash3));
 
-    final var resp = resp(123, 3);
+    final var resp = resp("0x7b", "0x3");
     final var result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies().size()).isEqualTo(3);
   }
@@ -297,7 +297,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   public void ShouldReturnEmptyPayloadForRequestsPastCurrentHead() {
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(123));
-    final JsonRpcResponse resp = resp(125, 3);
+    final JsonRpcResponse resp = resp("0x7d", "0x3");
     final var result = fromSuccessResp(resp);
     assertThat(result.getPayloadBodies()).isEqualTo(Collections.EMPTY_LIST);
   }
@@ -305,26 +305,26 @@ public class EngineGetPayloadBodiesByRangeV1Test {
   @Test
   public void shouldReturnErrorWhenRequestExceedsPermittedNumberOfBlocks() {
     doReturn(3).when(method).getMaxRequestBlocks();
-    final JsonRpcResponse resp = resp(1337, 4);
+    final JsonRpcResponse resp = resp("0x539", "0x4");
     final var result = fromErrorResp(resp);
     assertThat(result.getCode()).isEqualTo(INVALID_RANGE_REQUEST_TOO_LARGE.getCode());
   }
 
   @Test
   public void shouldReturnInvalidParamsIfStartIsZero() {
-    final JsonRpcResponse resp = resp(0, 1337);
+    final JsonRpcResponse resp = resp("0x0", "0x539");
     final var result = fromErrorResp(resp);
     assertThat(result.getCode()).isEqualTo(INVALID_PARAMS.getCode());
   }
 
   @Test
   public void shouldReturnInvalidParamsIfCountIsZero() {
-    final JsonRpcResponse resp = resp(1337, 0);
+    final JsonRpcResponse resp = resp("0x539", "0x0");
     final var result = fromErrorResp(resp);
     assertThat(result.getCode()).isEqualTo(INVALID_PARAMS.getCode());
   }
 
-  private JsonRpcResponse resp(final long startBlockNumber, final long range) {
+  private JsonRpcResponse resp(final String startBlockNumber, final String range) {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(

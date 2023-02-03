@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -61,13 +60,8 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
     engineCallListener.executionEngineCalled();
 
     final long startBlockNumber =
-        Optional.of(request.getRequiredParameter(0, UnsignedLongParameter.class))
-            .map(UnsignedLongParameter::getValue)
-            .orElse(0L);
-    final long count =
-        Optional.of(request.getRequiredParameter(1, UnsignedLongParameter.class))
-            .map(UnsignedLongParameter::getValue)
-            .orElse(0L);
+        request.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
+    final long count = request.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
     final Object reqId = request.getRequest().getId();
 
     traceLambda(
