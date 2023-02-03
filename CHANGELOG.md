@@ -18,6 +18,7 @@ tests are updated to use EC private keys instead of RSA keys.
 - Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
 - Add DebugGetRawBlock and DebugGetRawHeader RPC methods [#5011](https://github.com/hyperledger/besu/pull/5011)
 - Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
+- If a PoS block creation repetition takes less than a configurable duration, then waits before next repetition [#5048](https://github.com/hyperledger/besu/pull/5048)
 
 ### Bug Fixes
 
