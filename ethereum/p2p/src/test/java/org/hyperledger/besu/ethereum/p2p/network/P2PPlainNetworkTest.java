@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.network;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Fail.fail;
+import static org.hyperledger.besu.pki.keystore.KeyStoreWrapper.KEYSTORE_TYPE_PKCS12;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -47,21 +48,18 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.file.Files;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Charsets;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
@@ -72,6 +70,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class P2PPlainNetworkTest {
+  // See ethereum/p2p/src/test/resources/keys/README.md for certificates setup.
   private final Vertx vertx = Vertx.vertx();
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
@@ -417,90 +416,34 @@ public class P2PPlainNetworkTest {
             .build());
   }
 
-  private Path initNSSConfigFile(final Path srcFilePath) {
-    Path ret = null;
+  private static Path toPath(final String path) {
     try {
-      final String content = Files.readString(srcFilePath);
-      final String updated =
-          content.replaceAll(
-              "(nssSecmodDirectory\\W*)(\\.\\/.*)",
-              "$1".concat(srcFilePath.toAbsolutePath().toString().replace("nss.cfg", "nssdb")));
-      final Path targetFilePath = createTemporaryFile("nsscfg");
-      Files.write(targetFilePath, updated.getBytes(Charsets.UTF_8));
-      ret = targetFilePath;
-    } catch (final IOException e) {
-      throw new RuntimeException("Error populating nss config file", e);
+      return Path.of(Objects.requireNonNull(P2PPlainNetworkTest.class.getResource(path)).toURI());
+    } catch (URISyntaxException e) {
+      throw new RuntimeException("Error converting to URI.", e);
     }
-    return ret;
   }
 
-  private Path createTemporaryFile(final String suffix) {
-    final File tempFile;
-    try {
-      tempFile = File.createTempFile("temp", suffix);
-      tempFile.deleteOnExit();
-    } catch (final IOException e) {
-      throw new RuntimeException("Error creating temporary file", e);
-    }
-    return tempFile.toPath();
-  }
-
-  private static Path toPath(final String path) throws Exception {
-    return Path.of(P2PPlainNetworkTest.class.getResource(path).toURI());
-  }
-
-  public Optional<TLSConfiguration> p2pTLSEnabled(final String name, final String type) {
+  public Optional<TLSConfiguration> p2pTLSEnabled(final String clientDirName) {
+    final String parentPath = "/keys";
+    final String keystorePath = parentPath + "/%s/client1.p12";
+    final String truststorePath = parentPath + "/%s/truststore.p12";
+    final String crl = parentPath + "/crl/crl.pem";
     final TLSConfiguration.Builder builder = TLSConfiguration.Builder.tlsConfiguration();
-    try {
-      final String nsspin = "/keys/%s/nsspin.txt";
-      final String truststore = "/keys/%s/truststore.jks";
-      final String crl = "/keys/%s/crl.pem";
-      switch (type) {
-        case KeyStoreWrapper.KEYSTORE_TYPE_JKS:
-          builder
-              .withKeyStoreType(type)
-              .withKeyStorePath(toPath(String.format("/keys/%s/keystore.jks", name)))
-              .withKeyStorePasswordSupplier(
-                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
-              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
-              .withTrustStoreType(type)
-              .withTrustStorePath(toPath(String.format(truststore, name)))
-              .withTrustStorePasswordSupplier(
-                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
-              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)))
-              .withCrlPath(toPath(String.format(crl, name)));
-          break;
-        case KeyStoreWrapper.KEYSTORE_TYPE_PKCS12:
-          builder
-              .withKeyStoreType(type)
-              .withKeyStorePath(toPath(String.format("/keys/%s/keys.p12", name)))
-              .withKeyStorePasswordSupplier(
-                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
-              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
-              .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_JKS)
-              .withTrustStorePath(toPath(String.format(truststore, name)))
-              .withTrustStorePasswordSupplier(
-                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
-              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)))
-              .withCrlPath(toPath(String.format(crl, name)));
-          break;
-        case KeyStoreWrapper.KEYSTORE_TYPE_PKCS11:
-          builder
-              .withKeyStoreType(type)
-              .withKeyStorePath(initNSSConfigFile(toPath(String.format("/keys/%s/nss.cfg", name))))
-              .withKeyStorePasswordSupplier(
-                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
-              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
-              .withCrlPath(toPath(String.format(crl, name)));
-          break;
-      }
-    } catch (final Exception e) {
-      throw new RuntimeException(e);
-    }
+    builder
+        .withKeyStoreType(KEYSTORE_TYPE_PKCS12)
+        .withKeyStorePath(toPath(String.format(keystorePath, clientDirName)))
+        .withKeyStorePasswordSupplier(() -> "test123")
+        // .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
+        .withTrustStoreType(KEYSTORE_TYPE_PKCS12)
+        .withTrustStorePath(toPath(String.format(truststorePath, clientDirName)))
+        .withTrustStorePasswordSupplier(() -> "test123")
+        .withCrlPath(toPath(crl));
+
     return Optional.of(builder.build());
   }
 
-  private DefaultP2PNetwork.Builder builder(final String name) {
+  private DefaultP2PNetwork.Builder builder(final String clientDirName) {
     final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
     final Block blockMock = mock(Block.class);
     when(blockMock.getHash()).thenReturn(Hash.ZERO);
@@ -509,7 +452,7 @@ public class P2PPlainNetworkTest {
         .vertx(vertx)
         .config(config)
         .nodeKey(NodeKeyUtils.generate())
-        .p2pTLSConfiguration(p2pTLSEnabled(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS))
+        .p2pTLSConfiguration(p2pTLSEnabled(clientDirName))
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
         .storageProvider(new InMemoryKeyValueStorageProvider())

@@ -26,6 +26,8 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -122,12 +124,14 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
   /**
    * Instantiates a new Hardware key store wrapper.
    *
+   * @param crls the collection of X509CRL crls
    * @param keystore the keystore
    * @param password the password
    */
   @VisibleForTesting
-  HardwareKeyStoreWrapper(final KeyStore keystore, final String password) {
-    super(null);
+  HardwareKeyStoreWrapper(
+      final Collection<X509CRL> crls, final KeyStore keystore, final String password) {
+    super(crls);
     this.keystore = keystore;
     this.keystorePassword = password.toCharArray();
     this.provider = null;

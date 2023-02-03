@@ -21,8 +21,8 @@ configurations.maybeCreate("epJavac")
 apply plugin: 'java'
 apply plugin: 'net.ltgt.errorprone'
 
-sourceCompatibility = 11
-targetCompatibility = 11
+sourceCompatibility = 17
+targetCompatibility = 17
 
 dependencies {
   api 'org.slf4j:slf4j-api'
