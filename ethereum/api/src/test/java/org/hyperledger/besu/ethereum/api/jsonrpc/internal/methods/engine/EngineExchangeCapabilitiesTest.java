@@ -74,11 +74,13 @@ public class EngineExchangeCapabilitiesTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
-  private JsonRpcResponse resp(final List<String> params) {
+  private JsonRpcResponse resp(final List<String> capabilitiesParam) {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", ENGINE_EXCHANGE_CAPABILITIES.getMethodName(), params.toArray())));
+                "2.0",
+                ENGINE_EXCHANGE_CAPABILITIES.getMethodName(),
+                new Object[] {capabilitiesParam})));
   }
 
   @SuppressWarnings("unchecked")
