@@ -243,7 +243,9 @@ public class EngineGetPayloadBodiesByHashV1Test {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", RpcMethod.ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1.getMethodName(), hashes)));
+                "2.0",
+                RpcMethod.ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1.getMethodName(),
+                new Object[] {hashes})));
   }
 
   private EngineGetPayloadBodiesResultV1 fromSuccessResp(final JsonRpcResponse resp) {
