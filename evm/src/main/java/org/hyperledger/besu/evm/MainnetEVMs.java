@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -111,6 +112,8 @@ import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
+import org.hyperledger.besu.evm.operation.TLoadOperation;
+import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 
@@ -727,12 +730,21 @@ public class MainnetEVMs {
   /**
    * Cancun evm.
    *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancun(final EvmConfiguration evmConfiguration) {
+    return cancun(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+  /**
+   * Cancun evm.
+   *
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
    * @return the evm
    */
   public static EVM cancun(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return cancun(new ShanghaiGasCalculator(), chainId, evmConfiguration);
+    return cancun(new CancunGasCalculator(), chainId, evmConfiguration);
   }
 
   /**
@@ -780,12 +792,20 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerShanghaiOperations(registry, gasCalculator, chainID);
+
+    // EIP-4844
+    registry.put(new DataHashOperation(gasCalculator));
+
+    // TSTORE/TLOAD
+    registry.put(new TStoreOperation(gasCalculator));
+    registry.put(new TLoadOperation(gasCalculator));
+
+    // EOFV1
     registry.put(new RelativeJumpOperation(gasCalculator));
     registry.put(new RelativeJumpIfOperation(gasCalculator));
     registry.put(new RelativeJumpVectorOperation(gasCalculator));
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
-    registry.put(new DataHashOperation(gasCalculator));
   }
 
   /**
