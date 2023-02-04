@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -379,9 +378,7 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
                 .versionedHashes(transaction.getVersionedHashes())
-                .code(
-                    contractCreationProcessor.getCodeFromEVM(
-                        Hash.hash(initCodeBytes), initCodeBytes))
+                .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
