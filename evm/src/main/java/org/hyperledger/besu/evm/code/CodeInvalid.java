@@ -19,6 +19,9 @@ package org.hyperledger.besu.evm.code;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -27,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class CodeInvalid implements Code {
 
-  private final Hash codeHash;
+  private final Supplier<Hash> codeHash;
   private final Bytes codeBytes;
 
   private final String invalidReason;
@@ -35,13 +38,12 @@ public class CodeInvalid implements Code {
   /**
    * Instantiates a new Code invalid.
    *
-   * @param codeHash the code hash
    * @param codeBytes the code bytes
    * @param invalidReason the invalid reason
    */
-  public CodeInvalid(final Hash codeHash, final Bytes codeBytes, final String invalidReason) {
-    this.codeHash = codeHash;
+  public CodeInvalid(final Bytes codeBytes, final String invalidReason) {
     this.codeBytes = codeBytes;
+    this.codeHash = Suppliers.memoize(() -> Hash.hash(codeBytes));
     this.invalidReason = invalidReason;
   }
 
@@ -66,7 +68,7 @@ public class CodeInvalid implements Code {
 
   @Override
   public Hash getCodeHash() {
-    return codeHash;
+    return codeHash.get();
   }
 
   @Override
