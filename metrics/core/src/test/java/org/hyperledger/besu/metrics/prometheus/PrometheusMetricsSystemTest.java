@@ -217,10 +217,9 @@ public class PrometheusMetricsSystemTest {
   }
 
   @Test
-  public void shouldNotAllowDuplicateGaugeCreation() {
-    // Gauges have a reference to the source of their data so creating it twice will still only
-    // pull data from the first instance, possibly leaking memory and likely returning the wrong
-    // results.
+  public void shouldAllowDuplicateGaugeCreation() {
+    // When we are pushing the same gauge, the first one will be unregistered and the new one will
+    // be used
     metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
     assertThatThrownBy(() -> metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0))
         .isInstanceOf(IllegalArgumentException.class);
