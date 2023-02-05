@@ -148,6 +148,7 @@ public abstract class AbstractMessageProcessor {
    */
   private void completedSuccess(final MessageFrame frame) {
     frame.getWorldUpdater().commit();
+    frame.commitTransientStorage();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }

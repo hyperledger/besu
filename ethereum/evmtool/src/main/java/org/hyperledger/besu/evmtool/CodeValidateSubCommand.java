@@ -17,7 +17,6 @@ package org.hyperledger.besu.evmtool;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.CodeValidateSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.EOFLayout;
@@ -117,7 +116,7 @@ public class CodeValidateSubCommand implements Runnable {
       return "err: layout - " + layout.getInvalidReason() + "\n";
     }
 
-    var code = CodeFactory.createCode(codeBytes, Hash.hash(codeBytes), 1, true);
+    var code = CodeFactory.createCode(codeBytes, 1, true);
     if (!code.isValid()) {
       return "err: " + ((CodeInvalid) code).getInvalidReason() + "\n";
     }
