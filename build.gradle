@@ -116,6 +116,10 @@ allprojects {
       content { includeGroupByRegex('net\\.consensys\\..*') }
     }
     maven {
+      url "https://artifacts.consensys.net/public/besu-rocksdb/maven/"
+      //content { includeGroup('org\\.rocksdb') }
+    }
+    maven {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
