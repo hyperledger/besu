@@ -5,47 +5,8 @@
 ### Breaking Changes
 
 ### Additions and Improvements
-- Support for new DATAHASH opcode as part of EIP-4844 [#4823](https://github.com/hyperledger/besu/issues/4823)
-- Send only hash announcement for blob transaction type [#4940](https://github.com/hyperledger/besu/pull/4940)
-- Add `excess_data_gas` field to block header [#4958](https://github.com/hyperledger/besu/pull/4958)
-- Add `max_fee_per_data_gas` field to transaction [#4970](https://github.com/hyperledger/besu/pull/4970)
-
-### Bug Fixes
-- Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
-- Ensure latest cached layered worldstate is subscribed to storage, fix problem with RPC calls using 'latest' [#5039](https://github.com/hyperledger/besu/pull/5039)  
-
-
-## 23.1.0-RC1
-
-### Breaking Changes
-- Default configurations for the deprecated Ropsten, Kiln, Shandong, and Astor networks have been removed from the CLI network list. These networks can currently be accessed but will require a user-provided genesis configuration. [#4869](https://github.com/hyperledger/besu/pull/4869)
-
-### Additions and Improvements
-
-- Improve SLOAD and SSTORE performance by caching empty slots [#4874](https://github.com/hyperledger/besu/pull/4874)
-- RPC methods that lookup block by hash will now return an error response if no block found [#4582](https://github.com/hyperledger/besu/pull/4582)
-- Added support for `safe` and `finalized` strings for the RPC methods using defaultBlock parameter [#4902](https://github.com/hyperledger/besu/pull/4902)
-
-### Bug Fixes
-
-### Download Links
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.0-RC1/besu-23.1.0-RC1.tar.gz / sha256: 30906891e528b3b4e3ce8e2313550a1da066b31ea10b05456dd0ad026792b46d
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.0-RC1/besu-23.1.0-RC1.zip / sha256: 9067d1929079ae4a7c165e6f1e2bae08834939ed191f976d26544dc93352c306
-
-## 23.1.0-beta
-
-### Breaking Changes
-- GoQuorum-compatible privacy is deprecated and will be removed in 23.4
-- IBFT 1.0 is deprecated and will be removed in 23.4
-- Optimize SSTORE Operation execution time (memoize current and original value) [#4836](https://github.com/hyperledger/besu/pull/4836)
-
-### Additions and Improvements
-- Added post-execution state logging option to EVM Tool [#4709](https://github.com/hyperledger/besu/pull/4709)
-- Add access list to Transaction Call Object [#4802](https://github.com/hyperledger/besu/issues/4801)
-- Add timestamp fork support, including shanghaiTime and cancunTime forks [#4743](https://github.com/hyperledger/besu/pull/4743)
-- Optimization:  Memoize transaction size and hash at the same time [#4812](https://github.com/hyperledger/besu/pull/4812)
-- Add chain data pruning feature with three experimental CLI options: `--Xchain-pruning-enabled`, `--Xchain-pruning-blocks-retained` and `--Xchain-pruning-frequency` [#4686](https://github.com/hyperledger/besu/pull/4686)
-  - Note that chain pruning is hidden and disabled by default. Once you choose to enable chain pruning, a new column family will be added to the db and you cannot roll back to a previous version of Besu.
+- Use safe block as snap sync pivot block [#4819](https://github.com/hyperledger/besu/pull/4912)
+- Disconnect worst peer when retrying p2p tasks fails [#4888](https://github.com/hyperledger/besu/pull/4888)
 
 ### Bug Fixes
 - Fix for segmentation faults on worldstate truncation, snap-sync starts [#4786](https://github.com/hyperledger/besu/pull/4786)
