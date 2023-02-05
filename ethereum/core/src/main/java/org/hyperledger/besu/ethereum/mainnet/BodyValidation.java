@@ -17,10 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.*;
+import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -77,6 +75,22 @@ public final class BodyValidation {
     IntStream.range(0, withdrawals.size())
         .forEach(
             i -> trie.put(indexKey(i), WithdrawalEncoder.encodeOpaqueBytes(withdrawals.get(i))));
+
+    return Hash.wrap(trie.getRootHash());
+  }
+
+  /**
+   * Generates the deposits root for a list of deposits
+   *
+   * @param deposits the transactions
+   * @return the transaction root
+   */
+  public static Hash depositsRoot(final List<Deposit> deposits) {
+    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+
+    IntStream.range(0, deposits.size())
+        .forEach(
+            i -> trie.put(indexKey(i), DepositEncoder.encodeOpaqueBytes(deposits.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }

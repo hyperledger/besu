@@ -76,6 +76,10 @@ public class ProtocolSpecBuilder {
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
 
+  private DepositsValidator depositsValidator =
+          new DepositsValidator.ProhibitedDeposits();
+  private DepositsProcessor depositsProcessor;
+
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -257,6 +261,16 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder depositsValidator(final DepositsValidator depositsValidator) {
+    this.depositsValidator = depositsValidator;
+    return this;
+  }
+
+  public ProtocolSpecBuilder depositsProcessor(final DepositsProcessor depositsProcessor) {
+    this.depositsProcessor = depositsProcessor;
+    return this;
+  }
+
   public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
@@ -363,7 +377,9 @@ public class ProtocolSpecBuilder {
         badBlockManager,
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
-        Optional.ofNullable(withdrawalsProcessor));
+        Optional.ofNullable(withdrawalsProcessor),
+        depositsValidator,
+        Optional.ofNullable(depositsProcessor));
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(

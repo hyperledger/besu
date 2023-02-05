@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdater;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -92,6 +93,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
+      final Optional<List<Deposit>> maybeDeposits,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -145,6 +147,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       maybeWithdrawalsProcessor
           .get()
           .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
+    }
+
+    final Optional<DepositsProcessor> maybeDepositsProcessor =
+        protocolSchedule.getByBlockHeader(blockHeader).getDepositsProcessor();
+    if (maybeDepositsProcessor.isPresent() && maybeDeposits.isPresent()) {
+      try {
+        maybeDepositsProcessor
+            .get()
+            .processDeposits(maybeDeposits.get(), worldState.updater());
+      } catch (final Exception e) {
+        LOG.error("failed processing deposits", e);
+        return new BlockProcessingResult(Optional.empty(), e);
+      }
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

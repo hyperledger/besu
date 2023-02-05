@@ -77,8 +77,9 @@ public class ProtocolSpec {
   private final Optional<PoWHasher> powHasher;
 
   private final WithdrawalsValidator withdrawalsValidator;
-
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
+  private final DepositsValidator depositsValidator;
+  private final Optional<DepositsProcessor> depositsProcessor;
 
   /**
    * Creates a new protocol specification instance.
@@ -108,6 +109,8 @@ public class ProtocolSpec {
    * @param powHasher the proof-of-work hasher
    * @param withdrawalsValidator the withdrawals validator to use
    * @param withdrawalsProcessor the Withdrawals processor to use
+   * @param depositsValidator the withdrawals validator to use
+   * @param depositsProcessor the Withdrawals processor to use
    */
   public ProtocolSpec(
       final String name,
@@ -134,7 +137,9 @@ public class ProtocolSpec {
       final BadBlockManager badBlockManager,
       final Optional<PoWHasher> powHasher,
       final WithdrawalsValidator withdrawalsValidator,
-      final Optional<WithdrawalsProcessor> withdrawalsProcessor) {
+      final Optional<WithdrawalsProcessor> withdrawalsProcessor,
+      final DepositsValidator depositsValidator,
+      final Optional<DepositsProcessor> depositsProcessor) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -160,6 +165,8 @@ public class ProtocolSpec {
     this.powHasher = powHasher;
     this.withdrawalsValidator = withdrawalsValidator;
     this.withdrawalsProcessor = withdrawalsProcessor;
+    this.depositsValidator = depositsValidator;
+    this.depositsProcessor = depositsProcessor;
   }
 
   /**
@@ -367,4 +374,13 @@ public class ProtocolSpec {
   public Optional<WithdrawalsProcessor> getWithdrawalsProcessor() {
     return withdrawalsProcessor;
   }
+
+  public DepositsValidator getDepositsValidator() {
+    return depositsValidator;
+  }
+
+  public Optional<DepositsProcessor> getDepositsProcessor() {
+    return depositsProcessor;
+  }
+
 }

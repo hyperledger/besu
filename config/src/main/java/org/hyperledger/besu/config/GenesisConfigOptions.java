@@ -256,6 +256,13 @@ public interface GenesisConfigOptions {
   OptionalLong getCancunTime();
 
   /**
+   * Gets EIP-6110 time.
+   *
+   * @return the EIP-6110 time
+   */
+  OptionalLong getEIP6110Time();
+
+  /**
    * Gets future eips time.
    *
    * @return the future eips time

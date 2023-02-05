@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -748,6 +749,29 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
+  static ProtocolSpecBuilder eip6110Definition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return cancunDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .depositsProcessor(new DepositsProcessor())
+        .depositsValidator(new DepositsValidator.AllowedDeposits())
+        .name("Eip6110");
+
+  }
+
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
@@ -871,6 +895,7 @@ public abstract class MainnetProtocolSpecs {
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
         final Optional<List<Withdrawal>> withdrawals,
+        final Optional<List<Deposit>> deposits,
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
@@ -880,6 +905,7 @@ public abstract class MainnetProtocolSpecs {
           transactions,
           ommers,
           withdrawals,
+          deposits,
           privateMetadataUpdater);
     }
 

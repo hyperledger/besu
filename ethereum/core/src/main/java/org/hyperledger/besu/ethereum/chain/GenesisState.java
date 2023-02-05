@@ -21,13 +21,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.*;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -96,7 +90,10 @@ public final class GenesisState {
   private static BlockBody buildBody(final GenesisConfigFile config) {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
-    return new BlockBody(emptyList(), emptyList(), withdrawals);
+    final Optional<List<Deposit>> deposits =
+        isEIP6110AtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+
+    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits);
   }
 
   public Block getBlock() {
@@ -225,6 +222,14 @@ public final class GenesisState {
     final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
     if (shanghaiTimestamp.isPresent()) {
       return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
+    }
+    return false;
+  }
+
+  private static boolean isEIP6110AtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong eip6110Timestamp = genesis.getConfigOptions().getEIP6110Time();
+    if (eip6110Timestamp.isPresent()) {
+      return eip6110Timestamp.getAsLong() == genesis.getTimestamp();
     }
     return false;
   }
