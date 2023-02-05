@@ -221,8 +221,9 @@ public class PrometheusMetricsSystemTest {
     // When we are pushing the same gauge, the first one will be unregistered and the new one will
     // be used
     metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
-    assertThatThrownBy(() -> metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0))
-        .isInstanceOf(IllegalArgumentException.class);
+    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
+    assertThat(metricsSystem.streamObservations())
+        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7.0, emptyList()));
   }
 
   @Test

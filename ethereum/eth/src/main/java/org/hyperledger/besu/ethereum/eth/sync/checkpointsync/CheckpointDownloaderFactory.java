@@ -90,7 +90,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
-          "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
+          "Checkpoint sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
     }
 

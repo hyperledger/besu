@@ -322,6 +322,7 @@ public class SyncState {
 
   public void markInitialSyncPhaseAsDone() {
     isInitialSyncPhaseDone = true;
+    isResyncNeeded = false;
     completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncCompleted);
   }
 
