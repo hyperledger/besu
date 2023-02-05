@@ -155,7 +155,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(codeBytes, Hash.hash(codeBytes), 0, true))
+            .code(CodeFactory.createCode(codeBytes, 0, true))
             .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
@@ -179,10 +179,7 @@ public class Create2OperationTest {
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
     when(evm.getCode(any(), any()))
-        .thenAnswer(
-            invocation ->
-                CodeFactory.createCode(
-                    invocation.getArgument(1), invocation.getArgument(0), 0, true));
+        .thenAnswer(invocation -> CodeFactory.createCode(invocation.getArgument(1), 0, true));
   }
 
   @ParameterizedTest
@@ -283,7 +280,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, Hash.hash(SIMPLE_CREATE), 0, true))
+            .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
             .depth(depth)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
@@ -312,7 +309,7 @@ public class Create2OperationTest {
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder()
-            .code(CodeFactory.createCode(SIMPLE_EOF, Hash.hash(SIMPLE_EOF), 1, true))
+            .code(CodeFactory.createCode(SIMPLE_EOF, 1, true))
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(memoryLength)
             .pushStackItem(memoryOffset)
@@ -337,7 +334,7 @@ public class Create2OperationTest {
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_EOF.size());
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder()
-            .code(CodeFactory.createCode(SIMPLE_CREATE, Hash.hash(SIMPLE_CREATE), 1, true))
+            .code(CodeFactory.createCode(SIMPLE_CREATE, 1, true))
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(memoryLength)
             .pushStackItem(memoryOffset)
