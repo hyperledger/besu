@@ -98,6 +98,11 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public void clearTrieLog() {
+    // nothing to do for forest
+  }
+
+  @Override
   public void clearFlatDatabase() {
     // nothing to do for forest
   }
