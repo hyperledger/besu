@@ -142,6 +142,15 @@ public class BlockchainQueries {
   }
 
   /**
+   * Return the header of the head of the chain.
+   *
+   * @return The header of the head of the chain.
+   */
+  public BlockHeader headBlockHeader() {
+    return blockchain.getChainHeadHeader();
+  }
+
+  /**
    * Return the header of the last finalized block.
    *
    * @return The header of the last finalized block.
