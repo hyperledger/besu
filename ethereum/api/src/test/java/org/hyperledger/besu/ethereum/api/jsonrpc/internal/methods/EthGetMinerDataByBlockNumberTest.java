@@ -76,7 +76,7 @@ public class EthGetMinerDataByBlockNumberTest {
             header, Collections.emptyList(), Collections.emptyList(), Difficulty.of(100L), 5);
 
     when(blockchainQueries.blockByNumber(anyLong())).thenReturn(Optional.of(blockWithMetadata));
-    when(protocolSchedule.getByBlockNumber(header.getNumber())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(header)).thenReturn(protocolSpec);
     when(protocolSpec.getBlockReward()).thenReturn(Wei.fromEth(2));
     when(blockchainQueries.getBlockchain()).thenReturn(blockChain);
 

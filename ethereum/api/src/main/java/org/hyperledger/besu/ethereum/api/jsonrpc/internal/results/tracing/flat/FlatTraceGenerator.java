@@ -336,7 +336,7 @@ public class FlatTraceGenerator {
     if ("STOP".equals(traceFrame.getOpcode()) && resultBuilder.isGasUsedEmpty()) {
       final long callStipend =
           protocolSchedule
-              .getByBlockNumber(block.getHeader().getNumber())
+              .getByBlockHeader(block.getHeader())
               .getGasCalculator()
               .getAdditionalCallStipend();
       tracesContexts.stream()
