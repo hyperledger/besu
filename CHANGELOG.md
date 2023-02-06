@@ -9,7 +9,7 @@
 - PKCS11 with nss module (PKCS11 based HSM can be used in DevP2P TLS and QBFT PKI) does not work with RSA keys 
 in Java 17. SoftHSM is tested manually and working. (Other PKCS11 HSM are not tested). The relevant unit and acceptance 
 tests are updated to use EC private keys instead of RSA keys.
-- Change eth_feeHistory parameter `blockCount` to accept hexadecimal string #5047
+- Change eth_feeHistory parameter `blockCount` to accept hexadecimal string [#5047](https://github.com/hyperledger/besu/pull/5047)
 
 ### Additions and Improvements
 - Added option to evm CLI tool to allow code execution at specific forks [#4913](https://github.com/hyperledger/besu/pull/4913)
