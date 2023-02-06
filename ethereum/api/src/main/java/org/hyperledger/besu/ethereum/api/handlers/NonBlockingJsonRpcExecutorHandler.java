@@ -73,7 +73,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
           .writerWithDefaultPrettyPrinter()
           .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
           .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
-  private static final List BLOCKING_REQUESTS_NAMESPACES = List.of("eea_", "priv_");
+  private static final List<String> BLOCKING_REQUESTS_NAMESPACES = List.of("eea_", "priv_");
 
   private final List<String> verticleDeploymentIds = new ArrayList<>();
   private final Vertx vertx;
@@ -268,9 +268,19 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
     lazyTraceLogger(jsonArray::toString);
 
     for (int i = 0; i < jsonArray.size(); i++) {
-      final JsonObject jsonObject = jsonArray.getJsonObject(i);
+      final JsonObject jsonObject;
+      try {
+        jsonObject = jsonArray.getJsonObject(i);
+      } catch (ClassCastException e) {
+        // ignore invalid requests, as they will be marked as
+        // invalid in JsonRpcExecutorVerticle.handleJsonRpcExecutorArrayRequest()
+        continue;
+      }
+
       if (isBlockingRequest(jsonObject)) {
-        LOG.error("Methods of the namespaces {} cannot be processed in an array JSON request", BLOCKING_REQUESTS_NAMESPACES);
+        LOG.error(
+            "Methods of the namespaces {} cannot be processed in an array JSON request",
+            BLOCKING_REQUESTS_NAMESPACES);
         handleJsonRpcError(ctx, getRequestId(ctx), JsonRpcError.INVALID_REQUEST);
       }
     }
@@ -348,7 +358,7 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
 
   private boolean isBlockingRequest(final JsonObject jsonRequest) {
     final String method = jsonRequest.getString("method");
-    return method == null || BLOCKING_REQUESTS_NAMESPACES.stream().anyMatch(namespace -> method.startsWith((String) namespace));
+    return method == null || BLOCKING_REQUESTS_NAMESPACES.stream().anyMatch(method::startsWith);
   }
 
   private HttpResponseStatus status(final JsonRpcResponse response) {
