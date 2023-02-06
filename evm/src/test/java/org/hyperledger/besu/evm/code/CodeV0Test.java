@@ -65,8 +65,7 @@ public class CodeV0Test {
   public void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
-    final CodeV0 getsCached =
-        (CodeV0) spy(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0, false));
+    final CodeV0 getsCached = (CodeV0) spy(CodeFactory.createCode(jumpBytes, 0, false));
     MessageFrame frame = createJumpFrame(getsCached);
 
     OperationResult result = operation.execute(frame, evm);

@@ -49,6 +49,11 @@ public class TestCodeExecutor {
       final long gasLimit,
       final Consumer<MutableAccount> accountSetup) {
     final WorldUpdater worldUpdater = createInitialWorldState(accountSetup);
+    return executeCode(codeHexString, gasLimit, worldUpdater);
+  }
+
+  public MessageFrame executeCode(
+      final String codeHexString, final long gasLimit, final WorldUpdater worldUpdater) {
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
     final MessageCallProcessor messageCallProcessor =
@@ -80,7 +85,18 @@ public class TestCodeExecutor {
     return initialFrame;
   }
 
-  private WorldUpdater createInitialWorldState(final Consumer<MutableAccount> accountSetup) {
+  public static void deployContract(
+      final WorldUpdater worldUpdater, final Address contractAddress, final String codeHexString) {
+    var updater = worldUpdater.updater();
+    final MutableAccount contract = updater.getOrCreate(contractAddress).getMutable();
+
+    contract.setNonce(0);
+    contract.clearStorage();
+    contract.setCode(Bytes.fromHexStringLenient(codeHexString));
+    updater.commit();
+  }
+
+  public static WorldUpdater createInitialWorldState(final Consumer<MutableAccount> accountSetup) {
     ToyWorld toyWorld = new ToyWorld();
 
     final WorldUpdater worldState = toyWorld.updater();
