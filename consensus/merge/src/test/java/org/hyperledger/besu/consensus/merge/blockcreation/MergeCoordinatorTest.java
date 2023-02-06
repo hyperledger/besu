@@ -174,7 +174,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               return spec;
             })
         .when(protocolSchedule)
-        .getByBlockNumber(anyLong());
+        .getByBlockHeader(any(BlockHeader.class));
 
     protocolContext = new ProtocolContext(blockchain, worldStateArchive, mergeContext);
     var mutable = worldStateArchive.getMutable();

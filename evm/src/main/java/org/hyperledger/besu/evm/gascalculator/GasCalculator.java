@@ -489,6 +489,24 @@ public interface GasCalculator {
   long getMaximumTransactionCost(int size);
 
   /**
+   * Returns the cost of a loading from Transient Storage
+   *
+   * @return the cost of a TLOAD from a storage slot
+   */
+  default long getTransientLoadOperationGasCost() {
+    return 0L;
+  }
+
+  /**
+   * Returns the cost of a storing to Transient Storage
+   *
+   * @return the cost of a TSTORE to a storage slot
+   */
+  default long getTransientStoreOperationGasCost() {
+    return 0L;
+  }
+
+  /**
    * Return the gas cost given the number of blobs
    *
    * @param blobCount the number of blobs

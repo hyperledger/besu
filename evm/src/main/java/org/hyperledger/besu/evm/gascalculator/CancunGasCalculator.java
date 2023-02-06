@@ -14,15 +14,35 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-/** The Cancun gas calculator as defined in EIP-4844 */
+/**
+ * Gas Calculator for Cancun
+ *
+ * <UL>
+ *   <LI>Gas costs for TSTORE/TLOAD
+ * </UL>
+ */
 public class CancunGasCalculator extends LondonGasCalculator {
 
-  private static final long CANCUN_DATA_GAS_PER_BLOB = 1 << 17;
-  private static final long CANCUN_TARGET_DATA_GAS_PER_BLOCK = 1 << 18;
+  private static final long TLOAD_GAS = WARM_STORAGE_READ_COST;
+  private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
+
+  private static final long DATA_GAS_PER_BLOB = 1 << 17;
+  private static final long TARGET_DATA_GAS_PER_BLOCK = 1 << 18;
+
+  // EIP-1153
+  @Override
+  public long getTransientLoadOperationGasCost() {
+    return TLOAD_GAS;
+  }
+
+  @Override
+  public long getTransientStoreOperationGasCost() {
+    return TSTORE_GAS;
+  }
 
   @Override
   public long dataGasCost(final int blobCount) {
-    return CANCUN_DATA_GAS_PER_BLOB * blobCount;
+    return DATA_GAS_PER_BLOB * blobCount;
   }
 
   /**
@@ -35,12 +55,12 @@ public class CancunGasCalculator extends LondonGasCalculator {
    */
   @Override
   public long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
-    final long consumedDataGas = CANCUN_DATA_GAS_PER_BLOB * newBlobs;
+    final long consumedDataGas = DATA_GAS_PER_BLOB * newBlobs;
     final long currentExcessDataGas = parentExcessDataGas + consumedDataGas;
 
-    if (currentExcessDataGas < CANCUN_TARGET_DATA_GAS_PER_BLOCK) {
+    if (currentExcessDataGas < TARGET_DATA_GAS_PER_BLOCK) {
       return 0L;
     }
-    return currentExcessDataGas - CANCUN_TARGET_DATA_GAS_PER_BLOCK;
+    return currentExcessDataGas - TARGET_DATA_GAS_PER_BLOCK;
   }
 }
