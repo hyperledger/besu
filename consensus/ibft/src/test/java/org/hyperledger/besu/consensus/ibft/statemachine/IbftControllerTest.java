@@ -201,7 +201,7 @@ public class IbftControllerTest {
   public void newBlockForCurrentOrPreviousHeightTriggersNoChange() {
     constructIbftController();
     ibftController.start();
-    long chainHeadHeight = chainHeadBlockHeader.getNumber();
+    long chainHeadHeight = 3;
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight);
     when(nextBlock.getHash()).thenReturn(Hash.ZERO);
     final NewChainHead sameHeightBlock = new NewChainHead(nextBlock);

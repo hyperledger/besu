@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
@@ -75,7 +74,7 @@ public class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0, false))
+            .code(CodeFactory.createCode(jumpBytes, 0, false))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -90,7 +89,7 @@ public class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0, false))
+            .code(CodeFactory.createCode(jumpBytes, 0, false))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -105,7 +104,7 @@ public class JumpOperationTest {
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
-            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0, false))
+            .code(CodeFactory.createCode(jumpBytes, 0, false))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
@@ -115,7 +114,7 @@ public class JumpOperationTest {
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x04"))
-            .code(CodeFactory.createCode(badJump, Hash.hash(badJump), 0, false))
+            .code(CodeFactory.createCode(badJump, 0, false))
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
@@ -133,7 +132,7 @@ public class JumpOperationTest {
     final MessageFrame longContract =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x12c"))
-            .code(CodeFactory.createCode(longCode, Hash.hash(longCode), 0, false))
+            .code(CodeFactory.createCode(longCode, 0, false))
             .build();
     longContract.setPC(255);
 

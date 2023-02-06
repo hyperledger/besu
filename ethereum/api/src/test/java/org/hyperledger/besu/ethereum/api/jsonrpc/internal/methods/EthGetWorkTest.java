@@ -92,7 +92,8 @@ public class EthGetWorkTest {
           + BaseEncoding.base16()
               .lowerCase()
               .encode(
-                  DirectAcyclicGraphSeed.dagSeed(30000, miningCoordinator.getEpochCalculator())),
+                  DirectAcyclicGraphSeed.dagSeed(
+                      30000, new EpochCalculator.DefaultEpochCalculator())),
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x7530"
     };
@@ -106,8 +107,8 @@ public class EthGetWorkTest {
 
   @Test
   public void shouldReturnCorrectResultOnHighBlockSeedEcip1099() {
-    when(miningCoordinator.getEpochCalculator())
-        .thenReturn(new EpochCalculator.Ecip1099EpochCalculator());
+    EpochCalculator epochCalculator = new EpochCalculator.Ecip1099EpochCalculator();
+    when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
     method = new EthGetWork(miningCoordinator);
     final JsonRpcRequestContext request = requestWithParams();
     final PoWSolverInputs values =
@@ -118,8 +119,7 @@ public class EthGetWorkTest {
       "0x"
           + BaseEncoding.base16()
               .lowerCase()
-              .encode(
-                  DirectAcyclicGraphSeed.dagSeed(60000, miningCoordinator.getEpochCalculator())),
+              .encode(DirectAcyclicGraphSeed.dagSeed(60000, epochCalculator)),
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0xea60"
     };

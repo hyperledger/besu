@@ -22,24 +22,25 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The CodeV1. */
 public class CodeV1 implements Code {
 
-  private final Hash codeHash;
+  private final Supplier<Hash> codeHash;
   EOFLayout eofLayout;
 
   /**
    * Instantiates a new CodeV1.
    *
-   * @param codeHash the code hash
    * @param layout the layout
    */
-  CodeV1(final Hash codeHash, final EOFLayout layout) {
-    this.codeHash = codeHash;
+  CodeV1(final EOFLayout layout) {
     this.eofLayout = layout;
+    this.codeHash = Suppliers.memoize(() -> Hash.hash(eofLayout.getContainer()));
   }
 
   @Override
@@ -66,7 +67,7 @@ public class CodeV1 implements Code {
 
   @Override
   public Hash getCodeHash() {
-    return codeHash;
+    return codeHash.get();
   }
 
   @Override

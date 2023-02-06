@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.pki.keystore.KeyStoreWrapper.KEYSTORE_TYPE_PKCS12;
 
 import org.hyperledger.besu.pki.PkiException;
 import org.hyperledger.besu.pki.keystore.HardwareKeyStoreWrapper;
@@ -25,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -55,32 +57,29 @@ import org.slf4j.LoggerFactory;
 
 class TLSContextFactoryTest {
 
-  private static final String JKS = "JKS";
-  private static final String validKeystorePassword = "test123";
-  private static final String partner1client1PKCS11Config = "/keys/partner1client1/nss.cfg";
-  private static final String partner1client1JKSKeystore = "/keys/partner1client1/keystore.jks";
-  private static final String partner1client1JKSTruststore = "/keys/partner1client1/truststore.jks";
-  private static final String partner1client1CRL = "/keys/partner1client1/crl.pem";
-  private static final String partner1client2rvkJKSKeystore =
-      "/keys/partner1client2rvk/keystore.jks";
-  private static final String partner1client2rvkJKSTruststore =
-      "/keys/partner1client2rvk/truststore.jks";
-  private static final String partner2client1JKSKeystore = "/keys/partner2client1/keystore.jks";
-  private static final String partner2client1JKSTruststore = "/keys/partner2client1/truststore.jks";
-  private static final String partner2client1CRL = "/keys/partner2client1/crl.pem";
-  private static final String invalidPartner1client1JKSKeystore =
-      "/keys/invalidpartner1client1/keystore.jks";
-  private static final String invalidPartner1client1JKSTruststore =
-      "/keys/invalidpartner1client1/truststore.jks";
-  private static final String invalidPartner1client1CRL = "/keys/invalidpartner1client1/crl.pem";
-  private static final String partner2client2rvkJKSKeystore =
-      "/keys/partner2client2rvk/keystore.jks";
-  private static final String partner2client2rvkJKSTruststore =
-      "/keys/partner2client2rvk/truststore.jks";
+  // see resources/keys/README.md for setup details.
+  private static final String keystorePassword = "test123";
 
   private static final Logger LOG = LoggerFactory.getLogger(TLSContextFactoryTest.class);
 
   private static final int MAX_NUMBER_MESSAGES = 10;
+  private static final String CRL_PEM = "/keys/crl/crl.pem";
+  private static final String PARTNER1_CLIENT1_PKCS11 = "/keys/partner1client1/nss.cfg";
+  private static final String PARTNER1_CLIENT1_KEYSTORE = "/keys/partner1client1/client1.p12";
+  private static final String PARTNET1_CLIENT2_KEYSTORE = "/keys/partner1client2rvk/client2.p12";
+  private static final String PARTNER2_CLIENT1_KEYSTORE = "/keys/partner2client1/client1.p12";
+  private static final String PARTNER2_CLIENT2_KEYSTORE = "/keys/partner2client2rvk/client2.p12";
+  private static final String INVALIDPARTNER1_CLIENT1_KEYSTORE =
+      "/keys/invalidpartner1client1/client1.p12";
+
+  private static final String PARTNER1_CLIENT1_TRUSTSTORE = "/keys/partner1client1/truststore.p12";
+  private static final String PARTNET1_CLIENT2_TRUSTSTORE =
+      "/keys/partner1client2rvk/truststore.p12";
+  private static final String PARTNER2_CLIENT1_TRUSTSTORE = "/keys/partner2client1/truststore.p12";
+  private static final String PARTNER2_CLIENT2_TRUSTSTORE =
+      "/keys/partner2client2rvk/truststore.p12";
+  private static final String INVALIDPARTNER1_CLIENT1_TRUSTSTORE =
+      "/keys/invalidpartner1client1/truststore.p12";
 
   private Server server;
   private Client client;
@@ -89,27 +88,31 @@ class TLSContextFactoryTest {
     return Arrays.asList(
         new Object[][] {
           {
-            "PKCS11 serverPartner1Client1 -> JKS clientPartner2Client1 SuccessfulConnection",
+            "PKCS11 server Partner1 Client1 -> PKCS12 client Partner2 Client1 SuccessfulConnection",
             true,
-            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
+            getHardwareKeyStoreWrapper(PARTNER1_CLIENT1_PKCS11, CRL_PEM),
             getSoftwareKeyStoreWrapper(
-                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL)
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
+            Optional.empty(),
+            Optional.empty()
           },
           {
-            "PKCS11 serverPartner1Client1 -> JKS clientInvalidPartner1Client1 FailedConnection",
+            "PKCS11 server Partner1 Client1 -> PKCS12 client InvalidPartner1 Client1 FailedConnection",
             false,
-            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
+            getHardwareKeyStoreWrapper(PARTNER1_CLIENT1_PKCS11, CRL_PEM),
             getSoftwareKeyStoreWrapper(
-                invalidPartner1client1JKSKeystore,
-                invalidPartner1client1JKSTruststore,
-                invalidPartner1client1CRL)
+                INVALIDPARTNER1_CLIENT1_KEYSTORE, INVALIDPARTNER1_CLIENT1_TRUSTSTORE, null),
+            Optional.empty(),
+            Optional.of("certificate_unknown")
           },
           {
-            "PKCS11 serverPartner1Client1 -> JKS clientPartner1Client2rvk FailedConnection",
+            "PKCS11 server Partner1 Client1 -> PKCS12 client Partner2 Client2 revoked FailedConnection",
             false,
-            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
+            getHardwareKeyStoreWrapper(PARTNER1_CLIENT1_PKCS11, CRL_PEM),
             getSoftwareKeyStoreWrapper(
-                partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null)
+                PARTNER2_CLIENT2_KEYSTORE, PARTNER2_CLIENT2_TRUSTSTORE, null),
+            Optional.of("Certificate revoked"),
+            Optional.of("certificate_unknown")
           },
         });
   }
@@ -118,72 +121,84 @@ class TLSContextFactoryTest {
     return Arrays.asList(
         new Object[][] {
           {
-            "JKS serverPartner1Client1 -> JKS clientPartner2Client1 SuccessfulConnection",
+            "PKCS12 server Partner1 Client1 -> PKCS12 client Partner2 Client1 SuccessfulConnection",
             true,
             getSoftwareKeyStoreWrapper(
-                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL),
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
             getSoftwareKeyStoreWrapper(
-                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL)
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
+            Optional.empty(),
+            Optional.empty()
           },
           {
-            "JKS serverPartner2Client1 -> JKS clientPartner1Client1 SuccessfulConnection",
+            "PKCS12 server Partner2 Client1 -> PKCS12 client Partner1 Client1 SuccessfulConnection",
             true,
             getSoftwareKeyStoreWrapper(
-                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL),
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
             getSoftwareKeyStoreWrapper(
-                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL)
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
+            Optional.empty(),
+            Optional.empty()
           },
           {
-            "JKS serverPartner1Client1 -> JKS clientInvalidPartner1Client1 FailedConnection",
+            "PKCS12 server Partner1 Client1 -> PKCS12 client InvalidPartner1 Client1 FailedConnection",
             false,
             getSoftwareKeyStoreWrapper(
-                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL),
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
             getSoftwareKeyStoreWrapper(
-                invalidPartner1client1JKSKeystore,
-                invalidPartner1client1JKSTruststore,
-                invalidPartner1client1CRL)
+                INVALIDPARTNER1_CLIENT1_KEYSTORE, INVALIDPARTNER1_CLIENT1_TRUSTSTORE, null),
+            Optional.empty(),
+            Optional.of("certificate_unknown")
           },
           {
-            "JKS serverInvalidPartner1Client1 -> JKS clientPartner1Client1 FailedConnection",
+            "PKCS12 server InvalidPartner1 Client1 -> PKCS12 client Partner1 Client1 FailedConnection",
             false,
             getSoftwareKeyStoreWrapper(
-                invalidPartner1client1JKSKeystore,
-                invalidPartner1client1JKSTruststore,
-                invalidPartner1client1CRL),
+                INVALIDPARTNER1_CLIENT1_KEYSTORE, INVALIDPARTNER1_CLIENT1_TRUSTSTORE, null),
             getSoftwareKeyStoreWrapper(
-                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL)
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
+            Optional.of("certificate_unknown"),
+            Optional.empty()
           },
           {
-            "JKS serverPartner1Client2rvk -> JKS clientPartner2Client1 FailedConnection",
+            "PKCS12 server Partner1 Client2 (revoked) -> PKCS12 client Partner2 Client1 FailedConnection",
             false,
             getSoftwareKeyStoreWrapper(
-                partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null),
+                PARTNET1_CLIENT2_KEYSTORE, PARTNET1_CLIENT2_TRUSTSTORE, null),
             getSoftwareKeyStoreWrapper(
-                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL)
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
+            Optional.empty(),
+            Optional.of("Certificate revoked")
           },
           {
-            "JKS serverPartner2Client1 -> JKS clientPartner1Client2rvk FailedConnection",
+            "PKCS12 server Partner2 Client1 -> PKCS12 client Partner1 Client2 (revoked) FailedConnection",
             false,
             getSoftwareKeyStoreWrapper(
-                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL),
+                PARTNER2_CLIENT1_KEYSTORE, PARTNER2_CLIENT1_TRUSTSTORE, CRL_PEM),
             getSoftwareKeyStoreWrapper(
-                partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null)
+                PARTNET1_CLIENT2_KEYSTORE, PARTNET1_CLIENT2_TRUSTSTORE, null),
+            Optional.of("Certificate revoked"),
+            Optional.of("certificate_unknown")
           },
           {
-            "JKS serverPartner2Client2rvk -> JKS clientPartner1Client1 FailedConnection",
+            "PKCS12 server Partner2 Client2 (revoked) -> PKCS12 client Partner1 Client1 FailedConnection",
             false,
             getSoftwareKeyStoreWrapper(
-                partner2client2rvkJKSKeystore, partner2client2rvkJKSTruststore, null),
+                PARTNER2_CLIENT2_KEYSTORE, PARTNER2_CLIENT2_TRUSTSTORE, null),
             getSoftwareKeyStoreWrapper(
-                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL)
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
+            Optional.empty(),
+            Optional.of("Certificate revoked"),
           },
           {
-            "JKS serverPartner1Client1 -> JKS clientPartner2Client2rvk FailedConnection",
+            "PKCS12 server Partner1 Client1 -> PKCS12 client Partner2 Client2 (revoked) FailedConnection",
             false,
             getSoftwareKeyStoreWrapper(
-                partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL),
+                PARTNER1_CLIENT1_KEYSTORE, PARTNER1_CLIENT1_TRUSTSTORE, CRL_PEM),
             getSoftwareKeyStoreWrapper(
-                partner2client2rvkJKSKeystore, partner2client2rvkJKSTruststore, null)
+                PARTNER2_CLIENT2_KEYSTORE, PARTNER2_CLIENT2_TRUSTSTORE, null),
+            Optional.of("Certificate revoked"),
+            Optional.of("certificate_unknown")
           }
         });
   }
@@ -208,8 +223,7 @@ class TLSContextFactoryTest {
   private static KeyStoreWrapper getHardwareKeyStoreWrapper(
       final String config, final String crlLocation) {
     try {
-      return new HardwareKeyStoreWrapper(
-          validKeystorePassword, toPath(config), toPath(crlLocation));
+      return new HardwareKeyStoreWrapper(keystorePassword, toPath(config), toPath(crlLocation));
     } catch (final Exception e) {
       if (OS.MAC.isCurrentOs()) {
         // nss3 is difficult to setup on mac correctly, don't let it break unit tests for dev
@@ -225,12 +239,12 @@ class TLSContextFactoryTest {
       final String jksKeyStore, final String trustStore, final String crl) {
     try {
       return new SoftwareKeyStoreWrapper(
-          JKS,
+          KEYSTORE_TYPE_PKCS12,
           toPath(jksKeyStore),
-          validKeystorePassword,
-          JKS,
+          keystorePassword,
+          KEYSTORE_TYPE_PKCS12,
           toPath(trustStore),
-          null,
+          keystorePassword,
           toPath(crl));
     } catch (final Exception e) {
       throw new PkiException("Failed to initialize software keystore", e);
@@ -243,9 +257,16 @@ class TLSContextFactoryTest {
       final String ignoredTestDescription,
       final boolean testSuccess,
       final KeyStoreWrapper serverKeyStoreWrapper,
-      final KeyStoreWrapper clientKeyStoreWrapper)
+      final KeyStoreWrapper clientKeyStoreWrapper,
+      final Optional<String> serverFailureMessage,
+      final Optional<String> clientFailureMessage)
       throws Exception {
-    testConnection(testSuccess, serverKeyStoreWrapper, clientKeyStoreWrapper);
+    testConnection(
+        testSuccess,
+        serverKeyStoreWrapper,
+        clientKeyStoreWrapper,
+        serverFailureMessage,
+        clientFailureMessage);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
@@ -254,15 +275,24 @@ class TLSContextFactoryTest {
       final String ignoredTestDescription,
       final boolean testSuccess,
       final KeyStoreWrapper serverKeyStoreWrapper,
-      final KeyStoreWrapper clientKeyStoreWrapper)
+      final KeyStoreWrapper clientKeyStoreWrapper,
+      final Optional<String> serverFailureMessage,
+      final Optional<String> clientFailureMessage)
       throws Exception {
-    testConnection(testSuccess, serverKeyStoreWrapper, clientKeyStoreWrapper);
+    testConnection(
+        testSuccess,
+        serverKeyStoreWrapper,
+        clientKeyStoreWrapper,
+        serverFailureMessage,
+        clientFailureMessage);
   }
 
   private void testConnection(
       final boolean testSuccess,
       final KeyStoreWrapper serverKeyStoreWrapper,
-      final KeyStoreWrapper clientKeyStoreWrapper)
+      final KeyStoreWrapper clientKeyStoreWrapper,
+      final Optional<String> serverFailureMessage,
+      final Optional<String> clientFailureMessage)
       throws Exception {
     final CountDownLatch serverLatch = new CountDownLatch(MAX_NUMBER_MESSAGES);
     final CountDownLatch clientLatch = new CountDownLatch(MAX_NUMBER_MESSAGES);
@@ -279,6 +309,20 @@ class TLSContextFactoryTest {
         client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0)).sync();
         serverLatch.await(2, TimeUnit.SECONDS);
         assertThat(client.getChannelFuture().channel().isActive()).isFalse();
+
+        if (serverFailureMessage.isPresent()) {
+          assertThat(server.getCause()).isNotEmpty();
+          assertThat(server.getCause().get()).hasMessageContaining(serverFailureMessage.get());
+        } else {
+          assertThat(server.getCause()).isEmpty();
+        }
+
+        if (clientFailureMessage.isPresent()) {
+          assertThat(client.getCause()).isNotEmpty();
+          assertThat(client.getCause().get()).hasMessageContaining(clientFailureMessage.get());
+        } else {
+          assertThat(client.getCause()).isEmpty();
+        }
       } catch (final Exception e) {
         // NOOP
       }
@@ -288,7 +332,7 @@ class TLSContextFactoryTest {
   private Server startServer(final KeyStoreWrapper keyStoreWrapper, final CountDownLatch latch)
       throws Exception {
 
-    final Server nettyServer = new Server(validKeystorePassword, keyStoreWrapper, latch);
+    final Server nettyServer = new Server(keystorePassword, keyStoreWrapper, latch);
     nettyServer.start();
     return nettyServer;
   }
@@ -297,7 +341,7 @@ class TLSContextFactoryTest {
       final int port, final KeyStoreWrapper keyStoreWrapper, final CountDownLatch latch)
       throws Exception {
 
-    final Client nettyClient = new Client(port, validKeystorePassword, keyStoreWrapper, latch);
+    final Client nettyClient = new Client(port, keystorePassword, keyStoreWrapper, latch);
     nettyClient.start();
     return nettyClient;
   }
@@ -305,6 +349,8 @@ class TLSContextFactoryTest {
   static class MessageHandler extends ChannelInboundHandlerAdapter {
     private final String id;
     private final CountDownLatch latch;
+
+    private Throwable cause;
 
     MessageHandler(final String id, final CountDownLatch latch) {
       this.id = id;
@@ -325,6 +371,16 @@ class TLSContextFactoryTest {
         LOG.info("Remaining {}", this.latch.getCount());
       }
     }
+
+    @Override
+    public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
+        throws Exception {
+      this.cause = cause;
+    }
+
+    public Optional<Throwable> getCause() {
+      return Optional.ofNullable(cause);
+    }
   }
 
   static class Client {
@@ -335,6 +391,7 @@ class TLSContextFactoryTest {
 
     private ChannelFuture channelFuture;
     private final EventLoopGroup group = new NioEventLoopGroup();
+    private MessageHandler messageHandler;
 
     ChannelFuture getChannelFuture() {
       return channelFuture;
@@ -365,8 +422,8 @@ class TLSContextFactoryTest {
 
               final SslHandler sslHandler = sslContext.newHandler(socketChannel.alloc());
               socketChannel.pipeline().addFirst("ssl", sslHandler);
-
-              socketChannel.pipeline().addLast(new MessageHandler("Client", latch));
+              messageHandler = new MessageHandler("Client", latch);
+              socketChannel.pipeline().addLast(messageHandler);
             }
           });
 
@@ -375,6 +432,11 @@ class TLSContextFactoryTest {
 
     void stop() {
       group.shutdownGracefully();
+      messageHandler = null;
+    }
+
+    Optional<Throwable> getCause() {
+      return messageHandler != null ? messageHandler.getCause() : Optional.empty();
     }
   }
 
@@ -388,6 +450,8 @@ class TLSContextFactoryTest {
 
     private final EventLoopGroup parentGroup = new NioEventLoopGroup();
     private final EventLoopGroup childGroup = new NioEventLoopGroup();
+
+    private MessageHandler messageHandler;
 
     Server(
         final String keystorePassword,
@@ -412,7 +476,9 @@ class TLSContextFactoryTest {
                   final SslHandler sslHandler = sslContext.newHandler(channel.alloc());
                   socketChannel.pipeline().addFirst("ssl", sslHandler);
 
-                  socketChannel.pipeline().addLast(new MessageHandler("Server", latch));
+                  socketChannel
+                      .pipeline()
+                      .addLast(messageHandler = new MessageHandler("Server", latch));
                 }
               });
 
@@ -424,6 +490,10 @@ class TLSContextFactoryTest {
     void stop() {
       childGroup.shutdownGracefully();
       parentGroup.shutdownGracefully();
+    }
+
+    Optional<Throwable> getCause() {
+      return messageHandler != null ? messageHandler.getCause() : Optional.empty();
     }
   }
 }
