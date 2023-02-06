@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.AccessListEntry;
@@ -469,6 +470,9 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.failed(
             gasUsedByTransaction, refunded, validationResult, initialFrame.getRevertReason());
       }
+    } catch (final MerkleTrieException re) {
+      // need to throw to trigger the heal
+      throw re;
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(

@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
@@ -165,10 +166,28 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   private void addCollectorUnchecked(final MetricCategory category, final Collector metric) {
-    metric.register(registry);
-    collectors
-        .computeIfAbsent(category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-        .add(metric);
+    final Collection<Collector> metrics =
+        this.collectors.computeIfAbsent(
+            category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+
+    final List<String> newSamples =
+        metric.collect().stream()
+            .map(metricFamilySamples -> metricFamilySamples.name)
+            .collect(Collectors.toList());
+
+    metrics.stream()
+        .filter(
+            collector ->
+                collector.collect().stream()
+                    .anyMatch(metricFamilySamples -> newSamples.contains(metricFamilySamples.name)))
+        .findFirst()
+        .ifPresent(
+            collector -> {
+              metrics.remove(collector);
+              registry.unregister(collector);
+            });
+
+    metrics.add(metric.register(registry));
   }
 
   @Override
