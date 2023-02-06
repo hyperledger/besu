@@ -37,6 +37,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Proposal payload validator. */
 public class ProposalPayloadValidator {
 
   private static final String ERROR_PREFIX = "Invalid Proposal Payload";
@@ -49,6 +50,15 @@ public class ProposalPayloadValidator {
   private final BftExtraDataCodec bftExtraDataCodec;
   private final Optional<CmsValidator> cmsValidator;
 
+  /**
+   * Instantiates a new Proposal payload validator.
+   *
+   * @param expectedProposer the expected proposer
+   * @param targetRound the target round
+   * @param blockValidator the block validator
+   * @param protocolContext the protocol context
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public ProposalPayloadValidator(
       final Address expectedProposer,
       final ConsensusRoundIdentifier targetRound,
@@ -67,6 +77,16 @@ public class ProposalPayloadValidator {
             .map(config -> new CmsValidator(config.getTrustStore())));
   }
 
+  /**
+   * Instantiates a new Proposal payload validator.
+   *
+   * @param expectedProposer the expected proposer
+   * @param targetRound the target round
+   * @param blockValidator the block validator
+   * @param protocolContext the protocol context
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param cmsValidator the cms validator
+   */
   @VisibleForTesting
   public ProposalPayloadValidator(
       final Address expectedProposer,
@@ -83,6 +103,12 @@ public class ProposalPayloadValidator {
     this.cmsValidator = cmsValidator;
   }
 
+  /**
+   * Validate.
+   *
+   * @param signedPayload the signed Proposal payload
+   * @return the boolean
+   */
   public boolean validate(final SignedData<ProposalPayload> signedPayload) {
 
     if (!signedPayload.getAuthor().equals(expectedProposer)) {

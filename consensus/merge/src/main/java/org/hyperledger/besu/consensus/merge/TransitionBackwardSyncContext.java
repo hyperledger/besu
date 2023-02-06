@@ -25,10 +25,21 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+/** The Transition backward sync context. */
 public class TransitionBackwardSyncContext extends BackwardSyncContext {
 
   private final TransitionProtocolSchedule transitionProtocolSchedule;
 
+  /**
+   * Instantiates a new Transition backward sync context.
+   *
+   * @param protocolContext the protocol context
+   * @param transitionProtocolSchedule the transition protocol schedule
+   * @param metricsSystem the metrics system
+   * @param ethContext the eth context
+   * @param syncState the sync state
+   * @param storageProvider the storage provider
+   */
   public TransitionBackwardSyncContext(
       final ProtocolContext protocolContext,
       final TransitionProtocolSchedule transitionProtocolSchedule,

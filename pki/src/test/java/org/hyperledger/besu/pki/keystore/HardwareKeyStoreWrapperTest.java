@@ -45,7 +45,7 @@ public class HardwareKeyStoreWrapperTest {
 
   @Before
   public void before() {
-    keyStoreWrapper = new HardwareKeyStoreWrapper(keyStore, new String(PASSWORD));
+    keyStoreWrapper = new HardwareKeyStoreWrapper(null, keyStore, new String(PASSWORD));
   }
 
   @Test

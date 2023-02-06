@@ -27,12 +27,13 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/*
- The PkiQbftExtraData encoding format is different from the "regular" QbftExtraData encoding. We
- have an extra bytes element in the end of the list.
-*/
+/**
+ * The PkiQbftExtraData encoding format is different from the "regular" QbftExtraData encoding. We
+ * have an extra bytes element in the end of the list.
+ */
 public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
+  /** The constant QBFT_EXTRA_DATA_LIST_SIZE. */
   public static final int QBFT_EXTRA_DATA_LIST_SIZE = 5;
 
   @Override
@@ -82,6 +83,12 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
     return rlpOutput.encoded();
   }
 
+  /**
+   * Encode without cms.
+   *
+   * @param bftExtraData the bft extra data
+   * @return the bytes
+   */
   public Bytes encodeWithoutCms(final BftExtraData bftExtraData) {
     return encode(bftExtraData, EncodingType.ALL, false);
   }

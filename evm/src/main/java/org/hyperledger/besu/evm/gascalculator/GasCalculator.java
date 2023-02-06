@@ -169,6 +169,11 @@ public interface GasCalculator {
       Account recipient,
       Address contract);
 
+  /**
+   * Gets additional call stipend.
+   *
+   * @return the additional call stipend
+   */
   long getAdditionalCallStipend();
 
   /**
@@ -414,6 +419,12 @@ public interface GasCalculator {
     return false;
   }
 
+  /**
+   * Mod exp gas cost.
+   *
+   * @param input the input
+   * @return the long
+   */
   default long modExpGasCost(final Bytes input) {
     return 0L;
   }
@@ -476,4 +487,22 @@ public interface GasCalculator {
    */
   // what would be the gas for a PMT with hash of all non-zeros
   long getMaximumTransactionCost(int size);
+
+  /**
+   * Returns the cost of a loading from Transient Storage
+   *
+   * @return the cost of a TLOAD from a storage slot
+   */
+  default long getTransientLoadOperationGasCost() {
+    return 0L;
+  }
+
+  /**
+   * Returns the cost of a storing to Transient Storage
+   *
+   * @return the cost of a TSTORE to a storage slot
+   */
+  default long getTransientStoreOperationGasCost() {
+    return 0L;
+  }
 }

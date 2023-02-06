@@ -27,9 +27,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+/** The Propose Json Rpc method. */
 public class Propose implements JsonRpcMethod {
   private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Propose.
+   *
+   * @param validatorProvider the validator provider
+   */
   public Propose(final ValidatorProvider validatorProvider) {
     this.validatorProvider = validatorProvider;
   }

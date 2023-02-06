@@ -27,9 +27,17 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Merge consensus rule. */
 public abstract class MergeConsensusRule implements AttachedBlockHeaderValidationRule {
   private static final Logger LOG = LoggerFactory.getLogger(MergeConsensusRule.class);
 
+  /**
+   * Should use post merge rules.
+   *
+   * @param header the header
+   * @param context the context
+   * @return the boolean
+   */
   // TODO: post-merge cleanup
   protected boolean shouldUsePostMergeRules(
       final BlockHeader header, final ProtocolContext context) {

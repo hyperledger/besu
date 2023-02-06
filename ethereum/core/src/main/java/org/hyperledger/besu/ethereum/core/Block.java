@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -60,6 +61,7 @@ public class Block {
     header.writeTo(out);
     out.writeList(body.getTransactions(), Transaction::writeTo);
     out.writeList(body.getOmmers(), BlockHeader::writeTo);
+    body.getWithdrawals().ifPresent(withdrawals -> out.writeList(withdrawals, Withdrawal::writeTo));
 
     out.endList();
   }
@@ -69,9 +71,11 @@ public class Block {
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
     final List<Transaction> transactions = in.readList(Transaction::readFrom);
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
+    final Optional<List<Withdrawal>> withdrawals =
+        in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(Withdrawal::readFrom));
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers));
+    return new Block(header, new BlockBody(transactions, ommers, withdrawals));
   }
 
   @Override

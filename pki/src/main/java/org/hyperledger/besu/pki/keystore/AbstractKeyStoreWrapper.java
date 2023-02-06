@@ -24,12 +24,18 @@ import java.security.cert.X509CRL;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+/** The Abstract key store wrapper. */
 public abstract class AbstractKeyStoreWrapper implements KeyStoreWrapper {
 
   private static final String X_509 = "X.509";
 
   private final Collection<X509CRL> crls;
 
+  /**
+   * Instantiates a new Abstract key store wrapper.
+   *
+   * @param crlLocation the crl location
+   */
   protected AbstractKeyStoreWrapper(final Path crlLocation) {
     super();
     if (null == crlLocation) {
@@ -44,6 +50,15 @@ public abstract class AbstractKeyStoreWrapper implements KeyStoreWrapper {
         throw new PkiException("Failed to initialize software truststore", e);
       }
     }
+  }
+
+  /**
+   * Instantiates a new Abstract key store wrapper.
+   *
+   * @param crls the collection of X509CRL instances
+   */
+  protected AbstractKeyStoreWrapper(final Collection<X509CRL> crls) {
+    this.crls = crls;
   }
 
   @Override

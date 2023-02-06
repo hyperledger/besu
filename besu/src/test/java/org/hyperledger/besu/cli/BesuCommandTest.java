@@ -1200,7 +1200,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void identityValueTrueMustBeUsed() {
     parseCommand("--identity", "test");
 
-    verify(mockRunnerBuilder.identityString(eq(Optional.of("test")))).build();
+    verify(mockRunnerBuilder).identityString(eq(Optional.of("test")));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1210,7 +1211,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void p2pEnabledOptionValueTrueMustBeUsed() {
     parseCommand("--p2p-enabled", "true");
 
-    verify(mockRunnerBuilder.p2pEnabled(eq(true))).build();
+    verify(mockRunnerBuilder).p2pEnabled(eq(true));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1220,7 +1222,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void p2pEnabledOptionValueFalseMustBeUsed() {
     parseCommand("--p2p-enabled", "false");
 
-    verify(mockRunnerBuilder.p2pEnabled(eq(false))).build();
+    verify(mockRunnerBuilder).p2pEnabled(eq(false));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1301,7 +1304,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueTrueMustBeUsed() {
     parseCommand("--discovery-enabled", "true");
 
-    verify(mockRunnerBuilder.discovery(eq(true))).build();
+    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1311,7 +1315,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueFalseMustBeUsed() {
     parseCommand("--discovery-enabled", "false");
 
-    verify(mockRunnerBuilder.discovery(eq(false))).build();
+    verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1612,6 +1617,21 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
     verify(mockRunnerBuilder).build();
+  }
+
+  @Test
+  public void rpcHttpMaxBatchSizeOptionMustBeUsed() {
+    final int rpcHttpMaxBatchSize = 1;
+    parseCommand("--rpc-http-max-batch-size", Integer.toString(rpcHttpMaxBatchSize));
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxBatchSize())
+        .isEqualTo(rpcHttpMaxBatchSize);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4382,8 +4402,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void
       privateMarkerTransactionSigningKeyFileNotCanNotBeUsedWithPluginPrivateMarkerTransactionFactory()
           throws IOException {
-    privacyPluginService.setPrivateMarkerTransactionFactory(
-        mock(PrivateMarkerTransactionFactory.class));
+    when(privacyPluginService.getPrivateMarkerTransactionFactory())
+        .thenReturn(mock(PrivateMarkerTransactionFactory.class));
     final Path toml =
         createTempFile(
             "key",
@@ -4397,7 +4417,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         toml.toString());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    //    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies");
   }
 
   @Test

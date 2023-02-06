@@ -25,6 +25,8 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +34,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Software key store wrapper. */
 public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SoftwareKeyStoreWrapper.class);
@@ -45,6 +48,14 @@ public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
   private final Map<String, PublicKey> cachedPublicKeys = new HashMap<>();
   private final Map<String, Certificate> cachedCertificates = new HashMap<>();
 
+  /**
+   * Instantiates a new Software key store wrapper.
+   *
+   * @param keystoreType the keystore type
+   * @param keystoreLocation the keystore location
+   * @param keystorePassword the keystore password
+   * @param crlLocation the crl location
+   */
   public SoftwareKeyStoreWrapper(
       final String keystoreType,
       final Path keystoreLocation,
@@ -53,6 +64,17 @@ public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     this(keystoreType, keystoreLocation, keystorePassword, null, null, null, crlLocation);
   }
 
+  /**
+   * Instantiates a new Software key store wrapper.
+   *
+   * @param keystoreType the keystore type
+   * @param keystoreLocation the keystore location
+   * @param keystorePassword the keystore password
+   * @param truststoreType the truststore type
+   * @param truststoreLocation the truststore location
+   * @param truststorePassword the truststore password
+   * @param crlLocation the crl location
+   */
   public SoftwareKeyStoreWrapper(
       final String keystoreType,
       final Path keystoreLocation,
@@ -89,22 +111,38 @@ public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     }
   }
 
+  /**
+   * Instantiates a new Software key store wrapper.
+   *
+   * @param keystore the keystore
+   * @param keystorePassword the keystore password
+   * @param truststore the truststore
+   * @param truststorePassword the truststore password
+   */
   @VisibleForTesting
   public SoftwareKeyStoreWrapper(
       final KeyStore keystore,
       final String keystorePassword,
       final KeyStore truststore,
       final String truststorePassword) {
-    super(null);
+    super((Path) null);
     this.keystore = keystore;
     this.keystorePassword = keystorePassword.toCharArray();
     this.truststore = truststore;
     this.truststorePassword = truststorePassword.toCharArray();
   }
 
+  /**
+   * Instantiates a new Software key store wrapper.
+   *
+   * @param crls the collection of X509CRL crls
+   * @param keystore the keystore
+   * @param keystorePassword the keystore password
+   */
   @VisibleForTesting
-  public SoftwareKeyStoreWrapper(final KeyStore keystore, final String keystorePassword) {
-    super(null);
+  public SoftwareKeyStoreWrapper(
+      final Collection<X509CRL> crls, final KeyStore keystore, final String keystorePassword) {
+    super(crls);
     this.keystore = keystore;
     this.keystorePassword = keystorePassword.toCharArray();
     this.truststore = null;

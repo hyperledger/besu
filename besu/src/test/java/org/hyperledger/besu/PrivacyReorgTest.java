@@ -31,7 +31,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -51,7 +50,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -75,15 +73,14 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -135,11 +132,10 @@ public class PrivacyReorgTest {
   private BesuController besuController;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
-  private RestrictedDefaultPrivacyController privacyController;
   private Enclave mockEnclave;
   private Transaction privacyMarkerTransaction;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     mockEnclave = mock(Enclave.class);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
@@ -164,9 +160,6 @@ public class PrivacyReorgTest {
             .value(Wei.ZERO)
             .signAndBuild(KEY_PAIR);
 
-    // Create Storage
-    final Path dataDir = folder.newFolder().toPath();
-
     // Configure Privacy
     EnclaveFactory enclaveFactory = mock(EnclaveFactory.class);
     when(enclaveFactory.createVertxEnclave(any())).thenReturn(mockEnclave);
@@ -180,9 +173,6 @@ public class PrivacyReorgTest {
             .build();
 
     privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
-    privacyController = mock(RestrictedDefaultPrivacyController.class);
-    when(privacyController.findPrivacyGroupByGroupId(any(), any()))
-        .thenReturn(Optional.of(new PrivacyGroup()));
 
     privateStateRootResolver =
         new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
@@ -203,7 +193,7 @@ public class PrivacyReorgTest {
                     .build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
-            .dataDirectory(dataDir)
+            .dataDirectory(folder)
             .clock(TestClock.fixed())
             .privacyParameters(privacyParameters)
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)

@@ -26,6 +26,8 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -50,6 +52,13 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
 
   private final java.security.Provider provider;
 
+  /**
+   * Instantiates a new Hardware key store wrapper.
+   *
+   * @param keystorePassword the keystore password
+   * @param provider the provider
+   * @param crlLocation the crl location
+   */
   public HardwareKeyStoreWrapper(
       final String keystorePassword, final Provider provider, final Path crlLocation) {
     super(crlLocation);
@@ -72,6 +81,13 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     }
   }
 
+  /**
+   * Instantiates a new Hardware key store wrapper.
+   *
+   * @param keystorePassword the keystore password
+   * @param config the config
+   * @param crlLocation the CRL location
+   */
   public HardwareKeyStoreWrapper(
       final String keystorePassword, final Path config, final Path crlLocation) {
     super(crlLocation);
@@ -105,9 +121,17 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     }
   }
 
+  /**
+   * Instantiates a new Hardware key store wrapper.
+   *
+   * @param crls the collection of X509CRL crls
+   * @param keystore the keystore
+   * @param password the password
+   */
   @VisibleForTesting
-  HardwareKeyStoreWrapper(final KeyStore keystore, final String password) {
-    super(null);
+  HardwareKeyStoreWrapper(
+      final Collection<X509CRL> crls, final KeyStore keystore, final String password) {
+    super(crls);
     this.keystore = keystore;
     this.keystorePassword = password.toCharArray();
     this.provider = null;
@@ -173,6 +197,12 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     }
   }
 
+  /**
+   * Gets PKCS11 provider.
+   *
+   * @param config the config
+   * @return the PKCS11 provider
+   */
   @VisibleForTesting
   public Provider getPkcs11ProviderForConfig(final String config) {
     return getPkcs11Provider(config);

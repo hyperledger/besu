@@ -16,8 +16,8 @@ package org.hyperledger.besu;
 
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.api.query.cache.AutoTransactionLogBloomCachingService;
@@ -51,6 +51,7 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Runner controls various Besu services lifecycle. */
 public class Runner implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(Runner.class);
@@ -64,7 +65,7 @@ public class Runner implements AutoCloseable {
   private final Optional<EthStatsService> ethStatsService;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<JsonRpcHttpService> jsonRpc;
-  private final Optional<JsonRpcService> engineJsonRpc;
+  private final Optional<EngineJsonRpcService> engineJsonRpc;
   private final Optional<MetricsService> metrics;
   private final Optional<JsonRpcIpcService> ipcJsonRpc;
   private final Optional<Path> pidPath;
@@ -77,12 +78,32 @@ public class Runner implements AutoCloseable {
   private final Optional<AutoTransactionLogBloomCachingService>
       autoTransactionLogBloomCachingService;
 
+  /**
+   * Instantiates a new Runner.
+   *
+   * @param vertx the vertx
+   * @param networkRunner the network runner
+   * @param natService the nat service
+   * @param jsonRpc the json rpc
+   * @param engineJsonRpc the engine json rpc
+   * @param graphQLHttp the graph ql http
+   * @param webSocketRpc the web socket rpc
+   * @param ipcJsonRpc the ipc json rpc
+   * @param stratumServer the stratum server
+   * @param metrics the metrics
+   * @param ethStatsService the eth stats service
+   * @param besuController the besu controller
+   * @param dataDir the data dir
+   * @param pidPath the pid path
+   * @param transactionLogBloomCacher the transaction log bloom cacher
+   * @param blockchain the blockchain
+   */
   Runner(
       final Vertx vertx,
       final NetworkRunner networkRunner,
       final NatService natService,
       final Optional<JsonRpcHttpService> jsonRpc,
-      final Optional<JsonRpcService> engineJsonRpc,
+      final Optional<EngineJsonRpcService> engineJsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> webSocketRpc,
       final Optional<JsonRpcIpcService> ipcJsonRpc,
@@ -115,6 +136,7 @@ public class Runner implements AutoCloseable {
         new TransactionPoolEvictionService(vertx, besuController.getTransactionPool());
   }
 
+  /** Start external services. */
   public void startExternalServices() {
     LOG.info("Starting external services ... ");
     metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
@@ -132,6 +154,7 @@ public class Runner implements AutoCloseable {
     ethStatsService.ifPresent(EthStatsService::start);
   }
 
+  /** Start ethereum main loop. */
   public void startEthereumMainLoop() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
@@ -154,6 +177,7 @@ public class Runner implements AutoCloseable {
     }
   }
 
+  /** Stop services. */
   public void stop() {
     transactionPoolEvictionService.stop();
     jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
@@ -184,6 +208,7 @@ public class Runner implements AutoCloseable {
     shutdown.countDown();
   }
 
+  /** Await stop. */
   public void awaitStop() {
     try {
       shutdown.await();
@@ -328,22 +353,47 @@ public class Runner implements AutoCloseable {
         });
   }
 
+  /**
+   * Gets json rpc port.
+   *
+   * @return the json rpc port
+   */
   public Optional<Integer> getJsonRpcPort() {
     return jsonRpc.map(service -> service.socketAddress().getPort());
   }
 
+  /**
+   * Gets engine json rpc port.
+   *
+   * @return the engine json rpc port
+   */
   public Optional<Integer> getEngineJsonRpcPort() {
     return engineJsonRpc.map(service -> service.socketAddress().getPort());
   }
 
+  /**
+   * Gets GraphQl http port.
+   *
+   * @return the graph ql http port
+   */
   public Optional<Integer> getGraphQLHttpPort() {
     return graphQLHttp.map(service -> service.socketAddress().getPort());
   }
 
+  /**
+   * Gets web socket port.
+   *
+   * @return the web socket port
+   */
   public Optional<Integer> getWebSocketPort() {
     return webSocketRpc.map(service -> service.socketAddress().getPort());
   }
 
+  /**
+   * Gets metrics port.
+   *
+   * @return the metrics port
+   */
   public Optional<Integer> getMetricsPort() {
     if (metrics.isPresent()) {
       return metrics.get().getPort();
@@ -352,6 +402,11 @@ public class Runner implements AutoCloseable {
     }
   }
 
+  /**
+   * Gets local enode.
+   *
+   * @return the local enode
+   */
   @VisibleForTesting
   Optional<EnodeURL> getLocalEnode() {
     return networkRunner.getNetwork().getLocalEnode();
@@ -359,6 +414,11 @@ public class Runner implements AutoCloseable {
 
   @FunctionalInterface
   private interface SynchronousShutdown {
+    /**
+     * Await for shutdown.
+     *
+     * @throws InterruptedException the interrupted exception
+     */
     void await() throws InterruptedException;
   }
 

@@ -19,6 +19,7 @@ import static java.lang.Integer.parseInt;
 
 import java.util.Objects;
 
+/** The Positive number. */
 public class PositiveNumber {
 
   private final int value;
@@ -42,11 +43,22 @@ public class PositiveNumber {
     return positiveNumber;
   }
 
+  /**
+   * Instantiate positive number from int.
+   *
+   * @param val the val
+   * @return the positive number
+   */
   public static PositiveNumber fromInt(final int val) {
     checkArgument(val > 0);
     return new PositiveNumber(val);
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public int getValue() {
     return value;
   }

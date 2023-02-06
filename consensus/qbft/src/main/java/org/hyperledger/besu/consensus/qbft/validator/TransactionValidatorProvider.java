@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
+/** The Transaction validator provider. */
 public class TransactionValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
@@ -40,6 +41,13 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   private final Cache<Long, Collection<Address>> forBlockValidatorCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
 
+  /**
+   * Instantiates a new Transaction validator provider.
+   *
+   * @param blockchain the blockchain
+   * @param validatorContractController the validator contract controller
+   * @param forksSchedule the forks schedule
+   */
   public TransactionValidatorProvider(
       final Blockchain blockchain,
       final ValidatorContractController validatorContractController,

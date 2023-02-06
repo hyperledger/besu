@@ -25,8 +25,16 @@ import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+/** The Combined protocol schedule factory. */
 public class CombinedProtocolScheduleFactory {
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param forkSpecs the fork specs
+   * @param chainId the chain id
+   * @return the protocol schedule
+   */
   public ProtocolSchedule create(
       final NavigableSet<ForkSpec<ProtocolSchedule>> forkSpecs,
       final Optional<BigInteger> chainId) {

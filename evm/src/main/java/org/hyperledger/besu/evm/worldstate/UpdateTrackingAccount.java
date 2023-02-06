@@ -44,6 +44,8 @@ import org.apache.tuweni.units.bigints.UInt256;
  * remind if those were modified or not (the reason being that any modification of an account imply
  * the underlying trie node will have to be updated, and so knowing if the nonce and balance where
  * updated or not doesn't matter, we just need their new value).
+ *
+ * @param <A> the type parameter
  */
 public class UpdateTrackingAccount<A extends Account> implements MutableAccount, EvmAccount {
   private final Address address;
@@ -63,6 +65,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   private boolean storageWasCleared = false;
   private boolean transactionBoundary = false;
 
+  /**
+   * Instantiates a new Update tracking account.
+   *
+   * @param address the address
+   */
   UpdateTrackingAccount(final Address address) {
     checkNotNull(address);
     this.address = address;
@@ -76,6 +83,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     this.updatedStorage = new TreeMap<>();
   }
 
+  /**
+   * Instantiates a new Update tracking account.
+   *
+   * @param account the account
+   */
   public UpdateTrackingAccount(final A account) {
     checkNotNull(account);
 
@@ -102,6 +114,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     return account;
   }
 
+  /**
+   * Sets wrapped account.
+   *
+   * @param account the account
+   */
   public void setWrappedAccount(final A account) {
     if (this.account == null) {
       this.account = account;
@@ -194,6 +211,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     this.updatedCodeHash = null;
   }
 
+  /** Mark transaction boundary. */
   void markTransactionBoundary() {
     this.transactionBoundary = true;
   }
@@ -256,10 +274,20 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     updatedStorage.clear();
   }
 
+  /**
+   * Gets storage was cleared.
+   *
+   * @return boolean if storage was cleared
+   */
   public boolean getStorageWasCleared() {
     return storageWasCleared;
   }
 
+  /**
+   * Sets storage was cleared.
+   *
+   * @param storageWasCleared the storage was cleared
+   */
   public void setStorageWasCleared(final boolean storageWasCleared) {
     this.storageWasCleared = storageWasCleared;
   }

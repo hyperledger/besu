@@ -19,15 +19,27 @@ import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Node key. */
 public class NodeKey {
 
   private final SecurityModule securityModule;
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
+  /**
+   * Instantiates a new Node key.
+   *
+   * @param securityModule the security module
+   */
   public NodeKey(final SecurityModule securityModule) {
     this.securityModule = securityModule;
   }
 
+  /**
+   * Sign hash and get secp signature.
+   *
+   * @param dataHash the data hash
+   * @return the secp signature
+   */
   public SECPSignature sign(final Bytes32 dataHash) {
     final Signature signature = securityModule.sign(dataHash);
 
@@ -35,11 +47,22 @@ public class NodeKey {
         signature.getR(), signature.getS(), getPublicKey(), dataHash);
   }
 
+  /**
+   * Gets public key.
+   *
+   * @return the public key
+   */
   public SECPPublicKey getPublicKey() {
     return signatureAlgorithm.createPublicKey(
         ECPointUtil.getEncodedBytes(securityModule.getPublicKey().getW()));
   }
 
+  /**
+   * Calculate ecdh key agreement.
+   *
+   * @param partyKey the party key
+   * @return the bytes32
+   */
   public Bytes32 calculateECDHKeyAgreement(final SECPPublicKey partyKey) {
     return securityModule.calculateECDHKeyAgreement(
         () -> ECPointUtil.fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(partyKey)));

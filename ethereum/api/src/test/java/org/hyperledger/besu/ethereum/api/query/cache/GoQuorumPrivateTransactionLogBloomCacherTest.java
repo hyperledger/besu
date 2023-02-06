@@ -56,8 +56,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@SuppressWarnings("unused")
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings({"unused", "DirectInvocationOnMock"})
 public class GoQuorumPrivateTransactionLogBloomCacherTest {
 
   private static final long NUMBER_3 = 3L;
@@ -168,6 +168,8 @@ public class GoQuorumPrivateTransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
+            null,
             new MainnetBlockHeaderFunctions(),
             Optional.of(testLogsBloomFilter));
     return fakeHeader;

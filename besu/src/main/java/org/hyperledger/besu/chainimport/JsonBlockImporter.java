@@ -52,6 +52,11 @@ public class JsonBlockImporter {
   private final ObjectMapper mapper;
   private final BesuController controller;
 
+  /**
+   * Instantiates a new Json block importer.
+   *
+   * @param controller the controller
+   */
   public JsonBlockImporter(final BesuController controller) {
     this.controller = controller;
     mapper = new ObjectMapper();
@@ -61,6 +66,12 @@ public class JsonBlockImporter {
     mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
   }
 
+  /**
+   * Import chain.
+   *
+   * @param chainJson the chain json
+   * @throws IOException the io exception
+   */
   public void importChain(final String chainJson) throws IOException {
     warnIfDatabaseIsNotEmpty();
 
@@ -142,10 +153,7 @@ public class JsonBlockImporter {
 
   private void importBlock(final Block block) {
     final BlockImporter importer =
-        controller
-            .getProtocolSchedule()
-            .getByBlockNumber(block.getHeader().getNumber())
-            .getBlockImporter();
+        controller.getProtocolSchedule().getByBlockHeader(block.getHeader()).getBlockImporter();
 
     final BlockImportResult importResult =
         importer.importBlock(controller.getProtocolContext(), block, HeaderValidationMode.NONE);

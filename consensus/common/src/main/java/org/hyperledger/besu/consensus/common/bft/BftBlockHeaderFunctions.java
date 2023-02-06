@@ -20,23 +20,42 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
 import java.util.function.Function;
 
+/** The Bft block header functions. */
 public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
 
   private final Function<BlockHeader, Hash> hashFunction;
   private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Bft block header functions.
+   *
+   * @param hashFunction the hash function
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public BftBlockHeaderFunctions(
       final Function<BlockHeader, Hash> hashFunction, final BftExtraDataCodec bftExtraDataCodec) {
     this.hashFunction = hashFunction;
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
+  /**
+   * Instantiate Block Header Functions for onchain block.
+   *
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the block header functions
+   */
   public static BlockHeaderFunctions forOnchainBlock(final BftExtraDataCodec bftExtraDataCodec) {
     return new BftBlockHeaderFunctions(
         h -> new BftBlockHashing(bftExtraDataCodec).calculateHashOfBftBlockOnchain(h),
         bftExtraDataCodec);
   }
 
+  /**
+   * Instantiate Block Header Functions for committed seal.
+   *
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the block header functions
+   */
   public static BlockHeaderFunctions forCommittedSeal(final BftExtraDataCodec bftExtraDataCodec) {
     return new BftBlockHeaderFunctions(
         h -> new BftBlockHashing(bftExtraDataCodec).calculateDataHashForCommittedSeal(h),

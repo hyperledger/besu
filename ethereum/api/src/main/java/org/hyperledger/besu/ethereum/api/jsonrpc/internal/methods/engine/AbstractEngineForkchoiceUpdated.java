@@ -119,7 +119,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
-    if (!mergeContext.get().isCheckpointPostMergeSync()
+    if (requireTerminalPoWBlockValidation()
+        && !mergeContext.get().isCheckpointPostMergeSync()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)
         && !mergeContext.get().isChainPruningEnabled()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -154,7 +155,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
           "Invalid payload attributes: {}",
           () ->
               maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize).orElse(null));
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+      return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
     }
 
     if (!result.isValid()) {
@@ -200,7 +201,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
     return newTimestampGreaterThanHead
         && getWithdrawalsValidator(timestampSchedule, payloadAttributes.getTimestamp())
-            .validateWithdrawals(maybeWithdrawals.orElse(null));
+            .validateWithdrawals(maybeWithdrawals);
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
@@ -216,9 +217,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                 requestId,
                 new EngineUpdateForkchoiceResult(
                     INVALID, latestValid.orElse(null), null, result.getErrorMessage()));
-        break;
-      case INVALID_PAYLOAD_ATTRIBUTES:
-        response = new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
         break;
       case IGNORE_UPDATE_TO_OLD_HEAD:
         response =
@@ -298,6 +296,14 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     logForkchoiceUpdatedCall(this::logAtDebug, SYNCING, forkChoice);
     return new JsonRpcSuccessResponse(
         requestId, new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
+  }
+
+  protected boolean requireTerminalPoWBlockValidation() {
+    return false;
+  }
+
+  protected JsonRpcError getInvalidPayloadError() {
+    return JsonRpcError.INVALID_PARAMS;
   }
 
   // fcU calls are synchronous, no need to make volatile

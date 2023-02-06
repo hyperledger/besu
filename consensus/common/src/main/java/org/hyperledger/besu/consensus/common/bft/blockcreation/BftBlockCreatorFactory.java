@@ -44,19 +44,43 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * The Bft block creator factory.
+ *
+ * @param <T> the type parameter
+ */
 public class BftBlockCreatorFactory<T extends BftConfigOptions> {
+  /** The Forks schedule. */
   protected final ForksSchedule<T> forksSchedule;
+
   private final PendingTransactions pendingTransactions;
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+  /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
+  /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
+
   private final Address localAddress;
 
+  /** The Vanity data. */
   protected volatile Bytes vanityData;
+
   private volatile Wei minTransactionGasPrice;
   private volatile Double minBlockOccupancyRatio;
   private volatile Optional<AtomicLong> targetGasLimit;
 
+  /**
+   * Instantiates a new Bft block creator factory.
+   *
+   * @param pendingTransactions the pending transactions
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param forksSchedule the forks schedule
+   * @param miningParams the mining params
+   * @param localAddress the local address
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public BftBlockCreatorFactory(
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
@@ -77,6 +101,13 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
+  /**
+   * Create block creator.
+   *
+   * @param parentHeader the parent header
+   * @param round the round
+   * @return the block creator
+   */
   public BlockCreator create(final BlockHeader parentHeader, final int round) {
     return new BftBlockCreator(
         forksSchedule,
@@ -92,18 +123,40 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
         bftExtraDataCodec);
   }
 
+  /**
+   * Sets extra data.
+   *
+   * @param extraData the extra data
+   */
   public void setExtraData(final Bytes extraData) {
     this.vanityData = extraData.copy();
   }
 
+  /**
+   * Sets min transaction gas price.
+   *
+   * @param minTransactionGasPrice the min transaction gas price
+   */
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
     this.minTransactionGasPrice = minTransactionGasPrice;
   }
 
+  /**
+   * Gets min transaction gas price.
+   *
+   * @return the min transaction gas price
+   */
   public Wei getMinTransactionGasPrice() {
     return minTransactionGasPrice;
   }
 
+  /**
+   * Create extra data bytes.
+   *
+   * @param round the round
+   * @param parentHeader the parent header
+   * @return the bytes
+   */
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     final BftContext bftContext = protocolContext.getConsensusContext(BftContext.class);
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
@@ -127,6 +180,11 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     return bftExtraDataCodec.encode(extraData);
   }
 
+  /**
+   * Change target gas limit.
+   *
+   * @param newTargetGasLimit the new target gas limit
+   */
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
       this.targetGasLimit.ifPresentOrElse(
@@ -137,6 +195,11 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     }
   }
 
+  /**
+   * Gets local address.
+   *
+   * @return the local address
+   */
   public Address getLocalAddress() {
     return localAddress;
   }

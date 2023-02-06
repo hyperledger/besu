@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Json genesis config options. */
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
@@ -52,10 +53,23 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   private final TransitionsConfigOptions transitions;
 
+  /**
+   * From json object json genesis config options.
+   *
+   * @param configRoot the config root
+   * @return the json genesis config options
+   */
   public static JsonGenesisConfigOptions fromJsonObject(final ObjectNode configRoot) {
     return fromJsonObjectWithOverrides(configRoot, emptyMap());
   }
 
+  /**
+   * From json object with overrides json genesis config options.
+   *
+   * @param configRoot the config root
+   * @param configOverrides the config overrides
+   * @return the json genesis config options
+   */
   static JsonGenesisConfigOptions fromJsonObjectWithOverrides(
       final ObjectNode configRoot, final Map<String, String> configOverrides) {
     final TransitionsConfigOptions transitionsConfigOptions;
@@ -73,6 +87,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return new TransitionsConfigOptions(transitionsNode.get());
   }
 
+  /**
+   * Instantiates a new Json genesis config options.
+   *
+   * @param maybeConfig the optional config
+   * @param configOverrides the config overrides map
+   * @param transitionsConfig the transitions configuration
+   */
   JsonGenesisConfigOptions(
       final ObjectNode maybeConfig,
       final Map<String, String> configOverrides,

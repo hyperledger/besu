@@ -42,6 +42,7 @@ public class Memory {
 
   private int activeWords;
 
+  /** Instantiates a new Memory. */
   public Memory() {
     memBytes = new byte[0];
   }

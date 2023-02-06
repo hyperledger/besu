@@ -32,43 +32,84 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
+/** The interface Default command values. */
 public interface DefaultCommandValues {
+  /** The constant CONFIG_FILE_OPTION_NAME. */
   String CONFIG_FILE_OPTION_NAME = "--config-file";
 
+  /** The constant MANDATORY_PATH_FORMAT_HELP. */
   String MANDATORY_PATH_FORMAT_HELP = "<PATH>";
+  /** The constant MANDATORY_FILE_FORMAT_HELP. */
   String MANDATORY_FILE_FORMAT_HELP = "<FILE>";
+  /** The constant MANDATORY_DIRECTORY_FORMAT_HELP. */
   String MANDATORY_DIRECTORY_FORMAT_HELP = "<DIRECTORY>";
+  /** The constant BESU_HOME_PROPERTY_NAME. */
   String BESU_HOME_PROPERTY_NAME = "besu.home";
+  /** The constant DEFAULT_DATA_DIR_PATH. */
   String DEFAULT_DATA_DIR_PATH = "./build/data";
+  /** The constant MANDATORY_INTEGER_FORMAT_HELP. */
   String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";
+  /** The constant MANDATORY_DOUBLE_FORMAT_HELP. */
   String MANDATORY_DOUBLE_FORMAT_HELP = "<DOUBLE>";
+  /** The constant MANDATORY_LONG_FORMAT_HELP. */
   String MANDATORY_LONG_FORMAT_HELP = "<LONG>";
+  /** The constant MANDATORY_MODE_FORMAT_HELP. */
   String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
+  /** The constant MANDATORY_NETWORK_FORMAT_HELP. */
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
+  /** The constant MANDATORY_NODE_ID_FORMAT_HELP. */
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
+  /** The constant DEFAULT_MIN_TRANSACTION_GAS_PRICE. */
   Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
+  /** The constant DEFAULT_RPC_TX_FEE_CAP. */
   Wei DEFAULT_RPC_TX_FEE_CAP = TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP;
 
+  /** The constant DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO. */
   Double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
+  /** The constant DEFAULT_EXTRA_DATA. */
   Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
+  /** The constant PERMISSIONING_CONFIG_LOCATION. */
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
+  /** The constant MANDATORY_HOST_FORMAT_HELP. */
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
+  /** The constant MANDATORY_PORT_FORMAT_HELP. */
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
+  /** The constant DEFAULT_NAT_METHOD. */
   NatMethod DEFAULT_NAT_METHOD = NatMethod.AUTO;
+  /** The constant DEFAULT_JWT_ALGORITHM. */
   JwtAlgorithm DEFAULT_JWT_ALGORITHM = JwtAlgorithm.RS256;
+  /** The constant FAST_SYNC_MIN_PEER_COUNT. */
   int FAST_SYNC_MIN_PEER_COUNT = 5;
+  /** The constant DEFAULT_MAX_PEERS. */
   int DEFAULT_MAX_PEERS = 25;
+  /** The constant DEFAULT_P2P_PEER_LOWER_BOUND. */
   int DEFAULT_P2P_PEER_LOWER_BOUND = 25;
+  /** The constant DEFAULT_HTTP_MAX_CONNECTIONS. */
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
+  /** The constant DEFAULT_HTTP_MAX_BATCH_SIZE. */
+  int DEFAULT_HTTP_MAX_BATCH_SIZE = 1;
+  /** The constant DEFAULT_WS_MAX_CONNECTIONS. */
   int DEFAULT_WS_MAX_CONNECTIONS = 80;
+  /** The constant DEFAULT_WS_MAX_FRAME_SIZE. */
   int DEFAULT_WS_MAX_FRAME_SIZE = 1024 * 1024;
+  /** The constant DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED. */
   float DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
       RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
+  /** The constant DEFAULT_KEY_VALUE_STORAGE_NAME. */
   String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
+  /** The constant DEFAULT_SECURITY_MODULE. */
   String DEFAULT_SECURITY_MODULE = "localfile";
+  /** The constant DEFAULT_KEYSTORE_TYPE. */
   String DEFAULT_KEYSTORE_TYPE = "JKS";
+  /** The Default tls protocols. */
   List<String> DEFAULT_TLS_PROTOCOLS = List.of("TLSv1.3", "TLSv1.2");
 
+  /**
+   * Gets default besu data path.
+   *
+   * @param command the command
+   * @return the default besu data path
+   */
   static Path getDefaultBesuDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Besu running shell script.
     final String besuHomeProperty = System.getProperty(BESU_HOME_PROPERTY_NAME);

@@ -20,15 +20,43 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Map;
 import java.util.Optional;
 
+/** The interface Vote provider. */
 public interface VoteProvider {
 
+  /**
+   * Gets vote after block.
+   *
+   * @param header the header
+   * @param localAddress the local address
+   * @return the vote after block
+   */
   Optional<ValidatorVote> getVoteAfterBlock(final BlockHeader header, final Address localAddress);
 
+  /**
+   * Auth vote.
+   *
+   * @param address the address
+   */
   void authVote(final Address address);
 
+  /**
+   * Drop vote.
+   *
+   * @param address the address
+   */
   void dropVote(final Address address);
 
+  /**
+   * Discard vote.
+   *
+   * @param address the address
+   */
   void discardVote(final Address address);
 
+  /**
+   * Gets proposals.
+   *
+   * @return the proposals
+   */
   Map<Address, VoteType> getProposals();
 }

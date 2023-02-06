@@ -14,9 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,8 +36,11 @@ public class EngineGetPayloadResultV2 {
   private final String blockValue;
 
   public EngineGetPayloadResultV2(
-      final BlockHeader header, final List<String> transactions, final String blockValue) {
-    this.executionPayload = new PayloadResult(header, transactions);
+      final BlockHeader header,
+      final List<String> transactions,
+      final Optional<List<Withdrawal>> withdrawals,
+      final String blockValue) {
+    this.executionPayload = new PayloadResult(header, transactions, withdrawals);
     this.blockValue = blockValue;
   }
 
@@ -63,8 +70,12 @@ public class EngineGetPayloadResultV2 {
     private final String extraData;
     private final String baseFeePerGas;
     protected final List<String> transactions;
+    private final List<WithdrawalParameter> withdrawals;
 
-    public PayloadResult(final BlockHeader header, final List<String> transactions) {
+    public PayloadResult(
+        final BlockHeader header,
+        final List<String> transactions,
+        final Optional<List<Withdrawal>> withdrawals) {
       this.blockNumber = Quantity.create(header.getNumber());
       this.blockHash = header.getHash().toString();
       this.parentHash = header.getParentHash().toString();
@@ -79,6 +90,14 @@ public class EngineGetPayloadResultV2 {
       this.transactions = transactions;
       this.feeRecipient = header.getCoinbase().toString();
       this.prevRandao = header.getPrevRandao().map(Bytes32::toHexString).orElse(null);
+      this.withdrawals =
+          withdrawals
+              .map(
+                  ws ->
+                      ws.stream()
+                          .map(WithdrawalParameter::fromWithdrawal)
+                          .collect(Collectors.toList()))
+              .orElse(null);
     }
 
     @JsonGetter(value = "blockNumber")
@@ -144,6 +163,11 @@ public class EngineGetPayloadResultV2 {
     @JsonGetter(value = "transactions")
     public List<String> getTransactions() {
       return transactions;
+    }
+
+    @JsonGetter(value = "withdrawals")
+    public List<WithdrawalParameter> getWithdrawals() {
+      return withdrawals;
     }
 
     @JsonGetter(value = "feeRecipient")

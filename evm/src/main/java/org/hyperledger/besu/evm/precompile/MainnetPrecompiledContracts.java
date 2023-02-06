@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,17 +18,27 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 /** Provides the various precompiled contracts used on mainnet hard forks. */
-public abstract class MainnetPrecompiledContracts {
+public interface MainnetPrecompiledContracts {
 
-  private MainnetPrecompiledContracts() {}
-
-  public static PrecompileContractRegistry frontier(final GasCalculator gasCalculator) {
+  /**
+   * Frontier precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
+  static PrecompileContractRegistry frontier(final GasCalculator gasCalculator) {
     PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     populateForFrontier(precompileContractRegistry, gasCalculator);
     return precompileContractRegistry;
   }
 
-  public static void populateForFrontier(
+  /**
+   * Populate registry for frontier.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
+  static void populateForFrontier(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     registry.put(Address.ECREC, new ECRECPrecompiledContract(gasCalculator));
     registry.put(Address.SHA256, new SHA256PrecompiledContract(gasCalculator));
@@ -36,17 +46,35 @@ public abstract class MainnetPrecompiledContracts {
     registry.put(Address.ID, new IDPrecompiledContract(gasCalculator));
   }
 
-  public static PrecompileContractRegistry homestead(final GasCalculator gasCalculator) {
+  /**
+   * Homestead precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
+  static PrecompileContractRegistry homestead(final GasCalculator gasCalculator) {
     return frontier(gasCalculator);
   }
 
-  public static PrecompileContractRegistry byzantium(final GasCalculator gasCalculator) {
+  /**
+   * Byzantium precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
+  static PrecompileContractRegistry byzantium(final GasCalculator gasCalculator) {
     PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     populateForByzantium(precompileContractRegistry, gasCalculator);
     return precompileContractRegistry;
   }
 
-  public static void populateForByzantium(
+  /**
+   * Populate registry for byzantium.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
+  static void populateForByzantium(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForFrontier(registry, gasCalculator);
     registry.put(
@@ -57,13 +85,25 @@ public abstract class MainnetPrecompiledContracts {
         Address.ALTBN128_PAIRING, AltBN128PairingPrecompiledContract.byzantium(gasCalculator));
   }
 
-  public static PrecompileContractRegistry istanbul(final GasCalculator gasCalculator) {
+  /**
+   * Istanbul precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
+  static PrecompileContractRegistry istanbul(final GasCalculator gasCalculator) {
     PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     populateForIstanbul(precompileContractRegistry, gasCalculator);
     return precompileContractRegistry;
   }
 
-  public static void populateForIstanbul(
+  /**
+   * Populate registry for istanbul.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
+  static void populateForIstanbul(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForByzantium(registry, gasCalculator);
     registry.put(Address.ALTBN128_ADD, AltBN128AddPrecompiledContract.istanbul(gasCalculator));
@@ -73,9 +113,17 @@ public abstract class MainnetPrecompiledContracts {
     registry.put(Address.BLAKE2B_F_COMPRESSION, new BLAKE2BFPrecompileContract(gasCalculator));
   }
 
-  public static void populateForBLS12(
+  /**
+   * Populate registry for Cancun.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
+  static void populateForCancun(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForIstanbul(registry, gasCalculator);
+
+    // EIP-2537 - BLS12-381 curve operations
     registry.put(Address.BLS12_G1ADD, new BLS12G1AddPrecompiledContract());
     registry.put(Address.BLS12_G1MUL, new BLS12G1MulPrecompiledContract());
     registry.put(Address.BLS12_G1MULTIEXP, new BLS12G1MultiExpPrecompiledContract());
@@ -85,5 +133,9 @@ public abstract class MainnetPrecompiledContracts {
     registry.put(Address.BLS12_PAIRING, new BLS12PairingPrecompiledContract());
     registry.put(Address.BLS12_MAP_FP_TO_G1, new BLS12MapFpToG1PrecompiledContract());
     registry.put(Address.BLS12_MAP_FP2_TO_G2, new BLS12MapFp2ToG2PrecompiledContract());
+
+    // EIP-4844 - shard blob transactions
+    // TODO: allow override to be configured?
+    registry.put(Address.KZG_POINT_EVAL, new KZGPointEvalPrecompiledContract());
   }
 }

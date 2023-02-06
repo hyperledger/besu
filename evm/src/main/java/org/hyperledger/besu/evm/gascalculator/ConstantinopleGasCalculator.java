@@ -24,6 +24,7 @@ import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Constantinople gas calculator. */
 public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
   private static final long SSTORE_NO_OP_COST = 200L;

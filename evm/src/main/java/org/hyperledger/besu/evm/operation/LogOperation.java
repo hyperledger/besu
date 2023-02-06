@@ -28,10 +28,17 @@ import org.hyperledger.besu.evm.log.LogTopic;
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Log operation. */
 public class LogOperation extends AbstractOperation {
 
   private final int numTopics;
 
+  /**
+   * Instantiates a new Log operation.
+   *
+   * @param numTopics the num topics
+   * @param gasCalculator the gas calculator
+   */
   public LogOperation(final int numTopics, final GasCalculator gasCalculator) {
     super(0xA0 + numTopics, "LOG" + numTopics, numTopics + 2, 0, gasCalculator);
     this.numTopics = numTopics;

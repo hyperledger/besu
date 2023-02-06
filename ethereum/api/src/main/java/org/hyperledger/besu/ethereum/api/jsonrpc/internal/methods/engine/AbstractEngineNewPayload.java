@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -103,7 +104,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         Optional.ofNullable(blockParam.getWithdrawals())
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
     if (!getWithdrawalsValidator(timestampSchedule, blockParam.getTimestamp())
-        .validateWithdrawals(maybeWithdrawals.orElse(null))) {
+        .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
 
@@ -155,6 +156,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
+            maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
+            null,
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -165,7 +168,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      return respondWithInvalid(reqId, blockParam, null, INVALID_BLOCK_HASH, errorMessage);
+      return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
     // do we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
@@ -208,7 +211,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     // TODO: post-merge cleanup
-    if (!mergeContext.get().isCheckpointPostMergeSync()
+    if (requireTerminalPoWBlockValidation()
+        && !mergeContext.get().isCheckpointPostMergeSync()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)
         && !mergeContext.get().isChainPruningEnabled()) {
       mergeCoordinator.addBadBlock(block, Optional.empty());
@@ -308,17 +312,33 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             invalidStatus, latestValidHash, Optional.of(validationError)));
   }
 
+  protected boolean requireTerminalPoWBlockValidation() {
+    return false;
+  }
+
+  protected EngineStatus getInvalidBlockHashStatus() {
+    return INVALID;
+  }
+
   private void logImportedBlockInfo(final Block block, final double timeInS) {
-    LOG.info(
-        String.format(
-            "Imported #%,d / %d tx / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
-            block.getHeader().getNumber(),
-            block.getBody().getTransactions().size(),
+    final StringBuilder message = new StringBuilder();
+    message.append("Imported #%,d / %d tx");
+    final List<Object> messageArgs =
+        new ArrayList<>(
+            List.of(block.getHeader().getNumber(), block.getBody().getTransactions().size()));
+    if (block.getBody().getWithdrawals().isPresent()) {
+      message.append(" / %d ws");
+      messageArgs.add(block.getBody().getWithdrawals().get().size());
+    }
+    message.append(" / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d");
+    messageArgs.addAll(
+        List.of(
             block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
             block.getHash().toHexString(),
             timeInS,
             ethPeers.peerCount()));
+    LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
 }

@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface NatManager {
 
+  /** The constant TIMEOUT_SECONDS. */
   int TIMEOUT_SECONDS = 60;
 
   /**

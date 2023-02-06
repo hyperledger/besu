@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -29,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -49,8 +47,6 @@ public class PrivxFindFlexiblePrivacyGroupTest {
           "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
           "0x627306090abab3a6e1400e9345bc60c78a8bef57");
 
-  private final Enclave enclave = mock(Enclave.class);
-  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
 
   private final User user =
@@ -63,8 +59,6 @@ public class PrivxFindFlexiblePrivacyGroupTest {
 
   @Before
   public void setUp() {
-    when(privacyParameters.getEnclave()).thenReturn(enclave);
-    when(privacyParameters.isEnabled()).thenReturn(true);
     request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "privx_findFlexiblePrivacyGroup", new Object[] {ADDRESSES}),

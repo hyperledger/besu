@@ -24,12 +24,18 @@ import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
+/** The Environment variable default provider used in PicoCli. */
 public class EnvironmentVariableDefaultProvider implements IDefaultValueProvider {
   private static final String ENV_VAR_PREFIX = "BESU_";
   private static final String LEGACY_ENV_VAR_PREFIX = "PANTHEON_";
 
   private final Map<String, String> environment;
 
+  /**
+   * Instantiates a new Environment variable default provider.
+   *
+   * @param environment the environment
+   */
   public EnvironmentVariableDefaultProvider(final Map<String, String> environment) {
     this.environment = environment;
   }

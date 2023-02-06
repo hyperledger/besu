@@ -22,8 +22,14 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/** The Code copy operation. */
 public class CodeCopyOperation extends AbstractOperation {
 
+  /**
+   * Instantiates a new Code copy operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public CodeCopyOperation(final GasCalculator gasCalculator) {
     super(0x39, "CODECOPY", 3, 0, gasCalculator);
   }

@@ -151,6 +151,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                         .type(TransactionType.FRONTIER)
                         .nonce(42)
                         .gasLimit(654321)
+                        .gasPrice(Wei.ONE)
                         .build(),
                     true,
                     Instant.ofEpochSecond(Integer.MAX_VALUE))));
@@ -213,8 +214,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   void importBlock(final int n) {
     final Block block = BLOCKS.get(n);
-    final ProtocolSpec protocolSpec =
-        PROTOCOL_SCHEDULE.getByBlockNumber(block.getHeader().getNumber());
+    final ProtocolSpec protocolSpec = PROTOCOL_SCHEDULE.getByBlockHeader(block.getHeader());
     final BlockImporter blockImporter = protocolSpec.getBlockImporter();
     blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
   }

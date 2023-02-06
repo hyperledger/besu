@@ -16,14 +16,27 @@ package org.hyperledger.besu.crypto;
 
 import java.security.SecureRandom;
 
+/**
+ * The Secure random provider. Errorprone checks are in place to enforce only this class is used
+ * wherever SecureRandom instance is required.
+ */
 public class SecureRandomProvider {
   private static final SecureRandom publicSecureRandom = secureRandom();
 
-  // Returns a shared instance of secure random intended to be used where the value is used publicly
+  /**
+   * Returns a shared instance of secure random intended to be used where the value is used publicly
+   *
+   * @return the secure random
+   */
   public static SecureRandom publicSecureRandom() {
     return publicSecureRandom;
   }
 
+  /**
+   * Create secure random.
+   *
+   * @return the secure random
+   */
   public static SecureRandom createSecureRandom() {
     return secureRandom();
   }

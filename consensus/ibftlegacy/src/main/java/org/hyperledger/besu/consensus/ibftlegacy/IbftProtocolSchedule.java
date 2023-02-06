@@ -36,6 +36,15 @@ public class IbftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param privacyParameters the privacy parameters
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
@@ -59,6 +68,14 @@ public class IbftProtocolSchedule {
         .createProtocolSchedule();
   }
 
+  /**
+   * Create protocol schedule.
+   *
+   * @param config the config
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,

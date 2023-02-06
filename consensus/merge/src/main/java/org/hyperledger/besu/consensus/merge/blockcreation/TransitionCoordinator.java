@@ -35,12 +35,19 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Transition coordinator. */
 public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     implements MergeMiningCoordinator {
 
   private final MiningCoordinator miningCoordinator;
   private final MergeMiningCoordinator mergeCoordinator;
 
+  /**
+   * Instantiates a new Transition coordinator.
+   *
+   * @param miningCoordinator the mining coordinator
+   * @param mergeCoordinator the merge coordinator
+   */
   public TransitionCoordinator(
       final MiningCoordinator miningCoordinator, final MiningCoordinator mergeCoordinator) {
     super(miningCoordinator, mergeCoordinator, PostMergeContext.get());
@@ -48,6 +55,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;
   }
 
+  /**
+   * Gets merge coordinator.
+   *
+   * @return the merge coordinator
+   */
   public MergeMiningCoordinator getMergeCoordinator() {
     return mergeCoordinator;
   }

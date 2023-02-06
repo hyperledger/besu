@@ -29,12 +29,23 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+/**
+ * The type Segmented key value storage adapter.
+ *
+ * @param <S> the type parameter
+ */
 public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
 
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
   private final Supplier<SnappedKeyValueStorage> snapshotSupplier;
 
+  /**
+   * Instantiates a new Segmented key value storage adapter.
+   *
+   * @param segment the segment
+   * @param storage the storage
+   */
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
     this(
@@ -45,6 +56,13 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
         });
   }
 
+  /**
+   * Instantiates a new Segmented key value storage adapter.
+   *
+   * @param segment the segment
+   * @param storage the storage
+   * @param snapshotSupplier the snapshot supplier
+   */
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment,
       final SegmentedKeyValueStorage<S> storage,

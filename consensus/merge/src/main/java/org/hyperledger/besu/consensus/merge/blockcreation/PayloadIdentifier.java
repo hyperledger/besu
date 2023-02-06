@@ -25,19 +25,39 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
+/** The Payload identifier. */
 public class PayloadIdentifier implements Quantity {
 
   private final UInt64 val;
 
+  /**
+   * Instantiates a new Payload identifier.
+   *
+   * @param payloadId the payload id
+   */
   @JsonCreator
   public PayloadIdentifier(final String payloadId) {
     this(Long.decode(payloadId));
   }
 
+  /**
+   * Instantiates a new Payload identifier.
+   *
+   * @param payloadId the payload id
+   */
   public PayloadIdentifier(final Long payloadId) {
     this.val = UInt64.valueOf(Math.abs(payloadId));
   }
 
+  /**
+   * Create payload identifier for payload params.
+   *
+   * @param parentHash the parent hash
+   * @param timestamp the timestamp
+   * @param prevRandao the prev randao
+   * @param feeRecipient the fee recipient
+   * @return the payload identifier
+   */
   public static PayloadIdentifier forPayloadParams(
       final Hash parentHash,
       final Long timestamp,
@@ -74,6 +94,11 @@ public class PayloadIdentifier implements Quantity {
     return shortHex;
   }
 
+  /**
+   * Serialize to hex string.
+   *
+   * @return the string
+   */
   @JsonValue
   public String serialize() {
     return toShortHexString();

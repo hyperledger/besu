@@ -42,8 +42,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -189,6 +191,7 @@ public class MessageFrame {
     MESSAGE_CALL,
   }
 
+  /** The constant DEFAULT_MAX_STACK_SIZE. */
   public static final int DEFAULT_MAX_STACK_SIZE = 1024;
 
   // Global data fields.
@@ -237,6 +240,9 @@ public class MessageFrame {
   private Optional<Bytes> revertReason;
 
   private final Map<String, Object> contextVariables;
+  private final Optional<List<Hash>> versionedHashes;
+
+  private final Table<Address, Bytes32, Bytes32> transientStorage = HashBasedTable.create();
 
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
@@ -245,6 +251,11 @@ public class MessageFrame {
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
   private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
 
+  /**
+   * Builder builder.
+   *
+   * @return the builder
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -273,7 +284,8 @@ public class MessageFrame {
       final Optional<Bytes> revertReason,
       final int maxStackSize,
       final Set<Address> accessListWarmAddresses,
-      final Multimap<Address, Bytes32> accessListWarmStorage) {
+      final Multimap<Address, Bytes32> accessListWarmStorage,
+      final Optional<List<Hash>> versionedHashes) {
     this.type = type;
     this.messageFrameStack = messageFrameStack;
     this.parentMessageFrame = messageFrameStack.peek();
@@ -316,6 +328,7 @@ public class MessageFrame {
     this.warmedUpAddresses.add(sender);
     this.warmedUpAddresses.add(contract);
     this.warmedUpStorage = HashMultimap.create(accessListWarmStorage);
+    this.versionedHashes = versionedHashes;
 
     // the warmed up addresses will always be a superset of the address keys in the warmed up
     // storage, so we can do both warm-ups in one pass
@@ -367,6 +380,12 @@ public class MessageFrame {
     return section;
   }
 
+  /**
+   * Call function and return exceptional halt reason.
+   *
+   * @param calledSection the called section
+   * @return the exceptional halt reason
+   */
   public ExceptionalHaltReason callFunction(final int calledSection) {
     CodeSection info = code.getCodeSection(calledSection);
     if (info == null) {
@@ -384,6 +403,12 @@ public class MessageFrame {
     }
   }
 
+  /**
+   * Jump function exceptional halt reason.
+   *
+   * @param section the section
+   * @return the exceptional halt reason
+   */
   public ExceptionalHaltReason jumpFunction(final int section) {
     CodeSection info = code.getCodeSection(section);
     if (info == null) {
@@ -397,6 +422,11 @@ public class MessageFrame {
     }
   }
 
+  /**
+   * Return function exceptional halt reason.
+   *
+   * @return the exceptional halt reason
+   */
   public ExceptionalHaltReason returnFunction() {
     CodeSection thisInfo = code.getCodeSection(this.section);
     var returnInfo = returnStack.pop();
@@ -644,6 +674,11 @@ public class MessageFrame {
     return revertReason;
   }
 
+  /**
+   * Sets revert reason.
+   *
+   * @param revertReason the revert reason
+   */
   public void setRevertReason(final Bytes revertReason) {
     this.revertReason = Optional.ofNullable(revertReason);
   }
@@ -819,9 +854,16 @@ public class MessageFrame {
     maybeUpdatedMemory = Optional.of(new MemoryEntry(offset, value));
   }
 
+  /**
+   * Storage was updated.
+   *
+   * @param storageAddress the storage address
+   * @param value the value
+   */
   public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
     maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
   }
+
   /**
    * Accumulate a log.
    *
@@ -979,6 +1021,11 @@ public class MessageFrame {
     return false;
   }
 
+  /**
+   * Merge warmed up fields.
+   *
+   * @param childFrame the child frame
+   */
   public void mergeWarmedUpFields(final MessageFrame childFrame) {
     if (childFrame == this) {
       return;
@@ -1137,11 +1184,21 @@ public class MessageFrame {
     return messageFrameStack;
   }
 
+  /**
+   * Sets exceptional halt reason.
+   *
+   * @param exceptionalHaltReason the exceptional halt reason
+   */
   public void setExceptionalHaltReason(
       final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
     this.exceptionalHaltReason = exceptionalHaltReason;
   }
 
+  /**
+   * Gets exceptional halt reason.
+   *
+   * @return the exceptional halt reason
+   */
   public Optional<ExceptionalHaltReason> getExceptionalHaltReason() {
     return exceptionalHaltReason;
   }
@@ -1155,49 +1212,164 @@ public class MessageFrame {
     return miningBeneficiary;
   }
 
+  /**
+   * Gets block hash lookup.
+   *
+   * @return the block hash lookup
+   */
   public Function<Long, Hash> getBlockHashLookup() {
     return blockHashLookup;
   }
 
+  /**
+   * Gets current operation.
+   *
+   * @return the current operation
+   */
   public Operation getCurrentOperation() {
     return currentOperation;
   }
 
+  /**
+   * Gets max stack size.
+   *
+   * @return the max stack size
+   */
   public int getMaxStackSize() {
     return maxStackSize;
   }
 
+  /**
+   * Gets context variable.
+   *
+   * @param <T> the type parameter
+   * @param name the name
+   * @return the context variable
+   */
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   public <T> T getContextVariable(final String name) {
     return (T) contextVariables.get(name);
   }
 
+  /**
+   * Gets context variable.
+   *
+   * @param <T> the type parameter
+   * @param name the name
+   * @param defaultValue the default value
+   * @return the context variable
+   */
   @SuppressWarnings("unchecked")
   public <T> T getContextVariable(final String name, final T defaultValue) {
     return (T) contextVariables.getOrDefault(name, defaultValue);
   }
 
+  /**
+   * Has context variable.
+   *
+   * @param name the name
+   * @return the boolean
+   */
   public boolean hasContextVariable(final String name) {
     return contextVariables.containsKey(name);
   }
 
+  /**
+   * Sets current operation.
+   *
+   * @param currentOperation the current operation
+   */
   public void setCurrentOperation(final Operation currentOperation) {
     this.currentOperation = currentOperation;
   }
 
+  /**
+   * Gets warmedUp Storage.
+   *
+   * @return the warmed up storage
+   */
+  public Multimap<Address, Bytes32> getWarmedUpStorage() {
+    return warmedUpStorage;
+  }
+
+  /**
+   * Gets maybe updated memory.
+   *
+   * @return the maybe updated memory
+   */
   public Optional<MemoryEntry> getMaybeUpdatedMemory() {
     return maybeUpdatedMemory;
   }
 
+  /**
+   * Gets maybe updated storage.
+   *
+   * @return the maybe updated storage
+   */
   public Optional<StorageEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 
+  /**
+   * Gets the transient storage value, including values from parent frames if not set
+   *
+   * @param accountAddress The address of the executing context
+   * @param slot the slot to retrieve
+   * @return the data value read
+   */
+  public Bytes32 getTransientStorageValue(final Address accountAddress, final Bytes32 slot) {
+    Bytes32 data = transientStorage.get(accountAddress, slot);
+
+    if (data != null) {
+      return data;
+    }
+
+    if (parentMessageFrame != null) {
+      data = parentMessageFrame.getTransientStorageValue(accountAddress, slot);
+    }
+    if (data == null) {
+      data = Bytes32.ZERO;
+    }
+    transientStorage.put(accountAddress, slot, data);
+
+    return data;
+  }
+
+  /**
+   * Gets the transient storage value, including values from parent frames if not set
+   *
+   * @param accountAddress The address of the executing context
+   * @param slot the slot to set
+   * @param value the value to set in the transient store
+   */
+  public void setTransientStorageValue(
+      final Address accountAddress, final Bytes32 slot, final Bytes32 value) {
+    transientStorage.put(accountAddress, slot, value);
+  }
+
+  /** Writes the transient storage to the parent frame, if one exists */
+  public void commitTransientStorage() {
+    if (parentMessageFrame != null) {
+      parentMessageFrame.transientStorage.putAll(transientStorage);
+    }
+  }
+
+  /**
+   * Accessor for versionedHashes, if present.
+   *
+   * @return optional list of hashes
+   */
+  public Optional<List<Hash>> getVersionedHashes() {
+    return versionedHashes;
+  }
+
+  /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
     maybeUpdatedStorage = Optional.empty();
   }
 
+  /** The MessageFrame Builder. */
   public static class Builder {
 
     private Type type;
@@ -1225,123 +1397,280 @@ public class MessageFrame {
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
+    private Optional<List<Hash>> versionedHashes;
+
+    /**
+     * Sets Type.
+     *
+     * @param type the type
+     * @return the builder
+     */
     public Builder type(final Type type) {
       this.type = type;
       return this;
     }
 
+    /**
+     * Sets Message frame stack.
+     *
+     * @param messageFrameStack the message frame stack
+     * @return the builder
+     */
     public Builder messageFrameStack(final Deque<MessageFrame> messageFrameStack) {
       this.messageFrameStack = messageFrameStack;
       return this;
     }
 
+    /**
+     * Sets World updater.
+     *
+     * @param worldUpdater the world updater
+     * @return the builder
+     */
     public Builder worldUpdater(final WorldUpdater worldUpdater) {
       this.worldUpdater = worldUpdater;
       return this;
     }
 
+    /**
+     * Sets Initial gas.
+     *
+     * @param initialGas the initial gas
+     * @return the builder
+     */
     public Builder initialGas(final long initialGas) {
       this.initialGas = initialGas;
       return this;
     }
 
+    /**
+     * Sets Address.
+     *
+     * @param address the address
+     * @return the builder
+     */
     public Builder address(final Address address) {
       this.address = address;
       return this;
     }
 
+    /**
+     * Sets Originator.
+     *
+     * @param originator the originator
+     * @return the builder
+     */
     public Builder originator(final Address originator) {
       this.originator = originator;
       return this;
     }
 
+    /**
+     * Sets Contract.
+     *
+     * @param contract the contract
+     * @return the builder
+     */
     public Builder contract(final Address contract) {
       this.contract = contract;
       return this;
     }
 
+    /**
+     * Sets Gas price.
+     *
+     * @param gasPrice the gas price
+     * @return the builder
+     */
     public Builder gasPrice(final Wei gasPrice) {
       this.gasPrice = gasPrice;
       return this;
     }
 
+    /**
+     * Sets Input data.
+     *
+     * @param inputData the input data
+     * @return the builder
+     */
     public Builder inputData(final Bytes inputData) {
       this.inputData = inputData;
       return this;
     }
 
+    /**
+     * Sets Sender address.
+     *
+     * @param sender the sender
+     * @return the builder
+     */
     public Builder sender(final Address sender) {
       this.sender = sender;
       return this;
     }
 
+    /**
+     * Sets Value.
+     *
+     * @param value the value
+     * @return the builder
+     */
     public Builder value(final Wei value) {
       this.value = value;
       return this;
     }
 
+    /**
+     * Sets Apparent value.
+     *
+     * @param apparentValue the apparent value
+     * @return the builder
+     */
     public Builder apparentValue(final Wei apparentValue) {
       this.apparentValue = apparentValue;
       return this;
     }
 
+    /**
+     * Sets Code.
+     *
+     * @param code the code
+     * @return the builder
+     */
     public Builder code(final Code code) {
       this.code = code;
       return this;
     }
 
+    /**
+     * Sets Block values.
+     *
+     * @param blockValues the block values
+     * @return the builder
+     */
     public Builder blockValues(final BlockValues blockValues) {
       this.blockValues = blockValues;
       return this;
     }
 
+    /**
+     * Sets Depth.
+     *
+     * @param depth the depth
+     * @return the builder
+     */
     public Builder depth(final int depth) {
       this.depth = depth;
       return this;
     }
 
+    /**
+     * Sets Is static.
+     *
+     * @param isStatic the is static
+     * @return the builder
+     */
     public Builder isStatic(final boolean isStatic) {
       this.isStatic = isStatic;
       return this;
     }
 
+    /**
+     * Sets Max stack size.
+     *
+     * @param maxStackSize the max stack size
+     * @return the builder
+     */
     public Builder maxStackSize(final int maxStackSize) {
       this.maxStackSize = maxStackSize;
       return this;
     }
 
+    /**
+     * Sets Completer.
+     *
+     * @param completer the completer
+     * @return the builder
+     */
     public Builder completer(final Consumer<MessageFrame> completer) {
       this.completer = completer;
       return this;
     }
 
+    /**
+     * Sets Mining beneficiary.
+     *
+     * @param miningBeneficiary the mining beneficiary
+     * @return the builder
+     */
     public Builder miningBeneficiary(final Address miningBeneficiary) {
       this.miningBeneficiary = miningBeneficiary;
       return this;
     }
 
+    /**
+     * Sets Block hash lookup.
+     *
+     * @param blockHashLookup the block hash lookup
+     * @return the builder
+     */
     public Builder blockHashLookup(final Function<Long, Hash> blockHashLookup) {
       this.blockHashLookup = blockHashLookup;
       return this;
     }
 
+    /**
+     * Sets Context variables.
+     *
+     * @param contextVariables the context variables
+     * @return the builder
+     */
     public Builder contextVariables(final Map<String, Object> contextVariables) {
       this.contextVariables = contextVariables;
       return this;
     }
 
+    /**
+     * Sets Reason.
+     *
+     * @param reason the reason
+     * @return the builder
+     */
     public Builder reason(final Bytes reason) {
       this.reason = Optional.ofNullable(reason);
       return this;
     }
 
+    /**
+     * Sets Access list warm addresses.
+     *
+     * @param accessListWarmAddresses the access list warm addresses
+     * @return the builder
+     */
     public Builder accessListWarmAddresses(final Set<Address> accessListWarmAddresses) {
       this.accessListWarmAddresses = accessListWarmAddresses;
       return this;
     }
 
+    /**
+     * Sets Access list warm storage.
+     *
+     * @param accessListWarmStorage the access list warm storage
+     * @return the builder
+     */
     public Builder accessListWarmStorage(final Multimap<Address, Bytes32> accessListWarmStorage) {
       this.accessListWarmStorage = accessListWarmStorage;
+      return this;
+    }
+
+    /**
+     * Sets versioned hashes list.
+     *
+     * @param versionedHashes the Optional list of versioned hashes
+     * @return the builder
+     */
+    public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
+      this.versionedHashes = versionedHashes;
       return this;
     }
 
@@ -1366,6 +1695,11 @@ public class MessageFrame {
       checkState(blockHashLookup != null, "Missing block hash lookup");
     }
 
+    /**
+     * Build MessageFrame.
+     *
+     * @return instance of MessageFrame
+     */
     public MessageFrame build() {
       validate();
 
@@ -1393,7 +1727,8 @@ public class MessageFrame {
           reason,
           maxStackSize,
           accessListWarmAddresses,
-          accessListWarmStorage);
+          accessListWarmStorage,
+          versionedHashes);
     }
   }
 }

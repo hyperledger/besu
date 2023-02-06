@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ImmutableTransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -113,11 +112,12 @@ public class TransactionTracerTest {
     when(previousBlockHeader.getStateRoot()).thenReturn(Hash.ZERO);
     when(worldStateArchive.getMutable(Hash.ZERO, null, false))
         .thenReturn(Optional.of(mutableWorldState));
-    when(protocolSchedule.getByBlockNumber(12)).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     when(protocolSpec.getBadBlocksManager()).thenReturn(new BadBlockManager());
+    when(mutableWorldState.copy()).thenReturn(mutableWorldState);
   }
 
   @Test
@@ -169,14 +169,14 @@ public class TransactionTracerTest {
     when(blockBody.getTransactions()).thenReturn(Collections.singletonList(transaction));
     when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
 
-    final WorldUpdater updater = mutableWorldState.updater();
-    final Address coinbase = blockHeader.getCoinbase();
+    final WorldUpdater updater = mock(WorldUpdater.class);
+    when(mutableWorldState.updater()).thenReturn(updater);
     when(transactionProcessor.processTransaction(
             eq(blockchain),
             eq(updater),
             eq(blockHeader),
             eq(transaction),
-            eq(coinbase),
+            eq(null),
             eq(tracer),
             any(),
             any(),
@@ -258,13 +258,12 @@ public class TransactionTracerTest {
     when(mutableWorldState.updater()).thenReturn(updater);
     final WorldUpdater stackedUpdater = mock(StackedUpdater.class);
     when(updater.updater()).thenReturn(stackedUpdater);
-    final Address coinbase = blockHeader.getCoinbase();
     when(transactionProcessor.processTransaction(
             eq(blockchain),
             eq(stackedUpdater),
             eq(blockHeader),
             eq(transaction),
-            eq(coinbase),
+            eq(null),
             any(StandardJsonTracer.class),
             any(),
             any(),

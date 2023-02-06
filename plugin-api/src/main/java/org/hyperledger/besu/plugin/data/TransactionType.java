@@ -18,10 +18,15 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
+/** The enum Transaction type. */
 public enum TransactionType {
+  /** The Frontier. */
   FRONTIER(0xf8 /* this is serialized as 0x0 in TransactionCompleteResult */),
+  /** Access list transaction type. */
   ACCESS_LIST(0x01),
+  /** Eip1559 transaction type. */
   EIP1559(0x02),
+  /** Blob transaction type. */
   BLOB(0x03);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
@@ -36,14 +41,31 @@ public enum TransactionType {
     this.typeValue = typeValue;
   }
 
+  /**
+   * Gets serialized type.
+   *
+   * @return the serialized type
+   */
   public byte getSerializedType() {
     return (byte) this.typeValue;
   }
 
+  /**
+   * Compare to serialized type.
+   *
+   * @param b the byte value
+   * @return the int result of comparison
+   */
   public int compareTo(final Byte b) {
     return Byte.valueOf(getSerializedType()).compareTo(b);
   }
 
+  /**
+   * Convert TransactionType from int serialized type value.
+   *
+   * @param serializedTypeValue the serialized type value
+   * @return the transaction type
+   */
   public static TransactionType of(final int serializedTypeValue) {
     return Arrays.stream(
             new TransactionType[] {
@@ -57,15 +79,39 @@ public enum TransactionType {
                     String.format("Unsupported transaction type %x", serializedTypeValue)));
   }
 
+  /**
+   * Does transaction type supports access list.
+   *
+   * @return the boolean
+   */
   public boolean supportsAccessList() {
     return ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES.contains(this);
   }
 
+  /**
+   * Does transaction type supports EIP-1559 fee market.
+   *
+   * @return the boolean
+   */
   public boolean supports1559FeeMarket() {
     return !LEGACY_FEE_MARKET_TRANSACTION_TYPES.contains(this);
   }
 
+  /**
+   * Does transaction type requires chain id.
+   *
+   * @return the boolean
+   */
   public boolean requiresChainId() {
     return !this.equals(FRONTIER);
+  }
+
+  /**
+   * Does transaction type supports data blobs.
+   *
+   * @return the boolean
+   */
+  public boolean supportsBlob() {
+    return this.equals(BLOB);
   }
 }

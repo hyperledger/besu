@@ -19,6 +19,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The Create privacy group request. */
 public class CreatePrivacyGroupRequest {
 
   private final List<String> addresses;
@@ -26,6 +27,14 @@ public class CreatePrivacyGroupRequest {
   private final String name;
   private final String description;
 
+  /**
+   * Instantiates a new Create privacy group request.
+   *
+   * @param addresses the addresses
+   * @param from the from
+   * @param name the name
+   * @param description the description
+   */
   @JsonCreator
   public CreatePrivacyGroupRequest(
       @JsonProperty("addresses") final List<String> addresses,
@@ -38,21 +47,41 @@ public class CreatePrivacyGroupRequest {
     this.description = description;
   }
 
+  /**
+   * Addresses list.
+   *
+   * @return the list
+   */
   @JsonProperty("addresses")
   public List<String> addresses() {
     return addresses;
   }
 
+  /**
+   * From.
+   *
+   * @return the string
+   */
   @JsonProperty("from")
   public String from() {
     return from;
   }
 
+  /**
+   * Name.
+   *
+   * @return the string
+   */
   @JsonProperty("name")
   public String name() {
     return name;
   }
 
+  /**
+   * Description.
+   *
+   * @return the string
+   */
   @JsonProperty("description")
   public String description() {
     return description;

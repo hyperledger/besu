@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+/** The Qbft block height manager factory. */
 public class QbftBlockHeightManagerFactory {
 
   private final QbftRoundFactory roundFactory;
@@ -29,6 +30,15 @@ public class QbftBlockHeightManagerFactory {
   private final MessageFactory messageFactory;
   private final ValidatorModeTransitionLogger validatorModeTransitionLogger;
 
+  /**
+   * Instantiates a new Qbft block height manager factory.
+   *
+   * @param finalState the final state
+   * @param roundFactory the round factory
+   * @param messageValidatorFactory the message validator factory
+   * @param messageFactory the message factory
+   * @param validatorModeTransitionLogger the validator mode transition logger
+   */
   public QbftBlockHeightManagerFactory(
       final BftFinalState finalState,
       final QbftRoundFactory roundFactory,
@@ -42,6 +52,12 @@ public class QbftBlockHeightManagerFactory {
     this.validatorModeTransitionLogger = validatorModeTransitionLogger;
   }
 
+  /**
+   * Create base qbft block height manager.
+   *
+   * @param parentHeader the parent header
+   * @return the base qbft block height manager
+   */
   public BaseQbftBlockHeightManager create(final BlockHeader parentHeader) {
     validatorModeTransitionLogger.logTransitionChange(parentHeader);
 

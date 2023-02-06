@@ -49,6 +49,11 @@ public class BftProcessor implements Runnable {
     shutdown = true;
   }
 
+  /**
+   * Await stop.
+   *
+   * @throws InterruptedException the interrupted exception
+   */
   public void awaitStop() throws InterruptedException {
     shutdownLatch.await();
   }

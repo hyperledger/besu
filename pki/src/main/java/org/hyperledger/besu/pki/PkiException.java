@@ -14,22 +14,40 @@
  */
 package org.hyperledger.besu.pki;
 
+/** The Pki exception. */
 public class PkiException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
+  /** Instantiates a new Pki exception. */
   public PkiException() {
     super();
   }
 
+  /**
+   * Instantiates a new Pki exception.
+   *
+   * @param message the message
+   */
   public PkiException(final String message) {
     super(message);
   }
 
+  /**
+   * Instantiates a new Pki exception.
+   *
+   * @param message the message
+   * @param t the Throwable cause
+   */
   public PkiException(final String message, final Throwable t) {
     super(message, t);
   }
 
+  /**
+   * Instantiates a new Pki exception.
+   *
+   * @param t the Throwable cause
+   */
   public PkiException(final Throwable t) {
     super(t);
   }

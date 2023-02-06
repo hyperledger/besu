@@ -30,10 +30,14 @@ import java.util.List;
  */
 public class Istanbul99Protocol implements SubProtocol {
 
+  /** The constant NAME. */
   public static final String NAME = "istanbul";
+
   private static final int VERSION = 99;
 
+  /** The Istanbul 99. */
   static final Capability ISTANBUL99 = Capability.create(NAME, 99);
+  /** The Instanbul msg. */
   static final int INSTANBUL_MSG = 0x11;
 
   private static final Istanbul99Protocol INSTANCE = new Istanbul99Protocol();
@@ -115,6 +119,11 @@ public class Istanbul99Protocol implements SubProtocol {
     }
   }
 
+  /**
+   * Get istanbul99 protocol singleton instance.
+   *
+   * @return the istanbul 99 protocol instance
+   */
   public static Istanbul99Protocol get() {
     return INSTANCE;
   }

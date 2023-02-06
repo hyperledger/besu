@@ -18,13 +18,34 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+/** The interface Base block height manager. */
 public interface BaseBlockHeightManager {
 
+  /**
+   * Handle block timer expiry.
+   *
+   * @param roundIdentifier the round identifier
+   */
   void handleBlockTimerExpiry(ConsensusRoundIdentifier roundIdentifier);
 
+  /**
+   * Round expired.
+   *
+   * @param expire the expiry
+   */
   void roundExpired(RoundExpiry expire);
 
+  /**
+   * Gets chain height.
+   *
+   * @return the chain height
+   */
   long getChainHeight();
 
+  /**
+   * Gets parent block header.
+   *
+   * @return the parent block header
+   */
   BlockHeader getParentBlockHeader();
 }

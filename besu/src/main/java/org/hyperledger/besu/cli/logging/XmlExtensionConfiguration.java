@@ -29,8 +29,15 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Xml extension configuration for Logging framework. */
 public class XmlExtensionConfiguration extends XmlConfiguration {
 
+  /**
+   * Instantiates a new Xml extension configuration.
+   *
+   * @param loggerContext the logger context
+   * @param configSource the Configuration Source
+   */
   public XmlExtensionConfiguration(
       final LoggerContext loggerContext, final ConfigurationSource configSource) {
     super(loggerContext, configSource);

@@ -26,18 +26,32 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
+/** The Proposal payload. */
 public class ProposalPayload extends QbftPayload {
 
   private static final int TYPE = QbftV1.PROPOSAL;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Block proposedBlock;
 
+  /**
+   * Instantiates a new Proposal payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param proposedBlock the proposed block
+   */
   public ProposalPayload(
       final ConsensusRoundIdentifier roundIdentifier, final Block proposedBlock) {
     this.roundIdentifier = roundIdentifier;
     this.proposedBlock = proposedBlock;
   }
 
+  /**
+   * Read from rlp input and return proposal payload.
+   *
+   * @param rlpInput the rlp input
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the proposal payload
+   */
   public static ProposalPayload readFrom(
       final RLPInput rlpInput, final BftExtraDataCodec bftExtraDataCodec) {
     rlpInput.enterList();
@@ -57,6 +71,11 @@ public class ProposalPayload extends QbftPayload {
     rlpOutput.endList();
   }
 
+  /**
+   * Gets proposed block.
+   *
+   * @return the proposed block
+   */
   public Block getProposedBlock() {
     return proposedBlock;
   }

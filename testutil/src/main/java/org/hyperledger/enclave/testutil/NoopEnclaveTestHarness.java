@@ -26,11 +26,18 @@ import java.util.stream.Collectors;
 import com.google.common.base.Charsets;
 import org.apache.tuweni.io.file.Files;
 
+/** The Noop enclave test harness. */
 public class NoopEnclaveTestHarness implements EnclaveTestHarness {
 
   private final Path tempDir;
   private final EnclaveKeyConfiguration keyConfig;
 
+  /**
+   * Instantiates a new Noop enclave test harness.
+   *
+   * @param tempDir the temp dir
+   * @param keyConfig the key config
+   */
   public NoopEnclaveTestHarness(final Path tempDir, final EnclaveKeyConfiguration keyConfig) {
     this.tempDir = tempDir;
     this.keyConfig = keyConfig;

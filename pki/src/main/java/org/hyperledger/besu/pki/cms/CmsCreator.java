@@ -17,12 +17,16 @@ package org.hyperledger.besu.pki.cms;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.EllipticCurve;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.CMSProcessableByteArray;
@@ -37,6 +41,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
 
+/** The Cms creator. */
 public class CmsCreator {
 
   static {
@@ -48,6 +53,12 @@ public class CmsCreator {
   private final String certificateAlias;
   private final KeyStoreWrapper keyStore;
 
+  /**
+   * Instantiates a new Cms creator.
+   *
+   * @param keyStore the key store
+   * @param certificateAlias the certificate alias
+   */
   public CmsCreator(final KeyStoreWrapper keyStore, final String certificateAlias) {
     this.keyStore = keyStore;
     this.certificateAlias = certificateAlias;
@@ -76,11 +87,13 @@ public class CmsCreator {
       final PrivateKey privateKey = keyStore.getPrivateKey(certificateAlias);
 
       final ContentSigner contentSigner =
-          new JcaContentSignerBuilder("SHA256withRSA").build(privateKey);
+          new JcaContentSignerBuilder(
+                  getPreferredSignatureAlgorithm(keyStore.getPublicKey(certificateAlias)))
+              .build(privateKey);
 
       final CMSSignedDataGenerator cmsGenerator = new CMSSignedDataGenerator();
 
-      // Aditional intermediate certificates for path building
+      // Additional intermediate certificates for path building
       cmsGenerator.addCertificates(certs);
 
       final DigestCalculatorProvider digestCalculatorProvider =
@@ -97,6 +110,32 @@ public class CmsCreator {
       return Bytes.wrap(cmsSignedData.getEncoded());
     } catch (final Exception e) {
       throw new RuntimeException("Error creating CMS data", e);
+    }
+  }
+
+  /**
+   * Gets preferred signature algorithm for EC or RSA keys
+   *
+   * @param pub the public key
+   * @return the preferred signature algorithm
+   */
+  @VisibleForTesting
+  public static String getPreferredSignatureAlgorithm(final PublicKey pub) {
+    switch (pub.getAlgorithm()) {
+      case "EC" -> {
+        final EllipticCurve curve = ((ECPublicKey) pub).getParams().getCurve();
+        return switch (curve.getField().getFieldSize()) {
+          case 224, 256 -> "SHA256withECDSA";
+          case 384 -> "SHA384withECDSA";
+          case 521 -> "SHA512withECDSA";
+          default -> throw new IllegalArgumentException("Elliptic curve not supported: " + curve);
+        };
+      }
+      case "RSA" -> {
+        return "SHA256WithRSAEncryption";
+      }
+      default -> throw new UnsupportedOperationException(
+          "Private key algorithm not supported: " + pub.getAlgorithm());
     }
   }
 }

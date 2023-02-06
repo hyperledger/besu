@@ -36,6 +36,17 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Supports contract based voters and validators in extra data */
 public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOptions> {
+  /**
+   * Instantiates a new Qbft block creator factory.
+   *
+   * @param pendingTransactions the pending transactions
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param forksSchedule the forks schedule
+   * @param miningParams the mining params
+   * @param localAddress the local address
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public QbftBlockCreatorFactory(
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,

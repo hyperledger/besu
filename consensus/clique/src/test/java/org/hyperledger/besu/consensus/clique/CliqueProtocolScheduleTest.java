@@ -35,7 +35,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.time.Instant;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CliqueProtocolScheduleTest {
 
@@ -176,7 +176,7 @@ public class CliqueProtocolScheduleTest {
       final BlockHeader parentBlockHeader) {
 
     return schedule
-        .getByBlockNumber(blockHeader.getNumber())
+        .getByBlockHeader(blockHeader)
         .getBlockHeaderValidator()
         .validateHeader(blockHeader, parentBlockHeader, null, HeaderValidationMode.LIGHT);
   }

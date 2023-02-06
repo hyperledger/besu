@@ -17,19 +17,36 @@ package org.hyperledger.besu.evm.internal;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Memory entry. */
 public class MemoryEntry {
   private final long offset;
   private final Bytes value;
 
+  /**
+   * Instantiates a new Memory entry.
+   *
+   * @param offset the offset
+   * @param value the value
+   */
   public MemoryEntry(final long offset, final Bytes value) {
     this.offset = offset;
     this.value = value;
   }
 
+  /**
+   * Gets offset.
+   *
+   * @return the offset
+   */
   public long getOffset() {
     return offset;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public Bytes getValue() {
     return value;
   }

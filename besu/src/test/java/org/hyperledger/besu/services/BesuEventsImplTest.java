@@ -17,7 +17,6 @@ package org.hyperledger.besu.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -125,13 +124,14 @@ public class BesuEventsImplTest {
     when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
-    when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
+    when(mockProtocolSchedule.getByBlockHeader(any())).thenReturn(mockProtocolSpec);
     when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
     when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     when(mockTransactionValidator.validate(any(), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
+    when(mockWorldState.copy()).thenReturn(mockWorldState);
     when(mockWorldStateArchive.getMutable(any(), any(), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));
 
@@ -192,7 +192,8 @@ public class BesuEventsImplTest {
     syncState.setSyncTarget(
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
-            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null));
+            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
+            null, null));
   }
 
   private void clearSyncTarget() {

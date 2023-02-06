@@ -237,6 +237,7 @@ public interface BesuEvents extends BesuService {
     void onLogEmitted(LogWithMetadata logWithMetadata);
   }
 
+  /** The interface TTD reached listener. */
   interface TTDReachedListener {
 
     /**
@@ -249,6 +250,7 @@ public interface BesuEvents extends BesuService {
     void onTTDReached(boolean reached);
   }
 
+  /** The interface Initial sync completion listener. */
   interface InitialSyncCompletionListener {
 
     /** Emitted when initial sync finishes */

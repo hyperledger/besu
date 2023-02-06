@@ -142,6 +142,15 @@ public class BlockchainQueries {
   }
 
   /**
+   * Return the header of the head of the chain.
+   *
+   * @return The header of the head of the chain.
+   */
+  public BlockHeader headBlockHeader() {
+    return blockchain.getChainHeadHeader();
+  }
+
+  /**
    * Return the header of the last finalized block.
    *
    * @return The header of the last finalized block.
@@ -414,7 +423,12 @@ public class BlockchainQueries {
                                               .collect(Collectors.toList());
                                       final int size = new Block(header, body).calculateSize();
                                       return new BlockWithMetadata<>(
-                                          header, formattedTxs, ommers, td, size);
+                                          header,
+                                          formattedTxs,
+                                          ommers,
+                                          td,
+                                          size,
+                                          body.getWithdrawals());
                                     })));
   }
 
@@ -468,7 +482,8 @@ public class BlockchainQueries {
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
                                       final int size = new Block(header, body).calculateSize();
-                                      return new BlockWithMetadata<>(header, txs, ommers, td, size);
+                                      return new BlockWithMetadata<>(
+                                          header, txs, ommers, td, size, body.getWithdrawals());
                                     })));
   }
 

@@ -30,8 +30,8 @@ plugins {
   id 'maven-publish'
 }
 
-if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+  throw new GradleException("Java 17 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -99,8 +99,8 @@ allprojects {
     from javadoc.outputDirectory
   }
 
-  sourceCompatibility = 11
-  targetCompatibility = 11
+  sourceCompatibility = 17
+  targetCompatibility = 17
 
   repositories {
     maven {
@@ -109,7 +109,7 @@ allprojects {
     }
     maven {
       url 'https://artifacts.consensys.net/public/maven/maven/'
-      content { includeGroupByRegex('tech\\.pegasys\\..*') }
+      content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
     }
     maven {
       url 'https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/'
@@ -160,7 +160,7 @@ allprojects {
     ]
 
     options.errorprone {
-      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*)'
+      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*|build/.*/annotation-output/.*)'
 
       // Our equals need to be symmetric, this checker doesn't respect that.
       check('EqualsGetClass', CheckSeverity.OFF)
@@ -261,7 +261,19 @@ allprojects {
   }
 
   javadoc {
-    options.addStringOption('Xdoclint:all', '-quiet')
+    options.addBooleanOption('Xdoclint:all', true)
+    // disable doc lint checking for generated code and acceptance tests dsl.
+    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
+      '-org.hyperledger.besu.tests.acceptance.*,' +
+      '-org.hyperledger.besu.tests.web3j.generated,' +
+      // TODO: these are temporary disabled (ethereum and sub modules), it should be removed in a future PR.
+      '-org.hyperledger.besu.ethereum,' +
+      '-org.hyperledger.besu.ethereum.*,' +
+      '-org.hyperledger.besu.ethstats.*,' +
+      '-org.hyperledger.besu.evmtool',
+      true)
+    options.addStringOption('Xmaxerrs','65535')
+    options.addStringOption('Xmaxwarns','65535')
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
@@ -610,8 +622,8 @@ def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("
 def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
 def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
-  "openjdk-11",
-  "openjdk-11-debug",
+  "openjdk-17",
+  "openjdk-17-debug",
   "graalvm",
   "openjdk-latest"
 ]

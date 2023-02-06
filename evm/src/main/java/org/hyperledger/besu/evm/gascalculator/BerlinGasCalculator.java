@@ -32,25 +32,33 @@ import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Berlin gas calculator. */
 public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // new constants for EIP-2929
   private static final long COLD_SLOAD_COST = 2100L;
   private static final long COLD_ACCOUNT_ACCESS_COST = 2600L;
-  private static final long WARM_STORAGE_READ_COST = 100L;
+  /** Warm storage read, defined in EIP-2929 */
+  protected static final long WARM_STORAGE_READ_COST = 100L;
+
   private static final long ACCESS_LIST_ADDRESS_COST = 2400L;
+  /** The constant ACCESS_LIST_STORAGE_COST. */
   protected static final long ACCESS_LIST_STORAGE_COST = 1900L;
 
   // redefinitions for EIP-2929
   private static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
+  /** The constant SSTORE_RESET_GAS. */
   protected static final long SSTORE_RESET_GAS = 5000L - COLD_SLOAD_COST;
 
   // unchanged from Istanbul
   private static final long SSTORE_SET_GAS = 20_000L;
   private static final long SSTORE_CLEARS_SCHEDULE = 15_000L;
 
+  /** The constant SSTORE_SET_GAS_LESS_SLOAD_GAS. */
   protected static final long SSTORE_SET_GAS_LESS_SLOAD_GAS = SSTORE_SET_GAS - SLOAD_GAS;
+  /** The constant SSTORE_RESET_GAS_LESS_SLOAD_GAS. */
   protected static final long SSTORE_RESET_GAS_LESS_SLOAD_GAS = SSTORE_RESET_GAS - SLOAD_GAS;
+
   private static final long NEGATIVE_SSTORE_CLEARS_SCHEDULE = -SSTORE_CLEARS_SCHEDULE;
 
   // unchanged from Frontier
@@ -58,10 +66,16 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   private final int maxPrecompile;
 
+  /**
+   * Instantiates a new Berlin gas calculator.
+   *
+   * @param maxPrecompile the max precompile
+   */
   protected BerlinGasCalculator(final int maxPrecompile) {
     this.maxPrecompile = maxPrecompile;
   }
 
+  /** Instantiates a new Berlin gas calculator. */
   public BerlinGasCalculator() {
     this(BLAKE2B_F_COMPRESSION.toArrayUnsafe()[19]);
   }

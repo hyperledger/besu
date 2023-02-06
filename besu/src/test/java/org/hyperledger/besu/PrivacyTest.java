@@ -53,25 +53,22 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
 import io.vertx.core.Vertx;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-@RunWith(MockitoJUnitRunner.class)
 public class PrivacyTest {
 
   private final Vertx vertx = Vertx.vertx();
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path dataDir;
 
-  @After
+  @AfterEach
   public void cleanUp() {
     vertx.close();
   }
@@ -97,8 +94,7 @@ public class PrivacyTest {
 
   private BesuController setUpControllerWithPrivacyEnabled(final boolean flexibleEnabled)
       throws IOException, URISyntaxException {
-    final Path dataDir = folder.newFolder().toPath();
-    final Path dbDir = dataDir.resolve("database");
+    final Path dbDir = Files.createTempDirectory(dataDir, "database");
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
             .setEnabled(true)

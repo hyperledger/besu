@@ -256,7 +256,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private MainnetTransactionValidator getTransactionValidator() {
     return protocolSchedule
-        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
         .getTransactionValidator();
   }
 
@@ -285,7 +285,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
 
     final FeeMarket feeMarket =
-        protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber()).getFeeMarket();
+        protocolSchedule.getByBlockHeader(chainHeadBlockHeader).getFeeMarket();
 
     final TransactionInvalidReason priceInvalidReason =
         validatePrice(transaction, isLocal, feeMarket);
@@ -323,10 +323,18 @@ public class TransactionPool implements BlockAddedObserver {
           "EIP-1559 transaction are not allowed yet");
     }
 
-    try (var worldState =
+    try (final var worldState =
         protocolContext
             .getWorldStateArchive()
-            .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
+            .getMutable(
+                chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getBlockHash(), false)
+            .map(
+                ws -> {
+                  if (!ws.isPersistable()) {
+                    return ws.copy();
+                  }
+                  return ws;
+                })
             .orElseThrow()) {
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(
@@ -388,8 +396,8 @@ public class TransactionPool implements BlockAddedObserver {
         && transactionReplaySupportedAtBlock(chainHeadBlockHeader);
   }
 
-  private boolean transactionReplaySupportedAtBlock(final BlockHeader block) {
-    return protocolSchedule.getByBlockNumber(block.getNumber()).isReplayProtectionSupported();
+  private boolean transactionReplaySupportedAtBlock(final BlockHeader blockHeader) {
+    return protocolSchedule.getByBlockHeader(blockHeader).isReplayProtectionSupported();
   }
 
   public Optional<Transaction> getTransactionByHash(final Hash hash) {
@@ -403,7 +411,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public interface TransactionBatchAddedListener {
 
-    void onTransactionsAdded(Iterable<Transaction> transactions);
+    void onTransactionsAdded(Collection<Transaction> transactions);
   }
 
   private static class ValidationResultAndAccount {

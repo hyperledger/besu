@@ -19,15 +19,30 @@ package org.hyperledger.besu.evm.code;
 import java.util.Objects;
 
 //// java17 convert to record
+
+/** The code section */
 public final class CodeSection {
 
+  /** The length. */
   final int length;
+  /** The Inputs. */
   final int inputs;
+  /** The Outputs. */
   final int outputs;
+  /** The Max stack height. */
   final int maxStackHeight;
   /** The byte offset from the begining of the container that the section starts at */
   final int entryPoint;
 
+  /**
+   * Instantiates a new Code section.
+   *
+   * @param length the length
+   * @param inputs the inputs
+   * @param outputs the outputs
+   * @param maxStackHeight the max stack height
+   * @param entryPoint the entry point
+   */
   public CodeSection(
       final int length,
       final int inputs,
@@ -41,22 +56,47 @@ public final class CodeSection {
     this.entryPoint = entryPoint;
   }
 
+  /**
+   * Gets Length.
+   *
+   * @return the length
+   */
   public int getLength() {
     return length;
   }
 
+  /**
+   * Gets inputs.
+   *
+   * @return the inputs
+   */
   public int getInputs() {
     return inputs;
   }
 
+  /**
+   * Gets outputs.
+   *
+   * @return the outputs
+   */
   public int getOutputs() {
     return outputs;
   }
 
+  /**
+   * Gets max stack height.
+   *
+   * @return the max stack height
+   */
   public int getMaxStackHeight() {
     return maxStackHeight;
   }
 
+  /**
+   * Get Entry Point
+   *
+   * @return the entry point.
+   */
   public int getEntryPoint() {
     return entryPoint;
   }

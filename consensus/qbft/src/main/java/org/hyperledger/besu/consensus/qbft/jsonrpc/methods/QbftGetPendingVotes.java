@@ -19,8 +19,14 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
+/** The Qbft get pending votes. */
 public class QbftGetPendingVotes extends AbstractVoteProposerMethod implements JsonRpcMethod {
 
+  /**
+   * Instantiates a new Qbft get pending votes.
+   *
+   * @param validatorProvider the validator provider
+   */
   public QbftGetPendingVotes(final ValidatorProvider validatorProvider) {
     super(validatorProvider);
   }

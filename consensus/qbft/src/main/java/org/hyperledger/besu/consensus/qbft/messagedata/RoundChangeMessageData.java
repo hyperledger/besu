@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Round change message data. */
 public class RoundChangeMessageData extends AbstractBftMessageData {
 
   private static final int MESSAGE_CODE = QbftV1.ROUND_CHANGE;
@@ -29,15 +30,33 @@ public class RoundChangeMessageData extends AbstractBftMessageData {
     super(data);
   }
 
+  /**
+   * Create round change message data from message data.
+   *
+   * @param messageData the message data
+   * @return the round change message data
+   */
   public static RoundChangeMessageData fromMessageData(final MessageData messageData) {
     return fromMessageData(
         messageData, MESSAGE_CODE, RoundChangeMessageData.class, RoundChangeMessageData::new);
   }
 
+  /**
+   * Decode.
+   *
+   * @param bftExtraDataCodec the bft extra data codec
+   * @return the round change
+   */
   public RoundChange decode(final BftExtraDataCodec bftExtraDataCodec) {
     return RoundChange.decode(data, bftExtraDataCodec);
   }
 
+  /**
+   * Create round change message data.
+   *
+   * @param signedPayload the signed payload
+   * @return the round change message data
+   */
   public static RoundChangeMessageData create(final RoundChange signedPayload) {
 
     return new RoundChangeMessageData(signedPayload.encode());

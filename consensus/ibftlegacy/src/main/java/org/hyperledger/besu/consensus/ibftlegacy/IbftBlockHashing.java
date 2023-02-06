@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Ibft block hashing. */
 public class IbftBlockHashing {
 
   private static final Bytes COMMIT_MSG_CODE = Bytes.wrap(new byte[] {2});

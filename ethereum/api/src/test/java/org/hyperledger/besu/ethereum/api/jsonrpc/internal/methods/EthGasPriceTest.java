@@ -161,6 +161,8 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                null,
+                null,
                 null),
             new BlockBody(
                 List.of(
@@ -173,6 +175,7 @@ public class EthGasPriceTest {
                         null,
                         Bytes.EMPTY,
                         Address.ZERO,
+                        Optional.empty(),
                         Optional.empty())),
                 List.of())));
   }
@@ -197,6 +200,8 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                null,
+                null,
                 null),
             new BlockBody(List.of(), List.of())));
   }

@@ -19,11 +19,18 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The GoQuorum send signed request. */
 @JsonPropertyOrder({"hash", "to"})
 public class GoQuorumSendSignedRequest {
   private final byte[] hash;
   private final List<String> to;
 
+  /**
+   * Instantiates a new GoQuorum send signed request.
+   *
+   * @param hash the hash
+   * @param privateFor the private for
+   */
   public GoQuorumSendSignedRequest(
       @JsonProperty(value = "hash") final byte[] hash,
       @JsonProperty(value = "to") final List<String> privateFor) {
@@ -31,10 +38,20 @@ public class GoQuorumSendSignedRequest {
     this.to = privateFor;
   }
 
+  /**
+   * Get hash byte [ ].
+   *
+   * @return the byte [ ]
+   */
   public byte[] getHash() {
     return hash;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   public List<String> getTo() {
     return to;
   }

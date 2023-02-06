@@ -40,11 +40,27 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/** The Clique block creator. */
 public class CliqueBlockCreator extends AbstractBlockCreator {
 
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
 
+  /**
+   * Instantiates a new Clique block creator.
+   *
+   * @param coinbase the coinbase
+   * @param targetGasLimitSupplier the target gas limit supplier
+   * @param extraDataCalculator the extra data calculator
+   * @param pendingTransactions the pending transactions
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param nodeKey the node key
+   * @param minTransactionGasPrice the min transaction gas price
+   * @param minBlockOccupancyRatio the min block occupancy ratio
+   * @param parentHeader the parent header
+   * @param epochManager the epoch manager
+   */
   public CliqueBlockCreator(
       final Address coinbase,
       final Supplier<Optional<Long>> targetGasLimitSupplier,

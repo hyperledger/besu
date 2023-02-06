@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
@@ -43,6 +44,7 @@ public class ProcessableBlockHeader implements BlockValues {
   protected final Wei baseFee;
   // prevRandao is included for post-merge blocks
   protected final Bytes32 mixHashOrPrevRandao;
+  protected final DataGas excessDataGas;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -52,7 +54,8 @@ public class ProcessableBlockHeader implements BlockValues {
       final long gasLimit,
       final long timestamp,
       final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao) {
+      final Bytes32 mixHashOrPrevRandao,
+      final DataGas excessDataGas) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -61,6 +64,7 @@ public class ProcessableBlockHeader implements BlockValues {
     this.timestamp = timestamp;
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
+    this.excessDataGas = excessDataGas;
   }
 
   /**
@@ -157,6 +161,10 @@ public class ProcessableBlockHeader implements BlockValues {
    */
   public Optional<Bytes32> getPrevRandao() {
     return Optional.ofNullable(mixHashOrPrevRandao);
+  }
+
+  public Optional<DataGas> getExcessDataGas() {
+    return Optional.ofNullable(excessDataGas);
   }
 
   public String toLogString() {

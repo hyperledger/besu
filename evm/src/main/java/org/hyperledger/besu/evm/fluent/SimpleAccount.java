@@ -34,6 +34,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Simple account. */
 public class SimpleAccount implements EvmAccount, MutableAccount {
 
   private final Account parent;
@@ -48,10 +49,26 @@ public class SimpleAccount implements EvmAccount, MutableAccount {
       Suppliers.memoize(() -> code == null ? Hash.EMPTY : Hash.hash(code));
   private final Map<UInt256, UInt256> storage = new HashMap<>();
 
+  /**
+   * Instantiates a new Simple account.
+   *
+   * @param address the address
+   * @param nonce the nonce
+   * @param balance the balance
+   */
   public SimpleAccount(final Address address, final long nonce, final Wei balance) {
     this(null, address, nonce, balance, Bytes.EMPTY);
   }
 
+  /**
+   * Instantiates a new Simple account.
+   *
+   * @param parent the parent
+   * @param address the address
+   * @param nonce the nonce
+   * @param balance the balance
+   * @param code the code
+   */
   public SimpleAccount(
       final Account parent,
       final Address address,

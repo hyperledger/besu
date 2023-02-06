@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -44,6 +45,16 @@ public final class BodyValidationTest {
       final BlockBody body = ValidationTestUtils.readBody(block);
       final Bytes32 ommersHash = BodyValidation.ommersHash(body.getOmmers());
       Assertions.assertThat(header.getOmmersHash()).isEqualTo(ommersHash);
+    }
+  }
+
+  @Test
+  public void calculateWithdrawalsRoot() throws IOException {
+    for (final int block : Arrays.asList(4156, 12691)) {
+      final BlockHeader header = ValidationTestUtils.readHeader(block);
+      final BlockBody body = ValidationTestUtils.readBody(block);
+      final Bytes32 withdrawalsRoot = BodyValidation.withdrawalsRoot(body.getWithdrawals().get());
+      Assertions.assertThat(header.getWithdrawalsRoot()).hasValue(Hash.wrap(withdrawalsRoot));
     }
   }
 }

@@ -20,10 +20,19 @@ import java.util.Map;
 /**
  * Map that is limited to a specified size and will evict oldest entries when the size limit is
  * reached.
+ *
+ * @param <K> the type parameter
+ * @param <V> the type parameter
  */
 public class SizeLimitedMap<K, V> extends LinkedHashMap<K, V> {
+  /** Maximum size of map */
   private final int maxEntries;
 
+  /**
+   * Instantiates a new Size limited map.
+   *
+   * @param maxEntries the max entries
+   */
   public SizeLimitedMap(final int maxEntries) {
     this.maxEntries = maxEntries;
   }
@@ -31,5 +40,10 @@ public class SizeLimitedMap<K, V> extends LinkedHashMap<K, V> {
   @Override
   protected boolean removeEldestEntry(final Map.Entry<K, V> ignored) {
     return size() > maxEntries;
+  }
+
+  @Override
+  public Object clone() {
+    return super.clone();
   }
 }

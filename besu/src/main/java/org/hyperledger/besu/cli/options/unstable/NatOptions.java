@@ -18,6 +18,7 @@ import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_B
 
 import picocli.CommandLine;
 
+/** The Nat Cli options. */
 public class NatOptions {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -36,14 +37,29 @@ public class NatOptions {
       arity = "1")
   private final Boolean natMethodFallbackEnabled = true;
 
+  /**
+   * Create nat options.
+   *
+   * @return the nat options
+   */
   public static NatOptions create() {
     return new NatOptions();
   }
 
+  /**
+   * Gets nat manager service name.
+   *
+   * @return the nat manager service name
+   */
   public String getNatManagerServiceName() {
     return natManagerServiceName;
   }
 
+  /**
+   * Whether nat method fallback is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
   public Boolean getNatMethodFallbackEnabled() {
     return natMethodFallbackEnabled;
   }

@@ -26,8 +26,12 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private static final BlockBody EMPTY =
       new BlockBody(Collections.emptyList(), Collections.emptyList());
-
+  /**
+   * Adding a new field with a corresponding root hash in the block header will require a change in
+   * {@link org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.BodyIdentifier }
+   */
   private final List<Transaction> transactions;
+
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
 
@@ -71,6 +75,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    *
    * @return The optional list of withdrawals included in the block.
    */
+  @Override
   public Optional<List<Withdrawal>> getWithdrawals() {
     return withdrawals;
   }
@@ -85,6 +90,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
+    withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
 
     output.endList();
   }
@@ -96,7 +102,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     final BlockBody body =
         new BlockBody(
             input.readList(Transaction::readFrom),
-            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+            input.isEndOfCurrentList()
+                ? Optional.empty()
+                : Optional.of(input.readList(Withdrawal::readFrom)));
     input.leaveList();
     return body;
   }

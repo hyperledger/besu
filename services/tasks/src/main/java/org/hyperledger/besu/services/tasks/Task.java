@@ -14,7 +14,17 @@
  */
 package org.hyperledger.besu.services.tasks;
 
+/**
+ * The interface Task.
+ *
+ * @param <T> the type parameter
+ */
 public interface Task<T> {
+  /**
+   * Gets data.
+   *
+   * @return the data
+   */
   T getData();
 
   /** Mark this task as completed. */

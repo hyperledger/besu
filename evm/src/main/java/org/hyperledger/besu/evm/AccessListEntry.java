@@ -25,15 +25,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Access list entry. */
 public class AccessListEntry {
   private final Address address;
   private final List<Bytes32> storageKeys;
 
+  /**
+   * Instantiates a new Access list entry.
+   *
+   * @param address the address
+   * @param storageKeys the storage keys
+   */
   public AccessListEntry(final Address address, final List<Bytes32> storageKeys) {
     this.address = address;
     this.storageKeys = storageKeys;
   }
 
+  /**
+   * Create access list entry.
+   *
+   * @param address the address
+   * @param storageKeys the storage keys
+   * @return the access list entry
+   */
   @JsonCreator
   public static AccessListEntry createAccessListEntry(
       @JsonProperty("address") final Address address,
@@ -42,21 +56,41 @@ public class AccessListEntry {
         address, storageKeys.stream().map(Bytes32::fromHexString).collect(Collectors.toList()));
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   @JsonIgnore
   public Address getAddress() {
     return address;
   }
 
+  /**
+   * Gets storage keys.
+   *
+   * @return the storage keys
+   */
   @JsonIgnore
   public List<Bytes32> getStorageKeys() {
     return storageKeys;
   }
 
+  /**
+   * Gets address string.
+   *
+   * @return the address string in hex format
+   */
   @JsonProperty("address")
   public String getAddressString() {
     return address.toHexString();
   }
 
+  /**
+   * Gets storage keys string.
+   *
+   * @return the list of storage keys in hex format
+   */
   @JsonProperty("storageKeys")
   public List<String> getStorageKeysString() {
     return storageKeys.stream().map(Bytes::toHexString).collect(Collectors.toList());

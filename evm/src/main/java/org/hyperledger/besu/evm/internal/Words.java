@@ -166,6 +166,13 @@ public interface Words {
     return Long.compareUnsigned(a, b) < 0 ? a : b;
   }
 
+  /**
+   * Read big endian u16.
+   *
+   * @param index the index
+   * @param array the array
+   * @return the int
+   */
   static int readBigEndianU16(final int index, final byte[] array) {
     if (index + 1 >= array.length) {
       throw new IndexOutOfBoundsException();
@@ -173,6 +180,13 @@ public interface Words {
     return ((array[index] & 0xff) << 8) | (array[index + 1] & 0xff);
   }
 
+  /**
+   * Read big endian i16.
+   *
+   * @param index the index
+   * @param array the array
+   * @return the int
+   */
   static int readBigEndianI16(final int index, final byte[] array) {
     if (index + 1 >= array.length) {
       throw new IndexOutOfBoundsException();

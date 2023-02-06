@@ -36,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>The following methods have been created to be invoked when the message state changes via the
  * {@link MessageFrame.State}. Note that some of these methods are abstract while others have
  * default behaviors. There is currently no method for responding to a {@link
- * MessageFrame.State#CODE_SUSPENDED}.
+ * MessageFrame.State#CODE_SUSPENDED}*.
  *
  * <table>
  * <caption>Method Overview</caption>
@@ -72,11 +72,23 @@ public abstract class AbstractMessageProcessor {
   private final Collection<? super Address> forceDeleteAccountsWhenEmpty;
   private final EVM evm;
 
+  /**
+   * Instantiates a new Abstract message processor.
+   *
+   * @param evm the evm
+   * @param forceDeleteAccountsWhenEmpty the force delete accounts when empty
+   */
   AbstractMessageProcessor(final EVM evm, final Collection<Address> forceDeleteAccountsWhenEmpty) {
     this.evm = evm;
     this.forceDeleteAccountsWhenEmpty = forceDeleteAccountsWhenEmpty;
   }
 
+  /**
+   * Start.
+   *
+   * @param frame the frame
+   * @param operationTracer the operation tracer
+   */
   protected abstract void start(MessageFrame frame, final OperationTracer operationTracer);
 
   /**
@@ -136,6 +148,7 @@ public abstract class AbstractMessageProcessor {
    */
   private void completedSuccess(final MessageFrame frame) {
     frame.getWorldUpdater().commit();
+    frame.commitTransientStorage();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }
@@ -164,6 +177,12 @@ public abstract class AbstractMessageProcessor {
     }
   }
 
+  /**
+   * Process.
+   *
+   * @param frame the frame
+   * @param operationTracer the operation tracer
+   */
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
     if (frame.getState() == MessageFrame.State.NOT_STARTED) {
       start(frame, operationTracer);
@@ -198,6 +217,13 @@ public abstract class AbstractMessageProcessor {
     }
   }
 
+  /**
+   * Gets code from evm.
+   *
+   * @param codeHash the code hash
+   * @param codeBytes the code bytes
+   * @return the code from evm
+   */
   public Code getCodeFromEVM(final Hash codeHash, final Bytes codeBytes) {
     return evm.getCode(codeHash, codeBytes);
   }

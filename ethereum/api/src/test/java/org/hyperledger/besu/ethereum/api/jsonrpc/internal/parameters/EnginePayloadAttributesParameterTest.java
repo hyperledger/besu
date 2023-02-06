@@ -82,7 +82,7 @@ public class EnginePayloadAttributesParameterTest {
                 + "\"suggestedFeeRecipient\":\"0xaa00000000000000000000000000000000000000\","
                 + "\"withdrawals\":[{"
                 + "\"index\":\"0x0\","
-                + "\"validatorIndex\":\"0xFFFF\","
+                + "\"validatorIndex\":\"0xffff\","
                 + "\"address\":\"0x0000000000000000000000000000000000000000\","
                 + "\"amount\":\"0x0\""
                 + "},"

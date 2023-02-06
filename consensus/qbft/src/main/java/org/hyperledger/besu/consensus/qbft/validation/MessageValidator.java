@@ -30,15 +30,26 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Message validator. */
 public class MessageValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessageValidator.class);
 
+  /** The Subsequent message validator. */
   public static class SubsequentMessageValidator {
 
     private final PrepareValidator prepareValidator;
     private final CommitValidator commitValidator;
 
+    /**
+     * Instantiates a new Subsequent message validator.
+     *
+     * @param validators the validators
+     * @param targetRound the target round
+     * @param proposalBlock the proposal block
+     * @param blockInterface the block interface
+     * @param bftExtraDataCodec the bft extra data codec
+     */
     public SubsequentMessageValidator(
         final Collection<Address> validators,
         final ConsensusRoundIdentifier targetRound,
@@ -56,17 +67,36 @@ public class MessageValidator {
               validators, targetRound, proposalBlock.getHash(), commitBlock.getHash());
     }
 
+    /**
+     * Validate.
+     *
+     * @param msg the Prepare payload msg
+     * @return the boolean
+     */
     public boolean validate(final Prepare msg) {
       return prepareValidator.validate(msg);
     }
 
+    /**
+     * Validate.
+     *
+     * @param msg the Commit payload msg
+     * @return the boolean
+     */
     public boolean validate(final Commit msg) {
       return commitValidator.validate(msg);
     }
   }
 
+  /** The interface Subsequent message validator factory. */
   @FunctionalInterface
   public interface SubsequentMessageValidatorFactory {
+    /**
+     * Create subsequent message validator.
+     *
+     * @param proposalBlock the proposal block
+     * @return the subsequent message validator
+     */
     SubsequentMessageValidator create(Block proposalBlock);
   }
 
@@ -75,6 +105,12 @@ public class MessageValidator {
 
   private Optional<SubsequentMessageValidator> subsequentMessageValidator = Optional.empty();
 
+  /**
+   * Instantiates a new Message validator.
+   *
+   * @param subsequentMessageValidatorFactory the subsequent message validator factory
+   * @param proposalValidator the proposal validator
+   */
   public MessageValidator(
       final SubsequentMessageValidatorFactory subsequentMessageValidatorFactory,
       final ProposalValidator proposalValidator) {
@@ -82,6 +118,12 @@ public class MessageValidator {
     this.proposalValidator = proposalValidator;
   }
 
+  /**
+   * Validate proposal payload.
+   *
+   * @param msg the Proposal payload msg
+   * @return the boolean
+   */
   public boolean validateProposal(final Proposal msg) {
     if (subsequentMessageValidator.isPresent()) {
       LOG.info("Received subsequent Proposal for current round, discarding.");
@@ -97,10 +139,22 @@ public class MessageValidator {
     return result;
   }
 
+  /**
+   * Validate Prepare payload.
+   *
+   * @param msg the Prepare msg
+   * @return the boolean
+   */
   public boolean validatePrepare(final Prepare msg) {
     return subsequentMessageValidator.map(pv -> pv.validate(msg)).orElse(false);
   }
 
+  /**
+   * Validate commit payload.
+   *
+   * @param msg the Commit payload
+   * @return the boolean
+   */
   public boolean validateCommit(final Commit msg) {
     return subsequentMessageValidator.map(cv -> cv.validate(msg)).orElse(false);
   }

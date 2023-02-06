@@ -27,15 +27,24 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The Simple world. */
 public class SimpleWorld implements WorldUpdater {
 
+  /** The Parent. */
   SimpleWorld parent;
+  /** The Accounts. */
   Map<Address, SimpleAccount> accounts = new HashMap<>();
 
+  /** Instantiates a new Simple world. */
   public SimpleWorld() {
     this(null);
   }
 
+  /**
+   * Instantiates a new Simple world.
+   *
+   * @param parent the parent
+   */
   public SimpleWorld(final SimpleWorld parent) {
     this.parent = parent;
   }

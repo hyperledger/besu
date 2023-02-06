@@ -19,11 +19,18 @@ import java.util.List;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 
+/** The Framed log message. */
 public class FramedLogMessage {
   private static final int MAX_LINE_LENGTH = 100;
 
   private FramedLogMessage() {}
 
+  /**
+   * Generate log lines as String.
+   *
+   * @param logLines the log lines
+   * @return the string
+   */
   public static String generate(final List<String> logLines) {
     final StringBuilder builder = new StringBuilder("\n");
     appendHeader(builder);
@@ -44,6 +51,12 @@ public class FramedLogMessage {
     return builder.toString();
   }
 
+  /**
+   * Generate logs as centered string.
+   *
+   * @param logLines the log lines
+   * @return the string
+   */
   public static String generateCentered(final List<String> logLines) {
     final StringBuilder builder = new StringBuilder("\n");
     appendHeader(builder);

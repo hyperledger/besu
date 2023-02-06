@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -31,13 +30,26 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The Abstract create operation. */
 public abstract class AbstractCreateOperation extends AbstractOperation {
 
+  /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  /** The maximum init code size */
   protected int maxInitcodeSize;
 
+  /**
+   * Instantiates a new Abstract create operation.
+   *
+   * @param opcode the opcode
+   * @param name the name
+   * @param stackItemsConsumed the stack items consumed
+   * @param stackItemsProduced the stack items produced
+   * @param gasCalculator the gas calculator
+   * @param maxInitcodeSize Maximum init code size
+   */
   protected AbstractCreateOperation(
       final int opcode,
       final String name,
@@ -83,9 +95,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
       }
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-      Code code = evm.getCode(Hash.hash(inputData), inputData);
+      // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
+      // addresses disk loading delay, and we already have the code.
+      Code code = evm.getCode(null, inputData);
 
-      if (code.isValid()) {
+      if (code.isValid() && frame.getCode().getEofVersion() <= code.getEofVersion()) {
         frame.decrementRemainingGas(cost);
         spawnChildMessage(frame, code, evm);
         frame.incrementRemainingGas(cost);
@@ -97,8 +111,20 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     return new OperationResult(cost, null);
   }
 
+  /**
+   * Cost operation.
+   *
+   * @param frame the frame
+   * @return the long
+   */
   protected abstract long cost(final MessageFrame frame);
 
+  /**
+   * Target contract address.
+   *
+   * @param frame the frame
+   * @return the address
+   */
   protected abstract Address targetContractAddress(MessageFrame frame);
 
   private void fail(final MessageFrame frame) {
@@ -149,11 +175,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
     Code outputCode =
-        CodeFactory.createCode(
-            childFrame.getOutputData(),
-            Hash.hash(childFrame.getOutputData()),
-            evm.getMaxEOFVersion(),
-            true);
+        CodeFactory.createCode(childFrame.getOutputData(), evm.getMaxEOFVersion(), true);
     frame.popStackItems(getStackItemsConsumed());
 
     if (outputCode.isValid()) {

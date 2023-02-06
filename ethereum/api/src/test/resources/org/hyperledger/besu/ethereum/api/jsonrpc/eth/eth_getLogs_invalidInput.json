@@ -19,7 +19,7 @@
       "message": "Invalid params"
     }
   },
-  "statusCode": 400
+  "statusCode": 200
 }
 
 

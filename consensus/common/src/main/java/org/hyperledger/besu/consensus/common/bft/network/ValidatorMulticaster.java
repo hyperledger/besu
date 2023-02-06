@@ -19,9 +19,21 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.Collection;
 
+/** The interface Validator multicaster. */
 public interface ValidatorMulticaster {
 
+  /**
+   * Send.
+   *
+   * @param message the message
+   */
   void send(final MessageData message);
 
+  /**
+   * Send.
+   *
+   * @param message the message
+   * @param denylist the denylist
+   */
   void send(final MessageData message, final Collection<Address> denylist);
 }

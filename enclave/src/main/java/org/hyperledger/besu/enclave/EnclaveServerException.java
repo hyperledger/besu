@@ -14,14 +14,27 @@
  */
 package org.hyperledger.besu.enclave;
 
+/** The Enclave server exception. */
 public class EnclaveServerException extends RuntimeException {
+  /** Status Code */
   private final int statusCode;
 
+  /**
+   * Instantiates a new Enclave server exception.
+   *
+   * @param statusCode the status code
+   * @param message the message
+   */
   public EnclaveServerException(final int statusCode, final String message) {
     super(message);
     this.statusCode = statusCode;
   }
 
+  /**
+   * Gets status code.
+   *
+   * @return the status code
+   */
   public int getStatusCode() {
     return statusCode;
   }

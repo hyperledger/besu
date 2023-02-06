@@ -110,6 +110,7 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
+    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));

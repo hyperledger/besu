@@ -29,14 +29,18 @@ import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The SECP256R1 implementation. */
 public class SECP256R1 extends AbstractSECP256 {
 
   private static final Logger LOG = LoggerFactory.getLogger(SECP256R1.class);
 
+  /** The constant CURVE_NAME. */
   public static final String CURVE_NAME = "secp256r1";
+
   private boolean useNative;
   private final LibSECP256R1 libSECP256R1 = new LibSECP256R1();
 
+  /** Instantiates a new SECP256R1. */
   public SECP256R1() {
     super(CURVE_NAME, SecP256R1Curve.q);
     try {

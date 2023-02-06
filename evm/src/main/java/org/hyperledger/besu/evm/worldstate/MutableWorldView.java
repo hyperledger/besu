@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.worldstate;
 
+/** The interface Mutable world view. */
 public interface MutableWorldView extends WorldView {
 
   /**

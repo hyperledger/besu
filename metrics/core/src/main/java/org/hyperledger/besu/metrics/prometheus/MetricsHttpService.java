@@ -46,6 +46,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Metrics http service. */
 public class MetricsHttpService implements MetricsService {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsHttpService.class);
 
@@ -57,6 +58,13 @@ public class MetricsHttpService implements MetricsService {
 
   private HttpServer httpServer;
 
+  /**
+   * Instantiates a new Metrics http service.
+   *
+   * @param vertx the vertx
+   * @param configuration the configuration
+   * @param metricsSystem the metrics system
+   */
   public MetricsHttpService(
       final Vertx vertx,
       final MetricsConfiguration configuration,
@@ -233,6 +241,11 @@ public class MetricsHttpService implements MetricsService {
         });
   }
 
+  /**
+   * Socket address inet socket address.
+   *
+   * @return the inet socket address
+   */
   InetSocketAddress socketAddress() {
     if (httpServer == null) {
       return EMPTY_SOCKET_ADDRESS;

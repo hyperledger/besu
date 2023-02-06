@@ -27,12 +27,22 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The Block validator provider. */
 public class BlockValidatorProvider implements ValidatorProvider {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProvider voteProvider;
   private final BlockInterface blockInterface;
 
+  /**
+   * Forking validator provider block validator provider.
+   *
+   * @param blockchain the blockchain
+   * @param epochManager the epoch manager
+   * @param blockInterface the block interface
+   * @param bftValidatorOverrides the bft validator overrides
+   * @return the block validator provider
+   */
   public static BlockValidatorProvider forkingValidatorProvider(
       final Blockchain blockchain,
       final EpochManager epochManager,
@@ -42,6 +52,14 @@ public class BlockValidatorProvider implements ValidatorProvider {
         blockchain, epochManager, blockInterface, Optional.of(bftValidatorOverrides));
   }
 
+  /**
+   * Non forking validator provider block validator provider.
+   *
+   * @param blockchain the blockchain
+   * @param epochManager the epoch manager
+   * @param blockInterface the block interface
+   * @return the block validator provider
+   */
   public static BlockValidatorProvider nonForkingValidatorProvider(
       final Blockchain blockchain,
       final EpochManager epochManager,

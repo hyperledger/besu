@@ -201,6 +201,7 @@ public class AcceptanceTestBase {
           LOG.error(
               "==========================================================================================");
           LOG.error("Test failed. Reported Throwable at the point of failure:", e);
+          LOG.error(e.getMessage());
         }
 
         @Override

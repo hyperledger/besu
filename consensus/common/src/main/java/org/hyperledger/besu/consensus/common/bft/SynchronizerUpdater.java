@@ -16,7 +16,14 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
+/** The interface Synchronizer updater. */
 public interface SynchronizerUpdater {
 
+  /**
+   * Update peer chain state.
+   *
+   * @param knownBlockNumber the known block number
+   * @param peerConnection the peer connection
+   */
   void updatePeerChainState(long knownBlockNumber, PeerConnection peerConnection);
 }

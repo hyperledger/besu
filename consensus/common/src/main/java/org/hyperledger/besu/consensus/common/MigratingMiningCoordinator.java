@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Migrating mining coordinator. */
 public class MigratingMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
   private static final Logger LOG = LoggerFactory.getLogger(MigratingMiningCoordinator.class);
@@ -42,6 +43,12 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   private MiningCoordinator activeMiningCoordinator;
   private long blockAddedObserverId;
 
+  /**
+   * Instantiates a new Migrating mining coordinator.
+   *
+   * @param miningCoordinatorSchedule the mining coordinator schedule
+   * @param blockchain the blockchain
+   */
   public MigratingMiningCoordinator(
       final ForksSchedule<MiningCoordinator> miningCoordinatorSchedule,
       final Blockchain blockchain) {
@@ -153,6 +160,11 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
     }
   }
 
+  /**
+   * Gets mining coordinator schedule.
+   *
+   * @return the mining coordinator schedule
+   */
   @VisibleForTesting
   public ForksSchedule<MiningCoordinator> getMiningCoordinatorSchedule() {
     return this.miningCoordinatorSchedule;

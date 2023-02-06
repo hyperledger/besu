@@ -100,6 +100,7 @@ public class QbftBesuControllerBuilderTest {
     when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
+    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(storageProvider.createBlockchainStorage(any()))
         .thenReturn(

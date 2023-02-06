@@ -23,19 +23,42 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
 
+/** The Bft helpers. */
 public class BftHelpers {
 
+  /** The constant EXPECTED_MIX_HASH. */
   public static final Hash EXPECTED_MIX_HASH =
       Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365");
 
+  /**
+   * Calculate required validator quorum int.
+   *
+   * @param validatorCount the validator count
+   * @return the int
+   */
   public static int calculateRequiredValidatorQuorum(final int validatorCount) {
     return Util.fastDivCeiling(2 * validatorCount, 3);
   }
 
+  /**
+   * Prepare message count for quorum.
+   *
+   * @param quorum the quorum
+   * @return the long
+   */
   public static long prepareMessageCountForQuorum(final long quorum) {
     return quorum - 1;
   }
 
+  /**
+   * Create sealed block.
+   *
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param block the block
+   * @param roundNumber the round number
+   * @param commitSeals the commit seals
+   * @return the block
+   */
   public static Block createSealedBlock(
       final BftExtraDataCodec bftExtraDataCodec,
       final Block block,

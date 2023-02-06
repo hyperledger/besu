@@ -16,14 +16,25 @@ package org.hyperledger.besu.consensus.common;
 
 import org.hyperledger.besu.ethereum.ConsensusContext;
 
+/** The Migrating context. */
 public class MigratingContext implements ConsensusContext {
 
   private final ForksSchedule<ConsensusContext> consensusContextSchedule;
 
+  /**
+   * Instantiates a new Migrating context.
+   *
+   * @param consensusContextSchedule the consensus context schedule
+   */
   public MigratingContext(final ForksSchedule<ConsensusContext> consensusContextSchedule) {
     this.consensusContextSchedule = consensusContextSchedule;
   }
 
+  /**
+   * Gets consensus context schedule.
+   *
+   * @return the consensus context schedule
+   */
   public ForksSchedule<ConsensusContext> getConsensusContextSchedule() {
     return consensusContextSchedule;
   }

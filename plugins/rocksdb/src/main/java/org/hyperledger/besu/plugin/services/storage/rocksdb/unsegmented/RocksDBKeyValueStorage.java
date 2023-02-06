@@ -39,6 +39,7 @@ import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.LRUCache;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.Options;
+import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
@@ -47,6 +48,7 @@ import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Rocks db key value storage. */
 public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   static {
@@ -61,7 +63,15 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private final RocksDBMetrics rocksDBMetrics;
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
+  private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
 
+  /**
+   * Instantiates a new Rocks db key value storage.
+   *
+   * @param configuration the configuration
+   * @param metricsSystem the metrics system
+   * @param rocksDBMetricsFactory the rocks db metrics factory
+   */
   public RocksDBKeyValueStorage(
       final RocksDBConfiguration configuration,
       final MetricsSystem metricsSystem,
@@ -114,7 +124,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
     try (final OperationTimer.TimingContext ignored =
         rocksDBMetrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(db.get(key));
+      return Optional.ofNullable(db.get(readOptions, key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }

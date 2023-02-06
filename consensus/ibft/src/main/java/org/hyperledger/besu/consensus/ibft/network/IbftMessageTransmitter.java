@@ -37,6 +37,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Ibft message transmitter. */
 public class IbftMessageTransmitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(IbftMessageTransmitter.class);
@@ -44,12 +45,25 @@ public class IbftMessageTransmitter {
   private final MessageFactory messageFactory;
   private final ValidatorMulticaster multicaster;
 
+  /**
+   * Instantiates a new Ibft message transmitter.
+   *
+   * @param messageFactory the message factory
+   * @param multicaster the multicaster
+   */
   public IbftMessageTransmitter(
       final MessageFactory messageFactory, final ValidatorMulticaster multicaster) {
     this.messageFactory = messageFactory;
     this.multicaster = multicaster;
   }
 
+  /**
+   * Multicast proposal.
+   *
+   * @param roundIdentifier the round identifier
+   * @param block the block
+   * @param roundChangeCertificate the round change certificate
+   */
   public void multicastProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
@@ -66,6 +80,12 @@ public class IbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast prepare.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   */
   public void multicastPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     try {
       final Prepare data = messageFactory.createPrepare(roundIdentifier, digest);
@@ -78,6 +98,13 @@ public class IbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast commit.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @param commitSeal the commit seal
+   */
   public void multicastCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
@@ -93,6 +120,12 @@ public class IbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast round change.
+   *
+   * @param roundIdentifier the round identifier
+   * @param preparedRoundArtifacts the prepared round artifacts
+   */
   public void multicastRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {

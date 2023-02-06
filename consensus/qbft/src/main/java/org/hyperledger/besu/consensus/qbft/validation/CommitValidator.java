@@ -27,6 +27,7 @@ import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Commit validator. */
 public class CommitValidator {
 
   private static final String ERROR_PREFIX = "Invalid Commit Message";
@@ -38,6 +39,14 @@ public class CommitValidator {
   private final Hash expectedDigest;
   private final Hash expectedCommitDigest;
 
+  /**
+   * Instantiates a new Commit validator.
+   *
+   * @param validators the validators
+   * @param targetRound the target round
+   * @param expectedDigest the expected digest
+   * @param expectedCommitDigest the expected commit digest
+   */
   public CommitValidator(
       final Collection<Address> validators,
       final ConsensusRoundIdentifier targetRound,
@@ -49,10 +58,22 @@ public class CommitValidator {
     this.expectedCommitDigest = expectedCommitDigest;
   }
 
+  /**
+   * Validate.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validate(final Commit msg) {
     return validate(msg.getSignedPayload());
   }
 
+  /**
+   * Validate.
+   *
+   * @param signedPayload the signed payload
+   * @return the boolean
+   */
   public boolean validate(final SignedData<CommitPayload> signedPayload) {
     if (!validators.contains(signedPayload.getAuthor())) {
       LOG.info("{}: did not originate from a recognized validator.", ERROR_PREFIX);

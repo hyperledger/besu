@@ -18,25 +18,64 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 
+/** The interface Enclave test harness. */
 public interface EnclaveTestHarness {
 
+  /** Start. */
   void start();
 
+  /** Stop. */
   void stop();
 
+  /** Close. */
   void close();
 
+  /**
+   * Gets public key paths.
+   *
+   * @return the public key paths
+   */
   List<Path> getPublicKeyPaths();
 
+  /**
+   * Gets default public key.
+   *
+   * @return the default public key
+   */
   String getDefaultPublicKey();
 
+  /**
+   * Gets public keys.
+   *
+   * @return the public keys
+   */
   List<String> getPublicKeys();
 
+  /**
+   * Client url uri.
+   *
+   * @return the uri
+   */
   URI clientUrl();
 
+  /**
+   * Node url uri.
+   *
+   * @return the uri
+   */
   URI nodeUrl();
 
+  /**
+   * Add other node.
+   *
+   * @param otherNode the other node
+   */
   void addOtherNode(final URI otherNode);
 
+  /**
+   * Gets enclave type.
+   *
+   * @return the enclave type
+   */
   EnclaveType getEnclaveType();
 }

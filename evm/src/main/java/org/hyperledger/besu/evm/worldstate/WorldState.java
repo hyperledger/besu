@@ -62,15 +62,27 @@ public interface WorldState extends WorldView, AutoCloseable {
    */
   Stream<StreamableAccount> streamAccounts(Bytes32 startKeyHash, int limit);
 
+  /** The Streamable account. */
   class StreamableAccount implements AccountState {
     private final Optional<Address> address;
     private final AccountState accountState;
 
+    /**
+     * Instantiates a new Streamable account.
+     *
+     * @param address the address
+     * @param accountState the account state
+     */
     public StreamableAccount(final Optional<Address> address, final AccountState accountState) {
       this.address = address;
       this.accountState = accountState;
     }
 
+    /**
+     * Gets address.
+     *
+     * @return the address
+     */
     public Optional<Address> getAddress() {
       return address;
     }

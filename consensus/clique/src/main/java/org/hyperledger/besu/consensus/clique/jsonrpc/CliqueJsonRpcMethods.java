@@ -35,9 +35,15 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Map;
 
+/** The Clique json rpc methods. */
 public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolContext context;
 
+  /**
+   * Instantiates a new Clique json rpc methods.
+   *
+   * @param context the context
+   */
   public CliqueJsonRpcMethods(final ProtocolContext context) {
     this.context = context;
   }

@@ -27,6 +27,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Constant ommers hash rule. */
 public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule {
 
   private static final Hash mergeConstant = Hash.EMPTY_LIST_HASH;

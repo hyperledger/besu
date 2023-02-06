@@ -19,6 +19,7 @@ import java.util.Map;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The interface Privacy genesis account. */
 public interface PrivacyGenesisAccount {
   /**
    * The address of the initial genesis allocation/pre-compile

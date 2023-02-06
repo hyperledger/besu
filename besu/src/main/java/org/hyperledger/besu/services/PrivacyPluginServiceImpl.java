@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Privacy plugin service implementation. */
 public class PrivacyPluginServiceImpl implements PrivacyPluginService {
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPluginServiceImpl.class);
 

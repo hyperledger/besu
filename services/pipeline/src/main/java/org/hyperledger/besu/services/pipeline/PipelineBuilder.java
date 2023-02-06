@@ -54,6 +54,19 @@ public class PipelineBuilder<I, T> {
   private final boolean tracingEnabled;
   private final String pipelineName;
 
+  /**
+   * Instantiates a new Pipeline builder.
+   *
+   * @param inputPipe the input pipe
+   * @param stages the stages
+   * @param pipes the pipes
+   * @param lastStageName the last stage name
+   * @param pipeEnd the pipe end
+   * @param bufferSize the buffer size
+   * @param outputCounter the output counter
+   * @param tracingEnabled the tracing enabled
+   * @param pipelineName the pipeline name
+   */
   public PipelineBuilder(
       final Pipe<I> inputPipe,
       final Collection<Stage> stages,
@@ -81,12 +94,12 @@ public class PipelineBuilder<I, T> {
    * <i>source</i> returns <code>false</code> from {@link Iterator#hasNext()} and the last item has
    * been reached the end of the pipeline.
    *
+   * @param <T> the type of items input into the pipeline.
    * @param sourceName the name of this stage. Used as the label for the output count metric.
    * @param source the source to pull items from for processing.
    * @param bufferSize the number of items to be buffered between each stage in the pipeline.
    * @param itemCounter the counter to increment for each output of a stage. Must accept two labels,
    *     the stage name and action (output or drained).
-   * @param <T> the type of items input into the pipeline.
    * @param tracingEnabled whether this pipeline should be traced
    * @param pipelineName the name of the pipeline for tracing purposes
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
@@ -116,11 +129,11 @@ public class PipelineBuilder<I, T> {
    * Create a new pipeline that processes inputs added to <i>pipe</i>. The pipeline completes when
    * <i>pipe</i> is closed and the last item has been reached the end of the pipeline.
    *
+   * @param <T> the type of items input into the pipeline.
    * @param sourceName the name of this stage. Used as the label for the output count metric.
    * @param bufferSize the number of items to be buffered between each stage in the pipeline.
    * @param outputCounter the counter to increment for each output of a stage. Must have a single
    *     label which will be filled with the stage name.
-   * @param <T> the type of items input into the pipeline.
    * @param tracingEnabled whether this pipeline should be traced
    * @param pipelineName the name of the pipeline for tracing purposes
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
@@ -148,9 +161,9 @@ public class PipelineBuilder<I, T> {
    * Adds a 1-to-1 processing stage to the pipeline. A single thread processes each item in the
    * pipeline with <i>processor</i> outputting its return value to the next stage.
    *
+   * @param <O> the output type for this processing step.
    * @param stageName the name of this stage. Used as the label for the output count metric.
    * @param processor the processing to apply to each item.
-   * @param <O> the output type for this processing step.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
   public <O> PipelineBuilder<I, O> thenProcess(
@@ -165,10 +178,10 @@ public class PipelineBuilder<I, T> {
    *
    * <p>Note: The order of items is not preserved.
    *
+   * @param <O> the output type for this processing step.
    * @param stageName the name of this stage. Used as the label for the output count metric.
    * @param processor the processing to apply to each item.
    * @param numberOfThreads the number of threads to use for processing.
-   * @param <O> the output type for this processing step.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
   public <O> PipelineBuilder<I, O> thenProcessInParallel(
@@ -188,10 +201,10 @@ public class PipelineBuilder<I, T> {
    *
    * <p>Note: The order of items is not preserved.
    *
+   * @param <O> the output type for this processing step.
    * @param stageName the name of this stage. Used as the label for the output count metric.
    * @param processor the processing to apply to each item.
    * @param maxConcurrency the maximum number of items being processed concurrently.
-   * @param <O> the output type for this processing step.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
   public <O> PipelineBuilder<I, O> thenProcessAsync(
@@ -212,10 +225,10 @@ public class PipelineBuilder<I, T> {
    *
    * <p>Note: While processing may occur concurrently, order is preserved when results are output.
    *
+   * @param <O> the output type for this processing step.
    * @param stageName the name of this stage. Used as the label for the output count metric.
    * @param processor the processing to apply to each item.
    * @param maxConcurrency the maximum number of items being processed concurrently.
-   * @param <O> the output type for this processing step.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
   public <O> PipelineBuilder<I, O> thenProcessAsyncOrdered(
@@ -292,10 +305,10 @@ public class PipelineBuilder<I, T> {
    *
    * <pre>thenFlatMap(List::stream, newBufferSize)</pre>
    *
+   * @param <O> the type of items to be output from this stage.
    * @param stageName the name of this stage. Used as the label for the output count metric.
    * @param mapper the function to process each item with.
    * @param newBufferSize the output buffer size to use from this stage onwards.
-   * @param <O> the type of items to be output from this stage.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
   public <O> PipelineBuilder<I, O> thenFlatMap(
@@ -313,11 +326,11 @@ public class PipelineBuilder<I, T> {
    *
    * <pre>thenFlatMap(List::stream, newBufferSize)</pre>
    *
+   * @param <O> the type of items to be output from this stage.
    * @param stageName the name of this stage. Used as the label for the output count metric.
    * @param mapper the function to process each item with.
    * @param numberOfThreads the number of threads to use for processing.
    * @param newBufferSize the output buffer size to use from this stage onwards.
-   * @param <O> the type of items to be output from this stage.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
   public <O> PipelineBuilder<I, O> thenFlatMapInParallel(

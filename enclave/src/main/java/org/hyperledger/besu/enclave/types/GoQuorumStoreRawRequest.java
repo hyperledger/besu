@@ -16,13 +16,24 @@ package org.hyperledger.besu.enclave.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The type Go quorum store raw request. */
 public class GoQuorumStoreRawRequest {
   private final String payload;
 
+  /**
+   * Instantiates a new Go quorum store raw request.
+   *
+   * @param payload the payload
+   */
   public GoQuorumStoreRawRequest(@JsonProperty(value = "payload") final String payload) {
     this.payload = payload;
   }
 
+  /**
+   * Gets payload.
+   *
+   * @return the payload
+   */
   public String getPayload() {
     return payload;
   }

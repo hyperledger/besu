@@ -22,10 +22,17 @@ import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Add operation. */
 public class AddOperation extends AbstractFixedCostOperation {
 
+  /** The Add operation success result. */
   static final OperationResult addSuccess = new OperationResult(3, null);
 
+  /**
+   * Instantiates a new Add operation.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public AddOperation(final GasCalculator gasCalculator) {
     super(0x01, "ADD", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
@@ -36,6 +43,12 @@ public class AddOperation extends AbstractFixedCostOperation {
     return staticOperation(frame);
   }
 
+  /**
+   * Static operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final BigInteger value0 = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
     final BigInteger value1 = new BigInteger(1, frame.popStackItem().toArrayUnsafe());

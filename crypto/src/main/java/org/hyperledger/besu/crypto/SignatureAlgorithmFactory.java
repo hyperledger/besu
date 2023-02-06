@@ -18,6 +18,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Signature algorithm factory. */
 public class SignatureAlgorithmFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(SignatureAlgorithmFactory.class);
@@ -26,10 +27,17 @@ public class SignatureAlgorithmFactory {
 
   private SignatureAlgorithmFactory() {}
 
+  /** Sets default instance. */
   public static void setDefaultInstance() {
     instance = SignatureAlgorithmType.createDefault().getInstance();
   }
 
+  /**
+   * Sets instance.
+   *
+   * @param signatureAlgorithmType the signature algorithm type
+   * @throws IllegalStateException the illegal state exception
+   */
   public static void setInstance(final SignatureAlgorithmType signatureAlgorithmType)
       throws IllegalStateException {
     if (instance != null) {
@@ -52,7 +60,7 @@ public class SignatureAlgorithmFactory {
    * getInstance will always return a valid SignatureAlgorithm and never null. This is necessary in
    * the unit tests be able to use the factory without having to call setInstance first.
    *
-   * @return SignatureAlgorithm
+   * @return SignatureAlgorithm instance
    */
   public static SignatureAlgorithm getInstance() {
     return instance != null
@@ -60,10 +68,16 @@ public class SignatureAlgorithmFactory {
         : SignatureAlgorithmType.DEFAULT_SIGNATURE_ALGORITHM_TYPE.get();
   }
 
+  /**
+   * Is instance set boolean.
+   *
+   * @return the boolean
+   */
   public static boolean isInstanceSet() {
     return instance != null;
   }
 
+  /** Reset instance. */
   @VisibleForTesting
   public static void resetInstance() {
     instance = null;

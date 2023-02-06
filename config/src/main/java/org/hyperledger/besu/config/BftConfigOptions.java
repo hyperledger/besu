@@ -20,27 +20,83 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 
+/** The interface Bft config options. */
 public interface BftConfigOptions {
 
+  /**
+   * Gets epoch length.
+   *
+   * @return the epoch length
+   */
   long getEpochLength();
 
+  /**
+   * Gets block period seconds.
+   *
+   * @return the block period seconds
+   */
   int getBlockPeriodSeconds();
 
+  /**
+   * Gets request timeout seconds.
+   *
+   * @return the request timeout seconds
+   */
   int getRequestTimeoutSeconds();
 
+  /**
+   * Gets gossiped history limit.
+   *
+   * @return the gossiped history limit
+   */
   int getGossipedHistoryLimit();
 
+  /**
+   * Gets message queue limit.
+   *
+   * @return the message queue limit
+   */
   int getMessageQueueLimit();
 
+  /**
+   * Gets duplicate message limit.
+   *
+   * @return the duplicate message limit
+   */
   int getDuplicateMessageLimit();
 
+  /**
+   * Gets future messages limit.
+   *
+   * @return the future messages limit
+   */
   int getFutureMessagesLimit();
 
+  /**
+   * Gets future messages max distance.
+   *
+   * @return the future messages max distance
+   */
   int getFutureMessagesMaxDistance();
 
+  /**
+   * Gets mining beneficiary.
+   *
+   * @return the mining beneficiary
+   */
   Optional<Address> getMiningBeneficiary();
 
+  /**
+   * Gets block reward wei.
+   *
+   * @return the block reward wei
+   */
   BigInteger getBlockRewardWei();
 
+  /**
+   * As map.
+   *
+   * @return the map
+   */
   Map<String, Object> asMap();
 }
