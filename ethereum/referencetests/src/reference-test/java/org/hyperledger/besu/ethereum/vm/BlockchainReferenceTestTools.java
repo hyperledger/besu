@@ -83,7 +83,8 @@ public class BlockchainReferenceTestTools {
     params.ignore("UncleFromSideChain_Merge");
 
     // EIP tests are explicitly meant to be works-in-progress with known failing tests
-    params.ignore("/EIPTests/");
+    // We want to however include withdrawals even though they are EIP tests
+    params.ignore("(?:/EIPTests/(?!\\bbc4895\\b))");
   }
 
   private BlockchainReferenceTestTools() {
