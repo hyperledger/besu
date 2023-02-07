@@ -4,14 +4,21 @@
 
 ### Breaking Changes
 - Add a new CLI option to limit the number of requests in a single RPC batch request. Default=1 [#4965](https://github.com/hyperledger/besu/pull/4965)
-
-- Changed JsonRpc http service to return the error -32602 (Invalid params) with a 200 http status code
+- Change JsonRpc http service to return the error -32602 (Invalid params) with a 200 http status code
+- Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
+- PKCS11 with nss module (PKCS11 based HSM can be used in DevP2P TLS and QBFT PKI) does not work with RSA keys 
+in Java 17. SoftHSM is tested manually and working. (Other PKCS11 HSM are not tested). The relevant unit and acceptance 
+tests are updated to use EC private keys instead of RSA keys.
+- Change eth_feeHistory parameter `blockCount` to accept hexadecimal string (was accepting plain integer) [#5047](https://github.com/hyperledger/besu/pull/5047)
 
 ### Additions and Improvements
 - Added option to evm CLI tool to allow code execution at specific forks [#4913](https://github.com/hyperledger/besu/pull/4913)
 - Improve get account performance by using the world state updater cache [#4897](https://github.com/hyperledger/besu/pull/4897)
 - Add new KZG precompile and option to override the trusted setup being used [#4822](https://github.com/hyperledger/besu/issues/4822)
 - Add implementation for eth_createAccessList RPC method [#4942](https://github.com/hyperledger/besu/pull/4942)
+- Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
+- Add DebugGetRawBlock and DebugGetRawHeader RPC methods [#5011](https://github.com/hyperledger/besu/pull/5011)
+- Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
 
 ### Bug Fixes
 
@@ -27,6 +34,7 @@
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
+- Ensure latest cached layered worldstate is subscribed to storage, fix problem with RPC calls using 'latest' [#5039](https://github.com/hyperledger/besu/pull/5039)  
 
 
 ## 23.1.0-RC1

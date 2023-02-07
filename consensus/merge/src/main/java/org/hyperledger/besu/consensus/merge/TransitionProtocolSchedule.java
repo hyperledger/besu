@@ -102,7 +102,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
             LOG,
             "for {} returning a pre-merge schedule because we are not post-merge",
             blockHeader::toLogString);
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+        return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
 
       // otherwise check to see if this block represents a re-org TTD block:
@@ -128,12 +128,12 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
             LOG,
             "returning a pre-merge schedule because block {} is pre-merge or TTD",
             blockHeader::toLogString);
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+        return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
     }
     // else return post-merge schedule
     debugLambda(LOG, " for {} returning a post-merge schedule", blockHeader::toLogString);
-    return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+    return getPostMergeSchedule().getByBlockHeader(blockHeader);
   }
 
   /**

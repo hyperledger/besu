@@ -437,7 +437,11 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
             LOG,
             "Transaction {} not added because nonce too far in the future for sender {}",
             transaction::toTraceLog,
-            maybeSenderAccount::toString);
+            () ->
+                maybeSenderAccount
+                    .map(Account::getAddress)
+                    .map(Address::toString)
+                    .orElse("unknown"));
         return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
       }
 

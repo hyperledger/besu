@@ -125,8 +125,8 @@ public class EthGetTransactionCountTest {
 
   private void mockGetTransactionCount(final Address address, final long transactionCount) {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
+    when(chainHead.getHash()).thenReturn(Hash.ZERO);
     when(blockchainQueries.getTransactionCount(address, Hash.ZERO)).thenReturn(transactionCount);
   }
 }

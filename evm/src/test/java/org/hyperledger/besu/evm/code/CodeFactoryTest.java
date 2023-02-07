@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.code;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -181,7 +180,7 @@ class CodeFactoryTest {
   }
 
   private static void invalidCode(final String str) {
-    Code code = CodeFactory.createCode(Bytes.fromHexString(str), Hash.EMPTY, 1, true);
+    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1, true);
     assertThat(code.isValid()).isFalse();
   }
 }
