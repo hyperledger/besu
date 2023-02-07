@@ -42,8 +42,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -239,6 +241,8 @@ public class MessageFrame {
 
   private final Map<String, Object> contextVariables;
   private final Optional<List<Hash>> versionedHashes;
+
+  private final Table<Address, Bytes32, Bytes32> transientStorage = HashBasedTable.create();
 
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
@@ -1287,6 +1291,7 @@ public class MessageFrame {
   public Multimap<Address, Bytes32> getWarmedUpStorage() {
     return warmedUpStorage;
   }
+
   /**
    * Gets maybe updated memory.
    *
@@ -1303,6 +1308,50 @@ public class MessageFrame {
    */
   public Optional<StorageEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
+  }
+
+  /**
+   * Gets the transient storage value, including values from parent frames if not set
+   *
+   * @param accountAddress The address of the executing context
+   * @param slot the slot to retrieve
+   * @return the data value read
+   */
+  public Bytes32 getTransientStorageValue(final Address accountAddress, final Bytes32 slot) {
+    Bytes32 data = transientStorage.get(accountAddress, slot);
+
+    if (data != null) {
+      return data;
+    }
+
+    if (parentMessageFrame != null) {
+      data = parentMessageFrame.getTransientStorageValue(accountAddress, slot);
+    }
+    if (data == null) {
+      data = Bytes32.ZERO;
+    }
+    transientStorage.put(accountAddress, slot, data);
+
+    return data;
+  }
+
+  /**
+   * Gets the transient storage value, including values from parent frames if not set
+   *
+   * @param accountAddress The address of the executing context
+   * @param slot the slot to set
+   * @param value the value to set in the transient store
+   */
+  public void setTransientStorageValue(
+      final Address accountAddress, final Bytes32 slot, final Bytes32 value) {
+    transientStorage.put(accountAddress, slot, value);
+  }
+
+  /** Writes the transient storage to the parent frame, if one exists */
+  public void commitTransientStorage() {
+    if (parentMessageFrame != null) {
+      parentMessageFrame.transientStorage.putAll(transientStorage);
+    }
   }
 
   /**

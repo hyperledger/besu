@@ -56,6 +56,7 @@ import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.Options;
+import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
@@ -90,6 +91,7 @@ public class RocksDBColumnarKeyValueStorage
   private final RocksDBMetrics metrics;
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
+  private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
 
   /**
    * Instantiates a new RocksDb columnar key value storage.
@@ -249,7 +251,7 @@ public class RocksDBColumnarKeyValueStorage
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(db.get(segment.get(), key));
+      return Optional.ofNullable(db.get(segment.get(), readOptions, key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }

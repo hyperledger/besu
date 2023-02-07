@@ -33,6 +33,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("MockNotUsedInProduction")
 public class PrivFindPrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivFindPrivacyGroup.class);

@@ -89,7 +89,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
   public GasCalculator getGasCalculator() {
     return protocolSchedule
-        .getByBlockNumber(blockchainQueries.headBlockNumber())
+        .getByBlockHeader(blockchainQueries.headBlockHeader())
         .getGasCalculator();
   }
 

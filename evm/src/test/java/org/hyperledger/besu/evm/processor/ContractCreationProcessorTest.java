@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.frame.MessageFrame.State.COMPLETED_SUCCES
 import static org.hyperledger.besu.evm.frame.MessageFrame.State.EXCEPTIONAL_HALT;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
@@ -185,9 +184,7 @@ public class ContractCreationProcessorTest {
         Bytes.fromHexString(
             "0xEF000101000C020003000b000200080300000000000002020100020100000260016002b00001b00002b101b160005360106000f3");
     final MessageFrame messageFrame =
-        new TestMessageFrameBuilder()
-            .code(CodeFactory.createCode(initCode, Hash.hash(initCode), 1, true))
-            .build();
+        new TestMessageFrameBuilder().code(CodeFactory.createCode(initCode, 1, true)).build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
@@ -255,11 +252,7 @@ public class ContractCreationProcessorTest {
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder()
             .code(
-                CodeFactory.createCode(
-                    contractCreateCode,
-                    Hash.hash(contractCreateCode),
-                    evmSpecVersion.getMaxEofVersion(),
-                    true))
+                CodeFactory.createCode(contractCreateCode, evmSpecVersion.getMaxEofVersion(), true))
             .build();
     messageFrame.setOutputData(Bytes.fromHexString("0xef00010100010060"));
 
