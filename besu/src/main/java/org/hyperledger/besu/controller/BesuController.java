@@ -338,8 +338,7 @@ public class BesuController implements java.io.Closeable {
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
         // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block or if using
         // pos at genesis
-        if ((isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions))
-            || configOptions.isPos()) {
+        if ((isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions))) {
           return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
         } else {
           // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
