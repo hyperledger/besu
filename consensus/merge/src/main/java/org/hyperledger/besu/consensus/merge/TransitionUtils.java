@@ -117,8 +117,6 @@ public class TransitionUtils<SwitchingObject> {
             .orElse(Difficulty.ZERO);
 
     final MergeContext consensusContext = context.getConsensusContext(MergeContext.class);
-    final Difficulty configuredTotalTerminalDifficulty =
-        consensusContext.getTerminalTotalDifficulty();
 
     // Genesis is configured for post-merge we will never have a terminal pow block
     if (consensusContext.isPostMergeAtGenesis()) {
@@ -132,6 +130,7 @@ public class TransitionUtils<SwitchingObject> {
           header::toLogString,
           header::getParentHash);
     }
+    Difficulty configuredTotalTerminalDifficulty = consensusContext.getTerminalTotalDifficulty();
 
     if (currentChainTotalDifficulty
             .add(headerDifficulty)
