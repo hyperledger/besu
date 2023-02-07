@@ -69,4 +69,11 @@ public interface Peer extends PeerId {
   default Optional<ForkId> getForkId() {
     return Optional.empty();
   }
+
+  /**
+   * Sets the fork id
+   *
+   * @param forkId The fork id
+   */
+  void setForkId(ForkId forkId);
 }

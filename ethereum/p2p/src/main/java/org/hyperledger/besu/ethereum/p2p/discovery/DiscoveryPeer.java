@@ -147,6 +147,11 @@ public class DiscoveryPeer extends DefaultPeer {
     return this.forkId;
   }
 
+  @Override
+  public void setForkId(final ForkId forkId) {
+    this.forkId = Optional.ofNullable(forkId);
+  }
+
   public boolean discoveryEndpointMatches(final DiscoveryPeer peer) {
     return peer.getEndpoint().getHost().equals(endpoint.getHost())
         && peer.getEndpoint().getUdpPort() == endpoint.getUdpPort();

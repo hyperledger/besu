@@ -173,7 +173,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
   private NetworkingConfiguration networkingConfiguration;
-  private Boolean randomPeerPriority = true;
+  private Boolean randomPeerPriority;
   /**
    * Storage provider besu controller builder.
    *

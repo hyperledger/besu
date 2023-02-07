@@ -66,8 +66,9 @@ public class EthPeers {
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
       Comparator.comparing(EthPeer::outstandingRequests)
           .thenComparing(EthPeer::getLastRequestTimestamp);
+  public static final int NODE_ID_LENGTH = 64;
 
-  private final Map<Bytes, EthPeer> connections = new ConcurrentHashMap<>();
+  private final Map<Bytes, EthPeer> completeConnections = new ConcurrentHashMap<>();
 
   private final Cache<PeerConnection, EthPeer> incompleteConnections =
       CacheBuilder.newBuilder()
@@ -86,7 +87,7 @@ public class EthPeers {
   private final int peerUpperBound;
   private final int maxRemotelyInitiatedConnections;
   private final Boolean randomPeerPriority;
-  private final Bytes nodeIdMask = Bytes.random(64);
+  private final Bytes nodeIdMask = Bytes.random(NODE_ID_LENGTH);
 
   private Comparator<EthPeer> bestPeerComparator;
   private final Bytes localNodeId;
@@ -139,7 +140,7 @@ public class EthPeers {
       final PeerConnection newConnection, final List<PeerValidator> peerValidators) {
     final Bytes id = newConnection.getPeer().getId();
     synchronized (this) {
-      EthPeer ethPeer = connections.get(id);
+      EthPeer ethPeer = completeConnections.get(id);
       if (ethPeer == null) {
         final Optional<EthPeer> peerInList =
             incompleteConnections.asMap().values().stream()
@@ -170,7 +171,7 @@ public class EthPeers {
 
   public boolean registerDisconnect(final PeerConnection connection) {
     final Bytes id = connection.getPeer().getId();
-    final EthPeer peer = connections.get(id);
+    final EthPeer peer = completeConnections.get(id);
     return registerDisconnect(id, peer, connection);
   }
 
@@ -180,7 +181,7 @@ public class EthPeers {
     boolean removed = false;
     if (peer != null && peer.getConnection().equals(connection)) {
       if (!peerHasIncompleteConnection(id)) {
-        removed = connections.remove(id, peer);
+        removed = completeConnections.remove(id, peer);
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
@@ -208,14 +209,14 @@ public class EthPeers {
   public EthPeer peer(final PeerConnection connection) {
     try {
       return incompleteConnections.get(
-          connection, () -> connections.get(connection.getPeer().getId()));
+          connection, () -> completeConnections.get(connection.getPeer().getId()));
     } catch (final ExecutionException e) {
       throw new RuntimeException(e);
     }
   }
 
   public EthPeer peer(final Bytes peerId) {
-    return connections.get(peerId);
+    return completeConnections.get(peerId);
   }
 
   public PendingPeerRequest executePeerRequest(
@@ -270,7 +271,7 @@ public class EthPeers {
 
   public int peerCount() {
     removeDisconnectedPeers();
-    return connections.size();
+    return completeConnections.size();
   }
 
   public int getMaxPeers() {
@@ -278,11 +279,11 @@ public class EthPeers {
   }
 
   public Stream<EthPeer> streamAllPeers() {
-    return connections.values().stream();
+    return completeConnections.values().stream();
   }
 
   private void removeDisconnectedPeers() {
-    connections
+    completeConnections
         .values()
         .forEach(
             ep -> {
@@ -333,14 +334,14 @@ public class EthPeers {
   }
 
   private Stream<PeerConnection> getAllActiveConnections() {
-    return connections.values().stream()
+    return completeConnections.values().stream()
         .map(EthPeer::getConnection)
         .filter(c -> !c.isDisconnected());
   }
 
   private Stream<PeerConnection> getAllConnections() {
     return Stream.concat(
-            connections.values().stream().map(EthPeer::getConnection),
+            completeConnections.values().stream().map(EthPeer::getConnection),
             incompleteConnections.asMap().keySet().stream())
         .distinct()
         .filter(c -> !c.isDisconnected());
@@ -351,7 +352,7 @@ public class EthPeers {
       return false;
     }
     final Bytes id = peer.getId();
-    final EthPeer ethPeer = connections.get(id);
+    final EthPeer ethPeer = completeConnections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
       return false;
     }
@@ -388,15 +389,15 @@ public class EthPeers {
 
   @Override
   public String toString() {
-    if (connections.isEmpty()) {
+    if (completeConnections.isEmpty()) {
       return "0 EthPeers {}";
     }
     final String connectionsList =
-        connections.values().stream()
+        completeConnections.values().stream()
             .sorted()
             .map(EthPeer::toString)
             .collect(Collectors.joining(", \n"));
-    return connections.size() + " EthPeers {\n" + connectionsList + '}';
+    return completeConnections.size() + " EthPeers {\n" + connectionsList + '}';
   }
 
   private void ethPeerStatusExchanged(final EthPeer peer) {
@@ -458,7 +459,7 @@ public class EthPeers {
   }
 
   private Stream<EthPeer> getActivePrioritizedPeers() {
-    return connections.values().stream()
+    return completeConnections.values().stream()
         .filter(p -> !p.isDisconnected())
         .sorted(this::comparePeerPriorities);
   }
@@ -493,7 +494,7 @@ public class EthPeers {
   }
 
   private long countUntrustedRemotelyInitiatedConnections() {
-    return connections.values().stream()
+    return completeConnections.values().stream()
         .map(ep -> ep.getConnection())
         .filter(c -> c.inboundInitiated())
         .filter(c -> !c.isDisconnected())
@@ -516,7 +517,7 @@ public class EthPeers {
   private boolean addPeerToEthPeers(final EthPeer peer) {
     // We have a connection to a peer that is on the right chain and is willing to connect to us.
     // Figure out whether we want to keep this peer and add it to the EthPeers connections.
-    if (connections.containsValue(peer)) {
+    if (completeConnections.containsValue(peer)) {
       return false;
     }
     final Bytes id = peer.getId();
@@ -539,17 +540,17 @@ public class EthPeers {
         peer.getConnection().disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
-      final boolean added = (connections.putIfAbsent(id, peer) == null);
+      final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
       if (added)
         LOG.info(
             "Added peer {} with connection {} to connections", peer.getId(), peer.getConnection());
       return added;
     } else {
       // randomPeerPriority! Add the peer and if there are too many connections fix it
-      connections.putIfAbsent(id, peer);
+      completeConnections.putIfAbsent(id, peer);
       enforceRemoteConnectionLimits();
       enforceConnectionLimits();
-      return connections.containsKey(id);
+      return completeConnections.containsKey(id);
     }
   }
 }

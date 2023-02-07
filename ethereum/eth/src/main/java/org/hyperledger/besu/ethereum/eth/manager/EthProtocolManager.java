@@ -407,16 +407,18 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   private void handleStatusMessage(final EthPeer peer, final Message message) {
     final StatusMessage status = StatusMessage.readFrom(message.getData());
+    final ForkId forkId = status.forkId();
+    peer.getConnection().getPeer().setForkId(forkId);
     try {
       if (!status.networkId().equals(networkId)) {
         LOG.debug("Mismatched network id: {}, EthPeer {}", status.networkId(), peer);
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (!forkIdManager.peerCheck(status.forkId()) && status.protocolVersion() > 63) {
+      } else if (!forkIdManager.peerCheck(forkId) && status.protocolVersion() > 63) {
         LOG.debug(
             "{} has matching network id ({}), but non-matching fork id: {}",
             peer,
             networkId,
-            status.forkId());
+            forkId);
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (forkIdManager.peerCheck(status.genesisHash())) {
         LOG.debug(
