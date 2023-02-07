@@ -102,11 +102,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public boolean isPos() {
-    return false;
-  }
-
-  @Override
   public boolean isIbft2() {
     return false;
   }
@@ -149,11 +144,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
-  }
-
-  @Override
-  public PosConfigOptions getPosConfigOptions() {
-    return PosConfigOptions.DEFAULT;
   }
 
   @Override
