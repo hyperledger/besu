@@ -117,7 +117,7 @@ allprojects {
     }
     maven {
       url "https://artifacts.consensys.net/public/besu-rocksdb/maven/"
-      content { includeGroup('org.rocksdb') }
+      //content { includeGroup('org\\.rocksdb') }
     }
     maven {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
