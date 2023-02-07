@@ -178,6 +178,12 @@ public interface MergeContext extends ConsensusContext {
   default void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {}
 
   /**
+   * Set whether configured for post-merge at genesis
+   *
+   * @param isPostMergeAtGenesis
+   */
+
+  /**
    * Is chain pruning enabled.
    *
    * @return the boolean
@@ -192,4 +198,11 @@ public interface MergeContext extends ConsensusContext {
    * @return the boolean
    */
   boolean isCheckpointPostMergeSync();
+
+  /**
+   * Is configured for a post-merge from genesis.
+   *
+   * @return the boolean
+   */
+  boolean isPostMergeAtGenesis();
 }

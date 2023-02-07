@@ -212,6 +212,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     // TODO: post-merge cleanup
     if (requireTerminalPoWBlockValidation()
         && !mergeContext.get().isCheckpointPostMergeSync()
+        && !mergeContext.get().isPostMergeAtGenesis()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)
         && !mergeContext.get().isChainPruningEnabled()) {
       mergeCoordinator.addBadBlock(block, Optional.empty());
