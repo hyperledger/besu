@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
@@ -61,7 +61,7 @@ public class StratumServer implements PoWObserver {
 
   public StratumServer(
       final Vertx vertx,
-      final MiningCoordinator miningCoordinator,
+      final PoWMiningCoordinator miningCoordinator,
       final int port,
       final String networkInterface,
       final String extraNonce,
@@ -71,7 +71,7 @@ public class StratumServer implements PoWObserver {
     this.networkInterface = networkInterface;
     protocols =
         new StratumProtocol[] {
-          new GetWorkProtocol(miningCoordinator),
+          new GetWorkProtocol(miningCoordinator.getEpochCalculator()),
           new Stratum1Protocol(extraNonce, miningCoordinator),
           new Stratum1EthProxyProtocol(miningCoordinator)
         };

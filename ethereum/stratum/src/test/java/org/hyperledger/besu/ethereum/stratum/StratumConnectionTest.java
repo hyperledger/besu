@@ -30,18 +30,20 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class StratumConnectionTest {
 
   @Mock PoWMiningCoordinator miningCoordinator;
+  private EpochCalculator epochCalculator;
 
   @BeforeEach
   public void setup() {
-    miningCoordinator = Mockito.mock(PoWMiningCoordinator.class);
-    when(miningCoordinator.getEpochCalculator())
-        .thenReturn(new EpochCalculator.DefaultEpochCalculator());
+    this.epochCalculator = new EpochCalculator.DefaultEpochCalculator();
   }
 
   @Test
@@ -55,6 +57,7 @@ public class StratumConnectionTest {
 
   @Test
   public void testStratum1WithoutMatches() {
+    when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
     AtomicBoolean called = new AtomicBoolean(false);
     StratumConnection conn =
         new StratumConnection(
@@ -67,7 +70,7 @@ public class StratumConnectionTest {
 
   @Test
   public void testStratum1Matches() {
-
+    when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
     AtomicBoolean called = new AtomicBoolean(false);
 
     AtomicReference<String> message = new AtomicReference<>();
@@ -97,7 +100,7 @@ public class StratumConnectionTest {
 
   @Test
   public void testStratum1SendWork() {
-
+    when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
     AtomicBoolean called = new AtomicBoolean(false);
 
     AtomicReference<String> message = new AtomicReference<>();
@@ -138,7 +141,7 @@ public class StratumConnectionTest {
 
   @Test
   public void testStratum1SubmitHashrate() {
-
+    when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
     AtomicBoolean called = new AtomicBoolean(false);
 
     AtomicReference<String> message = new AtomicReference<>();
@@ -180,7 +183,7 @@ public class StratumConnectionTest {
 
     AtomicReference<String> received = new AtomicReference<>();
 
-    GetWorkProtocol protocol = new GetWorkProtocol(miningCoordinator);
+    GetWorkProtocol protocol = new GetWorkProtocol(epochCalculator);
     protocol.setCurrentWorkTask(new PoWSolverInputs(UInt256.ZERO, Bytes32.random(), 123L));
     StratumConnection conn =
         new StratumConnection(
@@ -198,7 +201,7 @@ public class StratumConnectionTest {
 
     AtomicReference<String> received = new AtomicReference<>();
 
-    GetWorkProtocol protocol = new GetWorkProtocol(miningCoordinator);
+    GetWorkProtocol protocol = new GetWorkProtocol(epochCalculator);
     StratumConnection conn =
         new StratumConnection(
             new StratumProtocol[] {protocol}, () -> called.set(true), received::set);

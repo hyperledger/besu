@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.stratum;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
@@ -44,12 +42,8 @@ public class GetWorkProtocol implements StratumProtocol {
   private Function<PoWSolution, Boolean> submitCallback;
   private String[] getWorkResult;
 
-  public GetWorkProtocol(final MiningCoordinator miningCoordinator) {
-    if (miningCoordinator instanceof PoWMiningCoordinator) {
-      this.epochCalculator = ((PoWMiningCoordinator) miningCoordinator).getEpochCalculator();
-    } else {
-      this.epochCalculator = new EpochCalculator.DefaultEpochCalculator();
-    }
+  public GetWorkProtocol(final EpochCalculator epochCalculator) {
+    this.epochCalculator = epochCalculator;
   }
 
   private JsonNode readMessage(final String message) {

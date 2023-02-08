@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -67,7 +66,7 @@ public class Stratum1Protocol implements StratumProtocol {
   private final List<StratumConnection> activeConnections = new ArrayList<>();
   private final EpochCalculator epochCalculator;
 
-  public Stratum1Protocol(final String extranonce, final MiningCoordinator miningCoordinator) {
+  public Stratum1Protocol(final String extranonce, final PoWMiningCoordinator miningCoordinator) {
     this(
         extranonce,
         miningCoordinator,
@@ -80,24 +79,14 @@ public class Stratum1Protocol implements StratumProtocol {
 
   Stratum1Protocol(
       final String extranonce,
-      final MiningCoordinator miningCoordinator,
+      final PoWMiningCoordinator miningCoordinator,
       final Supplier<String> jobIdSupplier,
       final Supplier<String> subscriptionIdCreator) {
-    MiningCoordinator maybePowMiner = miningCoordinator;
-    if (maybePowMiner instanceof TransitionCoordinator) {
-      maybePowMiner = ((TransitionCoordinator) maybePowMiner).getPreMergeObject();
-    }
-
-    if (!(maybePowMiner instanceof PoWMiningCoordinator)) {
-      throw new IllegalArgumentException(
-          "Stratum1 requires an PoWMiningCoordinator not "
-              + ((maybePowMiner == null) ? "null" : maybePowMiner.getClass().getName()));
-    }
     this.extranonce = extranonce;
-    this.miningCoordinator = maybePowMiner;
+    this.miningCoordinator = miningCoordinator;
     this.jobIdSupplier = jobIdSupplier;
     this.subscriptionIdCreator = subscriptionIdCreator;
-    this.epochCalculator = ((PoWMiningCoordinator) maybePowMiner).getEpochCalculator();
+    this.epochCalculator = miningCoordinator.getEpochCalculator();
   }
 
   @Override
