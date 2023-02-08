@@ -88,11 +88,13 @@ public class B11rSubCommand implements Runnable {
       description = "The clique seal/signature for the block")
   private final Path sealClique = stdinPath;
 
+  @SuppressWarnings("UnusedVariable") //FIXME do ethash sealing
   @Option(
       names = {"--seal.ethash"},
       description = "Use Proof of Work to seal the block")
   private final Boolean sealEthash = false;
 
+  @SuppressWarnings("UnusedVariable") //FIXME do ethash sealing
   @Option(
       names = {"--seal.ethash.mode"},
       paramLabel = "full path",
