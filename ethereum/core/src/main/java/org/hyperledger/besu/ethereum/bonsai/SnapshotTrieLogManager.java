@@ -105,6 +105,11 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
     dropArchive();
   }
 
+  @Override
+  public void onClearTrieLog() {
+    dropArchive();
+  }
+
   private void dropArchive() {
     // drop all cached snapshot worldstates, they are unsafe when the db has been truncated
     LOG.info("Key-value storage truncated, dropping cached worldstates");
