@@ -88,7 +88,7 @@ public class DebugStandardTraceBadBlockToFileTest {
     when(protocolSpec.getBadBlocksManager()).thenReturn(badBlockManager);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getChainHeadHeader()).thenReturn(new BlockHeaderTestFixture().buildHeader());
-    when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockNumber(blockHeader.getNumber())).thenReturn(protocolSpec);
     when(transactionTracer.traceTransactionToFile(eq(block.getHash()), any(), any()))
         .thenReturn(paths);
     final JsonRpcSuccessResponse response =
