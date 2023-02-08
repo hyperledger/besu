@@ -778,7 +778,10 @@ task manifestDocker {
     tags.add("${dockerImageName}:develop")
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  def isInterimBuild = (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
+
+  if (!isInterimBuild) {
     tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
