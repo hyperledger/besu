@@ -69,18 +69,20 @@ public class DebugReplayBlock extends AbstractBlockParameterMethod {
       return new JsonRpcErrorResponse(request.getRequest().getId(), UNKNOWN_BLOCK);
     }
 
-    final Block block = maybeBlock.get();
-
     // rewind to the block before the one we want to replay
     protocolContext.getBlockchain().rewindToBlock(blockNumber - 1);
 
     try {
       // replay block and persist it
       protocolSchedule
-          .getByBlockHeader(block.getHeader())
+          .getByBlockNumber(blockNumber)
           .getBlockValidator()
           .validateAndProcessBlock(
-              protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE, true);
+              protocolContext,
+              maybeBlock.get(),
+              HeaderValidationMode.FULL,
+              HeaderValidationMode.NONE,
+              true);
     } catch (Exception e) {
       LOG.error(e.getMessage());
       return new JsonRpcErrorResponse(request.getRequest().getId(), INTERNAL_ERROR);

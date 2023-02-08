@@ -114,7 +114,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
 
   protected boolean importBlock(final BlockWithReceipts blockWithReceipts) {
     final BlockImporter importer =
-        protocolSchedule.getByBlockHeader(blockWithReceipts.getHeader()).getBlockImporter();
+        protocolSchedule.getByBlockNumber(blockWithReceipts.getNumber()).getBlockImporter();
     final BlockImportResult blockImportResult =
         importer.fastImportBlock(
             protocolContext,

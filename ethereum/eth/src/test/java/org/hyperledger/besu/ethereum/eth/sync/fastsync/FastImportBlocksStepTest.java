@@ -19,7 +19,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.FULL;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -60,7 +60,7 @@ public class FastImportBlocksStepTest {
 
   @BeforeEach
   public void setUp() {
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(FULL);
     when(ommerValidationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT);
@@ -95,7 +95,7 @@ public class FastImportBlocksStepTest {
     importBlocksStep.accept(blocksWithReceipts);
 
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
-      verify(protocolSchedule).getByBlockHeader(blockWithReceipts.getHeader());
+      verify(protocolSchedule).getByBlockNumber(blockWithReceipts.getNumber());
     }
     verify(validationPolicy, times(blocks.size())).getValidationModeForNextBlock();
   }
