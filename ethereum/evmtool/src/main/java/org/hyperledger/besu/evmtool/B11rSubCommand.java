@@ -28,7 +28,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +44,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -61,8 +61,6 @@ public class B11rSubCommand implements Runnable {
   static final String COMMAND_ALIAS = "b11r";
   private static final Path stdoutPath = Path.of("stdout");
   private static final Path stdinPath = Path.of("stdin");
-  private final InputStream input;
-  private final PrintStream output;
 
   @Option(
       names = {"--input.header"},
@@ -88,13 +86,13 @@ public class B11rSubCommand implements Runnable {
       description = "The clique seal/signature for the block")
   private final Path sealClique = stdinPath;
 
-  @SuppressWarnings("UnusedVariable") //FIXME do ethash sealing
+  @SuppressWarnings("UnusedVariable") // FIXME do ethash sealing
   @Option(
       names = {"--seal.ethash"},
       description = "Use Proof of Work to seal the block")
   private final Boolean sealEthash = false;
 
-  @SuppressWarnings("UnusedVariable") //FIXME do ethash sealing
+  @SuppressWarnings("UnusedVariable") // FIXME do ethash sealing
   @Option(
       names = {"--seal.ethash.mode"},
       paramLabel = "full path",
@@ -115,21 +113,18 @@ public class B11rSubCommand implements Runnable {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
+  @CommandLine.ParentCommand private final EvmToolCommand parentCommand;
+
   @SuppressWarnings("unused")
   public B11rSubCommand() {
     // PicoCLI requires this
-    this(System.in, System.out);
+    parentCommand = null;
   }
 
   @SuppressWarnings("unused")
   public B11rSubCommand(final EvmToolCommand parentCommand) {
     // PicoCLI requires this too
-    this(System.in, System.out);
-  }
-
-  B11rSubCommand(final InputStream input, final PrintStream output) {
-    this.input = input;
-    this.output = output;
+    this.parentCommand = parentCommand;
   }
 
   @Override
@@ -149,7 +144,8 @@ public class B11rSubCommand implements Runnable {
           || ommers.equals(stdinPath)
           || sealClique.equals(stdinPath)) {
         config =
-            (ObjectNode) t8nReader.readTree(new InputStreamReader(input, StandardCharsets.UTF_8));
+            (ObjectNode)
+                t8nReader.readTree(new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8));
       } else {
         config = objectMapper.createObjectNode();
       }
@@ -171,7 +167,7 @@ public class B11rSubCommand implements Runnable {
             t8nReader.readTree(new FileReader(sealClique.toFile(), StandardCharsets.UTF_8)));
       }
     } catch (final JsonProcessingException jpe) {
-      output.println("File content error: " + jpe);
+      parentCommand.out.println("File content error: " + jpe);
       jpe.printStackTrace();
       return;
     } catch (final IOException e) {
@@ -218,7 +214,7 @@ public class B11rSubCommand implements Runnable {
     try {
       var resultString = writer.writeValueAsString(resultObject);
       if (outBlock.equals((stdoutPath))) {
-        output.println(resultString);
+        parentCommand.out.println(resultString);
       } else {
         try (var fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outBlock).toFile()))) {

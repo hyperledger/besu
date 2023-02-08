@@ -44,30 +44,26 @@ public class ReferenceTestProtocolSchedules {
   public static ReferenceTestProtocolSchedules create() {
     return create(new StubGenesisConfigOptions());
   }
-  
+
   public static ReferenceTestProtocolSchedules create(final StubGenesisConfigOptions genesisStub) {
     final ImmutableMap.Builder<String, HeaderBasedProtocolSchedule> builder =
         ImmutableMap.builder();
     builder.put("Frontier", createSchedule(genesisStub.clone()));
-    builder.put(
-        "FrontierToHomesteadAt5", createSchedule(genesisStub.clone().homesteadBlock(5)));
+    builder.put("FrontierToHomesteadAt5", createSchedule(genesisStub.clone().homesteadBlock(5)));
     builder.put("Homestead", createSchedule(genesisStub.clone().homesteadBlock(0)));
     builder.put(
         "HomesteadToEIP150At5",
         createSchedule(genesisStub.clone().homesteadBlock(0).eip150Block(5)));
     builder.put(
-        "HomesteadToDaoAt5",
-        createSchedule(genesisStub.clone().homesteadBlock(0).daoForkBlock(5)));
+        "HomesteadToDaoAt5", createSchedule(genesisStub.clone().homesteadBlock(0).daoForkBlock(5)));
     builder.put("EIP150", createSchedule(genesisStub.clone().eip150Block(0)));
     builder.put("EIP158", createSchedule(genesisStub.clone().eip158Block(0)));
     builder.put(
         "EIP158ToByzantiumAt5",
         createSchedule(genesisStub.clone().eip158Block(0).byzantiumBlock(5)));
     builder.put("Byzantium", createSchedule(genesisStub.clone().byzantiumBlock(0)));
-    builder.put(
-        "Constantinople", createSchedule(genesisStub.clone().constantinopleBlock(0)));
-    builder.put(
-        "ConstantinopleFix", createSchedule(genesisStub.clone().petersburgBlock(0)));
+    builder.put("Constantinople", createSchedule(genesisStub.clone().constantinopleBlock(0)));
+    builder.put("ConstantinopleFix", createSchedule(genesisStub.clone().petersburgBlock(0)));
     builder.put("Petersburg", createSchedule(genesisStub.clone().petersburgBlock(0)));
     builder.put("Istanbul", createSchedule(genesisStub.clone().istanbulBlock(0)));
     builder.put("MuirGlacier", createSchedule(genesisStub.clone().muirGlacierBlock(0)));
@@ -77,34 +73,15 @@ public class ReferenceTestProtocolSchedules {
     if (genesisStub.getBaseFeePerGas().isEmpty()) {
       genesisStub.baseFeePerGas(0x0a);
     }
-    builder.put(
-        "London",
-        createSchedule(genesisStub.clone().londonBlock(0)));
-    builder.put(
-        "ArrowGlacier", createSchedule(genesisStub.clone().arrowGlacierBlock(0)));
+    builder.put("London", createSchedule(genesisStub.clone().londonBlock(0)));
+    builder.put("ArrowGlacier", createSchedule(genesisStub.clone().arrowGlacierBlock(0)));
     builder.put("GrayGlacier", createSchedule(genesisStub.clone().grayGlacierBlock(0)));
-    builder.put(
-        "Merge",
-        createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
-    builder.put(
-        "Merge+3545+3670",
-        createTimestampSchedule(
-            genesisStub.clone().shanghaiTime(0)));
-    builder.put(
-        "Merge+3860",
-        createTimestampSchedule(
-            genesisStub.clone().shanghaiTime(0)));
-    builder.put(
-        "Merge+3855",
-        createTimestampSchedule(
-            genesisStub.clone().shanghaiTime(0)));
-    builder.put(
-        "Shanghai",
-        createTimestampSchedule(
-            genesisStub.clone().shanghaiTime(0)));
-    builder.put(
-        "Cancun",
-        createTimestampSchedule(genesisStub.clone().cancunTime(0)));
+    builder.put("Merge", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
+    builder.put("Merge+3545+3670", createTimestampSchedule(genesisStub.clone().shanghaiTime(0)));
+    builder.put("Merge+3860", createTimestampSchedule(genesisStub.clone().shanghaiTime(0)));
+    builder.put("Merge+3855", createTimestampSchedule(genesisStub.clone().shanghaiTime(0)));
+    builder.put("Shanghai", createTimestampSchedule(genesisStub.clone().shanghaiTime(0)));
+    builder.put("Cancun", createTimestampSchedule(genesisStub.clone().cancunTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

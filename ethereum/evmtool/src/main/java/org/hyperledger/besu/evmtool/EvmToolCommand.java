@@ -42,8 +42,10 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
@@ -173,18 +175,26 @@ public class EvmToolCommand implements Runnable {
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
 
-  @Option(names = {"-v", "--version"}, versionHelp = true, description = "display version info")
+  @Option(
+      names = {"-v", "--version"},
+      versionHelp = true,
+      description = "display version info")
   boolean versionInfoRequested;
 
   static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
-  private PrintWriter out =
+  PrintWriter out =
       new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
+  InputStream in = new ByteArrayInputStream(new byte[0]);
 
-  void parse(final CommandLine.IExecutionStrategy resultHandler, final String[] args) {
+  void execute(final String... args) {
+    execute(System.in, new PrintWriter(System.out, true, UTF_8), args);
+  }
 
-    final CommandLine commandLine = new CommandLine(this);
-    out = commandLine.getOut();
+  void execute(final InputStream input, final PrintWriter output, final String[] args) {
+    final CommandLine commandLine = new CommandLine(this).setOut(output);
+    out = output;
+    in = input;
     commandLine.addMixin("Dagger Options", daggerOptions);
 
     // add sub commands here
@@ -192,7 +202,7 @@ public class EvmToolCommand implements Runnable {
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Wei.class, arg -> Wei.of(Long.parseUnsignedLong(arg)));
 
-    commandLine.setExecutionStrategy(resultHandler).execute(args);
+    commandLine.setExecutionStrategy(new CommandLine.RunLast()).execute(args);
   }
 
   @Override

@@ -22,10 +22,14 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -37,6 +41,19 @@ import org.apache.tuweni.bytes.Bytes32;
 /** A memory holder for testing. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ReferenceTestEnv extends BlockHeader {
+
+  @SuppressWarnings("unused")
+  private final String parentDifficulty;
+
+  private final String parentBaseFee;
+
+  private final String parentGasUsed;
+
+  @SuppressWarnings("unused")
+  private final String parentGasLimit;
+
+  @SuppressWarnings("unused")
+  private final String parentTimestamp;
 
   /**
    * Public constructor.
@@ -58,7 +75,12 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("currentBaseFee") final String baseFee,
       @JsonProperty("currentTimestamp") final String timestamp,
       @JsonProperty("currentRandom") final String random,
-      @JsonProperty("previousHash") final String previousHash) {
+      @JsonProperty("previousHash") final String previousHash,
+      @JsonProperty("parentDifficulty") final String parentDifficulty,
+      @JsonProperty("parentBaseFee") final String parentBaseFee,
+      @JsonProperty("parentGasUsed") final String parentGasUsed,
+      @JsonProperty("parentGasLimit") final String parentGasLimit,
+      @JsonProperty("parentTimestamp") final String parentTimestamp) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY, // ommersHash
@@ -79,6 +101,11 @@ public class ReferenceTestEnv extends BlockHeader {
         null, // withdrawalsRoot
         null,
         new MainnetBlockHeaderFunctions());
+    this.parentDifficulty = parentDifficulty;
+    this.parentBaseFee = parentBaseFee;
+    this.parentGasUsed = parentGasUsed;
+    this.parentGasLimit = parentGasLimit;
+    this.parentTimestamp = parentTimestamp;
   }
 
   private static Hash generateTestBlockHash(final String previousHash, final String number) {
@@ -92,5 +119,46 @@ public class ReferenceTestEnv extends BlockHeader {
     } else {
       return Hash.wrap(Bytes32.fromHexString(previousHash));
     }
+  }
+
+  public BlockHeader updateFromParentValues(final ProtocolSpec protocolSpec) {
+    var builder =
+        BlockHeaderBuilder.fromHeader(this)
+            .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions());
+    if ((baseFee == null || baseFee.isEmpty()) && protocolSpec.getFeeMarket().implementsBaseFee()) {
+      builder.baseFee(
+          ((BaseFeeMarket) protocolSpec.getFeeMarket())
+              .computeBaseFee(
+                  number,
+                  Wei.fromHexString(parentBaseFee),
+                  Long.parseLong(parentGasUsed),
+                  gasLimit / 2));
+    }
+
+    return builder.buildBlockHeader();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    ReferenceTestEnv that = (ReferenceTestEnv) o;
+    return Objects.equals(parentDifficulty, that.parentDifficulty)
+        && Objects.equals(parentBaseFee, that.parentBaseFee)
+        && Objects.equals(parentGasUsed, that.parentGasUsed)
+        && Objects.equals(parentGasLimit, that.parentGasLimit)
+        && Objects.equals(parentTimestamp, that.parentTimestamp);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        super.hashCode(),
+        parentDifficulty,
+        parentBaseFee,
+        parentGasUsed,
+        parentGasLimit,
+        parentTimestamp);
   }
 }

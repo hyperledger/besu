@@ -58,7 +58,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.math.BigInteger;
@@ -103,8 +102,6 @@ public class T8nSubCommand implements Runnable {
   static final String COMMAND_ALIAS = "t8n";
   private static final Path stdoutPath = Path.of("stdout");
   private static final Path stdinPath = Path.of("stdin");
-  private final InputStream input;
-  private final PrintStream output;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
@@ -157,16 +154,16 @@ public class T8nSubCommand implements Runnable {
   private final Path outBody = Path.of("txs.rlp");
 
   @Option(
-          names = {"--state.chainid"},
-          paramLabel = "chain ID",
-          description = "The chain Id to use")
+      names = {"--state.chainid"},
+      paramLabel = "chain ID",
+      description = "The chain Id to use")
   private final Long chainId = 1L;
 
   @SuppressWarnings("UnusedVariable")
   @Option(
-          names = {"--state.reward"},
-          paramLabel = "block mining reward",
-          description = "The block reward to use in block tess")
+      names = {"--state.reward"},
+      paramLabel = "block mining reward",
+      description = "The block reward to use in block tess")
   private final Wei reward = null;
 
   @ParentCommand private final EvmToolCommand parentCommand;
@@ -174,20 +171,13 @@ public class T8nSubCommand implements Runnable {
   @SuppressWarnings("unused")
   public T8nSubCommand() {
     // PicoCLI requires this
-    this(null, System.in, System.out);
+    parentCommand = null;
   }
 
   @SuppressWarnings("unused")
   public T8nSubCommand(final EvmToolCommand parentCommand) {
     // PicoCLI requires this too
-    this(parentCommand, System.in, System.out);
-  }
-
-  T8nSubCommand(
-      final EvmToolCommand parentCommand, final InputStream input, final PrintStream output) {
     this.parentCommand = parentCommand;
-    this.input = input;
-    this.output = output;
   }
 
   @Override
@@ -202,13 +192,14 @@ public class T8nSubCommand implements Runnable {
     objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
 
     MutableWorldState initialWorldState;
-    BlockHeader blockHeader;
+    ReferenceTestEnv referenceTestEnv;
     List<Transaction> transactions;
     try {
       ObjectNode config;
       if (env.equals(stdinPath) || alloc.equals(stdinPath) || txs.equals(stdinPath)) {
         config =
-            (ObjectNode) t8nReader.readTree(new InputStreamReader(input, StandardCharsets.UTF_8));
+            (ObjectNode)
+                t8nReader.readTree(new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8));
       } else {
         config = objectMapper.createObjectNode();
       }
@@ -224,7 +215,7 @@ public class T8nSubCommand implements Runnable {
         config.set("txs", t8nReader.readTree(new FileReader(txs.toFile(), StandardCharsets.UTF_8)));
       }
 
-      blockHeader = objectMapper.convertValue(config.get("env"), ReferenceTestEnv.class);
+      referenceTestEnv = objectMapper.convertValue(config.get("env"), ReferenceTestEnv.class);
       initialWorldState =
           objectMapper.convertValue(config.get("alloc"), ReferenceTestWorldState.class);
       initialWorldState.persist(null);
@@ -235,7 +226,7 @@ public class T8nSubCommand implements Runnable {
         outDir.toFile().mkdirs();
       }
     } catch (final JsonProcessingException jpe) {
-      output.println("File content error: " + jpe);
+      parentCommand.out.println("File content error: " + jpe);
       jpe.printStackTrace();
       return;
     } catch (final IOException e) {
@@ -261,6 +252,7 @@ public class T8nSubCommand implements Runnable {
 
     ProtocolSpec protocolSpec =
         protocolSchedule.getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
+    final BlockHeader blockHeader = referenceTestEnv.updateFromParentValues(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
@@ -295,7 +287,7 @@ public class T8nSubCommand implements Runnable {
               blockHeader,
               transaction,
               blockHeader.getCoinbase(),
-              new BlockHashLookup(blockHeader, blockchain),
+              new BlockHashLookup(referenceTestEnv, blockchain),
               false,
               TransactionValidationParams.processingBlock(),
               tracer);
@@ -375,7 +367,7 @@ public class T8nSubCommand implements Runnable {
                       account.getAddress().map(Address::toHexString).orElse("0x"));
               if (account.getNonce() > 0) {
                 accountObject.put(
-                        "nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
+                    "nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
               }
               accountObject.put("balance", account.getBalance().toShortHexString());
               if (account.getCode() != null && account.getCode().size() > 0) {
@@ -428,7 +420,7 @@ public class T8nSubCommand implements Runnable {
       }
 
       if (outputObject.size() > 0) {
-        output.println(writer.writeValueAsString(outputObject));
+        parentCommand.out.println(writer.writeValueAsString(outputObject));
       }
     } catch (IOException ioe) {
       LOG.error("Could not write results", ioe);

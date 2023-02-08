@@ -168,8 +168,12 @@ public class BlockchainReferenceTestCaseSpec {
           uncleHash == null ? Hash.EMPTY_LIST_HASH : Hash.fromHexString(uncleHash), // ommersHash
           Address.fromHexString(coinbase), // coinbase
           Hash.fromHexString(stateRoot), // stateRoot
-          transactionsTrie == null ? Hash.EMPTY_TRIE_HASH : Hash.fromHexString(transactionsTrie), // transactionsRoot
-          receiptTrie == null ? Hash.EMPTY_TRIE_HASH : Hash.fromHexString(receiptTrie), // receiptTrie
+          transactionsTrie == null
+              ? Hash.EMPTY_TRIE_HASH
+              : Hash.fromHexString(transactionsTrie), // transactionsRoot
+          receiptTrie == null
+              ? Hash.EMPTY_TRIE_HASH
+              : Hash.fromHexString(receiptTrie), // receiptTrie
           LogsBloomFilter.fromHexString(bloom), // bloom
           Difficulty.fromHexString(difficulty), // difficulty
           Long.decode(number), // number
