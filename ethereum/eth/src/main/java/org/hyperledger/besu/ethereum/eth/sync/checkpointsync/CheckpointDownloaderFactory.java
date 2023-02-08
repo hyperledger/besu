@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -60,8 +61,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
-      final Clock clock,
-      final boolean isResync) {
+      final Clock clock) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -81,13 +81,12 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
-    if (isResync) {
+    if (syncState.isResyncNeeded()) {
       snapContext.clear();
-      worldStateStorage.clear();
-    }
-
-    if (!isResync
-        && fastSyncState.getPivotBlockHeader().isEmpty()
+      syncState
+          .getAccountToRepair()
+          .ifPresent(address -> snapContext.addInconsistentAccount(Hash.hash(address)));
+    } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
@@ -109,10 +108,12 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               pivotBlockSelector,
               metricsSystem);
     } else {
-      LOG.info(
-          "Checkpoint sync start with block {} and hash {}",
-          syncState.getCheckpoint().get().blockNumber(),
-          syncState.getCheckpoint().get().blockHash());
+      if (!syncState.isResyncNeeded()) {
+        LOG.info(
+            "Checkpoint sync start with block {} and hash {}",
+            syncState.getCheckpoint().get().blockNumber(),
+            syncState.getCheckpoint().get().blockHash());
+      }
       fastSyncActions =
           new CheckpointSyncActions(
               syncConfig,
