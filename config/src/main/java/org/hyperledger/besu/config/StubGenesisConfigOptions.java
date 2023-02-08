@@ -29,7 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Stub genesis config options. */
-public class StubGenesisConfigOptions implements GenesisConfigOptions {
+public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable {
 
   private OptionalLong homesteadBlockNumber = OptionalLong.empty();
   private OptionalLong daoForkBlock = OptionalLong.empty();
@@ -75,6 +75,15 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
   private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
+
+  @Override
+  public StubGenesisConfigOptions clone() {
+    try {
+      return (StubGenesisConfigOptions) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @Override
   public String getConsensusEngine() {

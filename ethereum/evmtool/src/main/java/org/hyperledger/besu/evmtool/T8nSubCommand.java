@@ -17,10 +17,15 @@
 package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
+import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_ALIAS;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -36,6 +41,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
@@ -45,6 +51,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.FileNotFoundException;
@@ -52,7 +59,9 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -60,7 +69,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -70,6 +78,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
@@ -83,15 +92,17 @@ import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = COMMAND_NAME,
+    aliases = COMMAND_ALIAS,
     description = "Execute an Ethereum State Test.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class T8nSubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(T8nSubCommand.class);
 
-  static final String COMMAND_NAME = "t8n";
+  static final String COMMAND_NAME = "transition";
+  static final String COMMAND_ALIAS = "t8n";
   private static final Path stdoutPath = Path.of("stdout");
-  private static final Path stdinPath = Path.of("stdout");
+  private static final Path stdinPath = Path.of("stdin");
   private final InputStream input;
   private final PrintStream output;
 
@@ -101,18 +112,6 @@ public class T8nSubCommand implements Runnable {
       paramLabel = "fork name",
       description = "The fork to run the transition against")
   private String fork = null;
-
-  //  @Option(
-  //      names = {"--state.reward"},
-  //      paramLabel = "block mining reward",
-  //      description = "The block reward to use in block tess")
-  //  private final Wei reward = null;
-
-  //  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
-  //  @Option(
-  //          names = {"--trace"},
-  //          description = "Produce a trace")
-  //  private Boolean trace = false;
 
   @Option(
       names = {"--input.env"},
@@ -150,6 +149,26 @@ public class T8nSubCommand implements Runnable {
       description = "The summary of the transition")
   private final Path outResult = Path.of("result.json");
 
+  @SuppressWarnings("UnusedVariable")
+  @Option(
+      names = {"--output.body"},
+      paramLabel = "file name",
+      description = "RLP of transactions considered")
+  private final Path outBody = Path.of("txs.rlp");
+
+  @Option(
+          names = {"--state.chainid"},
+          paramLabel = "chain ID",
+          description = "The chain Id to use")
+  private final Long chainId = 1L;
+
+  @SuppressWarnings("UnusedVariable")
+  @Option(
+          names = {"--state.reward"},
+          paramLabel = "block mining reward",
+          description = "The block reward to use in block tess")
+  private final Wei reward = null;
+
   @ParentCommand private final EvmToolCommand parentCommand;
 
   @SuppressWarnings("unused")
@@ -184,11 +203,12 @@ public class T8nSubCommand implements Runnable {
 
     MutableWorldState initialWorldState;
     BlockHeader blockHeader;
-    List<Transaction> transactions = new ArrayList<>();
+    List<Transaction> transactions;
     try {
       ObjectNode config;
       if (env.equals(stdinPath) || alloc.equals(stdinPath) || txs.equals(stdinPath)) {
-        config = t8nReader.readValue(input);
+        config =
+            (ObjectNode) t8nReader.readTree(new InputStreamReader(input, StandardCharsets.UTF_8));
       } else {
         config = objectMapper.createObjectNode();
       }
@@ -210,11 +230,7 @@ public class T8nSubCommand implements Runnable {
       initialWorldState.persist(null);
       Iterator<JsonNode> it = config.get("txs").elements();
 
-      while (it.hasNext()) {
-        JsonNode txNode = it.next();
-        var tx = Transaction.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
-        transactions.add(tx);
-      }
+      transactions = extractTransactions(it);
       if (!outDir.toString().isBlank()) {
         outDir.toFile().mkdirs();
       }
@@ -228,10 +244,12 @@ public class T8nSubCommand implements Runnable {
     }
 
     Log4j2ConfiguratorUtil.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
-    final var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
+        "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
+    final var referenceTestProtocolSchedules =
+        ReferenceTestProtocolSchedules.create(
+            new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
     Log4j2ConfiguratorUtil.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
+        "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
 
     final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
 
@@ -321,11 +339,12 @@ public class T8nSubCommand implements Runnable {
       receiptObject.put("transactionHash", transaction.getHash().toHexString());
       receiptObject.put(
           "contractAddress", transaction.contractAddress().orElse(Address.ZERO).toHexString());
-      receiptObject.put("gasUsed", gasUsedInTransaction.toShortHexString());
+      receiptObject.put("gasUsed", gasUsedInTransaction.toQuantityHexString());
       receiptObject.put("blockHash", Hash.ZERO.toHexString());
       receiptObject.put("transactionIndex", Bytes.ofUnsignedLong(i).toQuantityHexString());
     }
     worldStateUpdater.commit();
+    worldState.persist(blockHeader);
 
     final ObjectNode resultObject = objectMapper.createObjectNode();
     resultObject.put("stateRoot", worldState.rootHash().toHexString());
@@ -337,15 +356,13 @@ public class T8nSubCommand implements Runnable {
                 RLP.encode(
                     out ->
                         out.writeList(
-                            receipts.stream()
-                                .flatMap(r -> r.getLogsList().stream())
-                                .collect(Collectors.toList()),
+                            receipts.stream().flatMap(r -> r.getLogsList().stream()).toList(),
                             Log::writeTo)))
             .toHexString());
     resultObject.put("logsBloom", BodyValidation.logsBloom(receipts).toHexString());
     resultObject.set("receipts", receiptsArray);
     resultObject.put("currentDifficulty", blockHeader.getDifficultyBytes().toShortHexString());
-    resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toShortHexString());
+    resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
 
     var allocObject = objectMapper.createObjectNode();
     worldState
@@ -356,43 +373,121 @@ public class T8nSubCommand implements Runnable {
               var accountObject =
                   allocObject.putObject(
                       account.getAddress().map(Address::toHexString).orElse("0x"));
+              if (account.getNonce() > 0) {
+                accountObject.put(
+                        "nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
+              }
+              accountObject.put("balance", account.getBalance().toShortHexString());
               if (account.getCode() != null && account.getCode().size() > 0) {
                 accountObject.put("code", account.getCode().toHexString());
               }
-              var storateEntries = account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
-              if (!storateEntries.isEmpty()) {
-                var storageObject = accountObject.putObject("storage");
-                storateEntries
-                    .values()
-                    .forEach(
-                        accountStorageEntry ->
-                            storageObject.put(
-                                accountStorageEntry.getKey().map(UInt256::toHexString).orElse("0x"),
-                                accountStorageEntry.getValue().toHexString()));
-              }
-              accountObject.put("balance", account.getBalance().toShortHexString());
-              if (account.getNonce() > 0) {
-                accountObject.put(
-                    "nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
-              }
+              var storageEntries = account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              var storageObject = accountObject.putObject("storage");
+              storageEntries
+                  .values()
+                  .forEach(
+                      accountStorageEntry ->
+                          storageObject.put(
+                              accountStorageEntry.getKey().map(UInt256::toHexString).orElse("0x"),
+                              accountStorageEntry.getValue().toHexString()));
             });
 
     try {
       var writer = objectMapper.writerWithDefaultPrettyPrinter();
+      ObjectNode outputObject = objectMapper.createObjectNode();
 
-      PrintStream resultOutput =
-          outResult.equals(stdoutPath)
-              ? output
-              : new PrintStream(new FileOutputStream(outDir.resolve(outResult).toFile()));
-      resultOutput.println(writer.writeValueAsString(resultObject));
+      if (outAlloc.equals(stdoutPath)) {
+        outputObject.set("alloc", allocObject);
+      } else {
+        try (var fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outAlloc).toFile()))) {
+          fileOut.println(writer.writeValueAsString(allocObject));
+        }
+      }
 
-      PrintStream allocOutput =
-          outAlloc.equals(stdoutPath)
-              ? output
-              : new PrintStream(new FileOutputStream(outDir.resolve(outAlloc).toFile()));
-      allocOutput.println(writer.writeValueAsString(allocObject));
+      BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+      rlpOut.writeList(transactions, Transaction::writeTo);
+      Bytes bodyBytes = rlpOut.encoded();
+
+      if (outBody.equals((stdoutPath))) {
+        outputObject.set("body", TextNode.valueOf(bodyBytes.toHexString()));
+      } else {
+        try (var fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
+          fileOut.print(bodyBytes.toHexString());
+        }
+      }
+
+      if (outResult.equals(stdoutPath)) {
+        outputObject.set("result", resultObject);
+      } else {
+        try (var fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outResult).toFile()))) {
+          fileOut.println(writer.writeValueAsString(resultObject));
+        }
+      }
+
+      if (outputObject.size() > 0) {
+        output.println(writer.writeValueAsString(outputObject));
+      }
     } catch (IOException ioe) {
       LOG.error("Could not write results", ioe);
     }
+  }
+
+  private static List<Transaction> extractTransactions(final Iterator<JsonNode> it) {
+    List<Transaction> transactions = new ArrayList<>();
+    while (it.hasNext()) {
+      JsonNode txNode = it.next();
+      if (txNode.has("txBytes")) {
+        var tx = Transaction.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
+        transactions.add(tx);
+      } else {
+        var builder = Transaction.builder();
+        int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
+        TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
+        builder.type(transactionType);
+        builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
+        builder.gasPrice(Wei.fromHexString(txNode.get("gasPrice").textValue()));
+        builder.gasLimit(Bytes.fromHexStringLenient(txNode.get("gas").textValue()).toLong());
+        builder.value(Wei.fromHexString(txNode.get("value").textValue()));
+        builder.payload(Bytes.fromHexString(txNode.get("input").textValue()));
+        if (txNode.has("to")) {
+          builder.to(Address.fromHexString(txNode.get("to").textValue()));
+        }
+
+        if (transactionType.requiresChainId()
+            || !txNode.has("protected")
+            || txNode.get("protected").booleanValue()) {
+          // chainid if protected
+          builder.chainId(
+              new BigInteger(
+                  1,
+                  Bytes.fromHexStringLenient(txNode.get("chainId").textValue()).toArrayUnsafe()));
+        }
+
+        if (txNode.has("secretKey")) {
+          SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+          var keys =
+              signatureAlgorithm.createKeyPair(
+                  signatureAlgorithm.createPrivateKey(
+                      Bytes32.fromHexString(txNode.get("secretKey").textValue())));
+
+          transactions.add(builder.signAndBuild(keys));
+        } else {
+          builder.signature(
+              SignatureAlgorithmFactory.getInstance()
+                  .createSignature(
+                      Bytes.fromHexString(txNode.get("r").textValue()).toUnsignedBigInteger(),
+                      Bytes.fromHexString(txNode.get("s").textValue()).toUnsignedBigInteger(),
+                      Bytes.fromHexString(txNode.get("v").textValue())
+                          .toUnsignedBigInteger()
+                          .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
+                          .byteValueExact()));
+          transactions.add(builder.build());
+        }
+      }
+    }
+    return transactions;
   }
 }

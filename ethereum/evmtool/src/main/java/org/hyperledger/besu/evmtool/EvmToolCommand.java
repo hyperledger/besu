@@ -51,7 +51,6 @@ import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
@@ -79,7 +78,12 @@ import picocli.CommandLine.Option;
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
-    subcommands = {CodeValidateSubCommand.class, StateTestSubCommand.class, T8nSubCommand.class})
+    subcommands = {
+      B11rSubCommand.class,
+      CodeValidateSubCommand.class,
+      StateTestSubCommand.class,
+      T8nSubCommand.class
+    })
 public class EvmToolCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(EvmToolCommand.class);
@@ -168,6 +172,9 @@ public class EvmToolCommand implements Runnable {
       names = {"--repeat"},
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
+
+  @Option(names = {"-v", "--version"}, versionHelp = true, description = "display version info")
+  boolean versionInfoRequested;
 
   static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
@@ -374,7 +381,7 @@ public class EvmToolCommand implements Runnable {
                                         + "\": \""
                                         + accountStorageEntry.getValue().toHexString()
                                         + "\"")
-                            .collect(Collectors.toList())));
+                            .toList()));
                 out.println("  },");
               }
               out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
