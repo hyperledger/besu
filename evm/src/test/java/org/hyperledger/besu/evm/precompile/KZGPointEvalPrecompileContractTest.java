@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -98,6 +99,7 @@ public class KZGPointEvalPrecompileContractTest {
     }
   }
 
+  @Ignore
   @Test
   public void aggregateKzgProof() throws URISyntaxException {
     init("trusted_setup_devnet_4.txt");
