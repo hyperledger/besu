@@ -154,4 +154,9 @@ public class TransitionContext implements MergeContext {
   public boolean isCheckpointPostMergeSync() {
     return false;
   }
+
+  @Override
+  public boolean isPostMergeAtGenesis() {
+    return postMergeContext.isPostMergeAtGenesis();
+  }
 }

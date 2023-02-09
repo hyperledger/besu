@@ -31,6 +31,7 @@
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
+| Zhenyang Shi     | wcgcyx           | wcgcyx           |
 
 
 ## Emeritus Maintainers

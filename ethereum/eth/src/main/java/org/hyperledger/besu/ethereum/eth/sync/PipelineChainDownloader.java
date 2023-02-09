@@ -157,6 +157,7 @@ public class PipelineChainDownloader implements ChainDownloader {
     if (!syncTargetManager.shouldContinueDownloading()) {
       return CompletableFuture.completedFuture(null);
     }
+
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
     debugLambda(
         LOG,
