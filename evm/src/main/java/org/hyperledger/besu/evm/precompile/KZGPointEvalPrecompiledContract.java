@@ -38,6 +38,9 @@ import org.jetbrains.annotations.NotNull;
 /** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
+  boolean inited;
+  Optional<Path> pathToTrustedSetup;
+
   /** Instantiates a new KZGPointEval precompile contract. */
   public KZGPointEvalPrecompiledContract() {
     this(Optional.empty());
@@ -49,7 +52,13 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
    * @param pathToTrustedSetup the trusted setup path
    */
   public KZGPointEvalPrecompiledContract(final Optional<Path> pathToTrustedSetup) {
+    this.pathToTrustedSetup = pathToTrustedSetup;
+  }
 
+  public synchronized void init() {
+    if (inited) {
+      return;
+    }
     String absolutePathToSetup;
     CKZG4844JNI.Preset bitLength;
     if (pathToTrustedSetup.isPresent()) {
@@ -79,23 +88,26 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       } else {
         throw new IllegalArgumentException("provided file not a setup for either 4 or 4096 bits");
       }
-      CKZG4844JNI.loadNativeLibrary(bitLength);
-      try {
-        CKZG4844JNI.loadTrustedSetup(absolutePathToSetup);
-      } catch (RuntimeException mightBeAlreadyLoaded) {
-        if (!mightBeAlreadyLoaded.getMessage().contains("Trusted Setup is already loaded")) {
-          throw mightBeAlreadyLoaded;
-        }
-      }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+    CKZG4844JNI.loadNativeLibrary(bitLength);
+    try {
+      CKZG4844JNI.loadTrustedSetup(absolutePathToSetup);
+    } catch (RuntimeException mightBeAlreadyLoaded) {
+      if (!mightBeAlreadyLoaded.getMessage().contains("Trusted Setup is already loaded")) {
+        throw mightBeAlreadyLoaded;
+      }
+    }
+    inited = true;
   }
 
   /** free up resources. */
   @VisibleForTesting
   public void tearDown() {
-    CKZG4844JNI.freeTrustedSetup();
+    if (inited) {
+      CKZG4844JNI.freeTrustedSetup();
+    }
   }
 
   @Override
@@ -113,6 +125,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @NotNull final MessageFrame messageFrame) {
+    init();
 
     if (input.size() != 192) {
       return new PrecompileContractResult(
