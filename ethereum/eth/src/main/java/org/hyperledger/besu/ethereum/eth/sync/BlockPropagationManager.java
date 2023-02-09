@@ -584,7 +584,8 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
                     new IllegalArgumentException(
                         "Incapable of retrieving header from non-existent parent of "
                             + block.toLogString()));
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
+    final ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
     return ethContext

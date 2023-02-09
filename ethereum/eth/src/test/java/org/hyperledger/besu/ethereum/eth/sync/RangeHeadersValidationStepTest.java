@@ -18,7 +18,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -52,7 +52,6 @@ public class RangeHeadersValidationStepTest {
   @Mock private BlockHeaderValidator headerValidator;
   @Mock private ValidationPolicy validationPolicy;
   @Mock private EthPeer syncTarget;
-
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private RangeHeadersValidationStep validationStep;
 
@@ -66,7 +65,7 @@ public class RangeHeadersValidationStepTest {
 
   @Before
   public void setUp() {
-    when(protocolSchedule.getByBlockHeader(any(BlockHeader.class))).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockHeaderValidator()).thenReturn(headerValidator);
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(DETACHED_ONLY);
 
@@ -80,7 +79,7 @@ public class RangeHeadersValidationStepTest {
         .thenReturn(true);
     final Stream<BlockHeader> result = validationStep.apply(rangeHeaders);
 
-    verify(protocolSchedule).getByBlockHeader(firstHeader);
+    verify(protocolSchedule).getByBlockNumber(firstHeader.getNumber());
     verify(validationPolicy).getValidationModeForNextBlock();
     verify(headerValidator).validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY);
     verifyNoMoreInteractions(headerValidator, validationPolicy);

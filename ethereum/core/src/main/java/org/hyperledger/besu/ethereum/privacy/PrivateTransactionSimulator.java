@@ -125,7 +125,7 @@ public class PrivateTransactionSimulator {
     final PrivateTransaction transaction =
         getPrivateTransaction(callParams, header, privacyGroupId, disposablePrivateState);
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final PrivateTransactionProcessor privateTransactionProcessor =
         protocolSpec.getPrivateTransactionProcessor();
