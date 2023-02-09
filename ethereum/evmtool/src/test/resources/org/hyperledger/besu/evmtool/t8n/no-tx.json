@@ -7,7 +7,6 @@
     "--output.result=stdout",
     "--output.alloc=stdout",
     "--output.body=stdout",
-    "--output.basedir=/tmp",
     "--state.fork=Berlin",
     "--state.chainid=1",
     "--state.reward=0"

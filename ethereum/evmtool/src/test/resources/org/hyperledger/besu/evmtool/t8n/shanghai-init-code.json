@@ -7,7 +7,6 @@
     "--output.result=stdout",
     "--output.alloc=stdout",
     "--output.body=stdout",
-    "--output.basedir=/var/folders/wr/v7n250td44d4vfbpxm1bhky80000gp/T/tmp5wgl48i2",
     "--state.fork=Shanghai",
     "--state.chainid=1",
     "--state.reward=0"

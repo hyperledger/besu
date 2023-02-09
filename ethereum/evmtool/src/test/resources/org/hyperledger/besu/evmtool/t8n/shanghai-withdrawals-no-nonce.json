@@ -6,8 +6,7 @@
     "--input.env=stdin",
     "--output.result=stdout",
     "--output.alloc=stdout",
-    "--output.body=txs.rlp",
-    "--output.basedir=/var/folders/wr/v7n250td44d4vfbpxm1bhky80000gp/T/tmpct4se6k2",
+    "--output.body=stdout",
     "--state.fork=Shanghai",
     "--state.chainid=1",
     "--state.reward=0"
@@ -69,6 +68,7 @@
         "storage": {}
       }
     },
+    "body": "0xf865f86380843b9aca00825208940000000000000000000000000000000000000100808026a0e319535da2cae2d72ddb352054535d000c23acdc7cad9d828891253f3850d0d2a032fe4444149b609e2ffa621e23e179b12028309fdb8cb0a5c1bbc58135299af1",
     "result": {
       "stateRoot": "0xbe252b80c472518724f7b2aa7d688891f9b258d8f43f12b01e1ef5e3cb76bce9",
       "txRoot": "0xb5ffe01eaa51ee8246b2108e049e6e11dc0a1d99b4cc52966791ef9c40b8b863",

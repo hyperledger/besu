@@ -374,15 +374,20 @@ public class T8nSubCommand implements Runnable {
       receiptObject.put("transactionIndex", Bytes.ofUnsignedLong(i).toQuantityHexString());
     }
 
+    final ObjectNode resultObject = objectMapper.createObjectNode();
+
     // deposit CL withdrawals
-    protocolSpec
-        .getWithdrawalsProcessor()
-        .ifPresent(p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
+    try {
+      protocolSpec
+          .getWithdrawalsProcessor()
+          .ifPresent(p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
+      } catch (RuntimeException re) {
+      resultObject.put("exception", re.getMessage());
+    }
 
     worldStateUpdater.commit();
     worldState.persist(blockHeader);
 
-    final ObjectNode resultObject = objectMapper.createObjectNode();
     resultObject.put("stateRoot", worldState.rootHash().toHexString());
     resultObject.put("txRoot", BodyValidation.transactionsRoot(transactions).toHexString());
     resultObject.put("receiptsRoot", BodyValidation.receiptsRoot(receipts).toHexString());

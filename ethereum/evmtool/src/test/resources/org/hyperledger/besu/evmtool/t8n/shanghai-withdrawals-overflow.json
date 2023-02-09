@@ -6,8 +6,7 @@
     "--input.env=stdin",
     "--output.result=stdout",
     "--output.alloc=stdout",
-    "--output.body=txs.rlp",
-    "--output.basedir=/var/folders/wr/v7n250td44d4vfbpxm1bhky80000gp/T/tmpjtx7okui",
+    "--output.body=stdout",
     "--state.fork=Shanghai",
     "--state.chainid=1",
     "--state.reward=0"
@@ -55,5 +54,29 @@
       "parentUncleHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
     }
   },
-  "stdout": {}
+  "stdout": {
+    "alloc": {
+      "0x0000000000000000000000000000000000000100": {
+        "balance": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "storage": {}
+      },
+      "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+        "balance": "0x3635c9adc5dea00000",
+        "storage": {}
+      }
+    },
+    "body": "0xc0",
+    "result": {
+      "exception": "UInt256 overflow",
+      "stateRoot": "0x2a23ea102cd739aa3ad83a9be1555d621e50b3a3f780a7369ec2a6c03f22e18d",
+      "txRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "logsHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "receipts": [],
+      "currentDifficulty": "0x0",
+      "gasUsed": "0x0",
+      "withdrawalsRoot": "0x7bae13217931ff0d7a6c5823c996492f28cd92da5a7788a9a68856bb2206741a"
+    }
+  }
 }
