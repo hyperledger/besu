@@ -376,9 +376,8 @@ public class T8nSubCommand implements Runnable {
 
     // deposit CL withdrawals
     protocolSpec
-            .getWithdrawalsProcessor()
-            .ifPresent(
-                    p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
+        .getWithdrawalsProcessor()
+        .ifPresent(p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
 
     worldStateUpdater.commit();
     worldState.persist(blockHeader);

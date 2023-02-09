@@ -204,7 +204,8 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(
               "transaction up-front cost %s exceeds transaction sender account balance %s",
-              transaction.getUpfrontCost().toQuantityHexString(), senderBalance.toQuantityHexString()));
+              transaction.getUpfrontCost().toQuantityHexString(),
+              senderBalance.toQuantityHexString()));
     }
 
     if (transaction.getNonce() < senderNonce) {
