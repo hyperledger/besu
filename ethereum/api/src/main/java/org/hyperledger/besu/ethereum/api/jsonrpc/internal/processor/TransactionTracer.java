@@ -119,7 +119,7 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory, true));
+                            new StandardJsonTracer(out, showMemory, true, true));
                     out.println(
                         summaryTrace(
                             transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));

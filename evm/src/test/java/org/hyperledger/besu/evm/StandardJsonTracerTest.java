@@ -38,7 +38,7 @@ class StandardJsonTracerTest {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(baos);
     var executor = EVMExecutor.istanbul(EvmConfiguration.DEFAULT);
-    StandardJsonTracer tracer = new StandardJsonTracer(out, true, true);
+    StandardJsonTracer tracer = new StandardJsonTracer(out, true, true, true);
     executor.tracer(tracer);
     executor.gas(10_000_000_000L);
 

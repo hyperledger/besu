@@ -155,16 +155,19 @@ public class B11rSubCommand implements Runnable {
             "header", t8nReader.readTree(new FileReader(header.toFile(), StandardCharsets.UTF_8)));
       }
       if (!txs.equals(stdinPath)) {
-        config.set("txs", t8nReader.readTree(new FileReader(txs.toFile(), StandardCharsets.UTF_8)));
+        try (FileReader reader = new FileReader(txs.toFile(), StandardCharsets.UTF_8)) {
+          config.set("txs", t8nReader.readTree(reader));
+        }
       }
       if (!ommers.equals(stdinPath)) {
-        config.set(
-            "ommers", t8nReader.readTree(new FileReader(ommers.toFile(), StandardCharsets.UTF_8)));
+        try (FileReader reader = new FileReader(ommers.toFile(), StandardCharsets.UTF_8)) {
+          config.set("ommers", t8nReader.readTree(reader));
+        }
       }
       if (!sealClique.equals(stdinPath)) {
-        config.set(
-            "clique",
-            t8nReader.readTree(new FileReader(sealClique.toFile(), StandardCharsets.UTF_8)));
+        try (FileReader reader = new FileReader(sealClique.toFile(), StandardCharsets.UTF_8)) {
+          config.set("clique", t8nReader.readTree(reader));
+        }
       }
     } catch (final JsonProcessingException jpe) {
       parentCommand.out.println("File content error: " + jpe);

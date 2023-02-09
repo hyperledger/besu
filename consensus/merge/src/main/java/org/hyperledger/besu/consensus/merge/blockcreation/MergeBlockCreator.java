@@ -35,7 +35,7 @@ import java.util.function.Supplier;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Merge block creator. */
-public class MergeBlockCreator extends AbstractBlockCreator {
+class MergeBlockCreator extends AbstractBlockCreator {
 
   /**
    * Instantiates a new Merge block creator.

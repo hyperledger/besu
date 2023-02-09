@@ -112,6 +112,12 @@ public class EvmToyCommand implements Runnable {
   final Boolean showMemory = false;
 
   @CommandLine.Option(
+      names = {"--trace.stack"},
+      description = "When tracing, show the operand stack.",
+      scope = ScopeType.INHERIT)
+  final Boolean showStack = false;
+
+  @CommandLine.Option(
       names = {"--trace.returnData"},
       description = "When tracing, show the return data when not empty.",
       scope = ScopeType.INHERIT)
@@ -159,7 +165,7 @@ public class EvmToyCommand implements Runnable {
 
       final OperationTracer tracer = // You should have picked Mercy.
           lastLoop && showJsonResults
-              ? new StandardJsonTracer(System.out, showMemory, showReturnData)
+              ? new StandardJsonTracer(System.out, showMemory, showStack, showReturnData)
               : OperationTracer.NO_TRACING;
 
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();

@@ -37,6 +37,7 @@ public class StandardJsonTracer implements OperationTracer {
   private static final Joiner commaJoiner = Joiner.on(',');
   private final PrintStream out;
   private final boolean showMemory;
+  private final boolean showStack;
   private final boolean showReturnData;
   private int pc;
   private int section;
@@ -50,12 +51,17 @@ public class StandardJsonTracer implements OperationTracer {
    *
    * @param out the out
    * @param showMemory show memory in trace lines
+   * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
    */
   public StandardJsonTracer(
-      final PrintStream out, final boolean showMemory, final boolean showReturnData) {
+      final PrintStream out,
+      final boolean showMemory,
+      final boolean showStack,
+      final boolean showReturnData) {
     this.out = out;
     this.showMemory = showMemory;
+    this.showStack = showStack;
     this.showReturnData = showReturnData;
   }
 
@@ -123,7 +129,9 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
     }
     sb.append("\"memSize\":").append(memorySize).append(",");
-    sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
+    if (showStack) {
+      sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
+    }
     if (showReturnData && returnData.size() > 0) {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }

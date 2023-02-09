@@ -60,7 +60,6 @@ import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -207,22 +206,28 @@ public class T8nSubCommand implements Runnable {
     try {
       ObjectNode config;
       if (env.equals(stdinPath) || alloc.equals(stdinPath) || txs.equals(stdinPath)) {
-        config =
-            (ObjectNode)
-                t8nReader.readTree(new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8));
+        try (InputStreamReader reader =
+            new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8)) {
+          config = (ObjectNode) t8nReader.readTree(reader);
+        }
       } else {
         config = objectMapper.createObjectNode();
       }
 
       if (!env.equals(stdinPath)) {
-        config.set("env", t8nReader.readTree(new FileReader(env.toFile(), StandardCharsets.UTF_8)));
+        try (FileReader reader = new FileReader(env.toFile(), StandardCharsets.UTF_8)) {
+          config.set("env", t8nReader.readTree(reader));
+        }
       }
       if (!alloc.equals(stdinPath)) {
-        config.set(
-            "alloc", t8nReader.readTree(new FileReader(alloc.toFile(), StandardCharsets.UTF_8)));
+        try (FileReader reader = new FileReader(alloc.toFile(), StandardCharsets.UTF_8)) {
+          config.set("alloc", t8nReader.readTree(reader));
+        }
       }
       if (!txs.equals(stdinPath)) {
-        config.set("txs", t8nReader.readTree(new FileReader(txs.toFile(), StandardCharsets.UTF_8)));
+        try (FileReader reader = new FileReader(txs.toFile(), StandardCharsets.UTF_8)) {
+          config.set("txs", t8nReader.readTree(reader));
+        }
       }
 
       referenceTestEnv = objectMapper.convertValue(config.get("env"), ReferenceTestEnv.class);
@@ -299,33 +304,41 @@ public class T8nSubCommand implements Runnable {
 
       final Stopwatch timer = Stopwatch.createStarted();
       final OperationTracer tracer; // You should have picked Mercy.
-      if (parentCommand.showJsonResults) {
-        Path tracePath =
-            outDir.resolve(
-                String.format("trace-%d-%s.jsonl", i, transaction.getHash().toHexString()));
-        try {
+
+      final TransactionProcessingResult result;
+      try (FileOutputStream traceDest =
+          parentCommand.showJsonResults
+              ? new FileOutputStream(
+                  outDir
+                      .resolve(
+                          String.format(
+                              "trace-%d-%s.jsonl", i, transaction.getHash().toHexString()))
+                      .toFile())
+              : null) {
+        if (parentCommand.showJsonResults) {
           tracer =
               new StandardJsonTracer(
-                  new PrintStream(new FileOutputStream(tracePath.toFile())),
+                  new PrintStream(traceDest),
                   parentCommand.showMemory,
-                  true);
-        } catch (FileNotFoundException e) {
-          throw new RuntimeException(e);
+                  parentCommand.showStack,
+                  parentCommand.showReturnData);
+        } else {
+          tracer = OperationTracer.NO_TRACING;
         }
-      } else {
-        tracer = OperationTracer.NO_TRACING;
+        result =
+            processor.processTransaction(
+                blockchain,
+                worldStateUpdater,
+                blockHeader,
+                transaction,
+                blockHeader.getCoinbase(),
+                new BlockHashLookup(referenceTestEnv, blockchain),
+                false,
+                TransactionValidationParams.processingBlock(),
+                tracer);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
-      final TransactionProcessingResult result =
-          processor.processTransaction(
-              blockchain,
-              worldStateUpdater,
-              blockHeader,
-              transaction,
-              blockHeader.getCoinbase(),
-              new BlockHashLookup(referenceTestEnv, blockchain),
-              false,
-              TransactionValidationParams.processingBlock(),
-              tracer);
       timer.stop();
       if (shouldClearEmptyAccounts(fork)) {
         final Account coinbase = worldStateUpdater.getOrCreate(blockHeader.getCoinbase());
