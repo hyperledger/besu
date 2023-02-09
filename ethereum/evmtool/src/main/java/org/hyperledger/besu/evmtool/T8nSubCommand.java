@@ -380,8 +380,9 @@ public class T8nSubCommand implements Runnable {
     try {
       protocolSpec
           .getWithdrawalsProcessor()
-          .ifPresent(p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
-      } catch (RuntimeException re) {
+          .ifPresent(
+              p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
+    } catch (RuntimeException re) {
       resultObject.put("exception", re.getMessage());
     }
 
