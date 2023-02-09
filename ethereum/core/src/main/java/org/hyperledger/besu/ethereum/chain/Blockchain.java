@@ -94,6 +94,11 @@ public interface Blockchain {
         .orElseThrow(() -> new IllegalStateException("Missing genesis block."));
   }
 
+  default BlockHeader getGenesisBlockHeader() {
+    return getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER)
+        .orElseThrow(() -> new IllegalStateException("Missing genesis block header."));
+  }
+
   default Optional<Block> getBlockByHash(final Hash blockHash) {
     return getBlockHeader(blockHash)
         .flatMap(header -> getBlockBody(blockHash).map(body -> new Block(header, body)));

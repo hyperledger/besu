@@ -70,6 +70,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
   private boolean isCheckpointPostMergeSync;
+  private boolean isPostMergeAtGenesis;
 
   // TODO: cleanup - isChainPruningEnabled will not be required after
   // https://github.com/hyperledger/besu/pull/4703 is merged.
@@ -328,5 +329,21 @@ public class PostMergeContext implements MergeContext {
   @Override
   public boolean isCheckpointPostMergeSync() {
     return this.isCheckpointPostMergeSync;
+  }
+
+  @Override
+  public boolean isPostMergeAtGenesis() {
+    return this.isPostMergeAtGenesis;
+  }
+
+  /**
+   * Sets whether it is post merge at genesis
+   *
+   * @param isPostMergeAtGenesis the is post merge at genesis state
+   * @return the post merge context
+   */
+  public PostMergeContext setPostMergeAtGenesis(final boolean isPostMergeAtGenesis) {
+    this.isPostMergeAtGenesis = isPostMergeAtGenesis;
+    return this;
   }
 }
