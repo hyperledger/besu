@@ -63,20 +63,23 @@ public class EngineGetBlobsBundleV1 extends AbstractEngineGetPayload {
 
   private BlobsBundleV1 createResponse(final Block block) {
 
-    List<Bytes> kzgs =
+    final List<Transaction.BlobsWithCommitments> blobsWithCommitments =
         block.getBody().getTransactions().stream()
             .map(Transaction::getBlobsWithCommitments)
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .flatMap(b -> b.getKzgCommitments().stream())
             .collect(Collectors.toList());
 
-    List<Bytes> blobs =
-        block.getBody().getTransactions().stream()
-            .map(Transaction::getBlobsWithCommitments)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+    final List<String> kzgs =
+        blobsWithCommitments.stream()
+            .flatMap(b -> b.getKzgCommitments().stream())
+            .map(Bytes::toString)
+            .collect(Collectors.toList());
+
+    final List<String> blobs =
+        blobsWithCommitments.stream()
             .flatMap(b -> b.getBlobs().stream())
+            .map(Bytes::toString)
             .collect(Collectors.toList());
 
     return new BlobsBundleV1(block.getHash(), kzgs, blobs);
