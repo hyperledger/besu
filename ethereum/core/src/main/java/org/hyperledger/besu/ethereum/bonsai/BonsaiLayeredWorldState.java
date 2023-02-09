@@ -76,27 +76,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   public void setNextWorldView(final Optional<BonsaiWorldView> nextWorldView) {
-    maybeUnSubscribe();
     this.nextWorldView = nextWorldView;
-  }
-
-  private void maybeUnSubscribe() {
-    nextWorldView
-        .filter(WorldState.class::isInstance)
-        .map(WorldState.class::cast)
-        .ifPresent(
-            ws -> {
-              try {
-                ws.close();
-              } catch (final Exception e) {
-                // no-op
-              }
-            });
-  }
-
-  @Override
-  public void close() throws Exception {
-    maybeUnSubscribe();
   }
 
   public TrieLogLayer getTrieLog() {
