@@ -55,6 +55,12 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     this.pathToTrustedSetup = pathToTrustedSetup;
   }
 
+  /**
+   * Initialize the precompile, loading the KZG ceremony file.
+   *
+   * <p>This call is idempotent once successful. It is also called, if not inited, in the precompile
+   * execution.
+   */
   public synchronized void init() {
     if (inited) {
       return;
@@ -107,6 +113,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   public void tearDown() {
     if (inited) {
       CKZG4844JNI.freeTrustedSetup();
+      inited = false;
     }
   }
 
