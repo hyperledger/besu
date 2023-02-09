@@ -81,7 +81,7 @@ public class TestMineBlocks implements JsonRpcMethod {
     retesethClock.advanceSeconds(1);
 
     final BlockImporter blockImporter =
-        protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()).getBlockImporter();
+        protocolSchedule.getByBlockNumber(blockchain.getChainHeadBlockNumber()).getBlockImporter();
     final BlockImportResult result =
         blockImporter.importBlock(
             protocolContext, block, headerValidationMode, headerValidationMode);

@@ -82,7 +82,8 @@ public class JsonRpcTestMethodsFactory {
     this.synchronizer = mock(Synchronizer.class);
 
     for (final Block block : importer.getBlocks()) {
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
+      final ProtocolSpec protocolSpec =
+          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
