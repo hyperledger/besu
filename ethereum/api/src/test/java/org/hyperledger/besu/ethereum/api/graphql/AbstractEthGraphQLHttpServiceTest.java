@@ -214,7 +214,8 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   void importBlock(final int n) {
     final Block block = BLOCKS.get(n);
-    final ProtocolSpec protocolSpec = PROTOCOL_SCHEDULE.getByBlockHeader(block.getHeader());
+    final ProtocolSpec protocolSpec =
+        PROTOCOL_SCHEDULE.getByBlockNumber(block.getHeader().getNumber());
     final BlockImporter blockImporter = protocolSpec.getBlockImporter();
     blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
   }
