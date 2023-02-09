@@ -79,7 +79,7 @@ public class TestImportRawBlock implements JsonRpcMethod {
     } else {
       // otherwise attempt to import the block
       final BlockImporter blockImporter =
-          context.getProtocolSpec(block.getHeader()).getBlockImporter();
+          context.getProtocolSpec(block.getHeader().getNumber()).getBlockImporter();
       final BlockImportResult result =
           blockImporter.importBlock(
               protocolContext,

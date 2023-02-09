@@ -31,7 +31,7 @@ public final class BesuInfo {
   private BesuInfo() {}
 
   /**
-   * Generate Besu version
+   * Generate version-only Besu version
    *
    * @return Besu version in format such as besu/v22.10.3/linux-aarch_64/openjdk-java-11
    */
@@ -40,7 +40,7 @@ public final class BesuInfo {
   }
 
   /**
-   * Generate Besu version
+   * Generate full Besu version
    *
    * @return Besu version in format such as besu/v22.10.3/linux-aarch_64/openjdk-java-11
    */
