@@ -45,6 +45,7 @@ public class KZGPointEvalPrecompileContractTest {
         Path.of(
             KZGPointEvalPrecompileContractTest.class.getResource("trusted_setup_4.txt").getPath());
     contract = new KZGPointEvalPrecompiledContract(Optional.of(testSetupAbsolutePath));
+    contract.init();
   }
 
   @Test
@@ -82,7 +83,7 @@ public class KZGPointEvalPrecompileContractTest {
         MessageFrame.State endState = result.getState();
         assertThat(endState).isEqualTo(MessageFrame.State.COMPLETED_FAILED);
         assertThat(result.getHaltReason()).isPresent();
-        assertThat(result.getHaltReason().get()).isEqualTo(ExceptionalHaltReason.PRECOMPILE_ERROR);
+        assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.PRECOMPILE_ERROR);
       }
     } catch (IOException ioe) {
       fail("couldn't load test vectors", ioe);
