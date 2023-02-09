@@ -6,7 +6,7 @@
     "--input.env=stdin",
     "--output.result=stdout",
     "--output.alloc=stdout",
-    "--output.body=txs.rlp",
+    "--output.body=stdout",
     "--output.basedir=/var/folders/wr/v7n250td44d4vfbpxm1bhky80000gp/T/tmp376vnslc",
     "--state.fork=London",
     "--state.chainid=1",
@@ -80,6 +80,7 @@
         "storage": {}
       }
     },
+    "body": "0xf862f860800a8307a12094100000000000000000000000000000000000000080801ca091df80a63242846dcf1cc16c35e6ba39212cde92aad946f9c286fa0029782b54a0446170c2fb714c717885485ea7d93bf9277f3fb3d89ffd73e9b7f5f8eda3997b",
     "result": {
       "stateRoot": "0xe3d83cac3fbe146a6ee8ef05b28bc94e9906405cd976ccb1152f4ddc70b71a49",
       "txRoot": "0x8e987be72f36f97a98838e03d9e5d1b3d22795606240f16684532b1c994b4ee7",

@@ -67,6 +67,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
@@ -258,10 +259,24 @@ public class T8nSubCommand implements Runnable {
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
 
     List<TransactionReceipt> receipts = new ArrayList<>();
+    List<Map<String, Object>> invalidTransactions = new ArrayList<>();
     var receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
     for (int i = 0; i < transactions.size(); i++) {
       Transaction transaction = transactions.get(i);
+
+      var txValidation =
+          protocolSpec
+              .getTransactionValidator()
+              .validate(
+                  transaction,
+                  blockHeader.getBaseFee(),
+                  TransactionValidationParams.processingBlock());
+      if (!txValidation.isValid()) {
+        invalidTransactions.add(Map.of("index", i, "error", txValidation.getErrorMessage()));
+        continue;
+      }
+
       final Stopwatch timer = Stopwatch.createStarted();
       final OperationTracer tracer; // You should have picked Mercy.
       if (parentCommand.showJsonResults) {
@@ -326,7 +341,10 @@ public class T8nSubCommand implements Runnable {
       if (result.getLogs().isEmpty()) {
         receiptObject.putNull("logs");
       } else {
-        // FIXME do logs
+        var logsArray = receiptObject.putArray("logs");
+        for (var log : result.getLogs()) {
+          logsArray.addPOJO(log);
+        }
       }
       receiptObject.put("transactionHash", transaction.getHash().toHexString());
       receiptObject.put(
@@ -353,6 +371,10 @@ public class T8nSubCommand implements Runnable {
             .toHexString());
     resultObject.put("logsBloom", BodyValidation.logsBloom(receipts).toHexString());
     resultObject.set("receipts", receiptsArray);
+    if (!invalidTransactions.isEmpty()) {
+      resultObject.putPOJO("rejected", invalidTransactions);
+    }
+
     resultObject.put("currentDifficulty", blockHeader.getDifficultyBytes().toShortHexString());
     resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
 

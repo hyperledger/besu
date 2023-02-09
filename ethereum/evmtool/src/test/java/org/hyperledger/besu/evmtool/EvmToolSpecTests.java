@@ -36,11 +36,11 @@ public class EvmToolSpecTests {
   static final ObjectReader specReader = objectMapper.reader();
 
   public static Object[][] t8nTests() {
-    return findSpecFiles(new String[] {"t8n"}, "no-tx", "simple");
+    return findSpecFiles(new String[] {"t8n"});
   }
 
   public static Object[][] b11rTests() {
-    return findSpecFiles(new String[] {"b11r"}, "");
+    return findSpecFiles(new String[] {"b11r"});
   }
 
   public static Object[][] findSpecFiles(
