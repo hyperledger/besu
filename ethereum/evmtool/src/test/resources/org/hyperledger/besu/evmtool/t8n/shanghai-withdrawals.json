@@ -1,0 +1,86 @@
+{
+  "cli": [
+    "t8n",
+    "--input.alloc=stdin",
+    "--input.txs=stdin",
+    "--input.env=stdin",
+    "--output.result=stdout",
+    "--output.alloc=stdout",
+    "--output.body=stdout",
+    "--state.fork=Shanghai",
+    "--state.chainid=1",
+    "--state.reward=0"
+  ],
+  "stdin": {
+    "alloc": {},
+    "txs": [
+      {
+        "type": "0x0",
+        "chainId": "0x1",
+        "nonce": "0x0",
+        "gasPrice": "0x3b9aca00",
+        "gas": "0x5208",
+        "value": "0x0",
+        "input": "0x",
+        "to": "0x0000000000000000000000000000000000000100",
+        "protected": true,
+        "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+        "v": "0x0",
+        "r": "0x0",
+        "s": "0x0"
+      }
+    ],
+    "env": {
+      "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+      "currentGasLimit": "100000000000000000",
+      "currentNumber": "1",
+      "currentTimestamp": "12",
+      "currentRandom": "0",
+      "currentDifficulty": "0",
+      "parentDifficulty": "0",
+      "parentBaseFee": "7",
+      "parentGasUsed": "0",
+      "parentGasLimit": "100000000000000000",
+      "parentTimstamp": "0",
+      "blockHashes": {
+        "0": "0x651666d6d8727a6478a750dc8406c1bda0be85abc99094dca694807fa772f83c"
+      },
+      "ommers": [],
+      "withdrawals": [
+        {
+          "index": "0x0",
+          "validatorIndex": "0x0",
+          "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "amount": "0x5209"
+        }
+      ],
+      "parentUncleHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+    }
+  },
+  "stdout": {
+    "alloc": {
+      "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+        "balance": "0x1319ad251a00",
+        "storage": {}
+      }
+    },
+    "body": "0xf865f86380843b9aca00825208940000000000000000000000000000000000000100808026a0e319535da2cae2d72ddb352054535d000c23acdc7cad9d828891253f3850d0d2a032fe4444149b609e2ffa621e23e179b12028309fdb8cb0a5c1bbc58135299af1",
+    "result": {
+      "stateRoot": "0x7075d070d6ec70a91216fc2dba6ceae6b8d30815166f6b7b7249776767fb9855",
+      "txRoot": "0xb5ffe01eaa51ee8246b2108e049e6e11dc0a1d99b4cc52966791ef9c40b8b863",
+      "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "logsHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "receipts": [],
+      "rejected": [
+        {
+          "index": 0,
+          "error": "transaction up-front cost 0x1319718a5000 exceeds transaction sender account balance 0x0"
+        }
+      ],
+      "currentDifficulty": "0x0",
+      "gasUsed": "0x0",
+      "withdrawalsRoot": "0xa485a3bd07e29cb8234b5f093d5216eb8b965fb2693c66fea254f6cacef97a6f"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "cli": [
+    "t8n",
+    "--input.alloc=stdin",
+    "--input.txs=stdin",
+    "--input.env=stdin",
+    "--output.result=stdout",
+    "--output.alloc=stdout",
+    "--output.body=txs.rlp",
+    "--output.basedir=/var/folders/wr/v7n250td44d4vfbpxm1bhky80000gp/T/tmpjtx7okui",
+    "--state.fork=Shanghai",
+    "--state.chainid=1",
+    "--state.reward=0"
+  ],
+  "stdin": {
+    "alloc": {
+      "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+        "nonce": "0x00",
+        "balance": "0x3635c9adc5dea00000",
+        "code": "0x",
+        "storage": {}
+      },
+      "0x0000000000000000000000000000000000000100": {
+        "nonce": "0x00",
+        "balance": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "code": "0x",
+        "storage": {}
+      }
+    },
+    "txs": null,
+    "env": {
+      "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+      "currentGasLimit": "100000000000000000",
+      "currentNumber": "1",
+      "currentTimestamp": "12",
+      "currentRandom": "0",
+      "currentDifficulty": "0",
+      "parentDifficulty": "0",
+      "parentBaseFee": "7",
+      "parentGasUsed": "0",
+      "parentGasLimit": "100000000000000000",
+      "parentTimstamp": "0",
+      "blockHashes": {
+        "0": "0xfc63c00c7fe67bcc6ae52ea4eed5ff00b8673b1afb581d090c34b5fa6eca9467"
+      },
+      "ommers": [],
+      "withdrawals": [
+        {
+          "index": "0x0",
+          "validatorIndex": "0x0",
+          "address": "0x0000000000000000000000000000000000000100",
+          "amount": "0x1"
+        }
+      ],
+      "parentUncleHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+    }
+  },
+  "stdout": {}
+}

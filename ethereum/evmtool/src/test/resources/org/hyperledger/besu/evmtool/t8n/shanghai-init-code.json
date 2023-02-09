@@ -74,12 +74,13 @@
       "receipts": [],
       "rejected": [
         {
-          "error": "Initcode size of 49153 exceeds maximum size of 49152",
-          "index": 0
+          "index": 0,
+          "error": "Initcode size of 49153 exceeds maximum size of 49152"
         }
       ],
       "currentDifficulty": "0x0",
-      "gasUsed": "0x0"
+      "gasUsed": "0x0",
+      "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
     }
   }
 }

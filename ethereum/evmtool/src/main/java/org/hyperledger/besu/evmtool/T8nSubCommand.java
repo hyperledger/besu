@@ -21,6 +21,7 @@ import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_ALIAS;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -34,8 +35,10 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -43,9 +46,12 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
@@ -68,6 +74,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
@@ -77,6 +84,8 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Stopwatch;
@@ -237,7 +246,7 @@ public class T8nSubCommand implements Runnable {
 
     Log4j2ConfiguratorUtil.setLevel(
         "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
-    final var referenceTestProtocolSchedules =
+    final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
         ReferenceTestProtocolSchedules.create(
             new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
     Log4j2ConfiguratorUtil.setLevel(
@@ -260,20 +269,31 @@ public class T8nSubCommand implements Runnable {
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<Map<String, Object>> invalidTransactions = new ArrayList<>();
-    var receiptsArray = objectMapper.createArrayNode();
+    ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
     for (int i = 0; i < transactions.size(); i++) {
       Transaction transaction = transactions.get(i);
 
-      var txValidation =
-          protocolSpec
-              .getTransactionValidator()
-              .validate(
-                  transaction,
-                  blockHeader.getBaseFee(),
-                  TransactionValidationParams.processingBlock());
+      MainnetTransactionValidator transactionValidator = protocolSpec.getTransactionValidator();
+      ValidationResult<TransactionInvalidReason> txValidation =
+          transactionValidator.validate(
+              transaction, blockHeader.getBaseFee(), TransactionValidationParams.processingBlock());
       if (!txValidation.isValid()) {
         invalidTransactions.add(Map.of("index", i, "error", txValidation.getErrorMessage()));
+        continue;
+      }
+      final Address senderAddress = transaction.getSender();
+
+      final EvmAccount sender = worldStateUpdater.getOrCreateSenderAccount(senderAddress);
+
+      var senderValidation =
+          transactionValidator.validateForSender(
+              transaction, sender, TransactionValidationParams.processingBlock());
+      if (!senderValidation.isValid()) {
+        if (sender.isEmpty()) {
+          worldStateUpdater.deleteAccount(sender.getAddress());
+        }
+        invalidTransactions.add(Map.of("index", i, "error", senderValidation.getErrorMessage()));
         continue;
       }
 
@@ -312,9 +332,9 @@ public class T8nSubCommand implements Runnable {
         if (coinbase != null && coinbase.isEmpty()) {
           worldStateUpdater.deleteAccount(coinbase.getAddress());
         }
-        final Account sender = worldStateUpdater.getAccount(transaction.getSender());
-        if (sender != null && sender.isEmpty()) {
-          worldStateUpdater.deleteAccount(sender.getAddress());
+        final Account txSender = worldStateUpdater.getAccount(transaction.getSender());
+        if (txSender != null && txSender.isEmpty()) {
+          worldStateUpdater.deleteAccount(txSender.getAddress());
         }
       }
       long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
@@ -326,13 +346,13 @@ public class T8nSubCommand implements Runnable {
               .transactionIntrinsicGasCost(transaction.getPayload(), transaction.getTo().isEmpty());
       tracer.traceEndTransaction(
           result.getOutput(), gasUsed - intrinsicGas, timer.elapsed(TimeUnit.NANOSECONDS));
-      var receipt =
+      TransactionReceipt receipt =
           protocolSpec
               .getTransactionReceiptFactory()
               .create(transaction.getType(), result, worldState, transactionGasUsed);
       Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
       receipts.add(receipt);
-      var receiptObject = receiptsArray.addObject();
+      ObjectNode receiptObject = receiptsArray.addObject();
       receiptObject.put(
           "root", receipt.getStateRoot() == null ? "0x" : receipt.getStateRoot().toHexString());
       receiptObject.put("status", "0x" + receipt.getStatus());
@@ -341,8 +361,8 @@ public class T8nSubCommand implements Runnable {
       if (result.getLogs().isEmpty()) {
         receiptObject.putNull("logs");
       } else {
-        var logsArray = receiptObject.putArray("logs");
-        for (var log : result.getLogs()) {
+        ArrayNode logsArray = receiptObject.putArray("logs");
+        for (Log log : result.getLogs()) {
           logsArray.addPOJO(log);
         }
       }
@@ -353,6 +373,13 @@ public class T8nSubCommand implements Runnable {
       receiptObject.put("blockHash", Hash.ZERO.toHexString());
       receiptObject.put("transactionIndex", Bytes.ofUnsignedLong(i).toQuantityHexString());
     }
+
+    // deposit CL withdrawals
+    protocolSpec
+            .getWithdrawalsProcessor()
+            .ifPresent(
+                    p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
+
     worldStateUpdater.commit();
     worldState.persist(blockHeader);
 
@@ -377,14 +404,17 @@ public class T8nSubCommand implements Runnable {
 
     resultObject.put("currentDifficulty", blockHeader.getDifficultyBytes().toShortHexString());
     resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
+    blockHeader
+        .getWithdrawalsRoot()
+        .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
 
-    var allocObject = objectMapper.createObjectNode();
+    ObjectNode allocObject = objectMapper.createObjectNode();
     worldState
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
         .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
         .forEach(
             account -> {
-              var accountObject =
+              ObjectNode accountObject =
                   allocObject.putObject(
                       account.getAddress().map(Address::toHexString).orElse("0x"));
               if (account.getNonce() > 0) {
@@ -395,8 +425,9 @@ public class T8nSubCommand implements Runnable {
               if (account.getCode() != null && account.getCode().size() > 0) {
                 accountObject.put("code", account.getCode().toHexString());
               }
-              var storageEntries = account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
-              var storageObject = accountObject.putObject("storage");
+              NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
+                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              ObjectNode storageObject = accountObject.putObject("storage");
               storageEntries
                   .values()
                   .forEach(
@@ -407,13 +438,13 @@ public class T8nSubCommand implements Runnable {
             });
 
     try {
-      var writer = objectMapper.writerWithDefaultPrettyPrinter();
+      ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();
       ObjectNode outputObject = objectMapper.createObjectNode();
 
       if (outAlloc.equals(stdoutPath)) {
         outputObject.set("alloc", allocObject);
       } else {
-        try (var fileOut =
+        try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outAlloc).toFile()))) {
           fileOut.println(writer.writeValueAsString(allocObject));
         }
@@ -426,7 +457,7 @@ public class T8nSubCommand implements Runnable {
       if (outBody.equals((stdoutPath))) {
         outputObject.set("body", TextNode.valueOf(bodyBytes.toHexString()));
       } else {
-        try (var fileOut =
+        try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
           fileOut.print(bodyBytes.toHexString());
         }
@@ -435,7 +466,7 @@ public class T8nSubCommand implements Runnable {
       if (outResult.equals(stdoutPath)) {
         outputObject.set("result", resultObject);
       } else {
-        try (var fileOut =
+        try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outResult).toFile()))) {
           fileOut.println(writer.writeValueAsString(resultObject));
         }
@@ -454,10 +485,10 @@ public class T8nSubCommand implements Runnable {
     while (it.hasNext()) {
       JsonNode txNode = it.next();
       if (txNode.has("txBytes")) {
-        var tx = Transaction.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
+        Transaction tx = Transaction.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
         transactions.add(tx);
       } else {
-        var builder = Transaction.builder();
+        Transaction.Builder builder = Transaction.builder();
         int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
         TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
         builder.type(transactionType);
@@ -482,7 +513,7 @@ public class T8nSubCommand implements Runnable {
 
         if (txNode.has("secretKey")) {
           SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-          var keys =
+          KeyPair keys =
               signatureAlgorithm.createKeyPair(
                   signatureAlgorithm.createPrivateKey(
                       Bytes32.fromHexString(txNode.get("secretKey").textValue())));

@@ -35,6 +35,15 @@ public final class BesuInfo {
    *
    * @return Besu version in format such as besu/v22.10.3/linux-aarch_64/openjdk-java-11
    */
+  public static String shortVersion() {
+    return VERSION;
+  }
+
+  /**
+   * Generate Besu version
+   *
+   * @return Besu version in format such as besu/v22.10.3/linux-aarch_64/openjdk-java-11
+   */
   public static String version() {
     return String.format("%s/v%s/%s/%s", CLIENT, VERSION, OS, VM);
   }

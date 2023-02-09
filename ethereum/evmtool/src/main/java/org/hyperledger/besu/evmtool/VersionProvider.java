@@ -23,6 +23,6 @@ public class VersionProvider implements CommandLine.IVersionProvider {
 
   @Override
   public String[] getVersion() {
-    return new String[] {"Hyperledger Besu EvmTool " + BesuInfo.version()};
+    return new String[] {"Hyperledger Besu evm " + BesuInfo.shortVersion()};
   }
 }

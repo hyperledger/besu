@@ -19,16 +19,20 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -37,10 +41,26 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** A memory holder for testing. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ReferenceTestEnv extends BlockHeader {
+
+  public record EnvWithdrawal(
+      @JsonProperty("index") String index,
+      @JsonProperty("validatorIndex") String validatorIndex,
+      @JsonProperty("address") String address,
+      @JsonProperty("amount") String amount) {
+
+    Withdrawal asWithdrawal() {
+      return new Withdrawal(
+          UInt64.fromHexString(index),
+          UInt64.fromHexString(validatorIndex),
+          Address.fromHexString(address),
+          GWei.fromHexString(amount));
+    }
+  }
 
   @SuppressWarnings("unused")
   private final String parentDifficulty;
@@ -54,6 +74,8 @@ public class ReferenceTestEnv extends BlockHeader {
 
   @SuppressWarnings("unused")
   private final String parentTimestamp;
+
+  private final List<Withdrawal> withdrawals;
 
   /**
    * Public constructor.
@@ -80,7 +102,8 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("parentBaseFee") final String parentBaseFee,
       @JsonProperty("parentGasUsed") final String parentGasUsed,
       @JsonProperty("parentGasLimit") final String parentGasLimit,
-      @JsonProperty("parentTimestamp") final String parentTimestamp) {
+      @JsonProperty("parentTimestamp") final String parentTimestamp,
+      @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY, // ommersHash
@@ -106,6 +129,10 @@ public class ReferenceTestEnv extends BlockHeader {
     this.parentGasUsed = parentGasUsed;
     this.parentGasLimit = parentGasLimit;
     this.parentTimestamp = parentTimestamp;
+    this.withdrawals =
+        withdrawals == null
+            ? List.of()
+            : withdrawals.stream().map(EnvWithdrawal::asWithdrawal).toList();
   }
 
   private static Hash generateTestBlockHash(final String previousHash, final String number) {
@@ -125,6 +152,9 @@ public class ReferenceTestEnv extends BlockHeader {
     var builder =
         BlockHeaderBuilder.fromHeader(this)
             .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions());
+    if (protocolSpec.getWithdrawalsProcessor().isPresent()) {
+      builder.withdrawalsRoot(BodyValidation.withdrawalsRoot(withdrawals));
+    }
     if ((baseFee == null || baseFee.isEmpty()) && protocolSpec.getFeeMarket().implementsBaseFee()) {
       builder.baseFee(
           ((BaseFeeMarket) protocolSpec.getFeeMarket())
@@ -136,6 +166,10 @@ public class ReferenceTestEnv extends BlockHeader {
     }
 
     return builder.buildBlockHeader();
+  }
+
+  public List<Withdrawal> getWithdrawals() {
+    return withdrawals;
   }
 
   @Override
