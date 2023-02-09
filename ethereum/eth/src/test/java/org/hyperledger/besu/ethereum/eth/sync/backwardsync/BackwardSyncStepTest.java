@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,6 +67,7 @@ public class BackwardSyncStepTest {
 
   private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();
 
+  private MutableBlockchain localBlockchain;
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
@@ -91,7 +93,7 @@ public class BackwardSyncStepTest {
 
     Block genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
-    MutableBlockchain localBlockchain = createInMemoryBlockchain(genesisBlock);
+    localBlockchain = spy(createInMemoryBlockchain(genesisBlock));
 
     for (int i = 1; i <= REMOTE_HEIGHT; i++) {
       final BlockDataGenerator.BlockOptions options =
@@ -171,7 +173,10 @@ public class BackwardSyncStepTest {
     final CompletableFuture<List<BlockHeader>> future =
         step.requestHeaders(lookingForBlock.getHeader().getHash());
 
-    assertThat(future.get().isEmpty()).isTrue();
+    verify(localBlockchain).getBlockHeader(lookingForBlock.getHash());
+    verify(context, never()).getEthContext();
+    final BlockHeader blockHeader = future.get().get(0);
+    assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
   }
 
   @Test
