@@ -1895,7 +1895,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() <= 0
         || unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() > 2000) {
       throw new ParameterException(
-          this.commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 2000");
+          this.commandLine, "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
     }
   }
 
