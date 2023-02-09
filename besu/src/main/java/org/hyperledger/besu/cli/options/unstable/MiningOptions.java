@@ -72,7 +72,7 @@ public class MiningOptions {
       hidden = true,
       names = {"--Xpos-block-creation-repetition-min-duration"},
       description =
-          "If a PoS block creation repetition takes less thant this duration, in milliseconds,"
+          "If a PoS block creation repetition takes less than this duration, in milliseconds,"
               + " then it waits before next repetition. Must be positive and ≤ 2000 (default: ${DEFAULT-VALUE} milliseconds)")
   private final Long posBlockCreationRepetitionMinDuration =
       DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
