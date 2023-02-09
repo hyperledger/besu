@@ -63,7 +63,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
             KZGPointEvalPrecompiledContract.class.getResourceAsStream(
                 "mainnet_kzg_trusted_setup_4096.txt");
         try {
-          File jniWillLoadFrom = File.createTempFile("kzgTrustedSetup", "txt");
+          File jniWillLoadFrom = File.createTempFile("kzgTrustedSetup", ".txt");
           jniWillLoadFrom.deleteOnExit();
           Files.copy(is, jniWillLoadFrom.toPath(), REPLACE_EXISTING);
           is.close();
