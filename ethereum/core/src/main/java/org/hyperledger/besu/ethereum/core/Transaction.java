@@ -1379,13 +1379,7 @@ public class Transaction
 
     public List<Bytes> getBlobs() {
       return blobs.getElements().stream()
-          .map(
-              blob -> {
-                return blob.getElements().stream()
-                    .map(sszuInt256Wrapper -> (Bytes) sszuInt256Wrapper.getData().toBytes())
-                    .reduce(Bytes::concatenate)
-                    .orElseThrow();
-              })
+          .map(TransactionNetworkPayload.Blob::getBytes)
           .collect(Collectors.toList());
     }
 
