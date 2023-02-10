@@ -125,7 +125,7 @@ public class LayeredWorldStateTests {
             any(BonsaiWorldStateArchive.class),
             any(BonsaiPersistedWorldState.class));
 
-    manager.saveTrieLog(archive, testStorage, testUpdater, testStateRoot, testHeader, testState);
+    manager.saveTrieLog(archive, testUpdater, testStateRoot, testHeader, testState);
     assertThat(calledPrepareTrieLog.get()).isTrue();
   }
 }

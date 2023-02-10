@@ -58,7 +58,6 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
   @Override
   public synchronized void saveTrieLog(
       final BonsaiWorldStateArchive worldStateArchive,
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final BonsaiWorldStateUpdater localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
@@ -67,10 +66,11 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
     // if it's only in memory we need to save it
     // for example, in case of reorg we don't replace a trielog layer
     if (rootWorldStateStorage.getTrieLog(forBlockHeader.getHash()).isEmpty()) {
-      final BonsaiUpdater stateUpdater = worldStateKeyValueStorage.updater();
+      final BonsaiUpdater stateUpdater = forWorldState.getWorldStateStorage().updater();
       boolean success = false;
+      TrieLogLayer trieLog = null;
       try {
-        final TrieLogLayer trieLog =
+        trieLog =
             prepareTrieLog(
                 forBlockHeader,
                 forWorldStateRootHash,
@@ -85,6 +85,8 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
         } else {
           stateUpdater.rollback();
         }
+        addCachedLayer(forBlockHeader, forWorldStateRootHash, trieLog, worldStateArchive, (BonsaiPersistedWorldState) forWorldState.copy());
+        scrubCachedLayers(forBlockHeader.getNumber());
       }
     }
   }
@@ -106,8 +108,6 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
     debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
     final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
     trieLog.freeze();
-    addCachedLayer(blockHeader, worldStateRootHash, trieLog, worldStateArchive, forWorldState);
-    scrubCachedLayers(blockHeader.getNumber());
     return trieLog;
   }
 

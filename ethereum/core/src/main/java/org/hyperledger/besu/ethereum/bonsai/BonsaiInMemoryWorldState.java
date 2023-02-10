@@ -169,11 +169,10 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
         .getTrieLogManager()
         .saveTrieLog(
             archive,
-            worldStateStorage,
             localUpdater,
             newWorldStateRootHash,
             blockHeader,
-            (BonsaiPersistedWorldState) this.copy());
+            this);
     worldStateRootHash = newWorldStateRootHash;
     worldStateBlockHash = blockHeader.getBlockHash();
     isPersisted = true;

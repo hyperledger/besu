@@ -326,7 +326,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                     .getTrieLogManager()
                     .saveTrieLog(
                         archive,
-                        worldStateStorage,
                         localUpdater,
                         newWorldStateRootHash,
                         blockHeader,
