@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -850,6 +851,35 @@ public class BlockchainQueries {
    * @return the world state at the block number
    */
   public <U> Optional<U> getAndMapWorldState(
+      final Hash blockHash, final Function<WorldState, ? extends U> mapper) {
+    return blockchain
+        .getBlockHeader(blockHash)
+        .flatMap(
+            blockHeader -> {
+              try (var ws =
+                  worldStateArchive
+                      .get(blockHeader.getStateRoot(), blockHeader.getHash())
+                      .orElse(null)) {
+                if (ws != null) {
+                  return Optional.ofNullable(mapper.apply(ws));
+                }
+              } catch (Exception ex) {
+                LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
+              }
+              return Optional.empty();
+            });
+  }
+  /**
+   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block hash.
+   * This method provides access to the worldstate via a mapper function in order to ensure all of
+   * the uses of the MutableWorldState are subsequently closed, via the try-with-resources block.
+   *
+   * @param <U> return type of the operation on the MutableWorldState
+   * @param blockHash the block hash
+   * @param mapper Function which performs an operation on a MutableWorldState
+   * @return the world state at the block number
+   */
+  public <U> Optional<U> getAndMapMutableWorldState(
       final Hash blockHash, final Function<MutableWorldState, ? extends U> mapper) {
     return blockchain
         .getBlockHeader(blockHash)
@@ -878,7 +908,7 @@ public class BlockchainQueries {
    * @return the world state at the block number
    */
   public <U> Optional<U> getAndMapWorldState(
-      final long blockNumber, final Function<MutableWorldState, ? extends U> mapper) {
+      final long blockNumber, final Function<WorldState, ? extends U> mapper) {
     final Hash blockHash =
         getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
     return getAndMapWorldState(blockHash, mapper);

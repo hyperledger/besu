@@ -111,7 +111,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     final List<JsonNode> traceCallResults = new ArrayList<>();
 
     return getBlockchainQueries()
-        .getAndMapWorldState(
+        .getAndMapMutableWorldState(
             blockHeader.getBlockHash(),
             ws -> {
               final WorldUpdater updater =
