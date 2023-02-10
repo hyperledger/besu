@@ -28,7 +28,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MutableProtocolSchedule implements ProtocolSchedule {
+public class MutableProtocolSchedule extends ProtocolSchedule {
 
   private final NavigableSet<ScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(

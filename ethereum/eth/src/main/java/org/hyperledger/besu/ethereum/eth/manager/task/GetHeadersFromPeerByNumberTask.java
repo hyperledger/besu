@@ -40,7 +40,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
       final boolean reverse,
       final MetricsSystem metricsSystem) {
     super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
-    this.blockNumber = blockNumber;
+    this.blockNumber = protocolSchedule.isPostMerge() ? 0 : blockNumber;
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtNumber(
@@ -80,7 +80,8 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
           LOG.debug(
               "Requesting {} headers (blockNumber {}) from peer {}.", count, blockNumber, peer);
           return peer.getHeadersByNumber(blockNumber, count, skip, reverse);
-        });
+        },
+        blockNumber);
   }
 
   @Override

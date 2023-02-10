@@ -220,6 +220,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                 .getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
                 .ifPresent(mergeContext::setIsPostMerge));
 
+    protocolSchedule.setIsPostMerge(mergeContext::isPostMerge);
     return mergeContext;
   }
 

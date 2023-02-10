@@ -144,7 +144,10 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public boolean isPostMerge() {
-    return isPostMerge.get().orElse(Boolean.FALSE);
+    return isPostMerge
+        .get()
+        .orElse(Boolean.FALSE); // TODO: is this correct? PostMergeContext -> should this always be
+    // true????
   }
 
   @Override

@@ -202,11 +202,14 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return new TransitionContext(
-        preMergeBesuControllerBuilder.createConsensusContext(
-            blockchain, worldStateArchive, protocolSchedule),
-        mergeBesuControllerBuilder.createConsensusContext(
-            blockchain, worldStateArchive, protocolSchedule));
+    final TransitionContext transitionContext =
+        new TransitionContext(
+            preMergeBesuControllerBuilder.createConsensusContext(
+                blockchain, worldStateArchive, protocolSchedule),
+            mergeBesuControllerBuilder.createConsensusContext(
+                blockchain, worldStateArchive, protocolSchedule));
+    protocolSchedule.setIsPostMerge(transitionContext::isPostMerge);
+    return transitionContext;
   }
 
   @Override

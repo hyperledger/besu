@@ -96,6 +96,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   }
 
   private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeader() {
+    long blockNumberToUse = protocolSchedule.isPostMerge() ? 0 : this.blockNumber;
     return executeSubTask(
         () -> {
           final AbstractGetHeadersFromPeerTask task;
@@ -103,11 +104,11 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
               hash.map(
                       value ->
                           GetHeadersFromPeerByHashTask.forSingleHash(
-                              protocolSchedule, ethContext, value, metricsSystem))
+                              protocolSchedule, ethContext, value, blockNumberToUse, metricsSystem))
                   .orElseGet(
                       () ->
                           GetHeadersFromPeerByNumberTask.forSingleNumber(
-                              protocolSchedule, ethContext, blockNumber, metricsSystem));
+                              protocolSchedule, ethContext, blockNumberToUse, metricsSystem));
           assignedPeer.ifPresent(task::assignPeer);
           return task.run();
         });

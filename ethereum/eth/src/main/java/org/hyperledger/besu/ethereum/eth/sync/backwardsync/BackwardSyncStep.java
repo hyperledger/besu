@@ -67,6 +67,12 @@ public class BackwardSyncStep {
 
     final int batchSize = context.getBatchSize();
     LOG.debug("Requesting headers for hash {}, with batch size {}", hash, batchSize);
+    final Optional<BlockHeader> maybeFinalizedHeader =
+        context
+            .getProtocolContext()
+            .getBlockchain()
+            .getFinalized()
+            .flatMap(context.getProtocolContext().getBlockchain()::getBlockHeader);
 
     final RetryingGetHeadersEndingAtFromPeerByHashTask
         retryingGetHeadersEndingAtFromPeerByHashTask =
@@ -74,6 +80,7 @@ public class BackwardSyncStep {
                 context.getProtocolSchedule(),
                 context.getEthContext(),
                 hash,
+                maybeFinalizedHeader.map(BlockHeader::getNumber).orElse(0L),
                 batchSize,
                 context.getMetricsSystem(),
                 context.getEthContext().getEthPeers().peerCount());

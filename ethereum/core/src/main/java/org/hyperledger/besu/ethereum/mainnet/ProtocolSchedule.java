@@ -16,17 +16,28 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public interface ProtocolSchedule
-    extends HeaderBasedProtocolSchedule, PrivacySupportingProtocolSchedule {
+public abstract class ProtocolSchedule
+    implements HeaderBasedProtocolSchedule, PrivacySupportingProtocolSchedule {
 
-  ProtocolSpec getByBlockNumber(long number);
+  private Supplier<Boolean> isPostMerge = () -> false;
 
-  Stream<Long> streamMilestoneBlocks();
+  public abstract ProtocolSpec getByBlockNumber(long number);
+
+  public abstract Stream<Long> streamMilestoneBlocks();
+
+  public void setIsPostMerge(final Supplier<Boolean> isPostMerge) {
+    this.isPostMerge = isPostMerge;
+  }
+
+  public boolean isPostMerge() {
+    return isPostMerge.get();
+  }
 
   @Override
-  default ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
     return getByBlockNumber(blockHeader.getNumber());
   }
 }

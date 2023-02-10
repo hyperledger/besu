@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Transition protocol schedule. */
-public class TransitionProtocolSchedule implements ProtocolSchedule {
+public class TransitionProtocolSchedule extends ProtocolSchedule {
   private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
   private final TimestampSchedule timestampSchedule;

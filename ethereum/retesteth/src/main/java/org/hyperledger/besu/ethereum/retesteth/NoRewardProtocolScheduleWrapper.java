@@ -30,7 +30,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
+public class NoRewardProtocolScheduleWrapper extends ProtocolSchedule {
 
   private final ProtocolSchedule delegate;
 
