@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.ssz.SSZFixedSizeTypeList;
-import org.apache.tuweni.ssz.SSZFixedSizeVector;
 import org.apache.tuweni.ssz.SSZReadable;
 import org.apache.tuweni.ssz.SSZReader;
 import org.apache.tuweni.ssz.SSZVariableSizeTypeList;
@@ -335,8 +334,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
     public static class AccessTuple implements SSZReadable, SSZWritable {
       Bytes address;
-      SSZFixedSizeTypeList<SSZUInt256Wrapper> storageKeys =
-          new SSZFixedSizeTypeList<>(ELEMENT_SIZE, SSZUInt256Wrapper::new);
+      SSZFixedSizeTypeList<SSZByte32Wrapper> storageKeys =
+          new SSZFixedSizeTypeList<>(ELEMENT_SIZE, SSZByte32Wrapper::new);
 
       @Override
       public boolean isFixed() {
@@ -359,7 +358,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
       public List<Bytes32> getStorageKeys() {
         return storageKeys.getElements().stream()
-            .map(sszuInt256Wrapper -> sszuInt256Wrapper.getData().toBytes())
+            .map(sszByte32Wrapper -> sszByte32Wrapper.getData())
             .collect(Collectors.toList());
       }
 
@@ -375,9 +374,9 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
                 storageKeys.stream()
                     .map(
                         bytes32 -> {
-                          SSZUInt256Wrapper sszuInt256Wrapper = new SSZUInt256Wrapper();
-                          sszuInt256Wrapper.setData(UInt256.fromBytes(bytes32));
-                          return sszuInt256Wrapper;
+                          SSZByte32Wrapper sszByte32Wrapper = new SSZByte32Wrapper();
+                          sszByte32Wrapper.setData(UInt256.fromBytes(bytes32));
+                          return sszByte32Wrapper;
                         })
                     .collect(Collectors.toList()));
       }
@@ -480,42 +479,41 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
   }
 
   public static class Blob implements SSZReadable, SSZWritable {
-    SSZFixedSizeVector<SSZUInt256Wrapper> vector =
-        new SSZFixedSizeVector<>(FIELD_ELEMENTS_PER_BLOB, ELEMENT_SIZE, SSZUInt256Wrapper::new);
+    Bytes bytes;
 
     @Override
     public void populateFromReader(final SSZReader reader) {
-      vector.populateFromReader(reader);
+      bytes = reader.readFixedBytes(FIELD_ELEMENTS_PER_BLOB * ELEMENT_SIZE);
     }
 
     @Override
     public void writeTo(final SSZWriter writer) {
-      vector.writeTo(writer);
+      writer.writeFixedBytes(bytes);
     }
 
-    public List<SSZUInt256Wrapper> getElements() {
-      return vector.getElements();
+    public Bytes getBytes() {
+      return bytes;
     }
   }
 
-  public static class SSZUInt256Wrapper implements SSZReadable, SSZWritable {
-    UInt256 data;
+  public static class SSZByte32Wrapper implements SSZReadable, SSZWritable {
+    Bytes32 data;
 
     @Override
     public void populateFromReader(final SSZReader reader) {
-      data = reader.readUInt256();
+      data = Bytes32.wrap(reader.readFixedBytes(32));
     }
 
     @Override
     public void writeTo(final SSZWriter writer) {
-      writer.writeUInt256(data);
+      writer.writeBytes(data);
     }
 
-    public UInt256 getData() {
+    public Bytes32 getData() {
       return data;
     }
 
-    public void setData(final UInt256 data) {
+    public void setData(final Bytes32 data) {
       this.data = data;
     }
   }
