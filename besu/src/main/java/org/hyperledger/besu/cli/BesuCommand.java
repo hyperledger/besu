@@ -3523,7 +3523,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             }
             if (UInt256.fromHexString(
                     genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
-                .lessOrEqualThan(ttd)) {
+                .lessThan(ttd)) {
               throw new InvalidConfigurationException(
                   "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
             }
