@@ -75,7 +75,7 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
                 forWorldStateRootHash,
                 localUpdater,
                 worldStateArchive,
-                (BonsaiPersistedWorldState) forWorldState.copy());
+                forWorldState);
         persistTrieLog(forBlockHeader, forWorldStateRootHash, trieLog, stateUpdater);
         success = true;
       } finally {
@@ -105,7 +105,9 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
     debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
     final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
     trieLog.freeze();
-    addCachedLayer(blockHeader, worldStateRootHash, trieLog, worldStateArchive, forWorldState);
+    BonsaiPersistedWorldState copy = (BonsaiPersistedWorldState) forWorldState.copy();
+    copy.updater = forWorldState.updater.copy();
+    addCachedLayer(blockHeader, worldStateRootHash, trieLog, worldStateArchive, copy);
     scrubCachedLayers(blockHeader.getNumber());
     return trieLog;
   }
