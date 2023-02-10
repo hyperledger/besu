@@ -33,7 +33,8 @@ public interface BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final boolean shouldPersist);
+      final boolean shouldPersist,
+      final boolean isBlockProposer);
 
   boolean fastBlockValidation(
       final ProtocolContext context,

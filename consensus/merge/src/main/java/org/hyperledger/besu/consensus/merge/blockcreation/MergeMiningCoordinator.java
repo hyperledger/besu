@@ -69,7 +69,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param block the block
    * @return the block processing result
    */
-  BlockProcessingResult validateBlock(final Block block);
+  BlockProcessingResult validateBlock(final Block block, final boolean isBlockProposer);
 
   /**
    * Update fork choice.

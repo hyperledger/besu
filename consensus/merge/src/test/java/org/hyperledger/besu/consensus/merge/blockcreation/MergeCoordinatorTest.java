@@ -592,7 +592,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     sendNewPayloadAndForkchoiceUpdate(parent, Optional.empty(), terminalHeader.getHash());
     BlockHeader childHeader = nextBlockHeader(parentHeader);
     Block child = new Block(childHeader, BlockBody.empty());
-    coordinator.validateBlock(child);
+    coordinator.validateBlock(child, false);
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
         .isTrue();
     var nextLvh = this.coordinator.getLatestValidAncestor(childHeader);
@@ -622,7 +622,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     BlockHeader childHeader = nextBlockHeader(parentHeader);
     Block child = new Block(childHeader, BlockBody.empty());
-    coordinator.validateBlock(child);
+    coordinator.validateBlock(child, false);
 
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
         .isTrue();

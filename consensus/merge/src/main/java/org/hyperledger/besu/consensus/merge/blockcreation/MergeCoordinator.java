@@ -270,7 +270,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
             .getBlock();
 
-    BlockProcessingResult result = validateBlock(emptyBlock);
+    BlockProcessingResult result = validateBlock(emptyBlock, true);
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
@@ -391,7 +391,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-    final var resultBest = validateBlock(bestBlock);
+    final var resultBest = validateBlock(bestBlock, true);
     if (resultBest.isSuccessful()) {
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
@@ -469,7 +469,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public BlockProcessingResult validateBlock(final Block block) {
+  public BlockProcessingResult validateBlock(final Block block, final boolean isBlockProposer) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -479,7 +479,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
-                false);
+                false,
+                isBlockProposer);
 
     return validationResult;
   }
@@ -488,7 +489,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   public BlockProcessingResult rememberBlock(final Block block) {
     debugLambda(LOG, "Remember block {}", block::toLogString);
     final var chain = protocolContext.getBlockchain();
-    final var validationResult = validateBlock(block);
+    final var validationResult = validateBlock(block, false);
     validationResult
         .getYield()
         .ifPresentOrElse(

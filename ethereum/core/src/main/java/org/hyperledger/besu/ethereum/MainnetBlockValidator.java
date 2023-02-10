@@ -71,7 +71,8 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
-    return validateAndProcessBlock(context, block, headerValidationMode, ommerValidationMode, true);
+    return validateAndProcessBlock(
+        context, block, headerValidationMode, ommerValidationMode, true, false);
   }
 
   @Override
@@ -80,7 +81,8 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final boolean shouldPersist) {
+      final boolean shouldPersist,
+      final boolean isBlockProposer) {
 
     final BlockHeader header = block.getHeader();
     final BlockHeader parentHeader;
@@ -93,7 +95,7 @@ public class MainnetBlockValidator implements BlockValidator {
         var retval =
             new BlockProcessingResult(
                 "Parent block with hash " + header.getParentHash() + " not present");
-        handleAndLogImportFailure(block, retval);
+        handleAndLogImportFailure(block, retval, isBlockProposer);
         return retval;
       }
       parentHeader = maybeParentHeader.get();
@@ -101,12 +103,12 @@ public class MainnetBlockValidator implements BlockValidator {
       if (!blockHeaderValidator.validateHeader(
           header, parentHeader, context, headerValidationMode)) {
         var retval = new BlockProcessingResult("header validation rule violated, see logs");
-        handleAndLogImportFailure(block, retval);
+        handleAndLogImportFailure(block, retval, isBlockProposer);
         return retval;
       }
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
-      handleAndLogImportFailure(block, retval);
+      handleAndLogImportFailure(block, retval, isBlockProposer);
       return retval;
     }
 
@@ -129,19 +131,19 @@ public class MainnetBlockValidator implements BlockValidator {
                 "Unable to process block because parent world state "
                     + parentHeader.getStateRoot()
                     + " is not available");
-        handleAndLogImportFailure(block, retval);
+        handleAndLogImportFailure(block, retval, isBlockProposer);
         return retval;
       }
       var result = processBlock(context, worldState, block);
       if (result.isFailed()) {
-        handleAndLogImportFailure(block, result);
+        handleAndLogImportFailure(block, result, isBlockProposer);
         return result;
       } else {
         List<TransactionReceipt> receipts =
             result.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
         if (!blockBodyValidator.validateBody(
             context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
-          handleAndLogImportFailure(block, result);
+          handleAndLogImportFailure(block, result, isBlockProposer);
           return new BlockProcessingResult("failed to validate output of imported block");
         }
         if (result instanceof GoQuorumBlockProcessingResult) {
@@ -174,11 +176,11 @@ public class MainnetBlockValidator implements BlockValidator {
               synchronizer -> synchronizer.healWorldState(ex.getMaybeAddress(), ex.getLocation()),
               () ->
                   handleAndLogImportFailure(
-                      block, new BlockProcessingResult(Optional.empty(), ex)));
+                      block, new BlockProcessingResult(Optional.empty(), ex), isBlockProposer));
       return new BlockProcessingResult(Optional.empty(), ex);
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
-      handleAndLogImportFailure(block, retval);
+      handleAndLogImportFailure(block, retval, isBlockProposer);
       return retval;
     } catch (Exception ex) {
       throw new RuntimeException(ex);
@@ -186,7 +188,7 @@ public class MainnetBlockValidator implements BlockValidator {
   }
 
   private void handleAndLogImportFailure(
-      final Block invalidBlock, final BlockValidationResult result) {
+      final Block invalidBlock, final BlockValidationResult result, final boolean isCreatedBlock) {
     if (result.causedBy().isPresent()) {
       LOG.info(
           "Invalid block {}: {}, caused by {}",
@@ -201,7 +203,12 @@ public class MainnetBlockValidator implements BlockValidator {
         LOG.info("Invalid block {}", invalidBlock.toLogString());
       }
     }
-    badBlockManager.addBadBlock(invalidBlock, result.causedBy());
+    if (isCreatedBlock) {
+      LOG.info(
+          "Bad block created but did not report to badBlockManager {}", invalidBlock.toLogString());
+    } else {
+      badBlockManager.addBadBlock(invalidBlock, result.causedBy());
+    }
   }
 
   /**
