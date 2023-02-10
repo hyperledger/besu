@@ -14,22 +14,11 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
-import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -37,66 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
-
-  /** Instantiates a new KZGPointEval precompile contract. */
-  public KZGPointEvalPrecompiledContract() {
-    this(Optional.empty());
-  }
-
-  /**
-   * Instantiates a new KZGPointEval precompile contract.
-   *
-   * @param pathToTrustedSetup the trusted setup path
-   */
-  public KZGPointEvalPrecompiledContract(final Optional<Path> pathToTrustedSetup) {
-
-    String absolutePathToSetup;
-    CKZG4844JNI.Preset bitLength;
-    if (pathToTrustedSetup.isPresent()) {
-      Path pathToSetup = pathToTrustedSetup.get();
-      absolutePathToSetup = pathToSetup.toAbsolutePath().toString();
-    } else {
-      InputStream is =
-          KZGPointEvalPrecompiledContract.class.getResourceAsStream(
-              "mainnet_kzg_trusted_setup_4096.txt");
-      try {
-        File jniWillLoadFrom = File.createTempFile("kzgTrustedSetup", "txt");
-        jniWillLoadFrom.deleteOnExit();
-        Files.copy(is, jniWillLoadFrom.toPath(), REPLACE_EXISTING);
-        is.close();
-        absolutePathToSetup = jniWillLoadFrom.getAbsolutePath();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    try (BufferedReader setupFile =
-        Files.newBufferedReader(Paths.get(absolutePathToSetup), Charset.defaultCharset())) {
-      String firstLine = setupFile.readLine();
-      if ("4".equals(firstLine)) {
-        bitLength = CKZG4844JNI.Preset.MINIMAL;
-      } else if ("4096".equals(firstLine)) {
-        bitLength = CKZG4844JNI.Preset.MAINNET;
-      } else {
-        throw new IllegalArgumentException("provided file not a setup for either 4 or 4096 bits");
-      }
-      CKZG4844JNI.loadNativeLibrary(bitLength);
-      try {
-        CKZG4844JNI.loadTrustedSetup(absolutePathToSetup);
-      } catch (RuntimeException mightBeAlreadyLoaded) {
-        if (!mightBeAlreadyLoaded.getMessage().contains("Trusted Setup is already loaded")) {
-          throw mightBeAlreadyLoaded;
-        }
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /** free up resources. */
-  @VisibleForTesting
-  public void tearDown() {
-    CKZG4844JNI.freeTrustedSetup();
-  }
 
   @Override
   public String getName() {
