@@ -76,7 +76,6 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   public void setNextWorldView(final Optional<BonsaiWorldView> nextWorldView) {
-    maybeUnSubscribe();
     this.nextWorldView = nextWorldView;
   }
 

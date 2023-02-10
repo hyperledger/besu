@@ -85,7 +85,12 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
         } else {
           stateUpdater.rollback();
         }
-        addCachedLayer(forBlockHeader, forWorldStateRootHash, trieLog, worldStateArchive, (BonsaiPersistedWorldState) forWorldState.copy());
+        addCachedLayer(
+            forBlockHeader,
+            forWorldStateRootHash,
+            trieLog,
+            worldStateArchive,
+            (BonsaiPersistedWorldState) forWorldState.copy());
         scrubCachedLayers(forBlockHeader.getNumber());
       }
     }
