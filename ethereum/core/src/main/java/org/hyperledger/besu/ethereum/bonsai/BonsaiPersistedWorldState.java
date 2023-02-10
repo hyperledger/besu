@@ -53,7 +53,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   protected final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   protected final BonsaiWorldStateArchive archive;
-  protected BonsaiWorldStateUpdater updater;
+  protected final BonsaiWorldStateUpdater updater;
 
   protected Hash worldStateRootHash;
   protected Hash worldStateBlockHash;
