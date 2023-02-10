@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
@@ -193,6 +194,7 @@ import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -201,6 +203,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -231,6 +234,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import ethereum.ckzg4844.CKZG4844JNI;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
@@ -541,6 +545,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
       arity = "1")
   private final BigInteger networkId = null;
+
+  @Option(
+      names = {"--kzg-trusted-setup"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Path to file containing the KZG trusted setup, mandatory for custom networks that support data blobs, "
+              + "optional for overriding named networks default.",
+      arity = "1")
+  private final Path kzgTrustedSetupFile = null;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
   GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
@@ -1837,6 +1850,74 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       Blake2bfMessageDigest.Blake2bfDigest.disableNative();
       logger.info("Using the Java implementation of the blake2bf algorithm");
+    }
+
+    if (genesisConfigOptions.getCancunTime().isPresent()) {
+      initializeKzgNativeLib();
+    } else if (kzgTrustedSetupFile != null) {
+      throw new ParameterException(
+          this.commandLine,
+          "--kzg-trusted-setup can only be specified on data blobs enabled networks");
+    }
+  }
+
+  private void initializeKzgNativeLib() {
+    // if custom genesis provided, then trusted setup file is mandatory
+    if (genesisFile != null && kzgTrustedSetupFile == null) {
+      throw new ParameterException(
+          this.commandLine,
+          "--kzg-trusted-setup is mandatory when providing a custom genesis file using --genesis-file option");
+    }
+
+    final Path absolutePathToSetup;
+
+    if (kzgTrustedSetupFile != null) {
+      absolutePathToSetup = kzgTrustedSetupFile.toAbsolutePath();
+    } else {
+      final String trustedSetupResourceName =
+          "/kzg-trusted-setups/" + network.name().toLowerCase() + ".txt";
+      InputStream is = BesuCommand.class.getResourceAsStream(trustedSetupResourceName);
+      if (is == null) {
+        throw new IllegalStateException(
+            "Internal error: KZG trusted setup for named network "
+                + network.name()
+                + " not found in resources");
+      }
+      try (is) {
+        File jniWillLoadFrom = File.createTempFile("kzgTrustedSetup", "txt");
+        jniWillLoadFrom.deleteOnExit();
+        java.nio.file.Files.copy(is, jniWillLoadFrom.toPath(), REPLACE_EXISTING);
+        absolutePathToSetup = jniWillLoadFrom.toPath();
+      } catch (IOException e) {
+        throw new IllegalStateException(
+            "Internal error: Unable to load KZG trusted setup for named network "
+                + network.name()
+                + " from resource "
+                + trustedSetupResourceName,
+            e);
+      }
+    }
+
+    try (BufferedReader setupFile =
+        java.nio.file.Files.newBufferedReader(absolutePathToSetup, Charset.defaultCharset())) {
+      String firstLine = setupFile.readLine();
+      final ethereum.ckzg4844.CKZG4844JNI.Preset bitLength;
+      if ("4".equals(firstLine)) {
+        bitLength = CKZG4844JNI.Preset.MINIMAL;
+      } else if ("4096".equals(firstLine)) {
+        bitLength = CKZG4844JNI.Preset.MAINNET;
+      } else {
+        throw new IllegalArgumentException(
+            "Provided file not a KZG trusted setup for either 4 or 4096 bits");
+      }
+      CKZG4844JNI.loadNativeLibrary(bitLength);
+      CKZG4844JNI.loadTrustedSetup(absolutePathToSetup.toString());
+      logger.info(
+          "C-KZG native lib loaded with preset {} and initialized with {} as trusted setup",
+          bitLength,
+          absolutePathToSetup);
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to load KZG trusted setup", e);
     }
   }
 
