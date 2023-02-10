@@ -53,7 +53,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   protected final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   protected final BonsaiWorldStateArchive archive;
-  protected BonsaiWorldStateUpdater updater;
+  protected final BonsaiWorldStateUpdater updater;
 
   protected Hash worldStateRootHash;
   protected Hash worldStateBlockHash;
@@ -319,11 +319,18 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                   + " calculated "
                   + newWorldStateRootHash.toHexString());
         }
+
         saveTrieLog =
             () ->
                 archive
                     .getTrieLogManager()
-                    .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader, this);
+                    .saveTrieLog(
+                        archive,
+                        worldStateStorage,
+                        localUpdater,
+                        newWorldStateRootHash,
+                        blockHeader,
+                        this);
 
         stateUpdater
             .getTrieBranchStorageTransaction()

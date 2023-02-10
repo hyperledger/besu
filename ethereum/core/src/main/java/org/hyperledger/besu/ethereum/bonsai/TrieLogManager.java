@@ -25,6 +25,7 @@ public interface TrieLogManager {
 
   void saveTrieLog(
       final BonsaiWorldStateArchive worldStateArchive,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final BonsaiWorldStateUpdater localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
