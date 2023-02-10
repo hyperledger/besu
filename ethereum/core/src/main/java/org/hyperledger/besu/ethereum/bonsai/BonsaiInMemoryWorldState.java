@@ -165,11 +165,9 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
   public void persist(final BlockHeader blockHeader) {
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
     final Hash newWorldStateRootHash = rootHash(localUpdater);
-    BonsaiPersistedWorldState copy = (BonsaiPersistedWorldState) this.copy();
-    copy.updater = updater.copy();
     archive
         .getTrieLogManager()
-        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader, copy);
+        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader, this);
     worldStateRootHash = newWorldStateRootHash;
     worldStateBlockHash = blockHeader.getBlockHash();
     isPersisted = true;

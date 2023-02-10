@@ -75,7 +75,7 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
                 forWorldStateRootHash,
                 localUpdater,
                 worldStateArchive,
-                forWorldState);
+                (BonsaiPersistedWorldState) forWorldState.copy());
         persistTrieLog(forBlockHeader, forWorldStateRootHash, trieLog, stateUpdater);
         success = true;
       } finally {
