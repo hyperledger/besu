@@ -3525,7 +3525,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
                 .lessThan(ttd)) {
               throw new InvalidConfigurationException(
-                  "PoS checkpoint sync requires a block with total difficulty greater than the TTD");
+                  "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
             }
           },
           () -> {
