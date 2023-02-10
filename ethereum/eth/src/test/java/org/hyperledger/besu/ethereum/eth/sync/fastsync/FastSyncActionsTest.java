@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -94,6 +95,7 @@ public class FastSyncActionsTest {
     blockchain = blockchainSetupUtil.getBlockchain();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            ProtocolScheduleFixture.MAINNET,
             blockchain,
             () -> timeoutCount.getAndDecrement() > 0,
             blockchainSetupUtil.getWorldArchive(),

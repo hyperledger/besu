@@ -79,6 +79,7 @@ public class ProtocolSpec {
   private final WithdrawalsValidator withdrawalsValidator;
 
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
+  private final boolean isPoS;
 
   /**
    * Creates a new protocol specification instance.
@@ -108,6 +109,7 @@ public class ProtocolSpec {
    * @param powHasher the proof-of-work hasher
    * @param withdrawalsValidator the withdrawals validator to use
    * @param withdrawalsProcessor the Withdrawals processor to use
+   * @param isPoS is the network running Proof of Stake consensus?
    */
   public ProtocolSpec(
       final String name,
@@ -134,7 +136,8 @@ public class ProtocolSpec {
       final BadBlockManager badBlockManager,
       final Optional<PoWHasher> powHasher,
       final WithdrawalsValidator withdrawalsValidator,
-      final Optional<WithdrawalsProcessor> withdrawalsProcessor) {
+      final Optional<WithdrawalsProcessor> withdrawalsProcessor,
+      final boolean isPoS) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -160,6 +163,7 @@ public class ProtocolSpec {
     this.powHasher = powHasher;
     this.withdrawalsValidator = withdrawalsValidator;
     this.withdrawalsProcessor = withdrawalsProcessor;
+    this.isPoS = isPoS;
   }
 
   /**
@@ -366,5 +370,14 @@ public class ProtocolSpec {
 
   public Optional<WithdrawalsProcessor> getWithdrawalsProcessor() {
     return withdrawalsProcessor;
+  }
+
+  /**
+   * Returns true if the network is running Proof of Stake
+   *
+   * @return true if the network is running Proof of Stake
+   */
+  public boolean isPoS() {
+    return isPoS;
   }
 }
