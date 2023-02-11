@@ -7,28 +7,36 @@
     "--output.result=stdout",
     "--output.alloc=stdout",
     "--output.body=stdout",
-    "--state.fork=Shanghai",
+    "--state.fork=Berlin",
     "--state.chainid=1",
-    "--state.reward=0"
+    "--state.reward=2000000000000000000"
   ],
   "stdin": {
     "alloc": {
+      "0x1000000000000000000000000000000000000000": {
+        "nonce": "0x00",
+        "balance": "0x0ba1a9ce0ba1a9ce",
+        "code": "0x6010565b6000828201905092915050565b601a600260016003565b60005560206000f3",
+        "storage": {}
+      },
       "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-        "balance": "0x1319ad251a00",
+        "nonce": "0x00",
+        "balance": "0x0ba1a9ce0ba1a9ce",
+        "code": "0x",
         "storage": {}
       }
     },
     "txs": [
       {
         "type": "0x0",
-        "chainId": "0x1",
+        "chainId": "0x0",
         "nonce": "0x0",
-        "gasPrice": "0x3b9aca00",
-        "gas": "0x5208",
+        "gasPrice": "0xa",
+        "gas": "0x7a120",
         "value": "0x0",
         "input": "0x",
-        "to": "0x0000000000000000000000000000000000000100",
-        "protected": true,
+        "to": "0x1000000000000000000000000000000000000000",
+        "protected": false,
         "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
         "v": "0x0",
         "r": "0x0",
@@ -38,59 +46,59 @@
     "env": {
       "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
       "currentGasLimit": "100000000000000000",
-      "currentNumber": "2",
-      "currentTimestamp": "24",
-      "currentRandom": "0",
-      "currentDifficulty": "0",
-      "parentDifficulty": "0",
-      "parentGasUsed": "0",
+      "currentNumber": "1",
+      "currentTimestamp": "1000",
+      "parentDifficulty": "131072",
+      "parentGasUsed": "50000000000000000",
       "parentGasLimit": "100000000000000000",
-      "parentTimstamp": "12",
+      "parentTimstamp": "0",
       "blockHashes": {
-        "0": "0x651666d6d8727a6478a750dc8406c1bda0be85abc99094dca694807fa772f83c",
-        "1": "0x0275fc82fe832100726ec7c26078ffb1c1dbff14a3b52d93dc359768fc8c7baa"
+        "0": "0x87c5fa7cef8b99fc333b662c1a4306c7d41d9d43a23414b15aa25b3e093ae88f"
       },
       "ommers": [],
-      "withdrawals": [],
-      "parentUncleHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-      "currentBaseFee": "7"
+      "parentUncleHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
     }
   },
   "stdout": {
     "alloc": {
+      "0x1000000000000000000000000000000000000000": {
+        "code": "0x6010565b6000828201905092915050565b601a600260016003565b60005560206000f3",
+        "storage": {
+          "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000003"
+        },
+        "balance": "0xba1a9ce0ba1a9ce"
+      },
       "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
-        "balance": "0x1319718811c8"
+        "balance": "0x1bc16d674ece96c2"
       },
       "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-        "nonce": "0x1",
-        "balance": "0x3b9aca00"
+        "balance": "0xba1a9ce0b9b130c",
+        "nonce": "0x1"
       }
     },
-    "body": "0xf865f86380843b9aca00825208940000000000000000000000000000000000000100808026a0e319535da2cae2d72ddb352054535d000c23acdc7cad9d828891253f3850d0d2a032fe4444149b609e2ffa621e23e179b12028309fdb8cb0a5c1bbc58135299af1",
+    "body": "0xf862f860800a8307a12094100000000000000000000000000000000000000080801ca091df80a63242846dcf1cc16c35e6ba39212cde92aad946f9c286fa0029782b54a0446170c2fb714c717885485ea7d93bf9277f3fb3d89ffd73e9b7f5f8eda3997b",
     "result": {
-      "stateRoot": "0xbe252b80c472518724f7b2aa7d688891f9b258d8f43f12b01e1ef5e3cb76bce9",
-      "txRoot": "0xb5ffe01eaa51ee8246b2108e049e6e11dc0a1d99b4cc52966791ef9c40b8b863",
-      "receiptsRoot": "0x056b23fbba480696b65fe5a59b8f2148a1299103c4f57df839233af2cf4ca2d2",
+      "stateRoot": "0xd921e74bfe864514fa508003336b8f66eb98d748c5163749827029a1ed7db265",
+      "txRoot": "0x8e987be72f36f97a98838e03d9e5d1b3d22795606240f16684532b1c994b4ee7",
+      "receiptsRoot": "0x0812e2d0238699cad1dd4c1274804ed2dde9a35df8ee002d48bbf3ef87857a63",
       "logsHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
       "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "receipts": [
         {
           "root": "0x",
           "status": "0x1",
-          "cumulativeGasUsed": "0x5208",
+          "cumulativeGasUsed": "0xa8ad",
           "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
           "logs": null,
-          "transactionHash": "0xb5a8d2d008438dd97446b4e0971ae968fb07ee25f9c7d574d96e60808ce25dd1",
+          "transactionHash": "0x6c4a22ee7d2d9ae9307b09aac69a34600978e34313088917a7e69fd12e8f959a",
           "contractAddress": "0x0000000000000000000000000000000000000000",
-          "gasUsed": "0x5208",
+          "gasUsed": "0xa8ad",
           "blockHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "transactionIndex": "0x0"
         }
       ],
-      "currentDifficulty": null,
-      "gasUsed": "0x5208",
-      "currentBaseFee":"0x7",
-      "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+      "currentDifficulty": "0x20000",
+      "gasUsed": "0xa8ad"
     }
   }
 }

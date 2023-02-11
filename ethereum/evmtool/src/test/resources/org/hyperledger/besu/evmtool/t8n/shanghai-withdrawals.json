@@ -60,8 +60,7 @@
   "stdout": {
     "alloc": {
       "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-        "balance": "0x1319ad251a00",
-        "storage": {}
+        "balance": "0x1319ad251a00"
       }
     },
     "body": "0xf865f86380843b9aca00825208940000000000000000000000000000000000000100808026a0e319535da2cae2d72ddb352054535d000c23acdc7cad9d828891253f3850d0d2a032fe4444149b609e2ffa621e23e179b12028309fdb8cb0a5c1bbc58135299af1",
@@ -78,8 +77,9 @@
           "error": "transaction up-front cost 0x1319718a5000 exceeds transaction sender account balance 0x0"
         }
       ],
-      "currentDifficulty": "0x0",
+      "currentDifficulty": null,
       "gasUsed": "0x0",
+      "currentBaseFee":"0x7",
       "withdrawalsRoot": "0xa485a3bd07e29cb8234b5f093d5216eb8b965fb2693c66fea254f6cacef97a6f"
     }
   }

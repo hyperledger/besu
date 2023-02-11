@@ -62,17 +62,14 @@ public class ReferenceTestEnv extends BlockHeader {
     }
   }
 
-  @SuppressWarnings("unused")
   private final String parentDifficulty;
 
   private final String parentBaseFee;
 
   private final String parentGasUsed;
 
-  @SuppressWarnings("unused")
   private final String parentGasLimit;
 
-  @SuppressWarnings("unused")
   private final String parentTimestamp;
 
   private final List<Withdrawal> withdrawals;
@@ -106,13 +103,13 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals) {
     super(
         generateTestBlockHash(previousHash, number),
-        Hash.EMPTY, // ommersHash
+        Hash.EMPTY_LIST_HASH, // ommersHash
         Address.fromHexString(coinbase),
         Hash.EMPTY, // stateRoot
         Hash.EMPTY, // transactionsRoot
         Hash.EMPTY, // receiptsRoot
         new LogsBloomFilter(),
-        Optional.ofNullable(difficulty).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
+        difficulty == null ? null : Difficulty.fromHexOrDecimalString(difficulty),
         number == null ? 0 : Long.decode(number),
         gasLimit == null ? 15_000_000L : Long.decode(gasLimit),
         0L,
@@ -133,6 +130,11 @@ public class ReferenceTestEnv extends BlockHeader {
         withdrawals == null
             ? List.of()
             : withdrawals.stream().map(EnvWithdrawal::asWithdrawal).toList();
+  }
+
+  @Override
+  public Difficulty getDifficulty() {
+    return difficulty == null ? Difficulty.ZERO : super.getDifficulty();
   }
 
   private static Hash generateTestBlockHash(final String previousHash, final String number) {
@@ -164,6 +166,19 @@ public class ReferenceTestEnv extends BlockHeader {
                   Long.parseLong(parentGasUsed),
                   gasLimit / 2));
     }
+    if (difficulty == null && parentDifficulty != null) {
+      builder.difficulty(
+          Difficulty.of(
+              protocolSpec
+                  .getDifficultyCalculator()
+                  .nextDifficulty(
+                      timestamp,
+                      BlockHeaderBuilder.createDefault()
+                          .difficulty(Difficulty.fromHexOrDecimalString(parentDifficulty))
+                          .number(number - 1)
+                          .buildBlockHeader(),
+                      null)));
+    }
 
     return builder.buildBlockHeader();
   }
@@ -175,14 +190,14 @@ public class ReferenceTestEnv extends BlockHeader {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof ReferenceTestEnv that)) return false;
     if (!super.equals(o)) return false;
-    ReferenceTestEnv that = (ReferenceTestEnv) o;
     return Objects.equals(parentDifficulty, that.parentDifficulty)
         && Objects.equals(parentBaseFee, that.parentBaseFee)
         && Objects.equals(parentGasUsed, that.parentGasUsed)
         && Objects.equals(parentGasLimit, that.parentGasLimit)
-        && Objects.equals(parentTimestamp, that.parentTimestamp);
+        && Objects.equals(parentTimestamp, that.parentTimestamp)
+        && Objects.equals(withdrawals, that.withdrawals);
   }
 
   @Override
@@ -193,6 +208,7 @@ public class ReferenceTestEnv extends BlockHeader {
         parentBaseFee,
         parentGasUsed,
         parentGasLimit,
-        parentTimestamp);
+        parentTimestamp,
+        withdrawals);
   }
 }

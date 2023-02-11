@@ -132,8 +132,8 @@ public class B11rSubCommand implements Runnable {
     objectMapper.setDefaultPrettyPrinter(
         (new DefaultPrettyPrinter())
             .withSpacesInObjectEntries()
-            .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent(" "))
-            .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent(" ")));
+            .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  "))
+            .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  ")));
     final ObjectReader t8nReader = objectMapper.reader();
     objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
 
@@ -195,7 +195,7 @@ public class B11rSubCommand implements Runnable {
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     newHeader.writeTo(rlpOut);
-    if (txsBytes != null) {
+    if (txsBytes != null && txsBytes.size() > 0) {
       rlpOut.writeRaw(txsBytes);
     } else {
       rlpOut.startList();

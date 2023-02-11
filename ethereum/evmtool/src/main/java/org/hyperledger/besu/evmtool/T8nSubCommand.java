@@ -195,8 +195,8 @@ public class T8nSubCommand implements Runnable {
     objectMapper.setDefaultPrettyPrinter(
         (new DefaultPrettyPrinter())
             .withSpacesInObjectEntries()
-            .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent(" "))
-            .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent(" ")));
+            .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  "))
+            .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  ")));
     final ObjectReader t8nReader = objectMapper.reader();
     objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
 
@@ -274,6 +274,7 @@ public class T8nSubCommand implements Runnable {
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<Map<String, Object>> invalidTransactions = new ArrayList<>();
+    List<Transaction> validTransactions = new ArrayList<>();
     ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
     for (int i = 0; i < transactions.size(); i++) {
@@ -301,6 +302,8 @@ public class T8nSubCommand implements Runnable {
         invalidTransactions.add(Map.of("index", i, "error", senderValidation.getErrorMessage()));
         continue;
       }
+
+      validTransactions.add(transaction);
 
       final Stopwatch timer = Stopwatch.createStarted();
       final OperationTracer tracer; // You should have picked Mercy.
@@ -362,14 +365,14 @@ public class T8nSubCommand implements Runnable {
       TransactionReceipt receipt =
           protocolSpec
               .getTransactionReceiptFactory()
-              .create(transaction.getType(), result, worldState, transactionGasUsed);
+              .create(transaction.getType(), result, worldState, gasUsed);
       Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
       receipts.add(receipt);
       ObjectNode receiptObject = receiptsArray.addObject();
       receiptObject.put(
           "root", receipt.getStateRoot() == null ? "0x" : receipt.getStateRoot().toHexString());
       receiptObject.put("status", "0x" + receipt.getStatus());
-      receiptObject.put("cumulativeGasUsed", gasUsedInTransaction.toShortHexString());
+      receiptObject.put("cumulativeGasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
       receiptObject.put("logsBloom", receipt.getBloomFilter().toHexString());
       if (result.getLogs().isEmpty()) {
         receiptObject.putNull("logs");
@@ -389,6 +392,14 @@ public class T8nSubCommand implements Runnable {
 
     final ObjectNode resultObject = objectMapper.createObjectNode();
 
+    // block reward
+    if (!validTransactions.isEmpty() && Wei.ZERO.compareTo(reward) < 0) {
+      worldStateUpdater
+          .getOrCreateSenderAccount(blockHeader.getCoinbase())
+          .getMutable()
+          .incrementBalance(reward);
+    }
+
     // deposit CL withdrawals
     try {
       protocolSpec
@@ -403,7 +414,7 @@ public class T8nSubCommand implements Runnable {
     worldState.persist(blockHeader);
 
     resultObject.put("stateRoot", worldState.rootHash().toHexString());
-    resultObject.put("txRoot", BodyValidation.transactionsRoot(transactions).toHexString());
+    resultObject.put("txRoot", BodyValidation.transactionsRoot(validTransactions).toHexString());
     resultObject.put("receiptsRoot", BodyValidation.receiptsRoot(receipts).toHexString());
     resultObject.put(
         "logsHash",
@@ -420,8 +431,15 @@ public class T8nSubCommand implements Runnable {
       resultObject.putPOJO("rejected", invalidTransactions);
     }
 
-    resultObject.put("currentDifficulty", blockHeader.getDifficultyBytes().toShortHexString());
+    resultObject.put(
+        "currentDifficulty",
+        blockHeader.getDifficultyBytes().trimLeadingZeros().size() > 0
+            ? blockHeader.getDifficultyBytes().toShortHexString()
+            : null);
     resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
+    blockHeader
+        .getBaseFee()
+        .ifPresent(bf -> resultObject.put("currentBaseFee", bf.toQuantityHexString()));
     blockHeader
         .getWithdrawalsRoot()
         .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
@@ -435,24 +453,26 @@ public class T8nSubCommand implements Runnable {
               ObjectNode accountObject =
                   allocObject.putObject(
                       account.getAddress().map(Address::toHexString).orElse("0x"));
-              if (account.getNonce() > 0) {
-                accountObject.put(
-                    "nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
-              }
-              accountObject.put("balance", account.getBalance().toShortHexString());
               if (account.getCode() != null && account.getCode().size() > 0) {
                 accountObject.put("code", account.getCode().toHexString());
               }
               NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
                   account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
-              ObjectNode storageObject = accountObject.putObject("storage");
-              storageEntries
-                  .values()
-                  .forEach(
-                      accountStorageEntry ->
-                          storageObject.put(
-                              accountStorageEntry.getKey().map(UInt256::toHexString).orElse("0x"),
-                              accountStorageEntry.getValue().toHexString()));
+              if (!storageEntries.isEmpty()) {
+                ObjectNode storageObject = accountObject.putObject("storage");
+                storageEntries.values().stream()
+                    .sorted(Comparator.comparing(a -> a.getKey().get()))
+                    .forEach(
+                        accountStorageEntry ->
+                            storageObject.put(
+                                accountStorageEntry.getKey().map(UInt256::toHexString).orElse("0x"),
+                                accountStorageEntry.getValue().toHexString()));
+              }
+              accountObject.put("balance", account.getBalance().toShortHexString());
+              if (account.getNonce() > 0) {
+                accountObject.put(
+                    "nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
+              }
             });
 
     try {

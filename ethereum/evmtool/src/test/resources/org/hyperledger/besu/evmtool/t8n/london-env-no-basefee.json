@@ -63,25 +63,23 @@
   "stdout": {
     "alloc": {
       "0x1000000000000000000000000000000000000000": {
-        "balance": "0xba1a9ce0ba1a9ce",
         "code": "0x6010565b6000828201905092915050565b601a600260016003565b60005560206000f3",
         "storage": {
           "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000003"
-        }
+        },
+        "balance": "0xba1a9ce0ba1a9ce"
       },
       "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
-        "balance": "0x1fa07",
-        "storage": {}
+        "balance": "0x1bc16d674ec9fa07"
       },
       "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-        "nonce": "0x1",
         "balance": "0xba1a9ce0b9b130c",
-        "storage": {}
+        "nonce": "0x1"
       }
     },
     "body": "0xf862f860800a8307a12094100000000000000000000000000000000000000080801ca091df80a63242846dcf1cc16c35e6ba39212cde92aad946f9c286fa0029782b54a0446170c2fb714c717885485ea7d93bf9277f3fb3d89ffd73e9b7f5f8eda3997b",
     "result": {
-      "stateRoot": "0xe3d83cac3fbe146a6ee8ef05b28bc94e9906405cd976ccb1152f4ddc70b71a49",
+      "stateRoot": "0x5c0f211cd1bea44ac01bd3fd7e0ab742d316adabd139bcf60a7aac6c458d596d",
       "txRoot": "0x8e987be72f36f97a98838e03d9e5d1b3d22795606240f16684532b1c994b4ee7",
       "receiptsRoot": "0x0812e2d0238699cad1dd4c1274804ed2dde9a35df8ee002d48bbf3ef87857a63",
       "logsHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -100,8 +98,9 @@
           "transactionIndex": "0x0"
         }
       ],
-      "currentDifficulty": "0x0",
-      "gasUsed": "0xa8ad"
+      "currentDifficulty": "0x20000",
+      "gasUsed": "0xa8ad",
+      "currentBaseFee": "0x7"
     }
   }
 }
