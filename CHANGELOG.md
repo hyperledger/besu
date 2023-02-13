@@ -20,6 +20,8 @@ tests are updated to use EC private keys instead of RSA keys.
 - Improve get account performance by using the world state updater cache [#4897](https://github.com/hyperledger/besu/pull/4897)
 - Add new KZG precompile and option to override the trusted setup being used [#4822](https://github.com/hyperledger/besu/issues/4822)
 - Add implementation for eth_createAccessList RPC method [#4942](https://github.com/hyperledger/besu/pull/4942)
+- Add implementation for engine_exchangeCapabilities [#4997](https://github.com/hyperledger/besu/pull/4997)
+- Add implementation for engine_getPayloadBodiesByRangeV1 and engine_getPayloadBodiesByHashV1 [#4980](https://github.com/hyperledger/besu/pull/4980)
 - Updated reference tests to v11.3 [#4996](https://github.com/hyperledger/besu/pull/4996)
 - Add DebugGetRawBlock and DebugGetRawHeader RPC methods [#5011](https://github.com/hyperledger/besu/pull/5011)
 - Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
@@ -28,7 +30,6 @@ tests are updated to use EC private keys instead of RSA keys.
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
-- Ensure latest cached layered worldstate is subscribed to storage, fix problem with RPC calls using 'latest' [#5039](https://github.com/hyperledger/besu/pull/5039)  
 
 
 ## 23.1.0-RC1
