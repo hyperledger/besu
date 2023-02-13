@@ -40,8 +40,13 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A World State backed first by trie log layer and then by another world state. */
-public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
+public class BonsaiLayeredWorldState
+    implements MutableWorldState,
+        BonsaiWorldView,
+        WorldState,
+        BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
   private Optional<BonsaiWorldView> nextWorldView;
+  private Optional<Long> newtWorldViewSubscribeId;
   protected final long height;
   protected final TrieLogLayer trieLog;
   private final Hash worldStateRootHash;
@@ -58,7 +63,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       final TrieLogLayer trieLog) {
     this.blockchain = blockchain;
     this.archive = archive;
-    this.nextWorldView = nextWorldView;
+    this.setNextWorldView(nextWorldView);
     this.height = height;
     this.worldStateRootHash = worldStateRootHash;
     this.trieLog = trieLog;
@@ -76,20 +81,28 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   public void setNextWorldView(final Optional<BonsaiWorldView> nextWorldView) {
+    maybeUnSubscribe(); // unsubscribe the old view
     this.nextWorldView = nextWorldView;
+    maybeSubscribe(); // subscribe the next view
+  }
+
+  private void maybeSubscribe() {
+    nextWorldView
+        .filter(BonsaiPersistedWorldState.class::isInstance)
+        .map(BonsaiPersistedWorldState.class::cast)
+        .ifPresent(
+            worldState ->
+                newtWorldViewSubscribeId =
+                    Optional.of(worldState.worldStateStorage.subscribe(this)));
   }
 
   private void maybeUnSubscribe() {
     nextWorldView
-        .filter(WorldState.class::isInstance)
-        .map(WorldState.class::cast)
+        .filter(BonsaiPersistedWorldState.class::isInstance)
+        .map(BonsaiPersistedWorldState.class::cast)
         .ifPresent(
-            ws -> {
-              try {
-                ws.close();
-              } catch (final Exception e) {
-                // no-op
-              }
+            worldState -> {
+              newtWorldViewSubscribeId.ifPresent(worldState.worldStateStorage::unSubscribe);
             });
   }
 
