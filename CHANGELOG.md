@@ -28,7 +28,7 @@ tests are updated to use EC private keys instead of RSA keys.
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
-
+- Ensure latest cached layered worldstate is subscribed to storage, fix problem with RPC calls using 'latest' [#5076](https://github.com/hyperledger/besu/pull/5076)
 
 ## 23.1.0-RC1
 
