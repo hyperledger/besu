@@ -48,6 +48,8 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  testImplementation 'io.vertx:vertx-junit5'
+  testImplementation 'io.vertx:vertx-web-client'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'

@@ -15,18 +15,17 @@
 package org.hyperledger.besu.ethereum.stratum;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,40 +47,33 @@ public class StratumConnectionTest {
 
   @Test
   public void testNoSuitableProtocol() {
-    AtomicBoolean called = new AtomicBoolean(false);
-    StratumConnection conn =
-        new StratumConnection(new StratumProtocol[] {}, () -> called.set(true), bytes -> {});
-    conn.handleBuffer(Buffer.buffer("{}\n"));
-    assertThat(called.get()).isTrue();
+    StratumConnection conn = new StratumConnection(new StratumProtocol[] {}, notification -> {});
+    assertThatThrownBy(() -> conn.handleBuffer(Buffer.buffer("{}\n"), bytes -> {}))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   public void testStratum1WithoutMatches() {
     when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
-    AtomicBoolean called = new AtomicBoolean(false);
     StratumConnection conn =
         new StratumConnection(
             new StratumProtocol[] {new Stratum1Protocol("", miningCoordinator)},
-            () -> called.set(true),
-            bytes -> {});
-    conn.handleBuffer(Buffer.buffer("{}\n"));
-    assertThat(called.get()).isTrue();
+            notification -> {});
+    assertThatThrownBy(() -> conn.handleBuffer(Buffer.buffer("{}\n"), bytes -> {}))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   public void testStratum1Matches() {
     when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
-    AtomicBoolean called = new AtomicBoolean(false);
-
-    AtomicReference<String> message = new AtomicReference<>();
+    AtomicReference<Object> message = new AtomicReference<>();
 
     StratumConnection conn =
         new StratumConnection(
             new StratumProtocol[] {
               new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd")
             },
-            () -> called.set(true),
-            message::set);
+            notification -> {});
     conn.handleBuffer(
         Buffer.buffer(
             "{"
@@ -90,27 +82,23 @@ public class StratumConnectionTest {
                 + "  \"params\": [ "
                 + "    \"MinerName/1.0.0\", \"EthereumStratum/1.0.0\" "
                 + "  ]"
-                + "}\n"));
-    assertThat(called.get()).isFalse();
+                + "}\n"),
+        message::set);
 
     assertThat(message.get())
         .isEqualTo(
-            "{\"jsonrpc\":\"2.0\",\"id\":23,\"result\":[[\"mining.notify\",\"abcd\",\"EthereumStratum/1.0.0\"],\"\"]}\n");
+            "{\"jsonrpc\":\"2.0\",\"id\":23,\"result\":[[\"mining.notify\",\"abcd\",\"EthereumStratum/1.0.0\"],\"\"]}");
   }
 
   @Test
   public void testStratum1SendWork() {
     when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
-    AtomicBoolean called = new AtomicBoolean(false);
-
-    AtomicReference<String> message = new AtomicReference<>();
+    AtomicReference<Object> message = new AtomicReference<>();
 
     Stratum1Protocol protocol =
         new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd");
 
-    StratumConnection conn =
-        new StratumConnection(
-            new StratumProtocol[] {protocol}, () -> called.set(true), message::set);
+    StratumConnection conn = new StratumConnection(new StratumProtocol[] {protocol}, message::set);
     conn.handleBuffer(
         Buffer.buffer(
             "{"
@@ -119,7 +107,8 @@ public class StratumConnectionTest {
                 + "  \"params\": [ "
                 + "    \"MinerName/1.0.0\", \"EthereumStratum/1.0.0\" "
                 + "  ]"
-                + "}\n"));
+                + "}\n"),
+        message::set);
     conn.handleBuffer(
         Buffer.buffer(
             "{"
@@ -128,23 +117,21 @@ public class StratumConnectionTest {
                 + "  \"params\": [ "
                 + "    \"someusername\", \"password\" "
                 + "  ]"
-                + "}\n"));
-    assertThat(called.get()).isFalse();
+                + "}\n"),
+        message::set);
     // now send work without waiting.
     protocol.setCurrentWorkTask(
         new PoWSolverInputs(UInt256.valueOf(3), Bytes.fromHexString("deadbeef"), 42));
 
     assertThat(message.get())
         .isEqualTo(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"mining.notify\",\"params\":[\"abcd\",\"0xdeadbeef\",\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"0x0000000000000000000000000000000000000000000000000000000000000003\",true],\"id\":null}\n");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"mining.notify\",\"params\":[\"abcd\",\"0xdeadbeef\",\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"0x0000000000000000000000000000000000000000000000000000000000000003\",true],\"id\":null}");
   }
 
   @Test
   public void testStratum1SubmitHashrate() {
     when(miningCoordinator.getEpochCalculator()).thenReturn(epochCalculator);
-    AtomicBoolean called = new AtomicBoolean(false);
-
-    AtomicReference<String> message = new AtomicReference<>();
+    AtomicReference<Object> message = new AtomicReference<>();
 
     Stratum1Protocol protocol =
         new Stratum1Protocol("", miningCoordinator, () -> "abcd", () -> "abcd");
@@ -152,8 +139,7 @@ public class StratumConnectionTest {
     Mockito.when(miningCoordinator.submitHashRate("0x02", 3L)).thenReturn(true);
 
     StratumConnection conn =
-        new StratumConnection(
-            new StratumProtocol[] {protocol}, () -> called.set(true), message::set);
+        new StratumConnection(new StratumProtocol[] {protocol}, notification -> {});
     conn.handleBuffer(
         Buffer.buffer(
             "{"
@@ -162,7 +148,8 @@ public class StratumConnectionTest {
                 + "  \"params\": [ "
                 + "    \"MinerName/1.0.0\", \"EthereumStratum/1.0.0\" "
                 + "  ]"
-                + "}\n"));
+                + "}\n"),
+        message::set);
     conn.handleBuffer(
         Buffer.buffer(
             "{"
@@ -171,46 +158,8 @@ public class StratumConnectionTest {
                 + "  \"params\": [ "
                 + "    \"0x03\",\"0x02\" "
                 + "  ]"
-                + "}\n"));
-    assertThat(called.get()).isFalse();
-
-    assertThat(message.get()).isEqualTo("{\"jsonrpc\":\"2.0\",\"id\":23,\"result\":true}\n");
-  }
-
-  @Test
-  public void testHttpMessage() {
-    AtomicBoolean called = new AtomicBoolean(false);
-
-    AtomicReference<String> received = new AtomicReference<>();
-
-    GetWorkProtocol protocol = new GetWorkProtocol(epochCalculator);
-    protocol.setCurrentWorkTask(new PoWSolverInputs(UInt256.ZERO, Bytes32.random(), 123L));
-    StratumConnection conn =
-        new StratumConnection(
-            new StratumProtocol[] {protocol}, () -> called.set(true), received::set);
-    String message =
-        "POST / HTTP/1.1\r\nHost: 127.0.0.1:8008\r\nConnection: keep-alive\r\nAccept-Encoding: gzip, deflate\r\nContent-Length: 31\r\n\r\n{\"id\":1,\"method\":\"eth_getWork\"}";
-    conn.handleBuffer(Buffer.buffer(message));
-    assertThat(called.get()).isFalse();
-    assertThat(received.get()).contains("\"jsonrpc\":\"2.0\",\"id\":1,\"result\"");
-  }
-
-  @Test
-  public void testHttpMessageChunks() {
-    AtomicBoolean called = new AtomicBoolean(false);
-
-    AtomicReference<String> received = new AtomicReference<>();
-
-    GetWorkProtocol protocol = new GetWorkProtocol(epochCalculator);
-    StratumConnection conn =
-        new StratumConnection(
-            new StratumProtocol[] {protocol}, () -> called.set(true), received::set);
-    String message =
-        "POST / HTTP/1.1\r\nHost: 127.0.0.1:8008\r\nConnection: keep-alive\r\nAccept-Encoding: gzip, deflate\r\nContent-Length: 31\r\n\r\n{\"id";
-    String secondMessage = "\":1,\"method\":\"eth_getWork\"}";
-    conn.handleBuffer(Buffer.buffer(message));
-    conn.handleBuffer(Buffer.buffer(secondMessage));
-    assertThat(called.get()).isFalse();
-    assertThat(received.get()).contains("\"jsonrpc\":\"2.0\",\"id\":1,\"result\"");
+                + "}\n"),
+        message::set);
+    assertThat(message.get()).isEqualTo("{\"jsonrpc\":\"2.0\",\"id\":23,\"result\":true}");
   }
 }

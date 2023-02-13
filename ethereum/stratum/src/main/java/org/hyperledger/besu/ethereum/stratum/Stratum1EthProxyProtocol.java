@@ -25,13 +25,14 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -57,7 +58,8 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   @Override
-  public boolean maybeHandle(final String initialMessage, final StratumConnection conn) {
+  public boolean maybeHandle(
+      final Buffer initialMessage, final StratumConnection conn, final Consumer<String> sender) {
     JsonRpcRequest req;
     try {
       req = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
@@ -72,7 +74,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
 
     try {
       String response = mapper.writeValueAsString(new JsonRpcSuccessResponse(req.getId(), true));
-      conn.send(response + "\n");
+      sender.accept(response);
       activeConnections.add(conn);
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
@@ -88,26 +90,24 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   @Override
-  public void handle(final StratumConnection conn, final String message) {
-    try {
-      final JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
-      final JsonRpcRequestContext reqContext = new JsonRpcRequestContext(req);
-      final JsonRpcResponse rpcResponse;
-      switch (req.getMethod()) {
-        case "eth_getWork" -> rpcResponse = ethGetWork.response(reqContext);
-        case "eth_submitWork" -> rpcResponse = ethSubmitWork.response(reqContext);
-        case "eth_submitHashrate" -> rpcResponse = ethSubmitHashRate.response(reqContext);
-        default -> {
-          LOG.debug("Invalid method: {}", req.getMethod());
-          conn.close();
-          return;
-        }
+  public void handle(
+      final StratumConnection conn, final Buffer message, final Consumer<String> sender) {
+    final JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
+    final JsonRpcRequestContext reqContext = new JsonRpcRequestContext(req);
+    final JsonRpcResponse rpcResponse;
+    switch (req.getMethod()) {
+      case "eth_getWork" -> rpcResponse = ethGetWork.response(reqContext);
+      case "eth_submitWork" -> rpcResponse = ethSubmitWork.response(reqContext);
+      case "eth_submitHashrate" -> rpcResponse = ethSubmitHashRate.response(reqContext);
+      default -> {
+        LOG.debug("Invalid method: {}", req.getMethod());
+        throw new UnsupportedOperationException("Invalid method: " + req.getMethod());
       }
-      String response = mapper.writeValueAsString(rpcResponse);
-      conn.send(response + "\n");
-    } catch (IllegalArgumentException | IOException e) {
-      LOG.debug(e.getMessage(), e);
-      conn.close();
+    }
+    try {
+      sender.accept(mapper.writeValueAsString(rpcResponse));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
     }
   }
 
@@ -116,10 +116,10 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
     activeConnections.forEach(
         conn -> {
           try {
-            conn.send(
-                mapper.writeValueAsString(
-                        new JsonRpcSuccessResponse(0, ethGetWork.rawResponse(input)))
-                    + "\n");
+            conn.notificationSender()
+                .accept(
+                    mapper.writeValueAsString(
+                        new JsonRpcSuccessResponse(0, ethGetWork.rawResponse(input))));
           } catch (JsonProcessingException e) {
             LOG.error("Failed to announce new work", e);
           }
