@@ -91,9 +91,9 @@ public class BonsaiLayeredWorldState
         .filter(BonsaiPersistedWorldState.class::isInstance)
         .map(BonsaiPersistedWorldState.class::cast)
         .ifPresent(
-            worldState ->
-                newtWorldViewSubscribeId =
-                    Optional.of(worldState.worldStateStorage.subscribe(this)));
+            worldState -> {
+              newtWorldViewSubscribeId = Optional.of(worldState.worldStateStorage.subscribe(this));
+            });
   }
 
   private void maybeUnSubscribe() {
