@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -75,27 +76,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   public void setNextWorldView(final Optional<BonsaiWorldView> nextWorldView) {
-    maybeUnSubscribe();
     this.nextWorldView = nextWorldView;
-  }
-
-  private void maybeUnSubscribe() {
-    nextWorldView
-        .filter(WorldState.class::isInstance)
-        .map(WorldState.class::cast)
-        .ifPresent(
-            ws -> {
-              try {
-                ws.close();
-              } catch (final Exception e) {
-                // no-op
-              }
-            });
-  }
-
-  @Override
-  public void close() throws Exception {
-    maybeUnSubscribe();
   }
 
   public TrieLogLayer getTrieLog() {
@@ -107,7 +88,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public Optional<Bytes> getCode(final Address address) {
+  public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
     BonsaiLayeredWorldState currentLayer = this;
     while (currentLayer != null) {
       final Optional<Bytes> maybeCode = currentLayer.trieLog.getCode(address);
@@ -124,7 +105,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       } else if (currentLayer.getNextWorldView().get() instanceof BonsaiLayeredWorldState) {
         currentLayer = (BonsaiLayeredWorldState) currentLayer.getNextWorldView().get();
       } else {
-        return currentLayer.getNextWorldView().get().getCode(address);
+        return currentLayer.getNextWorldView().get().getCode(address, codeHash);
       }
     }
     return Optional.empty();
@@ -291,6 +272,8 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
                     new StorageException(
                         "Unable to copy Layered Worldstate for " + blockHash().toHexString()))) {
       return new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage());
+    } catch (MerkleTrieException ex) {
+      throw ex; // need to throw to trigger the heal
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

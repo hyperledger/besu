@@ -19,8 +19,6 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -50,25 +48,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-  public BonsaiSnapshotWorldStateKeyValueStorage(final StorageProvider snappableStorageProvider) {
-    this(
-        snappableStorageProvider
-            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE)
-            .takeSnapshot(),
-        snappableStorageProvider
-            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE)
-            .takeSnapshot(),
-        snappableStorageProvider
-            .getSnappableStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE)
-            .takeSnapshot(),
-        snappableStorageProvider
-            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE)
-            .takeSnapshot(),
-        snappableStorageProvider.getStorageBySegmentIdentifier(
-            KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
-  }
-
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final SnappedKeyValueStorage accountStorage,
       final SnappedKeyValueStorage codeStorage,
@@ -96,6 +75,12 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public void clearFlatDatabase() {
+    // snapshot storage does not implement clear
+    throw new StorageException("Snapshot storage does not implement clear");
+  }
+
+  @Override
+  public void clearTrieLog() {
     // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
@@ -135,6 +120,16 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public void onClearFlatDatabaseStorage() {
+    // when the parent storage clears, close regardless of subscribers
+    try {
+      doClose();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void onClearTrieLog() {
     // when the parent storage clears, close regardless of subscribers
     try {
       doClose();

@@ -199,7 +199,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
               child =
                   (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
             }
-            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(child);
+            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
             final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
 
             if (!validateHeader(child, header)) {
@@ -258,7 +258,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       return false;
     }
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(child);
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     return blockHeaderValidator.validateHeader(
         child, header, protocolContext, validationPolicy.getValidationModeForNextBlock());

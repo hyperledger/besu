@@ -141,7 +141,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
         block.getBody().getTransactions().size());
 
     final BlockImporter importer =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getBlockImporter();
+        protocolSchedule.getByBlockNumber(block.getHeader().getNumber()).getBlockImporter();
     final BlockImportResult blockImportResult =
         importer.importBlock(protocolContext, block, HeaderValidationMode.FULL);
     if (blockImportResult.isImported()) {

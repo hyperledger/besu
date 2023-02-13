@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
@@ -186,19 +187,24 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
 
-    OptionalLong terminalBlockNumber = configOptionsSupplier.get().getTerminalBlockNumber();
-    Optional<Hash> terminalBlockHash = configOptionsSupplier.get().getTerminalBlockHash();
+    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
+    final OptionalLong terminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
+    final Optional<Hash> terminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
+    final boolean isPostMergeAtGenesis =
+        genesisConfigOptions.getTerminalTotalDifficulty().isPresent()
+            && genesisConfigOptions.getTerminalTotalDifficulty().get().isZero()
+            && blockchain.getGenesisBlockHeader().getDifficulty().isZero();
 
     final MergeContext mergeContext =
         PostMergeContext.get()
             .setSyncState(syncState.get())
             .setTerminalTotalDifficulty(
-                configOptionsSupplier
-                    .get()
+                genesisConfigOptions
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO))
-            .setCheckpointPostMergeSync(syncConfig.isCheckpointPostMergeEnabled());
+            .setCheckpointPostMergeSync(syncConfig.isCheckpointPostMergeEnabled())
+            .setPostMergeAtGenesis(isPostMergeAtGenesis);
 
     blockchain
         .getFinalized()
