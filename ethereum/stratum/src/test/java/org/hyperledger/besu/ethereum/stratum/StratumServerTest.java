@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.stratum;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
@@ -27,9 +28,14 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class StratumServerTest {
+
+  @Mock private PoWMiningCoordinator mockPoW;
 
   @Test
   public void runJobSetDifficultyShouldSucceed() {
@@ -48,10 +54,7 @@ public class StratumServerTest {
   }
 
   private StratumServer stratumServerWithMocks(final ObservableMetricsSystem metrics) {
-    PoWMiningCoordinator mockPoW =
-        Mockito.when(Mockito.mock(PoWMiningCoordinator.class).getEpochCalculator())
-            .thenReturn(new EpochCalculator.DefaultEpochCalculator())
-            .getMock();
+    when(mockPoW.getEpochCalculator()).thenReturn(new EpochCalculator.DefaultEpochCalculator());
 
     StratumServer ss =
         new StratumServer(null, mockPoW, 0, "lo", "", metrics) {
