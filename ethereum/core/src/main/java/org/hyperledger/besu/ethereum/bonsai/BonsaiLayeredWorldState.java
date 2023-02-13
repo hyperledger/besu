@@ -45,8 +45,8 @@ public class BonsaiLayeredWorldState
         BonsaiWorldView,
         WorldState,
         BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
-  private Optional<BonsaiWorldView> nextWorldView;
-  private Optional<Long> newtWorldViewSubscribeId;
+  private Optional<BonsaiWorldView> nextWorldView = Optional.empty();
+  private Optional<Long> newtWorldViewSubscribeId = Optional.empty();
   protected final long height;
   protected final TrieLogLayer trieLog;
   private final Hash worldStateRootHash;
