@@ -25,12 +25,12 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import com.google.common.util.concurrent.AtomicDouble;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.NetServer;
@@ -90,29 +90,16 @@ public class StratumServer implements PoWObserver {
             BesuMetricCategory.STRATUM, "disconnections", "Number of disconnections over time");
   }
 
-  public CompletableFuture<?> start() {
+  public Future<NetServer> start() {
     if (started.compareAndSet(false, true)) {
       logger.info("Starting stratum server on {}:{}", networkInterface, port);
       server =
           vertx.createNetServer(
               new NetServerOptions().setPort(port).setHost(networkInterface).setTcpKeepAlive(true));
-      CompletableFuture<?> result = new CompletableFuture<>();
       server.connectHandler(this::handle);
-      server.listen(
-          res -> {
-            if (res.failed()) {
-              result.completeExceptionally(
-                  new StratumServerException(
-                      String.format(
-                          "Failed to bind Stratum Server listener to %s:%s: %s",
-                          networkInterface, port, res.cause().getMessage())));
-            } else {
-              result.complete(null);
-            }
-          });
-      return result;
+      return server.listen();
     }
-    return CompletableFuture.completedFuture(null);
+    return Future.succeededFuture(server);
   }
 
   private void handle(final NetSocket socket) {
@@ -130,25 +117,12 @@ public class StratumServer implements PoWObserver {
         });
   }
 
-  public CompletableFuture<?> stop() {
+  public Future<Void> stop() {
     if (started.compareAndSet(true, false)) {
-      CompletableFuture<?> result = new CompletableFuture<>();
-      server.close(
-          res -> {
-            if (res.failed()) {
-              result.completeExceptionally(
-                  new StratumServerException(
-                      String.format(
-                          "Failed to bind Stratum Server listener to %s:%s: %s",
-                          networkInterface, port, res.cause().getMessage())));
-            } else {
-              result.complete(null);
-            }
-          });
-      return result;
+      return server.close();
     }
     logger.debug("Stopping StratumServer that was not running");
-    return CompletableFuture.completedFuture(null);
+    return Future.succeededFuture();
   }
 
   @Override

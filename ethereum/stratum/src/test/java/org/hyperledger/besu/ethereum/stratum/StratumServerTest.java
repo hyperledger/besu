@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 
-import java.util.concurrent.CompletableFuture;
-
+import io.vertx.core.Future;
+import io.vertx.core.net.NetServer;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
@@ -59,7 +59,7 @@ public class StratumServerTest {
     StratumServer ss =
         new StratumServer(null, mockPoW, 0, "lo", "", metrics) {
           @Override
-          public CompletableFuture<?> start() {
+          public Future<NetServer> start() {
             this.started.set(true);
             return null;
           }
