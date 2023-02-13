@@ -68,9 +68,8 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
     if (rootWorldStateStorage.getTrieLog(forBlockHeader.getHash()).isEmpty()) {
       final BonsaiUpdater stateUpdater = forWorldState.getWorldStateStorage().updater();
       boolean success = false;
-      TrieLogLayer trieLog = null;
       try {
-        trieLog =
+        final TrieLogLayer trieLog =
             prepareTrieLog(
                 forBlockHeader,
                 forWorldStateRootHash,
