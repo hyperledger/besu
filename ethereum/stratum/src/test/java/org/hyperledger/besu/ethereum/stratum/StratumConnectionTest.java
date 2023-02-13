@@ -28,8 +28,8 @@ import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -37,7 +37,7 @@ public class StratumConnectionTest {
 
   @Mock PoWMiningCoordinator miningCoordinator;
 
-  @Before
+  @BeforeEach
   public void setup() {
     miningCoordinator = Mockito.mock(PoWMiningCoordinator.class);
     when(miningCoordinator.getEpochCalculator())

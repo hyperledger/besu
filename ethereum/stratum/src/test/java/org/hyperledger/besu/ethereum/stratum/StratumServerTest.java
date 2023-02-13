@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class StratumServerTest {

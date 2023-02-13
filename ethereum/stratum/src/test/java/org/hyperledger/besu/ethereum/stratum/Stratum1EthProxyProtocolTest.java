@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class Stratum1EthProxyProtocolTest {
 
@@ -32,7 +32,7 @@ public class Stratum1EthProxyProtocolTest {
   private StratumConnection conn;
   private List<String> receivedMessages;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     MiningCoordinator coordinator = mock(PoWMiningCoordinator.class);
     protocol = new Stratum1EthProxyProtocol(coordinator);
