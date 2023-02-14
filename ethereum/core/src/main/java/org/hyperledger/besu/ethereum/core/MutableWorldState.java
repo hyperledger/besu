@@ -20,13 +20,6 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 public interface MutableWorldState extends WorldState, MutableWorldView {
 
   /**
-   * Creates an independent copy of this world state initially equivalent to this world state.
-   *
-   * @return a copy of this world state.
-   */
-  MutableWorldState copy();
-
-  /**
    * Persist accumulated changes to underlying storage.
    *
    * @param blockHeader If persisting for an imported block, the block hash of the world state this
@@ -35,13 +28,8 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    */
   void persist(BlockHeader blockHeader);
 
-  /**
-   * Returns whether this mutable worldstate can be persisted to storage.
-   *
-   * @return boolean
-   */
-  default boolean isPersistable() {
-    // default to true
-    return true;
+  default MutableWorldState freeze() {
+    // no op
+    throw new UnsupportedOperationException("cannot freeze");
   }
 }

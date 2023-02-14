@@ -148,13 +148,6 @@ public class BlockReplay {
     try (final var worldState =
         worldStateArchive
             .getMutable(previous.getStateRoot(), previous.getBlockHash(), false)
-            .map(
-                ws -> {
-                  if (!ws.isPersistable()) {
-                    return ws.copy();
-                  }
-                  return ws;
-                })
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(

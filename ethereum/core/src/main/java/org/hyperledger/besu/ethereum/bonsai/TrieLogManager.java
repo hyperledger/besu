@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 
 import java.util.Optional;
 
@@ -28,23 +27,14 @@ public interface TrieLogManager {
       final BonsaiWorldStateUpdater localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
-      final BonsaiPersistedWorldState forWorldState);
+      final BonsaiWorldState forWorldState);
 
-  Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash);
+  void addCachedLayer(
+      BlockHeader blockHeader, Hash worldStateRootHash, BonsaiWorldState forWorldState);
+
+  Optional<BonsaiSnapshotWorldStateKeyValueStorage> getWorldStateStorage(final Hash blockHash);
 
   long getMaxLayersToLoad();
 
-  void updateCachedLayers(final Hash blockParentHash, final Hash blockHash);
-
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
-
-  interface CachedWorldState<Z extends MutableWorldState> {
-    void dispose();
-
-    long getHeight();
-
-    TrieLogLayer getTrieLog();
-
-    Z getMutableWorldState();
-  }
 }

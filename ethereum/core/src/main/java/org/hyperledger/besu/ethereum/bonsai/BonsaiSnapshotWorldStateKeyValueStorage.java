@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.Optional;
@@ -48,13 +49,39 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
+  private final long blockNumber;
+
   public BonsaiSnapshotWorldStateKeyValueStorage(
+      final long blockNumber,
       final SnappedKeyValueStorage accountStorage,
       final SnappedKeyValueStorage codeStorage,
       final SnappedKeyValueStorage storageStorage,
       final SnappedKeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+    this.blockNumber = blockNumber;
+  }
+
+  public BonsaiSnapshotWorldStateKeyValueStorage(
+      final long blockNumber, final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+    this(
+        blockNumber,
+        ((SnappableKeyValueStorage) worldStateStorage.accountStorage).takeSnapshot(),
+        ((SnappableKeyValueStorage) worldStateStorage.codeStorage).takeSnapshot(),
+        ((SnappableKeyValueStorage) worldStateStorage.storageStorage).takeSnapshot(),
+        ((SnappableKeyValueStorage) worldStateStorage.trieBranchStorage).takeSnapshot(),
+        worldStateStorage.trieLogStorage);
+  }
+
+  @Override
+  public BonsaiSnapshotWorldStateKeyValueStorage clone() {
+    return new BonsaiSnapshotWorldStateKeyValueStorage(
+        blockNumber,
+        ((SnappedKeyValueStorage) accountStorage).cloneFromSnapshot(),
+        ((SnappedKeyValueStorage) codeStorage).cloneFromSnapshot(),
+        ((SnappedKeyValueStorage) storageStorage).cloneFromSnapshot(),
+        ((SnappedKeyValueStorage) trieBranchStorage).cloneFromSnapshot(),
+        trieLogStorage);
   }
 
   @Override
@@ -65,6 +92,10 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         (SnappedKeyValueStorage) storageStorage,
         (SnappedKeyValueStorage) trieBranchStorage,
         trieLogStorage);
+  }
+
+  public long getBlockNumber() {
+    return blockNumber;
   }
 
   @Override
@@ -101,11 +132,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     } catch (Exception e) {
       warnLambda(LOG, "exception while trying to close : {}", e::getMessage);
     }
-  }
-
-  void subscribeToParentStorage(final BonsaiWorldStateKeyValueStorage parentStorage) {
-    this.parentStorage.set(parentStorage);
-    parentStorageSubscriberId.set(parentStorage.subscribe(this));
   }
 
   @Override

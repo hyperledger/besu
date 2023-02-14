@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBSnapshotTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
-
   private final RocksDBMetrics metrics;
   private final OptimisticTransactionDB db;
   private final ColumnFamilyHandle columnFamilyHandle;

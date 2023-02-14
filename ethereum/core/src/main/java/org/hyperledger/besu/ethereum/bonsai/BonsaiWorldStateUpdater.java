@@ -390,8 +390,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     } else {
       try {
         final Optional<UInt256> valueUInt =
-            (wrappedWorldView() instanceof BonsaiPersistedWorldState)
-                ? ((BonsaiPersistedWorldState) wrappedWorldView())
+            (wrappedWorldView() instanceof BonsaiWorldState)
+                ? ((BonsaiWorldState) wrappedWorldView())
                     .getStorageValueBySlotHash(
                         () ->
                             Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))

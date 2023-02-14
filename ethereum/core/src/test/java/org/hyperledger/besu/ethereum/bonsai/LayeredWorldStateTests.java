@@ -63,11 +63,11 @@ public class LayeredWorldStateTests {
 
     TrieLogLayer mockLayer =
         when(mock(TrieLogLayer.class).getBlockHash()).thenReturn(Hash.ZERO).getMock();
-    BonsaiLayeredWorldState mockLayerWs =
-        new BonsaiLayeredWorldState(
+    BonsaiSnapshotWorldState mockLayerWs =
+        new BonsaiSnapshotWorldState(
             blockchain,
             archive,
-            Optional.of(mock(BonsaiLayeredWorldState.class)),
+            Optional.of(mock(BonsaiSnapshotWorldState.class)),
             1L,
             state1Hash,
             mockLayer);
@@ -99,9 +99,9 @@ public class LayeredWorldStateTests {
 
     BonsaiWorldStateUpdater testUpdater = new BonsaiWorldStateUpdater(testState);
     // mock kvstorage to mimic head being in a different state than testState
-    LayeredTrieLogManager manager =
+    LayeredWorldstateStorageManager manager =
         spy(
-            new LayeredTrieLogManager(
+            new LayeredWorldstateStorageManager(
                 blockchain, mock(BonsaiWorldStateKeyValueStorage.class), 10L, new HashMap<>()));
 
     // assert we are using the target worldstate storage:
@@ -122,8 +122,7 @@ public class LayeredWorldStateTests {
             any(BlockHeader.class),
             any(Hash.class),
             any(BonsaiWorldStateUpdater.class),
-            any(BonsaiWorldStateArchive.class),
-            any(BonsaiPersistedWorldState.class));
+            any(BonsaiWorldStateArchive.class));
 
     manager.saveTrieLog(archive, testUpdater, testStateRoot, testHeader, testState);
     assertThat(calledPrepareTrieLog.get()).isTrue();

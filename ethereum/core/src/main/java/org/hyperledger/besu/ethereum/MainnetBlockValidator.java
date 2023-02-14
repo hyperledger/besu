@@ -114,13 +114,6 @@ public class MainnetBlockValidator implements BlockValidator {
         context
             .getWorldStateArchive()
             .getMutable(parentHeader.getStateRoot(), parentHeader.getBlockHash(), shouldPersist)
-            .map(
-                ws -> {
-                  if (!ws.isPersistable()) {
-                    return ws.copy();
-                  }
-                  return ws;
-                })
             .orElse(null)) {
 
       if (worldState == null) {

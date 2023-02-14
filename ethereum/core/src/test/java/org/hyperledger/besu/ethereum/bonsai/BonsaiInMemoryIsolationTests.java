@@ -67,10 +67,10 @@ public class BonsaiInMemoryIsolationTests extends AbstractIsolationTests {
             .orElse(null);
 
     // assert layered before and after the block is what and where we expect it to be:
-    assertThat(layered2).isInstanceOf(BonsaiLayeredWorldState.class);
+    assertThat(layered2).isInstanceOf(BonsaiSnapshotWorldState.class);
     assertThat(layered2.rootHash()).isEqualTo(genesisBlock.getHeader().getStateRoot());
     assertThat(layered2.get(testAddress)).isNull();
-    assertThat(layered).isInstanceOf(BonsaiLayeredWorldState.class);
+    assertThat(layered).isInstanceOf(BonsaiSnapshotWorldState.class);
     assertThat(layered.rootHash()).isEqualTo(genesisBlock.getHeader().getStateRoot());
     assertThat(layered.get(testAddress)).isNull();
 
