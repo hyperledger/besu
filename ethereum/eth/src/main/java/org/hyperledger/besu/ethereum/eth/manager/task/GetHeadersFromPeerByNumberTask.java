@@ -40,7 +40,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
       final boolean reverse,
       final MetricsSystem metricsSystem) {
     super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
-    this.blockNumber = protocolSchedule.isPostMerge() ? 0 : blockNumber;
+    this.blockNumber = blockNumber;
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtNumber(

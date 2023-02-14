@@ -53,8 +53,7 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
       final int maxRetries) {
     super(ethContext, metricsSystem, List::isEmpty, maxRetries);
     this.protocolSchedule = protocolSchedule;
-    this.minimumRequiredBlockNumber =
-        protocolSchedule.isPostMerge() ? 0 : minimumRequiredBlockNumber;
+    this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
     this.count = count;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;

@@ -74,6 +74,7 @@ public class RangeHeadersFetcherTest {
   public void setUpTest() {
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),

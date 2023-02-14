@@ -30,7 +30,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class NoRewardProtocolScheduleWrapper extends ProtocolSchedule {
+public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
 
   private final ProtocolSchedule delegate;
 
@@ -82,7 +82,8 @@ public class NoRewardProtocolScheduleWrapper extends ProtocolSchedule {
         original.getBadBlocksManager(),
         Optional.empty(),
         original.getWithdrawalsValidator(),
-        original.getWithdrawalsProcessor());
+        original.getWithdrawalsProcessor(),
+        original.isPoS());
   }
 
   @Override

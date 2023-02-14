@@ -45,8 +45,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
       final boolean reverse,
       final MetricsSystem metricsSystem) {
     super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
-    this.minimumRequiredBlockNumber =
-        protocolSchedule.isPostMerge() ? 0 : minimumRequiredBlockNumber;
+    this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
   }
