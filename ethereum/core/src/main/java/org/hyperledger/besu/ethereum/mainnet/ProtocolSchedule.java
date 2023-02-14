@@ -16,14 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
-import java.util.stream.Stream;
-
 public interface ProtocolSchedule
     extends HeaderBasedProtocolSchedule, PrivacySupportingProtocolSchedule {
 
   ProtocolSpec getByBlockNumber(long number);
-
-  Stream<Long> streamMilestoneBlocks();
 
   @Override
   default ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {

@@ -16,11 +16,14 @@ package org.hyperledger.besu.consensus.merge;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
@@ -58,6 +61,28 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     this.mergeContext = mergeContext;
     transitionUtils =
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
+  }
+
+  /**
+   * Create a Proof-of-Stake protocol schedule from a config object
+   *
+   * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the milestone starting points
+   * @return an initialised TransitionProtocolSchedule using post-merge defaults
+   */
+  public static TransitionProtocolSchedule fromConfig(
+      final GenesisConfigOptions genesisConfigOptions) {
+    ProtocolSchedule preMergeProtocolSchedule =
+        MainnetProtocolSchedule.fromConfig(genesisConfigOptions);
+    ProtocolSchedule postMergeProtocolSchedule =
+        MergeProtocolSchedule.create(genesisConfigOptions, false);
+    TimestampSchedule timestampSchedule =
+        MergeProtocolSchedule.createTimestamp(
+            genesisConfigOptions, PrivacyParameters.DEFAULT, false);
+    return new TransitionProtocolSchedule(
+        preMergeProtocolSchedule,
+        postMergeProtocolSchedule,
+        PostMergeContext.get(),
+        timestampSchedule);
   }
 
   /**
@@ -162,8 +187,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    */
   @Override
   public Stream<Long> streamMilestoneBlocks() {
-    return transitionUtils.dispatchFunctionAccordingToMergeState(
-        ProtocolSchedule::streamMilestoneBlocks);
+    Stream<Long> milestoneBlockNumbers =
+        transitionUtils.dispatchFunctionAccordingToMergeState(
+            ProtocolSchedule::streamMilestoneBlocks);
+    return Stream.concat(milestoneBlockNumbers, timestampSchedule.streamMilestoneBlocks());
   }
 
   /**
