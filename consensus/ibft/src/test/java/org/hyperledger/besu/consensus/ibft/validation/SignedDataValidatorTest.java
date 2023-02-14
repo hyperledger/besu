@@ -42,6 +42,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("DirectInvocationOnMock")
 public class SignedDataValidatorTest {
 
   private final NodeKey proposerKey = NodeKeyUtils.generate();

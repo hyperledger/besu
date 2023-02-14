@@ -43,6 +43,7 @@ import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings("MockNotUsedInProduction")
 public class PrivFindPrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = VALID_BASE64_ENCLAVE_KEY.toBase64String();
   private static final List<String> ADDRESSES =

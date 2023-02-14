@@ -56,6 +56,8 @@ public enum RpcMethod {
   ENGINE_FORKCHOICE_UPDATED_V1("engine_forkchoiceUpdatedV1"),
   ENGINE_FORKCHOICE_UPDATED_V2("engine_forkchoiceUpdatedV2"),
   ENGINE_EXCHANGE_TRANSITION_CONFIGURATION("engine_exchangeTransitionConfigurationV1"),
+  ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1("engine_getPayloadBodiesByHashV1"),
+  ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1("engine_getPayloadBodiesByRangeV1"),
   ENGINE_EXCHANGE_CAPABILITIES("engine_exchangeCapabilities"),
 
   GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),

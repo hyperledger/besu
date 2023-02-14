@@ -30,8 +30,8 @@ plugins {
   id 'maven-publish'
 }
 
-if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+  throw new GradleException("Java 17 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -99,8 +99,8 @@ allprojects {
     from javadoc.outputDirectory
   }
 
-  sourceCompatibility = 11
-  targetCompatibility = 11
+  sourceCompatibility = 17
+  targetCompatibility = 17
 
   repositories {
     maven {
@@ -622,8 +622,8 @@ def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("
 def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
 def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
-  "openjdk-11",
-  "openjdk-11-debug",
+  "openjdk-17",
+  "openjdk-17-debug",
   "graalvm",
   "openjdk-latest"
 ]
@@ -715,10 +715,7 @@ task dockerUpload {
     additionalTags.add('develop')
   }
 
-  def isInterimBuild = (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
-  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
-
-  if (!isInterimBuild) {
+  if (!isInterimBuild(dockerBuildVersion)) {
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -778,7 +775,7 @@ task manifestDocker {
     tags.add("${dockerImageName}:develop")
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  if (!isInterimBuild(dockerBuildVersion)) {
     tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -927,6 +924,12 @@ def getCheckedOutGitCommitHash(length = 8) {
     logger.info('Error retrieving git commit', e)
     return "xxxxxxxx"
   }
+}
+
+// Takes the version and if it contains SNAPSHOT, alpha, beta or RC in version then return true indicating an interim build
+def isInterimBuild(dockerBuildVersion) {
+  return (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
 }
 
 tasks.register("verifyDistributions") {

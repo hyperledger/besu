@@ -14,15 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
-import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -53,16 +50,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final KeyValueStorage trieLogStorage;
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
-  private Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder;
-
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     this(
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
-        Optional.empty());
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
   }
 
   public BonsaiWorldStateKeyValueStorage(
@@ -71,33 +65,23 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
-    this(
-        accountStorage,
-        codeStorage,
-        storageStorage,
-        trieBranchStorage,
-        trieLogStorage,
-        Optional.empty());
-  }
-
-  public BonsaiWorldStateKeyValueStorage(
-      final KeyValueStorage accountStorage,
-      final KeyValueStorage codeStorage,
-      final KeyValueStorage storageStorage,
-      final KeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage,
-      final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
-    this.maybeFallbackNodeFinder = fallbackNodeFinder;
   }
 
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
-    return codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    if (codeHash.equals(Hash.EMPTY)) {
+      return Optional.of(Bytes.EMPTY);
+    } else {
+      return codeStorage
+          .get(accountHash.toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(b -> Hash.hash(b).equals(codeHash));
+    }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
@@ -128,17 +112,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      final Optional<Bytes> value =
-          trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
-      if (value.isPresent()) {
-        return value
-            .filter(b -> Hash.hash(b).equals(nodeHash))
-            .or(
-                () ->
-                    maybeFallbackNodeFinder.flatMap(
-                        finder -> finder.getAccountStateTrieNode(location, nodeHash)));
-      }
-      return Optional.empty();
+      return trieBranchStorage
+          .get(location.toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
@@ -148,20 +125,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      final Optional<Bytes> value =
-          trieBranchStorage
-              .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-              .map(Bytes::wrap);
-      if (value.isPresent()) {
-        return value
-            .filter(b -> Hash.hash(b).equals(nodeHash))
-            .or(
-                () ->
-                    maybeFallbackNodeFinder.flatMap(
-                        finder ->
-                            finder.getAccountStorageTrieNode(accountHash, location, nodeHash)));
-      }
-      return Optional.empty();
+      return trieBranchStorage
+          .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
@@ -228,11 +195,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return trieBranchStorage
-            .get(WORLD_ROOT_HASH_KEY)
-            .map(Bytes32::wrap)
-            .filter(hash -> hash.equals(rootHash))
-            .isPresent()
-        || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+        .get(WORLD_ROOT_HASH_KEY)
+        .map(Bytes32::wrap)
+        .map(hash -> hash.equals(rootHash) || trieLogStorage.containsKey(blockHash.toArrayUnsafe()))
+        .orElse(false);
   }
 
   @Override
@@ -242,6 +208,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     codeStorage.clear();
     storageStorage.clear();
     trieBranchStorage.clear();
+    trieLogStorage.clear();
+  }
+
+  @Override
+  public void clearTrieLog() {
+    subscribers.forEach(BonsaiStorageSubscriber::onClearTrieLog);
     trieLogStorage.clear();
   }
 
@@ -275,15 +247,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void removeNodeAddedListener(final long id) {
     throw new RuntimeException("removeNodeAddedListener not available");
-  }
-
-  public Optional<PeerTrieNodeFinder> getMaybeFallbackNodeFinder() {
-    return maybeFallbackNodeFinder;
-  }
-
-  public void useFallbackNodeFinder(final Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder) {
-    checkNotNull(maybeFallbackNodeFinder);
-    this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
   }
 
   public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
@@ -455,6 +418,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     default void onClearStorage() {}
 
     default void onClearFlatDatabaseStorage() {}
+
+    default void onClearTrieLog() {}
 
     default void onCloseStorage() {}
   }

@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -273,7 +274,6 @@ public class BackwardSyncContextTest {
     Block block = Mockito.mock(Block.class);
     BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
     when(block.getHash()).thenReturn(Hash.fromHexStringLenient("0x42"));
-    when(block.getHeader()).thenReturn(blockHeader);
     when(blockHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x42"));
     BadChainListener badChainListener = Mockito.mock(BadChainListener.class);
     context.subscribeBadChainListener(badChainListener);
@@ -286,7 +286,7 @@ public class BackwardSyncContextTest {
     backwardChain.clear();
     backwardChain.prependAncestorsHeader(grandChildBlockHeader);
     backwardChain.prependAncestorsHeader(childBlockHeader);
-    backwardChain.prependAncestorsHeader(block.getHeader());
+    backwardChain.prependAncestorsHeader(blockHeader);
 
     doReturn(blockValidator).when(context).getBlockValidatorForBlock(any());
     BlockProcessingResult result = new BlockProcessingResult("custom error");
@@ -296,7 +296,7 @@ public class BackwardSyncContextTest {
         .isInstanceOf(BackwardSyncException.class)
         .hasMessageContaining("custom error");
 
-    Mockito.verify(badChainListener)
+    verify(badChainListener)
         .onBadChain(
             block, Collections.emptyList(), List.of(childBlockHeader, grandChildBlockHeader));
   }

@@ -1200,7 +1200,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void identityValueTrueMustBeUsed() {
     parseCommand("--identity", "test");
 
-    verify(mockRunnerBuilder.identityString(eq(Optional.of("test")))).build();
+    verify(mockRunnerBuilder).identityString(eq(Optional.of("test")));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1210,7 +1211,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void p2pEnabledOptionValueTrueMustBeUsed() {
     parseCommand("--p2p-enabled", "true");
 
-    verify(mockRunnerBuilder.p2pEnabled(eq(true))).build();
+    verify(mockRunnerBuilder).p2pEnabled(eq(true));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1220,7 +1222,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void p2pEnabledOptionValueFalseMustBeUsed() {
     parseCommand("--p2p-enabled", "false");
 
-    verify(mockRunnerBuilder.p2pEnabled(eq(false))).build();
+    verify(mockRunnerBuilder).p2pEnabled(eq(false));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1301,7 +1304,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueTrueMustBeUsed() {
     parseCommand("--discovery-enabled", "true");
 
-    verify(mockRunnerBuilder.discovery(eq(true))).build();
+    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1311,7 +1315,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueFalseMustBeUsed() {
     parseCommand("--discovery-enabled", "false");
 
-    verify(mockRunnerBuilder.discovery(eq(false))).build();
+    verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4397,8 +4402,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void
       privateMarkerTransactionSigningKeyFileNotCanNotBeUsedWithPluginPrivateMarkerTransactionFactory()
           throws IOException {
-    privacyPluginService.setPrivateMarkerTransactionFactory(
-        mock(PrivateMarkerTransactionFactory.class));
+    when(privacyPluginService.getPrivateMarkerTransactionFactory())
+        .thenReturn(mock(PrivateMarkerTransactionFactory.class));
     final Path toml =
         createTempFile(
             "key",
@@ -4412,7 +4417,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         toml.toString());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    //    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies");
   }
 
   @Test
@@ -5510,7 +5518,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Near head checkpoint sync requires TTD in the genesis file");
+        .contains("PoS checkpoint sync requires TTD in the genesis file");
   }
 
   @Test
@@ -5521,7 +5529,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
+            "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
   }
 
   @Test
@@ -5537,6 +5545,25 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String configText =
         Resources.toString(
             Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
+            StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
+
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "X_CHECKPOINT",
+        "--Xcheckpoint-post-merge-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkpointPostMergeWithPostMergeBlockTDEqualsTTDSucceeds() throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("valid_pos_checkpoint_pos_TD_equals_TTD.json"),
             StandardCharsets.UTF_8);
     final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
 
@@ -5569,6 +5596,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Post Merge checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+            "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
   }
 }

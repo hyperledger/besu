@@ -15,8 +15,11 @@
 
 package org.hyperledger.besu.pki.util;
 
+import org.hyperledger.besu.pki.cms.CmsCreator;
+
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -26,6 +29,7 @@ import java.security.cert.CRLReason;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
+import java.security.spec.ECGenParameterSpec;
 import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -62,20 +66,33 @@ public class TestCertificateUtils {
     }
   }
 
-  public static KeyPair createKeyPair() {
+  public enum Algorithm {
+    RSA,
+    EC
+  }
+
+  public static KeyPair createKeyPair(final Algorithm algorithm) {
     try {
-      final KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+      @SuppressWarnings("InsecureCryptoUsage")
+      final KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm.name());
+      if (algorithm == Algorithm.EC) {
+        kpg.initialize(new ECGenParameterSpec("secp256r1"));
+      }
       return kpg.generateKeyPair();
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException("Error creating KeyPair", e);
+    } catch (InvalidAlgorithmParameterException e) {
+      throw new RuntimeException(e);
     }
   }
 
   public static X509Certificate createSelfSignedCertificate(
       final String name, final Instant notBefore, final Instant notAfter, final KeyPair keyPair) {
     try {
+      final String signatureAlgorithm =
+          CmsCreator.getPreferredSignatureAlgorithm(keyPair.getPublic());
       final ContentSigner signer =
-          new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(keyPair.getPrivate());
+          new JcaContentSignerBuilder(signatureAlgorithm).build(keyPair.getPrivate());
 
       final X509v3CertificateBuilder certificateBuilder =
           new JcaX509v3CertificateBuilder(
@@ -123,8 +140,10 @@ public class TestCertificateUtils {
       final boolean isCa) {
 
     try {
+      final String signatureAlgorithm =
+          CmsCreator.getPreferredSignatureAlgorithm(keyPair.getPublic());
       final ContentSigner signer =
-          new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(issuerKeyPair.getPrivate());
+          new JcaContentSignerBuilder(signatureAlgorithm).build(issuerKeyPair.getPrivate());
 
       final X509v3CertificateBuilder certificateBuilder =
           new JcaX509v3CertificateBuilder(
@@ -181,9 +200,10 @@ public class TestCertificateUtils {
                   c.getSerialNumber(), Date.from(Instant.now()), CRLReason.UNSPECIFIED.ordinal()));
 
       crlBuilder.setNextUpdate(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)));
-
+      final String signatureAlgorithm =
+          CmsCreator.getPreferredSignatureAlgorithm(issuerKeyPair.getPublic());
       final ContentSigner signer =
-          new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(issuerKeyPair.getPrivate());
+          new JcaContentSignerBuilder(signatureAlgorithm).build(issuerKeyPair.getPrivate());
       final X509CRLHolder crlHolder = crlBuilder.build(signer);
       return new JcaX509CRLConverter()
           .setProvider(BouncyCastleProvider.PROVIDER_NAME)
