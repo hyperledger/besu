@@ -150,7 +150,8 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
                 blockHashLookup,
                 true,
                 TransactionValidationParams.processingBlock(),
-                null);
+                null,
+                Wei.ZERO);
 
         if (result.isInvalid()) {
           String errorMessage =

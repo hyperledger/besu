@@ -14,24 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core.feemarket;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
-import java.math.BigInteger;
 import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public interface TransactionPriceCalculator {
   Wei price(Transaction transaction, Optional<Wei> maybeFee);
-
-  default Wei dataPrice(final DataGas excessDataGas) {
-    return Wei.ZERO;
-  }
 
   class Frontier implements TransactionPriceCalculator {
     @Override
@@ -57,44 +46,5 @@ public interface TransactionPriceCalculator {
     }
   }
 
-  class DataBlob extends EIP1559 {
-    private static final Logger LOG = LoggerFactory.getLogger(DataBlob.class);
-    private final BigInteger minDataGasPrice;
-    private final BigInteger dataGasPriceUpdateFraction;
-
-    public DataBlob(final int minDataGasPrice, final int dataGasPriceUpdateFraction) {
-      this.minDataGasPrice = BigInteger.valueOf(minDataGasPrice);
-      this.dataGasPriceUpdateFraction = BigInteger.valueOf(dataGasPriceUpdateFraction);
-    }
-
-    @Override
-    public Wei dataPrice(final DataGas excessDataGas) {
-      final var dataGasPrice =
-          Wei.of(
-              fakeExponential(
-                  minDataGasPrice, excessDataGas.toBigInteger(), dataGasPriceUpdateFraction));
-      traceLambda(
-          LOG,
-          "parentExcessDataGas: {} dataGasPrice: {}",
-          excessDataGas::toShortHexString,
-          dataGasPrice::toHexString);
-
-      return dataGasPrice;
-    }
-
-    private BigInteger fakeExponential(
-        final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
-      int i = 1;
-      BigInteger output = BigInteger.ZERO;
-      BigInteger numeratorAccumulator = factor.multiply(denominator);
-      while (numeratorAccumulator.signum() > 0) {
-        output = output.add(numeratorAccumulator);
-        numeratorAccumulator =
-            (numeratorAccumulator.multiply(numerator))
-                .divide(denominator.multiply(BigInteger.valueOf(i)));
-        ++i;
-      }
-      return output.divide(denominator);
-    }
-  }
+  class DataBlob extends EIP1559 {}
 }

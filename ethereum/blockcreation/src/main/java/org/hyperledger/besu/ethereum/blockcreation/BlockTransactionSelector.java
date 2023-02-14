@@ -220,7 +220,8 @@ public class BlockTransactionSelector {
               miningBeneficiary,
               blockHashLookup,
               false,
-              TransactionValidationParams.mining());
+              TransactionValidationParams.mining(),
+              Wei.ZERO);
     }
 
     if (!effectiveResult.isInvalid()) {
@@ -245,9 +246,8 @@ public class BlockTransactionSelector {
           .getMaxFeePerDataGas()
           .orElseThrow()
           .lessThan(
-              feeMarket
-                  .getTransactionPriceCalculator()
-                  .dataPrice(processableBlockHeader.getExcessDataGas().orElse(DataGas.ZERO)))) {
+              feeMarket.dataPrice(
+                  processableBlockHeader.getExcessDataGas().orElse(DataGas.ZERO)))) {
         return true;
       }
     }
