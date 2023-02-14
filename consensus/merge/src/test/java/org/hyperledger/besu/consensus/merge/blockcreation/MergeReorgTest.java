@@ -147,7 +147,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   }
 
   private void appendBlock(final Block block) {
-    final BlockProcessingResult result = coordinator.validateBlock(block, false);
+    final BlockProcessingResult result = coordinator.validateBlock(block);
 
     if (result.isSuccessful()) {
       result

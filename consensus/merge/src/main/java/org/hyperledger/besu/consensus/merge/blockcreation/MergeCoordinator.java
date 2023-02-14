@@ -270,7 +270,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
             .getBlock();
 
-    BlockProcessingResult result = validateBlock(emptyBlock, true);
+    BlockProcessingResult result = validateProposedBlock(emptyBlock);
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
@@ -391,7 +391,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-    final var resultBest = validateBlock(bestBlock, true);
+    final var resultBest = validateProposedBlock(bestBlock);
     if (resultBest.isSuccessful()) {
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
@@ -469,7 +469,23 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public BlockProcessingResult validateBlock(final Block block, final boolean isBlockProposer) {
+  public BlockProcessingResult validateBlock(final Block block) {
+    final var validationResult =
+        protocolSchedule
+            .getByBlockHeader(block.getHeader())
+            .getBlockValidator()
+            .validateAndProcessBlock(
+                protocolContext,
+                block,
+                HeaderValidationMode.FULL,
+                HeaderValidationMode.NONE,
+                false);
+
+    return validationResult;
+  }
+
+  @Override
+  public BlockProcessingResult validateProposedBlock(Block block) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -480,7 +496,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
                 false,
-                isBlockProposer);
+                true);
 
     return validationResult;
   }
@@ -489,7 +505,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   public BlockProcessingResult rememberBlock(final Block block) {
     debugLambda(LOG, "Remember block {}", block::toLogString);
     final var chain = protocolContext.getBlockchain();
-    final var validationResult = validateBlock(block, false);
+    final var validationResult = validateBlock(block);
     validationResult
         .getYield()
         .ifPresentOrElse(
