@@ -49,7 +49,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
-    return protocolSpecs.stream().map(TimedProtocolSpec::getTimestamp);
+    return protocolSpecs.stream().map(TimedProtocolSpec::getTimestamp).sorted();
   }
 
   @Override
