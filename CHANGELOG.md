@@ -27,6 +27,7 @@ tests are updated to use EC private keys instead of RSA keys.
 - Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
 - Add worldstate auto-heal mechanism [#5059](https://github.com/hyperledger/besu/pull/5059)
 - Support for EIP-4895 - Withdrawals for Shanghai fork
+- If a PoS block creation repetition takes less than a configurable duration, then waits before next repetition [#5048](https://github.com/hyperledger/besu/pull/5048)
 - Gas accounting for EIP-4844 [#4992](https://github.com/hyperledger/besu/pull/4992)
 
 ### Bug Fixes
