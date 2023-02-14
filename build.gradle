@@ -715,10 +715,7 @@ task dockerUpload {
     additionalTags.add('develop')
   }
 
-  def isInterimBuild = (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
-  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
-
-  if (!isInterimBuild) {
+  if (!isInterimBuild(dockerBuildVersion)) {
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -778,7 +775,7 @@ task manifestDocker {
     tags.add("${dockerImageName}:develop")
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  if (!isInterimBuild(dockerBuildVersion)) {
     tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -927,6 +924,12 @@ def getCheckedOutGitCommitHash(length = 8) {
     logger.info('Error retrieving git commit', e)
     return "xxxxxxxx"
   }
+}
+
+// Takes the version and if it contains SNAPSHOT, alpha, beta or RC in version then return true indicating an interim build
+def isInterimBuild(dockerBuildVersion) {
+  return (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
 }
 
 tasks.register("verifyDistributions") {

@@ -428,7 +428,8 @@ public final class RunnerTest {
 
     for (int i = 1; i < count + 1; ++i) {
       final Block block = blocks.get(i);
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
+      final ProtocolSpec protocolSpec =
+          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final BlockImportResult result =
           blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);

@@ -167,8 +167,16 @@ public class FastSyncTargetManager extends SyncTargetManager {
   @Override
   public boolean shouldContinueDownloading() {
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
-    return !protocolContext.getBlockchain().getChainHeadHash().equals(pivotBlockHeader.getHash())
-        || !worldStateStorage.isWorldStateAvailable(
-            pivotBlockHeader.getStateRoot(), pivotBlockHeader.getBlockHash());
+    boolean isValidChainHead =
+        protocolContext.getBlockchain().getChainHeadHash().equals(pivotBlockHeader.getHash());
+    if (!isValidChainHead) {
+      if (protocolContext.getBlockchain().contains(pivotBlockHeader.getHash())) {
+        protocolContext.getBlockchain().rewindToBlock(pivotBlockHeader.getHash());
+      } else {
+        return true;
+      }
+    }
+    return !worldStateStorage.isWorldStateAvailable(
+        pivotBlockHeader.getStateRoot(), pivotBlockHeader.getBlockHash());
   }
 }

@@ -3512,7 +3512,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (synchronizerConfiguration.isCheckpointPostMergeEnabled()) {
       if (!checkpointConfigOptions.isValid()) {
         throw new InvalidConfigurationException(
-            "Near head checkpoint sync requires a checkpoint block configured in the genesis file");
+            "PoS checkpoint sync requires a checkpoint block configured in the genesis file");
       }
       terminalTotalDifficulty.ifPresentOrElse(
           ttd -> {
@@ -3521,18 +3521,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     .equals(UInt256.ZERO)
                 && ttd.equals(UInt256.ZERO)) {
               throw new InvalidConfigurationException(
-                  "Post Merge checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+                  "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
             }
             if (UInt256.fromHexString(
                     genesisOptions.getCheckpointOptions().getTotalDifficulty().get())
-                .lessOrEqualThan(ttd)) {
+                .lessThan(ttd)) {
               throw new InvalidConfigurationException(
-                  "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
+                  "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
             }
           },
           () -> {
             throw new InvalidConfigurationException(
-                "Near head checkpoint sync requires TTD in the genesis file");
+                "PoS checkpoint sync requires TTD in the genesis file");
           });
     }
   }

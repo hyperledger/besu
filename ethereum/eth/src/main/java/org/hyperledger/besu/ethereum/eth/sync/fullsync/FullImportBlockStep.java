@@ -58,7 +58,7 @@ public class FullImportBlockStep implements Consumer<Block> {
     final long blockNumber = block.getHeader().getNumber();
     final String blockHash = block.getHash().toHexString();
     final BlockImporter importer =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getBlockImporter();
+        protocolSchedule.getByBlockNumber(blockNumber).getBlockImporter();
     final BlockImportResult blockImportResult =
         importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED);
     if (!blockImportResult.isImported()) {

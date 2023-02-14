@@ -97,16 +97,17 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
 
   @VisibleForTesting
   TrieLogLayer prepareTrieLog(
-      final BlockHeader blockHeader,
-      final Hash worldStateRootHash,
+      final BlockHeader forBlockHeader,
+      final Hash forWorldStateRootHash,
       final BonsaiWorldStateUpdater localUpdater,
       final BonsaiWorldStateArchive worldStateArchive,
       final BonsaiPersistedWorldState forWorldState) {
-    debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
-    final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
+    debugLambda(LOG, "Adding layered world state for {}", forBlockHeader::toLogString);
+    final TrieLogLayer trieLog = localUpdater.generateTrieLog(forBlockHeader.getBlockHash());
     trieLog.freeze();
-    addCachedLayer(blockHeader, worldStateRootHash, trieLog, worldStateArchive, forWorldState);
-    scrubCachedLayers(blockHeader.getNumber());
+    addCachedLayer(
+        forBlockHeader, forWorldStateRootHash, trieLog, worldStateArchive, forWorldState);
+    scrubCachedLayers(forBlockHeader.getNumber());
     return trieLog;
   }
 
