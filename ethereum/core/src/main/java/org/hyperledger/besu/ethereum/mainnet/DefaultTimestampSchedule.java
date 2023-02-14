@@ -26,6 +26,7 @@ import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DefaultTimestampSchedule implements TimestampSchedule {
   private final NavigableSet<TimedProtocolSpec> protocolSpecs =
@@ -44,6 +45,11 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
       }
     }
     return Optional.empty();
+  }
+
+  @Override
+  public Stream<Long> streamMilestoneBlocks() {
+    return protocolSpecs.stream().map(TimedProtocolSpec::getTimestamp).sorted();
   }
 
   @Override
