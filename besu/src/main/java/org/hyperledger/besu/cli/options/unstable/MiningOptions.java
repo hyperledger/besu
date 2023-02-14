@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_MAX_OMMERS_DEPTH;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POW_JOB_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
@@ -66,6 +67,15 @@ public class MiningOptions {
       description =
           "Specifies the maximum time, in milliseconds, a PoS block creation jobs is allowed to run. Must be positive and ≤ 12000 (default: ${DEFAULT-VALUE} milliseconds)")
   private final Long posBlockCreationMaxTime = DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xpos-block-creation-repetition-min-duration"},
+      description =
+          "If a PoS block creation repetition takes less than this duration, in milliseconds,"
+              + " then it waits before next repetition. Must be positive and ≤ 2000 (default: ${DEFAULT-VALUE} milliseconds)")
+  private final Long posBlockCreationRepetitionMinDuration =
+      DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
 
   /**
    * Create mining options.
@@ -128,5 +138,14 @@ public class MiningOptions {
    */
   public Long getPosBlockCreationMaxTime() {
     return posBlockCreationMaxTime;
+  }
+
+  /**
+   * Gets pos block creation repetition min duration.
+   *
+   * @return the pos block creation repetition min duration.
+   */
+  public Long getPosBlockCreationRepetitionMinDuration() {
+    return posBlockCreationRepetitionMinDuration;
   }
 }
