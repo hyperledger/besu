@@ -66,7 +66,8 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   /**
    * Create a Proof-of-Stake protocol schedule from a config object
    *
-   * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the milestone starting points
+   * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the
+   *     milestone starting points
    * @return an initialised TransitionProtocolSchedule using post-merge defaults
    */
   public static TransitionProtocolSchedule fromConfig(
