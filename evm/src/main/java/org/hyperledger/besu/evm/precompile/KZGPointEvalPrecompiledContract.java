@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 
 /** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
+
+  private static final AtomicBoolean trustedSetupLoaded = new AtomicBoolean(false);
 
   /** Instantiates a new KZGPointEval precompile contract. */
   public KZGPointEvalPrecompiledContract() {
@@ -49,46 +52,47 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
    * @param pathToTrustedSetup the trusted setup path
    */
   public KZGPointEvalPrecompiledContract(final Optional<Path> pathToTrustedSetup) {
-
-    String absolutePathToSetup;
-    CKZG4844JNI.Preset bitLength;
-    if (pathToTrustedSetup.isPresent()) {
-      Path pathToSetup = pathToTrustedSetup.get();
-      absolutePathToSetup = pathToSetup.toAbsolutePath().toString();
-    } else {
-      InputStream is =
-          KZGPointEvalPrecompiledContract.class.getResourceAsStream(
-              "mainnet_kzg_trusted_setup_4096.txt");
-      try {
-        File jniWillLoadFrom = File.createTempFile("kzgTrustedSetup", "txt");
-        jniWillLoadFrom.deleteOnExit();
-        Files.copy(is, jniWillLoadFrom.toPath(), REPLACE_EXISTING);
-        is.close();
-        absolutePathToSetup = jniWillLoadFrom.getAbsolutePath();
+    if (trustedSetupLoaded.compareAndSet(false, true)) {
+      String absolutePathToSetup;
+      CKZG4844JNI.Preset bitLength;
+      if (pathToTrustedSetup.isPresent()) {
+        Path pathToSetup = pathToTrustedSetup.get();
+        absolutePathToSetup = pathToSetup.toAbsolutePath().toString();
+      } else {
+        InputStream is =
+            KZGPointEvalPrecompiledContract.class.getResourceAsStream(
+                "mainnet_kzg_trusted_setup_4096.txt");
+        try {
+          File jniWillLoadFrom = File.createTempFile("kzgTrustedSetup", ".txt");
+          jniWillLoadFrom.deleteOnExit();
+          Files.copy(is, jniWillLoadFrom.toPath(), REPLACE_EXISTING);
+          is.close();
+          absolutePathToSetup = jniWillLoadFrom.getAbsolutePath();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      try (BufferedReader setupFile =
+          Files.newBufferedReader(Paths.get(absolutePathToSetup), Charset.defaultCharset())) {
+        String firstLine = setupFile.readLine();
+        if ("4".equals(firstLine)) {
+          bitLength = CKZG4844JNI.Preset.MINIMAL;
+        } else if ("4096".equals(firstLine)) {
+          bitLength = CKZG4844JNI.Preset.MAINNET;
+        } else {
+          throw new IllegalArgumentException("provided file not a setup for either 4 or 4096 bits");
+        }
+        CKZG4844JNI.loadNativeLibrary(bitLength);
+        try {
+          CKZG4844JNI.loadTrustedSetup(absolutePathToSetup);
+        } catch (RuntimeException mightBeAlreadyLoaded) {
+          if (!mightBeAlreadyLoaded.getMessage().contains("Trusted Setup is already loaded")) {
+            throw mightBeAlreadyLoaded;
+          }
+        }
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
-    }
-    try (BufferedReader setupFile =
-        Files.newBufferedReader(Paths.get(absolutePathToSetup), Charset.defaultCharset())) {
-      String firstLine = setupFile.readLine();
-      if ("4".equals(firstLine)) {
-        bitLength = CKZG4844JNI.Preset.MINIMAL;
-      } else if ("4096".equals(firstLine)) {
-        bitLength = CKZG4844JNI.Preset.MAINNET;
-      } else {
-        throw new IllegalArgumentException("provided file not a setup for either 4 or 4096 bits");
-      }
-      CKZG4844JNI.loadNativeLibrary(bitLength);
-      try {
-        CKZG4844JNI.loadTrustedSetup(absolutePathToSetup);
-      } catch (RuntimeException mightBeAlreadyLoaded) {
-        if (!mightBeAlreadyLoaded.getMessage().contains("Trusted Setup is already loaded")) {
-          throw mightBeAlreadyLoaded;
-        }
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
   }
 
@@ -96,6 +100,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   @VisibleForTesting
   public void tearDown() {
     CKZG4844JNI.freeTrustedSetup();
+    trustedSetupLoaded.set(false);
   }
 
   @Override

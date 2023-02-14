@@ -135,8 +135,7 @@ public class MainnetTransactionValidator {
       return signatureResult;
     }
 
-    if (transaction.getType().equals(TransactionType.BLOB)
-        && transaction.getBlobsWithCommitments().isPresent()) {
+    if (transaction.getType().supportsBlob() && transaction.getBlobsWithCommitments().isPresent()) {
       final ValidationResult<TransactionInvalidReason> blobsResult =
           validateTransactionsBlobs(transaction);
       if (!blobsResult.isValid()) {
@@ -334,13 +333,7 @@ public class MainnetTransactionValidator {
   public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
       final Transaction transaction) {
 
-    if (transaction.getBlobsWithCommitments().isEmpty()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_BLOBS,
-          "transaction blobs are empty, cannot verify without blobs");
-    }
-
-    Transaction.BlobsWithCommitments blobsWithCommitments =
+    final Transaction.BlobsWithCommitments blobsWithCommitments =
         transaction.getBlobsWithCommitments().get();
 
     final long blobsLimit = gasLimitCalculator.currentDataGasLimit() / gasCalculator.dataGasCost(1);
@@ -360,27 +353,28 @@ public class MainnetTransactionValidator {
           "transaction blobs and commitments are not the same size");
     }
 
-    List<TransactionNetworkPayload.KZGCommitment> commitments =
-        blobsWithCommitments.kzgCommitments.getElements();
-    for (TransactionNetworkPayload.KZGCommitment commitment : commitments) {
-      if (commitment.getData().get(0) != BLOB_COMMITMENT_VERSION_KZG) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_BLOBS,
-            "transaction blobs commitment version is not supported");
-      }
-    }
     if (transaction.getVersionedHashes().isEmpty()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
           "transaction versioned hashes are empty, cannot verify without versioned hashes");
     }
-    List<Hash> versionedHashes = transaction.getVersionedHashes().get();
+    final List<Hash> versionedHashes = transaction.getVersionedHashes().get();
 
     for (int i = 0; i < versionedHashes.size(); i++) {
-      TransactionNetworkPayload.KZGCommitment commitment =
+      final TransactionNetworkPayload.KZGCommitment commitment =
           blobsWithCommitments.kzgCommitments.getElements().get(i);
-      Hash versionedHash = versionedHashes.get(i);
-      Hash calculatedVersionedHash = hashCommitment(commitment);
+      final Hash versionedHash = versionedHashes.get(i);
+
+      if (versionedHash.get(0) != BLOB_COMMITMENT_VERSION_KZG) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_BLOBS,
+            "transaction blobs commitment version is not supported. Expected "
+                + BLOB_COMMITMENT_VERSION_KZG
+                + ", found "
+                + versionedHash.get(0));
+      }
+
+      final Hash calculatedVersionedHash = hashCommitment(commitment);
       if (!calculatedVersionedHash.equals(versionedHash)) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_BLOBS,
@@ -388,29 +382,25 @@ public class MainnetTransactionValidator {
       }
     }
 
-    Bytes blobs =
+    final Bytes blobs =
         blobsWithCommitments.blobs.getElements().stream()
-            .map(
-                blob ->
-                    blob.getElements().stream()
-                        .map(sszuInt256Wrapper -> (Bytes) sszuInt256Wrapper.getData().toBytes())
-                        .reduce(Bytes::concatenate)
-                        .orElseThrow())
+            .map(TransactionNetworkPayload.Blob::getBytes)
             .reduce(Bytes::concatenate)
             .orElseThrow();
 
-    Bytes kzgCommitments =
+    final Bytes kzgCommitments =
         blobsWithCommitments.kzgCommitments.getElements().stream()
             .map(commitment -> commitment.getData())
             .reduce(Bytes::concatenate)
             .orElseThrow();
 
-    boolean kzgVerification =
+    final boolean kzgVerification =
         CKZG4844JNI.verifyAggregateKzgProof(
             blobs.toArrayUnsafe(),
             kzgCommitments.toArrayUnsafe(),
             blobsWithCommitments.blobs.getElements().size(),
             blobsWithCommitments.kzgProof.getBytes().toArrayUnsafe());
+
     if (!kzgVerification) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
@@ -421,7 +411,7 @@ public class MainnetTransactionValidator {
   }
 
   private Hash hashCommitment(final TransactionNetworkPayload.KZGCommitment commitment) {
-    SHA256Digest digest = new SHA256Digest();
+    final SHA256Digest digest = new SHA256Digest();
     digest.update(commitment.getData().toArrayUnsafe(), 0, commitment.getData().size());
 
     final byte[] dig = new byte[digest.getDigestSize()];
