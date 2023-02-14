@@ -44,7 +44,9 @@ public interface FinalBlockConfirmation {
   }
 
   static FinalBlockConfirmation ancestorConfirmation(final MutableBlockchain blockchain) {
-    return firstHeader -> blockchain.contains(firstHeader.getParentHash());
+    return firstHeader ->
+        blockchain.contains(firstHeader.getParentHash())
+            && blockchain.getChainHeadBlockNumber() + 1 >= firstHeader.getNumber();
   }
 
   static FinalBlockConfirmation confirmationChain(final FinalBlockConfirmation... confirmations) {

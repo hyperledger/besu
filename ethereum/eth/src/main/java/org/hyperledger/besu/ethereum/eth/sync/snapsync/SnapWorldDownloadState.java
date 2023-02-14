@@ -198,6 +198,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized void reloadHeal() {
     worldStateStorage.clearFlatDatabase();
+    worldStateStorage.clearTrieLog();
     pendingTrieNodeRequests.clear();
     pendingCodeRequests.clear();
     snapSyncState.setHealStatus(false);

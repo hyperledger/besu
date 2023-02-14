@@ -180,7 +180,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public Bytes getCode() {
     if (code == null) {
-      code = context.getCode(address).orElse(Bytes.EMPTY);
+      code = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
     }
     return code;
   }

@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -32,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.AccessListEntry;
@@ -344,7 +344,7 @@ public class MainnetTransactionProcessor {
 
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList)",
+          "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
@@ -394,9 +394,7 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
                 .versionedHashes(transaction.getVersionedHashes())
-                .code(
-                    contractCreationProcessor.getCodeFromEVM(
-                        Hash.hash(initCodeBytes), initCodeBytes))
+                .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
@@ -493,6 +491,9 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.failed(
             gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }
+    } catch (final MerkleTrieException re) {
+      // need to throw to trigger the heal
+      throw re;
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
