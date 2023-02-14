@@ -21,7 +21,7 @@ import org.junit.Test;
 
 public class NetstatsUrlTest {
 
-  private final String VALID_NETSTATS_URL = "Dev-Node-1:secret@127.0.0.1:3001";
+  private final String VALID_NETSTATS_URL = "Dev-Node-1:secret-with-dashes@127.0.0.1:3001";
 
   private final String CONTACT = "contact@mail.fr";
 
@@ -34,7 +34,7 @@ public class NetstatsUrlTest {
     assertThat(netstatsUrl.getHost()).isEqualTo("127.0.0.1");
     assertThat(netstatsUrl.getNodeName()).isEqualTo("Dev-Node-1");
     assertThat(netstatsUrl.getPort()).isEqualTo(3001);
-    assertThat(netstatsUrl.getSecret()).isEqualTo("secret");
+    assertThat(netstatsUrl.getSecret()).isEqualTo("secret-with-dashes");
     assertThat(netstatsUrl.getContact()).isEqualTo(CONTACT);
   }
 
