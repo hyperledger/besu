@@ -855,12 +855,19 @@ public class BlockchainQueries {
         .getBlockHeader(blockHash)
         .flatMap(
             blockHeader -> {
-              try (var ws =
+              try (final var worldState =
                   worldStateArchive
                       .getMutable(blockHeader.getStateRoot(), blockHeader.getHash(), false)
+                      .map(
+                          ws -> {
+                            if (!ws.isPersistable()) {
+                              return ws.copy();
+                            }
+                            return ws;
+                          })
                       .orElse(null)) {
-                if (ws != null) {
-                  return Optional.ofNullable(mapper.apply(ws));
+                if (worldState != null) {
+                  return Optional.ofNullable(mapper.apply(worldState));
                 }
               } catch (Exception ex) {
                 LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
