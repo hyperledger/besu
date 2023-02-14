@@ -622,22 +622,22 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   /**
    * Future EIPs Time block.
    *
-   * @param blockNumber the block number
+   * @param timestamp the block timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions futureEipsTime(final long blockNumber) {
-    futureEipsTime = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions futureEipsTime(final long timestamp) {
+    futureEipsTime = OptionalLong.of(timestamp);
     return this;
   }
 
   /**
    * Experimental EIPs Time block.
    *
-   * @param blockNumber the block number
+   * @param timestamp the block timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions experimentalEipsTime(final long blockNumber) {
-    experimentalEipsTime = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions experimentalEipsTime(final long timestamp) {
+    experimentalEipsTime = OptionalLong.of(timestamp);
     return this;
   }
 
