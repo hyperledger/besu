@@ -462,6 +462,7 @@ public final class RunnerTest {
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
+        .randomPeerPriority(Boolean.FALSE)
         .build();
   }
 }

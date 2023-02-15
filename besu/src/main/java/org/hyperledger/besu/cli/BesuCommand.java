@@ -469,7 +469,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         names = {"--random-peer-priority-enabled"},
         description =
             "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
-    private final Boolean randomPeerPriority = false;
+    private final Boolean randomPeerPriority = Boolean.FALSE;
 
     @Option(
         names = {"--banned-node-ids", "--banned-node-id"},
