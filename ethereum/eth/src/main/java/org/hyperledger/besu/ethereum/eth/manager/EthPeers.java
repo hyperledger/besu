@@ -18,6 +18,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -36,6 +37,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,26 +69,37 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
+  private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
 
   private Comparator<EthPeer> bestPeerComparator;
 
   public EthPeers(
       final String protocolName,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final Clock clock,
       final MetricsSystem metricsSystem,
       final int maxPeers,
       final int maxMessageSize) {
-    this(protocolName, clock, metricsSystem, maxPeers, maxMessageSize, Collections.emptyList());
+    this(
+        protocolName,
+        currentProtocolSpecSupplier,
+        clock,
+        metricsSystem,
+        maxPeers,
+        maxMessageSize,
+        Collections.emptyList());
   }
 
   public EthPeers(
       final String protocolName,
+      final Supplier<ProtocolSpec> currentProtocolSpecSupplier,
       final Clock clock,
       final MetricsSystem metricsSystem,
       final int maxPeers,
       final int maxMessageSize,
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     this.protocolName = protocolName;
+    this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxPeers = maxPeers;
@@ -148,8 +161,16 @@ public class EthPeers {
 
   public PendingPeerRequest executePeerRequest(
       final PeerRequest request, final long minimumBlockNumber, final Optional<EthPeer> peer) {
+    final long actualMinBlockNumber;
+    if (minimumBlockNumber > 0 && currentProtocolSpecSupplier.get().isPoS()) {
+      // if on PoS do not enforce a min block number, since the estimated chain height of the remote
+      // peer is not updated anymore.
+      actualMinBlockNumber = 0;
+    } else {
+      actualMinBlockNumber = minimumBlockNumber;
+    }
     final PendingPeerRequest pendingPeerRequest =
-        new PendingPeerRequest(this, request, minimumBlockNumber, peer);
+        new PendingPeerRequest(this, request, actualMinBlockNumber, peer);
     synchronized (this) {
       if (!pendingPeerRequest.attemptExecution()) {
         pendingRequests.add(pendingPeerRequest);

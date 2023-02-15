@@ -131,6 +131,7 @@ public final class EthProtocolManagerTest {
   public void handleMalformedRequestIdMessage() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -149,6 +150,7 @@ public final class EthProtocolManagerTest {
   public void disconnectOnUnsolicitedMessage() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -166,6 +168,7 @@ public final class EthProtocolManagerTest {
   public void disconnectOnFailureToSendStatusMessage() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -184,6 +187,7 @@ public final class EthProtocolManagerTest {
   public void disconnectOnWrongChainId() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -214,6 +218,7 @@ public final class EthProtocolManagerTest {
     final MergePeerFilter mergePeerFilter = new MergePeerFilter();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             protocolContext.getWorldStateArchive(),
             transactionPool,
@@ -262,6 +267,7 @@ public final class EthProtocolManagerTest {
   public void doNotDisconnectOnLargeMessageWithinLimits() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -281,6 +287,7 @@ public final class EthProtocolManagerTest {
   public void disconnectOnWrongGenesisHash() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -310,6 +317,7 @@ public final class EthProtocolManagerTest {
   public void doNotDisconnectOnValidMessage() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -331,6 +339,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -370,6 +379,7 @@ public final class EthProtocolManagerTest {
         EthProtocolConfiguration.builder().maxGetBlockHeaders(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -406,6 +416,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -442,6 +453,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -481,6 +493,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -541,6 +554,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -578,6 +592,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -612,6 +627,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -664,6 +680,7 @@ public final class EthProtocolManagerTest {
         EthProtocolConfiguration.builder().maxGetBlockBodies(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -712,6 +729,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -754,6 +772,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -804,6 +823,7 @@ public final class EthProtocolManagerTest {
         EthProtocolConfiguration.builder().maxGetReceipts(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -851,6 +871,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -895,6 +916,7 @@ public final class EthProtocolManagerTest {
 
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -942,6 +964,7 @@ public final class EthProtocolManagerTest {
   public void newBlockMinedSendsNewBlockMessageToAllPeers() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -1012,6 +1035,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
@@ -1077,6 +1101,7 @@ public final class EthProtocolManagerTest {
 
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             ethScheduler,
             protocolContext.getWorldStateArchive(),
@@ -1110,6 +1135,7 @@ public final class EthProtocolManagerTest {
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             ethScheduler,
             protocolContext.getWorldStateArchive(),
