@@ -163,7 +163,7 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public BlockProcessingResult validateProposedBlock(Block block) {
+  public BlockProcessingResult validateProposedBlock(final Block block) {
     return mergeCoordinator.validateProposedBlock(block);
   }
 

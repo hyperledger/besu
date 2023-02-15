@@ -485,7 +485,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public BlockProcessingResult validateProposedBlock(Block block) {
+  public BlockProcessingResult validateProposedBlock(final Block block) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -496,7 +496,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
                 false,
-                true);
+                false);
 
     return validationResult;
   }

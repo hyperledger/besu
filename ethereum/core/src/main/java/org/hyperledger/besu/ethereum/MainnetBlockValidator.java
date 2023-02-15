@@ -72,7 +72,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
     return validateAndProcessBlock(
-        context, block, headerValidationMode, ommerValidationMode, true, false);
+        context, block, headerValidationMode, ommerValidationMode, true, true);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode ommerValidationMode,
       final boolean shouldPersist) {
     return validateAndProcessBlock(
-        context, block, headerValidationMode, ommerValidationMode, shouldPersist, false);
+        context, block, headerValidationMode, ommerValidationMode, shouldPersist, true);
   }
 
   @Override
@@ -219,9 +219,6 @@ public class MainnetBlockValidator implements BlockValidator {
       }
     }
     if (shouldRecordBadBlock) {
-      LOG.info(
-          "Bad block created but did not report to badBlockManager {}", invalidBlock.toLogString());
-    } else {
       badBlockManager.addBadBlock(invalidBlock, result.causedBy());
     }
   }
