@@ -113,7 +113,7 @@ public class MainnetBlockValidator implements BlockValidator {
     try (final var worldState =
         context
             .getWorldStateArchive()
-            .getMutable(parentHeader.getStateRoot(), parentHeader.getBlockHash(), shouldPersist)
+            .getMutable(parentHeader, shouldPersist)
             .orElse(null)) {
 
       if (worldState == null) {

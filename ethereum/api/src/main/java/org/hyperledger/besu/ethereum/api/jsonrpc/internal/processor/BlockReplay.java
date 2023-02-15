@@ -147,7 +147,7 @@ public class BlockReplay {
     }
     try (final var worldState =
         worldStateArchive
-            .getMutable(previous.getStateRoot(), previous.getBlockHash(), false)
+            .getMutable(previous, false)
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(

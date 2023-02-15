@@ -857,7 +857,7 @@ public class BlockchainQueries {
             blockHeader -> {
               try (var ws =
                   worldStateArchive
-                      .getMutable(blockHeader.getStateRoot(), blockHeader.getHash(), false)
+                      .getMutable(blockHeader, false)
                       .orElse(null)) {
                 if (ws != null) {
                   return Optional.ofNullable(mapper.apply(ws));

@@ -50,9 +50,11 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   private final long blockNumber;
+  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final long blockNumber,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final SnappedKeyValueStorage accountStorage,
       final SnappedKeyValueStorage codeStorage,
       final SnappedKeyValueStorage storageStorage,
@@ -60,12 +62,15 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage trieLogStorage) {
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
     this.blockNumber = blockNumber;
+    this.worldStateStorage = worldStateStorage;
+    subscribeToParentStorage(worldStateStorage);
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final long blockNumber, final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     this(
         blockNumber,
+            worldStateStorage,
         ((SnappableKeyValueStorage) worldStateStorage.accountStorage).takeSnapshot(),
         ((SnappableKeyValueStorage) worldStateStorage.codeStorage).takeSnapshot(),
         ((SnappableKeyValueStorage) worldStateStorage.storageStorage).takeSnapshot(),
@@ -77,6 +82,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   public BonsaiSnapshotWorldStateKeyValueStorage clone() {
     return new BonsaiSnapshotWorldStateKeyValueStorage(
         blockNumber,
+            worldStateStorage,
         ((SnappedKeyValueStorage) accountStorage).cloneFromSnapshot(),
         ((SnappedKeyValueStorage) codeStorage).cloneFromSnapshot(),
         ((SnappedKeyValueStorage) storageStorage).cloneFromSnapshot(),
@@ -115,6 +121,12 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
+
+  void subscribeToParentStorage(final BonsaiWorldStateKeyValueStorage parentStorage) {
+    this.parentStorage.set(parentStorage);
+    parentStorageSubscriberId.set(parentStorage.subscribe(this));
+  }
+
 
   @Override
   public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
@@ -172,6 +184,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   protected synchronized void tryClose() throws Exception {
+    System.out.println("try close "+this+" "+getWorldStateBlockHash()+" "+shouldClose.get()+" "+subscribers.getSubscriberCount());
     if (shouldClose.get() && subscribers.getSubscriberCount() < 1) {
       // attempting to close already closed snapshots will segfault
       doClose();

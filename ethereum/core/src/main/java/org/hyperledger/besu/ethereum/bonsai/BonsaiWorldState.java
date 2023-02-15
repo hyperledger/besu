@@ -148,9 +148,11 @@ public class BonsaiWorldState
 
     // TODO write to a cache and then generate a layer update from that and the
     // DB tx updates.  Right now it is just DB updates.
-    accountTrie.commit(
-        (location, hash, value) ->
-            writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
+    if(!inMemory) {
+      accountTrie.commit(
+              (location, hash, value) ->
+                      writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
+    }
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
@@ -313,7 +315,7 @@ public class BonsaiWorldState
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     debugLambda(LOG, "Persist world state for block {}", maybeBlockHeader::toString);
 
-    if (blockHeader != null && worldStateRootHash.equals(blockHeader.getStateRoot())) {
+    if (blockHeader != null && worldStateBlockHash.equals(blockHeader.getBlockHash())) {
       updater.reset();
       return;
     }

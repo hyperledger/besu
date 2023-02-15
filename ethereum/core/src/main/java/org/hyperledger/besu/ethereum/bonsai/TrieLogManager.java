@@ -32,6 +32,8 @@ public interface TrieLogManager {
   void addCachedLayer(
       BlockHeader blockHeader, Hash worldStateRootHash, BonsaiWorldState forWorldState);
 
+  boolean containWorlStateStorage(final Hash blockHash);
+
   Optional<BonsaiSnapshotWorldStateKeyValueStorage> getWorldStateStorage(final Hash blockHash);
 
   long getMaxLayersToLoad();

@@ -164,7 +164,7 @@ public class TransactionSimulator {
 
   private MutableWorldState getWorldState(final BlockHeader header) {
     return worldStateArchive
-        .getMutable(header.getStateRoot(), header.getHash(), false)
+        .getMutable(header, false)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -338,7 +338,7 @@ public class TransactionSimulator {
     final BlockHeader header = blockchain.getChainHeadHeader();
     try (final MutableWorldState worldState =
         worldStateArchive
-            .getMutable(header.getStateRoot(), header.getHash(), false)
+            .getMutable(header, false)
             .orElseThrow()) {
       return doesAddressExist(worldState, address, header);
     } catch (final Exception ex) {

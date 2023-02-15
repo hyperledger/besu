@@ -118,47 +118,26 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(
-      final Hash rootHash, final Hash blockHash, final boolean shouldPersistState) {
+      final BlockHeader blockHeader, final boolean shouldPersistState) {
     if (shouldPersistState) {
-      return getMutable(rootHash, blockHash);
+      return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
-      return trieLogManager
-          .getWorldStateStorage(blockHash)
-          .map(
-              worldStateKeyValueStorage ->
-                  (MutableWorldState) new BonsaiWorldState(this, worldStateKeyValueStorage))
-          .or(
-              () ->
-                  blockchain
-                      .getBlockHeader(blockHash)
-                      .filter(
-                          header -> {
-                            if (blockchain.getChainHeadHeader().getNumber() - header.getNumber()
-                                >= trieLogManager.getMaxLayersToLoad()) {
-                              LOG.warn(
-                                  "Exceeded the limit of back layers that can be loaded ({})",
-                                  trieLogManager.getMaxLayersToLoad());
-                              return false;
-                            }
-                            return true;
-                          })
-                      .flatMap(
-                          header ->
-                              rollMutableStateToBlockHash(
-                                      new BonsaiWorldState(
-                                          this,
-                                          new BonsaiSnapshotWorldStateKeyValueStorage(
-                                              header.getNumber(), worldStateStorage)),
-                                      blockHash)
-                                  .map(
-                                      mutableWorldState -> {
-                                        trieLogManager.addCachedLayer(
-                                            header,
-                                            mutableWorldState.rootHash(),
-                                            (BonsaiWorldState) mutableWorldState);
-                                        return mutableWorldState;
-                                      }))
-                      .map(MutableWorldState::freeze));
+      final BonsaiSnapshotWorldStateKeyValueStorage worldStateKeyValueStorage = trieLogManager
+              .getWorldStateStorage(blockHeader.getHash())
+              .orElse(new BonsaiSnapshotWorldStateKeyValueStorage(
+                      blockchain.getChainHeadBlockNumber(), worldStateStorage));
+      System.out.println("getMutable "+worldStateKeyValueStorage.getWorldStateBlockHash()+" "+trieLogManager.containWorlStateStorage(blockHeader.getHash()));
+
+        return rollMutableStateToBlockHash(new BonsaiWorldState(this, worldStateKeyValueStorage), blockHeader.getHash())
+                .map(mutableWorldState -> {
+                  if(!trieLogManager.containWorlStateStorage(blockHeader.getHash())) {
+                    trieLogManager.addCachedLayer(
+                            blockHeader,
+                            mutableWorldState.rootHash(),
+                            (BonsaiWorldState) mutableWorldState);
+                  }
+                  return mutableWorldState;
+                }).map(MutableWorldState::freeze);
     }
   }
 
@@ -169,6 +148,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(
       final BonsaiWorldState mutableState, final Hash blockHash) {
+    System.out.println("rollMutableStateToBlockHash "+mutableState.blockHash()+" "+blockHash);
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
     } else {

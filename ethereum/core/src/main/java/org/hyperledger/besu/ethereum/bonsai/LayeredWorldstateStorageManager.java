@@ -55,9 +55,15 @@ public class LayeredWorldstateStorageManager extends AbstractTrieLogManager<Bons
         "adding layered world state for block {}, state root hash {}",
         blockHeader::toLogString,
         worldStateRootHash::toShortHexString);
-    cachedWorldStatesByHash.put(
-        blockHeader.getHash(),
-        new BonsaiSnapshotWorldStateKeyValueStorage(
-            blockHeader.getNumber(), forWorldState.worldStateStorage));
+    if(forWorldState.worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage){
+      cachedWorldStatesByHash.put(
+              blockHeader.getHash(),
+              ((BonsaiSnapshotWorldStateKeyValueStorage) forWorldState.worldStateStorage).clone());
+    }else {
+      cachedWorldStatesByHash.put(
+              blockHeader.getHash(),
+              new BonsaiSnapshotWorldStateKeyValueStorage(
+                      blockHeader.getNumber(), forWorldState.worldStateStorage));
+    }
   }
 }

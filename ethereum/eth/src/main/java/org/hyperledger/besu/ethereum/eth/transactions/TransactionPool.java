@@ -327,7 +327,7 @@ public class TransactionPool implements BlockAddedObserver {
         protocolContext
             .getWorldStateArchive()
             .getMutable(
-                chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getBlockHash(), false)
+                chainHeadBlockHeader, false)
             .orElseThrow()) {
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(

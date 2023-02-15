@@ -207,6 +207,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
               manager.start();
             }
           });
+
+
       CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
         future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);

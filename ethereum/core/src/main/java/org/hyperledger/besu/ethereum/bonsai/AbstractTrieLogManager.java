@@ -137,6 +137,11 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
   }
 
   @Override
+  public boolean containWorlStateStorage(final Hash blockHash){
+    return cachedWorldStatesByHash.containsKey(blockHash);
+  }
+
+  @Override
   public Optional<BonsaiSnapshotWorldStateKeyValueStorage> getWorldStateStorage(
       final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
