@@ -75,6 +75,7 @@ import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -114,6 +115,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
   private static final Optional<List<Withdrawal>> EMPTY_WITHDRAWALS = Optional.empty();
+
+  private static final long REPETITION_MIN_DURATION = 100;
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
 
@@ -121,7 +124,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
   @Spy
-  MiningParameters miningParameters = new MiningParameters.Builder().coinbase(coinbase).build();
+  MiningParameters miningParameters =
+      new MiningParameters.Builder()
+          .coinbase(coinbase)
+          .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
+          .build();
 
   private MergeCoordinator coordinator;
   private ProtocolContext protocolContext;
@@ -371,6 +378,51 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       assertThat(blockWithReceipts.getAllValues().get(i).getBlock().getBody().getTransactions())
           .hasSize(i);
     }
+  }
+
+  @Test
+  public void blockCreationRepetitionShouldTakeNotLessThanRepetitionMinDuration()
+      throws InterruptedException, ExecutionException {
+    final AtomicLong retries = new AtomicLong(0);
+    final AtomicLong lastPutAt = new AtomicLong();
+    final List<Long> repetitionDurations = new ArrayList<>();
+
+    doAnswer(
+            invocation -> {
+              final long r = retries.getAndIncrement();
+              if (r == 0) {
+                // ignore first one, that is the empty block
+              } else if (r < 5) {
+                if (lastPutAt.get() > 0) {
+                  // each repetition should take >= REPETITION_MIN_DURATION
+                  repetitionDurations.add(System.currentTimeMillis() - lastPutAt.get());
+                }
+                lastPutAt.set(System.currentTimeMillis());
+              } else {
+                // finalize after 5 repetitions
+                coordinator.finalizeProposalById(
+                    invocation.getArgument(0, PayloadIdentifier.class));
+              }
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any(), any());
+
+    var payloadId =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            System.currentTimeMillis() / 1000,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
+
+    blockCreationTask.get();
+
+    verify(mergeContext, times(retries.intValue())).putPayloadById(eq(payloadId), any());
+
+    // check with a tolerance
+    assertThat(repetitionDurations)
+        .allSatisfy(d -> assertThat(d).isGreaterThanOrEqualTo(REPETITION_MIN_DURATION - 10));
   }
 
   @Test

@@ -27,10 +27,11 @@ tests are updated to use EC private keys instead of RSA keys.
 - Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
 - Add worldstate auto-heal mechanism [#5059](https://github.com/hyperledger/besu/pull/5059)
 - Support for EIP-4895 - Withdrawals for Shanghai fork
+- If a PoS block creation repetition takes less than a configurable duration, then waits before next repetition [#5048](https://github.com/hyperledger/besu/pull/5048)
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
-
+- Ensure latest cached layered worldstate is subscribed to storage, fix problem with RPC calls using 'latest' [#5076](https://github.com/hyperledger/besu/pull/5076)
 
 ## 23.1.0-RC1
 

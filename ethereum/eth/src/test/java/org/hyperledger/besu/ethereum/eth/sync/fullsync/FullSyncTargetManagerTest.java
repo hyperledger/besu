@@ -83,6 +83,7 @@ public class FullSyncTargetManagerTest {
         new ProtocolContext(localBlockchain, localWorldState, null);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             localBlockchain,
             new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
             localWorldState,
