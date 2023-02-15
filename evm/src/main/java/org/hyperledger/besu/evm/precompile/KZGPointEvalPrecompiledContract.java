@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
+import ethereum.ckzg4844.CKZGException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
@@ -134,8 +135,16 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
                 Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
       }
       return result;
+    } catch (CKZGException ckzgException) {
+      System.out.println("CKZGexception" + ckzgException.getMessage());
+      result =
+          new PrecompileContractResult(
+              Bytes.EMPTY,
+              false,
+              MessageFrame.State.COMPLETED_FAILED,
+              Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     } catch (RuntimeException kzgFailed) {
-      System.out.println(kzgFailed.getMessage());
+      System.out.println("RuntimeException" + kzgFailed.getMessage());
       result =
           new PrecompileContractResult(
               Bytes.EMPTY,

@@ -84,10 +84,12 @@ public class KZGPointEvalPrecompileContractTest {
               final JsonNode testCase = testCases.get(i);
               final Bytes input = Bytes.fromHexString(testCase.get("Input").asText());
               final boolean valid = testCase.get("Valid").asBoolean();
-              return new PrecompileTestParameters(input, valid, returnValue);
+              final String failureMode = testCase.get("FailureMode").asText();
+              return new PrecompileTestParameters(input, valid, returnValue, failureMode);
             })
         .collect(Collectors.toList());
   }
 
-  record PrecompileTestParameters(Bytes input, boolean valid, Bytes returnValue) {}
+  record PrecompileTestParameters(
+      Bytes input, boolean valid, Bytes returnValue, String failureMode) {}
 }
