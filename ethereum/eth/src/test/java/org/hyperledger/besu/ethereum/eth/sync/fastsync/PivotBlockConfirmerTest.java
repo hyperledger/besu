@@ -85,6 +85,7 @@ public class PivotBlockConfirmerTest {
     protocolContext = blockchainSetupUtil.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             timeout::get,
             blockchainSetupUtil.getWorldArchive(),

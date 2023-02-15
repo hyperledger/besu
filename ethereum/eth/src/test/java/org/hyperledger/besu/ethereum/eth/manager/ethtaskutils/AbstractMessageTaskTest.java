@@ -90,6 +90,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
         spy(
             new EthPeers(
                 EthProtocol.NAME,
+                () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,
                 MAX_PEERS,

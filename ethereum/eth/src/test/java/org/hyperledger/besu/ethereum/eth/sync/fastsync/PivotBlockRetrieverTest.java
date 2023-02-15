@@ -88,6 +88,7 @@ public class PivotBlockRetrieverTest {
     transactionPool = blockchainSetupUtil.getTransactionPool();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             timeout::get,
             blockchainSetupUtil.getWorldArchive(),

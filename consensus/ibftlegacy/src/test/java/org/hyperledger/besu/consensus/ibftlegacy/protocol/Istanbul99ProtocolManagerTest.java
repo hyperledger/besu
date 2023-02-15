@@ -111,6 +111,7 @@ public class Istanbul99ProtocolManagerTest {
     EthPeers peers =
         new EthPeers(
             Istanbul99Protocol.NAME,
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
