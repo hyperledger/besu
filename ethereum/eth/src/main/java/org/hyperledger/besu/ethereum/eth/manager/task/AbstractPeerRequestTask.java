@@ -85,10 +85,6 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
         });
   }
 
-  public PendingPeerRequest sendRequestToPeer(final PeerRequest request) {
-    return sendRequestToPeer(request, 0L);
-  }
-
   public PendingPeerRequest sendRequestToPeer(
       final PeerRequest request, final long minimumBlockNumber) {
     return ethContext.getEthPeers().executePeerRequest(request, minimumBlockNumber, assignedPeer);

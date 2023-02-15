@@ -79,6 +79,7 @@ public class ProtocolSpecBuilder {
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
+  private boolean isPoS = false;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -257,6 +258,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder isPoS(final boolean isPoS) {
+    this.isPoS = isPoS;
+    return this;
+  }
+
   public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
@@ -363,7 +369,8 @@ public class ProtocolSpecBuilder {
         badBlockManager,
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
-        Optional.ofNullable(withdrawalsProcessor));
+        Optional.ofNullable(withdrawalsProcessor),
+        isPoS);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(
