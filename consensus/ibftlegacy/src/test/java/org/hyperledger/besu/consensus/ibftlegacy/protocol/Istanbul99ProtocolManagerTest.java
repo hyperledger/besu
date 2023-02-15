@@ -113,6 +113,7 @@ public class Istanbul99ProtocolManagerTest {
     final EthPeers peers =
         new EthPeers(
             Istanbul99Protocol.NAME,
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,

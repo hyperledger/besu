@@ -73,8 +73,11 @@ public class ForkIdTestUtil {
         Arrays.asList(
             1920000L, 1150000L, 2463000L, 2675000L, 2675000L, 4370000L, 7280000L, 7280000L,
             9069000L, 9200000L, 12244000L, 12965000L, 13773000L, 15050000L);
-    public static final List<Long> SEPOLIA =
+    public static final List<Long> SEPOLIA_BLOCKNUMBERS =
         Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1735371L);
+
+    public static final List<Long> SEPOLIA_TIMESTAMPS = Arrays.asList(1677557088L);
+
     public static final List<Long> RINKEBY =
         Arrays.asList(1L, 2L, 3L, 3L, 1035301L, 3660663L, 4321234L, 5435345L);
     public static final List<Long> GOERLI = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 1561651L);
@@ -106,7 +109,8 @@ public class ForkIdTestUtil {
     public static final List<ForkId> SEPOLIA =
         Arrays.asList(
             new ForkId(Bytes.fromHexString("0xfe3366e7"), 1735371L),
-            new ForkId(Bytes.fromHexString("0xb96cbd13"), 0L));
+            new ForkId(Bytes.fromHexString("0xb96cbd13"), 1677557088L),
+            new ForkId(Bytes.fromHexString("0xf7f9bc08"), 0L)); // First Shanghai block (timestamp)
     public static final List<ForkId> RINKEBY =
         Arrays.asList(
             new ForkId(Bytes.fromHexString("0x3b8e0691"), 1L),
@@ -145,7 +149,8 @@ public class ForkIdTestUtil {
 
   public static class Network {
     public static final Network MAINNET = network(GenesisHash.MAINNET, Forks.MAINNET, emptyList());
-    public static final Network SEPOLIA = network(GenesisHash.SEPOLIA, Forks.SEPOLIA, emptyList());
+    public static final Network SEPOLIA =
+        network(GenesisHash.SEPOLIA, Forks.SEPOLIA_BLOCKNUMBERS, Forks.SEPOLIA_TIMESTAMPS);
     public static final Network RINKEBY = network(GenesisHash.RINKEBY, Forks.RINKEBY, emptyList());
     public static final Network GOERLI = network(GenesisHash.GOERLI, Forks.GOERLI, emptyList());
     public static final Network PRIVATE = network(GenesisHash.PRIVATE, Forks.PRIVATE, emptyList());

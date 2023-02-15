@@ -1891,6 +1891,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(
           this.commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
     }
+
+    if (unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() <= 0
+        || unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() > 2000) {
+      throw new ParameterException(
+          this.commandLine,
+          "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
+    }
   }
 
   /**
@@ -2273,6 +2280,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .powJobTimeToLive(unstableMiningOptions.getPowJobTimeToLive())
                 .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
                 .posBlockCreationMaxTime(unstableMiningOptions.getPosBlockCreationMaxTime())
+                .posBlockCreationRepetitionMinDuration(
+                    unstableMiningOptions.getPosBlockCreationRepetitionMinDuration())
                 .build())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))

@@ -92,6 +92,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
         spy(
             new EthPeers(
                 EthProtocol.NAME,
+                () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,
                 EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,

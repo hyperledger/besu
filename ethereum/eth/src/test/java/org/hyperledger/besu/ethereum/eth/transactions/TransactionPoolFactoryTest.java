@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -63,6 +64,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class TransactionPoolFactoryTest {
   @Mock ProtocolSchedule schedule;
   @Mock ProtocolContext context;
+  @Mock ProtocolSpec protocolSpec;
   @Mock MutableBlockchain blockchain;
   @Mock EthContext ethContext;
   @Mock EthMessages ethMessages;
@@ -96,6 +98,7 @@ public class TransactionPoolFactoryTest {
     ethPeers =
         new EthPeers(
             "ETH",
+            () -> protocolSpec,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
