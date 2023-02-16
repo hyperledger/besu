@@ -18,7 +18,9 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -26,6 +28,25 @@ import org.jetbrains.annotations.NotNull;
 
 /** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
+  private static final AtomicBoolean loaded = new AtomicBoolean(false);
+
+  private final Bytes successResult;
+
+  public KZGPointEvalPrecompiledContract() {
+    Bytes fieldElementsPerBlob =
+        Bytes32.wrap(Bytes.ofUnsignedInt(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
+    Bytes blsModulus =
+        Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
+
+    successResult = Bytes.concatenate(fieldElementsPerBlob, blsModulus);
+  }
+
+  /** free up resources. */
+  @VisibleForTesting
+  void tearDown() {
+    CKZG4844JNI.freeTrustedSetup();
+    loaded.set(false);
+  }
 
   @Override
   public String getName() {
@@ -55,7 +76,6 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     Bytes commitment = input.slice(96, 48);
     Bytes proof = input.slice(144, 48);
 
-    Bytes output = Bytes.EMPTY;
     PrecompileContractResult result;
     try {
       boolean proved =
@@ -63,21 +83,13 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
               commitment.toArray(), z.toArray(), y.toArray(), proof.toArray());
 
       if (proved) {
-        Bytes fieldElementsPerBlob =
-            Bytes32.wrap(
-                Bytes.of(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO)); // usually 4096
-        Bytes blsModulus =
-            Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
-
-        output = Bytes.concatenate(fieldElementsPerBlob, blsModulus);
-
         result =
             new PrecompileContractResult(
-                output, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
+                successResult, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
       } else {
         result =
             new PrecompileContractResult(
-                output,
+                Bytes.EMPTY,
                 false,
                 MessageFrame.State.COMPLETED_FAILED,
                 Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
@@ -87,7 +99,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       System.out.println(kzgFailed.getMessage());
       result =
           new PrecompileContractResult(
-              output,
+              Bytes.EMPTY,
               false,
               MessageFrame.State.COMPLETED_FAILED,
               Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));

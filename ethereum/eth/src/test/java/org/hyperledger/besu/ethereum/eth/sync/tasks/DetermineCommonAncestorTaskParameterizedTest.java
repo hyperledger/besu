@@ -144,6 +144,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     final EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             localBlockchain,
             worldStateArchive,
             mock(TransactionPool.class),

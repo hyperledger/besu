@@ -137,7 +137,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
   private CompletableFuture<BlockHeader> downloadBlockHeader(final Hash hash) {
     return RetryingGetHeaderFromPeerByHashTask.byHash(
-            protocolSchedule, ethContext, hash, metricsSystem)
+            protocolSchedule, ethContext, hash, 0, metricsSystem)
         .getHeader()
         .whenComplete(
             (blockHeader, throwable) -> {

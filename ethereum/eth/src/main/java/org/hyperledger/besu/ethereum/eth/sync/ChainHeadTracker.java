@@ -73,6 +73,7 @@ public class ChainHeadTracker implements ConnectCallback {
             protocolSchedule,
             ethContext,
             Hash.wrap(peer.chainState().getBestBlock().getHash()),
+            0,
             metricsSystem)
         .assignPeer(peer)
         .run()
