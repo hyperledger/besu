@@ -3514,16 +3514,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     isGoQuorumCompatibilityMode = true;
   }
 
+  private GenesisConfigOptions getActualGenesisConfigOptions() {
+    return Optional.ofNullable(genesisConfigOptions)
+        .orElseGet(
+            () ->
+                GenesisConfigFile.fromConfig(
+                        genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
+                    .getConfigOptions(genesisConfigOverrides));
+  }
+
   private void setMergeConfigOptions() {
     MergeConfigOptions.setMergeEnabled(
-        Optional.ofNullable(genesisConfigOptions)
-            .orElseGet(
-                () ->
-                    GenesisConfigFile.fromConfig(
-                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
-                        .getConfigOptions(genesisConfigOverrides))
-            .getTerminalTotalDifficulty()
-            .isPresent());
+        getActualGenesisConfigOptions().getTerminalTotalDifficulty().isPresent());
   }
 
   private void setIgnorableStorageSegments() {
@@ -3533,13 +3535,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validatePostMergeCheckpointBlockRequirements() {
-    final GenesisConfigOptions genesisOptions =
-        Optional.ofNullable(genesisConfigOptions)
-            .orElseGet(
-                () ->
-                    GenesisConfigFile.fromConfig(
-                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
-                        .getConfigOptions(genesisConfigOverrides));
+    final GenesisConfigOptions genesisOptions = getActualGenesisConfigOptions();
     final SynchronizerConfiguration synchronizerConfiguration =
         unstableSynchronizerOptions.toDomainObject().build();
     final Optional<UInt256> terminalTotalDifficulty = genesisOptions.getTerminalTotalDifficulty();
