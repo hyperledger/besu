@@ -27,7 +27,13 @@ public class BlockValueCalculator {
     Wei totalFee = Wei.ZERO;
     for (int i = 0; i < txs.size(); i++) {
       final Wei minerFee = txs.get(i).getEffectivePriorityFeePerGas(block.getHeader().getBaseFee());
-      totalFee = totalFee.add(minerFee.multiply(receipts.get(i).getCumulativeGasUsed()));
+      // we don't store gasUsed and need to calculate that on the fly
+      // receipts are fetched in ascending sorted by cumulativeGasUsed
+      long gasUsed = receipts.get(i).getCumulativeGasUsed();
+      if (i > 0) {
+        gasUsed = gasUsed - receipts.get(i - 1).getCumulativeGasUsed();
+      }
+      totalFee = totalFee.add(minerFee.multiply(gasUsed));
     }
     return totalFee;
   }
