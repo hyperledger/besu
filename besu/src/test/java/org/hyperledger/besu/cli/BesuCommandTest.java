@@ -5634,7 +5634,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void kzgTrustedSetupFileLoadedWithCustomGenesisFile()
       throws IOException, URISyntaxException {
     final Path testSetupAbsolutePath =
-        Path.of(BesuCommandTest.class.getResource("/trusted_setup_4.txt").toURI());
+        Path.of(BesuCommandTest.class.getResource("/trusted_setup.txt").toURI());
     final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
     parseCommand(
         "--genesis-file",
