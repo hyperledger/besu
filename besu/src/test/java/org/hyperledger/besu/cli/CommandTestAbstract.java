@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -229,6 +228,10 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.randomPeerPriority(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.chainPruningConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.lowerBoundPeers(anyInt())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
+        .thenReturn(mockControllerBuilder);
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
@@ -254,12 +257,6 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenInterface(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.minPeers(anyInt())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.limitRemoteWireConnectionsEnabled(anyBoolean()))
-        .thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.fractionRemoteConnectionsAllowed(anyFloat()))
-        .thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natManagerServiceName(any())).thenReturn(mockRunnerBuilder);

@@ -343,6 +343,7 @@ public class EthPeers {
     if (rlpxAgent != null) {
       rlpxAgent.setGetAllActiveConnectionsCallback(this::getAllActiveConnections);
       rlpxAgent.setGetAllConnectionsCallback(this::getAllConnections);
+      rlpxAgent.setPeerLowerBound(peerLowerBound);
     }
   }
 

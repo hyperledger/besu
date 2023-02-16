@@ -189,7 +189,6 @@ public final class RunnerTest {
             .discovery(true)
             .p2pAdvertisedHost(listenHost)
             .p2pListenPort(0)
-            .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
@@ -463,6 +462,9 @@ public final class RunnerTest {
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
         .randomPeerPriority(Boolean.FALSE)
+            .maxPeers(25)
+            .lowerBoundPeers(25)
+            .maxRemotelyInitiatedPeers(15)
         .build();
   }
 }

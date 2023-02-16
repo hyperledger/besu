@@ -66,14 +66,13 @@ public class RlpxAgent {
   private final ConnectionInitializer connectionInitializer;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
   private final List<ShouldConnectCallback> connectRequestSubscribers = new ArrayList<>();
-
   private final PeerRlpxPermissions peerPermissions;
   private final PeerPrivileges peerPrivileges;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
-
-  private Callable<Stream<PeerConnection>> getAllConnectionsCallback;
-  private Callable<Stream<PeerConnection>> getAllActiveConnectionsCallback;
+  private int lowerBound;
+  private Callable<Stream<PeerConnection>> getAllConnectionsCallback = () -> Stream.empty();
+  private Callable<Stream<PeerConnection>> getAllActiveConnectionsCallback = () -> Stream.empty();
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
       CacheBuilder.newBuilder()
           .expireAfterWrite(
@@ -92,14 +91,6 @@ public class RlpxAgent {
     this.connectionInitializer = connectionInitializer;
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
-
-    // placeholders for callbacks
-    if (getAllActiveConnectionsCallback == null) {
-      setGetAllActiveConnectionsCallback(() -> Stream.empty());
-    }
-    if (getAllConnectionsCallback == null) {
-      setGetAllConnectionsCallback(() -> Stream.empty());
-    }
   }
 
   public static Builder builder() {
@@ -374,6 +365,14 @@ public class RlpxAgent {
   @VisibleForTesting
   public ConcurrentMap<Bytes, CompletableFuture<PeerConnection>> getMapOfCompletableFutures() {
     return peersConnectingCache.asMap();
+  }
+
+  public void setPeerLowerBound(final int lowerBound) {
+    this.lowerBound = lowerBound;
+  }
+
+  public int getPeerLowerBound() {
+    return lowerBound;
   }
 
   public static class Builder {

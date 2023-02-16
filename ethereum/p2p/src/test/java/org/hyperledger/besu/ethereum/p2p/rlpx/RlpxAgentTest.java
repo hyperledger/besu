@@ -81,7 +81,6 @@ public class RlpxAgentTest {
   public void setup() {
     // Set basic defaults
     when(peerPrivileges.canExceedConnectionLimits(any())).thenReturn(false);
-    config.setPeerUpperBound(5);
     agent.subscribeConnectRequest((a, b) -> true);
   }
 
@@ -580,7 +579,6 @@ public class RlpxAgentTest {
   private RlpxAgent agent(
       final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization,
       final Consumer<RlpxConfiguration> rlpxConfigurationModifier) {
-    config.setLimitRemoteWireConnectionsEnabled(true);
     rlpxConfigurationModifier.accept(config);
     return buildCustomization
         .apply(

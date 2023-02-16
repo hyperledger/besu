@@ -166,10 +166,6 @@ public class RunnerBuilder {
   private NatMethod natMethod = NatMethod.AUTO;
   private String natManagerServiceName;
   private boolean natMethodFallbackEnabled;
-  private int maxPeers;
-  private int minPeers;
-  private boolean limitRemoteWireConnectionsEnabled = false;
-  private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
 
   private String ethstatsUrl;
@@ -350,41 +346,6 @@ public class RunnerBuilder {
    */
   public RunnerBuilder natMethodFallbackEnabled(final boolean natMethodFallbackEnabled) {
     this.natMethodFallbackEnabled = natMethodFallbackEnabled;
-    return this;
-  }
-
-  /**
-   * Add Max peers.
-   *
-   * @param maxPeers the max peers
-   * @return the runner builder
-   */
-  public RunnerBuilder maxPeers(final int maxPeers) {
-    this.maxPeers = maxPeers;
-    return this;
-  }
-
-  /**
-   * Enable Limit remote wire connections.
-   *
-   * @param limitRemoteWireConnectionsEnabled the limit remote wire connections enabled
-   * @return the runner builder
-   */
-  public RunnerBuilder limitRemoteWireConnectionsEnabled(
-      final boolean limitRemoteWireConnectionsEnabled) {
-    this.limitRemoteWireConnectionsEnabled = limitRemoteWireConnectionsEnabled;
-    return this;
-  }
-
-  /**
-   * Add Fraction remote connections allowed.
-   *
-   * @param fractionRemoteConnectionsAllowed the fraction remote connections allowed
-   * @return the runner builder
-   */
-  public RunnerBuilder fractionRemoteConnectionsAllowed(
-      final float fractionRemoteConnectionsAllowed) {
-    this.fractionRemoteConnectionsAllowed = fractionRemoteConnectionsAllowed;
     return this;
   }
 
@@ -683,13 +644,13 @@ public class RunnerBuilder {
         RlpxConfiguration.create()
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
-            .setPeerUpperBound(maxPeers)
-            .setPeerLowerBound(minPeers)
             .setSupportedProtocols(subProtocols)
-            .setClientId(BesuInfo.nodeName(identityString))
-            .setLimitRemoteWireConnectionsEnabled(limitRemoteWireConnectionsEnabled)
-            .setFractionRemoteWireConnectionsAllowed(fractionRemoteConnectionsAllowed);
-    networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
+            .setClientId(BesuInfo.nodeName(identityString));
+    networkingConfiguration
+        .setRlpx(rlpxConfiguration)
+        .setDiscovery(
+            discoveryConfiguration); // TODO: Something fishy here, as we do getDiscovery in line
+    // 660 above ...
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
@@ -1416,26 +1377,6 @@ public class RunnerBuilder {
   private Optional<MetricsService> createMetricsService(
       final Vertx vertx, final MetricsConfiguration configuration) {
     return MetricsService.create(vertx, configuration, metricsSystem);
-  }
-
-  /**
-   * Gets minimum peers.
-   *
-   * @return the minimum peers
-   */
-  public int getMinPeers() {
-    return minPeers;
-  }
-
-  /**
-   * Add Minimum peers.
-   *
-   * @param minPeers the minimum peers
-   * @return the runner builder
-   */
-  public RunnerBuilder minPeers(final int minPeers) {
-    this.minPeers = minPeers;
-    return this;
   }
 
   /**

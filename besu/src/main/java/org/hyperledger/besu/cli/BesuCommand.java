@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -325,6 +326,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private RocksDBPlugin rocksDBPlugin;
 
+  private int maxPeers;
+  private int maxRemoteInitiatedPeers;
+  private int peersLowerBound;
+
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
 
@@ -438,8 +443,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
     private final Integer maxPeers = DEFAULT_MAX_PEERS;
-
-    private int minPeers;
 
     @Option(
         names = {"--remote-connections-limit-enabled"},
@@ -1305,6 +1308,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
   private final Long rpcMaxLogsRange = 1000L;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--p2p-peer-lower-bound"}, // TODO: do we want to make this not experimental
+      description =
+          "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
+  private final Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
+
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -1487,7 +1497,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       validateOptions();
       configure();
       configureNativeLibs();
-      initController();
+      besuController = initController();
 
       besuPluginContext.beforeExternalServices();
 
@@ -1697,8 +1707,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         p2pTLSConfiguration,
         p2PDiscoveryOptionGroup.peerDiscoveryEnabled,
         ethNetworkConfig,
-        p2PDiscoveryOptionGroup.maxPeers,
-        p2PDiscoveryOptionGroup.minPeers,
         p2PDiscoveryOptionGroup.p2pHost,
         p2PDiscoveryOptionGroup.p2pInterface,
         p2PDiscoveryOptionGroup.p2pPort,
@@ -1955,17 +1963,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void ensureValidPeerBoundParams() {
-    final int min = unstableNetworkingOptions.toDomainObject().getRlpx().getPeerLowerBound();
-    final int max = p2PDiscoveryOptionGroup.maxPeers;
-    if (min > max) {
-      logger.warn("`--Xp2p-peer-lower-bound` " + min + " must not exceed --max-peers " + max);
-      // modify the --X lower-bound value if it's not valid, we don't want unstable defaults
-      // breaking things
-      logger.warn("setting --Xp2p-peer-lower-bound=" + max);
-      unstableNetworkingOptions.toDomainObject().getRlpx().setPeerLowerBound(max);
-      p2PDiscoveryOptionGroup.minPeers = max;
+    maxPeers = p2PDiscoveryOptionGroup.maxPeers;
+    peersLowerBound = peerLowerBoundConfig;
+    if (peersLowerBound > maxPeers) {
+      logger.warn(
+          "`--p2p-peer-lower-bound` "
+              + peersLowerBound
+              + " must not exceed --max-peers "
+              + maxPeers);
+      logger.warn("setting --p2p-peer-lower-bound=" + maxPeers);
+      peersLowerBound = maxPeers;
+    }
+    final Boolean isLimitRemoteWireConnectionsEnabled =
+        p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled;
+    if (isLimitRemoteWireConnectionsEnabled) {
+      final float fraction =
+          Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
+              .getValue();
+      checkState(
+          fraction >= 0.0 && fraction <= 1.0,
+          "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");
+      maxRemoteInitiatedPeers = (int) Math.floor(fraction * maxPeers);
     } else {
-      p2PDiscoveryOptionGroup.minPeers = min;
+      maxRemoteInitiatedPeers = maxPeers;
     }
   }
 
@@ -2232,8 +2252,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void initController() {
-    besuController = buildController();
+  private BesuController initController() {
+    return buildController();
   }
 
   /**
@@ -2305,6 +2325,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
         .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
+        .lowerBoundPeers(peersLowerBound)
+        .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject());
   }
@@ -2983,8 +3005,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Optional<TLSConfiguration> p2pTLSConfiguration,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
-      final int maxPeers,
-      final int minPeers,
       final String p2pAdvertisedHost,
       final String p2pListenInterface,
       final int p2pListenPort,
@@ -3018,13 +3038,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
-            .maxPeers(maxPeers)
-            .minPeers(minPeers)
-            .limitRemoteWireConnectionsEnabled(
-                p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled)
-            .fractionRemoteConnectionsAllowed(
-                Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
-                    .getValue())
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .legacyForkId(unstableEthProtocolOptions.toDomainObject().isLegacyEth64ForkIdEnabled())
             .graphQLConfiguration(graphQLConfiguration)

@@ -147,14 +147,12 @@ public class P2PPlainNetworkTest {
   @Test
   public void limitMaxPeers() throws Exception {
     final NodeKey nodeKey = NodeKeyUtils.generate();
-    final int maxPeers = 1;
     final NetworkingConfiguration listenerConfig =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setActive(false))
             .setRlpx(
                 RlpxConfiguration.create()
                     .setBindPort(0)
-                    .setPeerUpperBound(maxPeers)
                     .setSupportedProtocols(MockSubProtocol.create()));
     try (final P2PNetwork listener =
             builder("partner1client1").nodeKey(nodeKey).config(listenerConfig).build();
@@ -419,7 +417,7 @@ public class P2PPlainNetworkTest {
   private static Path toPath(final String path) {
     try {
       return Path.of(Objects.requireNonNull(P2PPlainNetworkTest.class.getResource(path)).toURI());
-    } catch (URISyntaxException e) {
+    } catch (final URISyntaxException e) {
       throw new RuntimeException("Error converting to URI.", e);
     }
   }

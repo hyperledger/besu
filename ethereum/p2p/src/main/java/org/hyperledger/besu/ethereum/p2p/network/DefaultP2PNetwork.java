@@ -184,7 +184,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.peerPermissions = peerPermissions;
 
     // set the requirement here that the number of peers be greater than the lower bound
-    final int peerLowerBound = config.getRlpx().getPeerLowerBound();
+    final int peerLowerBound = rlpxAgent.getPeerLowerBound();
     LOG.debug("setting peerLowerBound {}", peerLowerBound);
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
     subscribeDisconnect(reputationManager);
