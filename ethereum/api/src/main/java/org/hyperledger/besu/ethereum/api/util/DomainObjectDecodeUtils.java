@@ -30,8 +30,10 @@ public class DomainObjectDecodeUtils {
       Bytes txnBytes = Bytes.fromHexString(rawTransaction);
       final boolean isGoQuorumCompatibilityMode = GoQuorumOptions.getGoQuorumCompatibilityMode();
       return TransactionDecoder.decodeOpaqueBytes(txnBytes, isGoQuorumCompatibilityMode);
-    } catch (final IllegalArgumentException | RLPException e) {
+    } catch (final IllegalArgumentException e) {
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);
+    } catch (final RLPException r) {
+      throw new InvalidJsonRpcRequestException("Invalid RLP in raw transaction hex", r);
     }
   }
 }
