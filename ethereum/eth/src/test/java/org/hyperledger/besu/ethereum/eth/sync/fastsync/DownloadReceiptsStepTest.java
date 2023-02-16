@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -61,6 +62,7 @@ public class DownloadReceiptsStepTest {
     TransactionPool transactionPool = mock(TransactionPool.class);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            ProtocolScheduleFixture.MAINNET,
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),

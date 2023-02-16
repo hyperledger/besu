@@ -24,14 +24,13 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.Collection;
 import java.util.List;
@@ -73,8 +72,9 @@ public class ForkIdsNetworkConfigTest {
             NetworkName.SEPOLIA,
             List.of(
                 new ForkId(Bytes.ofUnsignedInt(0xfe3366e7L), 1735371L),
-                new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 1677557088L),
+                new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 0L))
           },
           new Object[] {
             NetworkName.RINKEBY,
@@ -168,8 +168,7 @@ public class ForkIdsNetworkConfigTest {
       final GenesisConfigFile genesisConfigFile =
           GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
       final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
-      final ProtocolSchedule schedule =
-          MainnetProtocolSchedule.fromConfig(configOptions, EvmConfiguration.DEFAULT);
+      final ProtocolSchedule schedule = TransitionProtocolSchedule.fromConfig(configOptions);
       final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
       final Blockchain mockBlockchain = mock(Blockchain.class);
       final BlockHeader mockBlockHeader = mock(BlockHeader.class);
@@ -179,6 +178,7 @@ public class ForkIdsNetworkConfigTest {
       final AtomicLong blockNumber = new AtomicLong();
       when(mockBlockchain.getChainHeadHeader()).thenReturn(mockBlockHeader);
       when(mockBlockHeader.getNumber()).thenAnswer(o -> blockNumber.get());
+      when(mockBlockHeader.getTimestamp()).thenAnswer(o -> blockNumber.get());
 
       final ForkIdManager forkIdManager =
           new ForkIdManager(
@@ -187,7 +187,7 @@ public class ForkIdsNetworkConfigTest {
               genesisConfigFile.getForkTimestamps(),
               false);
 
-      final var actualForkIds =
+      final List<ForkId> actualForkIds =
           Streams.concat(schedule.streamMilestoneBlocks(), Stream.of(Long.MAX_VALUE))
               .map(
                   block -> {

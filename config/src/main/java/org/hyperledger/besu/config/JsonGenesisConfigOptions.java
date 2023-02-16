@@ -596,10 +596,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getArrowGlacierBlockNumber(),
             getGrayGlacierBlockNumber(),
             getMergeNetSplitBlockNumber(),
-            getShanghaiTime(),
-            getCancunTime(),
-            getFutureEipsTime(),
-            getExperimentalEipsTime(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),
@@ -623,7 +619,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public List<Long> getForkBlockTimestamps() {
-    Stream<OptionalLong> forkBlockTimestamps = Stream.of(getShanghaiTime(), getCancunTime());
+    Stream<OptionalLong> forkBlockTimestamps =
+        Stream.of(
+            getShanghaiTime(), getCancunTime(), getFutureEipsTime(), getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockTimestamps

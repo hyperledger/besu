@@ -80,6 +80,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
     frame.clearReturnData();
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
+    if (inputSize > maxInitcodeSize) {
+      frame.popStackItems(getStackItemsConsumed());
+      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+    }
 
     if (value.compareTo(account.getBalance()) > 0
         || frame.getMessageStackDepth() >= 1024
@@ -88,12 +94,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     } else {
       account.incrementNonce();
 
-      final long inputOffset = clampedToLong(frame.getStackItem(1));
-      final long inputSize = clampedToLong(frame.getStackItem(2));
-      if (inputSize > maxInitcodeSize) {
-        frame.popStackItems(getStackItemsConsumed());
-        return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
-      }
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
       // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
       // addresses disk loading delay, and we already have the code.
