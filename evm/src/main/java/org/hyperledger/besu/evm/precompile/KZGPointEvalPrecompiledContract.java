@@ -136,7 +136,6 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       }
       return result;
     } catch (CKZGException ckzgException) {
-      System.out.println("CKZGexception" + ckzgException.getMessage());
       result =
           new PrecompileContractResult(
               Bytes.EMPTY,
@@ -144,7 +143,6 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
               MessageFrame.State.COMPLETED_FAILED,
               Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     } catch (RuntimeException kzgFailed) {
-      System.out.println("RuntimeException" + kzgFailed.getMessage());
       result =
           new PrecompileContractResult(
               Bytes.EMPTY,
