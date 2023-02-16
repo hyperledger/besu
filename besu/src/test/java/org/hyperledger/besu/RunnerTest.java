@@ -462,9 +462,9 @@ public final class RunnerTest {
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
         .randomPeerPriority(Boolean.FALSE)
-            .maxPeers(25)
-            .lowerBoundPeers(25)
-            .maxRemotelyInitiatedPeers(15)
+        .maxPeers(25)
+        .lowerBoundPeers(25)
+        .maxRemotelyInitiatedPeers(15)
         .build();
   }
 }
