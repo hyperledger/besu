@@ -21,8 +21,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -30,7 +28,6 @@ import java.util.stream.IntStream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -42,13 +39,8 @@ public class KZGPointEvalPrecompileContractTest {
   private final MessageFrame toRun = mock(MessageFrame.class);
 
   @BeforeAll
-  public static void init() throws URISyntaxException {
-    final Path testSetupAbsolutePath =
-        Path.of(
-            KZGPointEvalPrecompileContractTest.class.getResource("trusted_setup_4096.txt").toURI());
-
-    CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
-    CKZG4844JNI.loadTrustedSetup(testSetupAbsolutePath.toString());
+  public static void init() {
+    KZGPointEvalPrecompiledContract.init("foo");
     contract = new KZGPointEvalPrecompiledContract();
   }
 

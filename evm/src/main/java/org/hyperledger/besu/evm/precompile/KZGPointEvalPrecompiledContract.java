@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.precompile;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,15 +31,35 @@ import org.jetbrains.annotations.NotNull;
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   private static final AtomicBoolean loaded = new AtomicBoolean(false);
 
-  private final Bytes successResult;
+  private static final Bytes successResult;
 
-  public KZGPointEvalPrecompiledContract() {
+  static {
+    CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
     Bytes fieldElementsPerBlob =
         Bytes32.wrap(Bytes.ofUnsignedInt(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
     Bytes blsModulus =
         Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
 
     successResult = Bytes.concatenate(fieldElementsPerBlob, blsModulus);
+  }
+
+  public static void init(final Path trustedSetupFile) {
+    if (loaded.compareAndSet(false, true)) {
+      CKZG4844JNI.loadTrustedSetup(trustedSetupFile.toAbsolutePath().toString());
+    } else {
+      throw new IllegalStateException("KZG trusted setup was already loaded");
+    }
+  }
+
+  public static void init(final String networkName) {
+    if (loaded.compareAndSet(false, true)) {
+      final String trustedSetupResourceName =
+          "/kzg-trusted-setups/" + networkName.toLowerCase() + ".txt";
+      CKZG4844JNI.loadTrustedSetupFromResource(
+          trustedSetupResourceName, KZGPointEvalPrecompiledContract.class);
+    } else {
+      throw new IllegalStateException("KZG trusted setup was already loaded");
+    }
   }
 
   /** free up resources. */
