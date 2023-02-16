@@ -31,9 +31,9 @@ import org.jetbrains.annotations.NotNull;
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   private static final AtomicBoolean loaded = new AtomicBoolean(false);
 
-  private static final Bytes successResult;
+  private static Bytes successResult;
 
-  static {
+  private static void init() {
     CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
     Bytes fieldElementsPerBlob =
         Bytes32.wrap(Bytes.ofUnsignedInt(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
@@ -51,6 +51,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
    */
   public static void init(final Path trustedSetupFile) {
     if (loaded.compareAndSet(false, true)) {
+      init();
       CKZG4844JNI.loadTrustedSetup(trustedSetupFile.toAbsolutePath().toString());
     } else {
       throw new IllegalStateException("KZG trusted setup was already loaded");
@@ -66,6 +67,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
    */
   public static void init(final String networkName) {
     if (loaded.compareAndSet(false, true)) {
+      init();
       final String trustedSetupResourceName =
           "/kzg-trusted-setups/" + networkName.toLowerCase() + ".txt";
       CKZG4844JNI.loadTrustedSetupFromResource(
