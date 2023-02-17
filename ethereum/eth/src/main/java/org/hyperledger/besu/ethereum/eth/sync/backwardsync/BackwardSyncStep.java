@@ -76,6 +76,7 @@ public class BackwardSyncStep {
                 context.getProtocolSchedule(),
                 context.getEthContext(),
                 hash,
+                0,
                 batchSize,
                 context.getMetricsSystem(),
                 context.getEthContext().getEthPeers().peerCount());

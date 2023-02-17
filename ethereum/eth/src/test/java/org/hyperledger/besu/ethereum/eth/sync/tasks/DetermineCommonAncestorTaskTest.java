@@ -80,6 +80,7 @@ public class DetermineCommonAncestorTaskTest {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             localBlockchain,
             worldStateArchive,
             mock(TransactionPool.class),

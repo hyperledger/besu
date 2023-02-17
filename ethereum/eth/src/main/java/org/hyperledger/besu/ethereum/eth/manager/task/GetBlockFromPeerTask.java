@@ -103,7 +103,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
               hash.map(
                       value ->
                           GetHeadersFromPeerByHashTask.forSingleHash(
-                              protocolSchedule, ethContext, value, metricsSystem))
+                              protocolSchedule, ethContext, value, blockNumber, metricsSystem))
                   .orElseGet(
                       () ->
                           GetHeadersFromPeerByNumberTask.forSingleNumber(

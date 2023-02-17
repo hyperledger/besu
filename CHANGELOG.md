@@ -1,5 +1,15 @@
 # Changelog
 
+## 23.1.1-RC1
+Besu 23.1.1-RC is a required update only for users who want to test Shanghai on Sepolia.
+
+### Additions and Improvements
+- Add implementation for engine_exchangeCapabilities [#4997](https://github.com/hyperledger/besu/pull/4997)
+- Add implementation for engine_getPayloadBodiesByRangeV1 and engine_getPayloadBodiesByHashV1 [#4980](https://github.com/hyperledger/besu/pull/4980)
+- If a PoS block creation repetition takes less than a configurable duration, then waits before next repetition [#5048](https://github.com/hyperledger/besu/pull/5048)
+- Fix engine_getPayloadV2 block value calculation [#5040](https://github.com/hyperledger/besu/issues/5040)
+- Add support for Shanghai in Sepolia [#5088](https://github.com/hyperledger/besu/pull/5088)
+
 ## 23.1.0
 Besu 23.1.0 is a recommended update for Mainnet users. Thank you all for your patience as we crafted this quarterly release.
 
