@@ -51,15 +51,16 @@ public class GeneralStateReferenceTestTools {
   private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
+  private static MainnetTransactionProcessor transactionProcessor(final String name) {
+    return protocolSpec(name)
+        .getTransactionProcessor();
+  }
+
   private static ProtocolSpec protocolSpec(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
             .getByName(name)
             .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
             ;
-  }
-  private static MainnetTransactionProcessor transactionProcessor(final String name) {
-    return protocolSpec(name)
-        .getTransactionProcessor();
   }
 
   private static final List<String> EIPS_TO_RUN;
