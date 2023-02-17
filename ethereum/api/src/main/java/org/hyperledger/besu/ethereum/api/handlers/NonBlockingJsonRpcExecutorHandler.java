@@ -140,22 +140,17 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
       final Context spanContext = ctx.get(SPAN_CONTEXT);
       response = response.putHeader("Content-Type", APPLICATION_JSON);
 
-      final boolean isRequestBodyAnObject =
-          ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
-      final boolean isRequestBodyAnArray =
-          ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name());
-
-      if (!isRequestBodyAnObject && !isRequestBodyAnArray) {
-        handleJsonRpcError(ctx, null, JsonRpcError.PARSE_ERROR);
+      if (isRequestBodyAnObject(ctx)) {
+        processRequestBodyAsObject(ctx, response, user, spanContext);
         return;
       }
 
-      if (isRequestBodyAnArray) {
+      if (isRequestBodyAnArray(ctx)) {
         processRequestBodyAsArray(ctx, response, user, spanContext);
         return;
       }
 
-      processRequestBodyAsObject(ctx, response, user, spanContext);
+      handleJsonRpcError(ctx, null, JsonRpcError.PARSE_ERROR);
     } catch (final IOException | RuntimeException e) {
       LOG.error("RPC call failed: {}", e.getMessage());
       handleJsonRpcError(ctx, null, JsonRpcError.INTERNAL_ERROR);
@@ -382,6 +377,14 @@ public class NonBlockingJsonRpcExecutorHandler implements Handler<RoutingContext
       default:
         return HttpResponseStatus.OK;
     }
+  }
+
+  private boolean isRequestBodyAnObject(final RoutingContext ctx) {
+    return ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
+  }
+
+  private boolean isRequestBodyAnArray(final RoutingContext ctx) {
+    return ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name());
   }
 
   @FunctionalInterface
