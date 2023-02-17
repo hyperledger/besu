@@ -132,7 +132,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
 
     final BlockTransactionSelector selector =
-        createBlockSelector(mainnetTransactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary);
+        createBlockSelector(
+            mainnetTransactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -155,7 +156,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
 
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -186,7 +188,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
 
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -213,7 +216,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
 
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -257,6 +261,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
+            Wei.ZERO,
             FeeMarket.london(0L),
             new LondonGasCalculator(),
             GasLimitCalculator.constant());
@@ -307,7 +312,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 3 transactions to the Pending Transactions, 79% of block, 100% of block and 10% of block
@@ -346,7 +352,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
@@ -394,7 +401,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     final Transaction validTransaction =
@@ -429,7 +437,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -443,7 +452,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final MainnetTransactionProcessor transactionProcessor,
       final ProcessableBlockHeader blockHeader,
       final Wei minGasPrice,
-      final Address miningBeneficiary) {
+      final Address miningBeneficiary,
+      final Wei dataGasPrice) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             transactionProcessor,
@@ -456,6 +466,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
+            dataGasPrice,
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant());

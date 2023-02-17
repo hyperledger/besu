@@ -168,6 +168,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           createPendingBlockHeader(timestamp, maybePrevRandao, newProtocolSpec);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
+      final Wei dataGasPrice =
+          newProtocolSpec
+              .getFeeMarket()
+              .dataPrice(parentHeader.getExcessDataGas().orElse(DataGas.ZERO));
 
       throwIfStopped();
 
@@ -177,10 +181,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final BlockTransactionSelector.TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
-              parentHeader,
               disposableWorldState,
               maybeTransactions,
               miningBeneficiary,
+              dataGasPrice,
               newProtocolSpec);
 
       throwIfStopped();
@@ -275,10 +279,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private BlockTransactionSelector.TransactionSelectionResults selectTransactions(
       final ProcessableBlockHeader processableBlockHeader,
-      final BlockHeader parentHeader,
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
       final Address miningBeneficiary,
+      final Wei dataGasPrice,
       final ProtocolSpec protocolSpec)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
@@ -293,12 +297,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             disposableWorldState,
             pendingTransactions,
             processableBlockHeader,
-            parentHeader,
             transactionReceiptFactory,
             minTransactionGasPrice,
             minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
+            dataGasPrice,
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
             protocolSpec.getGasLimitCalculator());

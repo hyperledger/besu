@@ -45,6 +45,4 @@ public interface TransactionPriceCalculator {
       return price;
     }
   }
-
-  class DataBlob extends EIP1559 {}
 }

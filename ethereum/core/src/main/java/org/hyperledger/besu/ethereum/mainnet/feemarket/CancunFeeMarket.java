@@ -18,7 +18,6 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -33,7 +32,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
 
   public CancunFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    super(new TransactionPriceCalculator.DataBlob(), londonForkBlockNumber, baseFeePerGasOverride);
+    super(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
   @Override

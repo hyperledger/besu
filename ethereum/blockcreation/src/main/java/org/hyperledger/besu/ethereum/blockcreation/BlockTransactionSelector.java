@@ -17,11 +17,9 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -86,12 +84,12 @@ public class BlockTransactionSelector {
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final ProcessableBlockHeader processableBlockHeader;
-  private final BlockHeader parentHeader;
   private final Blockchain blockchain;
   private final MutableWorldState worldState;
   private final PendingTransactions pendingTransactions;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
+  private final Wei dataGasPrice;
   private final FeeMarket feeMarket;
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
@@ -105,12 +103,12 @@ public class BlockTransactionSelector {
       final MutableWorldState worldState,
       final PendingTransactions pendingTransactions,
       final ProcessableBlockHeader processableBlockHeader,
-      final BlockHeader parentHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
+      final Wei dataGasPrice,
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator) {
@@ -119,12 +117,12 @@ public class BlockTransactionSelector {
     this.worldState = worldState;
     this.pendingTransactions = pendingTransactions;
     this.processableBlockHeader = processableBlockHeader;
-    this.parentHeader = parentHeader;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
+    this.dataGasPrice = dataGasPrice;
     this.feeMarket = feeMarket;
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
@@ -210,7 +208,7 @@ public class BlockTransactionSelector {
             transaction.getHash().toHexString());
         return transactionSelectionResultForInvalidResult(transaction, validationResult);
       } else {
-        // valid GoQuorum private tx, we need to hand craft the receipt and increment the nonce
+        // valid GoQuorum private tx, we need to handcraft the receipt and increment the nonce
         effectiveResult = publicResultForWhenWeHaveAPrivateTransaction(transaction);
         worldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
       }
@@ -225,7 +223,7 @@ public class BlockTransactionSelector {
               blockHashLookup,
               false,
               TransactionValidationParams.mining(),
-              feeMarket.dataPrice(parentHeader.getExcessDataGas().orElse(DataGas.ZERO)));
+              dataGasPrice);
     }
 
     if (!effectiveResult.isInvalid()) {
@@ -246,12 +244,7 @@ public class BlockTransactionSelector {
 
   private boolean transactionDataPriceBelowMin(final Transaction transaction) {
     if (transaction.getType().supportsBlob()) {
-      if (transaction
-          .getMaxFeePerDataGas()
-          .orElseThrow()
-          .lessThan(
-              feeMarket.dataPrice(
-                  processableBlockHeader.getExcessDataGas().orElse(DataGas.ZERO)))) {
+      if (transaction.getMaxFeePerDataGas().orElseThrow().lessThan(dataGasPrice)) {
         return true;
       }
     }
