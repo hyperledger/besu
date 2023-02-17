@@ -7,7 +7,8 @@ RUN apt-get update && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \
  adduser --disabled-password --gecos "" --home /opt/besu besu && \
-    chown besu:besu /opt/besu
+    chown besu:besu /opt/besu && \
+    chmod 0755 /opt/besu
 
 USER besu
 WORKDIR /opt/besu

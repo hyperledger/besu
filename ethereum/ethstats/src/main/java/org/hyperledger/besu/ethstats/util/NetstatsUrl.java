@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 @Value.Immutable
 public interface NetstatsUrl {
 
-  Pattern NETSTATS_URL_REGEX = Pattern.compile("([-\\w]+):([\\w]+)?@([-.\\w]+)(:([\\d]+))?");
+  Pattern NETSTATS_URL_REGEX = Pattern.compile("([-\\w]+):([-\\w]+)?@([-.\\w]+)(:([\\d]+))?");
 
   String getNodeName();
 

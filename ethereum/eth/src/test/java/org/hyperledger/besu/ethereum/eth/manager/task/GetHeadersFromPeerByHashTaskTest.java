@@ -69,7 +69,12 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
       final List<BlockHeader> requestedData) {
     final BlockHeader firstHeader = requestedData.get(0);
     return GetHeadersFromPeerByHashTask.startingAtHash(
-        protocolSchedule, ethContext, firstHeader.getHash(), requestedData.size(), metricsSystem);
+        protocolSchedule,
+        ethContext,
+        firstHeader.getHash(),
+        firstHeader.getNumber(),
+        requestedData.size(),
+        metricsSystem);
   }
 
   @Test
@@ -113,6 +118,7 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
             protocolSchedule,
             ethContext,
             blockchain.getBlockHashByNumber(startNumber).get(),
+            startNumber,
             count,
             skip,
             reverse,
@@ -135,6 +141,8 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
 
   @Test
   public void checkThatSequentialHeadersFormingAChainWorks() {
+    final int startNumber = 1;
+
     final BlockHeader block1 =
         new BlockHeaderTestFixture().number(1).parentHash(generateTestBlockHash(0)).buildHeader();
     final BlockHeader block2 =
@@ -145,7 +153,14 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
 
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByHashTask(
-            protocolSchedule, ethContext, block1.getHash(), 2, 0, false, metricsSystem);
+            protocolSchedule,
+            ethContext,
+            block1.getHash(),
+            startNumber,
+            2,
+            0,
+            false,
+            metricsSystem);
     final Optional<List<BlockHeader>> optionalBlockHeaders =
         task.processResponse(false, BlockHeadersMessage.create(headers), peer);
     assertThat(optionalBlockHeaders).isNotNull();
@@ -158,6 +173,7 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
 
   @Test
   public void checkThatSequentialHeadersNotFormingAChainFails() {
+    final int startNumber = 1;
     final BlockHeader block1 =
         new BlockHeaderTestFixture().number(1).parentHash(generateTestBlockHash(0)).buildHeader();
     final BlockHeader block2 =
@@ -168,7 +184,14 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
 
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByHashTask(
-            protocolSchedule, ethContext, block1.getHash(), 2, 0, false, metricsSystem);
+            protocolSchedule,
+            ethContext,
+            block1.getHash(),
+            startNumber,
+            2,
+            0,
+            false,
+            metricsSystem);
     final Optional<List<BlockHeader>> optionalBlockHeaders =
         task.processResponse(false, BlockHeadersMessage.create(headers), peer);
     assertThat(optionalBlockHeaders).isNotNull();

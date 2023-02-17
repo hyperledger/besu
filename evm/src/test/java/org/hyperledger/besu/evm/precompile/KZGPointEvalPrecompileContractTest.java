@@ -15,77 +15,79 @@
 package org.hyperledger.besu.evm.precompile;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ethereum.ckzg4844.CKZG4844JNI;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class KZGPointEvalPrecompileContractTest {
-
   private static KZGPointEvalPrecompiledContract contract;
   private final MessageFrame toRun = mock(MessageFrame.class);
 
-  @BeforeClass
+  @BeforeAll
   public static void init() {
     Path testSetupAbsolutePath =
         Path.of(
-            KZGPointEvalPrecompileContractTest.class.getResource("trusted_setup_4.txt").getPath());
+            KZGPointEvalPrecompileContractTest.class
+                .getResource("trusted_setup_4096.txt")
+                .getPath());
     contract = new KZGPointEvalPrecompiledContract(Optional.of(testSetupAbsolutePath));
   }
 
-  @Test
-  public void happyPath() {
-    Bytes input =
-        Bytes.fromHexString(
-            "013c03613f6fc558fb7e61e75602241ed9a2f04e36d8670aadd286e71b5ca9cc420000000000000000000000000000000000000000000000000000000000000031e5a2356cbc2ef6a733eae8d54bf48719ae3d990017ca787c419c7d369f8e3c83fac17c3f237fc51f90e2c660eb202a438bc2025baded5cd193c1a018c5885bc9281ba704d5566082e851235c7be763b2a99adff965e0a121ee972ebc472d02944a74f5c6243e14052e105124b70bf65faf85ad3a494325e269fad097842cba");
-
-    Bytes fieldElementsPerBlob =
-        Bytes32.wrap(Bytes.ofUnsignedInt(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
-    Bytes blsModulus =
-        Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
-    Bytes expectedOutput = Bytes.concatenate(fieldElementsPerBlob, blsModulus);
-    // contract input is encoded as follows: versioned_hash | z | y | commitment | proof |
-    PrecompiledContract.PrecompileContractResult result = contract.computePrecompile(input, toRun);
-    assertThat(result.getOutput()).isEqualTo(expectedOutput);
-    MessageFrame.State endState = result.getState();
-    assertThat(endState).isEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
+  @AfterAll
+  public static void tearDown() {
+    contract.tearDown();
   }
 
-  @Test
-  public void sadPaths() {
-    try (InputStream failVectors =
-        KZGPointEvalPrecompileContractTest.class.getResourceAsStream("fail_pointEvaluation.json")) {
-
-      ObjectMapper jsonMapper = new ObjectMapper();
-      JsonNode failJson = jsonMapper.readTree(failVectors);
-
-      for (JsonNode testCase : failJson) {
-
-        Bytes input = Bytes.fromHexString(testCase.get("Input").asText());
-
-        PrecompiledContract.PrecompileContractResult result =
-            contract.computePrecompile(input, toRun);
-        MessageFrame.State endState = result.getState();
-        assertThat(endState).isEqualTo(MessageFrame.State.COMPLETED_FAILED);
-        assertThat(result.getHaltReason()).isPresent();
-        assertThat(result.getHaltReason().get()).isEqualTo(ExceptionalHaltReason.PRECOMPILE_ERROR);
-      }
-    } catch (IOException ioe) {
-      fail("couldn't load test vectors", ioe);
+  @ParameterizedTest(name = "{index}")
+  @MethodSource("getPointEvaluationPrecompileTestVectors")
+  public void testComputePrecompile(final PrecompileTestParameters parameters) {
+    PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(parameters.input, toRun);
+    if (parameters.valid) {
+      assertThat(result.getState()).isEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
+      assertThat(result.getOutput()).isEqualTo(parameters.returnValue);
+    } else {
+      assertThat(result.getState()).isNotEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
     }
   }
+
+  public static List<PrecompileTestParameters> getPointEvaluationPrecompileTestVectors()
+      throws IOException {
+    final JsonNode jsonNode;
+    try (final InputStream testVectors =
+        KZGPointEvalPrecompileContractTest.class.getResourceAsStream(
+            "pointEvaluationPrecompile.json")) {
+      jsonNode = new ObjectMapper().readTree(testVectors);
+    }
+    final ArrayNode testCases = (ArrayNode) jsonNode.get("TestCases");
+    final Bytes returnValue = Bytes.fromHexString(jsonNode.get("PrecompileReturnValue").asText());
+    return IntStream.range(0, testCases.size())
+        .mapToObj(
+            i -> {
+              final JsonNode testCase = testCases.get(i);
+              final Bytes input = Bytes.fromHexString(testCase.get("Input").asText());
+              final boolean valid = testCase.get("Valid").asBoolean();
+              return new PrecompileTestParameters(input, valid, returnValue);
+            })
+        .collect(Collectors.toList());
+  }
+
+  record PrecompileTestParameters(Bytes input, boolean valid, Bytes returnValue) {}
 }
