@@ -534,30 +534,32 @@ public class EthPeers {
     if (completeConnections.containsValue(peer)) {
       return false;
     }
+    final PeerConnection connection = peer.getConnection();
     final Bytes id = peer.getId();
     if (!randomPeerPriority) {
       // Disconnect if too many peers
-      if (!canExceedPeerLimits(peer.getConnection()) && peerCount() >= peerUpperBound) {
+      if (!canExceedPeerLimits(connection) && peerCount() >= peerUpperBound) {
         LOG.debug(
             "Too many peers. Disconnect connection: {}, max connections {}",
-            peer.getConnection(),
+            connection,
             peerUpperBound);
-        peer.getConnection().disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+        connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
       // Disconnect if too many remotely-initiated connections
-      if (!canExceedPeerLimits(peer.getConnection()) && remoteConnectionLimitReached()) {
+      if (connection.inboundInitiated()
+          && !canExceedPeerLimits(connection)
+          && remoteConnectionLimitReached()) {
         LOG.debug(
             "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
-            peer.getConnection(),
+            connection,
             maxRemotelyInitiatedConnections);
-        peer.getConnection().disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+        connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
       final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
       if (added)
-        LOG.info(
-            "Added peer {} with connection {} to connections", peer.getId(), peer.getConnection());
+        LOG.info("Added peer {} with connection {} to connections", peer.getId(), connection);
       return added;
     } else {
       // randomPeerPriority! Add the peer and if there are too many connections fix it
