@@ -40,13 +40,8 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A World State backed first by trie log layer and then by another world state. */
-public class BonsaiLayeredWorldState
-    implements MutableWorldState,
-        BonsaiWorldView,
-        WorldState,
-        BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
-  private Optional<BonsaiWorldView> nextWorldView = Optional.empty();
-  private Optional<Long> newtWorldViewSubscribeId = Optional.empty();
+public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
+  private Optional<BonsaiWorldView> nextWorldView;
   protected final long height;
   protected final TrieLogLayer trieLog;
   private final Hash worldStateRootHash;
@@ -63,7 +58,7 @@ public class BonsaiLayeredWorldState
       final TrieLogLayer trieLog) {
     this.blockchain = blockchain;
     this.archive = archive;
-    this.setNextWorldView(nextWorldView);
+    this.nextWorldView = nextWorldView;
     this.height = height;
     this.worldStateRootHash = worldStateRootHash;
     this.trieLog = trieLog;
@@ -81,34 +76,7 @@ public class BonsaiLayeredWorldState
   }
 
   public void setNextWorldView(final Optional<BonsaiWorldView> nextWorldView) {
-    maybeUnSubscribe(); // unsubscribe the old view
     this.nextWorldView = nextWorldView;
-    maybeSubscribe(); // subscribe the next view
-  }
-
-  private void maybeSubscribe() {
-    nextWorldView
-        .filter(BonsaiPersistedWorldState.class::isInstance)
-        .map(BonsaiPersistedWorldState.class::cast)
-        .ifPresent(
-            worldState -> {
-              newtWorldViewSubscribeId = Optional.of(worldState.worldStateStorage.subscribe(this));
-            });
-  }
-
-  private void maybeUnSubscribe() {
-    nextWorldView
-        .filter(BonsaiPersistedWorldState.class::isInstance)
-        .map(BonsaiPersistedWorldState.class::cast)
-        .ifPresent(
-            worldState -> {
-              newtWorldViewSubscribeId.ifPresent(worldState.worldStateStorage::unSubscribe);
-            });
-  }
-
-  @Override
-  public void close() throws Exception {
-    maybeUnSubscribe();
   }
 
   public TrieLogLayer getTrieLog() {

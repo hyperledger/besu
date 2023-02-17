@@ -192,4 +192,11 @@ public interface MergeContext extends ConsensusContext {
    * @return the boolean
    */
   boolean isCheckpointPostMergeSync();
+
+  /**
+   * Is configured for a post-merge from genesis.
+   *
+   * @return the boolean
+   */
+  boolean isPostMergeAtGenesis();
 }
