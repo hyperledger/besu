@@ -46,7 +46,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
 
   public LondonFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    this.txPriceCalculator = new TransactionPriceCalculator.EIP1559();
+    this.txPriceCalculator = TransactionPriceCalculator.eip1559();
     this.londonForkBlockNumber = londonForkBlockNumber;
     this.baseFeeInitialValue = baseFeePerGasOverride.orElse(DEFAULT_BASEFEE_INITIAL_VALUE);
     this.baseFeeFloor = baseFeeInitialValue.isZero() ? Wei.ZERO : DEFAULT_BASEFEE_FLOOR;

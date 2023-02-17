@@ -19,20 +19,17 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Optional;
 
+@FunctionalInterface
 public interface TransactionPriceCalculator {
-  Wei price(Transaction transaction, Optional<Wei> maybeFee);
+  Wei price(Transaction transaction, Optional<Wei> baseFee);
 
-  class Frontier implements TransactionPriceCalculator {
-    @Override
-    public Wei price(final Transaction transaction, final Optional<Wei> maybeFee) {
-      return transaction.getGasPrice().orElse(Wei.ZERO);
-    }
+  static TransactionPriceCalculator frontier() {
+    return (transaction, baseFee) -> transaction.getGasPrice().orElse(Wei.ZERO);
   }
 
-  class EIP1559 implements TransactionPriceCalculator {
-    @Override
-    public Wei price(final Transaction transaction, final Optional<Wei> maybeFee) {
-      final Wei baseFee = maybeFee.orElseThrow();
+  static TransactionPriceCalculator eip1559() {
+    return (transaction, maybeBaseFee) -> {
+      final Wei baseFee = maybeBaseFee.orElseThrow();
       if (!transaction.getType().supports1559FeeMarket()) {
         return transaction.getGasPrice().orElse(Wei.ZERO);
       }
@@ -43,6 +40,6 @@ public interface TransactionPriceCalculator {
         price = maxFeePerGas;
       }
       return price;
-    }
+    };
   }
 }
