@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -122,7 +123,8 @@ class BranchNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    children.parallelStream().forEach(Node::getHash);
+    children.forEach(node -> CompletableFuture.runAsync(node::getHash));
+
     for (int i = 0; i < RADIX; ++i) {
       out.writeRaw(children.get(i).getRlpRef());
     }
