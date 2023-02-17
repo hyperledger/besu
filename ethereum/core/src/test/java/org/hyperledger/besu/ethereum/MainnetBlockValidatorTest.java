@@ -225,7 +225,7 @@ public class MainnetBlockValidatorTest {
   }
 
   @Test
-  public void shouldNotAddBadBlockToBadBlockManagerWhenShouldNotRecordBadBlockFlagIsSetToTrue() {
+  public void when_shouldRecordBadBlockIsFalse_Expect_BlockNotAddedToBadBlockManager() {
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     mainnetBlockValidator.validateAndProcessBlock(
@@ -240,7 +240,7 @@ public class MainnetBlockValidatorTest {
   }
 
   @Test
-  public void shouldAddBadBlockToBadBlockManagerWhenShouldNotRecordBadBlockFlagIsSetToFalse() {
+  public void when_shouldRecordBadBlockIsTrue_Expect_BlockAddedToBadBlockManager() {
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     mainnetBlockValidator.validateAndProcessBlock(
@@ -255,7 +255,7 @@ public class MainnetBlockValidatorTest {
   }
 
   @Test
-  public void shouldAddBadBlockToBadBlockManagerWhenShouldNotRecordBadBlockFlagIsNotSet() {
+  public void when_shouldRecordBadBlockIsNotSet_Expect_BlockAddedToBadBlockManager() {
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     mainnetBlockValidator.validateAndProcessBlock(
