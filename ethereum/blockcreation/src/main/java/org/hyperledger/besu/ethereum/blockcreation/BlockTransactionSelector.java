@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -85,6 +86,7 @@ public class BlockTransactionSelector {
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final ProcessableBlockHeader processableBlockHeader;
+  private final BlockHeader parentHeader;
   private final Blockchain blockchain;
   private final MutableWorldState worldState;
   private final PendingTransactions pendingTransactions;
@@ -103,6 +105,7 @@ public class BlockTransactionSelector {
       final MutableWorldState worldState,
       final PendingTransactions pendingTransactions,
       final ProcessableBlockHeader processableBlockHeader,
+      final BlockHeader parentHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
@@ -116,6 +119,7 @@ public class BlockTransactionSelector {
     this.worldState = worldState;
     this.pendingTransactions = pendingTransactions;
     this.processableBlockHeader = processableBlockHeader;
+    this.parentHeader = parentHeader;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
     this.minTransactionGasPrice = minTransactionGasPrice;
@@ -221,7 +225,7 @@ public class BlockTransactionSelector {
               blockHashLookup,
               false,
               TransactionValidationParams.mining(),
-              Wei.ZERO);
+              feeMarket.dataPrice(parentHeader.getExcessDataGas().orElse(DataGas.ZERO)));
     }
 
     if (!effectiveResult.isInvalid()) {

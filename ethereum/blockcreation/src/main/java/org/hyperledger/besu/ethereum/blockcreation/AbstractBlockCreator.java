@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -178,6 +177,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final BlockTransactionSelector.TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
+              parentHeader,
               disposableWorldState,
               maybeTransactions,
               miningBeneficiary,
@@ -275,6 +275,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private BlockTransactionSelector.TransactionSelectionResults selectTransactions(
       final ProcessableBlockHeader processableBlockHeader,
+      final BlockHeader parentHeader,
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
       final Address miningBeneficiary,
@@ -292,6 +293,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             disposableWorldState,
             pendingTransactions,
             processableBlockHeader,
+            parentHeader,
             transactionReceiptFactory,
             minTransactionGasPrice,
             minBlockOccupancyRatio,
@@ -342,13 +344,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<Bytes32> maybePrevRandao,
       final ProtocolSpec protocolSpec) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final GasLimitCalculator gasLimitCalculator = protocolSpec.getGasLimitCalculator();
-
-    final long gasLimit =
-        gasLimitCalculator.nextGasLimit(
-            parentHeader.getGasLimit(),
-            targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
-            newBlockNumber);
+    long gasLimit =
+        protocolSpec
+            .getGasLimitCalculator()
+            .nextGasLimit(
+                parentHeader.getGasLimit(),
+                targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
+                newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
