@@ -494,8 +494,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     return validationResult;
   }
 
-  @Override
-  public BlockProcessingResult validateProposedBlock(final Block block) {
+  private BlockProcessingResult validateProposedBlock(final Block block) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
