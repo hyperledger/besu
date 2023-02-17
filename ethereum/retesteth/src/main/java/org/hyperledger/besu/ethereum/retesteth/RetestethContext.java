@@ -67,6 +67,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -203,9 +204,12 @@ public class RetestethContext {
 
     // mining support
 
+    final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
+        () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
     final EthPeers ethPeers =
         new EthPeers(
             "reteseth",
+            currentProtocolSpecSupplier,
             retestethClock,
             metricsSystem,
             0,

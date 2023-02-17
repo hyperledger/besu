@@ -48,12 +48,14 @@ import java.util.OptionalLong;
 public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final TimeoutPolicy timeoutPolicy,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
     return create(
+        protocolSchedule,
         blockchain,
         new DeterministicEthScheduler(timeoutPolicy),
         worldStateArchive,
@@ -62,6 +64,7 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static EthProtocolManager create(
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
@@ -71,6 +74,7 @@ public class EthProtocolManagerTestUtil {
     EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
@@ -145,15 +149,20 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static EthProtocolManager create(final Blockchain blockchain) {
-    return create(blockchain, new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT));
+    return create(
+        ProtocolScheduleFixture.MAINNET,
+        blockchain,
+        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT));
   }
 
   public static EthProtocolManager create(
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethProtocolConfiguration) {
     return create(
+        protocolSchedule,
         blockchain,
         new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
         worldStateArchive,
@@ -166,10 +175,11 @@ public class EthProtocolManagerTestUtil {
     final GenesisConfigFile config = GenesisConfigFile.mainnet();
     final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
     final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    return create(blockchain, ethScheduler);
+    return create(protocolSchedule, blockchain, ethScheduler);
   }
 
   public static EthProtocolManager create(
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final EthScheduler ethScheduler,
       final WorldStateArchive worldStateArchive,
@@ -178,6 +188,7 @@ public class EthProtocolManagerTestUtil {
     EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
@@ -196,6 +207,7 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static EthProtocolManager create(
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final EthScheduler ethScheduler,
       final WorldStateArchive worldStateArchive,
@@ -205,6 +217,7 @@ public class EthProtocolManagerTestUtil {
     EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
@@ -224,10 +237,13 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static EthProtocolManager create(
-      final Blockchain blockchain, final EthScheduler ethScheduler) {
+      final ProtocolSchedule protocolSchedule,
+      final Blockchain blockchain,
+      final EthScheduler ethScheduler) {
     EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,

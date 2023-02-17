@@ -106,6 +106,7 @@ public abstract class AbstractBlockPropagationManagerTest {
             tempProtocolContext.getConsensusContext(ConsensusContext.class));
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             blockchain,
             blockchainUtil.getWorldArchive(),
             blockchainUtil.getTransactionPool(),
@@ -617,6 +618,7 @@ public abstract class AbstractBlockPropagationManagerTest {
         new EthContext(
             new EthPeers(
                 "eth",
+                () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,
                 25,
@@ -749,6 +751,7 @@ public abstract class AbstractBlockPropagationManagerTest {
         new EthContext(
             new EthPeers(
                 "eth",
+                () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,
                 25,
