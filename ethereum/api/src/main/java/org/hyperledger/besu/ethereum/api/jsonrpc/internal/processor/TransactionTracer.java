@@ -110,7 +110,11 @@ public class TransactionTracer {
               final Wei dataGasPrice =
                   protocolSpec
                       .getFeeMarket()
-                      .dataPrice(header.getExcessDataGas().orElse(DataGas.ZERO));
+                      .dataPrice(
+                          blockchain
+                              .getBlockHeader(header.getParentHash())
+                              .flatMap(BlockHeader::getExcessDataGas)
+                              .orElse(DataGas.ZERO));
               for (int i = 0; i < body.getTransactions().size(); i++) {
                 ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);

@@ -56,7 +56,13 @@ public class BlockReplay {
         block.getBody(),
         (body, header, blockchain, mutableWorldState, transactionProcessor, protocolSpec) -> {
           final Wei dataGasPrice =
-              protocolSpec.getFeeMarket().dataPrice(header.getExcessDataGas().orElse(DataGas.ZERO));
+              protocolSpec
+                  .getFeeMarket()
+                  .dataPrice(
+                      blockchain
+                          .getBlockHeader(header.getParentHash())
+                          .flatMap(BlockHeader::getExcessDataGas)
+                          .orElse(DataGas.ZERO));
 
           final List<TransactionTrace> transactionTraces =
               body.getTransactions().stream()
@@ -86,7 +92,13 @@ public class BlockReplay {
         (body, header, blockchain, mutableWorldState, transactionProcessor, protocolSpec) -> {
           final BlockHashLookup blockHashLookup = new BlockHashLookup(header, blockchain);
           final Wei dataGasPrice =
-              protocolSpec.getFeeMarket().dataPrice(header.getExcessDataGas().orElse(DataGas.ZERO));
+              protocolSpec
+                  .getFeeMarket()
+                  .dataPrice(
+                      blockchain
+                          .getBlockHeader(header.getParentHash())
+                          .flatMap(BlockHeader::getExcessDataGas)
+                          .orElse(DataGas.ZERO));
 
           for (final Transaction transaction : body.getTransactions()) {
             if (transaction.getHash().equals(transactionHash)) {

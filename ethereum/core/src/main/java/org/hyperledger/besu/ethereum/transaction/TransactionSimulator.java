@@ -223,6 +223,14 @@ public class TransactionSimulator {
       return Optional.empty();
     }
 
+    final Optional<BlockHeader> maybeParentHeader =
+        blockchain.getBlockHeader(blockHeaderToProcess.getParentHash());
+    final Wei dataGasPrice =
+        protocolSpec
+            .getFeeMarket()
+            .dataPrice(
+                maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
+
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
@@ -237,9 +245,7 @@ public class TransactionSimulator {
             false,
             transactionValidationParams,
             operationTracer,
-            protocolSpec
-                .getFeeMarket()
-                .dataPrice(blockHeaderToProcess.getExcessDataGas().orElse(DataGas.ZERO)));
+            dataGasPrice);
 
     // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
     // It is possible to have a data field that has a lower intrinsic value than the PMT hash.

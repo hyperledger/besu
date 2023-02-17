@@ -59,8 +59,7 @@ public class GeneralStateReferenceTestTools {
   private static ProtocolSpec protocolSpec(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
             .getByName(name)
-            .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
-            ;
+            .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
   }
 
   private static final List<String> EIPS_TO_RUN;
@@ -146,7 +145,8 @@ public class GeneralStateReferenceTestTools {
     final MainnetTransactionProcessor processor = transactionProcessor(spec.getFork());
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
-    final Wei dataGasPrice = protocolSpec(spec.getFork()).getFeeMarket().dataPrice(blockHeader.getExcessDataGas().orElse(DataGas.ZERO));
+    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
+    final Wei dataGasPrice = protocolSpec(spec.getFork()).getFeeMarket().dataPrice(DataGas.ZERO);
     final TransactionProcessingResult result =
         processor.processTransaction(
             blockchain,
@@ -156,7 +156,8 @@ public class GeneralStateReferenceTestTools {
             blockHeader.getCoinbase(),
             new BlockHashLookup(blockHeader, blockchain),
             false,
-            TransactionValidationParams.processingBlock(), dataGasPrice);
+            TransactionValidationParams.processingBlock(),
+            dataGasPrice);
     if (result.isInvalid()) {
       assertThat(spec.getExpectException()).isNotNull();
       return;
