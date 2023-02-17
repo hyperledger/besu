@@ -230,7 +230,7 @@ public class JsonRpcConfiguration {
         && Objects.equals(hostsAllowlist, that.hostsAllowlist)
         && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
         && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile)
-        && Objects.equals(maxBatchSize, that.maxBatchSize);
+        && maxBatchSize == that.maxBatchSize;
   }
 
   @Override
