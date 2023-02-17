@@ -221,7 +221,7 @@ public class MainnetBlockValidator implements BlockValidator {
     if (shouldRecordBadBlock) {
       badBlockManager.addBadBlock(invalidBlock, result.causedBy());
     } else {
-      LOG.debug("Invalid block not added to badBlockManager {}", invalidBlock.toLogString());
+      LOG.debug("Invalid block {} not added to badBlockManager ", invalidBlock.toLogString());
     }
   }
 
