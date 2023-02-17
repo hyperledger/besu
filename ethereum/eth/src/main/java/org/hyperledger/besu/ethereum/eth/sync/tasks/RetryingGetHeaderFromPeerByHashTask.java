@@ -40,16 +40,19 @@ public class RetryingGetHeaderFromPeerByHashTask
       LoggerFactory.getLogger(RetryingGetHeaderFromPeerByHashTask.class);
   private final Hash referenceHash;
   private final ProtocolSchedule protocolSchedule;
+  private final long minimumRequiredBlockNumber;
 
   @VisibleForTesting
   RetryingGetHeaderFromPeerByHashTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
+      final long minimumRequiredBlockNumber,
       final MetricsSystem metricsSystem,
       final int maxRetries) {
     super(ethContext, metricsSystem, List::isEmpty, maxRetries);
     this.protocolSchedule = protocolSchedule;
+    this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
   }
@@ -58,11 +61,13 @@ public class RetryingGetHeaderFromPeerByHashTask
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
+      final long minimumRequiredBlockNumber,
       final MetricsSystem metricsSystem) {
     return new RetryingGetHeaderFromPeerByHashTask(
         protocolSchedule,
         ethContext,
         referenceHash,
+        minimumRequiredBlockNumber,
         metricsSystem,
         ethContext.getEthPeers().peerCount());
   }
@@ -71,7 +76,11 @@ public class RetryingGetHeaderFromPeerByHashTask
   protected CompletableFuture<List<BlockHeader>> executeTaskOnCurrentPeer(final EthPeer peer) {
     final AbstractGetHeadersFromPeerTask task =
         GetHeadersFromPeerByHashTask.forSingleHash(
-            protocolSchedule, getEthContext(), referenceHash, getMetricsSystem());
+            protocolSchedule,
+            getEthContext(),
+            referenceHash,
+            minimumRequiredBlockNumber,
+            getMetricsSystem());
     task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
