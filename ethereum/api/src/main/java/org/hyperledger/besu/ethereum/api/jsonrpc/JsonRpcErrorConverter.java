@@ -67,6 +67,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
       case LOWER_NONCE_INVALID_TRANSACTION_EXISTS:
         return JsonRpcError.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
+      case TOTAL_DATA_GAS_TOO_HIGH:
+        return JsonRpcError.TOTAL_DATA_GAS_TOO_HIGH;
       default:
         return JsonRpcError.INVALID_PARAMS;
     }
