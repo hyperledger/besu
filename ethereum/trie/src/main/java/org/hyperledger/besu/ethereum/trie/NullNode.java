@@ -106,4 +106,9 @@ public class NullNode<V> implements Node<V> {
   public void markHealNeeded() {
     // do nothing
   }
+
+  @Override
+  public boolean isHashPresent() {
+    return false;
+  }
 }

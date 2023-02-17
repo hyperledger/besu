@@ -182,4 +182,9 @@ class ExtensionNode<V> implements Node<V> {
   public void markHealNeeded() {
     this.needHeal = true;
   }
+
+  @Override
+  public boolean isHashPresent() {
+    return hash.isPresent();
+  }
 }

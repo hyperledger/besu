@@ -172,6 +172,11 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
     }
 
     @Override
+    public boolean isHashPresent() {
+      return (hash != null);
+    }
+
+    @Override
     public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
       // do nothing
       return this;

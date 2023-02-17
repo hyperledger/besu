@@ -166,4 +166,9 @@ class LeafNode<V> implements Node<V> {
   public void markHealNeeded() {
     // nothing to do a leaf don't have child
   }
+
+  @Override
+  public boolean isHashPresent() {
+    return hash.isPresent();
+  }
 }

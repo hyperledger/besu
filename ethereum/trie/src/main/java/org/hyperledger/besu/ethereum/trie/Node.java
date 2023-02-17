@@ -83,4 +83,11 @@ public interface Node<V> {
    * Marking a node as need heal means that one of its children is not yet present in the storage
    */
   void markHealNeeded();
+
+  /**
+   * Check if hash is already calculated
+   *
+   * @return true if hash is present
+   */
+  boolean isHashPresent();
 }

@@ -61,6 +61,11 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
+  public boolean isHashPresent() {
+    return (hash != null);
+  }
+
+  @Override
   public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
     final Node<V> node = load();
     return node.accept(visitor, path);

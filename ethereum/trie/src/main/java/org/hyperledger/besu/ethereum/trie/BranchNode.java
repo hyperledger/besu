@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -123,7 +122,7 @@ class BranchNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    children.forEach(node -> CompletableFuture.runAsync(node::getHash));
+    children.stream().filter(node -> !node.isHashPresent()).parallel().forEach(Node::getHash);
 
     for (int i = 0; i < RADIX; ++i) {
       out.writeRaw(children.get(i).getRlpRef());
@@ -264,5 +263,10 @@ class BranchNode<V> implements Node<V> {
   @Override
   public void markHealNeeded() {
     this.needHeal = true;
+  }
+
+  @Override
+  public boolean isHashPresent() {
+    return hash.isPresent();
   }
 }
