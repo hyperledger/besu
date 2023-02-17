@@ -151,19 +151,22 @@ public class EvmToolCommand implements Runnable {
   @Option(
       names = {"--memory", "--trace.memory"},
       description = "Enable showing the full memory output in tracing for each op.",
-      scope = INHERIT)
+      scope = INHERIT,
+      negatable = true)
   final Boolean showMemory = false;
 
   @Option(
       names = {"--trace.stack"},
       description = "Enable showing the operand stack in tracing for each op.",
-      scope = INHERIT)
+      scope = INHERIT,
+      negatable = true)
   final Boolean showStack = true;
 
   @Option(
       names = {"--trace.returndata"},
       description = "Enable showing the return data in tracing for each op.",
-      scope = INHERIT)
+      scope = INHERIT,
+      negatable = true)
   final Boolean showReturnData = false;
 
   @Option(
@@ -201,6 +204,8 @@ public class EvmToolCommand implements Runnable {
     final CommandLine commandLine = new CommandLine(this).setOut(output);
     out = output;
     in = input;
+
+    // add dagger-injected options
     commandLine.addMixin("Dagger Options", daggerOptions);
 
     // add sub commands here
@@ -208,7 +213,17 @@ public class EvmToolCommand implements Runnable {
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Wei.class, arg -> Wei.of(Long.parseUnsignedLong(arg)));
 
-    commandLine.setExecutionStrategy(new CommandLine.RunLast()).execute(args);
+    // change negation regexp so --nomemory works
+    commandLine.setNegatableOptionTransformer(
+        new CommandLine.RegexTransformer.Builder()
+            .addPattern("^--no(\\w(-|\\w)*)$", "--$1", "--[no]$1")
+            .addPattern("^--trace.no(\\w(-|\\w)*)$", "--trace.$1", "--trace.[no]$1")
+            .addPattern("^--(\\w(-|\\w)*)$", "--no$1", "--[no]$1")
+            .addPattern("^--trace.(\\w(-|\\w)*)$", "--trace.no$1", "--trace.[no]$1")
+            .build());
+
+    commandLine.setExecutionStrategy(new CommandLine.RunLast());
+    commandLine.execute(args);
   }
 
   @Override
