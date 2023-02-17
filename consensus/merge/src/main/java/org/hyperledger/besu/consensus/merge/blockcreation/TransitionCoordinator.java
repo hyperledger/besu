@@ -163,11 +163,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public BlockProcessingResult validateProposedBlock(final Block block) {
-    return mergeCoordinator.validateProposedBlock(block);
-  }
-
-  @Override
   public ForkchoiceResult updateForkChoice(
       final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
     return mergeCoordinator.updateForkChoice(newHead, finalizedBlockHash, safeBlockHash);

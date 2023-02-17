@@ -72,14 +72,6 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   BlockProcessingResult validateBlock(final Block block);
 
   /**
-   * Validate a proposed block, proposed blocks do not get added to the badBlockManager by default.
-   *
-   * @param block the block
-   * @return the block processing result
-   */
-  BlockProcessingResult validateProposedBlock(final Block block);
-
-  /**
    * Update fork choice.
    *
    * @param newHead the new head
