@@ -64,7 +64,7 @@ public interface BesuPlugin {
   void start();
 
   /**
-   * Called when the plugin is being reloaded. This method will be called trough a dedicated JSON
+   * Called when the plugin is being reloaded. This method will be called through a dedicated JSON
    * RPC endpoint. If not overridden this method does nothing for convenience. The plugin should
    * only implement this method if it supports dynamic reloading.
    *

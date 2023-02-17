@@ -31,14 +31,14 @@ public interface BlockBody {
    *
    * @return The list of transactions of the block.
    */
-  public List<? extends Transaction> getTransactions();
+  List<? extends Transaction> getTransactions();
 
   /**
    * Returns the list of ommers of the block.
    *
    * @return The list of ommers of the block.
    */
-  public List<? extends BlockHeader> getOmmers();
+  List<? extends BlockHeader> getOmmers();
 
   /**
    * Returns the list of withdrawals of the block.
