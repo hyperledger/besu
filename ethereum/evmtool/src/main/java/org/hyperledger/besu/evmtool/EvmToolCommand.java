@@ -150,7 +150,8 @@ public class EvmToolCommand implements Runnable {
 
   @Option(
       names = {"--memory", "--trace.memory"},
-      description = "Show the full memory output in tracing for each op. Default is not to show memory.",
+      description =
+          "Show the full memory output in tracing for each op. Default is not to show memory.",
       scope = INHERIT,
       negatable = true)
   final Boolean showMemory = false;
@@ -164,7 +165,8 @@ public class EvmToolCommand implements Runnable {
 
   @Option(
       names = {"--trace.returndata"},
-      description = "Show the return data in tracing for each op when present. Default is to show return data.",
+      description =
+          "Show the return data in tracing for each op when present. Default is to show return data.",
       scope = INHERIT,
       negatable = true)
   final Boolean showReturnData = false;
