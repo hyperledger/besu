@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -242,7 +243,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<List<Deposit>> deposits) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -267,7 +269,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator
-            .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
+            .createBlock(
+                Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals, deposits)
             .getBlock();
 
     BlockProcessingResult result = validateBlock(emptyBlock);
@@ -289,7 +292,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       }
     }
 
-    tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals);
+    tryToBuildBetterBlock(
+        timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals, deposits);
 
     return payloadIdentifier;
   }
@@ -310,10 +314,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 random,
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<List<Deposit>> deposits) {
 
     final Supplier<BlockCreationResult> blockCreator =
-        () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp, withdrawals);
+        () ->
+            mergeBlockCreator.createBlock(
+                Optional.empty(), random, timestamp, withdrawals, deposits);
 
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",

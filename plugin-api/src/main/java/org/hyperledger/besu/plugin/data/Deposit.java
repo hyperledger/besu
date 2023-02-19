@@ -17,27 +17,43 @@ package org.hyperledger.besu.plugin.data;
 import org.apache.tuweni.units.bigints.UInt64;
 
 /**
- * A deposit is a system-level operation to support validator deposits that are pushed from the
- * beacon chain to EVM.
+ * A deposit is a system-level operation to support validator deposits that are pushed from the EVM
+ * to beacon chain.
  */
 public interface Deposit {
 
+  /**
+   * Public key of the address that sends the deposit
+   *
+   * @return public key of sender
+   */
   PublicKey getPublicKey();
 
+  /**
+   * Withdrawal credential that contains info that will be used for verifying the destination of
+   * valid withdrawals
+   *
+   * @return withdrawal credential
+   */
   WithdrawalCredential getWithdrawalCredentials();
 
   /**
-   * Amount of ether to be withdrawn that be credit to the recipient address
+   * Amount of ether to be sent to the deposit contract
    *
-   * @return withdrawn ether amount
+   * @return deposit ether amount
    */
   Quantity getAmount();
 
+  /**
+   * Signature that will be used together with the public key to verify the validity of this Deposit
+   *
+   * @return signature
+   */
   Signature getSignature();
 
   /**
-   * A monotonically increasing index, starting from 0 that increments by 1 per withdrawal to
-   * uniquely identify each withdrawal
+   * A monotonically increasing index, starting from 0 that increments by 1 per deposit to uniquely
+   * identify each deposit
    *
    * @return deposit index
    */

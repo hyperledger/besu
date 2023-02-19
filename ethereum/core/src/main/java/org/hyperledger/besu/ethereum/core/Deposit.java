@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.datatypes.*;
+import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.datatypes.BLSSignature;
+import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.WithdrawalCredential;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -36,11 +39,11 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   private final UInt64 index;
 
   public Deposit(
-      BLSPublicKey pubKey,
-      WithdrawalCredential withdrawalCredentials,
-      GWei amount,
-      BLSSignature signature,
-      UInt64 index) {
+      final BLSPublicKey pubKey,
+      final WithdrawalCredential withdrawalCredentials,
+      final GWei amount,
+      final BLSSignature signature,
+      final UInt64 index) {
     this.pubKey = pubKey;
     this.withdrawalCredentials = withdrawalCredentials;
     this.amount = amount;
@@ -61,18 +64,18 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   }
 
   @Override
-  public GWei getAmount() {
-    return amount;
-  }
-
-  @Override
   public PublicKey getPublicKey() {
-    return null;
+    return pubKey;
   }
 
   @Override
   public WithdrawalCredential getWithdrawalCredentials() {
     return withdrawalCredentials;
+  }
+
+  @Override
+  public GWei getAmount() {
+    return amount;
   }
 
   @Override

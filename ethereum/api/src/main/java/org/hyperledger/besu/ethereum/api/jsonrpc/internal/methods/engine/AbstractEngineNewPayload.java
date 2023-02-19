@@ -158,6 +158,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             0,
             maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
             null,
+            null,
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -200,7 +201,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final var block =
         new Block(
-            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
+            newBlockHeader,
+            new BlockBody(
+                transactions, Collections.emptyList(), maybeWithdrawals, Optional.empty()));
 
     if (parentHeader.isEmpty()) {
       debugLambda(

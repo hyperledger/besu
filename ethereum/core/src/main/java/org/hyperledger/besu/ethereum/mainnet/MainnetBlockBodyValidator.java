@@ -104,6 +104,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
+    if (!validateDeposits(block)) {
+      return false;
+    }
+
     return true;
   }
 

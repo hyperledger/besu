@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -82,17 +83,20 @@ public class MergeBlockCreator extends AbstractBlockCreator {
    * @param random the random
    * @param timestamp the timestamp
    * @param withdrawals optional list of withdrawals
+   * @param deposits optional list of deposits
    * @return the block creation result
    */
   public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Bytes32 random,
       final long timestamp,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<List<Deposit>> deposits) {
     return createBlock(
         maybeTransactions,
         Optional.of(Collections.emptyList()),
         withdrawals,
+        deposits,
         Optional.of(random),
         timestamp,
         false);
