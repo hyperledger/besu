@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.Deposit;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -24,10 +23,11 @@ public class DepositEncoder {
 
   public static void encode(final Deposit deposit, final RLPOutput rlpOutput) {
     rlpOutput.startList();
-//    rlpOutput.writeBigIntegerScalar(withdrawal.getIndex().toBigInteger());
-//    rlpOutput.writeBigIntegerScalar(withdrawal.getValidatorIndex().toBigInteger());
-//    rlpOutput.writeBytes(withdrawal.getAddress());
-//    rlpOutput.writeUInt64Scalar(withdrawal.getAmount());
+    rlpOutput.writeBytes(deposit.getPublicKey());
+    rlpOutput.writeBytes(deposit.getWithdrawalCredentials());
+    rlpOutput.writeUInt64Scalar(deposit.getAmount());
+    rlpOutput.writeBytes(deposit.getSignature());
+    rlpOutput.writeUInt64Scalar(deposit.getIndex());
     rlpOutput.endList();
   }
 

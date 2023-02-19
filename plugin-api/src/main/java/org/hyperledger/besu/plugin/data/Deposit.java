@@ -22,9 +22,9 @@ import org.apache.tuweni.units.bigints.UInt64;
  */
 public interface Deposit {
 
-  Object getPubKey(); // TODO
+  PublicKey getPublicKey();
 
-  Object getWithdrawalCredentials(); //TODO
+  WithdrawalCredential getWithdrawalCredentials();
 
   /**
    * Amount of ether to be withdrawn that be credit to the recipient address
@@ -33,7 +33,7 @@ public interface Deposit {
    */
   Quantity getAmount();
 
-  Object getSignature(); //TODO
+  Signature getSignature();
 
   /**
    * A monotonically increasing index, starting from 0 that increments by 1 per withdrawal to

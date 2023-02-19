@@ -19,16 +19,17 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.datatypes.WithdrawalCredential;
 import org.hyperledger.besu.ethereum.core.Deposit;
 
 import java.util.Objects;
 
 public class DepositParameter {
 
-  private final String pubKey;
+  private final String publicKey;
 
   private final String withdrawalCredentials;
   private final String amount;
@@ -43,7 +44,7 @@ public class DepositParameter {
       @JsonProperty("amount") final String amount,
       @JsonProperty("signature") final String signature,
       @JsonProperty("index") final String index) {
-        this.pubKey = pubKey;
+        this.publicKey = pubKey;
         this.withdrawalCredentials = withdrawalCredentials;
         this.amount = amount;
         this.signature = signature;
@@ -52,7 +53,7 @@ public class DepositParameter {
 
   public static DepositParameter fromDeposit(final Deposit deposit) {
     return new DepositParameter(
-        deposit.getPubKey().toString(), //TODO
+        deposit.getPublicKey().toString(),
         deposit.getWithdrawalCredentials().toString(),
         deposit.getAmount().toShortHexString(),
         deposit.getSignature().toString(),
@@ -60,19 +61,18 @@ public class DepositParameter {
     );
   }
 
-  //TODO
   public Deposit toDeposit() {
     return new Deposit(
-        pubKey,
-        withdrawalCredentials,
+        BLSPublicKey.fromHexString(publicKey),
+        WithdrawalCredential.fromHexString(withdrawalCredentials),
         GWei.fromHexString(amount),
-        signature,
+        BLSSignature.fromHexString(signature),
         UInt64.fromHexString(index));
   }
 
   public JsonObject asJsonObject() {
     return new JsonObject()
-        .put("pubKey", pubKey)
+        .put("pubKey", publicKey)
         .put("withdrawalCredentials", withdrawalCredentials)
         .put("amount", amount)
         .put("signature", signature)
@@ -80,8 +80,8 @@ public class DepositParameter {
   }
 
   @JsonGetter
-  public String getPubKey() {
-    return pubKey;
+  public String getPublicKey() {
+    return publicKey;
   }
 
   @JsonGetter
@@ -109,7 +109,7 @@ public class DepositParameter {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final DepositParameter that = (DepositParameter) o;
-    return Objects.equals(pubKey, that.pubKey)
+    return Objects.equals(publicKey, that.publicKey)
         && Objects.equals(withdrawalCredentials, that.withdrawalCredentials)
         && Objects.equals(amount, that.amount)
         && Objects.equals(signature, that.signature)
@@ -118,13 +118,13 @@ public class DepositParameter {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pubKey, withdrawalCredentials, amount, signature, index);
+    return Objects.hash(publicKey, withdrawalCredentials, amount, signature, index);
   }
 
   @Override
   public String toString() {
     return "DepositParameter{" +
-            "pubKey='" + pubKey + '\'' +
+            "pubKey='" + publicKey + '\'' +
             ", withdrawalCredentials='" + withdrawalCredentials + '\'' +
             ", amount='" + amount + '\'' +
             ", signature='" + signature + '\'' +

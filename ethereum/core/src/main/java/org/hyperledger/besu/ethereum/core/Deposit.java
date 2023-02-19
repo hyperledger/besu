@@ -16,25 +16,25 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.*;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.PublicKey;
 
 import java.util.Objects;
 
 public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
-  private final Object pubKey;
-  private final Object withdrawalCredentials;
+  private final BLSPublicKey pubKey;
+  private final WithdrawalCredential withdrawalCredentials;
   private final GWei amount;
-  private final Object signature;
+  private final BLSSignature signature;
   private final UInt64 index;
 
-  public Deposit(Object pubKey, Object withdrawalCredentials, GWei amount, Object signature, UInt64 index) {
+  public Deposit(BLSPublicKey pubKey, WithdrawalCredential withdrawalCredentials, GWei amount, BLSSignature signature, UInt64 index) {
     this.pubKey = pubKey;
     this.withdrawalCredentials = withdrawalCredentials;
     this.amount = amount;
@@ -47,21 +47,11 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   }
 
   public static Deposit readFrom(final RLPInput rlpInput) {
-    return DepositDecoder.decode(rlpInput); //TODO
+    return DepositDecoder.decode(rlpInput);
   }
 
   public void writeTo(final RLPOutput out) {
-    DepositEncoder.encode(this, out); //TODO
-  }
-
-  @Override
-  public Object getPubKey() {
-    return pubKey;
-  }
-
-  @Override
-  public Object getWithdrawalCredentials() {
-    return withdrawalCredentials;
+    DepositEncoder.encode(this, out);
   }
 
   @Override
@@ -70,7 +60,17 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   }
 
   @Override
-  public Object getSignature() {
+  public PublicKey getPublicKey() {
+    return null;
+  }
+
+  @Override
+  public WithdrawalCredential getWithdrawalCredentials() {
+    return withdrawalCredentials;
+  }
+
+  @Override
+  public BLSSignature getSignature() {
     return signature;
   }
 

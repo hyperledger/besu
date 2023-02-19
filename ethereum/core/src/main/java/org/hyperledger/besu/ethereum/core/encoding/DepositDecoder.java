@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.WithdrawalCredential;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -26,14 +28,14 @@ public class DepositDecoder {
 
   public static Deposit decode(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final Object pubKey = null; //TODO
-    final Object withdrawalCredential = null; // TODO
+    final BLSPublicKey publicKey = BLSPublicKey.readFrom(rlpInput);
+    final WithdrawalCredential withdrawalCredential = WithdrawalCredential.readFrom(rlpInput);
     final GWei amount = GWei.of(rlpInput.readUInt64Scalar());
-    final SECPSignature signature = null; // TODO
+    final BLSSignature signature = BLSSignature.readFrom(rlpInput);
     final UInt64 index = UInt64.valueOf(rlpInput.readBigIntegerScalar());
     rlpInput.leaveList();
 
-    return new Deposit(pubKey, withdrawalCredential, amount, signature, index);
+    return new Deposit(publicKey, withdrawalCredential, amount, signature, index);
   }
 
   public static Deposit decodeOpaqueBytes(final Bytes input) {
