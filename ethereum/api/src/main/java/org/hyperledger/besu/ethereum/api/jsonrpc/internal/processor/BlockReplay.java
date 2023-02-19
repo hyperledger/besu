@@ -69,26 +69,6 @@ public class BlockReplay {
         });
   }
 
-  public Optional<StreamBlockTrace> streamBlock(
-      final Block block, final TransactionAction<TransactionTrace> action) {
-    return performActionWithBlock(
-        block.getHeader(),
-        block.getBody(),
-        (body, header, blockchain, mutableWorldState, transactionProcessor) -> {
-          Stream<TransactionTrace> transactionTraces =
-              body.getTransactions().stream()
-                  .map(
-                      transaction ->
-                          action.performAction(
-                              transaction,
-                              header,
-                              blockchain,
-                              mutableWorldState,
-                              transactionProcessor));
-          return Optional.of(new StreamBlockTrace(transactionTraces));
-        });
-  }
-
   public Optional<BlockTrace> block(
       final Hash blockHash, final TransactionAction<TransactionTrace> action) {
     return getBlock(blockHash).flatMap(block -> block(block, action));

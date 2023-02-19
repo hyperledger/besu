@@ -14,24 +14,36 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.services.pipeline.Pipeline;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,15 +54,16 @@ public class TraceBlock extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceBlock.class);
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
-  private final Supplier<BlockTracer> blockTracerSupplier;
+  //private final Supplier<BlockTracer> blockTracerSupplier;
   protected final ProtocolSchedule protocolSchedule;
+  // Either the initial block state or the state of the prior TX, including miner rewards.
+  private WorldUpdater chainedUpdater;
 
   public TraceBlock(
-      final Supplier<BlockTracer> blockTracerSupplier,
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries queries) {
     super(queries);
-    this.blockTracerSupplier = blockTracerSupplier;
+//    this.blockTracerSupplier = blockTracerSupplier;
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -88,15 +101,74 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       return emptyResult();
     }
     final ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
+    final BlockHeader header = block.getHeader();
+    final BlockHeader previous =
+        getBlockchainQueries()
+            .getBlockchain()
+            .getBlockHeader(block.getHeader().getParentHash())
+            .orElse(null);
+    /*
+    if (previous == null) {
+        return Optional.empty();
+    }*/
+    try (final var worldState =
+        getBlockchainQueries()
+            .getWorldStateArchive()
+            .getMutable(previous.getStateRoot(), previous.getBlockHash(), false)
+            .map(
+                ws -> {
+                  if (!ws.isPersistable()) {
+                    return ws.copy();
+                  }
+                  return ws;
+                })
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Missing worldstate for stateroot "
+                            + previous.getStateRoot().toShortHexString()))) {
+      // return action.perform(body, header, blockchain, worldState, transactionProcessor);
 
-    blockTracerSupplier
-        .get()
-        .streamTrace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
-        .ifPresent(
-            blockTrace ->
-                generateTracesFromTransactionTraceAndBlock(
-                    filterParameter, blockTrace.getTransactionTraces(), block, resultArrayNode));
+      if (chainedUpdater == null) {
+        chainedUpdater = worldState.updater();
+      } else if (chainedUpdater instanceof StackedUpdater) {
+        ((StackedUpdater) chainedUpdater).markTransactionBoundary();
+      }
+      // create an updater for just this tx
+      chainedUpdater = chainedUpdater.updater();
+    } catch (Exception exception) {
+      // no-op
+    }
 
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+    final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
+
+    TransactionSource transactionSource = new TransactionSource(block);
+    LabelledMetric<Counter> outputCounter = null;
+    DebugOperationTracer debugOperationTracer =
+        new DebugOperationTracer(new TraceOptions(false, false, true));
+    Function<Transaction, TransactionTrace> executeTransactionStep =
+        new ExecuteTransactionStep(
+            block,
+            transactionProcessor,
+            getBlockchainQueries().getBlockchain(),
+            chainedUpdater,
+            debugOperationTracer);
+    Function<TransactionTrace, Stream<Trace>> traceFlatTransactionStep =
+        new TraceFlatTransactionStep(protocolSchedule, block);
+    Consumer<Trace> buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
+    Pipeline<Transaction> traceBlockPipeline =
+        createPipelineFrom(
+                "getTransactions",
+                transactionSource,
+                5,
+                outputCounter,
+                true,
+                "trace_replay_block_transactions")
+            .thenProcess("executeTransaction", executeTransactionStep)
+            .thenFlatMap("traceFlatTransaction", traceFlatTransactionStep, 5)
+            .andFinishWith("buildArrayNode", buildArrayNodeStep);
+    getBlockchainQueries().getEthScheduler().get().startPipeline(traceBlockPipeline);
     generateRewardsFromBlock(filterParameter, block, resultArrayNode);
 
     return resultArrayNode;
@@ -104,7 +176,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
   protected void generateTracesFromTransactionTraceAndBlock(
       final Optional<FilterParameter> filterParameter,
-      final Stream<TransactionTrace> transactionTraces,
+      final List<TransactionTrace> transactionTraces,
       final Block block,
       final ArrayNodeWrapper resultArrayNode) {
     transactionTraces.forEach(

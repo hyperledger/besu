@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.StreamBlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
@@ -39,11 +39,11 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -115,14 +115,14 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
 
     return blockTracerSupplier
         .get()
-        .streamTrace(block, new DebugOperationTracer(traceOptions))
-        .map(StreamBlockTrace::getTransactionTraces)
+        .trace(block, new DebugOperationTracer(traceOptions))
+        .map(BlockTrace::getTransactionTraces)
         .map((traces) -> generateTracesFromTransactionTrace(traces, block, traceTypes))
         .orElse(null);
   }
 
   private JsonNode generateTracesFromTransactionTrace(
-      final Stream<TransactionTrace> transactionTraces,
+      final List<TransactionTrace> transactionTraces,
       final Block block,
       final Set<TraceTypeParameter.TraceType> traceTypes) {
     final ObjectMapper mapper = new ObjectMapper();

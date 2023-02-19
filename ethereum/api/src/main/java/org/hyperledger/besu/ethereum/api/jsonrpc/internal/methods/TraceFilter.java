@@ -49,7 +49,7 @@ public class TraceFilter extends TraceBlock {
       final Supplier<BlockTracer> blockTracerSupplier,
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries) {
-    super(blockTracerSupplier, protocolSchedule, blockchainQueries);
+    super(protocolSchedule, blockchainQueries);
   }
 
   @Override
@@ -85,7 +85,7 @@ public class TraceFilter extends TraceBlock {
   @Override
   protected void generateTracesFromTransactionTraceAndBlock(
       final Optional<FilterParameter> maybeFilterParameter,
-      final Stream<TransactionTrace> transactionTraces,
+      final List<TransactionTrace> transactionTraces,
       final Block block,
       final ArrayNodeWrapper arrayNode) {
 
