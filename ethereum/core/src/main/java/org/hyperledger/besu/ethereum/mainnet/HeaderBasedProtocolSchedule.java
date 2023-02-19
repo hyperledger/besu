@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface HeaderBasedProtocolSchedule {
 
@@ -31,4 +32,6 @@ public interface HeaderBasedProtocolSchedule {
   void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec);
 
   String listMilestones();
+
+  Stream<Long> streamMilestoneBlocks();
 }

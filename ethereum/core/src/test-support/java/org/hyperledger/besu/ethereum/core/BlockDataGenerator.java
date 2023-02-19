@@ -437,8 +437,9 @@ public class BlockDataGenerator {
         .value(Wei.of(positiveLong()))
         .payload(payload)
         .chainId(BigInteger.ONE)
+        .maxFeePerDataGas(Wei.of(1))
+        .versionedHashes(List.of(Hash.fromHexStringLenient("0x29")))
         .signAndBuild(generateKeyPair());
-    // ToDo 4844: specialize for blob when more field will be added for it
   }
 
   private Transaction frontierTransaction(final Bytes payload, final Address to) {
@@ -666,6 +667,8 @@ public class BlockDataGenerator {
 
     private Optional<Hash> withdrawalsRoot = Optional.empty();
 
+    private Optional<Optional<Wei>> maybeMaxFeePerDataGas = Optional.empty();
+
     public static BlockOptions create() {
       return new BlockOptions();
     }
@@ -843,6 +846,15 @@ public class BlockDataGenerator {
 
     public BlockOptions setWithdrawalsRoot(final Hash withdrawalsRoot) {
       this.withdrawalsRoot = Optional.of(withdrawalsRoot);
+      return this;
+    }
+
+    public Optional<Wei> getMaxFeePerDataGas(final Optional<Wei> defaultValue) {
+      return maybeMaxFeePerDataGas.orElse(defaultValue);
+    }
+
+    public BlockOptions setMaxFeePerDataGas(final Optional<Wei> maxFeePerDataGas) {
+      this.maybeMaxFeePerDataGas = Optional.of(maxFeePerDataGas);
       return this;
     }
   }

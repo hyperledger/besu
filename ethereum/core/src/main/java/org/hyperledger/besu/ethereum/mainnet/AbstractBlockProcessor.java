@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -144,9 +145,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
-      maybeWithdrawalsProcessor
-          .get()
-          .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
+      try {
+        maybeWithdrawalsProcessor
+            .get()
+            .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
+      } catch (final Exception e) {
+        LOG.error("failed processing withdrawals", e);
+        return new BlockProcessingResult(Optional.empty(), e);
+      }
     }
 
     final Optional<DepositsProcessor> maybeDepositsProcessor =
@@ -172,6 +178,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     try {
       worldState.persist(blockHeader);
+    } catch (MerkleTrieException e) {
+      LOG.trace("Merkle trie exception during Transaction processing ", e);
+      if (worldState instanceof BonsaiPersistedWorldState) {
+        ((BonsaiWorldStateUpdater) worldState.updater()).reset();
+      }
+      throw e;
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
       return new BlockProcessingResult(Optional.empty(), e);

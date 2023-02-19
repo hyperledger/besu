@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -81,6 +80,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
     frame.clearReturnData();
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
+    if (inputSize > maxInitcodeSize) {
+      frame.popStackItems(getStackItemsConsumed());
+      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+    }
 
     if (value.compareTo(account.getBalance()) > 0
         || frame.getMessageStackDepth() >= 1024
@@ -89,14 +94,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     } else {
       account.incrementNonce();
 
-      final long inputOffset = clampedToLong(frame.getStackItem(1));
-      final long inputSize = clampedToLong(frame.getStackItem(2));
-      if (inputSize > maxInitcodeSize) {
-        frame.popStackItems(getStackItemsConsumed());
-        return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
-      }
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-      Code code = evm.getCode(Hash.hash(inputData), inputData);
+      // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
+      // addresses disk loading delay, and we already have the code.
+      Code code = evm.getCode(null, inputData);
 
       if (code.isValid() && frame.getCode().getEofVersion() <= code.getEofVersion()) {
         frame.decrementRemainingGas(cost);
@@ -174,11 +175,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
     Code outputCode =
-        CodeFactory.createCode(
-            childFrame.getOutputData(),
-            Hash.hash(childFrame.getOutputData()),
-            evm.getMaxEOFVersion(),
-            true);
+        CodeFactory.createCode(childFrame.getOutputData(), evm.getMaxEOFVersion(), true);
     frame.popStackItems(getStackItemsConsumed());
 
     if (outputCode.isValid()) {

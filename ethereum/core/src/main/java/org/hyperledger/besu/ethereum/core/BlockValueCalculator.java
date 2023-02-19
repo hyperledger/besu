@@ -20,15 +20,21 @@ import java.util.List;
 
 public class BlockValueCalculator {
 
-  public long calculateBlockValue(final BlockWithReceipts blockWithReceipts) {
+  public Wei calculateBlockValue(final BlockWithReceipts blockWithReceipts) {
     final Block block = blockWithReceipts.getBlock();
     final List<Transaction> txs = block.getBody().getTransactions();
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
     Wei totalFee = Wei.ZERO;
     for (int i = 0; i < txs.size(); i++) {
       final Wei minerFee = txs.get(i).getEffectivePriorityFeePerGas(block.getHeader().getBaseFee());
-      totalFee = totalFee.add(minerFee.multiply(receipts.get(i).getCumulativeGasUsed()));
+      // we don't store gasUsed and need to calculate that on the fly
+      // receipts are fetched in ascending sorted by cumulativeGasUsed
+      long gasUsed = receipts.get(i).getCumulativeGasUsed();
+      if (i > 0) {
+        gasUsed = gasUsed - receipts.get(i - 1).getCumulativeGasUsed();
+      }
+      totalFee = totalFee.add(minerFee.multiply(gasUsed));
     }
-    return totalFee.toLong();
+    return totalFee;
   }
 }

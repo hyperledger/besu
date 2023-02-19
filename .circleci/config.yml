@@ -1,12 +1,12 @@
 ---
 version: 2.1
 orbs:
-  win: circleci/windows@2.2.0
+  win: circleci/windows@5.0
 
 executors:
   besu_executor_small:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
     resource_class: small
     working_directory: ~/project
     environment:
@@ -14,7 +14,7 @@ executors:
 
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -22,8 +22,8 @@ executors:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
   besu_arm64_executor_med: # 2cpu, 8G ram
-    machine:
-      image: ubuntu-2004:202101-01
+    machine: #https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2
     resource_class: arm.medium
     working_directory: ~/project
     environment:
@@ -32,15 +32,15 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
     resource_class: xlarge
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
   xl_machine_executor:
-    machine:
-      image: ubuntu-2004:202201-02 #Ubuntu 20.04, Docker v20.10.12, Docker Compose v1.29.2, Google Cloud SDK updates
+    machine: #https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2
     resource_class: xlarge
 
   trivy_executor:
@@ -60,6 +60,7 @@ commands:
             sudo apt-get update
             sudo apt-get install -y libsodium23 libsodium-dev libjemalloc-dev apt-transport-https haveged libnss3-tools
             sudo service haveged restart
+            java --version
       - restore_gradle_cache
   restore_gradle_cache:
     description: "Restore Gradle cache"
@@ -225,8 +226,8 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests
-          no_output_timeout: 30m
+          name: AcceptanceTests (Mainnet)
+          no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
@@ -235,7 +236,29 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTestMainnet $GRADLE_ARGS
+      - capture_test_results
+      - capture_test_logs
+
+  acceptanceTestsNonMainnet:
+    parallelism: 6
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests (Non-Mainnet)
+          no_output_timeout: 20m
+          command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon acceptanceTestNonMainnet $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
@@ -247,13 +270,13 @@ jobs:
           at: ~/project
       - setup_remote_docker
       - run:
-          name: hadoLint_openjdk_11
+          name: hadoLint_openjdk_17
           command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
       - run:
-          name: hadoLint_openjdk_11_debug
+          name: hadoLint_openjdk_17_debug
           command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11-debug/Dockerfile
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
       - run:
           name: hadoLint_openjdk_latest
           command: |
@@ -280,9 +303,9 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: hadoLint_openjdk_11
+          name: hadoLint_openjdk_17
           command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
       - run:
           name: hadoLint_openjdk_latest
           command: |
@@ -291,6 +314,11 @@ jobs:
           name: hadoLint_graalvm
           command: |
             docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+      - run:
+          name: Java_17
+          command: |
+            sudo apt install -q --assume-yes openjdk-17-jre-headless openjdk-17-jdk-headless
+            sudo update-java-alternatives -a
       - run:
           name: build image
           command: |
@@ -332,6 +360,11 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
+      - run:
+          name: Java_17
+          command: |
+            sudo apt install -q --assume-yes openjdk-17-jre-headless openjdk-17-jdk-headless
+            sudo update-java-alternatives -a
       - run:
           name: Publish Docker
           command: |
@@ -439,3 +472,4 @@ workflows:
     jobs:
       - assemble
       - dockerScan
+      - acceptanceTestsNonMainnet

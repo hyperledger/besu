@@ -25,6 +25,8 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -123,7 +125,7 @@ public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
       final String keystorePassword,
       final KeyStore truststore,
       final String truststorePassword) {
-    super(null);
+    super((Path) null);
     this.keystore = keystore;
     this.keystorePassword = keystorePassword.toCharArray();
     this.truststore = truststore;
@@ -133,12 +135,14 @@ public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
   /**
    * Instantiates a new Software key store wrapper.
    *
+   * @param crls the collection of X509CRL crls
    * @param keystore the keystore
    * @param keystorePassword the keystore password
    */
   @VisibleForTesting
-  public SoftwareKeyStoreWrapper(final KeyStore keystore, final String keystorePassword) {
-    super(null);
+  public SoftwareKeyStoreWrapper(
+      final Collection<X509CRL> crls, final KeyStore keystore, final String keystorePassword) {
+    super(crls);
     this.keystore = keystore;
     this.keystorePassword = keystorePassword.toCharArray();
     this.truststore = null;

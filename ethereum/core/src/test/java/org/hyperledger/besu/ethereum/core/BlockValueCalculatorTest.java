@@ -40,10 +40,10 @@ public class BlockValueCalculatorTest {
             .buildHeader();
     final Block block =
         new Block(blockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
-    long blockValue =
+    Wei blockValue =
         new BlockValueCalculator()
             .calculateBlockValue(new BlockWithReceipts(block, Collections.emptyList()));
-    assertThat(blockValue).isEqualTo(0);
+    assertThat(blockValue).isEqualTo(Wei.ZERO);
   }
 
   @Test
@@ -84,11 +84,39 @@ public class BlockValueCalculatorTest {
             .buildHeader();
     final Block block =
         new Block(blockHeader, new BlockBody(List.of(tx1, tx2, tx3), Collections.emptyList()));
-    long blockValue =
+    Wei blockValue =
         new BlockValueCalculator()
             .calculateBlockValue(
                 new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3)));
-    // Block value = 71 * 1 + 143 * 2 + 214 * 5 = 1427
-    assertThat(blockValue).isEqualTo(1427);
+    // Block value = 71 * 1 + (143-71) * 2 + (214-143) * 5 = 1427
+    assertThat(blockValue).isEqualTo(Wei.of(570L));
+  }
+
+  @Test
+  public void shouldCalculateCorrectBlockValueExceedingLong() {
+    // Generate a block with one overpriced transaction where the resulting block value exceeds long
+    final long baseFee = 7L;
+    final long maxFee = 1L << 60L;
+    final Transaction tx1 =
+        new TransactionTestFixture()
+            .maxPriorityFeePerGas(Optional.of(Wei.of(maxFee - baseFee)))
+            .maxFeePerGas(Optional.of(Wei.of(maxFee)))
+            .type(TransactionType.EIP1559)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    final TransactionReceipt receipt1 =
+        new TransactionReceipt(
+            Hash.EMPTY_TRIE_HASH, 21000L, Collections.emptyList(), Optional.empty());
+    final BlockHeader blockHeader =
+        new BlockHeaderTestFixture()
+            .prevRandao(Bytes32.random())
+            .baseFeePerGas(Wei.of(baseFee))
+            .buildHeader();
+    final Block block =
+        new Block(blockHeader, new BlockBody(List.of(tx1), Collections.emptyList()));
+    Wei blockValue =
+        new BlockValueCalculator()
+            .calculateBlockValue(new BlockWithReceipts(block, List.of(receipt1)));
+    // Block value =~ max_long * 2
+    assertThat(blockValue).isGreaterThan(Wei.of(Long.MAX_VALUE));
   }
 }

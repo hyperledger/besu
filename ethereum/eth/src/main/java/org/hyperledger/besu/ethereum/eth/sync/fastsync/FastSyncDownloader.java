@@ -85,6 +85,7 @@ public class FastSyncDownloader<REQUEST> {
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       LOG.info("Clearing bonsai flat account db");
       worldStateStorage.clearFlatDatabase();
+      worldStateStorage.clearTrieLog();
     }
     LOG.debug("Start sync with initial sync state {}", fastSyncState);
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
@@ -119,7 +120,7 @@ public class FastSyncDownloader<REQUEST> {
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
       LOG.error(
-          "Encountered an unexpected error during fast sync. Restarting fast sync in "
+          "Encountered an unexpected error during fast sync. Restarting sync in "
               + FAST_SYNC_RETRY_DELAY
               + " seconds.",
           error);

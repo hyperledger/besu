@@ -81,6 +81,7 @@ public class ProtocolSpec {
   private final DepositsValidator depositsValidator;
   private final Optional<DepositsProcessor> depositsProcessor;
 
+  private final boolean isPoS;
   /**
    * Creates a new protocol specification instance.
    *
@@ -111,6 +112,7 @@ public class ProtocolSpec {
    * @param withdrawalsProcessor the Withdrawals processor to use
    * @param depositsValidator the withdrawals validator to use
    * @param depositsProcessor the Withdrawals processor to use
+   * @param isPoS indicates whether the current spec is PoS
    */
   public ProtocolSpec(
       final String name,
@@ -139,7 +141,8 @@ public class ProtocolSpec {
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final DepositsValidator depositsValidator,
-      final Optional<DepositsProcessor> depositsProcessor) {
+      final Optional<DepositsProcessor> depositsProcessor,
+      final boolean isPoS) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -167,6 +170,7 @@ public class ProtocolSpec {
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.depositsValidator = depositsValidator;
     this.depositsProcessor = depositsProcessor;
+    this.isPoS = isPoS;
   }
 
   /**
@@ -383,4 +387,12 @@ public class ProtocolSpec {
     return depositsProcessor;
   }
 
+  /**
+   * Returns true if the network is running Proof of Stake
+   *
+   * @return true if the network is running Proof of Stake
+   */
+  public boolean isPoS() {
+    return isPoS;
+  }
 }

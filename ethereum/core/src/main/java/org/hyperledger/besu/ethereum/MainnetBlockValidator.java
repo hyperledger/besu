@@ -167,7 +167,16 @@ public class MainnetBlockValidator implements BlockValidator {
         return new BlockProcessingResult(
             Optional.of(new BlockProcessingOutputs(worldState, receipts)));
       }
-    } catch (StorageException | MerkleTrieException ex) {
+    } catch (MerkleTrieException ex) {
+      context
+          .getSynchronizer()
+          .ifPresentOrElse(
+              synchronizer -> synchronizer.healWorldState(ex.getMaybeAddress(), ex.getLocation()),
+              () ->
+                  handleAndLogImportFailure(
+                      block, new BlockProcessingResult(Optional.empty(), ex)));
+      return new BlockProcessingResult(Optional.empty(), ex);
+    } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
       handleAndLogImportFailure(block, retval);
       return retval;
@@ -180,13 +189,17 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block invalidBlock, final BlockValidationResult result) {
     if (result.causedBy().isPresent()) {
       LOG.info(
-          "{}. Block {}, caused by {}",
-          result.errorMessage,
+          "Invalid block {}: {}, caused by {}",
           invalidBlock.toLogString(),
+          result.errorMessage,
           result.causedBy().get());
       LOG.debug("with stack", result.causedBy().get());
     } else {
-      LOG.info("{}. Block {}", result.errorMessage, invalidBlock.toLogString());
+      if (result.errorMessage.isPresent()) {
+        LOG.info("Invalid block {}: {}", invalidBlock.toLogString(), result.errorMessage);
+      } else {
+        LOG.info("Invalid block {}", invalidBlock.toLogString());
+      }
     }
     badBlockManager.addBadBlock(invalidBlock, result.causedBy());
   }

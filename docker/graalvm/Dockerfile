@@ -1,9 +1,10 @@
 
-FROM ghcr.io/graalvm/graalvm-ce:ol8-java11
+FROM ghcr.io/graalvm/graalvm-ce:ol9-java17
 ARG VERSION="dev"
 
 RUN adduser --home /opt/besu besu && \
-    chown besu:besu /opt/besu
+    chown besu:besu /opt/besu && \
+    chmod 0755 /opt/besu
 
 USER besu
 WORKDIR /opt/besu

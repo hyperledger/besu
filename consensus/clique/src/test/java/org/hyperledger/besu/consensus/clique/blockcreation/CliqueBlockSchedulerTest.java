@@ -33,8 +33,8 @@ import java.time.Clock;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueBlockSchedulerTest {
 
@@ -45,7 +45,7 @@ public class CliqueBlockSchedulerTest {
   private ValidatorProvider validatorProvider;
   private BlockHeaderTestFixture blockHeaderBuilder;
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddr = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
 

@@ -141,6 +141,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               BlockHeaderBuilder.fromHeader(parentHeader)
                   .number(parentHeader.getNumber() + 1)
                   .timestamp(timestamp)
+                  .parentHash(parentHeader.getHash())
                   .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
                   .buildBlockHeader());
 
