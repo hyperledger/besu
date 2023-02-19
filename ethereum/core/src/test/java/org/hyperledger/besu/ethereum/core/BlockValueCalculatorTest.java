@@ -88,8 +88,8 @@ public class BlockValueCalculatorTest {
         new BlockValueCalculator()
             .calculateBlockValue(
                 new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3)));
-    // Block value = 71 * 1 + 143 * 2 + 214 * 5 = 1427
-    assertThat(blockValue).isEqualTo(Wei.of(1427L));
+    // Block value = 71 * 1 + (143-71) * 2 + (214-143) * 5 = 1427
+    assertThat(blockValue).isEqualTo(Wei.of(570L));
   }
 
   @Test
