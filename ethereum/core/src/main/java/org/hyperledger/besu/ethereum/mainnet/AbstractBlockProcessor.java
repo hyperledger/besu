@@ -159,9 +159,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSchedule.getByBlockHeader(blockHeader).getDepositsProcessor();
     if (maybeDepositsProcessor.isPresent() && maybeDeposits.isPresent()) {
       try {
-        maybeDepositsProcessor
-            .get()
-            .processDeposits(maybeDeposits.get(), worldState.updater());
+        maybeDepositsProcessor.get().processDeposits(maybeDeposits.get(), worldState.updater());
       } catch (final Exception e) {
         LOG.error("failed processing deposits", e);
         return new BlockProcessingResult(Optional.empty(), e);

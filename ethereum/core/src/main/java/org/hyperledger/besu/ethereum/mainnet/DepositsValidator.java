@@ -15,16 +15,17 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Deposit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface DepositsValidator {
 
@@ -40,8 +41,7 @@ public interface DepositsValidator {
     public boolean validateDeposits(final Optional<List<Deposit>> deposits) {
       final boolean isValid = deposits.isEmpty();
       if (!isValid) {
-        LOG.warn(
-            "Deposits must be null when Deposits are prohibited but were: {}", deposits);
+        LOG.warn("Deposits must be null when Deposits are prohibited but were: {}", deposits);
       }
       return isValid;
     }
@@ -75,8 +75,7 @@ public interface DepositsValidator {
 
     @Override
     public boolean validateDepositsRoot(final Block block) {
-      checkArgument(
-          block.getBody().getDeposits().isPresent(), "Block body must contain deposits");
+      checkArgument(block.getBody().getDeposits().isPresent(), "Block body must contain deposits");
       final Optional<Hash> depositsRoot = block.getHeader().getDepositsRoot();
       if (depositsRoot.isEmpty()) {
         LOG.warn("depositsRoot must not be null when Deposits are activated");

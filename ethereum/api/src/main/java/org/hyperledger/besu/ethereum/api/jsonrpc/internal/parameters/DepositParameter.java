@@ -14,11 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.vertx.core.json.JsonObject;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
@@ -26,6 +21,12 @@ import org.hyperledger.besu.datatypes.WithdrawalCredential;
 import org.hyperledger.besu.ethereum.core.Deposit;
 
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.core.json.JsonObject;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class DepositParameter {
 
@@ -44,11 +45,11 @@ public class DepositParameter {
       @JsonProperty("amount") final String amount,
       @JsonProperty("signature") final String signature,
       @JsonProperty("index") final String index) {
-        this.publicKey = pubKey;
-        this.withdrawalCredentials = withdrawalCredentials;
-        this.amount = amount;
-        this.signature = signature;
-        this.index = index;
+    this.publicKey = pubKey;
+    this.withdrawalCredentials = withdrawalCredentials;
+    this.amount = amount;
+    this.signature = signature;
+    this.index = index;
   }
 
   public static DepositParameter fromDeposit(final Deposit deposit) {
@@ -57,8 +58,7 @@ public class DepositParameter {
         deposit.getWithdrawalCredentials().toString(),
         deposit.getAmount().toShortHexString(),
         deposit.getSignature().toString(),
-        deposit.getIndex().toBytes().toQuantityHexString()
-    );
+        deposit.getIndex().toBytes().toQuantityHexString());
   }
 
   public Deposit toDeposit() {
@@ -123,13 +123,22 @@ public class DepositParameter {
 
   @Override
   public String toString() {
-    return "DepositParameter{" +
-            "pubKey='" + publicKey + '\'' +
-            ", withdrawalCredentials='" + withdrawalCredentials + '\'' +
-            ", amount='" + amount + '\'' +
-            ", signature='" + signature + '\'' +
-            ", index='" + index + '\'' +
-            '}';
+    return "DepositParameter{"
+        + "pubKey='"
+        + publicKey
+        + '\''
+        + ", withdrawalCredentials='"
+        + withdrawalCredentials
+        + '\''
+        + ", amount='"
+        + amount
+        + '\''
+        + ", signature='"
+        + signature
+        + '\''
+        + ", index='"
+        + index
+        + '\''
+        + '}';
   }
-
 }

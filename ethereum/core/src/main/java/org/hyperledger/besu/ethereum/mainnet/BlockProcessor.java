@@ -104,7 +104,15 @@ public interface BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
     return processBlock(
-        blockchain, worldState, blockHeader, transactions, ommers, Optional.empty(), Optional.empty(), null); }
+        blockchain,
+        worldState,
+        blockHeader,
+        transactions,
+        ommers,
+        Optional.empty(),
+        Optional.empty(),
+        null);
+  }
 
   /**
    * Processes the block.

@@ -14,10 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -27,6 +23,11 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonPropertyOrder({
   "executionPayload",
@@ -77,10 +78,10 @@ public class EngineGetPayloadResultV6110 {
     private final List<DepositParameter> deposits;
 
     public PayloadResult(
-            final BlockHeader header,
-            final List<String> transactions,
-            final Optional<List<Withdrawal>> withdrawals,
-            final Optional<List<Deposit>> deposits) {
+        final BlockHeader header,
+        final List<String> transactions,
+        final Optional<List<Withdrawal>> withdrawals,
+        final Optional<List<Deposit>> deposits) {
       this.blockNumber = Quantity.create(header.getNumber());
       this.blockHash = header.getHash().toString();
       this.parentHash = header.getParentHash().toString();
@@ -106,10 +107,7 @@ public class EngineGetPayloadResultV6110 {
       this.deposits =
           deposits
               .map(
-                  ws ->
-                      ws.stream()
-                          .map(DepositParameter::fromDeposit)
-                          .collect(Collectors.toList()))
+                  ws -> ws.stream().map(DepositParameter::fromDeposit).collect(Collectors.toList()))
               .orElse(null);
     }
 

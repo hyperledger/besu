@@ -123,7 +123,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
     return createBlock(
-        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), Optional.empty(), timestamp, true);
+        maybeTransactions,
+        maybeOmmers,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.empty(),
+        timestamp,
+        true);
   }
 
   protected BlockCreationResult createBlock(
@@ -220,9 +226,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .depositsRoot(
-                  depositsCanBeProcessed
-                      ? BodyValidation.depositsRoot(maybeDeposits.get())
-                      : null)
+                  depositsCanBeProcessed ? BodyValidation.depositsRoot(maybeDeposits.get()) : null)
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);

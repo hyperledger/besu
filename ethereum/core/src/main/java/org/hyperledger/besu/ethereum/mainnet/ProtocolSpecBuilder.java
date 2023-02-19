@@ -76,8 +76,7 @@ public class ProtocolSpecBuilder {
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
 
-  private DepositsValidator depositsValidator =
-          new DepositsValidator.ProhibitedDeposits();
+  private DepositsValidator depositsValidator = new DepositsValidator.ProhibitedDeposits();
   private DepositsProcessor depositsProcessor;
 
   private FeeMarket feeMarket = FeeMarket.legacy();

@@ -146,11 +146,15 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   @Override
   public String toString() {
-    return "BlockBody{" +
-        "transactions=" + transactions +
-        ", ommers=" + ommers +
-        ", withdrawals=" + withdrawals +
-        ", deposits=" + deposits +
-        '}';
+    return "BlockBody{"
+        + "transactions="
+        + transactions
+        + ", ommers="
+        + ommers
+        + ", withdrawals="
+        + withdrawals
+        + ", deposits="
+        + deposits
+        + '}';
   }
 }

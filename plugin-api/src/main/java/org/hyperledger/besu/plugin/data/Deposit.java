@@ -17,8 +17,8 @@ package org.hyperledger.besu.plugin.data;
 import org.apache.tuweni.units.bigints.UInt64;
 
 /**
- * A deposit is a system-level operation to support validator deposits that are pushed from
- * the beacon chain to EVM.
+ * A deposit is a system-level operation to support validator deposits that are pushed from the
+ * beacon chain to EVM.
  */
 public interface Deposit {
 
@@ -42,5 +42,4 @@ public interface Deposit {
    * @return deposit index
    */
   UInt64 getIndex();
-
 }

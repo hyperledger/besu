@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.datatypes.*;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
@@ -26,6 +24,9 @@ import org.hyperledger.besu.plugin.data.PublicKey;
 
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
+
 public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
   private final BLSPublicKey pubKey;
@@ -34,7 +35,12 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   private final BLSSignature signature;
   private final UInt64 index;
 
-  public Deposit(BLSPublicKey pubKey, WithdrawalCredential withdrawalCredentials, GWei amount, BLSSignature signature, UInt64 index) {
+  public Deposit(
+      BLSPublicKey pubKey,
+      WithdrawalCredential withdrawalCredentials,
+      GWei amount,
+      BLSSignature signature,
+      UInt64 index) {
     this.pubKey = pubKey;
     this.withdrawalCredentials = withdrawalCredentials;
     this.amount = amount;
@@ -81,13 +87,18 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
   @Override
   public String toString() {
-    return "Deposit{" +
-        "pubKey=" + pubKey +
-        ", withdrawalCredentials=" + withdrawalCredentials +
-        ", amount=" + amount +
-        ", signature=" + signature +
-        ", index=" + index +
-        '}';
+    return "Deposit{"
+        + "pubKey="
+        + pubKey
+        + ", withdrawalCredentials="
+        + withdrawalCredentials
+        + ", amount="
+        + amount
+        + ", signature="
+        + signature
+        + ", index="
+        + index
+        + '}';
   }
 
   @Override

@@ -15,20 +15,18 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Deposit;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
 
 public class DepositsProcessor {
 
-  public void processDeposits(
-      final List<Deposit> deposits, final WorldUpdater worldUpdater) {
-//    for (final Deposit deposit : deposits) {
-//      final EvmAccount account = worldUpdater.getOrCreate(deposit.getAddress());
-//      account.getMutable().incrementBalance(deposit.getAmount().getAsWei());
-//    }
-//    worldUpdater.clearAccountsThatAreEmpty();
-//    worldUpdater.commit();
+  public void processDeposits(final List<Deposit> deposits, final WorldUpdater worldUpdater) {
+    //    for (final Deposit deposit : deposits) {
+    //      final EvmAccount account = worldUpdater.getOrCreate(deposit.getAddress());
+    //      account.getMutable().incrementBalance(deposit.getAmount().getAsWei());
+    //    }
+    //    worldUpdater.clearAccountsThatAreEmpty();
+    //    worldUpdater.commit();
   }
 }

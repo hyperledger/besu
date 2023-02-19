@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class DepositEncoder {
 

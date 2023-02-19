@@ -89,8 +89,7 @@ public final class BodyValidation {
     final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, deposits.size())
-        .forEach(
-            i -> trie.put(indexKey(i), DepositEncoder.encodeOpaqueBytes(deposits.get(i))));
+        .forEach(i -> trie.put(indexKey(i), DepositEncoder.encodeOpaqueBytes(deposits.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }

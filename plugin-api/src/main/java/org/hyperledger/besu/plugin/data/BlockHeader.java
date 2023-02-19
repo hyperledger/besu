@@ -189,8 +189,8 @@ public interface BlockHeader {
   Optional<? extends Hash> getWithdrawalsRoot();
 
   /**
-   * The Keccak 256-bit hash of the root node of the trie structure populated with each deposit
-   * in the deposits list portion of the block.
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each deposit in
+   * the deposits list portion of the block.
    *
    * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
    *     deposit in the deposit list portion of the block.

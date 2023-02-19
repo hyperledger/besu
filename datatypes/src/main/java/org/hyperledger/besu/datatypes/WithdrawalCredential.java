@@ -14,16 +14,18 @@
  */
 package org.hyperledger.besu.datatypes;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.DelegatingBytes;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A withdrawal credential of a Deposit. */
-public class WithdrawalCredential extends DelegatingBytes implements org.hyperledger.besu.plugin.data.WithdrawalCredential {
+public class WithdrawalCredential extends DelegatingBytes
+    implements org.hyperledger.besu.plugin.data.WithdrawalCredential {
 
   /** The constant SIZE. */
   public static final int SIZE = 32;
@@ -62,7 +64,8 @@ public class WithdrawalCredential extends DelegatingBytes implements org.hyperle
     final Bytes bytes = input.readBytes();
     if (bytes.size() != SIZE) {
       throw new RLPException(
-          String.format("Withdrawal credential unexpected size of %s (needs %s)", bytes.size(), SIZE));
+          String.format(
+              "Withdrawal credential unexpected size of %s (needs %s)", bytes.size(), SIZE));
     }
     return WithdrawalCredential.wrap(bytes);
   }
@@ -70,7 +73,8 @@ public class WithdrawalCredential extends DelegatingBytes implements org.hyperle
   /**
    * Parse a hexadecimal string representing a withdrawal credential.
    *
-   * @param str A hexadecimal string (with or without the leading '0x') representing a valid withdrawal credential.
+   * @param str A hexadecimal string (with or without the leading '0x') representing a valid
+   *     withdrawal credential.
    * @return The parsed withdrawal credential: {@code null} if the provided string is {@code null}.
    * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid
    *     representation of a withdrawal credential.
@@ -80,5 +84,4 @@ public class WithdrawalCredential extends DelegatingBytes implements org.hyperle
     if (str == null) return null;
     return wrap(Bytes.fromHexStringLenient(str, SIZE));
   }
-
 }

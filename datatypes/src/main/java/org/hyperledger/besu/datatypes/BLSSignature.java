@@ -14,16 +14,18 @@
  */
 package org.hyperledger.besu.datatypes;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.DelegatingBytes;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
 
-/** A BLS Signature **/
-public class BLSSignature extends DelegatingBytes implements org.hyperledger.besu.plugin.data.Signature {
+/** A BLS Signature * */
+public class BLSSignature extends DelegatingBytes
+    implements org.hyperledger.besu.plugin.data.Signature {
 
   /** The constant SIZE. */
   public static final int SIZE = 96;
@@ -45,10 +47,7 @@ public class BLSSignature extends DelegatingBytes implements org.hyperledger.bes
    */
   public static BLSSignature wrap(final Bytes value) {
     checkArgument(
-        value.size() == SIZE,
-        "A signature must be %s bytes long, got %s",
-        SIZE,
-        value.size());
+        value.size() == SIZE, "A signature must be %s bytes long, got %s", SIZE, value.size());
     return new BLSSignature(value);
   }
 
@@ -70,7 +69,8 @@ public class BLSSignature extends DelegatingBytes implements org.hyperledger.bes
   /**
    * Parse a hexadecimal string representing a signature.
    *
-   * @param str A hexadecimal string (with or without the leading '0x') representing a valid bls signature.
+   * @param str A hexadecimal string (with or without the leading '0x') representing a valid bls
+   *     signature.
    * @return The parsed signature: {@code null} if the provided string is {@code null}.
    * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid
    *     representation of a bls signature.
@@ -80,5 +80,4 @@ public class BLSSignature extends DelegatingBytes implements org.hyperledger.bes
     if (str == null) return null;
     return wrap(Bytes.fromHexStringLenient(str, SIZE));
   }
-
 }

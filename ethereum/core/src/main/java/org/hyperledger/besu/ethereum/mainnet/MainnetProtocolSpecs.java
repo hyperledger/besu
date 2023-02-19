@@ -770,7 +770,6 @@ public abstract class MainnetProtocolSpecs {
         .depositsProcessor(new DepositsProcessor())
         .depositsValidator(new DepositsValidator.AllowedDeposits())
         .name("Eip6110");
-
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(
