@@ -121,6 +121,11 @@ public class EthPeers {
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
     this.randomPeerPriority = randomPeerPriority;
+    LOG.debug(
+        "MaxPeers: {}, Lower Bound: {}, Max Remote: {}",
+        peerUpperBound,
+        peerLowerBound,
+        maxRemotelyInitiatedConnections);
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
         "peer_count",
@@ -362,7 +367,7 @@ public class EthPeers {
   }
 
   public boolean shouldConnect(final Peer peer, final boolean inbound) {
-    if ((inbound && peerCount() >= peerUpperBound) || (!inbound && peerCount() >= peerLowerBound)) {
+    if (peerCount() >= peerUpperBound) {
       return false;
     }
     final Bytes id = peer.getId();
@@ -558,8 +563,12 @@ public class EthPeers {
         return false;
       }
       final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
-      if (added)
+      if (added) {
         LOG.info("Added peer {} with connection {} to connections", peer.getId(), connection);
+      } else {
+        LOG.debug(
+            "Did not add peer {} with connection {} to connections", peer.getId(), connection);
+      }
       return added;
     } else {
       // randomPeerPriority! Add the peer and if there are too many connections fix it
