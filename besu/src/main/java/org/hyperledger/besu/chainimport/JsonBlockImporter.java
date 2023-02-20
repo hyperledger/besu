@@ -153,7 +153,10 @@ public class JsonBlockImporter {
 
   private void importBlock(final Block block) {
     final BlockImporter importer =
-        controller.getProtocolSchedule().getByBlockHeader(block.getHeader()).getBlockImporter();
+        controller
+            .getProtocolSchedule()
+            .getByBlockNumber(block.getHeader().getNumber())
+            .getBlockImporter();
 
     final BlockImportResult importResult =
         importer.importBlock(controller.getProtocolContext(), block, HeaderValidationMode.NONE);

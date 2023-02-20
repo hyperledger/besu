@@ -84,11 +84,13 @@ public class BackwardsSyncAlgorithm implements BesuEvents.InitialSyncCompletionL
 
     final MutableBlockchain blockchain = context.getProtocolContext().getBlockchain();
     final BlockHeader firstAncestorHeader = maybeFirstAncestorHeader.get();
-    if (blockchain.contains(firstAncestorHeader.getHash())) {
+    final BlockHeader chainHeader = blockchain.getChainHeadHeader();
+    if (blockchain.contains(firstAncestorHeader.getHash())
+        && firstAncestorHeader.getNumber() <= chainHeader.getNumber()) {
       return executeProcessKnownAncestors();
     }
 
-    if (blockchain.getChainHead().getHeight() > firstAncestorHeader.getNumber()) {
+    if (chainHeader.getNumber() > firstAncestorHeader.getNumber()) {
       debugLambda(
           LOG,
           "Backward reached below current chain head {} : {}",

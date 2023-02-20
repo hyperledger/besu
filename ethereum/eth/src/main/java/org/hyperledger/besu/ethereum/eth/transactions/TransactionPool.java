@@ -259,7 +259,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private MainnetTransactionValidator getTransactionValidator() {
     return protocolSchedule
-        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
+        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
         .getTransactionValidator();
   }
 
@@ -288,7 +288,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
 
     final FeeMarket feeMarket =
-        protocolSchedule.getByBlockHeader(chainHeadBlockHeader).getFeeMarket();
+        protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber()).getFeeMarket();
 
     final TransactionInvalidReason priceInvalidReason =
         validatePrice(transaction, isLocal, feeMarket);
@@ -399,8 +399,8 @@ public class TransactionPool implements BlockAddedObserver {
         && transactionReplaySupportedAtBlock(chainHeadBlockHeader);
   }
 
-  private boolean transactionReplaySupportedAtBlock(final BlockHeader blockHeader) {
-    return protocolSchedule.getByBlockHeader(blockHeader).isReplayProtectionSupported();
+  private boolean transactionReplaySupportedAtBlock(final BlockHeader block) {
+    return protocolSchedule.getByBlockNumber(block.getNumber()).isReplayProtectionSupported();
   }
 
   public Optional<Transaction> getTransactionByHash(final Hash hash) {

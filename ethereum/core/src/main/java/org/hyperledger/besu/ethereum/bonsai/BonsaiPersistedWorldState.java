@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
@@ -92,15 +93,14 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateStorage.codeStorage,
             worldStateStorage.storageStorage,
             worldStateStorage.trieBranchStorage,
-            worldStateStorage.trieLogStorage,
-            getWorldStateStorage().getMaybeFallbackNodeFinder());
+            worldStateStorage.trieLogStorage);
 
     return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
   }
 
   @Override
-  public Optional<Bytes> getCode(@Nonnull final Address address) {
-    return worldStateStorage.getCode(null, Hash.hash(address));
+  public Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash) {
+    return worldStateStorage.getCode(codeHash, Hash.hash(address));
   }
 
   public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
@@ -148,7 +148,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     return Hash.wrap(rootHash);
   }
 
-  private static void addTheAccounts(
+  private void addTheAccounts(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater,
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie) {
@@ -157,20 +157,26 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Bytes accountKey = accountUpdate.getKey();
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
-      if (updatedAccount == null) {
-        final Hash addressHash = Hash.hash(accountKey);
-        accountTrie.remove(addressHash);
-        stateUpdater.removeAccountInfoState(addressHash);
-      } else {
-        final Hash addressHash = updatedAccount.getAddressHash();
-        final Bytes accountValue = updatedAccount.serializeAccount();
-        stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
-        accountTrie.put(addressHash, accountValue);
+      try {
+        if (updatedAccount == null) {
+          final Hash addressHash = Hash.hash(accountKey);
+          accountTrie.remove(addressHash);
+          stateUpdater.removeAccountInfoState(addressHash);
+        } else {
+          final Hash addressHash = updatedAccount.getAddressHash();
+          final Bytes accountValue = updatedAccount.serializeAccount();
+          stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
+          accountTrie.put(addressHash, accountValue);
+        }
+      } catch (MerkleTrieException e) {
+        // need to throw to trigger the heal
+        throw new MerkleTrieException(
+            e.getMessage(), Optional.of(Address.wrap(accountKey)), e.getHash(), e.getLocation());
       }
     }
   }
 
-  private static void updateCode(
+  private void updateCode(
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater) {
     for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate :
@@ -215,12 +221,21 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             storageAccountUpdate.getValue().entrySet()) {
           final Hash keyHash = storageUpdate.getKey();
           final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
-          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-            stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
-            storageTrie.remove(keyHash);
-          } else {
-            stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorage);
-            storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
+          try {
+            if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+              stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
+              storageTrie.remove(keyHash);
+            } else {
+              stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorage);
+              storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
+            }
+          } catch (MerkleTrieException e) {
+            // need to throw to trigger the heal
+            throw new MerkleTrieException(
+                e.getMessage(),
+                Optional.of(Address.wrap(updatedAddress)),
+                e.getHash(),
+                e.getLocation());
           }
         }
 
@@ -259,18 +274,24 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
               oldAccount.getStorageRoot(),
               Function.identity(),
               Function.identity());
-      Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-      while (!entriesToDelete.isEmpty()) {
-        entriesToDelete
-            .keySet()
-            .forEach(
-                k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
-        entriesToDelete.keySet().forEach(storageTrie::remove);
-        if (entriesToDelete.size() == 256) {
-          entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-        } else {
-          break;
+      try {
+        Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+        while (!entriesToDelete.isEmpty()) {
+          entriesToDelete
+              .keySet()
+              .forEach(
+                  k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
+          entriesToDelete.keySet().forEach(storageTrie::remove);
+          if (entriesToDelete.size() == 256) {
+            entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+          } else {
+            break;
+          }
         }
+      } catch (MerkleTrieException e) {
+        // need to throw to trigger the heal
+        throw new MerkleTrieException(
+            e.getMessage(), Optional.of(Address.wrap(address)), e.getHash(), e.getLocation());
       }
     }
   }

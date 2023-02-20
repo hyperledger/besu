@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -39,8 +40,13 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A World State backed first by trie log layer and then by another world state. */
-public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
-  private Optional<BonsaiWorldView> nextWorldView;
+public class BonsaiLayeredWorldState
+    implements MutableWorldState,
+        BonsaiWorldView,
+        WorldState,
+        BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
+  private Optional<BonsaiWorldView> nextWorldView = Optional.empty();
+  private Optional<Long> newtWorldViewSubscribeId = Optional.empty();
   protected final long height;
   protected final TrieLogLayer trieLog;
   private final Hash worldStateRootHash;
@@ -57,7 +63,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       final TrieLogLayer trieLog) {
     this.blockchain = blockchain;
     this.archive = archive;
-    this.nextWorldView = nextWorldView;
+    this.setNextWorldView(nextWorldView);
     this.height = height;
     this.worldStateRootHash = worldStateRootHash;
     this.trieLog = trieLog;
@@ -75,21 +81,28 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   public void setNextWorldView(final Optional<BonsaiWorldView> nextWorldView) {
-    maybeUnSubscribe();
+    maybeUnSubscribe(); // unsubscribe the old view
     this.nextWorldView = nextWorldView;
+    maybeSubscribe(); // subscribe the next view
+  }
+
+  private void maybeSubscribe() {
+    nextWorldView
+        .filter(BonsaiPersistedWorldState.class::isInstance)
+        .map(BonsaiPersistedWorldState.class::cast)
+        .ifPresent(
+            worldState -> {
+              newtWorldViewSubscribeId = Optional.of(worldState.worldStateStorage.subscribe(this));
+            });
   }
 
   private void maybeUnSubscribe() {
     nextWorldView
-        .filter(WorldState.class::isInstance)
-        .map(WorldState.class::cast)
+        .filter(BonsaiPersistedWorldState.class::isInstance)
+        .map(BonsaiPersistedWorldState.class::cast)
         .ifPresent(
-            ws -> {
-              try {
-                ws.close();
-              } catch (final Exception e) {
-                // no-op
-              }
+            worldState -> {
+              newtWorldViewSubscribeId.ifPresent(worldState.worldStateStorage::unSubscribe);
             });
   }
 
@@ -107,7 +120,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public Optional<Bytes> getCode(final Address address) {
+  public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
     BonsaiLayeredWorldState currentLayer = this;
     while (currentLayer != null) {
       final Optional<Bytes> maybeCode = currentLayer.trieLog.getCode(address);
@@ -124,7 +137,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       } else if (currentLayer.getNextWorldView().get() instanceof BonsaiLayeredWorldState) {
         currentLayer = (BonsaiLayeredWorldState) currentLayer.getNextWorldView().get();
       } else {
-        return currentLayer.getNextWorldView().get().getCode(address);
+        return currentLayer.getNextWorldView().get().getCode(address, codeHash);
       }
     }
     return Optional.empty();
@@ -291,6 +304,8 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
                     new StorageException(
                         "Unable to copy Layered Worldstate for " + blockHash().toHexString()))) {
       return new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage());
+    } catch (MerkleTrieException ex) {
+      throw ex; // need to throw to trigger the heal
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
