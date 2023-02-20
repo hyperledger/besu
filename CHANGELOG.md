@@ -3,7 +3,6 @@
 ## 23.1.0-RC2
 
 ### Breaking Changes
-- Add a new CLI option to limit the number of requests in a single RPC batch request. Default=1 [#4965](https://github.com/hyperledger/besu/pull/4965)
 - Change JsonRpc http service to return the error -32602 (Invalid params) with a 200 http status code
 - Besu requires minimum Java 17 and up to build and run [#3320](https://github.com/hyperledger/besu/issues/3320)
 - PKCS11 with nss module (PKCS11 based HSM can be used in DevP2P TLS and QBFT PKI) does not work with RSA keys 
@@ -12,6 +11,8 @@ tests are updated to use EC private keys instead of RSA keys.
 - Change eth_feeHistory parameter `blockCount` to accept hexadecimal string (was accepting plain integer) [#5047](https://github.com/hyperledger/besu/pull/5047)
 
 ### Additions and Improvements
+- Default rpc batch request to 1000 [#5104](https://github.com/hyperledger/besu/pull/5104)
+- Add a new CLI option to limit the number of requests in a single RPC batch request. [#4965](https://github.com/hyperledger/besu/pull/4965)
 - Support for new DATAHASH opcode as part of EIP-4844 [#4823](https://github.com/hyperledger/besu/issues/4823)
 - Send only hash announcement for blob transaction type [#4940](https://github.com/hyperledger/besu/pull/4940)
 - Add `excess_data_gas` field to block header [#4958](https://github.com/hyperledger/besu/pull/4958)
