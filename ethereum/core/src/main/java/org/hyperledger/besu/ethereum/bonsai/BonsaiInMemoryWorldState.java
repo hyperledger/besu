@@ -20,9 +20,11 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -84,13 +86,19 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
       final Bytes accountKey = accountUpdate.getKey();
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
-      if (updatedAccount == null) {
-        final Hash addressHash = Hash.hash(accountKey);
-        accountTrie.remove(addressHash);
-      } else {
-        final Hash addressHash = updatedAccount.getAddressHash();
-        final Bytes accountValue = updatedAccount.serializeAccount();
-        accountTrie.put(addressHash, accountValue);
+      try {
+        if (updatedAccount == null) {
+          final Hash addressHash = Hash.hash(accountKey);
+          accountTrie.remove(addressHash);
+        } else {
+          final Hash addressHash = updatedAccount.getAddressHash();
+          final Bytes accountValue = updatedAccount.serializeAccount();
+          accountTrie.put(addressHash, accountValue);
+        }
+      } catch (MerkleTrieException e) {
+        // need to throw to trigger the heal
+        throw new MerkleTrieException(
+            e.getMessage(), Optional.of(Address.wrap(accountKey)), e.getHash(), e.getLocation());
       }
     }
 
@@ -129,10 +137,19 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
           storageAccountUpdate.getValue().entrySet()) {
         final Hash keyHash = storageUpdate.getKey();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
-        if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-          storageTrie.remove(keyHash);
-        } else {
-          storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
+        try {
+          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+            storageTrie.remove(keyHash);
+          } else {
+            storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
+          }
+        } catch (MerkleTrieException e) {
+          // need to throw to trigger the heal
+          throw new MerkleTrieException(
+              e.getMessage(),
+              Optional.of(Address.wrap(updatedAddress)),
+              e.getHash(),
+              e.getLocation());
         }
       }
 
@@ -150,12 +167,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState
     final Hash newWorldStateRootHash = rootHash(localUpdater);
     archive
         .getTrieLogManager()
-        .saveTrieLog(
-            archive,
-            localUpdater,
-            newWorldStateRootHash,
-            blockHeader,
-            (BonsaiPersistedWorldState) this.copy());
+        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader, this);
     worldStateRootHash = newWorldStateRootHash;
     worldStateBlockHash = blockHeader.getBlockHash();
     isPersisted = true;

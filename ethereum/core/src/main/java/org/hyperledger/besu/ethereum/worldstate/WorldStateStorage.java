@@ -44,6 +44,8 @@ public interface WorldStateStorage {
 
   void clear();
 
+  void clearTrieLog();
+
   void clearFlatDatabase();
 
   Updater updater();

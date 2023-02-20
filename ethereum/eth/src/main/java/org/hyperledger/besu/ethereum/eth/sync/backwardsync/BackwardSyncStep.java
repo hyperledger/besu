@@ -59,10 +59,12 @@ public class BackwardSyncStep {
 
   @VisibleForTesting
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
-    if (context.getProtocolContext().getBlockchain().contains(hash)) {
+    final Optional<BlockHeader> blockHeader =
+        context.getProtocolContext().getBlockchain().getBlockHeader(hash);
+    if (blockHeader.isPresent()) {
       LOG.debug(
           "Hash {} already present in local blockchain no need to request headers to peers", hash);
-      return CompletableFuture.completedFuture(List.of());
+      return CompletableFuture.completedFuture(List.of(blockHeader.get()));
     }
 
     final int batchSize = context.getBatchSize();
@@ -74,6 +76,7 @@ public class BackwardSyncStep {
                 context.getProtocolSchedule(),
                 context.getEthContext(),
                 hash,
+                0,
                 batchSize,
                 context.getMetricsSystem(),
                 context.getEthContext().getEthPeers().peerCount());
@@ -104,8 +107,9 @@ public class BackwardSyncStep {
       saveHeader(blockHeader);
     }
 
-    logProgress(blockHeaders.get(blockHeaders.size() - 1).getNumber());
-
+    if (!blockHeaders.isEmpty()) {
+      logProgress(blockHeaders.get(blockHeaders.size() - 1).getNumber());
+    }
     return null;
   }
 

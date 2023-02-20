@@ -14,12 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,15 +32,8 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage,
-      final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
-    super(
-        accountStorage,
-        codeStorage,
-        storageStorage,
-        trieBranchStorage,
-        trieLogStorage,
-        fallbackNodeFinder);
+      final KeyValueStorage trieLogStorage) {
+    super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
   }
 
   @Override
