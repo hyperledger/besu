@@ -52,7 +52,7 @@ public interface BesuPlugin {
 
   /**
    * Called once when besu has loaded configuration but before external services have been started
-   * e.g metrics and http
+   * e.g. metrics and http
    */
   default void beforeExternalServices() {}
 
