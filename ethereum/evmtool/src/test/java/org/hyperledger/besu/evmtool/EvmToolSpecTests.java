@@ -41,6 +41,7 @@ import java.util.stream.StreamSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -135,6 +136,19 @@ public class EvmToolSpecTests {
 
     if (stdoutNode.isTextual()) {
       assertThat(baos.toString(UTF_8)).isEqualTo(stdoutNode.textValue());
+    } else if (stdoutNode.isArray()) {
+      ArrayNode arrayNode = (ArrayNode) specReader.createArrayNode();
+      int pos = 0;
+      byte[] output = baos.toByteArray();
+      while (pos < output.length) {
+        int next = pos;
+        //noinspection StatementWithEmptyBody
+        while (output[next++] != ((byte) '\n')) {}
+        arrayNode.add(specReader.readTree(output, pos, next - pos));
+        pos = next;
+      }
+      System.out.println(arrayNode.toString());
+      assertThat(arrayNode).isEqualTo(stdoutNode);
     } else {
       var actualNode = specReader.readTree(baos.toByteArray());
       assertThat(actualNode).isEqualTo(stdoutNode);
