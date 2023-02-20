@@ -43,8 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class LayeredWorldStateTests {
 
-  @Mock
-  BonsaiWorldStateProvider archive;
+  @Mock BonsaiWorldStateProvider archive;
   @Mock Blockchain blockchain;
 
   @Test
@@ -98,7 +97,8 @@ public class LayeredWorldStateTests {
     when(testState.rootHash()).thenReturn(testStateRoot);
     when(testState.blockHash()).thenReturn(testHeader.getBlockHash());
 
-    BonsaiWorldStateUpdateAccumulator testUpdater = new BonsaiWorldStateUpdateAccumulator(testState);
+    BonsaiWorldStateUpdateAccumulator testUpdater =
+        new BonsaiWorldStateUpdateAccumulator(testState);
     // mock kvstorage to mimic head being in a different state than testState
     CachedSnapshotWorldstateManager manager =
         spy(

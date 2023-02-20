@@ -84,6 +84,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             localBlockchain,
             new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
             localBlockchainSetup.getWorldArchive(),

@@ -48,9 +48,10 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BonsaiWorldStateUpdateAccumulator extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
-    implements BonsaiWorldView {
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
+public class BonsaiWorldStateUpdateAccumulator
+    extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount> implements BonsaiWorldView {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
 
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
@@ -81,7 +82,8 @@ public class BonsaiWorldStateUpdateAccumulator extends AbstractWorldUpdater<Bons
 
   public BonsaiWorldStateUpdateAccumulator copy() {
     final BonsaiWorldStateUpdateAccumulator copy =
-        new BonsaiWorldStateUpdateAccumulator(wrappedWorldView(), accountPreloader, storagePreloader);
+        new BonsaiWorldStateUpdateAccumulator(
+            wrappedWorldView(), accountPreloader, storagePreloader);
     copy.cloneFromUpdater(this);
     return copy;
   }

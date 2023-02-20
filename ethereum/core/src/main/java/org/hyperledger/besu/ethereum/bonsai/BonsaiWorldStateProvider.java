@@ -94,13 +94,6 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
-    System.out.println(
-        "testouille "
-            + persistedState.worldStateBlockHash
-            + " "
-            + blockchain.getChainHead().getHash()
-            + " "
-            + blockchain.getBlockHeader(persistedState.worldStateBlockHash));
     blockchain
         .getBlockHeader(persistedState.worldStateBlockHash)
         .ifPresent(
@@ -147,12 +140,6 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
               .orElse(
                   new BonsaiSnapshotWorldStateKeyValueStorage(
                       blockchain.getChainHeadBlockNumber(), worldStateStorage));
-      System.out.println(
-          "getMutable "
-              + worldStateKeyValueStorage.getWorldStateBlockHash()
-              + " "
-              + trieLogManager.containWorlStateStorage(blockHeader.getHash()));
-
       return rollMutableStateToBlockHash(
               new BonsaiWorldState(this, worldStateKeyValueStorage), blockHeader.getHash())
           .map(
@@ -176,7 +163,6 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(
       final BonsaiWorldState mutableState, final Hash blockHash) {
-    System.out.println("rollMutableStateToBlockHash " + mutableState.blockHash() + " " + blockHash);
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
     } else {
