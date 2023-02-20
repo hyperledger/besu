@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -21,6 +22,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class DebugResyncWorldstate implements JsonRpcMethod {
   private final Synchronizer synchronizer;
@@ -48,6 +53,7 @@ public class DebugResyncWorldstate implements JsonRpcMethod {
         .getBadBlocksManager()
         .reset();
     return new JsonRpcSuccessResponse(
-        request.getRequest().getId(), synchronizer.resyncWorldState());
+        request.getRequest().getId(),
+        synchronizer.healWorldState(Optional.of(Address.ZERO), Bytes.EMPTY));
   }
 }

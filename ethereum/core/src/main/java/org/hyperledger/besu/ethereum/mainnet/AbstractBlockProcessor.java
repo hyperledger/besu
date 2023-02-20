@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdater;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -127,7 +127,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
         if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdater) worldStateUpdater).reset();
+          ((BonsaiWorldStateUpdateAccumulator) worldStateUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
@@ -156,7 +156,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
       if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdater) worldState.updater()).reset();
+        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
@@ -166,7 +166,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     } catch (MerkleTrieException e) {
       LOG.trace("Merkle trie exception during Transaction processing ", e);
       if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdater) worldState.updater()).reset();
+        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
       throw e;
     } catch (Exception e) {

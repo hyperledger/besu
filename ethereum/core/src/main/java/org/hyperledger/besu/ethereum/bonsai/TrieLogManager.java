@@ -23,8 +23,8 @@ import java.util.Optional;
 public interface TrieLogManager {
 
   void saveTrieLog(
-      final BonsaiWorldStateArchive worldStateArchive,
-      final BonsaiWorldStateUpdater localUpdater,
+      final BonsaiWorldStateProvider worldStateArchive,
+      final BonsaiWorldStateUpdateAccumulator localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
       final BonsaiWorldState forWorldState);

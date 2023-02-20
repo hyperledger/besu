@@ -61,7 +61,7 @@ public class BonsaiWorldStateArchiveTest {
 
   @Mock SnappableKeyValueStorage keyValueStorage;
 
-  BonsaiWorldStateArchive bonsaiWorldStateArchive;
+  BonsaiWorldStateProvider bonsaiWorldStateArchive;
 
   @Before
   public void setUp() {
@@ -82,7 +82,7 @@ public class BonsaiWorldStateArchiveTest {
     when(keyValueStorage.get(WORLD_BLOCK_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(
+        new BonsaiWorldStateProvider(
             new BonsaiWorldStateKeyValueStorage(storageProvider),
             blockchain,
             Optional.of(1L),
@@ -96,7 +96,7 @@ public class BonsaiWorldStateArchiveTest {
   @Test
   public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(
+        new BonsaiWorldStateProvider(
             new BonsaiWorldStateKeyValueStorage(storageProvider),
             blockchain,
             Optional.of(512L),
@@ -112,7 +112,7 @@ public class BonsaiWorldStateArchiveTest {
   @Test
   public void testGetMutableWhenLoadLessThanLimitLayersBack() {
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(
+        new BonsaiWorldStateProvider(
             new BonsaiWorldStateKeyValueStorage(storageProvider),
             blockchain,
             Optional.of(512L),
@@ -144,8 +144,8 @@ public class BonsaiWorldStateArchiveTest {
     var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
     bonsaiWorldStateArchive =
         spy(
-            new BonsaiWorldStateArchive(
-                new LayeredWorldstateStorageManager(
+            new BonsaiWorldStateProvider(
+                new CachedSnapshotWorldstateManager(
                     blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
                 blockchain,
@@ -172,8 +172,8 @@ public class BonsaiWorldStateArchiveTest {
     var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
     bonsaiWorldStateArchive =
         spy(
-            new BonsaiWorldStateArchive(
-                new LayeredWorldstateStorageManager(
+            new BonsaiWorldStateProvider(
+                new CachedSnapshotWorldstateManager(
                     blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
                 blockchain,
@@ -223,8 +223,8 @@ public class BonsaiWorldStateArchiveTest {
 
     bonsaiWorldStateArchive =
         spy(
-            new BonsaiWorldStateArchive(
-                new LayeredWorldstateStorageManager(
+            new BonsaiWorldStateProvider(
+                new CachedSnapshotWorldstateManager(
                     blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
                 blockchain,
@@ -278,8 +278,8 @@ public class BonsaiWorldStateArchiveTest {
     var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
     bonsaiWorldStateArchive =
         spy(
-            new BonsaiWorldStateArchive(
-                new LayeredWorldstateStorageManager(
+            new BonsaiWorldStateProvider(
+                new CachedSnapshotWorldstateManager(
                     blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
                 blockchain,

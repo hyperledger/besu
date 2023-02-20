@@ -144,8 +144,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return trieBranchStorage.get(WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
   }
 
-  public Optional<Bytes> getWorldStateBlockHash() {
-    return trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes::wrap);
+  public Optional<Hash> getWorldStateBlockHash() {
+    return trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes32::wrap).map(Hash::wrap);
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
@@ -360,7 +360,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
 
     @Override
-    public BonsaiUpdater putAccountStorageTrieNode(
+    public synchronized BonsaiUpdater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes

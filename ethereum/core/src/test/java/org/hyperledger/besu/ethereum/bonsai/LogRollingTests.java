@@ -50,14 +50,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class LogRollingTests {
 
-  private BonsaiWorldStateArchive archive;
+  private BonsaiWorldStateProvider archive;
   private InMemoryKeyValueStorage accountStorage;
   private InMemoryKeyValueStorage codeStorage;
   private InMemoryKeyValueStorage storageStorage;
   private InMemoryKeyValueStorage trieBranchStorage;
   private InMemoryKeyValueStorage trieLogStorage;
 
-  private BonsaiWorldStateArchive secondArchive;
+  private BonsaiWorldStateProvider secondArchive;
   private InMemoryKeyValueStorage secondAccountStorage;
   private InMemoryKeyValueStorage secondCodeStorage;
   private InMemoryKeyValueStorage secondStorageStorage;
@@ -116,7 +116,7 @@ public class LogRollingTests {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-    archive = new BonsaiWorldStateArchive(provider, blockchain, cachedMerkleTrieLoader);
+    archive = new BonsaiWorldStateProvider(provider, blockchain, cachedMerkleTrieLoader);
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -138,7 +138,7 @@ public class LogRollingTests {
     final CachedMerkleTrieLoader secondOptimizedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     secondArchive =
-        new BonsaiWorldStateArchive(secondProvider, blockchain, secondOptimizedMerkleTrieLoader);
+        new BonsaiWorldStateProvider(secondProvider, blockchain, secondOptimizedMerkleTrieLoader);
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(
@@ -186,8 +186,8 @@ public class LogRollingTests {
                 secondStorageStorage,
                 secondTrieBranchStorage,
                 secondTrieLogStorage));
-    final BonsaiWorldStateUpdater secondUpdater =
-        (BonsaiWorldStateUpdater) secondWorldState.updater();
+    final BonsaiWorldStateUpdateAccumulator secondUpdater =
+        (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
     final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
 
@@ -243,8 +243,8 @@ public class LogRollingTests {
                 secondStorageStorage,
                 secondTrieBranchStorage,
                 secondTrieLogStorage));
-    final BonsaiWorldStateUpdater secondUpdater =
-        (BonsaiWorldStateUpdater) secondWorldState.updater();
+    final BonsaiWorldStateUpdateAccumulator secondUpdater =
+        (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
     final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, headerOne.getHash());
     secondUpdater.rollForward(layerOne);
@@ -291,8 +291,8 @@ public class LogRollingTests {
     updater2.commit();
 
     worldState.persist(headerTwo);
-    final BonsaiWorldStateUpdater firstRollbackUpdater =
-        (BonsaiWorldStateUpdater) worldState.updater();
+    final BonsaiWorldStateUpdateAccumulator firstRollbackUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
 
     final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, headerTwo.getHash());
     firstRollbackUpdater.rollBack(layerTwo);

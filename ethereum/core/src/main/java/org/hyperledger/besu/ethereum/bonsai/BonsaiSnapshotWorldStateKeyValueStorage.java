@@ -27,10 +27,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -42,10 +39,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   private static final Logger LOG =
       LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
-
-  private final AtomicReference<BonsaiWorldStateKeyValueStorage> parentStorage =
-      new AtomicReference<>();
-  private final AtomicLong parentStorageSubscriberId = new AtomicLong(Long.MAX_VALUE);
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
@@ -63,14 +56,13 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
     this.blockNumber = blockNumber;
     this.worldStateStorage = worldStateStorage;
-    subscribeToParentStorage(worldStateStorage);
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final long blockNumber, final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     this(
         blockNumber,
-            worldStateStorage,
+        worldStateStorage,
         ((SnappableKeyValueStorage) worldStateStorage.accountStorage).takeSnapshot(),
         ((SnappableKeyValueStorage) worldStateStorage.codeStorage).takeSnapshot(),
         ((SnappableKeyValueStorage) worldStateStorage.storageStorage).takeSnapshot(),
@@ -82,7 +74,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   public BonsaiSnapshotWorldStateKeyValueStorage clone() {
     return new BonsaiSnapshotWorldStateKeyValueStorage(
         blockNumber,
-            worldStateStorage,
+        worldStateStorage,
         ((SnappedKeyValueStorage) accountStorage).cloneFromSnapshot(),
         ((SnappedKeyValueStorage) codeStorage).cloneFromSnapshot(),
         ((SnappedKeyValueStorage) storageStorage).cloneFromSnapshot(),
@@ -121,12 +113,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
-
-  void subscribeToParentStorage(final BonsaiWorldStateKeyValueStorage parentStorage) {
-    this.parentStorage.set(parentStorage);
-    parentStorageSubscriberId.set(parentStorage.subscribe(this));
-  }
-
 
   @Override
   public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
@@ -184,7 +170,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   protected synchronized void tryClose() throws Exception {
-    System.out.println("try close "+this+" "+getWorldStateBlockHash()+" "+shouldClose.get()+" "+subscribers.getSubscriberCount());
     if (shouldClose.get() && subscribers.getSubscriberCount() < 1) {
       // attempting to close already closed snapshots will segfault
       doClose();
@@ -195,11 +180,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     if (!isClosed.get()) {
       // alert any subscribers we are closing:
       subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);
-
-      // unsubscribe from parent storage if we have subscribed
-      Optional.ofNullable(parentStorage.get())
-          .filter(__ -> parentStorageSubscriberId.get() != Long.MAX_VALUE)
-          .ifPresent(parent -> parent.unSubscribe(parentStorageSubscriberId.get()));
 
       // close all of the SnappedKeyValueStorages:
       accountStorage.close();

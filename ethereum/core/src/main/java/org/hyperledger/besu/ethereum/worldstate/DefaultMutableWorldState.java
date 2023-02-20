@@ -168,6 +168,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
+  public Hash getSateRoot() {
+    return rootHash();
+  }
+
+  @Override
   public void persist(final BlockHeader blockHeader) {
     final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
     // Store updated code

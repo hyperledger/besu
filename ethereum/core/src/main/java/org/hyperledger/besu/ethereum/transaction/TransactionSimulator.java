@@ -337,9 +337,7 @@ public class TransactionSimulator {
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
     final BlockHeader header = blockchain.getChainHeadHeader();
     try (final MutableWorldState worldState =
-        worldStateArchive
-            .getMutable(header, false)
-            .orElseThrow()) {
+        worldStateArchive.getMutable(header, false).orElseThrow()) {
       return doesAddressExist(worldState, address, header);
     } catch (final Exception ex) {
       return Optional.empty();

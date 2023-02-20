@@ -60,7 +60,7 @@ public class BonsaiSnapshotWorldStateArchiveTest {
 
   @Mock SnappableKeyValueStorage keyValueStorage;
 
-  BonsaiWorldStateArchive bonsaiWorldStateArchive;
+  BonsaiWorldStateProvider bonsaiWorldStateArchive;
 
   CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
@@ -84,7 +84,7 @@ public class BonsaiSnapshotWorldStateArchiveTest {
     when(keyValueStorage.get(WORLD_BLOCK_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(
+        new BonsaiWorldStateProvider(
             new BonsaiWorldStateKeyValueStorage(storageProvider),
             blockchain,
             Optional.of(1L),
@@ -98,7 +98,7 @@ public class BonsaiSnapshotWorldStateArchiveTest {
   @Test
   public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(
+        new BonsaiWorldStateProvider(
             new BonsaiWorldStateKeyValueStorage(storageProvider),
             blockchain,
             Optional.of(512L),
@@ -134,7 +134,7 @@ public class BonsaiSnapshotWorldStateArchiveTest {
     var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
     bonsaiWorldStateArchive =
         spy(
-            new BonsaiWorldStateArchive(
+            new BonsaiWorldStateProvider(
                 new SnapshotTrieLogManager(blockchain, worldStateStorage, 12L, worldStatesByHash),
                 worldStateStorage,
                 blockchain,

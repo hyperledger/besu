@@ -43,7 +43,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class LayeredWorldStateTests {
 
-  @Mock BonsaiWorldStateArchive archive;
+  @Mock
+  BonsaiWorldStateProvider archive;
   @Mock Blockchain blockchain;
 
   @Test
@@ -97,11 +98,11 @@ public class LayeredWorldStateTests {
     when(testState.rootHash()).thenReturn(testStateRoot);
     when(testState.blockHash()).thenReturn(testHeader.getBlockHash());
 
-    BonsaiWorldStateUpdater testUpdater = new BonsaiWorldStateUpdater(testState);
+    BonsaiWorldStateUpdateAccumulator testUpdater = new BonsaiWorldStateUpdateAccumulator(testState);
     // mock kvstorage to mimic head being in a different state than testState
-    LayeredWorldstateStorageManager manager =
+    CachedSnapshotWorldstateManager manager =
         spy(
-            new LayeredWorldstateStorageManager(
+            new CachedSnapshotWorldstateManager(
                 blockchain, mock(BonsaiWorldStateKeyValueStorage.class), 10L, new HashMap<>()));
 
     // assert we are using the target worldstate storage:
@@ -121,8 +122,8 @@ public class LayeredWorldStateTests {
         .prepareTrieLog(
             any(BlockHeader.class),
             any(Hash.class),
-            any(BonsaiWorldStateUpdater.class),
-            any(BonsaiWorldStateArchive.class));
+            any(BonsaiWorldStateUpdateAccumulator.class),
+            any(BonsaiWorldStateProvider.class));
 
     manager.saveTrieLog(archive, testUpdater, testStateRoot, testHeader, testState);
     assertThat(calledPrepareTrieLog.get()).isTrue();

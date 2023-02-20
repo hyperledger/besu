@@ -48,9 +48,9 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
+public class BonsaiWorldStateUpdateAccumulator extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateUpdater.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
 
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
@@ -65,11 +65,11 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   private final Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> storageToUpdate =
       new ConcurrentHashMap<>();
 
-  BonsaiWorldStateUpdater(final BonsaiWorldView world) {
+  BonsaiWorldStateUpdateAccumulator(final BonsaiWorldView world) {
     this(world, (__, ___) -> {}, (__, ___) -> {});
   }
 
-  BonsaiWorldStateUpdater(
+  BonsaiWorldStateUpdateAccumulator(
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
       final Consumer<Hash> storagePreloader) {
@@ -79,14 +79,14 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     this.storagePreloader = storagePreloader;
   }
 
-  public BonsaiWorldStateUpdater copy() {
-    final BonsaiWorldStateUpdater copy =
-        new BonsaiWorldStateUpdater(wrappedWorldView(), accountPreloader, storagePreloader);
+  public BonsaiWorldStateUpdateAccumulator copy() {
+    final BonsaiWorldStateUpdateAccumulator copy =
+        new BonsaiWorldStateUpdateAccumulator(wrappedWorldView(), accountPreloader, storagePreloader);
     copy.cloneFromUpdater(this);
     return copy;
   }
 
-  void cloneFromUpdater(final BonsaiWorldStateUpdater source) {
+  void cloneFromUpdater(final BonsaiWorldStateUpdateAccumulator source) {
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
     storageToClear.addAll(source.storageToClear);
@@ -356,7 +356,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
     final BonsaiValue<Bytes> localCode = codeToUpdate.get(address);
     if (localCode == null) {
-      return wrappedWorldView().getCode(address, codeHash);
+      final Optional<Bytes> code = wrappedWorldView().getCode(address, codeHash);
+      if (code.isEmpty() && !codeHash.equals(Hash.EMPTY)) {
+        throw new MerkleTrieException(
+            "invalid account code", Optional.of(address), codeHash, Bytes.EMPTY);
+      }
+      return code;
     } else {
       return Optional.ofNullable(localCode.getUpdated());
     }

@@ -72,7 +72,7 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
 public abstract class AbstractIsolationTests {
-  protected BonsaiWorldStateArchive archive;
+  protected BonsaiWorldStateProvider archive;
   protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
   final Function<String, KeyPair> asKeyPair =
@@ -112,7 +112,7 @@ public abstract class AbstractIsolationTests {
         (BonsaiWorldStateKeyValueStorage)
             createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
     archive =
-        new BonsaiWorldStateArchive(
+        new BonsaiWorldStateProvider(
             bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),

@@ -56,8 +56,8 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
 
   @Override
   public synchronized void saveTrieLog(
-      final BonsaiWorldStateArchive worldStateArchive,
-      final BonsaiWorldStateUpdater localUpdater,
+      final BonsaiWorldStateProvider worldStateArchive,
+      final BonsaiWorldStateUpdateAccumulator localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
       final BonsaiWorldState forWorldState) {
@@ -86,13 +86,11 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
   TrieLogLayer prepareTrieLog(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
-      final BonsaiWorldStateUpdater localUpdater,
+      final BonsaiWorldStateUpdateAccumulator localUpdater,
       final BonsaiWorldState forWorldState) {
     debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
     final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
     trieLog.freeze();
-    addCachedLayer(blockHeader, worldStateRootHash, forWorldState);
-    scrubCachedLayers(blockHeader.getNumber());
     return trieLog;
   }
 
@@ -137,7 +135,7 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
   }
 
   @Override
-  public boolean containWorlStateStorage(final Hash blockHash){
+  public boolean containWorlStateStorage(final Hash blockHash) {
     return cachedWorldStatesByHash.containsKey(blockHash);
   }
 

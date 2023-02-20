@@ -109,12 +109,8 @@ public class MainnetBlockValidator implements BlockValidator {
       handleAndLogImportFailure(block, retval);
       return retval;
     }
-
     try (final var worldState =
-        context
-            .getWorldStateArchive()
-            .getMutable(parentHeader, shouldPersist)
-            .orElse(null)) {
+        context.getWorldStateArchive().getMutable(parentHeader, shouldPersist).orElse(null)) {
 
       if (worldState == null) {
         var retval =

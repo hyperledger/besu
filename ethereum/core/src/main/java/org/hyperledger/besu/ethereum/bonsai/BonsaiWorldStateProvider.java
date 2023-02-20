@@ -16,7 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.hyperledger.besu.ethereum.bonsai.LayeredWorldstateStorageManager.RETAINED_LAYERS;
+import static org.hyperledger.besu.ethereum.bonsai.CachedSnapshotWorldstateManager.RETAINED_LAYERS;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -46,9 +46,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BonsaiWorldStateArchive implements WorldStateArchive {
+public class BonsaiWorldStateProvider implements WorldStateArchive {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateArchive.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateProvider.class);
 
   private final Blockchain blockchain;
 
@@ -58,7 +58,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
-  public BonsaiWorldStateArchive(
+  public BonsaiWorldStateProvider(
       final StorageProvider provider,
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
@@ -70,13 +70,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         cachedMerkleTrieLoader);
   }
 
-  public BonsaiWorldStateArchive(
+  public BonsaiWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     this(
-        new LayeredWorldstateStorageManager(
+        new CachedSnapshotWorldstateManager(
             blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS)),
         worldStateStorage,
         blockchain,
@@ -84,7 +84,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @VisibleForTesting
-  BonsaiWorldStateArchive(
+  BonsaiWorldStateProvider(
       final TrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
@@ -94,6 +94,20 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+    System.out.println(
+        "testouille "
+            + persistedState.worldStateBlockHash
+            + " "
+            + blockchain.getChainHead().getHash()
+            + " "
+            + blockchain.getBlockHeader(persistedState.worldStateBlockHash));
+    blockchain
+        .getBlockHeader(persistedState.worldStateBlockHash)
+        .ifPresent(
+            blockHeader -> {
+              this.trieLogManager.addCachedLayer(
+                  blockHeader, persistedState.worldStateRootHash, persistedState);
+            });
   }
 
   @Override
@@ -122,22 +136,36 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     if (shouldPersistState) {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
-      final BonsaiSnapshotWorldStateKeyValueStorage worldStateKeyValueStorage = trieLogManager
+      final BonsaiSnapshotWorldStateKeyValueStorage worldStateKeyValueStorage =
+          trieLogManager
               .getWorldStateStorage(blockHeader.getHash())
-              .orElse(new BonsaiSnapshotWorldStateKeyValueStorage(
+              .or(
+                  () ->
+                      worldStateStorage
+                          .getWorldStateBlockHash()
+                          .flatMap(trieLogManager::getWorldStateStorage))
+              .orElse(
+                  new BonsaiSnapshotWorldStateKeyValueStorage(
                       blockchain.getChainHeadBlockNumber(), worldStateStorage));
-      System.out.println("getMutable "+worldStateKeyValueStorage.getWorldStateBlockHash()+" "+trieLogManager.containWorlStateStorage(blockHeader.getHash()));
+      System.out.println(
+          "getMutable "
+              + worldStateKeyValueStorage.getWorldStateBlockHash()
+              + " "
+              + trieLogManager.containWorlStateStorage(blockHeader.getHash()));
 
-        return rollMutableStateToBlockHash(new BonsaiWorldState(this, worldStateKeyValueStorage), blockHeader.getHash())
-                .map(mutableWorldState -> {
-                  if(!trieLogManager.containWorlStateStorage(blockHeader.getHash())) {
-                    trieLogManager.addCachedLayer(
-                            blockHeader,
-                            mutableWorldState.rootHash(),
-                            (BonsaiWorldState) mutableWorldState);
-                  }
-                  return mutableWorldState;
-                }).map(MutableWorldState::freeze);
+      return rollMutableStateToBlockHash(
+              new BonsaiWorldState(this, worldStateKeyValueStorage), blockHeader.getHash())
+          .map(
+              mutableWorldState -> {
+                if (!trieLogManager.containWorlStateStorage(blockHeader.getHash())) {
+                  trieLogManager.addCachedLayer(
+                      blockHeader,
+                      mutableWorldState.rootHash(),
+                      (BonsaiWorldState) mutableWorldState);
+                }
+                mutableWorldState.freeze();
+                return mutableWorldState;
+              });
     }
   }
 
@@ -148,7 +176,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(
       final BonsaiWorldState mutableState, final Hash blockHash) {
-    System.out.println("rollMutableStateToBlockHash "+mutableState.blockHash()+" "+blockHash);
+    System.out.println("rollMutableStateToBlockHash " + mutableState.blockHash() + " " + blockHash);
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
     } else {
@@ -197,7 +225,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         }
 
         // attempt the state rolling
-        final BonsaiWorldStateUpdater bonsaiUpdater = mutableState.updater;
+        final BonsaiWorldStateUpdateAccumulator bonsaiUpdater = mutableState.updater;
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
             LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
@@ -223,12 +251,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           return Optional.empty();
         }
       } catch (final RuntimeException re) {
-        LOG.trace("Archive rolling failed for block hash " + blockHash, re);
+        LOG.info("Archive rolling failed for block hash " + blockHash, re);
         if (re instanceof MerkleTrieException) {
           // need to throw to trigger the heal
           throw re;
         }
-        return Optional.empty();
+        throw new MerkleTrieException(
+            "invalid", Optional.of(Address.ZERO), Hash.EMPTY, Bytes.EMPTY);
       }
     }
   }

@@ -20,7 +20,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
@@ -208,7 +208,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
             }
           });
 
-
       CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
         future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);
@@ -315,6 +314,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       fastSyncDownloader.get().deleteFastSyncState();
     }
 
+    new Exception().printStackTrace(System.out);
+
     final List<String> lines = new ArrayList<>();
     lines.add("Besu has identified a problem with its worldstate database.");
     lines.add("Your node will fetch the correct data from peers to repair the problem.");
@@ -325,8 +326,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     this.syncState.markResyncNeeded();
     maybeAccountToRepair.ifPresent(
         address -> {
-          if (this.protocolContext.getWorldStateArchive() instanceof BonsaiWorldStateArchive) {
-            ((BonsaiWorldStateArchive) this.protocolContext.getWorldStateArchive())
+          if (this.protocolContext.getWorldStateArchive() instanceof BonsaiWorldStateProvider) {
+            ((BonsaiWorldStateProvider) this.protocolContext.getWorldStateArchive())
                 .prepareStateHealing(
                     org.hyperledger.besu.datatypes.Address.wrap(address), location);
           }
