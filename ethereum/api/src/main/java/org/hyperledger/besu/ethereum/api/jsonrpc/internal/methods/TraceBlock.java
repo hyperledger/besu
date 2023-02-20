@@ -30,18 +30,23 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -100,7 +105,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
     if (block == null) {
       return emptyResult();
     }
-    final ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
+    ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
     final BlockHeader header = block.getHeader();
     final BlockHeader previous =
         getBlockchainQueries()
@@ -144,7 +149,13 @@ public class TraceBlock extends AbstractBlockParameterMethod {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
     TransactionSource transactionSource = new TransactionSource(block);
-    LabelledMetric<Counter> outputCounter = null;
+    final LabelledMetric<Counter> outputCounter =
+            new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES,false).createLabelledCounter(
+                    BesuMetricCategory.BLOCKCHAIN,
+                    "transactions_traceblock_pipeline_processed_total",
+                    "Number of transactions processed for each block",
+                    "step",
+                    "action");
     DebugOperationTracer debugOperationTracer =
         new DebugOperationTracer(new TraceOptions(false, false, true));
     Function<Transaction, TransactionTrace> executeTransactionStep =
@@ -156,21 +167,26 @@ public class TraceBlock extends AbstractBlockParameterMethod {
             debugOperationTracer);
     Function<TransactionTrace, Stream<Trace>> traceFlatTransactionStep =
         new TraceFlatTransactionStep(protocolSchedule, block);
-    Consumer<Trace> buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
+    BuildArrayNodeCompleterStep buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
     Pipeline<Transaction> traceBlockPipeline =
         createPipelineFrom(
                 "getTransactions",
                 transactionSource,
-                5,
+                2,
                 outputCounter,
                 true,
                 "trace_replay_block_transactions")
             .thenProcess("executeTransaction", executeTransactionStep)
             .thenFlatMap("traceFlatTransaction", traceFlatTransactionStep, 5)
             .andFinishWith("buildArrayNode", buildArrayNodeStep);
-    getBlockchainQueries().getEthScheduler().get().startPipeline(traceBlockPipeline);
+    if (getBlockchainQueries().getEthScheduler().isPresent()) {
+      getBlockchainQueries().getEthScheduler().get().startPipeline(traceBlockPipeline);
+    } else {
+      EthScheduler ethScheduler = new EthScheduler(4, 4, 4, 4, new NoOpMetricsSystem());
+      ethScheduler.startPipeline(traceBlockPipeline).thenCompose(unused -> ethScheduler.startPipeline(traceBlockPipeline));
+    }
+    resultArrayNode = buildArrayNodeStep.getResultArrayNode();
     generateRewardsFromBlock(filterParameter, block, resultArrayNode);
-
     return resultArrayNode;
   }
 
