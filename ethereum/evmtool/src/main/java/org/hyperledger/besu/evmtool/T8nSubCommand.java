@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -295,7 +295,7 @@ public class T8nSubCommand implements Runnable {
               new StandardJsonTracer(
                   new PrintStream(traceDest),
                   parentCommand.showMemory,
-                  parentCommand.showStack,
+                  !parentCommand.hideStack,
                   parentCommand.showReturnData);
         } else {
           tracer = OperationTracer.NO_TRACING;
@@ -381,14 +381,16 @@ public class T8nSubCommand implements Runnable {
           .incrementBalance((reward == null) ? protocolSpec.getBlockReward() : reward);
     }
 
-    // deposit CL withdrawals
-    try {
-      protocolSpec
-          .getWithdrawalsProcessor()
-          .ifPresent(
-              p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
-    } catch (RuntimeException re) {
-      resultObject.put("exception", re.getMessage());
+    // Invoke the withdrawal processor to handle CL withdrawals.
+    if (!referenceTestEnv.getWithdrawals().isEmpty()) {
+      try {
+        protocolSpec
+            .getWithdrawalsProcessor()
+            .ifPresent(
+                p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
+      } catch (RuntimeException re) {
+        resultObject.put("exception", re.getMessage());
+      }
     }
 
     worldStateUpdater.commit();

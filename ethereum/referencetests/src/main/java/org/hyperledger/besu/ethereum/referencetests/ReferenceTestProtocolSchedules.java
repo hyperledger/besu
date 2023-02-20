@@ -77,9 +77,6 @@ public class ReferenceTestProtocolSchedules {
     builder.put("ArrowGlacier", createSchedule(genesisStub.clone().arrowGlacierBlock(0)));
     builder.put("GrayGlacier", createSchedule(genesisStub.clone().grayGlacierBlock(0)));
     builder.put("Merge", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
-    builder.put("Merge+3545+3670", createTimestampSchedule(genesisStub.clone().shanghaiTime(0)));
-    builder.put("Merge+3860", createTimestampSchedule(genesisStub.clone().shanghaiTime(0)));
-    builder.put("Merge+3855", createTimestampSchedule(genesisStub.clone().shanghaiTime(0)));
     builder.put("Shanghai", createTimestampSchedule(genesisStub.clone().shanghaiTime(0)));
     builder.put("Cancun", createTimestampSchedule(genesisStub.clone().cancunTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());

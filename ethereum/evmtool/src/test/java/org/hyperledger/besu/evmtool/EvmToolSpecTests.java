@@ -49,6 +49,10 @@ public class EvmToolSpecTests {
   static final ObjectMapper objectMapper = new ObjectMapper();
   static final ObjectReader specReader = objectMapper.reader();
 
+  public static Object[][] stateTestTests() {
+    return findSpecFiles(new String[] {"state-test"});
+  }
+
   public static Object[][] t8nTests() {
     return findSpecFiles(new String[] {"t8n"});
   }
@@ -98,7 +102,7 @@ public class EvmToolSpecTests {
   }
 
   @ParameterizedTest(name = "{0}")
-  @MethodSource({"t8nTests", "b11rTests"})
+  @MethodSource({"stateTestTests", "t8nTests", "b11rTests"})
   void testBySpec(
       final String file,
       final JsonNode cliNode,
@@ -130,7 +134,7 @@ public class EvmToolSpecTests {
     evmTool.execute(inputStream, new PrintWriter(baos, true, UTF_8), cli);
 
     if (stdoutNode.isTextual()) {
-      assertThat(baos.toString(UTF_8)).isEqualTo(stdinNode.textValue());
+      assertThat(baos.toString(UTF_8)).isEqualTo(stdoutNode.textValue());
     } else {
       var actualNode = specReader.readTree(baos.toByteArray());
       assertThat(actualNode).isEqualTo(stdoutNode);

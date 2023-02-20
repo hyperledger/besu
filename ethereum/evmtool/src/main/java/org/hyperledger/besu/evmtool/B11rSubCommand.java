@@ -86,13 +86,13 @@ public class B11rSubCommand implements Runnable {
       description = "The clique seal/signature for the block")
   private final Path sealClique = stdinPath;
 
-  @SuppressWarnings("UnusedVariable") // FIXME do ethash sealing
+  @SuppressWarnings("UnusedVariable")
   @Option(
       names = {"--seal.ethash"},
       description = "Use Proof of Work to seal the block")
   private final Boolean sealEthash = false;
 
-  @SuppressWarnings("UnusedVariable") // FIXME do ethash sealing
+  @SuppressWarnings("UnusedVariable")
   @Option(
       names = {"--seal.ethash.mode"},
       paramLabel = "full path",
@@ -206,7 +206,7 @@ public class B11rSubCommand implements Runnable {
     rlpOut.endList();
 
     // withdrawals
-    // TODO
+    // TODO - waiting on b11r spec to specify how withdrawals are added to blocks.
 
     rlpOut.endList();
 

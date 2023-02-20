@@ -157,11 +157,11 @@ public class EvmToolCommand implements Runnable {
   final Boolean showMemory = false;
 
   @Option(
-      names = {"--trace.stack"},
+      names = {"--trace.nostack"},
       description = "Show the operand stack in tracing for each op. Default is to show stack.",
       scope = INHERIT,
       negatable = true)
-  final Boolean showStack = true;
+  final Boolean hideStack = false;
 
   @Option(
       names = {"--trace.returndata"},
@@ -194,9 +194,19 @@ public class EvmToolCommand implements Runnable {
 
   static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
-  PrintWriter out =
-      new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
-  InputStream in = new ByteArrayInputStream(new byte[0]);
+  PrintWriter out;
+  InputStream in;
+
+  public EvmToolCommand() {
+    this(
+        new ByteArrayInputStream(new byte[0]),
+        new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true));
+  }
+
+  public EvmToolCommand(final InputStream in, final PrintWriter out) {
+    this.in = in;
+    this.out = out;
+  }
 
   void execute(final String... args) {
     execute(System.in, new PrintWriter(System.out, true, UTF_8), args);
@@ -215,7 +225,8 @@ public class EvmToolCommand implements Runnable {
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Wei.class, arg -> Wei.of(Long.parseUnsignedLong(arg)));
 
-    // change negation regexp so --nomemory works
+    // change negation regexp so --nomemory works.  See
+    // https://picocli.info/#_customizing_negatable_options
     commandLine.setNegatableOptionTransformer(
         new CommandLine.RegexTransformer.Builder()
             .addPattern("^--no(\\w(-|\\w)*)$", "--$1", "--[no]$1")
@@ -310,7 +321,7 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(System.out, showMemory, showStack, showReturnData)
+                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData)
                 : OperationTracer.NO_TRACING;
 
         var updater = component.getWorldUpdater();

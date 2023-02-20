@@ -23,6 +23,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +37,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class StandardJsonTracer implements OperationTracer {
 
   private static final Joiner commaJoiner = Joiner.on(',');
-  private final PrintStream out;
+  private final PrintWriter out;
   private final boolean showMemory;
   private final boolean showStack;
   private final boolean showReturnData;
@@ -55,7 +57,7 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showReturnData show return data in trace lines
    */
   public StandardJsonTracer(
-      final PrintStream out,
+      final PrintWriter out,
       final boolean showMemory,
       final boolean showStack,
       final boolean showReturnData) {
@@ -63,6 +65,22 @@ public class StandardJsonTracer implements OperationTracer {
     this.showMemory = showMemory;
     this.showStack = showStack;
     this.showReturnData = showReturnData;
+  }
+
+  /**
+   * Instantiates a new Standard json tracer.
+   *
+   * @param out the out
+   * @param showMemory show memory in trace lines
+   * @param showStack show the stack in trace lines
+   * @param showReturnData show return data in trace lines
+   */
+  public StandardJsonTracer(
+      final PrintStream out,
+      final boolean showMemory,
+      final boolean showStack,
+      final boolean showReturnData) {
+    this(new PrintWriter(out, true, StandardCharsets.UTF_8), showMemory, showStack, showReturnData);
   }
 
   /**

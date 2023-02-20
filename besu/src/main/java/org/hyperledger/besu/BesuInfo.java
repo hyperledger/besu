@@ -33,7 +33,7 @@ public final class BesuInfo {
   /**
    * Generate version-only Besu version
    *
-   * @return Besu version in format such as besu/v22.10.3/linux-aarch_64/openjdk-java-11
+   * @return Besu version in format such as "v23.1.0" or "v23.1.1-dev-ac23d311"
    */
   public static String shortVersion() {
     return VERSION;
@@ -42,7 +42,8 @@ public final class BesuInfo {
   /**
    * Generate full Besu version
    *
-   * @return Besu version in format such as besu/v22.10.3/linux-aarch_64/openjdk-java-11
+   * @return Besu version in format such as "besu/v23.1.1-dev-ac23d311/osx-x86_64/graalvm-java-17"
+   *     or "besu/v23.1.0/osx-aarch_64/corretto-java-19"
    */
   public static String version() {
     return String.format("%s/v%s/%s/%s", CLIENT, VERSION, OS, VM);
