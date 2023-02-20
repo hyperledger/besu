@@ -136,7 +136,7 @@ abstract class AbstractBlockProcessorTest {
         emptyList(),
         emptyList(),
         Optional.of(withdrawals),
-        null,
+        Optional.empty(),
         null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
