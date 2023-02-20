@@ -151,8 +151,9 @@ public class B11rSubCommand implements Runnable {
       }
 
       if (!header.equals(stdinPath)) {
-        config.set(
-            "header", t8nReader.readTree(new FileReader(header.toFile(), StandardCharsets.UTF_8)));
+        try (FileReader reader = new FileReader(header.toFile(), StandardCharsets.UTF_8)) {
+          config.set("header", t8nReader.readTree(reader));
+        }
       }
       if (!txs.equals(stdinPath)) {
         try (FileReader reader = new FileReader(txs.toFile(), StandardCharsets.UTF_8)) {
