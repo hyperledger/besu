@@ -114,6 +114,8 @@ public class EthGetTransactionReceiptTest {
           Optional.of(PoWHasher.ETHASH_LIGHT),
           null,
           Optional.empty(),
+          null,
+          Optional.empty(),
           true);
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
@@ -140,6 +142,8 @@ public class EthGetTransactionReceiptTest {
           FeeMarket.legacy(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT),
+          null,
+          Optional.empty(),
           null,
           Optional.empty(),
           true);

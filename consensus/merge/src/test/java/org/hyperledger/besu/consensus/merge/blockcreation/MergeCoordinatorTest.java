@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -115,6 +116,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
   private static final Optional<List<Withdrawal>> EMPTY_WITHDRAWALS = Optional.empty();
+  private static final Optional<List<Deposit>> EMPTY_DEPOSITS = Optional.empty();
 
   private static final long REPETITION_MIN_DURATION = 100;
   @Mock MergeContext mergeContext;
@@ -225,7 +227,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
-            EMPTY_WITHDRAWALS);
+            EMPTY_WITHDRAWALS,
+            EMPTY_DEPOSITS);
 
     ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
         ArgumentCaptor.forClass(BlockWithReceipts.class);
@@ -263,7 +266,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doThrow(new MerkleTrieException("missing leaf"))
               .doCallRealMethod()
               .when(beingSpiedOn)
-              .createBlock(any(), any(Bytes32.class), anyLong(), eq(Optional.empty()));
+              .createBlock(
+                  any(), any(Bytes32.class), anyLong(), eq(Optional.empty()), eq(Optional.empty()));
           return beingSpiedOn;
         };
 
@@ -299,6 +303,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.random(),
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     verify(willThrow, never()).addBadBlock(any(), any());
@@ -343,6 +348,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -394,6 +400,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -439,6 +446,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -473,6 +481,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     try {
@@ -515,6 +524,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     waitForBlockCreationInProgress.await();
@@ -561,6 +571,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     final CompletableFuture<Void> task1 = blockCreationTask;
@@ -571,6 +582,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     assertThat(payloadId1).isEqualTo(payloadId2);

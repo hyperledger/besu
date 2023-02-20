@@ -58,6 +58,7 @@ public class ChainForTestCreator {
         0,
         null,
         null,
+        null,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -82,6 +83,7 @@ public class ChainForTestCreator {
         blockHeader.getMixHash(),
         blockHeader.getNonce(),
         blockHeader.getWithdrawalsRoot().orElse(null),
+        blockHeader.getDepositsRoot().orElse(null),
         blockHeader.getExcessDataGas().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
@@ -128,6 +130,7 @@ public class ChainForTestCreator {
         Wei.ZERO,
         Hash.EMPTY,
         0,
+        null,
         null,
         null,
         new MainnetBlockHeaderFunctions());

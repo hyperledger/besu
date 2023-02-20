@@ -74,7 +74,7 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
     final BlockBody emptyBodyBlock = BlockBody.empty();
     // Block with no tx, no ommers, 1 withdrawal
     final BlockBody bodyBlockWithWithdrawal =
-        new BlockBody(emptyList(), emptyList(), Optional.of(List.of(withdrawal)));
+        new BlockBody(emptyList(), emptyList(), Optional.of(List.of(withdrawal)), Optional.empty());
 
     assertThat(
             new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)
