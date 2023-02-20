@@ -44,7 +44,6 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -62,7 +61,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,12 +160,7 @@ public class StateTestSubCommand implements Runnable {
   }
 
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
-    Log4j2ConfiguratorUtil.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
-    final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
-        ReferenceTestProtocolSchedules.create();
-    Log4j2ConfiguratorUtil.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
+    final var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
 
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
