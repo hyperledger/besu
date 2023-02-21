@@ -56,6 +56,7 @@ genesis-file="~/genesis.json"
 sync-mode="fast"
 fast-sync-min-peers=5
 network-id=303
+kzg-trusted-setup="/etc/besu/kzg-trusted-setup.txt"
 
 # JSON-RPC
 rpc-http-enabled=false
