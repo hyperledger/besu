@@ -22,7 +22,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 public abstract class CompactEncoding {
   private CompactEncoding() {}
 
-  static final byte LEAF_TERMINATOR = 0x10;
+  public static final byte LEAF_TERMINATOR = 0x10;
 
   public static Bytes bytesToPath(final Bytes bytes) {
     final MutableBytes path = MutableBytes.create(bytes.size() * 2 + 1);

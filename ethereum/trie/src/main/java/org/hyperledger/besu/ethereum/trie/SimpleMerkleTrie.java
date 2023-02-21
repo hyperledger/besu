@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toUnmodifiableSet;
-import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 
 import java.util.List;
 import java.util.Map;
@@ -28,18 +28,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 /**
- * An in-memory {@link MerklePatriciaTrie}.
+ * An in-memory {@link MerkleTrie}.
  *
  * @param <V> The type of values stored by this trie.
  */
-public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
-  private final PathNodeVisitor<V> getVisitor = new GetVisitor<>();
-  private final PathNodeVisitor<V> removeVisitor = new RemoveVisitor<>();
-  private final DefaultNodeFactory<V> nodeFactory;
+public abstract class SimpleMerkleTrie<K extends Bytes, V> implements MerkleTrie<K, V> {
+
+  protected final DefaultNodeFactory<V> nodeFactory;
 
   private Node<V> root;
 
@@ -48,7 +48,7 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
    *
    * @param valueSerializer A function for serializing values to bytes.
    */
-  public SimpleMerklePatriciaTrie(final Function<V, Bytes> valueSerializer) {
+  public SimpleMerkleTrie(final Function<V, Bytes> valueSerializer) {
     this.nodeFactory = new DefaultNodeFactory<>(valueSerializer);
     this.root = NullNode.instance();
   }
@@ -56,13 +56,13 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public Optional<V> get(final K key) {
     checkNotNull(key);
-    return root.accept(getVisitor, bytesToPath(key)).getValue();
+    return root.accept(getGetVisitor(), bytesToPath(key)).getValue();
   }
 
   @Override
   public Optional<V> getPath(final K path) {
     checkNotNull(path);
-    return root.accept(getVisitor, path).getValue();
+    return root.accept(getGetVisitor(), path).getValue();
   }
 
   @Override
@@ -79,11 +79,11 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   public void put(final K key, final V value) {
     checkNotNull(key);
     checkNotNull(value);
-    this.root = root.accept(new PutVisitor<>(nodeFactory, value), bytesToPath(key));
+    this.root = root.accept(getPutVisitor(value), bytesToPath(key));
   }
 
   @Override
-  public void put(final K key, final PutVisitor<V> putVisitor) {
+  public void put(final K key, final PathNodeVisitor<V> putVisitor) {
     checkNotNull(key);
     this.root = root.accept(putVisitor, bytesToPath(key));
   }
@@ -91,7 +91,7 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public void remove(final K key) {
     checkNotNull(key);
-    this.root = root.accept(removeVisitor, bytesToPath(key));
+    this.root = root.accept(getRemoveVisitor(), bytesToPath(key));
   }
 
   @Override
@@ -157,4 +157,10 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     final TrieIterator<V> visitor = new TrieIterator<>(handler, true);
     root.accept(visitor, CompactEncoding.bytesToPath(Bytes32.ZERO));
   }
+
+  public abstract PathNodeVisitor<V> getGetVisitor();
+
+  public abstract PathNodeVisitor<V> getRemoveVisitor();
+
+  public abstract PathNodeVisitor<V> getPutVisitor(final V value);
 }

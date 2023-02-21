@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.trie.patricia.PutVisitor;
 
 public class SnapPutVisitor<V> extends PutVisitor<V> {
 

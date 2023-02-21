@@ -64,17 +64,17 @@ public class NullNode<V> implements Node<V> {
 
   @Override
   public Bytes getRlp() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE;
+    return MerkleTrie.EMPTY_TRIE_NODE;
   }
 
   @Override
   public Bytes getRlpRef() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE;
+    return MerkleTrie.EMPTY_TRIE_NODE;
   }
 
   @Override
   public Bytes32 getHash() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH;
+    return MerkleTrie.EMPTY_TRIE_NODE_HASH;
   }
 
   @Override

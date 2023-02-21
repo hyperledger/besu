@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.function.Function;

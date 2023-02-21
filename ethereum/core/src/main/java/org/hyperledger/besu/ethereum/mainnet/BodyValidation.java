@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public final class BodyValidation {
     return RLP.encodeOne(UInt256.valueOf(i).trimLeadingZeros());
   }
 
-  private static MerklePatriciaTrie<Bytes, Bytes> trie() {
+  private static MerkleTrie<Bytes, Bytes> trie() {
     return new SimpleMerklePatriciaTrie<>(b -> b);
   }
 
@@ -56,7 +56,7 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash transactionsRoot(final List<Transaction> transactions) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerkleTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, transactions.size())
         .forEach(
@@ -72,7 +72,7 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash withdrawalsRoot(final List<Withdrawal> withdrawals) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerkleTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, withdrawals.size())
         .forEach(
@@ -88,7 +88,7 @@ public final class BodyValidation {
    * @return the receipt root
    */
   public static Hash receiptsRoot(final List<TransactionReceipt> receipts) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerkleTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, receipts.size())
         .forEach(

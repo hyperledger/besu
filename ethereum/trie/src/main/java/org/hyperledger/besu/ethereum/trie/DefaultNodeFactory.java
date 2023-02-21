@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -60,7 +61,7 @@ public class DefaultNodeFactory<V> implements NodeFactory<V> {
   }
 
   @Override
-  public Node<V> createBranch(final ArrayList<Node<V>> children, final Optional<V> value) {
+  public Node<V> createBranch(final List<Node<V>> children, final Optional<V> value) {
     return new BranchNode<>(children, value, this, valueSerializer);
   }
 

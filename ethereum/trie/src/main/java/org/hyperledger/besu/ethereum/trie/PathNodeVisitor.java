@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-interface PathNodeVisitor<V> {
+public interface PathNodeVisitor<V> {
 
   Node<V> visit(ExtensionNode<V> extensionNode, Bytes path);
 

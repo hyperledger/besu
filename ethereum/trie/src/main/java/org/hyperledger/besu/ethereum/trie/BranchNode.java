@@ -32,14 +32,14 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 
-class BranchNode<V> implements Node<V> {
+public class BranchNode<V> implements Node<V> {
   public static final byte RADIX = CompactEncoding.LEAF_TERMINATOR;
 
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
 
   private final Optional<Bytes> location;
-  private final ArrayList<Node<V>> children;
+  private final List<Node<V>> children;
   private final Optional<V> value;
   private final NodeFactory<V> nodeFactory;
   private final Function<V, Bytes> valueSerializer;
@@ -48,7 +48,7 @@ class BranchNode<V> implements Node<V> {
   private boolean dirty = false;
   private boolean needHeal = false;
 
-  BranchNode(
+  public BranchNode(
       final Bytes location,
       final ArrayList<Node<V>> children,
       final Optional<V> value,
@@ -62,8 +62,8 @@ class BranchNode<V> implements Node<V> {
     this.valueSerializer = valueSerializer;
   }
 
-  BranchNode(
-      final ArrayList<Node<V>> children,
+  public BranchNode(
+      final List<Node<V>> children,
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
@@ -205,7 +205,7 @@ class BranchNode<V> implements Node<V> {
     return false;
   }
 
-  private static <V> Optional<Node<V>> maybeFlatten(final ArrayList<Node<V>> children) {
+  private static <V> Optional<Node<V>> maybeFlatten(final List<Node<V>> children) {
     final int onlyChildIndex = findOnlyChild(children);
     if (onlyChildIndex >= 0) {
       // replace the path of the only child and return it
@@ -219,7 +219,7 @@ class BranchNode<V> implements Node<V> {
     return Optional.empty();
   }
 
-  private static <V> int findOnlyChild(final ArrayList<Node<V>> children) {
+  private static <V> int findOnlyChild(final List<Node<V>> children) {
     int onlyChildIndex = -1;
     assert (children.size() == RADIX);
     for (int i = 0; i < RADIX; ++i) {

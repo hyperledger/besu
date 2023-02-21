@@ -19,12 +19,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager.InnerNode;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Proof;
-import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
-import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
+import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -79,7 +79,7 @@ public class WorldStateProofProvider {
       final Hash accountHash,
       final StateTrieAccountValue account,
       final List<UInt256> accountStorageKeys) {
-    final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
+    final MerkleTrie<Bytes32, Bytes> storageTrie =
         newAccountStorageTrie(accountHash, account.getStorageRoot());
     final NavigableMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
     accountStorageKeys.forEach(
@@ -94,12 +94,12 @@ public class WorldStateProofProvider {
     return accountProof.getProofRelatedNodes();
   }
 
-  private MerklePatriciaTrie<Bytes, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
+  private MerkleTrie<Bytes, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(
+  private MerkleTrie<Bytes32, Bytes> newAccountStorageTrie(
       final Hash accountHash, final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         (location, hash) ->
@@ -123,7 +123,7 @@ public class WorldStateProofProvider {
 
     // when proof is empty we need to have all the keys to reconstruct the trie
     if (proofs.isEmpty()) {
-      final MerklePatriciaTrie<Bytes, Bytes> trie =
+      final MerkleTrie<Bytes, Bytes> trie =
           new SimpleMerklePatriciaTrie<>(Function.identity());
       // add the received keys in the trie
       for (Map.Entry<Bytes32, Bytes> key : keys.entrySet()) {
@@ -140,7 +140,7 @@ public class WorldStateProofProvider {
     }
 
     if (keys.isEmpty()) {
-      final MerklePatriciaTrie<Bytes, Bytes> trie =
+      final MerkleTrie<Bytes, Bytes> trie =
           new StoredMerklePatriciaTrie<>(
               new InnerNodeDiscoveryManager<>(
                   (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
@@ -170,7 +170,7 @@ public class WorldStateProofProvider {
             startKeyHash,
             keys.lastKey(),
             true);
-    final MerklePatriciaTrie<Bytes, Bytes> trie =
+    final MerkleTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, rootHash);
     // filling out innerNodes of the InnerNodeDiscoveryManager by walking through the trie
     trie.visitAll(node -> {});

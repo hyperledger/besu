@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 
 public class TrieNodeDecoder {
   private static final StoredNodeFactory<Bytes> emptyNodeFactory =

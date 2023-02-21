@@ -18,6 +18,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
 /** Storage for use in a {@link StoredMerklePatriciaTrie}. */
 public interface MerkleStorage {

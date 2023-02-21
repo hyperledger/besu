@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-interface NodeVisitor<V> {
+public interface NodeVisitor<V> {
 
   void visit(ExtensionNode<V> extensionNode);
 

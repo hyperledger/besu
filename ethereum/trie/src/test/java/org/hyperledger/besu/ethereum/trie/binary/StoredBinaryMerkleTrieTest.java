@@ -12,35 +12,38 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.binary;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.patricia.AbstractMerklePatriciaTrieTest;
+import org.hyperledger.besu.ethereum.trie.KeyValueMerkleStorage;
+import org.hyperledger.besu.ethereum.trie.MerkleStorage;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest {
+public class StoredBinaryMerkleTrieTest extends AbstractBinaryMerkleTrieTest {
   private KeyValueStorage keyValueStore;
   private MerkleStorage merkleStorage;
   private Function<String, Bytes> valueSerializer;
   private Function<Bytes, String> valueDeserializer;
 
   @Override
-  protected MerklePatriciaTrie<Bytes, String> createTrie() {
+  protected MerkleTrie<Bytes, String> createTrie() {
     keyValueStore = new InMemoryKeyValueStorage();
     merkleStorage = new KeyValueMerkleStorage(keyValueStore);
     valueSerializer =
         value -> (value != null) ? Bytes.wrap(value.getBytes(StandardCharsets.UTF_8)) : null;
     valueDeserializer = bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8);
-    return new StoredMerklePatriciaTrie<>(merkleStorage::get, valueSerializer, valueDeserializer);
+    return new StoredBinaryMerkleTrie<>(merkleStorage::get, valueSerializer, valueDeserializer);
   }
 
   @Test
@@ -76,21 +79,21 @@ public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest
 
     // Create new tries from root hashes and check that we find expected values
     trie =
-        new StoredMerklePatriciaTrie<>(
+        new StoredBinaryMerkleTrie<>(
             merkleStorage::get, hash1, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.empty());
     assertThat(trie.get(key3)).isEqualTo(Optional.empty());
 
     trie =
-        new StoredMerklePatriciaTrie<>(
+        new StoredBinaryMerkleTrie<>(
             merkleStorage::get, hash2, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
 
     trie =
-        new StoredMerklePatriciaTrie<>(
+        new StoredBinaryMerkleTrie<>(
             merkleStorage::get, hash3, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value4"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
@@ -100,21 +103,21 @@ public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest
     merkleStorage.commit();
     final MerkleStorage newMerkleStorage = new KeyValueMerkleStorage(keyValueStore);
     trie =
-        new StoredMerklePatriciaTrie<>(
+        new StoredBinaryMerkleTrie<>(
             newMerkleStorage::get, hash1, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.empty());
     assertThat(trie.get(key3)).isEqualTo(Optional.empty());
 
     trie =
-        new StoredMerklePatriciaTrie<>(
+        new StoredBinaryMerkleTrie<>(
             newMerkleStorage::get, hash2, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
 
     trie =
-        new StoredMerklePatriciaTrie<>(
+        new StoredBinaryMerkleTrie<>(
             newMerkleStorage::get, hash3, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value4"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));

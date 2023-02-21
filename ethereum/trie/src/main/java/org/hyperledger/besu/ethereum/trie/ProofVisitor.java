@@ -18,13 +18,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.trie.patricia.GetVisitor;
 
-class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
+public class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
 
   private final Node<V> rootNode;
   private final List<Node<V>> proof = new ArrayList<>();
 
-  ProofVisitor(final Node<V> rootNode) {
+  public ProofVisitor(final Node<V> rootNode) {
     this.rootNode = rootNode;
   }
 

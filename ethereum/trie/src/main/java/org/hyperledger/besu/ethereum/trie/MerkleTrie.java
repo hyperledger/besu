@@ -27,9 +27,10 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 
 /** An Merkle Patricial Trie. */
-public interface MerklePatriciaTrie<K, V> {
+public interface MerkleTrie<K, V> {
 
   Bytes EMPTY_TRIE_NODE = RLP.NULL;
   Bytes32 EMPTY_TRIE_NODE_HASH = keccak256(EMPTY_TRIE_NODE);
@@ -74,7 +75,7 @@ public interface MerklePatriciaTrie<K, V> {
    * @param key The key that corresponds to the value to be updated.
    * @param putVisitor custom visitor for the update
    */
-  void put(K key, PutVisitor<V> putVisitor);
+  void put(K key, PathNodeVisitor<V> putVisitor);
 
   /**
    * Deletes the value mapped to the specified key, if such a value exists (Optional operation).
