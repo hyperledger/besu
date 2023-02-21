@@ -21,9 +21,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -42,12 +40,8 @@ public class KZGPointEvalPrecompileContractTest {
 
   @BeforeAll
   public static void init() {
-    Path testSetupAbsolutePath =
-        Path.of(
-            KZGPointEvalPrecompileContractTest.class
-                .getResource("trusted_setup_4096.txt")
-                .getPath());
-    contract = new KZGPointEvalPrecompiledContract(Optional.of(testSetupAbsolutePath));
+    KZGPointEvalPrecompiledContract.init("foo");
+    contract = new KZGPointEvalPrecompiledContract();
   }
 
   @AfterAll

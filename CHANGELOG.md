@@ -29,6 +29,7 @@ tests are updated to use EC private keys instead of RSA keys.
 - Add worldstate auto-heal mechanism [#5059](https://github.com/hyperledger/besu/pull/5059)
 - Support for EIP-4895 - Withdrawals for Shanghai fork
 - If a PoS block creation repetition takes less than a configurable duration, then waits before next repetition [#5048](https://github.com/hyperledger/besu/pull/5048)
+- Added the option --kzg-trusted-setup to pass a custom setup file for custom networks or to override the default one for named networks [#5084](https://github.com/hyperledger/besu/pull/5084)
 
 ### Bug Fixes
 - Mitigation fix for stale bonsai code storage leading to log rolling issues on contract recreates [#4906](https://github.com/hyperledger/besu/pull/4906)
