@@ -82,46 +82,6 @@ public class TraceFilter extends TraceBlock {
         requestContext.getRequest().getId(), resultArrayNode.getArrayNode());
   }
 
-  @Override
-  protected void generateTracesFromTransactionTraceAndBlock(
-      final Optional<FilterParameter> maybeFilterParameter,
-      final List<TransactionTrace> transactionTraces,
-      final Block block,
-      final ArrayNodeWrapper arrayNode) {
-
-    final Iterator<TransactionTrace> iterator = transactionTraces.iterator();
-    while (!arrayNode.isFull() && iterator.hasNext()) {
-      maybeFilterParameter.ifPresentOrElse(
-          filterParameter -> {
-            final List<Address> fromAddress = filterParameter.getFromAddress();
-            final List<Address> toAddress = filterParameter.getToAddress();
-            FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-                    protocolSchedule, iterator.next(), block)
-                .map(FlatTrace.class::cast)
-                .filter(
-                    trace ->
-                        fromAddress.isEmpty()
-                            || Optional.ofNullable(trace.getAction().getFrom())
-                                .map(Address::fromHexString)
-                                .map(fromAddress::contains)
-                                .orElse(false))
-                .filter(
-                    trace ->
-                        toAddress.isEmpty()
-                            || Optional.ofNullable(trace.getAction().getTo())
-                                .map(Address::fromHexString)
-                                .map(toAddress::contains)
-                                .orElse(false))
-                .forEachOrdered(arrayNode::addPOJO);
-          },
-          new Runnable() {
-            @Override
-            public void run() {
-              LOG.debug("No filter found. Unable to create traces");
-            }
-          });
-    }
-  }
 
   @Override
   protected void generateRewardsFromBlock(

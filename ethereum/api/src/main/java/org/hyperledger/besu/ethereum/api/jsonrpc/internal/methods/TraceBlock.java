@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -44,8 +45,11 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -57,12 +61,11 @@ import org.slf4j.LoggerFactory;
 
 public class TraceBlock extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceBlock.class);
-
+  private final EthScheduler ethScheduler = new EthScheduler(4, 4, 4, 4, new NoOpMetricsSystem());
   private static final ObjectMapper MAPPER = new ObjectMapper();
   //private final Supplier<BlockTracer> blockTracerSupplier;
   protected final ProtocolSchedule protocolSchedule;
   // Either the initial block state or the state of the prior TX, including miner rewards.
-  private WorldUpdater chainedUpdater;
 
   public TraceBlock(
       final ProtocolSchedule protocolSchedule,
@@ -134,16 +137,6 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                             + previous.getStateRoot().toShortHexString()))) {
       // return action.perform(body, header, blockchain, worldState, transactionProcessor);
 
-      if (chainedUpdater == null) {
-        chainedUpdater = worldState.updater();
-      } else if (chainedUpdater instanceof StackedUpdater) {
-        ((StackedUpdater) chainedUpdater).markTransactionBoundary();
-      }
-      // create an updater for just this tx
-      chainedUpdater = chainedUpdater.updater();
-    } catch (Exception exception) {
-      // no-op
-    }
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
@@ -165,34 +158,35 @@ public class TraceBlock extends AbstractBlockParameterMethod {
             getBlockchainQueries().getBlockchain(),
             chainedUpdater,
             debugOperationTracer);
-    Function<TransactionTrace, Stream<Trace>> traceFlatTransactionStep =
-        new TraceFlatTransactionStep(protocolSchedule, block);
-    Consumer<Trace> buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
+    Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> traceFlatTransactionStep =
+        new TraceFlatTransactionStep(protocolSchedule, block, filterParameter);
+    Consumer<FlatTrace> buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
     Pipeline<Transaction> traceBlockPipeline =
         createPipelineFrom(
                 "getTransactions",
                 transactionSource,
-                1,
+                4,
                 outputCounter,
                 false,
                 "trace_replay_block_transactions")
             .thenProcess("executeTransaction", executeTransactionStep)
-            .thenFlatMap("traceFlatTransaction", traceFlatTransactionStep, 4)
-            .andFinishWith("buildArrayNode", buildArrayNodeStep);
-    if (getBlockchainQueries().getEthScheduler().isPresent()) {
-      getBlockchainQueries().getEthScheduler().get().startPipeline(traceBlockPipeline);
-    } else {
-      EthScheduler ethScheduler = new EthScheduler(4, 4, 4, 4, new NoOpMetricsSystem());
-      try {
-        ethScheduler.startPipeline(traceBlockPipeline).get();
-      } catch (InterruptedException e) {
-        // no-op
-      } catch (ExecutionException e) {
-        // no-op
-      }
+            .thenProcessAsyncOrdered("traceFlatTransaction", traceFlatTransactionStep, 4)
+            .andFinishWith("buildArrayNode", traceStream-> traceStream.forEachOrdered(buildArrayNodeStep));
+
+
+    try {
+      ethScheduler.startPipeline(traceBlockPipeline).get();
+    } catch (InterruptedException e) {
+      // no-op
+    } catch (ExecutionException e) {
+      // no-op
     }
+
     resultArrayNode = ((BuildArrayNodeCompleterStep) buildArrayNodeStep).getResultArrayNode();
     generateRewardsFromBlock(filterParameter, block, resultArrayNode);
+    } catch (Exception exception) {
+      // no-op
+    }
     return resultArrayNode;
   }
 
