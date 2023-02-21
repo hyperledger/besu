@@ -19,7 +19,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/** A transaction receipt, containing information pertaining a transaction execution. */
+/** A transaction receipt, containing information pertaining to a transaction execution. */
 public interface TransactionReceipt {
   /**
    * Returns the total amount of gas consumed in the block after the transaction has been processed.
