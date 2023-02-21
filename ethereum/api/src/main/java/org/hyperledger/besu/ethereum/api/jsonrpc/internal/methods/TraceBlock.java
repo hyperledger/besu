@@ -46,7 +46,7 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -167,25 +167,31 @@ public class TraceBlock extends AbstractBlockParameterMethod {
             debugOperationTracer);
     Function<TransactionTrace, Stream<Trace>> traceFlatTransactionStep =
         new TraceFlatTransactionStep(protocolSchedule, block);
-    BuildArrayNodeCompleterStep buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
+    Consumer<Trace> buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
     Pipeline<Transaction> traceBlockPipeline =
         createPipelineFrom(
                 "getTransactions",
                 transactionSource,
-                2,
+                1,
                 outputCounter,
-                true,
+                false,
                 "trace_replay_block_transactions")
             .thenProcess("executeTransaction", executeTransactionStep)
-            .thenFlatMap("traceFlatTransaction", traceFlatTransactionStep, 5)
+            .thenFlatMap("traceFlatTransaction", traceFlatTransactionStep, 4)
             .andFinishWith("buildArrayNode", buildArrayNodeStep);
     if (getBlockchainQueries().getEthScheduler().isPresent()) {
       getBlockchainQueries().getEthScheduler().get().startPipeline(traceBlockPipeline);
     } else {
       EthScheduler ethScheduler = new EthScheduler(4, 4, 4, 4, new NoOpMetricsSystem());
-      ethScheduler.startPipeline(traceBlockPipeline).thenCompose(unused -> ethScheduler.startPipeline(traceBlockPipeline));
+      try {
+        ethScheduler.startPipeline(traceBlockPipeline).get();
+      } catch (InterruptedException e) {
+        // no-op
+      } catch (ExecutionException e) {
+        // no-op
+      }
     }
-    resultArrayNode = buildArrayNodeStep.getResultArrayNode();
+    resultArrayNode = ((BuildArrayNodeCompleterStep) buildArrayNodeStep).getResultArrayNode();
     generateRewardsFromBlock(filterParameter, block, resultArrayNode);
     return resultArrayNode;
   }

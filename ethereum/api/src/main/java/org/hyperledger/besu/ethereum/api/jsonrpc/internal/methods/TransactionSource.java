@@ -32,7 +32,7 @@ public class TransactionSource implements Iterator<Transaction> {
 
   @Override
   public boolean hasNext() {
-    return currentIndex.get() < (transactions.size() - 1);
+    return currentIndex.get() < (transactions.size());
   }
 
   @Override
