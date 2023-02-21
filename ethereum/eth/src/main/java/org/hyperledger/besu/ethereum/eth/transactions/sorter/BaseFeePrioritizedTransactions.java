@@ -127,6 +127,10 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       }
     }
 
+    if (orderByFee.isEmpty()) {
+      return "Empty";
+    }
+
     return "Highest priority tx: [max fee: "
         + orderByFee.last().getTransaction().getMaxGasFee().toHumanReadableString()
         + ", curr prio fee: "

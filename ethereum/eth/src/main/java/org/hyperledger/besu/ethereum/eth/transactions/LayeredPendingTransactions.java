@@ -174,6 +174,10 @@ public class LayeredPendingTransactions implements PendingTransactions {
     final var result = addAndPrioritize(pendingTransaction, senderNonce);
     updateMetrics(pendingTransaction, result);
 
+    if (LOG.isDebugEnabled()) {
+      consistencyCheck();
+    }
+
     return result;
   }
 
@@ -273,10 +277,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final var prioritizeResult =
         prioritizedTransactions.prioritizeTransaction(
-            readyBySender.get(addedReadyTransaction.getSender()),
-            addedReadyTransaction,
-            senderNonce,
-            addResult);
+            addedReadyTransaction, senderNonce, addResult);
+
+    prioritizeResult.maybeDemotedTransaction().ifPresent(this::demoteLastPrioritizedForSenderOf);
 
     metrics.incrementPrioritized(
         addedReadyTransaction.isReceivedFromLocalSource(), prioritizeResult);
@@ -287,6 +290,39 @@ public class LayeredPendingTransactions implements PendingTransactions {
       getReady(addedReadyTransaction.getSender(), addedReadyTransaction.getNonce() + 1)
           .ifPresent(nextReadyTx -> prioritizeReadyTransaction(nextReadyTx, senderNonce, ADDED));
     }
+  }
+
+  private void demoteLastPrioritizedForSenderOf(final PendingTransaction lastPrioTx) {
+    final var senderReadyTxs = readyBySender.get(lastPrioTx.getSender());
+    final var demotableSenderTxs = senderReadyTxs.tailMap(lastPrioTx.getNonce(), true);
+
+    final var itDemotableTxs = demotableSenderTxs.values().stream().iterator();
+    var lastPrioritizedForSender = itDemotableTxs.next();
+
+    while (itDemotableTxs.hasNext()) {
+      final var maybeNewLast = itDemotableTxs.next();
+      if (!prioritizedTransactions.containsTransaction(maybeNewLast.getTransaction())) {
+        break;
+      }
+      lastPrioritizedForSender = maybeNewLast;
+    }
+
+    final boolean prevTxExists =
+        lastPrioTx.equals(lastPrioritizedForSender)
+            ? senderReadyTxs.containsKey(lastPrioTx.getNonce() - 1)
+            : true;
+
+    final Optional<Long> maybeNewExpectedNonce =
+        prevTxExists ? Optional.of(lastPrioritizedForSender.getNonce()) : Optional.empty();
+
+    traceLambda(
+        LOG,
+        "Higher nonce prioritized transaction for sender {} is {}",
+        lastPrioTx::getSender,
+        lastPrioritizedForSender::toTraceLog);
+
+    prioritizedTransactions.demoteTransactions(
+        lastPrioTx.getSender(), List.of(lastPrioritizedForSender), maybeNewExpectedNonce);
   }
 
   Optional<PendingTransaction> getReady(final Address sender, final long nonce) {
@@ -693,8 +729,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private void removeInvalidTransaction(final PendingTransaction invalidTransaction) {
     // remove the invalid transaction and move all the following to sparse set
     final var sender = invalidTransaction.getSender();
-    final var followingTxs =
-        streamReadyTransactions(sender, invalidTransaction.getNonce()).collect(Collectors.toList());
+    final var senderReadyTxs = readyBySender.get(sender);
+
+    final var followingTxs = senderReadyTxs.tailMap(invalidTransaction.getNonce(), false).values();
 
     removeFromReady(invalidTransaction.getTransaction());
     pendingTransactions.remove(invalidTransaction.getHash());
@@ -709,12 +746,24 @@ public class LayeredPendingTransactions implements PendingTransactions {
           sparseEvictionOrder.add(followingTx);
         });
 
-    final var maybeLastValidSenderNonce =
-        getReady(sender, invalidTransaction.getNonce() - 1).map(PendingTransaction::getNonce);
+    if (prioritizedTransactions.containsTransaction(invalidTransaction.getTransaction())) {
+      // remove the invalid and the following from prioritize
+      final List<PendingTransaction> demotedTxs = new ArrayList<>(followingTxs.size() + 1);
+      demotedTxs.add(invalidTransaction);
+      demotedTxs.addAll(followingTxs);
 
-    followingTxs.add(0, invalidTransaction);
+      // if previous valid transaction is prioritized then update the expected nonce or remove it
+      final var prevValidTx = senderReadyTxs.get(invalidTransaction.getNonce() - 1);
+      final Optional<Long> newExpectedNonce;
+      if (prevValidTx != null
+          && prioritizedTransactions.containsTransaction(prevValidTx.getTransaction())) {
+        newExpectedNonce = Optional.of(invalidTransaction.getNonce());
+      } else {
+        newExpectedNonce = Optional.empty();
+      }
 
-    prioritizedTransactions.demoteTransactions(sender, followingTxs, maybeLastValidSenderNonce);
+      prioritizedTransactions.demoteTransactions(sender, demotedTxs, newExpectedNonce);
+    }
 
     notifyTransactionDropped(invalidTransaction);
   }
@@ -860,6 +909,10 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return readyBySender.values().stream().mapToInt(Map::size).sum();
   }
 
+  private int getSparseCount() {
+    return sparseBySender.values().stream().mapToInt(Map::size).sum();
+  }
+
   @Override
   public String logStats() {
     synchronized (lock) {
@@ -876,5 +929,106 @@ public class LayeredPendingTransactions implements PendingTransactions {
           + ", Prioritized stats: "
           + prioritizedTransactions.logStats();
     }
+  }
+
+  private void consistencyCheck() {
+    synchronized (lock) {
+      // check numbers
+      final int pendingTotal = pendingTransactions.size();
+      final int readyTotal = getReadyCount();
+      final int sparseTotal = getSparseCount();
+      if (pendingTotal != readyTotal + sparseTotal) {
+        LOG.error(
+            "Pending != Ready + Sparse ({} != {} + {})", pendingTotal, readyTotal, sparseTotal);
+      }
+
+      readyCheck();
+
+      sparseCheck(sparseTotal);
+
+      prioritizedCheck();
+    }
+  }
+
+  private void readyCheck() {
+    if (orderByMaxFee.size() != readyBySender.size()) {
+      LOG.error(
+          "OrderByMaxFee != ReadyBySender ({} != {})", orderByMaxFee.size(), readyBySender.size());
+    }
+
+    orderByMaxFee.stream()
+        .filter(
+            tx -> {
+              if (readyBySender.containsKey(tx.getSender())) {
+                if (readyBySender.get(tx.getSender()).firstEntry().getValue().equals(tx)) {
+                  return false;
+                }
+              }
+              return true;
+            })
+        .forEach(tx -> LOG.error("OrderByMaxFee tx {} the first ReadyBySender", tx));
+
+    orderByMaxFee.stream()
+        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
+        .forEach(tx -> LOG.error("OrderByMaxFee tx {} not found in PendingTransactions", tx));
+
+    readyBySender.values().stream()
+        .flatMap(senderTxs -> senderTxs.values().stream())
+        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
+        .forEach(tx -> LOG.error("ReadyBySender tx {} not found in PendingTransactions", tx));
+  }
+
+  private void sparseCheck(final int sparseTotal) {
+    if (sparseTotal != sparseEvictionOrder.size()) {
+      LOG.error("Sparse != Eviction order ({} != {})", sparseTotal, sparseEvictionOrder.size());
+    }
+
+    sparseEvictionOrder.stream()
+        .filter(
+            tx -> {
+              if (sparseBySender.containsKey(tx.getSender())) {
+                if (sparseBySender.get(tx.getSender()).containsKey(tx.getNonce())) {
+                  if (sparseBySender.get(tx.getSender()).get(tx.getNonce()).equals(tx)) {
+                    return false;
+                  }
+                }
+              }
+              return true;
+            })
+        .forEach(tx -> LOG.error("SparseEvictionOrder tx {} not found in SparseBySender", tx));
+
+    sparseEvictionOrder.stream()
+        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
+        .forEach(tx -> LOG.error("SparseEvictionOrder tx {} not found in PendingTransactions", tx));
+
+    sparseBySender.values().stream()
+        .flatMap(senderTxs -> senderTxs.values().stream())
+        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
+        .forEach(tx -> LOG.error("SparseBySender tx {} not found in PendingTransactions", tx));
+  }
+
+  private void prioritizedCheck() {
+    prioritizedTransactions
+        .prioritizedTransactions()
+        .forEachRemaining(
+            ptx -> {
+              if (!pendingTransactions.containsKey(ptx.getHash())) {
+                LOG.error("PrioritizedTransaction {} not found in PendingTransactions", ptx);
+              }
+
+              if (!readyBySender.containsKey(ptx.getSender())
+                  || !readyBySender.get(ptx.getSender()).containsKey(ptx.getNonce())
+                  || !readyBySender.get(ptx.getSender()).get(ptx.getNonce()).equals(ptx)) {
+                LOG.error("PrioritizedTransaction {} not found in ReadyBySender", ptx);
+              }
+
+              if (sparseBySender.containsKey(ptx.getSender())
+                  && sparseBySender.get(ptx.getSender()).containsKey(ptx.getNonce())
+                  && sparseBySender.get(ptx.getSender()).get(ptx.getNonce()).equals(ptx)) {
+                LOG.error("PrioritizedTransaction {} found in SparseBySender", ptx);
+              }
+            });
+
+    prioritizedTransactions.consistencyCheck();
   }
 }

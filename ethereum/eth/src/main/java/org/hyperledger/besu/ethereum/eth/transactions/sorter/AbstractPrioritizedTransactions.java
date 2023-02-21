@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.time.Clock;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
@@ -75,7 +75,6 @@ public abstract class AbstractPrioritizedTransactions {
   protected abstract int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2);
 
   public PrioritizeResult prioritizeTransaction(
-      final NavigableMap<Long, PendingTransaction> senderReadyTxs,
       final PendingTransaction addedReadyTransaction,
       final long senderNonce,
       final TransactionAddedResult addResult) {
@@ -145,7 +144,7 @@ public abstract class AbstractPrioritizedTransactions {
               + "to make space for the incoming transaction {}",
           currentLeastPriorityTx::toTraceLog,
           addedReadyTransaction::toTraceLog);
-      demoteLastPrioritizedForSender(currentLeastPriorityTx, senderReadyTxs);
+      // demoteLastPrioritizedForSender(currentLeastPriorityTx, senderReadyTxs);
       addPrioritizedTransaction(addedReadyTransaction);
       return PrioritizeResult.prioritizedDemotingTransaction(currentLeastPriorityTx);
     }
@@ -156,12 +155,13 @@ public abstract class AbstractPrioritizedTransactions {
 
   public void demoteTransactions(
       final Address sender,
-      final List<PendingTransaction> invalidTransactions,
+      final Collection<PendingTransaction> demotedTransactions,
       final Optional<Long> maybeLastValidSenderNonce) {
 
-    for (final var pendingTransaction : invalidTransactions) {
+    for (final var pendingTransaction : demotedTransactions) {
       if (prioritizedPendingTransactions.remove(pendingTransaction.getHash()) != null) {
         removeFromOrderedTransactions(pendingTransaction, false);
+        traceLambda(LOG, "Demoted transaction {}", pendingTransaction::toTraceLog);
       } else {
         break;
       }
@@ -196,47 +196,6 @@ public abstract class AbstractPrioritizedTransactions {
 
   public Iterator<PendingTransaction> prioritizedTransactions() {
     return orderByFee.descendingIterator();
-  }
-
-  private void demoteLastPrioritizedForSender(
-      final PendingTransaction firstDemotedTx,
-      final NavigableMap<Long, PendingTransaction> senderReadyTxs) {
-    final var demotableSenderTxs =
-        senderReadyTxs.tailMap(firstDemotedTx.getNonce(), false).values().stream().iterator();
-
-    var lastPrioritizedForSender = firstDemotedTx;
-    while (demotableSenderTxs.hasNext()) {
-      final var maybeNewLast = demotableSenderTxs.next();
-      if (!prioritizedPendingTransactions.containsKey(maybeNewLast.getHash())) {
-        break;
-      }
-      lastPrioritizedForSender = maybeNewLast;
-    }
-
-    traceLambda(
-        LOG,
-        "Higher nonce prioritized transaction for sender {} is {}, expected nonce for sender is {}",
-        firstDemotedTx::getSender,
-        lastPrioritizedForSender::toTraceLog,
-        () -> expectedNonceForSender.get(firstDemotedTx.getSender()));
-
-    prioritizedPendingTransactions.remove(lastPrioritizedForSender.getHash());
-    removeFromOrderedTransactions(lastPrioritizedForSender, false);
-
-    expectedNonceForSender.compute(
-        firstDemotedTx.getSender(),
-        (sender, expectedNonce) -> {
-          if (expectedNonce == firstDemotedTx.getNonce() + 1
-              || !senderReadyTxs.containsKey(expectedNonce - 1)) {
-            return null;
-          }
-          return expectedNonce - 1;
-        });
-
-    traceLambda(
-        LOG,
-        "Demoted transaction {}, to make space for the incoming transaction",
-        lastPrioritizedForSender::toTraceLog);
   }
 
   public void addPrioritizedTransaction(final PendingTransaction prioritizedTx) {
@@ -301,6 +260,39 @@ public abstract class AbstractPrioritizedTransactions {
     prioritizedPendingTransactions.clear();
     orderByFee.clear();
     expectedNonceForSender.clear();
+  }
+
+  public void consistencyCheck() {
+    if (prioritizedPendingTransactions.size() != orderByFee.size()) {
+      LOG.error(
+          "PrioritizedTransaction != OrderByFee ({} != {})",
+          prioritizedPendingTransactions.size(),
+          orderByFee.size());
+    }
+
+    orderByFee.stream()
+        .filter(tx -> !prioritizedPendingTransactions.containsKey(tx.getHash()))
+        .forEach(
+            tx -> LOG.error("OrderByFee transaction {} not found in PrioritizedTransactions", tx));
+
+    prioritizedPendingTransactions.values().stream()
+        .collect(
+            Collectors.groupingBy(
+                PendingTransaction::getSender,
+                Collectors.reducing(
+                    0L, PendingTransaction::getNonce, (Long a, Long b) -> a > b ? a : b)))
+        .forEach(
+            (sender, nonce) -> {
+              if (!expectedNonceForSender.containsKey(sender)) {
+                LOG.error("Sender {} not found in expected nonce", sender);
+              } else if (!expectedNonceForSender.get(sender).equals(nonce + 1)) {
+                LOG.error(
+                    "Current expected nonce {} for sender {} does not match PrioritizedTransactions nonce {}",
+                    expectedNonceForSender.get(sender),
+                    sender,
+                    nonce + 1);
+              }
+            });
   }
 
   public static class PrioritizeResult {

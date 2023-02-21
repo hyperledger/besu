@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -154,11 +153,9 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
             .mapToObj(
                 i -> {
                   final var lowPriceTx = lowValueTxSupplier.next();
-                  final var senderTxs = new TreeMap<Long, PendingTransaction>();
-                  senderTxs.put(lowPriceTx.getNonce(), lowPriceTx);
                   final var prioritizeResult =
                       transactions.prioritizeTransaction(
-                          senderTxs, lowPriceTx, 0, TransactionAddedResult.ADDED);
+                          lowPriceTx, 0, TransactionAddedResult.ADDED);
 
                   assertThat(prioritizeResult.isPrioritized()).isTrue();
                   assertThat(prioritizeResult.maybeDemotedTransaction()).isEmpty();
@@ -167,13 +164,10 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
             .collect(Collectors.toUnmodifiableList());
 
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    // This should kick the oldest tx with the low gas price out, namely the first one we added
-    final var highValueSenderTxs = new TreeMap<Long, PendingTransaction>();
-    highValueSenderTxs.put(highValueTx.getNonce(), highValueTx);
 
+    // This should kick the oldest tx with the low gas price out, namely the first one we added
     final var highValuePrioRes =
-        transactions.prioritizeTransaction(
-            highValueSenderTxs, highValueTx, 0, TransactionAddedResult.ADDED);
+        transactions.prioritizeTransaction(highValueTx, 0, TransactionAddedResult.ADDED);
     assertThat(highValuePrioRes.isPrioritized()).isTrue();
     assertThat(highValuePrioRes.maybeDemotedTransaction())
         .isPresent()
@@ -193,10 +187,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
   }
 
   protected PrioritizeResult prioritizeTransaction(final PendingTransaction tx) {
-    final var senderTxs = new TreeMap<Long, PendingTransaction>();
-    senderTxs.put(tx.getNonce(), tx);
-
-    return transactions.prioritizeTransaction(senderTxs, tx, 0, TransactionAddedResult.ADDED);
+    return transactions.prioritizeTransaction(tx, 0, TransactionAddedResult.ADDED);
   }
 
   protected void assertTransactionPrioritized(final PendingTransaction tx) {
