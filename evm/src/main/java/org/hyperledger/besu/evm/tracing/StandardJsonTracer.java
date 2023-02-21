@@ -157,11 +157,11 @@ public class StandardJsonTracer implements OperationTracer {
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\"");
     if (executeResult.getHaltReason() != null) {
-      sb.append("\",error\":\"")
+      sb.append(",\"error\":\"")
           .append(executeResult.getHaltReason().getDescription())
           .append("\"}");
     } else if (messageFrame.getRevertReason().isPresent()) {
-      sb.append("\",error\":\"")
+      sb.append(",\"error\":\"")
           .append(quoteEscape(messageFrame.getRevertReason().orElse(Bytes.EMPTY)))
           .append("\"}");
     } else {
