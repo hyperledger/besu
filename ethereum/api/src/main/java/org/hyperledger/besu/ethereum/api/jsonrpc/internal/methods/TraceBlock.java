@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -140,6 +142,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
+    final ChainUpdater chainUpdater = new ChainUpdater(worldState);
 
     TransactionSource transactionSource = new TransactionSource(block);
     final LabelledMetric<Counter> outputCounter =
@@ -151,12 +154,12 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                     "action");
     DebugOperationTracer debugOperationTracer =
         new DebugOperationTracer(new TraceOptions(false, false, true));
-    Function<Transaction, TransactionTrace> executeTransactionStep =
+    ExecuteTransactionStep executeTransactionStep =
         new ExecuteTransactionStep(
+                chainUpdater,
             block,
             transactionProcessor,
             getBlockchainQueries().getBlockchain(),
-            chainedUpdater,
             debugOperationTracer);
     Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> traceFlatTransactionStep =
         new TraceFlatTransactionStep(protocolSchedule, block, filterParameter);
@@ -212,5 +215,26 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
   private ArrayNodeWrapper emptyResult() {
     return new ArrayNodeWrapper(MAPPER.createArrayNode());
+  }
+
+
+  public static class ChainUpdater {
+
+    private final MutableWorldState worldState;
+    private WorldUpdater updater;
+
+    public ChainUpdater(final MutableWorldState worldState) {
+      this.worldState = worldState;
+    }
+
+    public WorldUpdater getNextUpdater(){
+      if (updater==null) {
+        updater = worldState.updater();
+      } else if(updater instanceof StackedUpdater) {
+        ((StackedUpdater) updater).markTransactionBoundary();
+      }
+      updater = updater.updater();
+      return updater;
+    }
   }
 }

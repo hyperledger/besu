@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
@@ -32,22 +33,22 @@ import java.util.function.Function;
 
 public class ExecuteTransactionStep implements Function<Transaction, TransactionTrace> {
 
+  private  final TraceBlock.ChainUpdater chainUpdater;
   private final Block block;
   private final DebugOperationTracer tracer;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
-  private final WorldUpdater chainedUpdater;
 
   public ExecuteTransactionStep(
+          final TraceBlock.ChainUpdater chainUpdater,
       final Block block,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
-      final WorldUpdater chainedUpdater,
       final DebugOperationTracer tracer) {
+    this.chainUpdater = chainUpdater;
     this.block = block;
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
-    this.chainedUpdater = chainedUpdater;
     this.tracer = tracer;
   }
 
@@ -62,10 +63,11 @@ public class ExecuteTransactionStep implements Function<Transaction, Transaction
         return Optional.empty();
     }
     */
+
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
-            chainedUpdater,
+                chainUpdater.getNextUpdater(),
             header,
             transaction,
             header.getCoinbase(),
