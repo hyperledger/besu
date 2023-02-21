@@ -356,7 +356,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
     final BonsaiValue<Bytes> localCode = codeToUpdate.get(address);
     if (localCode == null) {
-      return wrappedWorldView().getCode(address, codeHash);
+      final Optional<Bytes> code = wrappedWorldView().getCode(address, codeHash);
+      if (code.isEmpty() && !codeHash.equals(Hash.EMPTY)) {
+        throw new MerkleTrieException(
+            "invalid account code", Optional.of(address), codeHash, Bytes.EMPTY);
+      }
+      return code;
     } else {
       return Optional.ofNullable(localCode.getUpdated());
     }

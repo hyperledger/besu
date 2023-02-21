@@ -1,0 +1,104 @@
+{
+  "cli": [
+    "--json",
+    "--nomemory",
+    "state-test",
+    "stdin",
+    "--notime"
+  ],
+  "stdin": {
+    "returndatacopy_following_call": {
+      "env": {
+        "currentBaseFee": "0x0a",
+        "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+        "currentDifficulty": "0x020000",
+        "currentGasLimit": "0x1a00000000",
+        "currentNumber": "0x01",
+        "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000020000",
+        "currentTimestamp": "0x03e8",
+        "previousHash": "0x5e20a0453cecd065ea59c37ac63e079ee08998b6045136a8ce6635c7912ec0b6"
+      },
+      "post": {
+        "London": [
+          {
+            "hash": "0x1c6dda42e80135b6d5ff1a664e6f85e8552d5c56888bb35e2e694f3829a500c7",
+            "indexes": {
+              "data": 0,
+              "gas": 0,
+              "value": 0
+            },
+            "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+            "txbytes": "0xf862800a850a00000000940f572e5295c57f15886f9b263e2f6d2d6c7b5ec680801ba0be56d61b678ad2c41b294c70b5213913b9a6f17753ba7aadc171c9a2474f66a8a04814800401028ca339e8af9f4a6253bddd3f9df8f1dc6da275d19862e9f28642"
+          }
+        ]
+      },
+      "pre": {
+        "0x0aabbccdd5c57f15886f9b263e2f6d2d6c7b5ec6": {
+          "balance": "0x00",
+          "code": "0x7d111122223333444455556666777788889999aaaabbbbccccddddeeeeffff60005260206000f300",
+          "nonce": "0x00",
+          "storage": {
+          }
+        },
+        "0x0f572e5295c57f15886f9b263e2f6d2d6c7b5ec6": {
+          "balance": "0x00",
+          "code": "0x60006000600060006000730aabbccdd5c57f15886f9b263e2f6d2d6c7b5ec6640900000000f1506020600060003e60005160005500",
+          "nonce": "0x00",
+          "storage": {
+            "0x00": "0x01"
+          }
+        },
+        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+          "balance": "0x6400000000",
+          "code": "0x",
+          "nonce": "0x00",
+          "storage": {
+          }
+        }
+      },
+      "transaction": {
+        "data": [
+          "0x"
+        ],
+        "gasLimit": [
+          "0x0a00000000"
+        ],
+        "gasPrice": "0x0a",
+        "nonce": "0x00",
+        "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+        "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "to": "0x0f572e5295c57f15886f9b263e2f6d2d6c7b5ec6",
+        "value": [
+          "0x00"
+        ]
+      }
+    }
+  },
+  "stdout": [
+    {"pc":0,"op":96,"gas":"0x9ffffadf8","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":2,"op":96,"gas":"0x9ffffadf5","gasCost":"0x3","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":4,"op":96,"gas":"0x9ffffadf2","gasCost":"0x3","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":6,"op":96,"gas":"0x9ffffadef","gasCost":"0x3","memSize":0,"stack":["0x0","0x0","0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":8,"op":96,"gas":"0x9ffffadec","gasCost":"0x3","memSize":0,"stack":["0x0","0x0","0x0","0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":10,"op":115,"gas":"0x9ffffade9","gasCost":"0x3","memSize":0,"stack":["0x0","0x0","0x0","0x0","0x0"],"depth":1,"refund":0,"opName":"PUSH20"},
+    {"pc":31,"op":100,"gas":"0x9ffffade6","gasCost":"0x3","memSize":0,"stack":["0x0","0x0","0x0","0x0","0x0","0xaabbccdd5c57f15886f9b263e2f6d2d6c7b5ec6"],"depth":1,"refund":0,"opName":"PUSH5"},
+    {"pc":37,"op":241,"gas":"0x9ffffade3","gasCost":"0xa28","memSize":0,"stack":["0x0","0x0","0x0","0x0","0x0","0xaabbccdd5c57f15886f9b263e2f6d2d6c7b5ec6","0x900000000"],"depth":1,"refund":0,"opName":"CALL"},
+    {"pc":0,"op":125,"gas":"0x900000000","gasCost":"0x3","memSize":0,"stack":[],"depth":2,"refund":0,"opName":"PUSH30"},
+    {"pc":31,"op":96,"gas":"0x8fffffffd","gasCost":"0x3","memSize":0,"stack":["0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff"],"depth":2,"refund":0,"opName":"PUSH1"},
+    {"pc":33,"op":82,"gas":"0x8fffffffa","gasCost":"0x6","memSize":0,"stack":["0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","0x0"],"depth":2,"refund":0,"opName":"MSTORE"},
+    {"pc":34,"op":96,"gas":"0x8fffffff4","gasCost":"0x3","memSize":32,"stack":[],"depth":2,"refund":0,"opName":"PUSH1"},
+    {"pc":36,"op":96,"gas":"0x8fffffff1","gasCost":"0x3","memSize":32,"stack":["0x20"],"depth":2,"refund":0,"opName":"PUSH1"},
+    {"pc":38,"op":243,"gas":"0x8ffffffee","gasCost":"0x0","memSize":32,"stack":["0x20","0x0"],"depth":2,"refund":0,"opName":"RETURN"},
+    {"pc":38,"op":80,"gas":"0x9ffffa3a9","gasCost":"0x2","memSize":0,"stack":["0x1"],"depth":1,"refund":0,"opName":"POP"},
+    {"pc":39,"op":96,"gas":"0x9ffffa3a7","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":41,"op":96,"gas":"0x9ffffa3a4","gasCost":"0x3","memSize":0,"stack":["0x20"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":43,"op":96,"gas":"0x9ffffa3a1","gasCost":"0x3","memSize":0,"stack":["0x20","0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":45,"op":62,"gas":"0x9ffffa39e","gasCost":"0x9","memSize":0,"stack":["0x20","0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNDATACOPY"},
+    {"pc":46,"op":96,"gas":"0x9ffffa395","gasCost":"0x3","memSize":32,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":48,"op":81,"gas":"0x9ffffa392","gasCost":"0x3","memSize":32,"stack":["0x0"],"depth":1,"refund":0,"opName":"MLOAD"},
+    {"pc":49,"op":96,"gas":"0x9ffffa38f","gasCost":"0x3","memSize":32,"stack":["0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":51,"op":85,"gas":"0x9ffffa38c","gasCost":"0x1388","memSize":32,"stack":["0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","0x0"],"depth":1,"refund":0,"opName":"SSTORE"},
+    {"pc":52,"op":0,"gas":"0x9ffff9004","gasCost":"0x0","memSize":32,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
+    {"output":"","gasUsed":"0x6ffc","test":"returndatacopy_following_call","fork":"London","d":0,"g":0,"v":0,"postHash":"0x1c6dda42e80135b6d5ff1a664e6f85e8552d5c56888bb35e2e694f3829a500c7","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+  ]
+}
