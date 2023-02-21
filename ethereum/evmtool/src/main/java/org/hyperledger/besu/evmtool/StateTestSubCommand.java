@@ -19,7 +19,6 @@ package org.hyperledger.besu.evmtool;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
-import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -85,13 +84,6 @@ public class StateTestSubCommand implements Runnable {
       names = {"--fork"},
       description = "Force the state tests to run on a specific fork.")
   private String fork = null;
-
-  @Option(
-      names = {"--notime"},
-      description = "Don't include time data in summary output.",
-      scope = INHERIT,
-      negatable = true)
-  final Boolean noTime = false;
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
@@ -256,7 +248,7 @@ public class StateTestSubCommand implements Runnable {
 
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
 
-        if (!noTime) {
+        if (!parentCommand.noTime) {
           summaryLine.put("time", timeNs);
           summaryLine.put("Mgps", String.format("%.3f", mGps));
         }
