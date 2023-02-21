@@ -28,12 +28,18 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddOperation;
+import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
+import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
+import org.hyperledger.besu.evm.operation.GtOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.IsZeroOperation;
+import org.hyperledger.besu.evm.operation.LtOperation;
+import org.hyperledger.besu.evm.operation.ModOperation;
 import org.hyperledger.besu.evm.operation.MulOperation;
+import org.hyperledger.besu.evm.operation.MulModOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -42,11 +48,13 @@ import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
+import org.hyperledger.besu.evm.operation.SDivOperation;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
 import org.hyperledger.besu.evm.operation.SModOperation;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
+import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
@@ -153,37 +161,36 @@ public class EVM {
       OperationResult result;
       try {
         switch (opcode) {
-            // case 0x00: // STOP
-            //  result = StopOperation.staticOperation(frame);
-            //  break;
+          case 0x00: // STOP
+            result = StopOperation.staticOperation(frame);
+            break;
           case 0x01: // ADD
             result = AddOperation.staticOperation(frame);
             break;
           case 0x02: // MUL
             result = MulOperation.staticOperation(frame);
             break;
-            // case 0x03: // SUB
-            //  result = SubOperation.staticOperation(frame);
-            //  break;
-            // case 0x04: // DIV
-            //  result = DivOperation.staticOperation(frame);
-            //  break;
-            // case 0x05: // SDIV
-            //  result = SDivOperation.staticOperation(frame);
-            //  break;
-            // case 0x06: // MOD
-            //  result = ModOperation.staticOperation(frame);
-            //  break;
+          case 0x03: // SUB
+            result = SubOperation.staticOperation(frame);
+            break;
+          case 0x04: // DIV
+            result = DivOperation.staticOperation(frame);
+            break;
+          case 0x05: // SDIV
+            result = SDivOperation.staticOperation(frame);
+            break;
+          case 0x06: // MOD
+            result = ModOperation.staticOperation(frame);
+            break;
           case 0x07: // SMOD
             result = SModOperation.staticOperation(frame);
             break;
-            // case 0x08: // ADDMOD
-            //  result = AddModOperation.staticOperation(frame);
-            //  break;
-            // case 0x09: // MULMOD
-            //  result = MulModOperation.staticOperation(frame);
-            //  break;
-            // case 0x0a: //EXP requires gasCalculator access, so it is skipped
+          case 0x08: // ADDMOD
+            result = AddModOperation.staticOperation(frame);
+            break;
+          case 0x09: // MULMOD
+            result = MulModOperation.staticOperation(frame);
+            break;
           case 0x0b: // SIGNEXTEND
             result = SignExtendOperation.staticOperation(frame);
             break;
@@ -193,12 +200,12 @@ public class EVM {
           case 0x0f:
             result = InvalidOperation.INVALID_RESULT;
             break;
-            // case 0x10: // LT
-            //  result = LtOperation.staticOperation(frame);
-            //  break;
-            // case 0x11: // GT
-            //  result = GtOperation.staticOperation(frame);
-            //  break;
+          case 0x10: // LT
+            result = LtOperation.staticOperation(frame);
+            break;
+          case 0x11: // GT
+            result = GtOperation.staticOperation(frame);
+            break;
           case 0x12: // SLT
             result = SLtOperation.staticOperation(frame);
             break;
