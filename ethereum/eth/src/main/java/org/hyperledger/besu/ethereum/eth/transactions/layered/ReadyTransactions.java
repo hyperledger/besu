@@ -14,18 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.maxBy;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TX_POOL_FULL;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
+import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,11 +30,12 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.util.Subscribers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -63,12 +53,20 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.maxBy;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TX_POOL_FULL;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
-public class LayeredPendingTransactions implements PendingTransactions {
-  private static final Logger LOG = LoggerFactory.getLogger(LayeredPendingTransactions.class);
+public class ReadyTransactions extends AbstractLayeredTransactions {
+  private static final Logger LOG = LoggerFactory.getLogger(ReadyTransactions.class);
 
   private final TransactionPoolConfiguration poolConfig;
   private final BiFunction<PendingTransaction, PendingTransaction, Boolean>
@@ -100,9 +98,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private final AbstractPrioritizedTransactions prioritizedTransactions;
 
   final TransactionPoolMetrics metrics;
-  final ReadyTransactions readyTransactions;
+  final SparseTransactions sparseTransactions;
 
-  public LayeredPendingTransactions(
+  public ReadyTransactions(
       final TransactionPoolConfiguration poolConfig,
       final AbstractPrioritizedTransactions prioritizedTransactions,
       final TransactionPoolMetrics metrics,
@@ -112,12 +110,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
     this.prioritizedTransactions = prioritizedTransactions;
     this.transactionReplacementTester = transactionReplacementTester;
     this.metrics = metrics;
-//    metrics.initPendingTransactionCount(pendingTransactions::size);
-//    metrics.initPendingTransactionSpace(this::getUsedSpace);
-//    metrics.initReadyTransactionCount(this::getReadyCount);
+    metrics.initPendingTransactionCount(pendingTransactions::size);
+    metrics.initPendingTransactionSpace(this::getUsedSpace);
+    metrics.initReadyTransactionCount(this::getReadyCount);
 //    metrics.initSparseTransactionCount(sparseEvictionOrder::size);
-//    metrics.initPrioritizedTransactionSize(prioritizedTransactions::size);
-    this.readyTransactions = new ReadyTransactions(poolConfig, prioritizedTransactions, metrics, transactionReplacementTester);
+    metrics.initPrioritizedTransactionSize(prioritizedTransactions::size);
+    this.sparseTransactions = new SparseTransactions(poolConfig, metrics, transactionReplacementTester);
   }
 
   @Override
@@ -132,28 +130,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
     prioritizedTransactions.reset();
   }
 
-  @Override
-  public synchronized TransactionAddedResult addRemoteTransaction(
-      final Transaction transaction, final Optional<Account> maybeSenderAccount) {
-
-    return addTransaction(
-        new PendingTransaction.Remote(transaction, System.currentTimeMillis()), maybeSenderAccount);
-  }
-
-  @Override
-  public synchronized TransactionAddedResult addLocalTransaction(
-      final Transaction transaction, final Optional<Account> maybeSenderAccount) {
-
-    final TransactionAddedResult addedResult =
-        addTransaction(
-            new PendingTransaction.Local(transaction, System.currentTimeMillis()),
-            maybeSenderAccount);
-    if (addedResult.isSuccess()) {
-      localSenders.add(transaction.getSender());
-    }
-    return addedResult;
-  }
-/*
   private TransactionAddedResult addTransaction(
       final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount) {
 
@@ -186,9 +162,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     return result;
   }
- */
 
-  /*
   private void updateMetrics(
       final PendingTransaction pendingTransaction, final TransactionAddedResult result) {
     if (result.isSuccess()) {
@@ -220,69 +194,65 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
   }
 
-   */
+  private TransactionAddedResult addAndPrioritize(
+      final PendingTransaction pendingTransaction, final long senderNonce) {
 
+    final var addStatus =
+        modifySenderReadyTxsWrapper(
+            pendingTransaction.getSender(),
+            senderTxs -> tryAddToReady(senderTxs, pendingTransaction, senderNonce));
 
-//  private TransactionAddedResult addAndPrioritize(
-//      final PendingTransaction pendingTransaction, final long senderNonce) {
-//
-//    final var addStatus =
-//        modifySenderReadyTxsWrapper(
-//            pendingTransaction.getSender(),
-//            senderTxs -> tryAddToReady(senderTxs, pendingTransaction, senderNonce));
-//
-//    if (addStatus.isSuccess()) {
-//
-//      addStatus
-//          .maybeReplacedTransaction()
-//          .ifPresent(
-//              replacedTx -> {
-//                pendingTransactions.remove(replacedTx.getHash());
-//                decreaseSpaceUsed(replacedTx);
-//              });
-//
-//      pendingTransactions.put(pendingTransaction.getHash(), pendingTransaction);
-//      increaseSpaceUsed(pendingTransaction);
-//      if (addStatus.isPrioritizable()) {
-//        prioritizeReadyTransaction(pendingTransaction, senderNonce, addStatus);
-//      }
-//
-//      var cacheFreeSpace = cacheFreeSpace();
-//      if (cacheFreeSpace < 0) {
-//        LOG.trace("Cache full, need to free space {}", cacheFreeSpace);
-//        /*
-//        // free some space moving trying first to evict older sparse txs,
-//        // then less valuable ready to postponed
-//        final var evictedSparseTxs = evictSparseTransactions(-cacheFreeSpace);
-//        metrics.incrementEvicted("sparse", evictedSparseTxs.size());
-//        evictedSparseTxs.forEach(this::notifyTransactionDropped);
-//        if (evictedSparseTxs.contains(pendingTransaction)) {
-//          // in case the just added transaction is postponed to free space change the returned
-//          // result
-//          return TX_POOL_FULL;
-//        }
-//
-//        cacheFreeSpace = cacheFreeSpace();
-//        if (cacheFreeSpace < 0) {
-//
-//         */
-//          final var evictedReadyTxs = evictReadyTransactions(-cacheFreeSpace);
-//          metrics.incrementEvicted("ready", evictedReadyTxs.size());
-//          evictedReadyTxs.forEach(this::notifyTransactionDropped);
-//          if (evictedReadyTxs.contains(pendingTransaction)) {
-//            // in case the just added transaction is evicted to free space
-//            // change the returned result
-//            return TX_POOL_FULL;
-//          }
-//    //    }
-//      }
-//      notifyTransactionAdded(pendingTransaction);
-//    }
-//
-//    return addStatus;
-//  }
+    if (addStatus.isSuccess()) {
 
-/*
+      addStatus
+          .maybeReplacedTransaction()
+          .ifPresent(
+              replacedTx -> {
+                pendingTransactions.remove(replacedTx.getHash());
+                decreaseSpaceUsed(replacedTx);
+              });
+
+      pendingTransactions.put(pendingTransaction.getHash(), pendingTransaction);
+      increaseSpaceUsed(pendingTransaction);
+      if (addStatus.isPrioritizable()) {
+        prioritizeReadyTransaction(pendingTransaction, senderNonce, addStatus);
+      }
+
+      var cacheFreeSpace = cacheFreeSpace();
+      if (cacheFreeSpace < 0) {
+        LOG.trace("Cache full, need to free space {}", cacheFreeSpace);
+        /*
+        // free some space moving trying first to evict older sparse txs,
+        // then less valuable ready to postponed
+        final var evictedSparseTxs = evictSparseTransactions(-cacheFreeSpace);
+        metrics.incrementEvicted("sparse", evictedSparseTxs.size());
+        evictedSparseTxs.forEach(this::notifyTransactionDropped);
+        if (evictedSparseTxs.contains(pendingTransaction)) {
+          // in case the just added transaction is postponed to free space change the returned
+          // result
+          return TX_POOL_FULL;
+        }
+
+        cacheFreeSpace = cacheFreeSpace();
+        if (cacheFreeSpace < 0) {
+
+         */
+          final var evictedReadyTxs = evictReadyTransactions(-cacheFreeSpace);
+          metrics.incrementEvicted("ready", evictedReadyTxs.size());
+          evictedReadyTxs.forEach(this::notifyTransactionDropped);
+          if (evictedReadyTxs.contains(pendingTransaction)) {
+            // in case the just added transaction is evicted to free space
+            // change the returned result
+            return TX_POOL_FULL;
+          }
+    //    }
+      }
+      notifyTransactionAdded(pendingTransaction);
+    }
+
+    return addStatus;
+  }
+
   private void prioritizeReadyTransaction(
       final PendingTransaction addedReadyTransaction,
       final long senderNonce,
@@ -304,7 +274,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
           .ifPresent(nextReadyTx -> prioritizeReadyTransaction(nextReadyTx, senderNonce, ADDED));
     }
   }
-*/
+
   private void demoteLastPrioritizedForSenderOf(final PendingTransaction lastPrioTx) {
     final var senderReadyTxs = readyBySender.get(lastPrioTx.getSender());
     final var demotableSenderTxs = senderReadyTxs.tailMap(lastPrioTx.getNonce(), true);
@@ -679,68 +649,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return promotableTxs;
   }
 
-  @Override
-  public void evictOldTransactions() {}
-
-  @Override
-  public synchronized List<Transaction> getLocalTransactions() {
-    return pendingTransactions.values().stream()
-        .filter(PendingTransaction::isReceivedFromLocalSource)
-        .map(PendingTransaction::getTransaction)
-        .collect(Collectors.toList());
-  }
-
-  @Override
-  public synchronized boolean isLocalSender(final Address sender) {
-    return localSenders.contains(sender);
-  }
-
-  @Override
-  // There's a small edge case here we could encounter.
-  // When we pass an upgrade block that has a new transaction type, we start allowing transactions
-  // of that new type into our pool.
-  // If we then reorg to a block lower than the upgrade block height _and_ we create a block, that
-  // block could end up with transactions of the new type.
-  // This seems like it would be very rare but worth it to document that we don't handle that case
-  // right now.
-  public synchronized void selectTransactions(
-      final PendingTransactions.TransactionSelector selector) {
-    final List<PendingTransaction> transactionsToRemove = new ArrayList<>();
-    final Set<Hash> alreadyChecked = new HashSet<>();
-
-    final Iterator<PendingTransaction> itPrioritizedTransactions =
-        prioritizedTransactions.prioritizedTransactions();
-    outerLoop:
-    while (itPrioritizedTransactions.hasNext()) {
-      final PendingTransaction highestPriorityPendingTransaction = itPrioritizedTransactions.next();
-      // get all the txs for this sender up to this highest priority
-      final var itSenderCandidateTxs =
-          streamReadyTransactions(highestPriorityPendingTransaction.getSender()).iterator();
-      while (itSenderCandidateTxs.hasNext()) {
-        final var candidateTx = itSenderCandidateTxs.next();
-        if (candidateTx.getNonce() <= highestPriorityPendingTransaction.getNonce()
-            && !alreadyChecked.contains(candidateTx.getHash())) {
-          final PendingTransactions.TransactionSelectionResult result =
-              selector.evaluateTransaction(candidateTx.getTransaction());
-          switch (result) {
-            case DELETE_TRANSACTION_AND_CONTINUE:
-              alreadyChecked.add(candidateTx.getHash());
-              transactionsToRemove.add(candidateTx);
-              break;
-            case CONTINUE:
-              alreadyChecked.add(candidateTx.getHash());
-              break;
-            case COMPLETE_OPERATION:
-              break outerLoop;
-            default:
-              throw new RuntimeException("Illegal value for TransactionSelectionResult.");
-          }
-        }
-      }
-    }
-    removeInvalidTransaction(transactionsToRemove);
-  }
-
   private void removeInvalidTransaction(final List<PendingTransaction> invalidTransactions) {
     invalidTransactions.forEach(
         invalidTransaction -> {
@@ -792,58 +700,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
           notifyTransactionDropped(invalidTransaction);
         });
-  }
-
-  @Override
-  public long maxSize() {
-    return -1;
-  }
-
-  @Override
-  public int size() {
-    return pendingTransactions.size();
-  }
-
-  @Override
-  public long subscribePendingTransactions(final PendingTransactionListener listener) {
-    return pendingTransactionSubscribers.subscribe(listener);
-  }
-
-  @Override
-  public void unsubscribePendingTransactions(final long id) {
-    pendingTransactionSubscribers.unsubscribe(id);
-  }
-
-  @Override
-  public long subscribeDroppedTransactions(final PendingTransactionDroppedListener listener) {
-    return transactionDroppedListeners.subscribe(listener);
-  }
-
-  @Override
-  public void unsubscribeDroppedTransactions(final long id) {
-    transactionDroppedListeners.unsubscribe(id);
-  }
-
-  @Override
-  public synchronized OptionalLong getNextNonceForSender(final Address sender) {
-    final var senderTxs = readyBySender.get(sender);
-    if (senderTxs != null) {
-      return OptionalLong.of(senderTxs.lastKey() + 1);
-    }
-
-    return OptionalLong.empty();
-  }
-
-  @Override
-  public synchronized void manageBlockAdded(
-      final BlockHeader blockHeader,
-      final List<Transaction> confirmedTransactions,
-      final FeeMarket feeMarket) {
-    debugLambda(LOG, "Managing new added block {}", blockHeader::toLogString);
-
-    transactionsAddedToBlock(confirmedTransactions);
-    prioritizedTransactions.manageBlockAdded(blockHeader, feeMarket);
-    prioritizeReadyTransactions();
   }
 
   private void transactionsAddedToBlock(final List<Transaction> confirmedTransactions) {
@@ -906,17 +762,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
         listener -> listener.onTransactionDropped(pendingTransaction.getTransaction()));
   }
 
-  @Override
-  public synchronized String toTraceLog() {
-
-    return "Ready by sender ("
-        + toTraceLog(readyBySender)
-        + "), Sparse by sender ("
-        + sparseTransactions.toTraceLog()
-        + "); "
-        + prioritizedTransactions.toTraceLog();
-  }
-
   private String toTraceLog(final Map<Address, NavigableMap<Long, PendingTransaction>> senderTxs) {
     return senderTxs.entrySet().stream()
         .map(
@@ -931,28 +776,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   private synchronized int getReadyCount() {
     return readyBySender.values().stream().mapToInt(Map::size).sum();
-  }
-
-  /*
-  private synchronized int getSparseCount() {
-    return sparseBySender.values().stream().mapToInt(Map::size).sum();
-  }
-*/
-  @Override
-  public synchronized String logStats() {
-
-    return "Pending: "
-        + pendingTransactions.size()
-        + ", Ready: "
-        + getReadyCount()
-        + ", Prioritized: "
-        + prioritizedTransactions.size()
-        + ", Sparse: "
-        + sparseTransactions.logStats()
-        + ", Space used: "
-        + spaceUsed
-        + ", Prioritized stats: "
-        + prioritizedTransactions.logStats();
   }
 
   private void consistencyCheck() {
@@ -1042,12 +865,14 @@ public class LayeredPendingTransactions implements PendingTransactions {
                   || !readyBySender.get(ptx.getSender()).get(ptx.getNonce()).equals(ptx)) {
                 LOG.error("PrioritizedTransaction {} not found in ReadyBySender", ptx);
               }
-
+/*
               if (sparseBySender.containsKey(ptx.getSender())
                   && sparseBySender.get(ptx.getSender()).containsKey(ptx.getNonce())
                   && sparseBySender.get(ptx.getSender()).get(ptx.getNonce()).equals(ptx)) {
                 LOG.error("PrioritizedTransaction {} found in SparseBySender", ptx);
               }
+
+ */
             });
 
     prioritizedTransactions.consistencyCheck();
