@@ -46,8 +46,8 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
   protected AbstractPrioritizedTransactions transactions =
       getSorter(
           ImmutableTransactionPoolConfiguration.builder()
-              .txPoolMaxSize(MAX_TRANSACTIONS)
-              .txPoolLimitByAccountPercentage(1.0f)
+              .maxPrioritizedTransactions(MAX_TRANSACTIONS)
+              .maxFutureBySender(MAX_TRANSACTIONS)
               .build(),
           Optional.empty());
 

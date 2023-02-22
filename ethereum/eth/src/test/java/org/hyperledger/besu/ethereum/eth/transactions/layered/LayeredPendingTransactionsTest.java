@@ -58,7 +58,7 @@ import org.junit.jupiter.api.Test;
 public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final int MAX_CAPACITY_BYTES = 1024;
-  private static final float LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
+  protected static final int LIMITED_TRANSACTIONS_BY_SENDER = 4;
   protected static final String ADDED_COUNTER = "transactions_added_total";
   protected static final String REMOVED_COUNTER = "transactions_removed_total";
   protected static final String EVICTED_COUNTER = "transactions_evicted_total";
@@ -79,15 +79,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   private final TransactionPoolConfiguration poolConf =
       ImmutableTransactionPoolConfiguration.builder()
-          .txPoolMaxSize(MAX_TRANSACTIONS)
-          .txPoolLimitByAccountPercentage(1.0f)
+          .maxPrioritizedTransactions(MAX_TRANSACTIONS)
+          .maxFutureBySender(MAX_TRANSACTIONS)
           .pendingTransactionsMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
 
   private final TransactionPoolConfiguration senderLimitedConfig =
       ImmutableTransactionPoolConfiguration.builder()
-          .txPoolMaxSize(MAX_TRANSACTIONS)
-          .txPoolLimitByAccountPercentage(LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE)
+          .maxPrioritizedTransactions(MAX_TRANSACTIONS)
+          .maxFutureBySender(LIMITED_TRANSACTIONS_BY_SENDER)
           .pendingTransactionsMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
   protected LayeredPendingTransactions senderLimitedTransactions;
