@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,6 +48,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private final EthGetWork ethGetWork;
   private final EthSubmitWork ethSubmitWork;
   private final EthSubmitHashRate ethSubmitHashRate;
+  private final Collection<StratumConnection> activeConnections = new ArrayList<>();
 
   public Stratum1EthProxyProtocol(final PoWMiningCoordinator miningCoordinator) {
     ethGetWork = new EthGetWork(miningCoordinator);
@@ -70,6 +73,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
     try {
       String response = mapper.writeValueAsString(new JsonRpcSuccessResponse(req.getId(), true));
       conn.send(response + "\n");
+      activeConnections.add(conn);
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
       conn.close();
@@ -79,7 +83,9 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   @Override
-  public void onClose(final StratumConnection conn) {}
+  public void onClose(final StratumConnection conn) {
+    activeConnections.remove(conn);
+  }
 
   @Override
   public void handle(final StratumConnection conn, final String message) {
@@ -106,7 +112,19 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   @Override
-  public void setCurrentWorkTask(final PoWSolverInputs input) {}
+  public void setCurrentWorkTask(final PoWSolverInputs input) {
+    activeConnections.forEach(
+        conn -> {
+          try {
+            conn.send(
+                mapper.writeValueAsString(
+                        new JsonRpcSuccessResponse(0, ethGetWork.rawResponse(input)))
+                    + "\n");
+          } catch (JsonProcessingException e) {
+            LOG.error("Failed to announce new work", e);
+          }
+        });
+  }
 
   @Override
   public void setSubmitCallback(final Function<PoWSolution, Boolean> submitSolutionCallback) {}
