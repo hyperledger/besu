@@ -914,11 +914,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .collect(Collectors.joining(";"));
   }
 
-  private int getReadyCount() {
+  private synchronized int getReadyCount() {
     return readyBySender.values().stream().mapToInt(Map::size).sum();
   }
 
-  private int getSparseCount() {
+  private synchronized int getSparseCount() {
     return sparseBySender.values().stream().mapToInt(Map::size).sum();
   }
 
