@@ -39,6 +39,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -138,7 +139,7 @@ public class ReferenceTestEnv extends BlockHeader {
   }
 
   private static Hash generateTestBlockHash(final String previousHash, final String number) {
-    if (previousHash == null) {
+    if (Strings.isNullOrEmpty(previousHash)) {
       if (number == null) {
         return Hash.EMPTY;
       } else {

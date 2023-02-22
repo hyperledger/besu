@@ -21,8 +21,10 @@ import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocol
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -62,6 +64,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -223,7 +226,7 @@ public class StateTestSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                new BlockHashLookup(blockHeader, blockchain),
+                new ReferenceTestBlockhashLookup(blockHeader, blockchain),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer);
@@ -283,5 +286,18 @@ public class StateTestSubCommand implements Runnable {
 
       parentCommand.out.println(summaryLine);
     }
+  }
+}
+
+class ReferenceTestBlockhashLookup extends BlockHashLookup {
+
+  ReferenceTestBlockhashLookup(
+      final ProcessableBlockHeader currentBlock, final Blockchain blockchain) {
+    super(currentBlock, blockchain);
+  }
+
+  @Override
+  public Hash apply(final Long blockNumber) {
+    return Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8)));
   }
 }
