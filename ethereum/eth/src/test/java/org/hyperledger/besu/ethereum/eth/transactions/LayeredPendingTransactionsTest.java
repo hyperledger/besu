@@ -47,7 +47,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
 
-import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -389,7 +388,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
     pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
 
-    final List<Transaction> parsedTransactions = Lists.newArrayList();
+    final List<Transaction> parsedTransactions = new ArrayList<>(2);
     pendingTransactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);

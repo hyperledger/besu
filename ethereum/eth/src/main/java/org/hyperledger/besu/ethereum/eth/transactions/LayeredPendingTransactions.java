@@ -719,49 +719,57 @@ public class LayeredPendingTransactions implements PendingTransactions {
         }
       }
     }
-    transactionsToRemove.forEach(this::removeInvalidTransaction);
+    removeInvalidTransaction(transactionsToRemove);
   }
 
-  private void removeInvalidTransaction(final PendingTransaction invalidTransaction) {
-    // remove the invalid transaction and move all the following to sparse set
-    final var sender = invalidTransaction.getSender();
-    final var senderReadyTxs = readyBySender.get(sender);
+  private void removeInvalidTransaction(final List<PendingTransaction> invalidTransactions) {
+    invalidTransactions.forEach(
+        invalidTransaction -> {
+          // remove the invalid transaction and move all the following to sparse set
+          final var sender = invalidTransaction.getSender();
+          final var senderReadyTxs = readyBySender.get(sender);
 
-    final var followingTxs = senderReadyTxs.tailMap(invalidTransaction.getNonce(), false).values();
+          final var followingTxs =
+              senderReadyTxs.tailMap(invalidTransaction.getNonce(), false).values();
 
-    removeFromReady(invalidTransaction.getTransaction());
-    pendingTransactions.remove(invalidTransaction.getHash());
-    metrics.incrementRemoved(invalidTransaction.isReceivedFromLocalSource(), "invalid");
+          removeFromReady(invalidTransaction.getTransaction());
+          pendingTransactions.remove(invalidTransaction.getHash());
+          metrics.incrementRemoved(invalidTransaction.isReceivedFromLocalSource(), "invalid");
 
-    followingTxs.forEach(
-        followingTx -> {
-          removeFromReady(followingTx.getTransaction());
-          sparseBySender
-              .computeIfAbsent(sender, unused -> new TreeMap<>())
-              .put(followingTx.getNonce(), followingTx);
-          sparseEvictionOrder.add(followingTx);
+          followingTxs.stream()
+              // skip following that are invalid here, they will be removed in a next cycle
+              .filter(followingTx -> !invalidTransactions.contains(followingTx))
+              .forEach(
+                  followingTx -> {
+                    removeFromReady(followingTx.getTransaction());
+                    sparseBySender
+                        .computeIfAbsent(sender, unused -> new TreeMap<>())
+                        .put(followingTx.getNonce(), followingTx);
+                    sparseEvictionOrder.add(followingTx);
+                  });
+
+          if (prioritizedTransactions.containsTransaction(invalidTransaction.getTransaction())) {
+            // remove the invalid and the following from prioritize
+            final List<PendingTransaction> demotedTxs = new ArrayList<>(followingTxs.size() + 1);
+            demotedTxs.add(invalidTransaction);
+            demotedTxs.addAll(followingTxs);
+
+            // if previous valid transaction is prioritized then update the expected nonce or remove
+            // it
+            final var prevValidTx = senderReadyTxs.get(invalidTransaction.getNonce() - 1);
+            final Optional<Long> newExpectedNonce;
+            if (prevValidTx != null
+                && prioritizedTransactions.containsTransaction(prevValidTx.getTransaction())) {
+              newExpectedNonce = Optional.of(invalidTransaction.getNonce());
+            } else {
+              newExpectedNonce = Optional.empty();
+            }
+
+            prioritizedTransactions.demoteTransactions(sender, demotedTxs, newExpectedNonce);
+          }
+
+          notifyTransactionDropped(invalidTransaction);
         });
-
-    if (prioritizedTransactions.containsTransaction(invalidTransaction.getTransaction())) {
-      // remove the invalid and the following from prioritize
-      final List<PendingTransaction> demotedTxs = new ArrayList<>(followingTxs.size() + 1);
-      demotedTxs.add(invalidTransaction);
-      demotedTxs.addAll(followingTxs);
-
-      // if previous valid transaction is prioritized then update the expected nonce or remove it
-      final var prevValidTx = senderReadyTxs.get(invalidTransaction.getNonce() - 1);
-      final Optional<Long> newExpectedNonce;
-      if (prevValidTx != null
-          && prioritizedTransactions.containsTransaction(prevValidTx.getTransaction())) {
-        newExpectedNonce = Optional.of(invalidTransaction.getNonce());
-      } else {
-        newExpectedNonce = Optional.empty();
-      }
-
-      prioritizedTransactions.demoteTransactions(sender, demotedTxs, newExpectedNonce);
-    }
-
-    notifyTransactionDropped(invalidTransaction);
   }
 
   @Override

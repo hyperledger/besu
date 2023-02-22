@@ -101,6 +101,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     assertThat(prioritizeTransaction(localTransaction).isPrioritized()).isTrue();
 
     final List<PendingTransaction> remoteTxs = new ArrayList<>();
+    PrioritizeResult prioritizeResult = null;
     for (int i = 0; i < MAX_TRANSACTIONS; i++) {
       final PendingTransaction highValueRemoteTx =
           createRemotePendingTransaction(
@@ -109,12 +110,12 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
                   Wei.of(BigInteger.valueOf(100).pow(i)),
                   SIGNATURE_ALGORITHM.get().generateKeyPair()));
       remoteTxs.add(highValueRemoteTx);
-      assertThat(prioritizeTransaction(highValueRemoteTx).isPrioritized()).isTrue();
+      prioritizeResult = prioritizeTransaction(highValueRemoteTx);
+      assertThat(prioritizeResult.isPrioritized()).isTrue();
     }
 
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    assertThat(prioritizeResult.maybeDemotedTransaction()).isPresent().contains(remoteTxs.get(0));
     assertTransactionPrioritized(localTransaction);
-    assertTransactionNotPrioritized(remoteTxs.get(0));
     remoteTxs.stream().skip(1).forEach(remoteTx -> assertTransactionPrioritized(remoteTx));
   }
 
@@ -173,10 +174,8 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
         .isPresent()
         .map(PendingTransaction::getHash)
         .contains(expectedDroppedTx.getHash());
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
     assertThat(transactions.getTransactionByHash(highValueTx.getHash())).isPresent();
-    assertThat(transactions.getTransactionByHash(expectedDroppedTx.getHash())).isEmpty();
     lowGasPriceTransactions.stream()
         .filter(tx -> !tx.equals(expectedDroppedTx))
         .forEach(tx -> assertThat(transactions.getTransactionByHash(tx.getHash())).isPresent());

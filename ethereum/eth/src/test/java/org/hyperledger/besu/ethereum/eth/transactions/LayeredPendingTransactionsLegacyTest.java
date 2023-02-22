@@ -214,9 +214,9 @@ public class LayeredPendingTransactionsLegacyTest extends AbstractLayeredPending
     when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
 
     final Transaction transaction37 =
-        Transaction.builder().v(BigInteger.valueOf(37)).value(Wei.ONE).build();
+        Transaction.builder().v(BigInteger.valueOf(37)).value(Wei.ONE).gasPrice(Wei.ZERO).build();
     final Transaction transaction38 =
-        Transaction.builder().v(BigInteger.valueOf(38)).value(Wei.ONE).build();
+        Transaction.builder().v(BigInteger.valueOf(38)).value(Wei.ONE).gasPrice(Wei.ZERO).build();
 
     final ValidationResult<TransactionInvalidReason> result37 =
         transactionPool.addLocalTransaction(transaction37);
