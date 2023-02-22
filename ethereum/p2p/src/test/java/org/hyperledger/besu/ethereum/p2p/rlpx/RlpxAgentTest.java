@@ -114,7 +114,7 @@ public class RlpxAgentTest {
     startAgent();
 
     final MockPeerConnection connection = (MockPeerConnection) agent.connect(createPeer()).get();
-    agent.setGetAllConnectionsCallback(() -> Stream.of(connection));
+    agent.setGetAllConnectionsSupplier(() -> Stream.of(connection));
 
     final CompletableFuture<Void> future2 = agent.stop();
     assertThat(future2).isDone();
@@ -325,7 +325,7 @@ public class RlpxAgentTest {
     final PeerConnection permittedConnection = permittedConnectionFuture.get();
     final PeerConnection nonPermittedConnection = spy(this.agent.connect(nonPermittedPeer).get());
 
-    agent.setGetAllConnectionsCallback(
+    agent.setGetAllConnectionsSupplier(
         () -> Stream.of(permittedConnection, nonPermittedConnection));
 
     // Sanity check
@@ -355,7 +355,7 @@ public class RlpxAgentTest {
     final PeerConnection permittedConnection = agent.connect(permittedPeer).get();
     final PeerConnection nonPermittedConnection = agent.connect(nonPermittedPeer).get();
 
-    agent.setGetAllConnectionsCallback(
+    agent.setGetAllConnectionsSupplier(
         () -> Stream.of(permittedConnection, nonPermittedConnection));
 
     // Sanity check
@@ -386,7 +386,7 @@ public class RlpxAgentTest {
 
     final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
     final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer, true);
-    agent.setGetAllConnectionsCallback(
+    agent.setGetAllConnectionsSupplier(
         () -> Stream.of(locallyInitiatedConnection, remotelyInitiatedConnection));
     connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
 
@@ -419,7 +419,7 @@ public class RlpxAgentTest {
 
     final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
     final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer, true);
-    agent.setGetAllConnectionsCallback(
+    agent.setGetAllConnectionsSupplier(
         () -> Stream.of(locallyInitiatedConnection, remotelyInitiatedConnection));
     connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
 

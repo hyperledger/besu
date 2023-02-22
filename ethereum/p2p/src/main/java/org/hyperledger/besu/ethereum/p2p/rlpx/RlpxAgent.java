@@ -42,11 +42,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,8 +71,8 @@ public class RlpxAgent {
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private int lowerBound;
-  private Callable<Stream<PeerConnection>> getAllConnectionsCallback = () -> Stream.empty();
-  private Callable<Stream<PeerConnection>> getAllActiveConnectionsCallback = () -> Stream.empty();
+  private Supplier<Stream<PeerConnection>> getAllConnectionsSupplier = () -> Stream.empty();
+  private Supplier<Stream<PeerConnection>> getAllActiveConnectionsSupplier = () -> Stream.empty();
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
       CacheBuilder.newBuilder()
           .expireAfterWrite(
@@ -134,7 +134,7 @@ public class RlpxAgent {
 
   public Stream<PeerConnection> streamConnections() {
     try {
-      return getAllConnectionsCallback.call();
+      return getAllConnectionsSupplier.get();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -142,7 +142,7 @@ public class RlpxAgent {
 
   public Stream<PeerConnection> streamActiveConnections() {
     try {
-      return getAllActiveConnectionsCallback.call();
+      return getAllActiveConnectionsSupplier.get();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -150,7 +150,7 @@ public class RlpxAgent {
 
   public int getConnectionCount() {
     try {
-      return (int) getAllActiveConnectionsCallback.call().count();
+      return (int) getAllActiveConnectionsSupplier.get().count();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -165,8 +165,8 @@ public class RlpxAgent {
 
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
     try {
-      getAllActiveConnectionsCallback
-          .call()
+      getAllActiveConnectionsSupplier
+          .get()
           .filter(c -> c.getPeer().getId().equals(peerId))
           .forEach(c -> c.disconnect(reason));
       final CompletableFuture<PeerConnection> peerConnectionCompletableFuture =
@@ -307,12 +307,13 @@ public class RlpxAgent {
     return peerPrivileges.canExceedConnectionLimits(peer);
   }
 
-  public void setGetAllConnectionsCallback(final Callable<Stream<PeerConnection>> callback) {
-    this.getAllConnectionsCallback = callback;
+  public void setGetAllConnectionsSupplier(final Supplier<Stream<PeerConnection>> streamSupplier) {
+    this.getAllConnectionsSupplier = streamSupplier;
   }
 
-  public void setGetAllActiveConnectionsCallback(final Callable<Stream<PeerConnection>> callback) {
-    this.getAllActiveConnectionsCallback = callback;
+  public void setGetAllActiveConnectionsSupplier(
+      final Supplier<Stream<PeerConnection>> streamSupplier) {
+    this.getAllActiveConnectionsSupplier = streamSupplier;
   }
 
   private void handleIncomingConnection(final PeerConnection peerConnection) {

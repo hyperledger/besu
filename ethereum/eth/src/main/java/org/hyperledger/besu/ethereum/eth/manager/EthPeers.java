@@ -346,8 +346,8 @@ public class EthPeers {
   public void setRlpxAgent(final RlpxAgent rlpxAgent) {
     this.rlpxAgent = rlpxAgent;
     if (rlpxAgent != null) {
-      rlpxAgent.setGetAllActiveConnectionsCallback(this::getAllActiveConnections);
-      rlpxAgent.setGetAllConnectionsCallback(this::getAllConnections);
+      rlpxAgent.setGetAllActiveConnectionsSupplier(this::getAllActiveConnections);
+      rlpxAgent.setGetAllConnectionsSupplier(this::getAllConnections);
       rlpxAgent.setPeerLowerBound(peerLowerBound);
     }
   }
@@ -564,10 +564,13 @@ public class EthPeers {
       }
       final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
       if (added) {
-        LOG.info("Added peer {} with connection {} to connections", peer.getId(), connection);
+        LOG.debug(
+            "Added peer {} with connection {} to completeConnections", peer.getId(), connection);
       } else {
         LOG.debug(
-            "Did not add peer {} with connection {} to connections", peer.getId(), connection);
+            "Did not add peer {} with connection {} to completeConnections",
+            peer.getId(),
+            connection);
       }
       return added;
     } else {

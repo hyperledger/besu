@@ -145,7 +145,7 @@ public class TrailingPeerLimiterTest {
     final List<EthPeer> disconnected = asList(disconnectedPeers);
     for (final EthPeer peer : peers) {
       if (disconnected.contains(peer)) {
-        verify(peer).disconnect(DisconnectReason.TOO_MANY_PEERS);
+        verify(peer).disconnect(DisconnectReason.USELESS_PEER);
       } else {
         verify(peer, never()).disconnect(any(DisconnectReason.class));
       }

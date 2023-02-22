@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
@@ -98,7 +99,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   private final Map<String, Map<Integer, RequestManager>> requestManagers;
 
-  private final Consumer<EthPeer> onStatusesExchanged;
+  private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
   private final Bytes id;
@@ -134,7 +135,7 @@ public class EthPeer implements Comparable<EthPeer> {
     this.maxMessageSize = maxMessageSize;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
-    this.onStatusesExchanged = onStatusesExchanged;
+    this.onStatusesExchanged.set(onStatusesExchanged);
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
@@ -497,10 +498,11 @@ public class EthPeer implements Comparable<EthPeer> {
           }
         }
         readyForRequests.set(true);
-        if (onStatusesExchanged != null) {
+        final Consumer<EthPeer> peerConsumer = onStatusesExchanged.getAndSet(null);
+        if (peerConsumer != null) {
           // this callback could be called multiple times
           LOG.debug("Status message exchange successful. {}", this);
-          onStatusesExchanged.accept(this);
+          peerConsumer.accept(this);
         }
       }
     }

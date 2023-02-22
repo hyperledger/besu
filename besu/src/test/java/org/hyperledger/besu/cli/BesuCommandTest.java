@@ -5600,41 +5600,41 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void kzgTrustedSetupFileRequiresDataBlobEnabledNetwork() throws IOException {
     final Path genesisFileWithoutBlobs =
-            createFakeGenesisFile(new JsonObject().put("config", new JsonObject()));
+        createFakeGenesisFile(new JsonObject().put("config", new JsonObject()));
     parseCommand(
-            "--genesis-file",
-            genesisFileWithoutBlobs.toString(),
-            "--kzg-trusted-setup",
-            "/etc/besu/kzg-trusted-setup.txt");
+        "--genesis-file",
+        genesisFileWithoutBlobs.toString(),
+        "--kzg-trusted-setup",
+        "/etc/besu/kzg-trusted-setup.txt");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-            .contains("--kzg-trusted-setup can only be specified on networks with data blobs enabled");
+        .contains("--kzg-trusted-setup can only be specified on networks with data blobs enabled");
   }
 
   @Test
   public void kzgTrustedSetupFileIsMandatoryWithCustomGenesisFile()
-          throws IOException, URISyntaxException {
+      throws IOException, URISyntaxException {
     final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
     parseCommand("--genesis-file", genesisFileWithBlobs.toString());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-            .contains(
-                    "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
+        .contains(
+            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
   }
 
   @Test
   public void kzgTrustedSetupFileLoadedWithCustomGenesisFile()
-          throws IOException, URISyntaxException {
+      throws IOException, URISyntaxException {
     final Path testSetupAbsolutePath =
-            Path.of(BesuCommandTest.class.getResource("/trusted_setup.txt").toURI());
+        Path.of(BesuCommandTest.class.getResource("/trusted_setup.txt").toURI());
     final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
     parseCommand(
-            "--genesis-file",
-            genesisFileWithBlobs.toString(),
-            "--kzg-trusted-setup",
-            testSetupAbsolutePath.toString());
+        "--genesis-file",
+        genesisFileWithBlobs.toString(),
+        "--kzg-trusted-setup",
+        testSetupAbsolutePath.toString());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
