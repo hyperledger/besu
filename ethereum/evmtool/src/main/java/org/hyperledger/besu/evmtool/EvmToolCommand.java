@@ -172,6 +172,13 @@ public class EvmToolCommand implements Runnable {
   final Boolean showReturnData = false;
 
   @Option(
+      names = {"--notime"},
+      description = "Don't include time data in summary output.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean noTime = false;
+
+  @Option(
       names = {"--prestate", "--genesis"},
       description = "The genesis file containing account data for this invocation.")
   private final File genesisFile = null;
@@ -373,14 +380,16 @@ public class EvmToolCommand implements Runnable {
 
           if (lastLoop && messageFrameStack.isEmpty()) {
             final long evmGas = txGas - messageFrame.getRemainingGas();
+            final var resultLine = new JsonObject();
+            resultLine.put("gasUser", "0x" + Long.toHexString(evmGas));
+            if (!noTime) {
+              resultLine.put("timens", lastTime).put("time", lastTime / 1000);
+            }
+            resultLine
+                .put("gasTotal", "0x" + Long.toHexString(evmGas))
+                .put("output", messageFrame.getOutputData().toHexString());
             out.println();
-            out.println(
-                new JsonObject()
-                    .put("gasUser", "0x" + Long.toHexString(evmGas))
-                    .put("timens", lastTime)
-                    .put("time", lastTime / 1000)
-                    .put("gasTotal", "0x" + Long.toHexString(evmGas))
-                    .put("output", messageFrame.getOutputData().toHexString()));
+            out.println(resultLine);
           }
         }
         lastTime = stopwatch.elapsed().toNanos();

@@ -77,7 +77,7 @@ class FullSyncTargetManager extends SyncTargetManager {
     final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
     if (!maybeBestPeer.isPresent()) {
       LOG.info(
-          "No sync target, waiting for peers. Current peers: {}",
+          "Unable to find sync target. Currently checking {} peers for usefulness",
           ethContext.getEthPeers().peerCount());
       return completedFuture(Optional.empty());
     } else {

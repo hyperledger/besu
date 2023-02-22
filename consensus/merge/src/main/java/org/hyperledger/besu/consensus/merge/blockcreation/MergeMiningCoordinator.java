@@ -305,8 +305,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
      *
      * @return the boolean
      */
-    public boolean isValid() {
-      return status == VALID;
+    public boolean shouldNotProceedToPayloadBuildProcess() {
+      return status != VALID;
     }
   }
 }
