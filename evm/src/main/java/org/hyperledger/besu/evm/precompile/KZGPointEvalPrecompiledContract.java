@@ -14,15 +14,9 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,41 +31,10 @@ import org.jetbrains.annotations.NotNull;
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   private static final AtomicBoolean loaded = new AtomicBoolean(false);
 
-  private final Bytes successResult;
+  private static Bytes successResult;
 
-  /** Instantiates a new KZGPointEval precompile contract. */
-  public KZGPointEvalPrecompiledContract() {
-    this(Optional.empty());
-  }
-
-  /**
-   * Instantiates a new KZGPointEval precompile contract.
-   *
-   * @param pathToTrustedSetup the trusted setup path
-   */
-  public KZGPointEvalPrecompiledContract(final Optional<Path> pathToTrustedSetup) {
-    if (loaded.compareAndSet(false, true)) {
-      String absolutePathToSetup;
-      if (pathToTrustedSetup.isPresent()) {
-        Path pathToSetup = pathToTrustedSetup.get();
-        absolutePathToSetup = pathToSetup.toAbsolutePath().toString();
-      } else {
-        InputStream is =
-            KZGPointEvalPrecompiledContract.class.getResourceAsStream(
-                "mainnet_kzg_trusted_setup_4096.txt");
-        try {
-          File jniWillLoadFrom = File.createTempFile("kzgTrustedSetup", "txt");
-          jniWillLoadFrom.deleteOnExit();
-          Files.copy(is, jniWillLoadFrom.toPath(), REPLACE_EXISTING);
-          is.close();
-          absolutePathToSetup = jniWillLoadFrom.getAbsolutePath();
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-      CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
-      CKZG4844JNI.loadTrustedSetup(absolutePathToSetup);
-    }
+  private static void init() {
+    CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
     Bytes fieldElementsPerBlob =
         Bytes32.wrap(Bytes.ofUnsignedInt(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
     Bytes blsModulus =
@@ -80,9 +43,43 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     successResult = Bytes.concatenate(fieldElementsPerBlob, blsModulus);
   }
 
+  /**
+   * Init the C-KZG native lib using a file as trusted setup
+   *
+   * @param trustedSetupFile the file with the trusted setup
+   * @throws IllegalStateException is the trusted setup was already loaded
+   */
+  public static void init(final Path trustedSetupFile) {
+    if (loaded.compareAndSet(false, true)) {
+      init();
+      CKZG4844JNI.loadTrustedSetup(trustedSetupFile.toAbsolutePath().toString());
+    } else {
+      throw new IllegalStateException("KZG trusted setup was already loaded");
+    }
+  }
+
+  /**
+   * Init the C-KZG native lib using a resource identified by the passed network name as trusted
+   * setup
+   *
+   * @param networkName used to select the resource that contains the trusted setup
+   * @throws IllegalStateException is the trusted setup was already loaded
+   */
+  public static void init(final String networkName) {
+    if (loaded.compareAndSet(false, true)) {
+      init();
+      final String trustedSetupResourceName =
+          "/kzg-trusted-setups/" + networkName.toLowerCase() + ".txt";
+      CKZG4844JNI.loadTrustedSetupFromResource(
+          trustedSetupResourceName, KZGPointEvalPrecompiledContract.class);
+    } else {
+      throw new IllegalStateException("KZG trusted setup was already loaded");
+    }
+  }
+
   /** free up resources. */
   @VisibleForTesting
-  public void tearDown() {
+  void tearDown() {
     CKZG4844JNI.freeTrustedSetup();
     loaded.set(false);
   }

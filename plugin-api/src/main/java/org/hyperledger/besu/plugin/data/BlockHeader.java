@@ -54,10 +54,10 @@ public interface BlockHeader {
 
   /**
    * The Keccak 256-bit hash of the root node of the state trie, after all transactions are executed
-   * and finalisations applied.
+   * and finalizations applied.
    *
    * @return The Keccak 256-bit hash of the root node of the state trie, after all transactions are
-   *     executed and finalisations applied.
+   *     executed and finalizations applied.
    */
   Hash getStateRoot();
 

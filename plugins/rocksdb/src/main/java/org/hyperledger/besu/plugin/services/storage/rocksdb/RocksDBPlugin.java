@@ -67,7 +67,7 @@ public class RocksDBPlugin implements BesuPlugin {
 
     if (cmdlineOptions.isEmpty()) {
       throw new IllegalStateException(
-          "Expecting a PicoCLIO options to register CLI options with, but none found.");
+          "Expecting a PicoCLI options to register CLI options with, but none found.");
     }
 
     cmdlineOptions.get().addPicoCLIOptions(NAME, options);

@@ -70,8 +70,10 @@ import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +101,9 @@ public class RetestethContext {
   private TransactionPool transactionPool;
   private EthScheduler ethScheduler;
   private PoWSolver poWSolver;
+
+  private Optional<Bytes> terminalTotalDifficulty;
+  private Optional<Bytes32> mixHash;
 
   public boolean resetContext(
       final String genesisConfigString, final String sealEngine, final Optional<Long> clockTime) {
@@ -134,6 +139,12 @@ public class RetestethContext {
     clockTime.ifPresent(retestethClock::resetTime);
     final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
+    terminalTotalDifficulty =
+        Optional.ofNullable(genesisConfig.get("params"))
+            .map(n -> n.get("terminaltotaldifficulty"))
+            .map(JsonNode::asText)
+            .map(Bytes::fromHexString);
+
     final JsonGenesisConfigOptions jsonGenesisConfigOptions =
         JsonGenesisConfigOptions.fromJsonObject(
             JsonUtil.getObjectNode(genesisConfig, "config").get());
@@ -147,6 +158,7 @@ public class RetestethContext {
     final GenesisState genesisState = GenesisState.fromJson(genesisConfigString, protocolSchedule);
     coinbase = genesisState.getBlock().getHeader().getCoinbase();
     extraData = genesisState.getBlock().getHeader().getExtraData();
+    mixHash = Optional.ofNullable(genesisState.getBlock().getHeader().getMixHashOrPrevRandao());
 
     final WorldStateArchive worldStateArchive =
         new DefaultWorldStateArchive(
@@ -311,6 +323,14 @@ public class RetestethContext {
 
   public RetestethClock getRetestethClock() {
     return retestethClock;
+  }
+
+  public Optional<Bytes> getTerminalTotalDifficulty() {
+    return terminalTotalDifficulty;
+  }
+
+  public Optional<Bytes32> getMixHash() {
+    return mixHash;
   }
 
   public PoWSolver getEthHashSolver() {
