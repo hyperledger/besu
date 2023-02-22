@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
@@ -87,13 +87,13 @@ public class BlockImportExceptionHandlingTest {
   private CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
   private final WorldStateArchive worldStateArchive =
-      // contains a BonsaiPersistedWorldState which we need to spy on.
+      // contains a BonsaiWorldState which we need to spy on.
       // do we need to also test with a DefaultWorldStateArchive?
       spy(new BonsaiWorldStateProvider(storageProvider, blockchain, cachedMerkleTrieLoader));
 
-  private final BonsaiPersistedWorldState persisted =
+  private final BonsaiWorldState persisted =
       spy(
-          new BonsaiPersistedWorldState(
+          new BonsaiWorldState(
               (BonsaiWorldStateProvider) worldStateArchive,
               (BonsaiWorldStateKeyValueStorage) worldStateStorage));
 

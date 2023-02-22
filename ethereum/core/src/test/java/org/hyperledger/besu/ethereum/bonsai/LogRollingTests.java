@@ -163,8 +163,8 @@ public class LogRollingTests {
   @Test
   public void simpleRollForwardTest() {
 
-    final BonsaiPersistedWorldState worldState =
-        new BonsaiPersistedWorldState(
+    final BonsaiWorldState worldState =
+        new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
                 accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
@@ -177,8 +177,8 @@ public class LogRollingTests {
     updater.commit();
     worldState.persist(headerOne);
 
-    final BonsaiPersistedWorldState secondWorldState =
-        new BonsaiPersistedWorldState(
+    final BonsaiWorldState secondWorldState =
+        new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(
                 secondAccountStorage,
@@ -212,8 +212,8 @@ public class LogRollingTests {
 
   @Test
   public void rollForwardTwice() {
-    final BonsaiPersistedWorldState worldState =
-        new BonsaiPersistedWorldState(
+    final BonsaiWorldState worldState =
+        new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
                 accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
@@ -234,8 +234,8 @@ public class LogRollingTests {
 
     worldState.persist(headerTwo);
 
-    final BonsaiPersistedWorldState secondWorldState =
-        new BonsaiPersistedWorldState(
+    final BonsaiWorldState secondWorldState =
+        new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(
                 secondAccountStorage,
@@ -270,8 +270,8 @@ public class LogRollingTests {
 
   @Test
   public void rollBackOnce() {
-    final BonsaiPersistedWorldState worldState =
-        new BonsaiPersistedWorldState(
+    final BonsaiWorldState worldState =
+        new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
                 accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
@@ -299,8 +299,8 @@ public class LogRollingTests {
 
     worldState.persist(headerOne);
 
-    final BonsaiPersistedWorldState secondWorldState =
-        new BonsaiPersistedWorldState(
+    final BonsaiWorldState secondWorldState =
+        new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(
                 secondAccountStorage,
