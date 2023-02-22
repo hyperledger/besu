@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -280,7 +281,8 @@ public class BlockTransactionSelector {
     }
 
     final WorldUpdater worldStateUpdater = worldState.updater();
-    final BlockHashLookup blockHashLookup = new BlockHashLookup(processableBlockHeader, blockchain);
+    final BlockHashLookup blockHashLookup =
+        new CachingBlockHashLookup(processableBlockHeader, blockchain);
     final boolean isGoQuorumPrivateTransaction =
         transaction.isGoQuorumPrivateTransaction(
             transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
@@ -320,7 +322,7 @@ public class BlockTransactionSelector {
       traceLambda(LOG, "Selected {} for block creation", transaction::toTraceLog);
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
-      final var isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
+      final boolean isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
       if (!isIncorrectNonce || reportFutureNonceTransactionsAsInvalid) {
         transactionSelectionResult.updateWithInvalidTransaction(
             transaction, effectiveResult.getValidationResult());
@@ -362,7 +364,7 @@ public class BlockTransactionSelector {
       final Transaction transaction,
       final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
 
-    final var invalidReason = invalidReasonValidationResult.getInvalidReason();
+    final TransactionInvalidReason invalidReason = invalidReasonValidationResult.getInvalidReason();
     // If the invalid reason is transient, then leave the transaction in the pool and continue
     if (isTransientValidationError(invalidReason)) {
       traceLambda(

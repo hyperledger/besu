@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -48,6 +49,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -104,7 +106,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       }
 
       final WorldUpdater publicWorldStateUpdater = publicWorldState.updater();
-      final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
+      final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
@@ -210,7 +212,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
     // create the bloom for the private transactions in the block and store it
     final LogsBloomFilter.Builder privateBloomBuilder = LogsBloomFilter.builder();
     privateTxReceipts.stream()
-        .filter(pr -> pr != null)
+        .filter(Objects::nonNull)
         .forEach(pr -> privateBloomBuilder.insertFilter(pr.getBloomFilter()));
     blockHeader.setPrivateLogsBloom(privateBloomBuilder.build());
 
@@ -221,8 +223,10 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         publicWorldState.rootHash(), privateWorldState.rootHash());
     privateStorageUpdater.commit();
 
-    var mainnetYield = new BlockProcessingOutputs(publicWorldState, publicTxReceipts);
-    var privateYield = new BlockProcessingOutputs(privateWorldState, privateTxReceipts);
+    BlockProcessingOutputs mainnetYield =
+        new BlockProcessingOutputs(publicWorldState, publicTxReceipts);
+    BlockProcessingOutputs privateYield =
+        new BlockProcessingOutputs(privateWorldState, privateTxReceipts);
     return new GoQuorumBlockProcessingResult(mainnetYield, privateYield);
   }
 

@@ -21,10 +21,8 @@ import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocol
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -36,7 +34,6 @@ import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.Log;
@@ -153,7 +150,8 @@ public class StateTestSubCommand implements Runnable {
   }
 
   private void executeStateTest(final Map<String, GeneralStateTestCaseSpec> generalStateTests) {
-    for (final var generalStateTestEntry : generalStateTests.entrySet()) {
+    for (final Map.Entry<String, GeneralStateTestCaseSpec> generalStateTestEntry :
+        generalStateTests.entrySet()) {
       generalStateTestEntry
           .getValue()
           .finalStateSpecs()
@@ -164,7 +162,8 @@ public class StateTestSubCommand implements Runnable {
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
     Log4j2ConfiguratorUtil.setLevel(
         "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
-    final var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
+    final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
+        ReferenceTestProtocolSchedules.create();
     Log4j2ConfiguratorUtil.setLevel(
         "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
 
@@ -226,7 +225,7 @@ public class StateTestSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                new ReferenceTestBlockhashLookup(blockHeader, blockchain),
+                blockNumber -> Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer);
@@ -245,9 +244,9 @@ public class StateTestSubCommand implements Runnable {
         worldStateUpdater.commit();
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-        final var gasUsed = transaction.getGasLimit() - result.getGasRemaining();
-        final var timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
-        final var mGps = gasUsed * 1000.0f / timeNs;
+        final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
+        final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+        final float mGps = gasUsed * 1000.0f / timeNs;
 
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
 
@@ -286,18 +285,5 @@ public class StateTestSubCommand implements Runnable {
 
       parentCommand.out.println(summaryLine);
     }
-  }
-}
-
-class ReferenceTestBlockhashLookup extends BlockHashLookup {
-
-  ReferenceTestBlockhashLookup(
-      final ProcessableBlockHeader currentBlock, final Blockchain blockchain) {
-    super(currentBlock, blockchain);
-  }
-
-  @Override
-  public Hash apply(final Long blockNumber) {
-    return Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8)));
   }
 }
