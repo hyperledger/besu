@@ -36,12 +36,12 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
   @Test
   public void ensureTruncateDoesNotCauseSegfault() {
 
-    var preTruncatedWorldState = archive.getMutable(null, genesisState.getBlock().getHash(), false);
+    var preTruncatedWorldState = archive.getMutable(genesisState.getBlock().getHeader(), false);
     assertThat(preTruncatedWorldState)
         .isPresent(); // really just assert that we have not segfaulted after truncating
     bonsaiWorldStateStorage.clear();
     var postTruncatedWorldState =
-        archive.getMutable(null, genesisState.getBlock().getHash(), false);
+        archive.getMutable(genesisState.getBlock().getHeader(), false);
     assertThat(postTruncatedWorldState).isEmpty();
     // assert that trying to access pre-worldstate does not segfault after truncating
     preTruncatedWorldState.get().get(Address.fromHexString(accounts.get(0).getAddress()));
@@ -52,22 +52,20 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
   public void testIsolatedFromHead_behindHead() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
     // assert we can mutate head without mutating the isolated snapshot
-    var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash());
+    var isolated = archive.getMutable(genesisState.getBlock().getHeader(), false);
 
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(archive.getMutable(), firstBlock);
 
-    var isolated2 = archive.getMutableSnapshot(firstBlock.getHash());
+    var isolated2 = archive.getMutable(firstBlock.getHeader(), false);
     var secondBlock = forTransactions(List.of(burnTransaction(sender1, 1L, testAddress)));
     var res2 = executeBlock(archive.getMutable(), secondBlock);
 
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
-    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
-        .isNotEmpty();
-    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(secondBlock.getHash()))
-        .isNotEmpty();
+    assertThat(archive.getTrieLogManager().containWorlStateStorage(firstBlock.getHash())).isTrue();
+    assertThat(archive.getTrieLogManager().containWorlStateStorage(secondBlock.getHash())).isTrue();
 
     assertThat(archive.getMutable().get(testAddress)).isNotNull();
     assertThat(archive.getMutable().get(testAddress).getBalance())

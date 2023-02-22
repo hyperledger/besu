@@ -129,6 +129,13 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     if (shouldPersistState) {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
+      final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
+      if (chainHeadBlockNumber - blockHeader.getNumber() >= trieLogManager.getMaxLayersToLoad()) {
+        LOG.warn(
+            "Exceeded the limit of back layers that can be loaded ({})",
+            trieLogManager.getMaxLayersToLoad());
+        return Optional.empty();
+      }
       final BonsaiSnapshotWorldStateKeyValueStorage worldStateKeyValueStorage =
           trieLogManager
               .getWorldStateStorage(blockHeader.getHash())
@@ -139,7 +146,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
                           .flatMap(trieLogManager::getWorldStateStorage))
               .orElse(
                   new BonsaiSnapshotWorldStateKeyValueStorage(
-                      blockchain.getChainHeadBlockNumber(), worldStateStorage));
+                      chainHeadBlockNumber, worldStateStorage));
       return rollMutableStateToBlockHash(
               new BonsaiWorldState(this, worldStateKeyValueStorage), blockHeader.getHash())
           .map(

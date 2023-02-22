@@ -101,11 +101,6 @@ public abstract class AbstractIsolationTests {
 
   @Rule public final TemporaryFolder tempData = new TemporaryFolder();
 
-  protected boolean shouldUseSnapshots() {
-    // override for layered worldstate
-    return true;
-  }
-
   @Before
   public void createStorage() {
     bonsaiWorldStateStorage =
@@ -116,7 +111,6 @@ public abstract class AbstractIsolationTests {
             bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),
-            shouldUseSnapshots(),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
