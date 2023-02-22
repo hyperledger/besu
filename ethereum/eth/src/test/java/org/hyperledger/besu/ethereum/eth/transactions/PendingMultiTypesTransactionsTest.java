@@ -67,7 +67,7 @@ public class PendingMultiTypesTransactionsTest {
       ImmutableTransactionPoolConfiguration.builder()
           .txPoolMaxSize(MAX_TRANSACTIONS)
           .txPoolLimitByAccountPercentage(MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE)
-          .pendingTransactionsCacheSizeBytes(1024)
+          .pendingTransactionsMaxCapacityBytes(1024)
           .build();
 
   protected final TransactionPoolReplacementHandler transactionReplacementHandler =
@@ -128,7 +128,7 @@ public class PendingMultiTypesTransactionsTest {
 
     final int freeSpace =
         (int)
-            (transactionPoolConfiguration.getPendingTransactionsCacheSizeBytes()
+            (transactionPoolConfiguration.getPendingTransactionsMaxCapacityBytes()
                 - transactions.getUsedSpace());
     final Transaction localTransaction5 =
         create1559Transaction(0, 900, 20, freeSpace - localTransaction1.getSize() + 1, KEYS6);
@@ -160,7 +160,7 @@ public class PendingMultiTypesTransactionsTest {
 
     final int freeSpace =
         (int)
-            (transactionPoolConfiguration.getPendingTransactionsCacheSizeBytes()
+            (transactionPoolConfiguration.getPendingTransactionsMaxCapacityBytes()
                 - transactions.getUsedSpace());
     final Transaction localTransaction5 =
         create1559Transaction(0, 900, 20, freeSpace - localTransaction1.getSize() + 1, KEYS6);
@@ -191,7 +191,7 @@ public class PendingMultiTypesTransactionsTest {
 
     final int freeSpace =
         (int)
-            (transactionPoolConfiguration.getPendingTransactionsCacheSizeBytes()
+            (transactionPoolConfiguration.getPendingTransactionsMaxCapacityBytes()
                 - transactions.getUsedSpace());
 
     final Transaction localTransaction5 =
@@ -222,7 +222,7 @@ public class PendingMultiTypesTransactionsTest {
 
     final int freeSpace =
         (int)
-            (transactionPoolConfiguration.getPendingTransactionsCacheSizeBytes()
+            (transactionPoolConfiguration.getPendingTransactionsMaxCapacityBytes()
                 - transactions.getUsedSpace());
 
     final Transaction localTransaction5 =

@@ -113,7 +113,7 @@ public abstract class AbstractPrioritizedTransactions {
       return PrioritizeResult.NOT_PRIORITIZED;
     }
 
-    if (prioritizedPendingTransactions.size() >= poolConfig.getTxPoolMaxSize()) {
+    if (prioritizedPendingTransactions.size() >= poolConfig.getMaxPrioritizedTransactions()) {
       LOG.trace("Max number of prioritized transactions reached");
 
       final var currentLeastPriorityTx = orderByFee.first();

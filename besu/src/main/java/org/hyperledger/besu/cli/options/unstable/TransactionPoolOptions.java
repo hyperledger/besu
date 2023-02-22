@@ -48,7 +48,12 @@ public class TransactionPoolOptions
   private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
       "--tx-pool-limit-by-account-percentage";
 
-  private static final String ENABLE_LAYERED_TX_POOL_FLAG = "--Xlayered-tx-pool";
+  private static final String LAYERED_TX_POOL_ENABLED_FLAG = "--Xlayered-tx-pool";
+  private static final String LAYERED_TX_POOL_MAX_CAPACITY = "--Xlayered-tx-pool-max-capacity";
+  private static final String LAYERED_TX_POOL_MAX_PRIORITIZED =
+      "--Xlayered-tx-pool-max-prioritized";
+  private static final String LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER =
+      "--Xlayered-tx-pool-max-future-by-sender";
 
   @CommandLine.Option(
       names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
@@ -87,16 +92,46 @@ public class TransactionPoolOptions
           "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
       arity = "1")
   private Float txPoolLimitByAccountPercentage =
-      TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
+      TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
 
   @CommandLine.Option(
-      names = {ENABLE_LAYERED_TX_POOL_FLAG},
+      names = {LAYERED_TX_POOL_ENABLED_FLAG},
       paramLabel = "<Boolean>",
       hidden = true,
       description = "Enable the Layered Transaction Pool (default: ${DEFAULT-VALUE})",
       arity = "0..1")
-  private Boolean enabledLayeredTxPool =
-      TransactionPoolConfiguration.DEFAULT_ENABLE_LAYERED_TX_POOL;
+  private Boolean layeredTxPoolEnabled =
+      TransactionPoolConfiguration.DEFAULT_LAYERED_TX_POOL_ENABLED;
+
+  @CommandLine.Option(
+      names = {LAYERED_TX_POOL_MAX_CAPACITY},
+      paramLabel = "<Long>",
+      hidden = true,
+      description =
+          "Max amount of memory space, in bytes, that pending transactions could occupy (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private long layeredTxPoolMaxCapacity =
+      TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_MAX_CAPACITY_BYTES;
+
+  @CommandLine.Option(
+      names = {LAYERED_TX_POOL_MAX_PRIORITIZED},
+      paramLabel = "<Int>",
+      hidden = true,
+      description =
+          "Max number of pending transactions that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private int layeredTxPoolMaxPrioritized =
+      TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
+
+  @CommandLine.Option(
+      names = {LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER},
+      paramLabel = "<Int>",
+      hidden = true,
+      description =
+          "Max number future pending transactions that are allow for a single sender (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private int layeredTxPoolMaxFutureBySender =
+      TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
 
   @CommandLine.Option(
       hidden = true,
@@ -129,7 +164,7 @@ public class TransactionPoolOptions
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
-    options.enabledLayeredTxPool = config.getEnableLayeredTxPool();
+    options.layeredTxPoolEnabled = config.getLayeredTxPoolEnabled();
     return options;
   }
 
@@ -141,12 +176,22 @@ public class TransactionPoolOptions
           "--tx-pool-future-max-by-account",
           "--tx-pool-limit-by-account-percentage");
     }
+
+    if (layeredTxPoolEnabled) {
+      LOG.warn(
+          "Layered transaction pool enabled, ignoring settings for "
+              + "--tx-pool-max-size and --tx-pool-limit-by-account-percentage");
+    }
+
     return ImmutableTransactionPoolConfiguration.builder()
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
         .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
-        .enableLayeredTxPool(enabledLayeredTxPool);
+        .layeredTxPoolEnabled(layeredTxPoolEnabled)
+        .pendingTransactionsMaxCapacityBytes(layeredTxPoolMaxCapacity)
+        .maxPrioritizedTransactions(layeredTxPoolMaxPrioritized)
+        .maxFutureBySender(layeredTxPoolMaxFutureBySender);
   }
 
   @Override
@@ -159,6 +204,12 @@ public class TransactionPoolOptions
         OptionParser.format(txMessageKeepAliveSeconds),
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
         OptionParser.format(eth65TrxAnnouncedBufferingPeriod),
-        ENABLE_LAYERED_TX_POOL_FLAG + "=" + enabledLayeredTxPool);
+        LAYERED_TX_POOL_ENABLED_FLAG + "=" + layeredTxPoolEnabled,
+            LAYERED_TX_POOL_MAX_CAPACITY,
+        OptionParser.format(layeredTxPoolMaxCapacity),
+        LAYERED_TX_POOL_MAX_PRIORITIZED,
+        OptionParser.format(layeredTxPoolMaxPrioritized),
+        LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER,
+        OptionParser.format(layeredTxPoolMaxFutureBySender));
   }
 }

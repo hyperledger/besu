@@ -25,26 +25,28 @@ import org.immutables.value.Value;
 @Value.Style(allParameters = true)
 public interface TransactionPoolConfiguration {
   int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
-  int MAX_PENDING_TRANSACTIONS = 4096;
-  float LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE = 0.001f; // 0.1%
+  int DEFAULT_MAX_PENDING_TRANSACTIONS = 4096;
+  float DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE = 0.001f; // 0.1%
   int DEFAULT_TX_RETENTION_HOURS = 13;
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
-  long DEFAULT_PENDING_TRANSACTIONS_CACHE_SIZE_BYTES = 100_000_000L;
-  boolean DEFAULT_ENABLE_LAYERED_TX_POOL = false;
+  long DEFAULT_PENDING_TRANSACTIONS_MAX_CAPACITY_BYTES = 100_000_000L;
+  int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
+  int DEFAULT_MAX_FUTURE_BY_SENDER = 100;
+  boolean DEFAULT_LAYERED_TX_POOL_ENABLED = false;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
   @Value.Default
   default int getTxPoolMaxSize() {
-    return MAX_PENDING_TRANSACTIONS;
+    return DEFAULT_MAX_PENDING_TRANSACTIONS;
   }
 
   @Value.Default
   default float getTxPoolLimitByAccountPercentage() {
-    return LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
+    return DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
   }
 
   @Value.Derived
@@ -83,12 +85,22 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default long getPendingTransactionsCacheSizeBytes() {
-    return DEFAULT_PENDING_TRANSACTIONS_CACHE_SIZE_BYTES;
+  default Boolean getLayeredTxPoolEnabled() {
+    return DEFAULT_LAYERED_TX_POOL_ENABLED;
   }
 
   @Value.Default
-  default Boolean getEnableLayeredTxPool() {
-    return DEFAULT_ENABLE_LAYERED_TX_POOL;
+  default long getPendingTransactionsMaxCapacityBytes() {
+    return DEFAULT_PENDING_TRANSACTIONS_MAX_CAPACITY_BYTES;
+  }
+
+  @Value.Default
+  default int getMaxPrioritizedTransactions() {
+    return DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
+  }
+
+  @Value.Default
+  default int getMaxFutureBySender() {
+    return DEFAULT_MAX_FUTURE_BY_SENDER;
   }
 }

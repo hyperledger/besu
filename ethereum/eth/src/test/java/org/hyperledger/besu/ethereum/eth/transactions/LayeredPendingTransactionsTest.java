@@ -52,7 +52,7 @@ import org.junit.jupiter.api.Test;
 
 public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
-  protected static final int CACHE_CAPACITY_BYTES = 1024;
+  protected static final int MAX_CAPACITY_BYTES = 1024;
   private static final float LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
   protected static final String ADDED_COUNTER = "transactions_added_total";
   protected static final String REMOVED_COUNTER = "transactions_removed_total";
@@ -76,14 +76,14 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
       ImmutableTransactionPoolConfiguration.builder()
           .txPoolMaxSize(MAX_TRANSACTIONS)
           .txPoolLimitByAccountPercentage(1.0f)
-          .pendingTransactionsCacheSizeBytes(CACHE_CAPACITY_BYTES)
+          .pendingTransactionsMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
 
   private final TransactionPoolConfiguration senderLimitedConfig =
       ImmutableTransactionPoolConfiguration.builder()
           .txPoolMaxSize(MAX_TRANSACTIONS)
           .txPoolLimitByAccountPercentage(LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE)
-          .pendingTransactionsCacheSizeBytes(CACHE_CAPACITY_BYTES)
+          .pendingTransactionsMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
   protected LayeredPendingTransactions senderLimitedTransactions;
   private LayeredPendingTransactions pendingTransactions;
@@ -185,8 +185,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertThat(metricsSystem.getCounterValue(EVICTED_COUNTER, READY)).isZero();
 
     final int freeSpace =
-        (int)
-            (poolConf.getPendingTransactionsCacheSizeBytes() - pendingTransactions.getUsedSpace());
+        (int) (poolConf.getPendingTransactionsMaxCapacityBytes() - pendingTransactions.getUsedSpace());
 
     final Transaction lastBigTx =
         createTransaction(

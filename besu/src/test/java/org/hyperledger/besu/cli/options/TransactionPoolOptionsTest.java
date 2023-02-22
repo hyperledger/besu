@@ -16,7 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
 
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -100,7 +100,7 @@ public class TransactionPoolOptionsTest
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
     final TransactionPoolConfiguration config = options.toDomainObject().build();
     assertThat(config.getTxPoolLimitByAccountPercentage())
-        .isEqualTo(LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE);
+        .isEqualTo(DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -161,7 +161,7 @@ public class TransactionPoolOptionsTest
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
         .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
-        .enableLayeredTxPool(defaultValue.getEnableLayeredTxPool());
+        .layeredTxPoolEnabled(defaultValue.getLayeredTxPoolEnabled());
   }
 
   @Override
@@ -173,7 +173,7 @@ public class TransactionPoolOptionsTest
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
         .txPoolLimitByAccountPercentage(0.5f)
-        .enableLayeredTxPool(true);
+        .layeredTxPoolEnabled(true);
   }
 
   @Override

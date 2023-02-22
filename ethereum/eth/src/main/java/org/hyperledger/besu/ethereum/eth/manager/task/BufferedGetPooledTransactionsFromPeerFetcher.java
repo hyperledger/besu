@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -63,7 +63,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     this.transactionPool = transactionPool;
     this.transactionTracker = transactionTracker;
     this.metrics = metrics;
-    this.txAnnounces = Queues.synchronizedQueue(EvictingQueue.create(MAX_PENDING_TRANSACTIONS));
+    this.txAnnounces =
+        Queues.synchronizedQueue(EvictingQueue.create(DEFAULT_MAX_PENDING_TRANSACTIONS));
   }
 
   public ScheduledFuture<?> getScheduledFuture() {

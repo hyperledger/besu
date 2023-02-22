@@ -160,7 +160,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
           pendingTransaction::toTraceLog,
           () -> senderNonce);
       return ALREADY_KNOWN;
-    } else if (nonceDistance >= poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
+    } else if (nonceDistance >= poolConfig.getMaxFutureBySender()) {
       traceLambda(
           LOG,
           "Drop too much in the future transaction {}, since current sender nonce is {}",
@@ -468,7 +468,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   private long cacheFreeSpace() {
-    return poolConfig.getPendingTransactionsCacheSizeBytes() - spaceUsed;
+    return poolConfig.getPendingTransactionsMaxCapacityBytes() - spaceUsed;
   }
 
   public synchronized long getUsedSpace() {
@@ -587,7 +587,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   private boolean fitsInCache(final PendingTransaction pendingTransaction) {
     return spaceUsed + pendingTransaction.getTransaction().getSize()
-        <= poolConfig.getPendingTransactionsCacheSizeBytes();
+        <= poolConfig.getPendingTransactionsMaxCapacityBytes();
   }
 
   private void decreaseSpaceUsed(final PendingTransaction pendingTransaction) {
@@ -871,7 +871,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   private void prioritizeReadyTransactions() {
-    final int maxPromotable = poolConfig.getTxPoolMaxSize() - prioritizedTransactions.size();
+    final int maxPromotable =
+        poolConfig.getMaxPrioritizedTransactions() - prioritizedTransactions.size();
 
     if (maxPromotable > 0) {
       final List<PendingTransaction> prioritizeTransactions =

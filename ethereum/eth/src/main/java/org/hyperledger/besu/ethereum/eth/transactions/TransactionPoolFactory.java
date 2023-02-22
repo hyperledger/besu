@@ -194,7 +194,7 @@ public class TransactionPoolFactory {
             .map(ProtocolSpec::getFeeMarket)
             .anyMatch(FeeMarket::implementsBaseFee);
 
-    if (transactionPoolConfiguration.getEnableLayeredTxPool()) {
+    if (transactionPoolConfiguration.getLayeredTxPoolEnabled()) {
       LOG.info("Using layered transaction pool");
       return createLayeredPendingTransactions(
           protocolSchedule,
