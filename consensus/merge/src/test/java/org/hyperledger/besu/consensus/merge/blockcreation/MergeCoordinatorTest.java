@@ -318,6 +318,26 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
+  public void shouldNotRecordProposedBadBlockToBadBlockManager()
+      throws ExecutionException, InterruptedException {
+    // set up invalid parent to simulate one of the many conditions that can cause a block
+    // validation to fail
+    final BlockHeader invalidParentHeader = new BlockHeaderTestFixture().buildHeader();
+
+    blockCreationTask.get();
+
+    coordinator.preparePayload(
+        invalidParentHeader,
+        System.currentTimeMillis() / 1000,
+        Bytes32.ZERO,
+        suggestedFeeRecipient,
+        Optional.empty());
+
+    verify(badBlockManager, never()).addBadBlock(any(), any());
+    assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
+  }
+
+  @Test
   public void shouldContinueBuildingBlocksUntilFinalizeIsCalled()
       throws InterruptedException, ExecutionException {
     final AtomicLong retries = new AtomicLong(0);
