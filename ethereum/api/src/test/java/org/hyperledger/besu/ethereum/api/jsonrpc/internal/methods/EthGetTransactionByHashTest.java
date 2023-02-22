@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.plugin.data.Transaction;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -195,9 +194,7 @@ public class EthGetTransactionByHashTest {
     Transaction pendingTransaction = gen.transaction();
     System.out.println(pendingTransaction.getHash());
     return gen.transactionsWithAllTypes(4).stream()
-        .map(
-            transaction ->
-                new PendingTransaction.Local(transaction, Instant.ofEpochSecond(Integer.MAX_VALUE)))
+        .map(transaction -> new PendingTransaction.Local(transaction, Long.MAX_VALUE))
         .collect(Collectors.toUnmodifiableSet());
   }
 }

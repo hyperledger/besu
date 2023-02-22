@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -331,8 +330,8 @@ public class TransactionBroadcasterTest {
         .map(
             tx ->
                 local
-                    ? new PendingTransaction.Local(tx, Instant.now())
-                    : new PendingTransaction.Remote(tx, Instant.now()))
+                    ? new PendingTransaction.Local(tx, System.currentTimeMillis())
+                    : new PendingTransaction.Remote(tx, System.currentTimeMillis()))
         .collect(Collectors.toSet());
   }
 
@@ -343,8 +342,8 @@ public class TransactionBroadcasterTest {
         .map(
             tx ->
                 local
-                    ? new PendingTransaction.Local(tx, Instant.now())
-                    : new PendingTransaction.Remote(tx, Instant.now()))
+                    ? new PendingTransaction.Local(tx, System.currentTimeMillis())
+                    : new PendingTransaction.Remote(tx, System.currentTimeMillis()))
         .collect(Collectors.toSet());
   }
 

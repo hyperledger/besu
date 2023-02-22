@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.po
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -139,8 +138,7 @@ public class PendingTransactionFilterTest {
       if (i == numberTrx - 1) {
         when(transaction.isContractCreation()).thenReturn(true);
       }
-      pendingTransactionList.add(
-          new PendingTransaction.Local(transaction, Instant.ofEpochSecond(Integer.MAX_VALUE)));
+      pendingTransactionList.add(new PendingTransaction.Local(transaction, Long.MAX_VALUE));
     }
     return new LinkedHashSet<>(pendingTransactionList);
   }

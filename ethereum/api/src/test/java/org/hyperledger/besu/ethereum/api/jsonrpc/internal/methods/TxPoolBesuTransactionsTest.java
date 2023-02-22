@@ -58,7 +58,7 @@ public class TxPoolBesuTransactionsTest {
 
   @Test
   public void shouldReturnPendingTransactions() {
-    Instant addedAt = Instant.ofEpochMilli(10_000_000);
+    long addedAt = 10_000_000;
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
@@ -78,6 +78,6 @@ public class TxPoolBesuTransactionsTest {
 
     assertThat(actualResult.getHash()).isEqualTo(TRANSACTION_HASH);
     assertThat(actualResult.isReceivedFromLocalSource()).isTrue();
-    assertThat(actualResult.getAddedToPoolAt()).isEqualTo(addedAt.toString());
+    assertThat(actualResult.getAddedToPoolAt()).isEqualTo(Instant.ofEpochMilli(addedAt).toString());
   }
 }

@@ -29,7 +29,6 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
@@ -125,7 +124,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
                     new PendingTransaction.Remote(
                         createTransaction(
                             0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair()),
-                        Instant.now()))
+                        System.currentTimeMillis()))
             .collect(Collectors.toUnmodifiableList());
 
     final var lowestPriorityFee =

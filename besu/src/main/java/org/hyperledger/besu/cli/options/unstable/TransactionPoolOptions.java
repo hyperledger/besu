@@ -205,7 +205,7 @@ public class TransactionPoolOptions
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
         OptionParser.format(eth65TrxAnnouncedBufferingPeriod),
         LAYERED_TX_POOL_ENABLED_FLAG + "=" + layeredTxPoolEnabled,
-            LAYERED_TX_POOL_MAX_CAPACITY,
+        LAYERED_TX_POOL_MAX_CAPACITY,
         OptionParser.format(layeredTxPoolMaxCapacity),
         LAYERED_TX_POOL_MAX_PRIORITIZED,
         OptionParser.format(layeredTxPoolMaxPrioritized),

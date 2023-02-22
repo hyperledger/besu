@@ -185,7 +185,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertThat(metricsSystem.getCounterValue(EVICTED_COUNTER, READY)).isZero();
 
     final int freeSpace =
-        (int) (poolConf.getPendingTransactionsMaxCapacityBytes() - pendingTransactions.getUsedSpace());
+        (int)
+            (poolConf.getPendingTransactionsMaxCapacityBytes()
+                - pendingTransactions.getUsedSpace());
 
     final Transaction lastBigTx =
         createTransaction(

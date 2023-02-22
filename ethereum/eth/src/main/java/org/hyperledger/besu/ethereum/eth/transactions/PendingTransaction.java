@@ -19,7 +19,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,10 +32,10 @@ public abstract class PendingTransaction {
 
   private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
   private final Transaction transaction;
-  private final Instant addedToPoolAt;
+  private final long addedToPoolAt;
   private final long sequence; // Allows prioritization based on order transactions are added
 
-  protected PendingTransaction(final Transaction transaction, final Instant addedToPoolAt) {
+  protected PendingTransaction(final Transaction transaction, final long addedToPoolAt) {
     this.transaction = transaction;
     this.addedToPoolAt = addedToPoolAt;
     this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
@@ -68,7 +67,7 @@ public abstract class PendingTransaction {
     return transaction.getHash();
   }
 
-  public Instant getAddedToPoolAt() {
+  public long getAddedToPoolAt() {
     return addedToPoolAt;
   }
 
@@ -110,7 +109,7 @@ public abstract class PendingTransaction {
 
   public static class Local extends PendingTransaction {
 
-    public Local(final Transaction transaction, final Instant addedToPoolAt) {
+    public Local(final Transaction transaction, final long addedToPoolAt) {
       super(transaction, addedToPoolAt);
     }
 
@@ -122,7 +121,7 @@ public abstract class PendingTransaction {
 
   public static class Remote extends PendingTransaction {
 
-    public Remote(final Transaction transaction, final Instant addedToPoolAt) {
+    public Remote(final Transaction transaction, final long addedToPoolAt) {
       super(transaction, addedToPoolAt);
     }
 

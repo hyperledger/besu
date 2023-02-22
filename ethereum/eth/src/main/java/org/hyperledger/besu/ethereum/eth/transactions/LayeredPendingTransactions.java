@@ -37,7 +37,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -130,7 +129,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
     return addTransaction(
-        new PendingTransaction.Remote(transaction, Instant.now()), maybeSenderAccount);
+        new PendingTransaction.Remote(transaction, System.currentTimeMillis()), maybeSenderAccount);
   }
 
   @Override
@@ -139,7 +138,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final TransactionAddedResult addedResult =
         addTransaction(
-            new PendingTransaction.Local(transaction, Instant.now()), maybeSenderAccount);
+            new PendingTransaction.Local(transaction, System.currentTimeMillis()),
+            maybeSenderAccount);
     if (addedResult.isSuccess()) {
       localSenders.add(transaction.getSender());
     }

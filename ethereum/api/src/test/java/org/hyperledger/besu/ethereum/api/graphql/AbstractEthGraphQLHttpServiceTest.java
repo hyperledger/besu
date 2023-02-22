@@ -51,7 +51,6 @@ import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.net.URL;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -152,7 +151,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                         .gasLimit(654321)
                         .gasPrice(Wei.ONE)
                         .build(),
-                    Instant.ofEpochSecond(Integer.MAX_VALUE))));
+                    Long.MAX_VALUE)));
 
     final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());

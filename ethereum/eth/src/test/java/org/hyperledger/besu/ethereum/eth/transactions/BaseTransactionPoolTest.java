@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.Random;
 
@@ -117,11 +116,11 @@ public class BaseTransactionPoolTest {
   }
 
   protected PendingTransaction createRemotePendingTransaction(final Transaction transaction) {
-    return new PendingTransaction.Remote(transaction, Instant.now());
+    return new PendingTransaction.Remote(transaction, System.currentTimeMillis());
   }
 
   protected PendingTransaction createLocalPendingTransaction(final Transaction transaction) {
-    return new PendingTransaction.Local(transaction, Instant.now());
+    return new PendingTransaction.Local(transaction, System.currentTimeMillis());
   }
 
   protected void assertTransactionPendingAndReady(

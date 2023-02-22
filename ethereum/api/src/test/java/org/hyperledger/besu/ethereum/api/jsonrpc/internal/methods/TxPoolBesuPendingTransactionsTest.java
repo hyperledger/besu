@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -258,9 +257,7 @@ public class TxPoolBesuPendingTransactionsTest {
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     return gen.transactionsWithAllTypes(4).stream()
-        .map(
-            transaction ->
-                new PendingTransaction.Local(transaction, Instant.ofEpochSecond(Integer.MAX_VALUE)))
+        .map(transaction -> new PendingTransaction.Local(transaction, Long.MAX_VALUE))
         .collect(Collectors.toUnmodifiableSet());
   }
 }

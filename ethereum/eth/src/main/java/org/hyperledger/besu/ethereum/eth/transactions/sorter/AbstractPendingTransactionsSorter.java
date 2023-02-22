@@ -44,7 +44,6 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -145,11 +144,14 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   @Override
   public void evictOldTransactions() {
-    final Instant removeTransactionsBefore =
-        clock.instant().minus(poolConfig.getPendingTxRetentionPeriod(), ChronoUnit.HOURS);
+    final long removeTransactionsBefore =
+        clock
+            .instant()
+            .minus(poolConfig.getPendingTxRetentionPeriod(), ChronoUnit.HOURS)
+            .toEpochMilli();
 
     pendingTransactions.values().stream()
-        .filter(transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
+        .filter(transaction -> transaction.getAddedToPoolAt() < removeTransactionsBefore)
         .forEach(
             transactionInfo -> {
               traceLambda(LOG, "Evicted {} due to age", transactionInfo::toTraceLog);
@@ -178,7 +180,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     }
 
     final PendingTransaction pendingTransaction =
-        new PendingTransaction.Remote(transaction, clock.instant());
+        new PendingTransaction.Remote(transaction, clock.millis());
     final TransactionAddedResult transactionAddedStatus =
         addTransaction(pendingTransaction, maybeSenderAccount);
     if (transactionAddedStatus.equals(ADDED)) {
@@ -193,7 +195,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
     final TransactionAddedResult transactionAdded =
         addTransaction(
-            new PendingTransaction.Local(transaction, clock.instant()), maybeSenderAccount);
+            new PendingTransaction.Local(transaction, clock.millis()), maybeSenderAccount);
     if (transactionAdded.equals(ADDED)) {
       localSenders.add(transaction.getSender());
       localTransactionAddedCounter.inc();
