@@ -165,6 +165,9 @@ public class TransactionPoolOptions
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
     options.layeredTxPoolEnabled = config.getLayeredTxPoolEnabled();
+    options.layeredTxPoolMaxCapacity = config.getPendingTransactionsMaxCapacityBytes();
+    options.layeredTxPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
+    options.layeredTxPoolMaxFutureBySender = config.getMaxFutureBySender();
     return options;
   }
 
