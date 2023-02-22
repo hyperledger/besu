@@ -80,7 +80,8 @@ public class GeneralStateReferenceTestTools {
                     collector.add(prefix + eip, fullPath, eipSpecs.get(0), runTest);
                   } else {
                     for (int i = 0; i < eipSpecs.size(); i++) {
-                      collector.add(prefix + eip + '[' + i + ']', fullPath, eipSpecs.get(i), runTest);
+                      collector.add(
+                          prefix + eip + '[' + i + ']', fullPath, eipSpecs.get(i), runTest);
                     }
                   }
                 }
@@ -145,14 +146,16 @@ public class GeneralStateReferenceTestTools {
             blockHeader,
             transaction,
             blockHeader.getCoinbase(),
-            new BlockHashLookup(blockHeader, blockchain),
+            new CachingBlockHashLookup(blockHeader, blockchain),
             false,
             TransactionValidationParams.processingBlock());
     if (result.isInvalid()) {
       assertThat(spec.getExpectException()).isNotNull();
       return;
     }
-    assertThat(spec.getExpectException()).withFailMessage("Exception was expected - " + spec.getExpectException()).isNull();
+    assertThat(spec.getExpectException())
+        .withFailMessage("Exception was expected - " + spec.getExpectException())
+        .isNull();
 
     final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
     if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.getFork())) {
