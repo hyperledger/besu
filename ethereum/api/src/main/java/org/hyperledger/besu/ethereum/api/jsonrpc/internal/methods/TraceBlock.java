@@ -171,7 +171,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                 4,
                 outputCounter,
                 false,
-                "trace_replay_block_transactions")
+                "trace_block_transactions")
             .thenProcess("executeTransaction", executeTransactionStep)
             .thenProcessAsyncOrdered("traceFlatTransaction", traceFlatTransactionStep, 4)
             .andFinishWith("buildArrayNode", traceStream-> traceStream.forEachOrdered(buildArrayNodeStep));
