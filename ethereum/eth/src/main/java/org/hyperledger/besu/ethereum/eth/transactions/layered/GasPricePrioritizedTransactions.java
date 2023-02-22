@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions.sorter;
+package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static java.util.Comparator.comparing;
 

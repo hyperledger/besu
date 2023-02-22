@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.AbstractPrioritizedTransactions;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
