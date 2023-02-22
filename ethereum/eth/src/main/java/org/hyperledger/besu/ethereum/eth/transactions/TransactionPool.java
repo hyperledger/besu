@@ -226,14 +226,17 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     LOG.trace("Block added event {}", event);
-    if (isPoolEnabled.get()) {
-      pendingTransactions.manageBlockAdded(
-          event.getBlock().getHeader(),
-          event.getAddedTransactions(),
-          protocolSchedule
-              .getByBlockNumber(event.getBlock().getHeader().getNumber() + 1)
-              .getFeeMarket());
-      reAddTransactions(event.getRemovedTransactions());
+    if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
+        || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
+      if (isPoolEnabled.get()) {
+        pendingTransactions.manageBlockAdded(
+            event.getBlock().getHeader(),
+            event.getAddedTransactions(),
+            protocolSchedule
+                .getByBlockNumber(event.getBlock().getHeader().getNumber() + 1)
+                .getFeeMarket());
+        reAddTransactions(event.getRemovedTransactions());
+      }
     }
   }
 

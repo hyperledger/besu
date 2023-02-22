@@ -36,9 +36,7 @@ import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -65,7 +63,7 @@ public abstract class AbstractPrioritizedTransactions {
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
     this.poolConfig = poolConfig;
-    this.prioritizedPendingTransactions = new ConcurrentHashMap<>(poolConfig.getTxPoolMaxSize());
+    this.prioritizedPendingTransactions = new HashMap<>(poolConfig.getTxPoolMaxSize());
     this.expectedNonceForSender = new HashMap<>();
     this.clock = clock;
     this.transactionReplacementTester = transactionReplacementTester;
@@ -144,7 +142,6 @@ public abstract class AbstractPrioritizedTransactions {
               + "to make space for the incoming transaction {}",
           currentLeastPriorityTx::toTraceLog,
           addedReadyTransaction::toTraceLog);
-      // demoteLastPrioritizedForSender(currentLeastPriorityTx, senderReadyTxs);
       addPrioritizedTransaction(addedReadyTransaction);
       return PrioritizeResult.prioritizedDemotingTransaction(currentLeastPriorityTx);
     }
@@ -214,6 +211,7 @@ public abstract class AbstractPrioritizedTransactions {
   public void removeConfirmedTransactions(
       final Map<Address, Optional<Long>> orderedConfirmedNonceBySender,
       final List<PendingTransaction> confirmedTransactions) {
+
     confirmedTransactions.stream()
         .map(PendingTransaction::getHash)
         .map(prioritizedPendingTransactions::remove)
@@ -237,7 +235,9 @@ public abstract class AbstractPrioritizedTransactions {
 
   public abstract void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket);
 
-  public abstract Predicate<PendingTransaction> getPromotionFilter();
+  public boolean isPromotable(final PendingTransaction pendingTransaction) {
+    return !prioritizedPendingTransactions.containsKey(pendingTransaction.getHash());
+  }
 
   public String toTraceLog() {
     return "Prioritized size "
@@ -291,6 +291,7 @@ public abstract class AbstractPrioritizedTransactions {
                     expectedNonceForSender.get(sender),
                     sender,
                     nonce + 1);
+                LOG.info(toTraceLog());
               }
             });
   }

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.time.Clock;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -58,11 +57,6 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   protected void removeFromOrderedTransactions(
       final PendingTransaction removedPendingTx, final boolean addedToBlock) {
     orderByFee.remove(removedPendingTx);
-  }
-
-  @Override
-  public Predicate<PendingTransaction> getPromotionFilter() {
-    return pt -> true;
   }
 
   @Override

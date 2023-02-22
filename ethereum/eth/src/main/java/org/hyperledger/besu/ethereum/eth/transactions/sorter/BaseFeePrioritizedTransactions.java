@@ -27,7 +27,6 @@ import java.time.Clock;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -102,9 +101,9 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   }
 
   @Override
-  public Predicate<PendingTransaction> getPromotionFilter() {
-    return pendingTransaction ->
-        nextBlockBaseFee
+  public boolean isPromotable(final PendingTransaction pendingTransaction) {
+    return super.isPromotable(pendingTransaction)
+        && nextBlockBaseFee
             .map(
                 baseFee ->
                     pendingTransaction
