@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,10 +21,16 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.trie.LeafNode;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeFactory;
+import org.hyperledger.besu.ethereum.trie.NullNode;
 
 public class DefaultNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
+
+  private static final int NB_CHILD = 16;
 
   private final Function<V, Bytes> valueSerializer;
 
@@ -41,16 +47,16 @@ public class DefaultNodeFactory<V> implements NodeFactory<V> {
   @Override
   public Node<V> createBranch(
       final byte leftIndex, final Node<V> left, final byte rightIndex, final Node<V> right) {
-    assert (leftIndex <= BranchNode.RADIX);
-    assert (rightIndex <= BranchNode.RADIX);
+    assert (leftIndex <= NB_CHILD);
+    assert (rightIndex <= NB_CHILD);
     assert (leftIndex != rightIndex);
 
     final ArrayList<Node<V>> children =
-        new ArrayList<>(Collections.nCopies(BranchNode.RADIX, (Node<V>) NULL_NODE));
-    if (leftIndex == BranchNode.RADIX) {
+        new ArrayList<>(Collections.nCopies(NB_CHILD, (Node<V>) NULL_NODE));
+    if (leftIndex == NB_CHILD) {
       children.set(rightIndex, right);
       return createBranch(children, left.getValue());
-    } else if (rightIndex == BranchNode.RADIX) {
+    } else if (rightIndex == NB_CHILD) {
       children.set(leftIndex, left);
       return createBranch(children, right.getValue());
     } else {

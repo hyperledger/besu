@@ -19,6 +19,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

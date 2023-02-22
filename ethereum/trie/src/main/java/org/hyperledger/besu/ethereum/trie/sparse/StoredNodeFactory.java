@@ -12,14 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.binary;
+package org.hyperledger.besu.ethereum.trie.sparse;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.trie.BranchNode;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -30,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.StoredNode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -40,7 +40,7 @@ import static java.lang.String.format;
 public class StoredNodeFactory<V> implements NodeFactory<V> {
 
   @SuppressWarnings("rawtypes")
-  private static final NullNode NULL_NODE = NullNode.instance();
+  public static final NullNode NULL_NODE = NullNode.instance();
 
   @SuppressWarnings("rawtypes")
   private static final int NB_CHILD = 2;
@@ -73,7 +73,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     assert (leftIndex != rightIndex);
 
     final ArrayList<Node<V>> children =
-        new ArrayList<>(NB_CHILD);
+        new ArrayList<>(Collections.nCopies(NB_CHILD, (Node<V>) NULL_NODE));
 
     if (leftIndex == NB_CHILD) {
       children.set(rightIndex, right);
@@ -153,7 +153,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
         nodeRLPs.leaveList();
         return leafNode;
 
-      case (BranchNode.RADIX + 1):
+      case (NB_CHILD + 1):
         final BranchNode<V> branchNode = decodeBranch(location, nodeRLPs, errMessage);
         nodeRLPs.leaveList();
         return branchNode;
@@ -170,7 +170,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     final ArrayList<Node<V>> children = new ArrayList<>(NB_CHILD);
     for (int i = 0; i < NB_CHILD; ++i) {
       if (nodeRLPs.nextIsNull()) {
-        throw new MerkleTrieException(errMessage.get() + ": branch without child");
+        nodeRLPs.skipNext();
+        children.add(NULL_NODE);
       } else if (nodeRLPs.nextIsList()) {
         final Node<V> child =
             decode(

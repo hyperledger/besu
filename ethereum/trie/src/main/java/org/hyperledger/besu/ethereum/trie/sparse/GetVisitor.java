@@ -12,11 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.binary;
+package org.hyperledger.besu.ethereum.trie.sparse;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.BranchNode;
-import org.hyperledger.besu.ethereum.trie.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Node;
@@ -31,8 +32,8 @@ public class GetVisitor<V> implements PathNodeVisitor<V> {
   public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
 
     final byte childIndex = path.get(0);
-    if (childIndex >= 2 ) {
-      throw new MerkleTrieException("too many children in the branch");
+    if (childIndex == CompactEncoding.LEAF_TERMINATOR) {
+      return branchNode;
     }
 
     return branchNode.child(childIndex).accept(this, path.slice(1));

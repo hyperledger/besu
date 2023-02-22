@@ -12,11 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.binary;
+package org.hyperledger.besu.ethereum.trie.sparse;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.BranchNode;
-import org.hyperledger.besu.ethereum.trie.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Node;
@@ -45,6 +45,7 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
 
+    System.out.println(path+" "+leafPath);
     // Check if the current leaf node should be replaced
     if (commonPathLength == leafPath.size() && commonPathLength == path.size()) {
       return nodeFactory.createLeaf(leafPath, value);
@@ -54,14 +55,28 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
             : "Should not have consumed non-matching terminator";
 
     // The current leaf path must be split to accommodate the new value.
-    final byte newLeafIndex = path.get(0);
-    final Bytes newLeafPath = path.slice( 1);
 
-    final byte updatedLeafIndex = leafPath.get(0);
-    final Node<V> updatedLeaf = leafNode.replacePath(leafPath.slice(1));
+    final byte newLeafIndex = path.get(commonPathLength);
+    final Bytes newLeafPath = path.slice(commonPathLength + 1);
 
+    final byte updatedLeafIndex = leafPath.get(commonPathLength);
+
+    final Node<V> updatedLeaf = leafNode.replacePath(leafPath.slice(commonPathLength + 1));
     final Node<V> leaf = nodeFactory.createLeaf(newLeafPath, value);
-    return nodeFactory.createBranch(updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
+    Node<V> branch =
+            nodeFactory.createBranch(updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
+
+    //create all the common path
+    final Bytes commonPath = leafPath.slice(0, commonPathLength);
+    for (int i = commonPath.size()-1; i >= 0; i--) {
+      byte loc = commonPath.get(i);
+      switch (loc) {
+        case 0x00 -> branch = nodeFactory.createBranch(loc, branch, (byte) 0x01, NullNode.instance());
+        case 0x01 -> branch = nodeFactory.createBranch((byte) 0x00, NullNode.instance(), loc, branch);
+      }
+    }
+
+    return branch;
   }
 
   @Override

@@ -20,6 +20,8 @@ import java.util.Iterator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 
 public class TrieIterator<V> implements PathNodeVisitor<V> {
 
@@ -63,7 +65,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
       remainingPath = searchPath.slice(1);
     }
     paths.push(node.getPath());
-    for (byte i = iterateFrom; i < BranchNode.RADIX && state.continueIterating(); i++) {
+    for (byte i = iterateFrom; i < node.maxChild() && state.continueIterating(); i++) {
       paths.push(Bytes.of(i));
       final Node<V> child = node.child(i);
       child.accept(this, remainingPath);

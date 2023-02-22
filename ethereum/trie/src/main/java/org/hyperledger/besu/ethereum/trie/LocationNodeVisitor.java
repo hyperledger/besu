@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 
-interface LocationNodeVisitor<V> {
+public interface LocationNodeVisitor<V> {
 
   void visit(Bytes location, ExtensionNode<V> extensionNode);
 

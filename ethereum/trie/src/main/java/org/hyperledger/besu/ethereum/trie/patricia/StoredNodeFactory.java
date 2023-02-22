@@ -29,9 +29,7 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.trie.BranchNode;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.trie.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Node;
@@ -43,6 +41,8 @@ import org.hyperledger.besu.ethereum.trie.StoredNode;
 public class StoredNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final NullNode NULL_NODE = NullNode.instance();
+
+  private static final int RADIX = 16;
 
   private final NodeLoader nodeLoader;
   private final Function<V, Bytes> valueSerializer;
@@ -66,17 +66,17 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   @Override
   public Node<V> createBranch(
       final byte leftIndex, final Node<V> left, final byte rightIndex, final Node<V> right) {
-    assert (leftIndex <= BranchNode.RADIX);
-    assert (rightIndex <= BranchNode.RADIX);
+    assert (leftIndex <= RADIX);
+    assert (rightIndex <= RADIX);
     assert (leftIndex != rightIndex);
 
     final ArrayList<Node<V>> children =
-        new ArrayList<>(Collections.nCopies(BranchNode.RADIX, (Node<V>) NULL_NODE));
+        new ArrayList<>(Collections.nCopies(RADIX, (Node<V>) NULL_NODE));
 
-    if (leftIndex == BranchNode.RADIX) {
+    if (leftIndex == RADIX) {
       children.set(rightIndex, right);
       return createBranch(children, left.getValue());
-    } else if (rightIndex == BranchNode.RADIX) {
+    } else if (rightIndex == RADIX) {
       children.set(leftIndex, left);
       return createBranch(children, right.getValue());
     } else {
@@ -159,7 +159,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
           return extensionNode;
         }
 
-      case (BranchNode.RADIX + 1):
+      case (RADIX + 1):
         final BranchNode<V> branchNode = decodeBranch(location, nodeRLPs, errMessage);
         nodeRLPs.leaveList();
         return branchNode;
@@ -192,8 +192,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("unchecked")
   protected BranchNode<V> decodeBranch(
       final Bytes location, final RLPInput nodeRLPs, final Supplier<String> errMessage) {
-    final ArrayList<Node<V>> children = new ArrayList<>(BranchNode.RADIX);
-    for (int i = 0; i < BranchNode.RADIX; ++i) {
+    final ArrayList<Node<V>> children = new ArrayList<>(RADIX);
+    for (int i = 0; i < RADIX; ++i) {
       if (nodeRLPs.nextIsNull()) {
         nodeRLPs.skipNext();
         children.add(NULL_NODE);

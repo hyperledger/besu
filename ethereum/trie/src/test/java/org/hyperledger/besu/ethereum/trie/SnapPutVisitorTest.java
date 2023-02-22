@@ -19,6 +19,8 @@ import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.plugin.data.Hash;
 
@@ -41,7 +43,7 @@ public class SnapPutVisitorTest {
             new LeafNode<Bytes>(
                 Bytes.EMPTY, Bytes.of(0x00), storedNodeFactory, Function.identity()));
     final ArrayList<Node<Bytes>> children = new ArrayList<>();
-    for (int i = 0; i < BranchNode.RADIX; i++) {
+    for (int i = 0; i < 16; i++) {
       children.add(new StoredNode<>(storedNodeFactory, Bytes.EMPTY, Hash.ZERO));
     }
     final BranchNode<Bytes> invalidBranchNode =
@@ -64,7 +66,7 @@ public class SnapPutVisitorTest {
     when(storedNodeFactory.createBranch(any(), any()))
         .thenReturn(new MissingNode<>(Hash.ZERO, Bytes.EMPTY));
     final ArrayList<Node<Bytes>> children = new ArrayList<>();
-    for (int i = 0; i < BranchNode.RADIX; i++) {
+    for (int i = 0; i < 16; i++) {
       children.add(new StoredNode<>(storedNodeFactory, Bytes.EMPTY, Hash.ZERO));
     }
     final BranchNode<Bytes> invalidBranchNode =
@@ -88,7 +90,7 @@ public class SnapPutVisitorTest {
         .thenReturn(
             new LeafNode<>(Bytes.EMPTY, Bytes.of(0x00), storedNodeFactory, Function.identity()));
     final ArrayList<Node<Bytes>> children = new ArrayList<>();
-    for (int i = 0; i < BranchNode.RADIX; i++) {
+    for (int i = 0; i < 16; i++) {
       children.add(new StoredNode<>(storedNodeFactory, Bytes.EMPTY, Hash.ZERO));
     }
     final BranchNode<Bytes> invalidBranchNode =

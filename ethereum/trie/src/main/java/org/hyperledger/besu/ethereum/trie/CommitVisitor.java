@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 
 public class CommitVisitor<V> implements LocationNodeVisitor<V> {
 
@@ -44,7 +46,7 @@ public class CommitVisitor<V> implements LocationNodeVisitor<V> {
       return;
     }
 
-    for (byte i = 0; i < BranchNode.RADIX; ++i) {
+    for (byte i = 0; i < branchNode.maxChild(); ++i) {
       final Node<V> child = branchNode.child(i);
       if (child.isDirty()) {
         child.accept(Bytes.concatenate(location, Bytes.of(i)), this);

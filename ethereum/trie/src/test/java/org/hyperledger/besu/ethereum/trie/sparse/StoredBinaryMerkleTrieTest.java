@@ -12,11 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.binary;
+package org.hyperledger.besu.ethereum.trie.sparse;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.trie.patricia.AbstractMerklePatriciaTrieTest;
 import org.hyperledger.besu.ethereum.trie.KeyValueMerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -43,14 +42,14 @@ public class StoredBinaryMerkleTrieTest extends AbstractBinaryMerkleTrieTest {
     valueSerializer =
         value -> (value != null) ? Bytes.wrap(value.getBytes(StandardCharsets.UTF_8)) : null;
     valueDeserializer = bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8);
-    return new StoredBinaryMerkleTrie<>(merkleStorage::get, valueSerializer, valueDeserializer);
+    return new StoredSparseMerkleTrie<>(merkleStorage::get, valueSerializer, valueDeserializer);
   }
 
   @Test
   public void canReloadTrieFromHash() {
-    final Bytes key1 = Bytes.of(1, 5, 8, 9);
-    final Bytes key2 = Bytes.of(1, 6, 1, 2);
-    final Bytes key3 = Bytes.of(1, 6, 1, 3);
+    final Bytes key1 = Bytes.of(1, 0, 1, 1);
+    final Bytes key2 = Bytes.of(1, 0, 1, 0);
+    final Bytes key3 = Bytes.of(1, 1, 1, 1);
 
     // Push some values into the trie and commit changes so nodes are persisted
     final String value1 = "value1";
@@ -79,21 +78,21 @@ public class StoredBinaryMerkleTrieTest extends AbstractBinaryMerkleTrieTest {
 
     // Create new tries from root hashes and check that we find expected values
     trie =
-        new StoredBinaryMerkleTrie<>(
+        new StoredSparseMerkleTrie<>(
             merkleStorage::get, hash1, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.empty());
     assertThat(trie.get(key3)).isEqualTo(Optional.empty());
 
     trie =
-        new StoredBinaryMerkleTrie<>(
+        new StoredSparseMerkleTrie<>(
             merkleStorage::get, hash2, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
 
     trie =
-        new StoredBinaryMerkleTrie<>(
+        new StoredSparseMerkleTrie<>(
             merkleStorage::get, hash3, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value4"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
@@ -103,21 +102,21 @@ public class StoredBinaryMerkleTrieTest extends AbstractBinaryMerkleTrieTest {
     merkleStorage.commit();
     final MerkleStorage newMerkleStorage = new KeyValueMerkleStorage(keyValueStore);
     trie =
-        new StoredBinaryMerkleTrie<>(
+        new StoredSparseMerkleTrie<>(
             newMerkleStorage::get, hash1, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.empty());
     assertThat(trie.get(key3)).isEqualTo(Optional.empty());
 
     trie =
-        new StoredBinaryMerkleTrie<>(
+        new StoredSparseMerkleTrie<>(
             newMerkleStorage::get, hash2, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
 
     trie =
-        new StoredBinaryMerkleTrie<>(
+        new StoredSparseMerkleTrie<>(
             newMerkleStorage::get, hash3, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value4"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));

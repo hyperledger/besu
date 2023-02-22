@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.binary;
+package org.hyperledger.besu.ethereum.trie.sparse;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -96,14 +96,14 @@ public abstract class AbstractBinaryMerkleTrieTest {
   public void readPastLeaf() {
     final Bytes key1 = Bytes.of(1);
     trie.put(key1, "value");
-    final Bytes key2 = Bytes.of(1, 3);
+    final Bytes key2 = Bytes.of(1, 1);
     assertFalse(trie.get(key2).isPresent());
   }
 
   @Test
   public void branchValue() {
     final Bytes key1 = Bytes.of(1);
-    final Bytes key2 = Bytes.of(16);
+    final Bytes key2 = Bytes.of(0);
 
     final String value1 = "value1";
     trie.put(key1, value1);
@@ -116,22 +116,8 @@ public abstract class AbstractBinaryMerkleTrieTest {
   }
 
   @Test
-  public void readPastBranch() {
-    final Bytes key1 = Bytes.of(12);
-    final Bytes key2 = Bytes.of(12, 54);
-
-    final String value1 = "value1";
-    trie.put(key1, value1);
-    final String value2 = "value2";
-    trie.put(key2, value2);
-
-    final Bytes key3 = Bytes.of(3);
-    assertFalse(trie.get(key3).isPresent());
-  }
-
-  @Test
   public void branchWithValue() {
-    final Bytes key1 = Bytes.of(5);
+    final Bytes key1 = Bytes.of(1);
     final Bytes key2 = Bytes.EMPTY;
 
     final String value1 = "value1";
@@ -146,8 +132,8 @@ public abstract class AbstractBinaryMerkleTrieTest {
 
   @Test
   public void extendAndBranch() {
-    final Bytes key1 = Bytes.of(1, 5, 9);
-    final Bytes key2 = Bytes.of(1, 5, 2);
+    final Bytes key1 = Bytes.of(1, 1, 0);
+    final Bytes key2 = Bytes.of(1, 0, 0);
 
     final String value1 = "value1";
     trie.put(key1, value1);
@@ -158,50 +144,6 @@ public abstract class AbstractBinaryMerkleTrieTest {
     assertThat(trie.get(key1)).isEqualTo(Optional.of(value1));
     assertThat(trie.get(key2)).isEqualTo(Optional.of(value2));
     assertFalse(trie.get(Bytes.of(1, 4)).isPresent());
-  }
-
-  @Test
-  public void branchFromTopOfExtend() {
-    final Bytes key1 = Bytes.of(0xfe, 1);
-    final Bytes key2 = Bytes.of(0xfe, 2);
-    final Bytes key3 = Bytes.of(0xe1, 1);
-
-    final String value1 = "value1";
-    trie.put(key1, value1);
-
-    final String value2 = "value2";
-    trie.put(key2, value2);
-
-    final String value3 = "value3";
-    trie.put(key3, value3);
-
-    assertThat(trie.get(key1)).isEqualTo(Optional.of(value1));
-    assertThat(trie.get(key2)).isEqualTo(Optional.of(value2));
-    assertThat(trie.get(key3)).isEqualTo(Optional.of(value3));
-    assertFalse(trie.get(Bytes.of(1, 4)).isPresent());
-    assertFalse(trie.get(Bytes.of(2, 4)).isPresent());
-    assertFalse(trie.get(Bytes.of(3)).isPresent());
-  }
-
-  @Test
-  public void splitBranchExtension() {
-    final Bytes key1 = Bytes.of(1, 5, 9);
-    final Bytes key2 = Bytes.of(1, 5, 2);
-
-    final String value1 = "value1";
-    trie.put(key1, value1);
-
-    final String value2 = "value2";
-    trie.put(key2, value2);
-
-    final Bytes key3 = Bytes.of(1, 9, 1);
-
-    final String value3 = "value3";
-    trie.put(key3, value3);
-
-    assertThat(trie.get(key1)).isEqualTo(Optional.of(value1));
-    assertThat(trie.get(key2)).isEqualTo(Optional.of(value2));
-    assertThat(trie.get(key3)).isEqualTo(Optional.of(value3));
   }
 
   @Test
@@ -226,11 +168,11 @@ public abstract class AbstractBinaryMerkleTrieTest {
 
   @Test
   public void inlineBranchInBranch() {
-    final Bytes key1 = Bytes.of(0);
-    final Bytes key2 = Bytes.of(1);
-    final Bytes key3 = Bytes.of(2);
-    final Bytes key4 = Bytes.of(0, 0);
-    final Bytes key5 = Bytes.of(0, 1);
+    final Bytes key1 = Bytes.of(1,1,0);
+    final Bytes key2 = Bytes.of(1,0,0);
+    final Bytes key3 = Bytes.of(1,1,1);
+    final Bytes key4 = Bytes.of(0, 0,0);
+    final Bytes key5 = Bytes.of(0, 1,0);
 
     trie.put(key1, "value1");
     trie.put(key2, "value2");
@@ -248,28 +190,13 @@ public abstract class AbstractBinaryMerkleTrieTest {
     assertThat(trie.get(key5)).isEqualTo(Optional.of("value5"));
   }
 
-  @Test
-  public void removeNodeInBranchExtensionHasNoEffect() {
-    final Bytes key1 = Bytes.of(1, 5, 9);
-    final Bytes key2 = Bytes.of(1, 5, 2);
 
-    final String value1 = "value1";
-    trie.put(key1, value1);
-
-    final String value2 = "value2";
-    trie.put(key2, value2);
-
-    final Bytes hash = trie.getRootHash();
-
-    trie.remove(Bytes.of(1, 4));
-    assertThat(trie.getRootHash()).isEqualTo(hash);
-  }
 
   @Test
   public void hashChangesWhenValueChanged() {
-    final Bytes key1 = Bytes.of(1, 5, 8, 9);
-    final Bytes key2 = Bytes.of(1, 6, 1, 2);
-    final Bytes key3 = Bytes.of(1, 6, 1, 3);
+    final Bytes key1 = Bytes.of(1,1,0);
+    final Bytes key2 = Bytes.of(1,0,0);
+    final Bytes key3 = Bytes.of(1,1,1);
 
     final String value1 = "value1";
     trie.put(key1, value1);
@@ -277,6 +204,7 @@ public abstract class AbstractBinaryMerkleTrieTest {
 
     final String value2 = "value2";
     trie.put(key2, value2);
+    final Bytes32 hash6 = trie.getRootHash();
     final String value3 = "value3";
     trie.put(key3, value3);
     final Bytes32 hash2 = trie.getRootHash();
@@ -293,29 +221,12 @@ public abstract class AbstractBinaryMerkleTrieTest {
     trie.put(key1, value1);
     assertThat(trie.getRootHash()).isEqualTo(hash2);
 
-    trie.remove(key2);
     trie.remove(key3);
+
+    assertThat(trie.getRootHash()).isEqualTo(hash6);
+
+    trie.remove(key2);
     assertThat(trie.getRootHash()).isEqualTo(hash1);
-  }
-
-  @Test
-  public void shouldRetrieveStoredExtensionWithInlinedChild() {
-    final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-    final MerkleStorage merkleStorage = new KeyValueMerkleStorage(keyValueStorage);
-    final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(merkleStorage::get, b -> b, b -> b);
-
-    // Both of these can be inlined in its parent branch and the branch
-    // itself can be inlined into its parent extension.
-    trie.put(Bytes.fromHexString("0x0400"), Bytes.of(1));
-    trie.put(Bytes.fromHexString("0x0800"), Bytes.of(2));
-    trie.commit(merkleStorage::put);
-
-    // Ensure the extension branch can be loaded correct with its inlined child.
-    final Bytes32 rootHash = trie.getRootHash();
-    final StoredMerklePatriciaTrie<Bytes, Bytes> newTrie =
-        new StoredMerklePatriciaTrie<>(merkleStorage::get, rootHash, b -> b, b -> b);
-    newTrie.get(Bytes.fromHexString("0x0401"));
   }
 
   @Test
@@ -328,24 +239,24 @@ public abstract class AbstractBinaryMerkleTrieTest {
         new StoredMerklePatriciaTrie<>(merkleStorage::get, b -> b, b -> b);
 
     // Both of these can be inlined in its parent branch.
-    trie.put(Bytes.fromHexString("0x0400"), Bytes.of(1));
-    trie.put(Bytes.fromHexString("0x0800"), Bytes.of(2));
+    trie.put(Bytes.fromHexString("0x0100"), Bytes.of(1));
+    trie.put(Bytes.fromHexString("0x0000"), Bytes.of(2));
     trie.commit(merkleStorage::put);
 
     final Bytes32 rootHash = trie.getRootHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> newTrie =
         new StoredMerklePatriciaTrie<>(merkleStorage::get, rootHash, b -> b, b -> b);
 
-    newTrie.put(Bytes.fromHexString("0x0800"), Bytes.of(3));
-    newTrie.get(Bytes.fromHexString("0x0401"));
+    newTrie.put(Bytes.fromHexString("0x0000"), Bytes.of(3));
+    newTrie.get(Bytes.fromHexString("0x0101"));
     trie.commit(merkleStorage::put);
 
-    newTrie.get(Bytes.fromHexString("0x0401"));
+    newTrie.get(Bytes.fromHexString("0x0101"));
   }
 
   @Test
   public void getValueWithProof_emptyTrie() {
-    final Bytes key1 = Bytes.of(0xfe, 1);
+    final Bytes key1 = Bytes.of(0x1, 0x1);
 
     Proof<String> valueWithProof = trie.getValueWithProof(key1);
     assertThat(valueWithProof.getValue()).isEmpty();
@@ -354,9 +265,9 @@ public abstract class AbstractBinaryMerkleTrieTest {
 
   @Test
   public void getValueWithProof_forExistingValues() {
-    final Bytes key1 = Bytes.of(0xfe, 1);
-    final Bytes key2 = Bytes.of(0xfe, 2);
-    final Bytes key3 = Bytes.of(0xfe, 3);
+    final Bytes key1 = Bytes.of(1,1,0);
+    final Bytes key2 = Bytes.of(1,0,0);
+    final Bytes key3 = Bytes.of(1,1,1);
 
     final String value1 = "value1";
     trie.put(key1, value1);
@@ -380,10 +291,10 @@ public abstract class AbstractBinaryMerkleTrieTest {
 
   @Test
   public void getValueWithProof_forNonExistentValue() {
-    final Bytes key1 = Bytes.of(0xfe, 1);
-    final Bytes key2 = Bytes.of(0xfe, 2);
-    final Bytes key3 = Bytes.of(0xfe, 3);
-    final Bytes key4 = Bytes.of(0xfe, 4);
+    final Bytes key1 = Bytes.of(1,1,0);
+    final Bytes key2 = Bytes.of(1,0,0);
+    final Bytes key3 = Bytes.of(1,1,1);
+    final Bytes key4 = Bytes.of(0, 0,0);
 
     final String value1 = "value1";
     trie.put(key1, value1);
@@ -401,7 +312,7 @@ public abstract class AbstractBinaryMerkleTrieTest {
 
   @Test
   public void getValueWithProof_singleNodeTrie() {
-    final Bytes key1 = Bytes.of(0xfe, 1);
+    final Bytes key1 = Bytes.of(0, 1);
     final String value1 = "1";
     trie.put(key1, value1);
 

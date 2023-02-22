@@ -15,9 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.patricia;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.BranchNode;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.trie.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeFactory;
