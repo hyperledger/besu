@@ -41,7 +41,7 @@ sonarqube {
   }
 }
 
-// project.tasks["sonarqube"].dependsOn "jacocoRootReport"
+project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
   throw new GradleException("Java 17 or later is required to build Besu.\n" +
