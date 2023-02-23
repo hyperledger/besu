@@ -529,13 +529,12 @@ public class FlatTraceGenerator {
   }
 
   private static boolean hasRevertInSubCall(
-          final TransactionTrace transactionTrace, final TraceFrame callFrame) {
-    return transactionTrace.getTraceFrames()
-            .stream()
-            .filter(traceFrame -> !traceFrame.equals(callFrame))
-            .takeWhile(traceFrame -> !traceFrame.getOpcode().equals("RETURN"))
-            .filter(traceFrame -> traceFrame.getOpcode().equals("REVERT"))
-            .anyMatch(traceFrame -> traceFrame.getDepth() == callFrame.getDepth());
+      final TransactionTrace transactionTrace, final TraceFrame callFrame) {
+    return transactionTrace.getTraceFrames().stream()
+        .filter(traceFrame -> !traceFrame.equals(callFrame))
+        .takeWhile(traceFrame -> !traceFrame.getOpcode().equals("RETURN"))
+        .filter(traceFrame -> traceFrame.getOpcode().equals("REVERT"))
+        .anyMatch(traceFrame -> traceFrame.getDepth() == callFrame.getDepth());
   }
 
   private static String calculateCallingAddress(final FlatTrace.Context lastContext) {

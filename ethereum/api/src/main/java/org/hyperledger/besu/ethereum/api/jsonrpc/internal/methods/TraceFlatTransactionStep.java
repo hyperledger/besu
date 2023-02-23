@@ -22,20 +22,23 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.F
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class TraceFlatTransactionStep implements Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> {
+public class TraceFlatTransactionStep
+    implements Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> {
 
   private final ProtocolSchedule protocolSchedule;
   private final Block block;
-  private final Optional <FilterParameter> filterParameter;
+  private final Optional<FilterParameter> filterParameter;
 
-  public TraceFlatTransactionStep(final ProtocolSchedule protocolSchedule, final Block block, final Optional<FilterParameter> filterParameter) {
+  public TraceFlatTransactionStep(
+      final ProtocolSchedule protocolSchedule,
+      final Block block,
+      final Optional<FilterParameter> filterParameter) {
     this.protocolSchedule = protocolSchedule;
     this.block = block;
     this.filterParameter = filterParameter;
@@ -48,30 +51,30 @@ public class TraceFlatTransactionStep implements Function<TransactionTrace, Comp
       final List<Address> fromAddress = filterParameter.get().getFromAddress();
       final List<Address> toAddress = filterParameter.get().getToAddress();
 
-      return CompletableFuture.completedFuture(FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-                      protocolSchedule, transactionTrace, block)
+      return CompletableFuture.completedFuture(
+          FlatTraceGenerator.generateFromTransactionTraceAndBlock(
+                  protocolSchedule, transactionTrace, block)
               .map(FlatTrace.class::cast)
               .filter(
-                      trace ->
-                              fromAddress.isEmpty()
-                                      || Optional.ofNullable(trace.getAction().getFrom())
-                                      .map(Address::fromHexString)
-                                      .map(fromAddress::contains)
-                                      .orElse(false))
+                  trace ->
+                      fromAddress.isEmpty()
+                          || Optional.ofNullable(trace.getAction().getFrom())
+                              .map(Address::fromHexString)
+                              .map(fromAddress::contains)
+                              .orElse(false))
               .filter(
-                      trace ->
-                              toAddress.isEmpty()
-                                      || Optional.ofNullable(trace.getAction().getTo())
-                                      .map(Address::fromHexString)
-                                      .map(toAddress::contains)
-                                      .orElse(false)));
-
+                  trace ->
+                      toAddress.isEmpty()
+                          || Optional.ofNullable(trace.getAction().getTo())
+                              .map(Address::fromHexString)
+                              .map(toAddress::contains)
+                              .orElse(false)));
 
     } else {
-      return CompletableFuture.completedFuture(FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-                      protocolSchedule, transactionTrace, block)
+      return CompletableFuture.completedFuture(
+          FlatTraceGenerator.generateFromTransactionTraceAndBlock(
+                  protocolSchedule, transactionTrace, block)
               .map(FlatTrace.class::cast));
     }
   }
-
 }

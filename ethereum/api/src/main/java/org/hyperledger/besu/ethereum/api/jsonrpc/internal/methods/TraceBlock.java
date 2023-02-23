@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
@@ -38,7 +37,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -47,8 +45,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -65,15 +61,13 @@ public class TraceBlock extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceBlock.class);
   private final EthScheduler ethScheduler = new EthScheduler(4, 4, 4, 4, new NoOpMetricsSystem());
   private static final ObjectMapper MAPPER = new ObjectMapper();
-  //private final Supplier<BlockTracer> blockTracerSupplier;
+  // private final Supplier<BlockTracer> blockTracerSupplier;
   protected final ProtocolSchedule protocolSchedule;
   // Either the initial block state or the state of the prior TX, including miner rewards.
 
-  public TraceBlock(
-      final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries queries) {
+  public TraceBlock(final ProtocolSchedule protocolSchedule, final BlockchainQueries queries) {
     super(queries);
-//    this.blockTracerSupplier = blockTracerSupplier;
+    //    this.blockTracerSupplier = blockTracerSupplier;
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -139,54 +133,56 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                             + previous.getStateRoot().toShortHexString()))) {
       // return action.perform(body, header, blockchain, worldState, transactionProcessor);
 
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+      final MainnetTransactionProcessor transactionProcessor =
+          protocolSpec.getTransactionProcessor();
+      final ChainUpdater chainUpdater = new ChainUpdater(worldState);
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
-    final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
-    final ChainUpdater chainUpdater = new ChainUpdater(worldState);
+      TransactionSource transactionSource = new TransactionSource(block);
+      final LabelledMetric<Counter> outputCounter =
+          new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
+              .createLabelledCounter(
+                  BesuMetricCategory.BLOCKCHAIN,
+                  "transactions_traceblock_pipeline_processed_total",
+                  "Number of transactions processed for each block",
+                  "step",
+                  "action");
+      DebugOperationTracer debugOperationTracer =
+          new DebugOperationTracer(new TraceOptions(false, false, true));
+      ExecuteTransactionStep executeTransactionStep =
+          new ExecuteTransactionStep(
+              chainUpdater,
+              block,
+              transactionProcessor,
+              getBlockchainQueries().getBlockchain(),
+              debugOperationTracer,
+              protocolSpec);
+      Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> traceFlatTransactionStep =
+          new TraceFlatTransactionStep(protocolSchedule, block, filterParameter);
+      Consumer<FlatTrace> buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
+      Pipeline<Transaction> traceBlockPipeline =
+          createPipelineFrom(
+                  "getTransactions",
+                  transactionSource,
+                  4,
+                  outputCounter,
+                  false,
+                  "trace_block_transactions")
+              .thenProcess("executeTransaction", executeTransactionStep)
+              .thenProcessAsyncOrdered("traceFlatTransaction", traceFlatTransactionStep, 4)
+              .andFinishWith(
+                  "buildArrayNode", traceStream -> traceStream.forEachOrdered(buildArrayNodeStep));
 
-    TransactionSource transactionSource = new TransactionSource(block);
-    final LabelledMetric<Counter> outputCounter =
-            new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES,false).createLabelledCounter(
-                    BesuMetricCategory.BLOCKCHAIN,
-                    "transactions_traceblock_pipeline_processed_total",
-                    "Number of transactions processed for each block",
-                    "step",
-                    "action");
-    DebugOperationTracer debugOperationTracer =
-        new DebugOperationTracer(new TraceOptions(false, false, true));
-    ExecuteTransactionStep executeTransactionStep =
-        new ExecuteTransactionStep(
-                chainUpdater,
-            block,
-            transactionProcessor,
-            getBlockchainQueries().getBlockchain(),
-            debugOperationTracer);
-    Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> traceFlatTransactionStep =
-        new TraceFlatTransactionStep(protocolSchedule, block, filterParameter);
-    Consumer<FlatTrace> buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
-    Pipeline<Transaction> traceBlockPipeline =
-        createPipelineFrom(
-                "getTransactions",
-                transactionSource,
-                4,
-                outputCounter,
-                false,
-                "trace_block_transactions")
-            .thenProcess("executeTransaction", executeTransactionStep)
-            .thenProcessAsyncOrdered("traceFlatTransaction", traceFlatTransactionStep, 4)
-            .andFinishWith("buildArrayNode", traceStream-> traceStream.forEachOrdered(buildArrayNodeStep));
+      try {
+        ethScheduler.startPipeline(traceBlockPipeline).get();
+      } catch (InterruptedException e) {
+        // no-op
+      } catch (ExecutionException e) {
+        // no-op
+      }
 
-
-    try {
-      ethScheduler.startPipeline(traceBlockPipeline).get();
-    } catch (InterruptedException e) {
-      // no-op
-    } catch (ExecutionException e) {
-      // no-op
-    }
-
-    resultArrayNode = ((BuildArrayNodeCompleterStep) buildArrayNodeStep).getResultArrayNode();
-    generateRewardsFromBlock(filterParameter, block, resultArrayNode);
+      resultArrayNode = ((BuildArrayNodeCompleterStep) buildArrayNodeStep).getResultArrayNode();
+      generateRewardsFromBlock(filterParameter, block, resultArrayNode);
     } catch (Exception exception) {
       // no-op
     }
@@ -217,7 +213,6 @@ public class TraceBlock extends AbstractBlockParameterMethod {
     return new ArrayNodeWrapper(MAPPER.createArrayNode());
   }
 
-
   public static class ChainUpdater {
 
     private final MutableWorldState worldState;
@@ -227,10 +222,10 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       this.worldState = worldState;
     }
 
-    public WorldUpdater getNextUpdater(){
-      if (updater==null) {
+    public WorldUpdater getNextUpdater() {
+      if (updater == null) {
         updater = worldState.updater();
-      } else if(updater instanceof StackedUpdater) {
+      } else if (updater instanceof StackedUpdater) {
         ((StackedUpdater) updater).markTransactionBoundary();
       }
       updater = updater.updater();
