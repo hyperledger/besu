@@ -105,10 +105,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   /**
-   * Gets by block header.
+   * Gets protocol spec by block header.
    *
    * @param blockHeader the block header
-   * @return the by block header
+   * @return the ProtocolSpec to be used by the provided block
    */
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
@@ -120,6 +120,12 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
                     protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader)));
   }
 
+  /**
+   * Gets the protocol spec by block header, with some additional logic used by backwards sync (BWS)
+   *
+   * @param blockHeader the block header
+   * @return the ProtocolSpec to be used by the provided block
+   */
   public ProtocolSpec getByBlockHeaderForBws(final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
         .getByTimestamp(blockHeader.getTimestamp())
