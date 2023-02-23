@@ -70,7 +70,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary, Wei.ZERO);
 
     // tx is willing to pay max 6 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, so it is skipped
@@ -90,7 +91,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary, Wei.ZERO);
 
     // tx is willing to pay max 6 wei for gas, and current network condition (baseFee == 5)
     // result in it paying the max, that is >= the minimum accepted by the node, so it is selected
@@ -112,7 +114,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary);
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary, Wei.ZERO);
 
     // tx is willing to pay max 6 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, but since it is
