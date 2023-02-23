@@ -14,26 +14,59 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
+import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Wei;
+
+import java.math.BigInteger;
 import java.util.Optional;
 
-public class CancunFeeMarket extends LondonFeeMarket {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  private static final int MIN_DATA_GAS_PRICE = 1;
-  private static final int DATA_GAS_PRICE_UPDATE_FRACTION = 2225652;
+public class CancunFeeMarket extends LondonFeeMarket {
+  private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
+  private static final BigInteger MIN_DATA_GAS_PRICE = BigInteger.ONE;
+  private static final BigInteger DATA_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(2225652);
 
   public CancunFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    super(
-        new TransactionPriceCalculator.DataBlob(MIN_DATA_GAS_PRICE, DATA_GAS_PRICE_UPDATE_FRACTION),
-        londonForkBlockNumber,
-        baseFeePerGasOverride);
+    super(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
   @Override
   public boolean implementsDataFee() {
     return true;
+  }
+
+  @Override
+  public Wei dataPrice(final DataGas excessDataGas) {
+    final var dataGasPrice =
+        Wei.of(
+            fakeExponential(
+                MIN_DATA_GAS_PRICE, excessDataGas.toBigInteger(), DATA_GAS_PRICE_UPDATE_FRACTION));
+    traceLambda(
+        LOG,
+        "parentExcessDataGas: {} dataGasPrice: {}",
+        excessDataGas::toShortHexString,
+        dataGasPrice::toHexString);
+
+    return dataGasPrice;
+  }
+
+  private BigInteger fakeExponential(
+      final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
+    int i = 1;
+    BigInteger output = BigInteger.ZERO;
+    BigInteger numeratorAccumulator = factor.multiply(denominator);
+    while (numeratorAccumulator.signum() > 0) {
+      output = output.add(numeratorAccumulator);
+      numeratorAccumulator =
+          (numeratorAccumulator.multiply(numerator))
+              .divide(denominator.multiply(BigInteger.valueOf(i)));
+      ++i;
+    }
+    return output.divide(denominator);
   }
 }

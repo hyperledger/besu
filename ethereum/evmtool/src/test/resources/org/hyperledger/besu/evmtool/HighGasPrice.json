@@ -1,15 +1,5 @@
 {
     "HighGasPrice" : {
-        "_info" : {
-            "comment" : "",
-            "filling-rpc-server" : "evm version 1.10.16-unstable-0f893109-20220105",
-            "filling-tool-version" : "retesteth-0.2.2-testinfo+commit.01c6aac2.Linux.g++",
-            "generatedTestHash" : "399ed11fc62af31e9c3dc126828160c15b9c2422373ef7f68a628017a9693a63",
-            "lllcversion" : "Version: 0.5.14-develop.2021.11.27+commit.401d5358.Linux.g++",
-            "solidity" : "Version: 0.8.5+commit.a4f2e591.Linux.g++",
-            "source" : "src/GeneralStateTestsFiller/stTransactionTest/HighGasPriceFiller.yml",
-            "sourceHash" : "b3c0dfeeca0bb9616669d0bdd0996e24c71febd2579d14e9ec42914e9f096a44"
-        },
         "env" : {
             "currentBaseFee" : "0x0a",
             "currentCoinbase" : "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",

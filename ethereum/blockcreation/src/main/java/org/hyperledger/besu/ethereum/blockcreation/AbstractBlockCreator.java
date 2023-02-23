@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -169,6 +168,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           createPendingBlockHeader(timestamp, maybePrevRandao, newProtocolSpec);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
+      final Wei dataGasPrice =
+          newProtocolSpec
+              .getFeeMarket()
+              .dataPrice(parentHeader.getExcessDataGas().orElse(DataGas.ZERO));
 
       throwIfStopped();
 
@@ -181,6 +184,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               disposableWorldState,
               maybeTransactions,
               miningBeneficiary,
+              dataGasPrice,
               newProtocolSpec);
 
       throwIfStopped();
@@ -278,6 +282,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
       final Address miningBeneficiary,
+      final Wei dataGasPrice,
       final ProtocolSpec protocolSpec)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
@@ -297,6 +302,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
+            dataGasPrice,
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
             protocolSpec.getGasLimitCalculator());
@@ -342,13 +348,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<Bytes32> maybePrevRandao,
       final ProtocolSpec protocolSpec) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final GasLimitCalculator gasLimitCalculator = protocolSpec.getGasLimitCalculator();
-
-    final long gasLimit =
-        gasLimitCalculator.nextGasLimit(
-            parentHeader.getGasLimit(),
-            targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
-            newBlockNumber);
+    long gasLimit =
+        protocolSpec
+            .getGasLimitCalculator()
+            .nextGasLimit(
+                parentHeader.getGasLimit(),
+                targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
+                newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =

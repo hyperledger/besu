@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,6 +19,7 @@ package org.hyperledger.besu.evm.gascalculator;
  *
  * <UL>
  *   <LI>Gas costs for TSTORE/TLOAD
+ *   <LI>Data gas for EIP-4844
  * </UL>
  */
 public class CancunGasCalculator extends LondonGasCalculator {
@@ -45,17 +46,9 @@ public class CancunGasCalculator extends LondonGasCalculator {
     return DATA_GAS_PER_BLOB * blobCount;
   }
 
-  /**
-   * Compute the new excess data gas for the block, using the parent value and the number of new
-   * blobs
-   *
-   * @param parentExcessDataGas the excess data gas value from the parent block
-   * @param newBlobs the number of blobs in the new block
-   * @return the new excess data gas value
-   */
   @Override
   public long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
-    final long consumedDataGas = DATA_GAS_PER_BLOB * newBlobs;
+    final long consumedDataGas = dataGasCost(newBlobs);
     final long currentExcessDataGas = parentExcessDataGas + consumedDataGas;
 
     if (currentExcessDataGas < TARGET_DATA_GAS_PER_BLOCK) {

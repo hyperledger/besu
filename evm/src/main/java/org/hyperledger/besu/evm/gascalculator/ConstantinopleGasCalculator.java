@@ -20,7 +20,8 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
+
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 

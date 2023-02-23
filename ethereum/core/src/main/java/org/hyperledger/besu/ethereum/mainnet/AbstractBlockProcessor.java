@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -108,6 +109,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
+      final Wei dataGasPrice =
+          protocolSpec
+              .getFeeMarket()
+              .dataPrice(
+                  blockchain
+                      .getBlockHeader(blockHeader.getParentHash())
+                      .flatMap(BlockHeader::getExcessDataGas)
+                      .orElse(DataGas.ZERO));
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
@@ -120,7 +129,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               true,
               TransactionValidationParams.processingBlock(),
-              privateMetadataUpdater);
+              privateMetadataUpdater,
+              dataGasPrice);
       if (result.isInvalid()) {
         String errorMessage =
             MessageFormat.format(

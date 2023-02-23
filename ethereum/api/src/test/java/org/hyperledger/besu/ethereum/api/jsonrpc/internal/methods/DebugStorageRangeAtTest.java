@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
@@ -155,6 +156,7 @@ public class DebugStorageRangeAtTest {
     //noinspection rawtypes
     return Optional.of(
         ((BlockReplay.TransactionAction) invocation.getArgument(2))
-            .performAction(transaction, blockHeader, blockchain, worldState, transactionProcessor));
+            .performAction(
+                transaction, blockHeader, blockchain, worldState, transactionProcessor, Wei.ZERO));
   }
 }

@@ -20,10 +20,8 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
@@ -127,7 +125,8 @@ public class MainnetTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams) {
+      final TransactionValidationParams transactionValidationParams,
+      final Wei dataGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -138,7 +137,8 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams,
-        null);
+        null,
+        dataGasPrice);
   }
 
   /**
@@ -167,7 +167,8 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final OperationTracer operationTracer) {
+      final OperationTracer operationTracer,
+      final Wei dataGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -178,7 +179,8 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams,
-        null);
+        null,
+        dataGasPrice);
   }
 
   /**
@@ -202,7 +204,8 @@ public class MainnetTransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState) {
+      final Boolean isPersistingPrivateState,
+      final Wei dataGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -213,7 +216,8 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         ImmutableTransactionValidationParams.builder().build(),
-        null);
+        null,
+        dataGasPrice);
   }
 
   /**
@@ -239,7 +243,8 @@ public class MainnetTransactionProcessor {
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams) {
+      final TransactionValidationParams transactionValidationParams,
+      final Wei dataGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -250,11 +255,12 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams,
-        null);
+        null,
+        dataGasPrice);
   }
 
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
+      final Blockchain ignoredBlockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -263,7 +269,8 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final Wei dataGasPrice) {
     try {
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
@@ -298,14 +305,6 @@ public class MainnetTransactionProcessor {
 
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
-      final Wei dataGasPrice =
-          feeMarket
-              .getTransactionPriceCalculator()
-              .dataPrice(
-                  blockchain
-                      .getBlockHeader(blockHeader.getParentHash())
-                      .flatMap(BlockHeader::getExcessDataGas)
-                      .orElse(DataGas.ZERO));
 
       final long dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
 
@@ -344,7 +343,7 @@ public class MainnetTransactionProcessor {
 
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList)",
+          "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
