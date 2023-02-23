@@ -750,28 +750,6 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
-  static ProtocolSpecBuilder eip6110Definition(
-      final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
-
-    return cancunDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            quorumCompatibilityMode,
-            evmConfiguration)
-        .depositsProcessor(new DepositsProcessor())
-        .depositsValidator(new DepositsValidator.AllowedDeposits())
-        .name("Eip6110");
-  }
-
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
@@ -817,6 +795,8 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.experimentalEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .depositsProcessor(new DepositsProcessor())
+        .depositsValidator(new DepositsValidator.AllowedDeposits())
         .name("ExperimentalEips");
   }
 

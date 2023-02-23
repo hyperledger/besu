@@ -310,11 +310,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEIP6110Time() {
-    return getOptionalLong("eip6110time");
-  }
-
-  @Override
   public OptionalLong getFutureEipsTime() {
     return getOptionalLong("futureeipstime");
   }
