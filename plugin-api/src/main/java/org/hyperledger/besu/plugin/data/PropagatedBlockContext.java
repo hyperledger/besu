@@ -27,9 +27,9 @@ public interface PropagatedBlockContext {
   BlockHeader getBlockHeader();
 
   /**
-   * A {@link BlockHeader} object.
+   * A {@link BlockBody} object.
    *
-   * @return A {@link BlockHeader}
+   * @return A {@link BlockBody}
    */
   BlockBody getBlockBody();
 

@@ -56,10 +56,10 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
         @JsonProperty("balance") final String balance,
         @JsonProperty("storage") final Map<String, String> storage,
         @JsonProperty("code") final String code) {
-      this.nonce = Bytes.fromHexStringLenient(nonce).toLong();
-      this.balance = Wei.fromHexString(balance);
-      this.code = Bytes.fromHexString(code);
-      this.storage = parseStorage(storage);
+      this.nonce = nonce == null ? 0 : Bytes.fromHexStringLenient(nonce).toLong();
+      this.balance = balance == null ? Wei.ZERO : Wei.fromHexString(balance);
+      this.code = code == null ? Bytes.EMPTY : Bytes.fromHexString(code);
+      this.storage = storage == null ? Map.of() : parseStorage(storage);
     }
 
     public long getNonce() {
