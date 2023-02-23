@@ -114,6 +114,15 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
         .getByTimestamp(blockHeader.getTimestamp())
+        .orElseGet(
+            () ->
+                transitionUtils.dispatchFunctionAccordingToMergeState(
+                    protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader)));
+  }
+
+  public ProtocolSpec getByBlockHeaderForBws(final ProcessableBlockHeader blockHeader) {
+    return this.timestampSchedule
+        .getByTimestamp(blockHeader.getTimestamp())
         .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
   }
 
