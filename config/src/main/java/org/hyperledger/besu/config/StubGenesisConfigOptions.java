@@ -47,7 +47,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
   private OptionalLong shanghaiTime = OptionalLong.empty();
   private OptionalLong cancunTime = OptionalLong.empty();
-  private OptionalLong eip6110Time = OptionalLong.empty();
   private OptionalLong futureEipsTime = OptionalLong.empty();
   private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
@@ -230,11 +229,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getCancunTime() {
     return cancunTime;
-  }
-
-  @Override
-  public OptionalLong getEIP6110Time() {
-    return eip6110Time;
   }
 
   @Override
@@ -622,17 +616,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
    */
   public StubGenesisConfigOptions cancunTime(final long timestamp) {
     cancunTime = OptionalLong.of(timestamp);
-    return this;
-  }
-
-  /**
-   * Cancun time.
-   *
-   * @param timestamp the timestamp
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions eip6110Time(final long timestamp) {
-    eip6110Time = OptionalLong.of(timestamp);
     return this;
   }
 
