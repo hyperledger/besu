@@ -25,6 +25,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -274,6 +275,9 @@ public class T8nSubCommand implements Runnable {
     List<Transaction> validTransactions = new ArrayList<>();
     ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
+    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
+    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
+
     for (int i = 0; i < transactions.size(); i++) {
       Transaction transaction = transactions.get(i);
 
@@ -300,6 +304,7 @@ public class T8nSubCommand implements Runnable {
         } else {
           tracer = OperationTracer.NO_TRACING;
         }
+
         result =
             processor.processTransaction(
                 blockchain,
@@ -310,7 +315,8 @@ public class T8nSubCommand implements Runnable {
                 new BlockHashLookup(referenceTestEnv, blockchain),
                 false,
                 TransactionValidationParams.processingBlock(),
-                tracer);
+                tracer,
+                dataGasPrice);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
