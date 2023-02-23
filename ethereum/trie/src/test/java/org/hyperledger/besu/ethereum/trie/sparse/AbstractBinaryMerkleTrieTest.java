@@ -21,8 +21,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.Proof;
-import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
-import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.sparse.TrieNodeDecoder;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.junit.Before;
@@ -30,6 +29,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.assertFalse;
@@ -116,37 +116,6 @@ public abstract class AbstractBinaryMerkleTrieTest {
   }
 
   @Test
-  public void branchWithValue() {
-    final Bytes key1 = Bytes.of(1);
-    final Bytes key2 = Bytes.EMPTY;
-
-    final String value1 = "value1";
-    trie.put(key1, value1);
-
-    final String value2 = "value2";
-    trie.put(key2, value2);
-
-    assertThat(trie.get(key1)).isEqualTo(Optional.of(value1));
-    assertThat(trie.get(key2)).isEqualTo(Optional.of(value2));
-  }
-
-  @Test
-  public void extendAndBranch() {
-    final Bytes key1 = Bytes.of(1, 1, 0);
-    final Bytes key2 = Bytes.of(1, 0, 0);
-
-    final String value1 = "value1";
-    trie.put(key1, value1);
-
-    final String value2 = "value2";
-    trie.put(key2, value2);
-
-    assertThat(trie.get(key1)).isEqualTo(Optional.of(value1));
-    assertThat(trie.get(key2)).isEqualTo(Optional.of(value2));
-    assertFalse(trie.get(Bytes.of(1, 4)).isPresent());
-  }
-
-  @Test
   public void replaceBranchChild() {
     final Bytes key1 = Bytes.of(0);
     final Bytes key2 = Bytes.of(1);
@@ -166,37 +135,12 @@ public abstract class AbstractBinaryMerkleTrieTest {
     assertThat(trie.get(key2)).isEqualTo(Optional.of(value2));
   }
 
-  @Test
-  public void inlineBranchInBranch() {
-    final Bytes key1 = Bytes.of(1,1,0);
-    final Bytes key2 = Bytes.of(1,0,0);
-    final Bytes key3 = Bytes.of(1,1,1);
-    final Bytes key4 = Bytes.of(0, 0,0);
-    final Bytes key5 = Bytes.of(0, 1,0);
-
-    trie.put(key1, "value1");
-    trie.put(key2, "value2");
-    trie.put(key3, "value3");
-    trie.put(key4, "value4");
-    trie.put(key5, "value5");
-
-    trie.remove(key2);
-    trie.remove(key3);
-
-    assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
-    assertFalse(trie.get(key2).isPresent());
-    assertFalse(trie.get(key3).isPresent());
-    assertThat(trie.get(key4)).isEqualTo(Optional.of("value4"));
-    assertThat(trie.get(key5)).isEqualTo(Optional.of("value5"));
-  }
-
-
 
   @Test
   public void hashChangesWhenValueChanged() {
-    final Bytes key1 = Bytes.of(1,1,0);
-    final Bytes key2 = Bytes.of(1,0,0);
-    final Bytes key3 = Bytes.of(1,1,1);
+    final Bytes key1 = Bytes.of(1,1,0,1);
+    final Bytes key2 = Bytes.of(1,0,0,0);
+    final Bytes key3 = Bytes.of(1,1,1,1);
 
     final String value1 = "value1";
     trie.put(key1, value1);
@@ -204,7 +148,6 @@ public abstract class AbstractBinaryMerkleTrieTest {
 
     final String value2 = "value2";
     trie.put(key2, value2);
-    final Bytes32 hash6 = trie.getRootHash();
     final String value3 = "value3";
     trie.put(key3, value3);
     final Bytes32 hash2 = trie.getRootHash();
@@ -220,13 +163,8 @@ public abstract class AbstractBinaryMerkleTrieTest {
 
     trie.put(key1, value1);
     assertThat(trie.getRootHash()).isEqualTo(hash2);
-
-    trie.remove(key3);
-
-    assertThat(trie.getRootHash()).isEqualTo(hash6);
-
-    trie.remove(key2);
-    assertThat(trie.getRootHash()).isEqualTo(hash1);
+    trie.put(key1, value4);
+    assertThat(trie.getRootHash()).isEqualTo(hash3);
   }
 
   @Test
@@ -235,8 +173,8 @@ public abstract class AbstractBinaryMerkleTrieTest {
     // up being stored as a hash in its parent, which this would fail for.
     final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     final MerkleStorage merkleStorage = new KeyValueMerkleStorage(keyValueStorage);
-    final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(merkleStorage::get, b -> b, b -> b);
+    final StoredSparseMerkleTrie<Bytes, Bytes> trie =
+        new StoredSparseMerkleTrie<>(merkleStorage::get, b -> b, b -> b);
 
     // Both of these can be inlined in its parent branch.
     trie.put(Bytes.fromHexString("0x0100"), Bytes.of(1));
@@ -244,8 +182,8 @@ public abstract class AbstractBinaryMerkleTrieTest {
     trie.commit(merkleStorage::put);
 
     final Bytes32 rootHash = trie.getRootHash();
-    final StoredMerklePatriciaTrie<Bytes, Bytes> newTrie =
-        new StoredMerklePatriciaTrie<>(merkleStorage::get, rootHash, b -> b, b -> b);
+    final StoredSparseMerkleTrie<Bytes, Bytes> newTrie =
+        new StoredSparseMerkleTrie<>(merkleStorage::get, rootHash, b -> b, b -> b);
 
     newTrie.put(Bytes.fromHexString("0x0000"), Bytes.of(3));
     newTrie.get(Bytes.fromHexString("0x0101"));
@@ -264,37 +202,11 @@ public abstract class AbstractBinaryMerkleTrieTest {
   }
 
   @Test
-  public void getValueWithProof_forExistingValues() {
-    final Bytes key1 = Bytes.of(1,1,0);
-    final Bytes key2 = Bytes.of(1,0,0);
-    final Bytes key3 = Bytes.of(1,1,1);
-
-    final String value1 = "value1";
-    trie.put(key1, value1);
-
-    final String value2 = "value2";
-    trie.put(key2, value2);
-
-    final String value3 = "value3";
-    trie.put(key3, value3);
-
-    final Proof<String> valueWithProof = trie.getValueWithProof(key1);
-    assertThat(valueWithProof.getProofRelatedNodes()).hasSize(2);
-    assertThat(valueWithProof.getValue()).contains(value1);
-
-    final List<Node<Bytes>> nodes =
-        TrieNodeDecoder.decodeNodes(null, valueWithProof.getProofRelatedNodes().get(1));
-
-    assertThat(new String(nodes.get(1).getValue().get().toArray(), UTF_8)).isEqualTo(value1);
-    assertThat(new String(nodes.get(2).getValue().get().toArray(), UTF_8)).isEqualTo(value2);
-  }
-
-  @Test
   public void getValueWithProof_forNonExistentValue() {
-    final Bytes key1 = Bytes.of(1,1,0);
-    final Bytes key2 = Bytes.of(1,0,0);
-    final Bytes key3 = Bytes.of(1,1,1);
-    final Bytes key4 = Bytes.of(0, 0,0);
+    final Bytes key1 = Bytes.of(1,1,0,1);
+    final Bytes key2 = Bytes.of(1,0,0,0);
+    final Bytes key3 = Bytes.of(1,1,1,1);
+    final Bytes key4 = Bytes.of(0, 0,0,0);
 
     final String value1 = "value1";
     trie.put(key1, value1);

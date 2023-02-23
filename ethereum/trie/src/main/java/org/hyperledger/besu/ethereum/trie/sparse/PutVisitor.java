@@ -37,7 +37,9 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
   public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
     final byte childIndex = path.get(0);
     final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
-    return branchNode.replaceChild(childIndex, updatedChild);
+    Node<V> vNode = branchNode.replaceChild(childIndex, updatedChild);
+    System.out.println("put "+vNode.print()+" "+vNode.getHash());
+    return vNode;
   }
 
   @Override

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -28,7 +28,9 @@ import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeLoader;
+import org.hyperledger.besu.ethereum.trie.NullNode;
 
 public class TrieNodeDecoder {
   private static final StoredNodeFactory<Bytes> emptyNodeFactory =
@@ -89,7 +91,7 @@ public class TrieNodeDecoder {
    * @return A stream non-null nodes in the breadth-first traversal order.
    */
   public static Stream<Node<Bytes>> breadthFirstDecoder(
-      final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
+          final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
     checkArgument(maxDepth >= 0);
     return Streams.stream(new BreadthFirstIterator(nodeLoader, rootHash, maxDepth));
   }
