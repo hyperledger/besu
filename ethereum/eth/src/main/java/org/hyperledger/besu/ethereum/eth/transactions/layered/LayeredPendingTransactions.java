@@ -849,7 +849,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private void transactionsAddedToBlock(final List<Transaction> confirmedTransactions) {
     final var orderedConfirmedNonceBySender = maxConfirmedNonceBySender(confirmedTransactions);
     final var removedTransactions = removeConfirmedTransactions(orderedConfirmedNonceBySender);
-
+    removeFromSparse(orderedConfirmedNonceBySender);
     traceLambda(
         LOG,
         "Confirmed nonce by sender {}, removed pending transactions {}",
@@ -866,6 +866,19 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     prioritizedTransactions.removeConfirmedTransactions(
         orderedConfirmedNonceBySender, removedTransactions);
+  }
+
+  private void removeFromSparse(final Map<Address, Optional<Long>> orderedConfirmedNonceBySender) {
+    orderedConfirmedNonceBySender.forEach(
+        (sender, nonce) ->
+            sparseBySender.computeIfPresent(
+                sender,
+                (s, txs) -> {
+                  final var sparseConfirmed = txs.headMap(nonce.get(), true);
+                  sparseConfirmed.values().forEach(sparseEvictionOrder::remove);
+                  sparseConfirmed.clear();
+                  return txs.isEmpty() ? null : txs;
+                }));
   }
 
   private Map<Address, Optional<Long>> maxConfirmedNonceBySender(
