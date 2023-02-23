@@ -119,7 +119,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     int belowBaseFee = 0;
     final var txs = prioritizedTransactions();
     while (txs.hasNext()) {
-      if (txs.next().getTransaction().getMaxGasFee().greaterOrEqualThan(nextBlockBaseFee.get())) {
+      if (txs.next().getTransaction().getMaxGasPrice().greaterOrEqualThan(nextBlockBaseFee.get())) {
         aboveBaseFee++;
       } else {
         belowBaseFee++;
@@ -131,7 +131,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     }
 
     return "Highest priority tx: [max fee: "
-        + orderByFee.last().getTransaction().getMaxGasFee().toHumanReadableString()
+        + orderByFee.last().getTransaction().getMaxGasPrice().toHumanReadableString()
         + ", curr prio fee: "
         + orderByFee
             .last()
@@ -139,7 +139,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
             .getEffectivePriorityFeePerGas(nextBlockBaseFee)
             .toHumanReadableString()
         + "], Lowest priority tx: [max fee: "
-        + orderByFee.first().getTransaction().getMaxGasFee().toHumanReadableString()
+        + orderByFee.first().getTransaction().getMaxGasPrice().toHumanReadableString()
         + ", curr prio fee: "
         + orderByFee
             .first()

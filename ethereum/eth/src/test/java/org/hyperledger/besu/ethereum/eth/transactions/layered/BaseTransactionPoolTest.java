@@ -112,7 +112,7 @@ public class BaseTransactionPoolTest {
     return createTransaction(
         originalTransaction.getType(),
         originalTransaction.getNonce(),
-        originalTransaction.getMaxGasFee().multiply(2),
+        originalTransaction.getMaxGasPrice().multiply(2),
         0,
         keys);
   }

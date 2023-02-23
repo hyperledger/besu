@@ -19,12 +19,16 @@ package org.hyperledger.besu.evm.gascalculator;
  *
  * <UL>
  *   <LI>Gas costs for TSTORE/TLOAD
+ *   <LI>Data gas for EIP-4844
  * </UL>
  */
 public class CancunGasCalculator extends LondonGasCalculator {
 
   private static final long TLOAD_GAS = WARM_STORAGE_READ_COST;
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
+
+  private static final long DATA_GAS_PER_BLOB = 1 << 17;
+  private static final long TARGET_DATA_GAS_PER_BLOCK = 1 << 18;
 
   // EIP-1153
   @Override
@@ -35,5 +39,21 @@ public class CancunGasCalculator extends LondonGasCalculator {
   @Override
   public long getTransientStoreOperationGasCost() {
     return TSTORE_GAS;
+  }
+
+  @Override
+  public long dataGasCost(final int blobCount) {
+    return DATA_GAS_PER_BLOB * blobCount;
+  }
+
+  @Override
+  public long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
+    final long consumedDataGas = dataGasCost(newBlobs);
+    final long currentExcessDataGas = parentExcessDataGas + consumedDataGas;
+
+    if (currentExcessDataGas < TARGET_DATA_GAS_PER_BLOCK) {
+      return 0L;
+    }
+    return currentExcessDataGas - TARGET_DATA_GAS_PER_BLOCK;
   }
 }
