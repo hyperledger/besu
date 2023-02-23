@@ -42,8 +42,10 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
@@ -51,7 +53,6 @@ import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
@@ -79,7 +80,12 @@ import picocli.CommandLine.Option;
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
-    subcommands = {StateTestSubCommand.class, CodeValidateSubCommand.class})
+    subcommands = {
+      B11rSubCommand.class,
+      CodeValidateSubCommand.class,
+      StateTestSubCommand.class,
+      T8nSubCommand.class
+    })
 public class EvmToolCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(EvmToolCommand.class);
@@ -131,7 +137,7 @@ public class EvmToolCommand implements Runnable {
   private final Wei ethValue = Wei.ZERO;
 
   @Option(
-      names = {"--json"},
+      names = {"--json", "--trace"},
       description = "Trace each opcode as a json object.",
       scope = INHERIT)
   final Boolean showJsonResults = false;
@@ -143,10 +149,34 @@ public class EvmToolCommand implements Runnable {
   final Boolean showJsonAlloc = false;
 
   @Option(
-      names = {"--nomemory"},
-      description = "Disable showing the full memory output for each op.",
-      scope = INHERIT)
-  final Boolean noMemory = false;
+      names = {"--memory", "--trace.memory"},
+      description =
+          "Show the full memory output in tracing for each op. Default is not to show memory.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean showMemory = false;
+
+  @Option(
+      names = {"--trace.nostack"},
+      description = "Show the operand stack in tracing for each op. Default is to show stack.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean hideStack = false;
+
+  @Option(
+      names = {"--trace.returndata"},
+      description =
+          "Show the return data in tracing for each op when present. Default is to show return data.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean showReturnData = false;
+
+  @Option(
+      names = {"--notime"},
+      description = "Don't include time data in summary output.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean noTime = false;
 
   @Option(
       names = {"--prestate", "--genesis"},
@@ -163,15 +193,38 @@ public class EvmToolCommand implements Runnable {
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
 
+  @Option(
+      names = {"-v", "--version"},
+      versionHelp = true,
+      description = "display version info")
+  boolean versionInfoRequested;
+
   static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
-  private PrintWriter out =
-      new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
+  PrintWriter out;
+  InputStream in;
 
-  void parse(final CommandLine.IExecutionStrategy resultHandler, final String[] args) {
+  public EvmToolCommand() {
+    this(
+        new ByteArrayInputStream(new byte[0]),
+        new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true));
+  }
 
-    final CommandLine commandLine = new CommandLine(this);
-    out = commandLine.getOut();
+  public EvmToolCommand(final InputStream in, final PrintWriter out) {
+    this.in = in;
+    this.out = out;
+  }
+
+  void execute(final String... args) {
+    execute(System.in, new PrintWriter(System.out, true, UTF_8), args);
+  }
+
+  void execute(final InputStream input, final PrintWriter output, final String[] args) {
+    final CommandLine commandLine = new CommandLine(this).setOut(output);
+    out = output;
+    in = input;
+
+    // add dagger-injected options
     commandLine.addMixin("Dagger Options", daggerOptions);
 
     // add sub commands here
@@ -179,7 +232,18 @@ public class EvmToolCommand implements Runnable {
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Wei.class, arg -> Wei.of(Long.parseUnsignedLong(arg)));
 
-    commandLine.setExecutionStrategy(resultHandler).execute(args);
+    // change negation regexp so --nomemory works.  See
+    // https://picocli.info/#_customizing_negatable_options
+    commandLine.setNegatableOptionTransformer(
+        new CommandLine.RegexTransformer.Builder()
+            .addPattern("^--no(\\w(-|\\w)*)$", "--$1", "--[no]$1")
+            .addPattern("^--trace.no(\\w(-|\\w)*)$", "--trace.$1", "--trace.[no]$1")
+            .addPattern("^--(\\w(-|\\w)*)$", "--no$1", "--[no]$1")
+            .addPattern("^--trace.(\\w(-|\\w)*)$", "--trace.no$1", "--trace.[no]$1")
+            .build());
+
+    commandLine.setExecutionStrategy(new CommandLine.RunLast());
+    commandLine.execute(args);
   }
 
   @Override
@@ -264,7 +328,7 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(System.out, !noMemory)
+                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData)
                 : OperationTracer.NO_TRACING;
 
         var updater = component.getWorldUpdater();
@@ -299,31 +363,33 @@ public class EvmToolCommand implements Runnable {
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
           mcp.process(messageFrame, tracer);
-          if (lastLoop) {
-            if (messageFrame.getExceptionalHaltReason().isPresent()) {
-              out.println(messageFrame.getExceptionalHaltReason().get());
-            }
-            if (messageFrame.getRevertReason().isPresent()) {
-              out.println(new String(messageFrame.getRevertReason().get().toArray(), UTF_8));
-            }
-          }
           if (messageFrameStack.isEmpty()) {
             stopwatch.stop();
             if (lastTime == 0) {
               lastTime = stopwatch.elapsed().toNanos();
             }
+            if (lastLoop) {
+              if (messageFrame.getExceptionalHaltReason().isPresent()) {
+                out.println(messageFrame.getExceptionalHaltReason().get());
+              }
+              if (messageFrame.getRevertReason().isPresent()) {
+                out.println(new String(messageFrame.getRevertReason().get().toArray(), UTF_8));
+              }
+            }
           }
 
           if (lastLoop && messageFrameStack.isEmpty()) {
             final long evmGas = txGas - messageFrame.getRemainingGas();
+            final var resultLine = new JsonObject();
+            resultLine.put("gasUser", "0x" + Long.toHexString(evmGas));
+            if (!noTime) {
+              resultLine.put("timens", lastTime).put("time", lastTime / 1000);
+            }
+            resultLine
+                .put("gasTotal", "0x" + Long.toHexString(evmGas))
+                .put("output", messageFrame.getOutputData().toHexString());
             out.println();
-            out.println(
-                new JsonObject()
-                    .put("gasUser", "0x" + Long.toHexString(evmGas))
-                    .put("timens", lastTime)
-                    .put("time", lastTime / 1000)
-                    .put("gasTotal", "0x" + Long.toHexString(evmGas))
-                    .put("output", messageFrame.getOutputData().toHexString()));
+            out.println(resultLine);
           }
         }
         lastTime = stopwatch.elapsed().toNanos();
@@ -368,7 +434,7 @@ public class EvmToolCommand implements Runnable {
                                         + "\": \""
                                         + accountStorageEntry.getValue().toHexString()
                                         + "\"")
-                            .collect(Collectors.toList())));
+                            .toList()));
                 out.println("  },");
               }
               out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");

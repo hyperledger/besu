@@ -121,6 +121,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     // TODO: post-merge cleanup, this should be unnecessary after merge
     if (requireTerminalPoWBlockValidation()
         && !mergeContext.get().isCheckpointPostMergeSync()
+        && !mergeContext.get().isPostMergeAtGenesis()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)
         && !mergeContext.get().isChainPruningEnabled()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -158,8 +159,12 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
     }
 
-    if (!result.isValid()) {
-      logForkchoiceUpdatedCall(INVALID, forkChoice);
+    if (result.shouldNotProceedToPayloadBuildProcess()) {
+      if (ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD.equals(result.getStatus())) {
+        logForkchoiceUpdatedCall(VALID, forkChoice);
+      } else {
+        logForkchoiceUpdatedCall(INVALID, forkChoice);
+      }
       return handleNonValidForkchoiceUpdate(requestId, result);
     }
 

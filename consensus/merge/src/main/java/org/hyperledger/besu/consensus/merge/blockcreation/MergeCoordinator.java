@@ -270,7 +270,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
             .getBlock();
 
-    BlockProcessingResult result = validateBlock(emptyBlock);
+    BlockProcessingResult result = validateProposedBlock(emptyBlock);
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
@@ -344,10 +344,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private Void retryBlockCreationUntilUseful(
       final PayloadIdentifier payloadIdentifier, final Supplier<BlockCreationResult> blockCreator) {
 
+    long lastStartAt;
+
     while (!isBlockCreationCancelled(payloadIdentifier)) {
       try {
-        recoverableBlockCreation(payloadIdentifier, blockCreator, System.currentTimeMillis());
-      } catch (final CancellationException ce) {
+        lastStartAt = System.currentTimeMillis();
+        recoverableBlockCreation(payloadIdentifier, blockCreator, lastStartAt);
+        final long lastDuration = System.currentTimeMillis() - lastStartAt;
+        final long waitBeforeRepetition =
+            miningParameters.getPosBlockCreationRepetitionMinDuration() - lastDuration;
+        if (waitBeforeRepetition > 0) {
+          LOG.debug("Waiting {}ms before repeating block creation", waitBeforeRepetition);
+          Thread.sleep(waitBeforeRepetition);
+        }
+      } catch (final CancellationException | InterruptedException ce) {
         debugLambda(
             LOG,
             "Block creation for payload id {} has been cancelled, reason {}",
@@ -391,7 +401,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-    final var resultBest = validateBlock(bestBlock);
+    final var resultBest = validateProposedBlock(bestBlock);
     if (resultBest.isSuccessful()) {
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
@@ -479,6 +489,22 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
+                false);
+
+    return validationResult;
+  }
+
+  private BlockProcessingResult validateProposedBlock(final Block block) {
+    final var validationResult =
+        protocolSchedule
+            .getByBlockHeader(block.getHeader())
+            .getBlockValidator()
+            .validateAndProcessBlock(
+                protocolContext,
+                block,
+                HeaderValidationMode.FULL,
+                HeaderValidationMode.NONE,
+                false,
                 false);
 
     return validationResult;

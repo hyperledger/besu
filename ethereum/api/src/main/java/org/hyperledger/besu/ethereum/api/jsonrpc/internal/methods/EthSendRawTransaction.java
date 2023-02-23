@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -68,12 +69,20 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     final Transaction transaction;
     try {
       transaction = DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction);
-    } catch (final RLPException | IllegalArgumentException e) {
+      LOG.trace("Received local transaction {}", transaction);
+    } catch (final RLPException e) {
+      LOG.debug("RLPException: {} caused by {}", e.getMessage(), e.getCause());
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    } catch (final InvalidJsonRpcRequestException i) {
+      LOG.debug("InvalidJsonRpcRequestException: {} caused by {}", i.getMessage(), i.getCause());
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    } catch (final IllegalArgumentException ill) {
+      LOG.debug("IllegalArgumentException: {} caused by {}", ill.getMessage(), ill.getCause());
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-
-    LOG.trace("Received local transaction {}", transaction);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         transactionPool.get().addLocalTransaction(transaction);

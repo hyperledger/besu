@@ -63,14 +63,12 @@ public interface OperationTracer {
   default void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}
 
-  /** The interface Execute operation. */
-  interface ExecuteOperation {
-
-    /**
-     * Execute operation.
-     *
-     * @return the operation result
-     */
-    OperationResult execute();
-  }
+  /**
+   * Trace the end of a transaction.
+   *
+   * @param output the bytes output from the transaction
+   * @param gasUsed the gas used by the entire transaction
+   * @param timeNs the time in nanoseconds it took to execute the transaction
+   */
+  default void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {}
 }

@@ -45,7 +45,7 @@ public interface Withdrawal {
   Address getAddress();
 
   /**
-   * Amount of ether to be withdrawn that be credit to the recipient address
+   * Amount of ether to be withdrawn and credited to the recipient address
    *
    * @return withdrawn ether amount
    */

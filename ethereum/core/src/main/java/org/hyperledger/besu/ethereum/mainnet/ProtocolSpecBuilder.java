@@ -54,7 +54,8 @@ public class ProtocolSpecBuilder {
   private DifficultyCalculator difficultyCalculator;
   private EvmConfiguration evmConfiguration;
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
-  private Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder;
+  private BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
+      transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<HeaderBasedProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
@@ -79,6 +80,7 @@ public class ProtocolSpecBuilder {
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
+  private boolean isPoS = false;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -123,7 +125,8 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder transactionValidatorBuilder(
-      final Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder) {
+      final BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
+          transactionValidatorBuilder) {
     this.transactionValidatorBuilder = transactionValidatorBuilder;
     return this;
   }
@@ -257,6 +260,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder isPoS(final boolean isPoS) {
+    this.isPoS = isPoS;
+    return this;
+  }
+
   public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
@@ -290,7 +298,7 @@ public class ProtocolSpecBuilder {
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final MainnetTransactionValidator transactionValidator =
-        transactionValidatorBuilder.apply(gasCalculator);
+        transactionValidatorBuilder.apply(gasCalculator, gasLimitCalculator);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
@@ -363,7 +371,8 @@ public class ProtocolSpecBuilder {
         badBlockManager,
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
-        Optional.ofNullable(withdrawalsProcessor));
+        Optional.ofNullable(withdrawalsProcessor),
+        isPoS);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(

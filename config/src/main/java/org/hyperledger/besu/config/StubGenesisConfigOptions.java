@@ -29,7 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Stub genesis config options. */
-public class StubGenesisConfigOptions implements GenesisConfigOptions {
+public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable {
 
   private OptionalLong homesteadBlockNumber = OptionalLong.empty();
   private OptionalLong daoForkBlock = OptionalLong.empty();
@@ -75,6 +75,15 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
   private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
+
+  @Override
+  public StubGenesisConfigOptions clone() {
+    try {
+      return (StubGenesisConfigOptions) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @Override
   public String getConsensusEngine() {
@@ -622,22 +631,22 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   /**
    * Future EIPs Time block.
    *
-   * @param blockNumber the block number
+   * @param timestamp the block timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions futureEipsTime(final long blockNumber) {
-    futureEipsTime = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions futureEipsTime(final long timestamp) {
+    futureEipsTime = OptionalLong.of(timestamp);
     return this;
   }
 
   /**
    * Experimental EIPs Time block.
    *
-   * @param blockNumber the block number
+   * @param timestamp the block timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions experimentalEipsTime(final long blockNumber) {
-    experimentalEipsTime = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions experimentalEipsTime(final long timestamp) {
+    experimentalEipsTime = OptionalLong.of(timestamp);
     return this;
   }
 

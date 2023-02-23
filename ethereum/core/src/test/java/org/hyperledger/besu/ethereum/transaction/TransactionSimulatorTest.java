@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -539,6 +540,7 @@ public class TransactionSimulatorTest {
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
 
     final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
     switch (status) {
@@ -551,14 +553,32 @@ public class TransactionSimulatorTest {
         break;
     }
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any(), any()))
+            any(),
+            any(),
+            any(),
+            eq(transaction),
+            any(),
+            any(),
+            anyBoolean(),
+            any(),
+            any(),
+            any(Wei.class)))
         .thenReturn(result);
   }
 
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(), any(), any(), eq(expectedTransaction), any(), any(), anyBoolean(), any(), any());
+            any(),
+            any(),
+            any(),
+            eq(expectedTransaction),
+            any(),
+            any(),
+            anyBoolean(),
+            any(),
+            any(),
+            any(Wei.class));
   }
 
   private CallParameter legacyTransactionCallParameter() {

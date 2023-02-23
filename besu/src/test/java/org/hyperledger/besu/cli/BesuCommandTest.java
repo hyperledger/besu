@@ -102,6 +102,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -187,6 +188,9 @@ public class BesuCommandTest extends CommandTestAbstract {
                       new JsonObject()
                           .put("bootnodes", List.of(VALID_ENODE_STRINGS))
                           .put("dns", DNS_DISCOVERY_URL)));
+
+  private static final JsonObject GENESIS_WITH_DATA_BLOBS_ENABLED =
+      new JsonObject().put("config", new JsonObject().put("cancunTime", 1L));
 
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
@@ -5518,7 +5522,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Near head checkpoint sync requires TTD in the genesis file");
+        .contains("PoS checkpoint sync requires TTD in the genesis file");
   }
 
   @Test
@@ -5529,7 +5533,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Near head checkpoint sync requires a block with total difficulty greater than the TTD");
+            "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
   }
 
   @Test
@@ -5545,6 +5549,25 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String configText =
         Resources.toString(
             Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
+            StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
+
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "X_CHECKPOINT",
+        "--Xcheckpoint-post-merge-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkpointPostMergeWithPostMergeBlockTDEqualsTTDSucceeds() throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("valid_pos_checkpoint_pos_TD_equals_TTD.json"),
             StandardCharsets.UTF_8);
     final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
 
@@ -5577,6 +5600,49 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Post Merge checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+            "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+  }
+
+  @Test
+  public void kzgTrustedSetupFileRequiresDataBlobEnabledNetwork() throws IOException {
+    final Path genesisFileWithoutBlobs =
+        createFakeGenesisFile(new JsonObject().put("config", new JsonObject()));
+    parseCommand(
+        "--genesis-file",
+        genesisFileWithoutBlobs.toString(),
+        "--kzg-trusted-setup",
+        "/etc/besu/kzg-trusted-setup.txt");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--kzg-trusted-setup can only be specified on networks with data blobs enabled");
+  }
+
+  @Test
+  public void kzgTrustedSetupFileIsMandatoryWithCustomGenesisFile()
+      throws IOException, URISyntaxException {
+    final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
+    parseCommand("--genesis-file", genesisFileWithBlobs.toString());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
+  }
+
+  @Test
+  public void kzgTrustedSetupFileLoadedWithCustomGenesisFile()
+      throws IOException, URISyntaxException {
+    final Path testSetupAbsolutePath =
+        Path.of(BesuCommandTest.class.getResource("/trusted_setup.txt").toURI());
+    final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
+    parseCommand(
+        "--genesis-file",
+        genesisFileWithBlobs.toString(),
+        "--kzg-trusted-setup",
+        testSetupAbsolutePath.toString());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }
