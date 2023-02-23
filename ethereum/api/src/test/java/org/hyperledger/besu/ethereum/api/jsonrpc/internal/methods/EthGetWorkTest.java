@@ -69,8 +69,7 @@ public class EthGetWorkTest {
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x0"
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     };
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
@@ -94,8 +93,7 @@ public class EthGetWorkTest {
               .encode(
                   DirectAcyclicGraphSeed.dagSeed(
                       30000, new EpochCalculator.DefaultEpochCalculator())),
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x7530"
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     };
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
@@ -120,8 +118,7 @@ public class EthGetWorkTest {
           + BaseEncoding.base16()
               .lowerCase()
               .encode(DirectAcyclicGraphSeed.dagSeed(60000, epochCalculator)),
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0xea60"
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     };
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
