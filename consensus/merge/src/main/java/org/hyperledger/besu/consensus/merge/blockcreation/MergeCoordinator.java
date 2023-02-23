@@ -270,7 +270,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
             .getBlock();
 
-    BlockProcessingResult result = validateBlock(emptyBlock);
+    BlockProcessingResult result = validateProposedBlock(emptyBlock);
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
@@ -401,7 +401,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-    final var resultBest = validateBlock(bestBlock);
+    final var resultBest = validateProposedBlock(bestBlock);
     if (resultBest.isSuccessful()) {
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
@@ -489,6 +489,22 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
+                false);
+
+    return validationResult;
+  }
+
+  private BlockProcessingResult validateProposedBlock(final Block block) {
+    final var validationResult =
+        protocolSchedule
+            .getByBlockHeader(block.getHeader())
+            .getBlockValidator()
+            .validateAndProcessBlock(
+                protocolContext,
+                block,
+                HeaderValidationMode.FULL,
+                HeaderValidationMode.NONE,
+                false,
                 false);
 
     return validationResult;

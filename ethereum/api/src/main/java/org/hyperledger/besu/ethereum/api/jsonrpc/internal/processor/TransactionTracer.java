@@ -130,7 +130,7 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory),
+                            new StandardJsonTracer(out, showMemory, true, true),
                             dataGasPrice);
                     out.println(
                         summaryTrace(
