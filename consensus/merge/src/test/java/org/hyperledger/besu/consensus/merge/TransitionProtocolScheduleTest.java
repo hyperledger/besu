@@ -73,7 +73,7 @@ public class TransitionProtocolScheduleTest {
   public void returnPostMergeIfFinalizedExists() {
     when(mergeContext.getFinalized()).thenReturn(Optional.of(mock(BlockHeader.class)));
 
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
     verifyPostMergeProtocolScheduleReturned();
   }
@@ -83,7 +83,7 @@ public class TransitionProtocolScheduleTest {
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
     when(mergeContext.isPostMerge()).thenReturn(false);
 
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -101,7 +101,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(95L)));
 
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -119,7 +119,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(95L)));
 
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -138,7 +138,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(105L)));
 
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
     verifyPostMergeProtocolScheduleReturned();
   }
@@ -158,7 +158,7 @@ public class TransitionProtocolScheduleTest {
   public void getByBlockHeader_delegatesToPreMergeScheduleWhenBlockNotFound() {
     when(mergeContext.isPostMerge()).thenReturn(false);
 
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
     verifyPreMergeProtocolScheduleReturned();
   }
@@ -170,7 +170,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(TTD));
     when(mergeContext.isPostMerge()).thenReturn(true);
 
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
     verifyPostMergeProtocolScheduleReturned();
   }
@@ -182,7 +182,7 @@ public class TransitionProtocolScheduleTest {
     when(blockHeader.getNumber()).thenReturn(BLOCK_NUMBER);
     when(blockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(TTD));
 
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
     verifyPostMergeProtocolScheduleReturned();
   }
