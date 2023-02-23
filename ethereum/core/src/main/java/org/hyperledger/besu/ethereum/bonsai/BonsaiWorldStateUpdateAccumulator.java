@@ -66,6 +66,8 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> storageToUpdate =
       new ConcurrentHashMap<>();
 
+  private boolean isAccumulatorStateChanged;
+
   BonsaiWorldStateUpdateAccumulator(final BonsaiWorldView world) {
     this(world, (__, ___) -> {}, (__, ___) -> {});
   }
@@ -78,6 +80,7 @@ public class BonsaiWorldStateUpdateAccumulator
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
+    this.isAccumulatorStateChanged = false;
   }
 
   public BonsaiWorldStateUpdateAccumulator copy() {
@@ -96,6 +99,7 @@ public class BonsaiWorldStateUpdateAccumulator
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
     emptySlot.addAll(source.emptySlot);
+    this.isAccumulatorStateChanged = true;
   }
 
   @Override
@@ -200,6 +204,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public void commit() {
+    this.isAccumulatorStateChanged = true;
     for (final Address deletedAddress : getDeletedAccounts()) {
       final BonsaiValue<BonsaiAccount> accountValue =
           accountsToUpdate.computeIfAbsent(
@@ -771,6 +776,14 @@ public class BonsaiWorldStateUpdateAccumulator
     return Objects.equals(sanitizedExpectedValue, sanitizedExistingSlotValue);
   }
 
+  public boolean isAccumulatorStateChanged() {
+    return isAccumulatorStateChanged;
+  }
+
+  public void resetAccumulatorStateChanged() {
+    isAccumulatorStateChanged = false;
+  }
+
   @Override
   public void reset() {
     storageToClear.clear();
@@ -778,6 +791,7 @@ public class BonsaiWorldStateUpdateAccumulator
     codeToUpdate.clear();
     accountsToUpdate.clear();
     emptySlot.clear();
+    resetAccumulatorStateChanged();
     super.reset();
   }
 

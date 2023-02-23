@@ -43,11 +43,12 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   private final long blockNumber;
-  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
+  private final long subscribeParentId;
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final long blockNumber,
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage accountStorage,
       final SnappedKeyValueStorage codeStorage,
       final SnappedKeyValueStorage storageStorage,
@@ -55,7 +56,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage trieLogStorage) {
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
     this.blockNumber = blockNumber;
-    this.worldStateStorage = worldStateStorage;
+    this.parentWorldStateStorage = parentWorldStateStorage;
+    this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
@@ -74,7 +76,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   public BonsaiSnapshotWorldStateKeyValueStorage clone() {
     return new BonsaiSnapshotWorldStateKeyValueStorage(
         blockNumber,
-        worldStateStorage,
+        parentWorldStateStorage,
         ((SnappedKeyValueStorage) accountStorage).cloneFromSnapshot(),
         ((SnappedKeyValueStorage) codeStorage).cloneFromSnapshot(),
         ((SnappedKeyValueStorage) storageStorage).cloneFromSnapshot(),
@@ -176,7 +178,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     }
   }
 
-  private void doClose() throws Exception {
+  private synchronized void doClose() throws Exception {
     if (!isClosed.get()) {
       // alert any subscribers we are closing:
       subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);
@@ -186,6 +188,9 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       codeStorage.close();
       storageStorage.close();
       trieBranchStorage.close();
+
+      // unsubscribe the parent worldstate
+      parentWorldStateStorage.unSubscribe(subscribeParentId);
 
       // set storage closed
       isClosed.set(true);

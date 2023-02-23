@@ -56,15 +56,15 @@ public class BonsaiWorldState
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldState.class);
 
-  protected final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  public final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  protected final BonsaiWorldStateProvider archive;
-  protected final BonsaiWorldStateUpdateAccumulator updater;
+  private final BonsaiWorldStateProvider archive;
+  private final BonsaiWorldStateUpdateAccumulator updater;
 
-  protected Hash worldStateRootHash;
-  protected Hash worldStateBlockHash;
+  public Hash worldStateRootHash;
+  public Hash worldStateBlockHash;
 
-  protected boolean isFrozen;
+  private boolean isFrozen;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
@@ -115,7 +115,7 @@ public class BonsaiWorldState
     return worldStateStorage;
   }
 
-  protected Hash calculateRootHash(
+  private Hash calculateRootHash(
       final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
 
@@ -324,11 +324,6 @@ public class BonsaiWorldState
   }
 
   @Override
-  public Hash getSateRoot() {
-    return worldStateRootHash;
-  }
-
-  @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     debugLambda(LOG, "Persist world state for block {}", maybeBlockHeader::toString);
@@ -398,6 +393,10 @@ public class BonsaiWorldState
 
   @Override
   public Hash rootHash() {
+    if (isFrozen && updater.isAccumulatorStateChanged()) {
+      worldStateRootHash = calculateRootHash(Optional.empty(), updater.copy());
+      updater.resetAccumulatorStateChanged();
+    }
     return Hash.wrap(worldStateRootHash);
   }
 
