@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
-import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
-import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 
 public class RestoreVisitor<V> implements PathNodeVisitor<V> {
 

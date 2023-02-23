@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie.sparse;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static java.lang.String.format;
+
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -35,7 +35,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static java.lang.String.format;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class StoredNodeFactory<V> implements NodeFactory<V> {
 
@@ -56,12 +57,11 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     this.nodeLoader = nodeLoader;
     this.valueSerializer = valueSerializer;
     this.valueDeserializer = valueDeserializer;
-   }
-
+  }
 
   @Override
   public Node<V> createExtension(final Bytes path, final Node<V> child) {
-    throw new UnsupportedOperationException ("cannot create extension in the sparse merkle trie");
+    throw new UnsupportedOperationException("cannot create extension in the sparse merkle trie");
   }
 
   @SuppressWarnings("unchecked")
@@ -107,7 +107,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   public Optional<Node<V>> retrieve(final Bytes location, final Bytes32 hash)
       throws MerkleTrieException {
     return nodeLoader
-            .getNode(location, hash).map(
+        .getNode(location, hash)
+        .map(
             rlp -> {
               final Node<V> node =
                   decode(location, rlp, () -> format("Invalid RLP value for hash %s", hash));
@@ -132,7 +133,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   private Node<V> decode(
-          final Bytes location, final RLPInput nodeRLPs, final Supplier<String> errMessage) {
+      final Bytes location, final RLPInput nodeRLPs, final Supplier<String> errMessage) {
     final int nodesCount = nodeRLPs.enterList();
     switch (nodesCount) {
       case 1:
@@ -160,7 +161,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
 
       default:
         throw new MerkleTrieException(
-                errMessage.get() + format(": invalid list size %s", nodesCount));
+            errMessage.get() + format(": invalid list size %s", nodesCount));
     }
   }
 
@@ -209,7 +210,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
       throw new MerkleTrieException(errMessage.get() + ": leaf has null value");
     }
     final V value = decodeValue(valueRlp, errMessage);
-    return new LeafNode<>(location,path, value, this, valueSerializer);
+    return new LeafNode<>(location, path, value, this, valueSerializer);
   }
 
   @SuppressWarnings("unchecked")

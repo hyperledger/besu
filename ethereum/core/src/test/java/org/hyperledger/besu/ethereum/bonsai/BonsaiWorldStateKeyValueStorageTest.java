@@ -50,8 +50,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getAccountStateTrieNode_returnsEmptyNode() {
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(
-            storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+    assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
@@ -104,14 +103,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
     storage
         .updater()
         .putAccountStateTrieNode(
-            Bytes.EMPTY,
-            Hash.hash(MerkleTrie.EMPTY_TRIE_NODE),
-            MerkleTrie.EMPTY_TRIE_NODE)
+            Bytes.EMPTY, Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
         .putAccountStateTrieNode(Bytes.EMPTY, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
-    assertThat(
-            storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+    assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
   }

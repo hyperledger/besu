@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie.patricia;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
+import static org.hyperledger.besu.crypto.Hash.keccak256;
+
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.LocationNodeVisitor;
@@ -35,7 +34,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static org.hyperledger.besu.crypto.Hash.keccak256;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 public class BranchNode<V> implements Node<V> {
 
@@ -53,11 +54,11 @@ public class BranchNode<V> implements Node<V> {
   private boolean needHeal = false;
 
   public BranchNode(
-          final Bytes location,
-          final ArrayList<Node<V>> children,
-          final Optional<V> value,
-          final NodeFactory<V> nodeFactory,
-          final Function<V, Bytes> valueSerializer) {
+      final Bytes location,
+      final ArrayList<Node<V>> children,
+      final Optional<V> value,
+      final NodeFactory<V> nodeFactory,
+      final Function<V, Bytes> valueSerializer) {
     this.location = Optional.ofNullable(location);
     this.children = children;
     this.value = value;
@@ -66,10 +67,10 @@ public class BranchNode<V> implements Node<V> {
   }
 
   public BranchNode(
-          final List<Node<V>> children,
-          final Optional<V> value,
-          final NodeFactory<V> nodeFactory,
-          final Function<V, Bytes> valueSerializer) {
+      final List<Node<V>> children,
+      final Optional<V> value,
+      final NodeFactory<V> nodeFactory,
+      final Function<V, Bytes> valueSerializer) {
     this.location = Optional.empty();
     this.children = children;
     this.value = value;
@@ -172,7 +173,7 @@ public class BranchNode<V> implements Node<V> {
   }
 
   public Node<V> replaceChild(
-          final byte index, final Node<V> updatedChild, final boolean allowFlatten) {
+      final byte index, final Node<V> updatedChild, final boolean allowFlatten) {
     final ArrayList<Node<V>> newChildren = new ArrayList<>(children);
     newChildren.set(index, updatedChild);
 
@@ -272,7 +273,7 @@ public class BranchNode<V> implements Node<V> {
     this.needHeal = true;
   }
 
-  public int maxChild(){
+  public int maxChild() {
     return 16;
   }
 }

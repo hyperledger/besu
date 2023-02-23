@@ -14,20 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.trie.sparse;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.ethereum.trie.KeyValueMerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.junit.Test;
 
 public class StoredBinaryMerkleTrieTest extends AbstractBinaryMerkleTrieTest {
   private KeyValueStorage keyValueStore;
@@ -78,22 +79,19 @@ public class StoredBinaryMerkleTrieTest extends AbstractBinaryMerkleTrieTest {
 
     // Create new tries from root hashes and check that we find expected values
     trie =
-        new StoredSparseMerkleTrie<>(
-            merkleStorage::get, hash1, valueSerializer, valueDeserializer);
+        new StoredSparseMerkleTrie<>(merkleStorage::get, hash1, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.empty());
     assertThat(trie.get(key3)).isEqualTo(Optional.empty());
 
     trie =
-        new StoredSparseMerkleTrie<>(
-            merkleStorage::get, hash2, valueSerializer, valueDeserializer);
+        new StoredSparseMerkleTrie<>(merkleStorage::get, hash2, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value1"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
 
     trie =
-        new StoredSparseMerkleTrie<>(
-            merkleStorage::get, hash3, valueSerializer, valueDeserializer);
+        new StoredSparseMerkleTrie<>(merkleStorage::get, hash3, valueSerializer, valueDeserializer);
     assertThat(trie.get(key1)).isEqualTo(Optional.of("value4"));
     assertThat(trie.get(key2)).isEqualTo(Optional.of("value2"));
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));

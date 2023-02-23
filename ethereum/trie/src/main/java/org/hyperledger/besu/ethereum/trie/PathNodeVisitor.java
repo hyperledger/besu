@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public interface PathNodeVisitor<V> {
 

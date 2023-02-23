@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.trie.sparse;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
-import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeFactory;
 import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class PutVisitor<V> implements PathNodeVisitor<V> {
   private final NodeFactory<V> nodeFactory;
@@ -38,7 +39,7 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     final byte childIndex = path.get(0);
     final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
     Node<V> vNode = branchNode.replaceChild(childIndex, updatedChild);
-    System.out.println("put "+vNode.print()+" "+vNode.getHash());
+    System.out.println("put " + vNode.print() + " " + vNode.getHash());
     return vNode;
   }
 
@@ -47,14 +48,14 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
 
-    System.out.println(path+" "+leafPath);
+    System.out.println(path + " " + leafPath);
     // Check if the current leaf node should be replaced
     if (commonPathLength == leafPath.size() && commonPathLength == path.size()) {
       return nodeFactory.createLeaf(leafPath, value);
     }
 
     assert commonPathLength < leafPath.size() && commonPathLength < path.size()
-            : "Should not have consumed non-matching terminator";
+        : "Should not have consumed non-matching terminator";
 
     // The current leaf path must be split to accommodate the new value.
 
@@ -65,16 +66,17 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
 
     final Node<V> updatedLeaf = leafNode.replacePath(leafPath.slice(commonPathLength + 1));
     final Node<V> leaf = nodeFactory.createLeaf(newLeafPath, value);
-    Node<V> branch =
-            nodeFactory.createBranch(updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
+    Node<V> branch = nodeFactory.createBranch(updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
 
-    //create all the common path
+    // create all the common path
     final Bytes commonPath = leafPath.slice(0, commonPathLength);
-    for (int i = commonPath.size()-1; i >= 0; i--) {
+    for (int i = commonPath.size() - 1; i >= 0; i--) {
       byte loc = commonPath.get(i);
       switch (loc) {
-        case 0x00 -> branch = nodeFactory.createBranch(loc, branch, (byte) 0x01, NullNode.instance());
-        case 0x01 -> branch = nodeFactory.createBranch((byte) 0x00, NullNode.instance(), loc, branch);
+        case 0x00 -> branch =
+            nodeFactory.createBranch(loc, branch, (byte) 0x01, NullNode.instance());
+        case 0x01 -> branch =
+            nodeFactory.createBranch((byte) 0x00, NullNode.instance(), loc, branch);
       }
     }
 

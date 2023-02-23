@@ -54,8 +54,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final WorldStatePreimageStorage preimageStorage;
 
   private final MerkleTrie<Bytes32, Bytes> accountStateTrie;
-  private final Map<Address, MerkleTrie<Bytes32, Bytes>> updatedStorageTries =
-      new HashMap<>();
+  private final Map<Address, MerkleTrie<Bytes32, Bytes>> updatedStorageTries = new HashMap<>();
   private final Map<Address, Bytes> updatedAccountCode = new HashMap<>();
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();

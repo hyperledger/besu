@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.trie.patricia;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   private final Node<V> NULL_NODE_RESULT = NullNode.instance();

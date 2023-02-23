@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie.sparse;
 
-import com.google.common.collect.Streams;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.NullNode;
@@ -30,7 +29,9 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.collect.Streams;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class TrieNodeDecoder {
   private static final StoredNodeFactory<Bytes> emptyNodeFactory =
@@ -91,7 +92,7 @@ public class TrieNodeDecoder {
    * @return A stream non-null nodes in the breadth-first traversal order.
    */
   public static Stream<Node<Bytes>> breadthFirstDecoder(
-          final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
+      final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
     checkArgument(maxDepth >= 0);
     return Streams.stream(new BreadthFirstIterator(nodeLoader, rootHash, maxDepth));
   }

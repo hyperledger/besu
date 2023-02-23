@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.GetVisitor;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
-import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
-import org.hyperledger.besu.ethereum.trie.patricia.GetVisitor;
 
 public class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
 

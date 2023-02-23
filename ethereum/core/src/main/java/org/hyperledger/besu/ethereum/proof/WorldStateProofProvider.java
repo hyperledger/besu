@@ -123,8 +123,7 @@ public class WorldStateProofProvider {
 
     // when proof is empty we need to have all the keys to reconstruct the trie
     if (proofs.isEmpty()) {
-      final MerkleTrie<Bytes, Bytes> trie =
-          new SimpleMerklePatriciaTrie<>(Function.identity());
+      final MerkleTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>(Function.identity());
       // add the received keys in the trie
       for (Map.Entry<Bytes32, Bytes> key : keys.entrySet()) {
         trie.put(key.getKey(), key.getValue());

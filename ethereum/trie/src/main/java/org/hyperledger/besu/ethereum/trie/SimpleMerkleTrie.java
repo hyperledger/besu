@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
+
 import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
 import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 
@@ -29,9 +31,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toUnmodifiableSet;
-import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * An in-memory {@link MerkleTrie}.
@@ -81,6 +82,13 @@ public abstract class SimpleMerkleTrie<K extends Bytes, V> implements MerkleTrie
     checkNotNull(key);
     checkNotNull(value);
     this.root = root.accept(getPutVisitor(value), bytesToPath(key));
+  }
+
+  @Override
+  public void putPath(final K path, final V value) {
+    checkNotNull(path);
+    checkNotNull(value);
+    this.root = root.accept(getPutVisitor(value), path);
   }
 
   @Override

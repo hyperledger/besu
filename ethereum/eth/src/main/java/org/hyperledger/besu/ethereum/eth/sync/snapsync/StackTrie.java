@@ -110,8 +110,7 @@ public class StackTrie {
 
       final MerkleTrie<Bytes, Bytes> trie =
           new StoredMerklePatriciaTrie<>(
-              snapStoredNodeFactory,
-              proofs.isEmpty() ? MerkleTrie.EMPTY_TRIE_NODE_HASH : rootHash);
+              snapStoredNodeFactory, proofs.isEmpty() ? MerkleTrie.EMPTY_TRIE_NODE_HASH : rootHash);
 
       for (Map.Entry<Bytes32, Bytes> account : keys.entrySet()) {
         trie.put(account.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, account.getValue()));

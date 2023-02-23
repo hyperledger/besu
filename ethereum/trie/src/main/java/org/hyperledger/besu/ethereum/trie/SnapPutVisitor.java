@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.patricia.PutVisitor;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class SnapPutVisitor<V> extends PutVisitor<V> {
 

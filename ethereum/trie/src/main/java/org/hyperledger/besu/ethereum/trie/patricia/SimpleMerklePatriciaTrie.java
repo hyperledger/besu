@@ -14,28 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.trie.patricia;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
+import org.hyperledger.besu.ethereum.trie.SimpleMerkleTrie;
 
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
-import org.hyperledger.besu.ethereum.trie.SimpleMerkleTrie;
 
 /**
  * An in-memory {@link MerkleTrie}.
  *
  * @param <V> The type of values stored by this trie.
  */
-public class SimpleMerklePatriciaTrie<K extends Bytes, V> extends SimpleMerkleTrie<K,V> implements MerkleTrie<K, V> {
+public class SimpleMerklePatriciaTrie<K extends Bytes, V> extends SimpleMerkleTrie<K, V>
+    implements MerkleTrie<K, V> {
   private final GetVisitor<V> getVisitor = new GetVisitor<>();
   private final RemoveVisitor<V> removeVisitor = new RemoveVisitor<>();
 
   public SimpleMerklePatriciaTrie(final Function<V, Bytes> valueSerializer) {
     super(valueSerializer);
   }
-
 
   @Override
   public GetVisitor<V> getGetVisitor() {

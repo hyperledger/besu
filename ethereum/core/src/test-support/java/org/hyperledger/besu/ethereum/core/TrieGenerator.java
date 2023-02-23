@@ -44,8 +44,7 @@ public class TrieGenerator {
 
   public static MerkleTrie<Bytes, Bytes> generateTrie(
       final WorldStateStorage worldStateStorage, final List<Hash> accounts) {
-    final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        emptyAccountStateTrie(worldStateStorage);
+    final MerkleTrie<Bytes, Bytes> accountStateTrie = emptyAccountStateTrie(worldStateStorage);
     // Add some storage values
     for (int i = 0; i < accounts.size(); i++) {
       final WorldStateStorage.Updater updater = worldStateStorage.updater();

@@ -82,8 +82,7 @@ public class WorldStateRangeProofProviderTest {
 
   @Test
   public void rangeProofValidationMissingAccount() {
-    MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+    MerkleTrie<Bytes, Bytes> accountStateTrie = TrieGenerator.generateTrie(worldStateStorage, 15);
     // collect accounts in range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
@@ -120,8 +119,7 @@ public class WorldStateRangeProofProviderTest {
 
   @Test
   public void rangeProofValidationNoMonotonicIncreasing() {
-    MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+    MerkleTrie<Bytes, Bytes> accountStateTrie = TrieGenerator.generateTrie(worldStateStorage, 15);
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
@@ -157,8 +155,7 @@ public class WorldStateRangeProofProviderTest {
 
   @Test
   public void rangeProofValidationEmptyProof() {
-    MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+    MerkleTrie<Bytes, Bytes> accountStateTrie = TrieGenerator.generateTrie(worldStateStorage, 15);
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
@@ -185,8 +182,7 @@ public class WorldStateRangeProofProviderTest {
 
   @Test
   public void rangeProofValidationInvalidEmptyProof() {
-    MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+    MerkleTrie<Bytes, Bytes> accountStateTrie = TrieGenerator.generateTrie(worldStateStorage, 15);
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =

@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.trie.sparse;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class GetVisitor<V> implements PathNodeVisitor<V> {
 
@@ -48,7 +49,6 @@ public class GetVisitor<V> implements PathNodeVisitor<V> {
     return leafNode;
   }
 
-
   @Override
   public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
     return NULL_NODE_RESULT;
@@ -58,6 +58,4 @@ public class GetVisitor<V> implements PathNodeVisitor<V> {
   public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
     throw new MerkleTrieException("extension node not allowed in the sparse merkle trie");
   }
-
-
 }

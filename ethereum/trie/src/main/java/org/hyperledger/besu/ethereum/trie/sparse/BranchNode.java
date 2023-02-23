@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.sparse;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeFactory;
 
@@ -23,19 +22,30 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class BranchNode<V> extends org.hyperledger.besu.ethereum.trie.patricia.BranchNode<V> implements Node<V> {
+import org.apache.tuweni.bytes.Bytes;
 
+public class BranchNode<V> extends org.hyperledger.besu.ethereum.trie.patricia.BranchNode<V>
+    implements Node<V> {
 
-  public BranchNode(final Bytes location, final ArrayList<Node<V>> children, final Optional<V> value, final NodeFactory<V> nodeFactory, final Function<V, Bytes> valueSerializer) {
+  public BranchNode(
+      final Bytes location,
+      final ArrayList<Node<V>> children,
+      final Optional<V> value,
+      final NodeFactory<V> nodeFactory,
+      final Function<V, Bytes> valueSerializer) {
     super(location, children, value, nodeFactory, valueSerializer);
   }
 
-  public BranchNode(final List<Node<V>> children, final Optional<V> value, final NodeFactory<V> nodeFactory, final Function<V, Bytes> valueSerializer) {
+  public BranchNode(
+      final List<Node<V>> children,
+      final Optional<V> value,
+      final NodeFactory<V> nodeFactory,
+      final Function<V, Bytes> valueSerializer) {
     super(children, value, nodeFactory, valueSerializer);
   }
 
   @Override
-  public int maxChild(){
+  public int maxChild() {
     return 2;
   }
 }

@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.trie.patricia;
 
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+
 import java.nio.charset.Charset;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 
 public class SimpleMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest {
   @Override

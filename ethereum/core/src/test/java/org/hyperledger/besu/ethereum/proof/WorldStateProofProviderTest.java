@@ -131,9 +131,7 @@ public class WorldStateProofProviderTest {
   }
 
   private void writeStorageValue(
-      final MerkleTrie<Bytes32, Bytes> storageTrie,
-      final UInt256 key,
-      final UInt256 value) {
+      final MerkleTrie<Bytes32, Bytes> storageTrie, final UInt256 key, final UInt256 value) {
     storageTrie.put(storageKeyHash(key), encodeStorageValue(value));
   }
 

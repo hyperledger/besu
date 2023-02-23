@@ -27,6 +27,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.LeafHandler;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
+import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
+import org.hyperledger.besu.ethereum.trie.patricia.PutVisitor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.NavigableSet;
@@ -36,8 +38,6 @@ import java.util.TreeSet;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
-import org.hyperledger.besu.ethereum.trie.patricia.PutVisitor;
 import org.junit.Test;
 import org.mockito.InOrder;
 

@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
-import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 
 public class TrieIterator<V> implements PathNodeVisitor<V> {
 

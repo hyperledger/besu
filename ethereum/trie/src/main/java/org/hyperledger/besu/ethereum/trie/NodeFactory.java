@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,7 +30,7 @@ public interface NodeFactory<V> {
 
   Node<V> createLeaf(Bytes path, V value);
 
-  default Optional<Node<V>> retrieve(final Bytes location, final Bytes32 hash){
+  default Optional<Node<V>> retrieve(final Bytes location, final Bytes32 hash) {
     throw new UnsupportedOperationException("retrieve is not implemented");
   }
 }

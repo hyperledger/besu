@@ -245,8 +245,7 @@ public class MarkSweepPrunerTest {
     return collector;
   }
 
-  private void collectTrieNodes(
-          final MerkleTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
+  private void collectTrieNodes(final MerkleTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
     final Bytes32 rootHash = trie.getRootHash();
     trie.visitAll(
         (node) -> {

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 
 import java.util.Map;
 import java.util.Optional;
@@ -27,7 +28,6 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 
 /** An Merkle Patricial Trie. */
 public interface MerkleTrie<K, V> {
@@ -68,6 +68,7 @@ public interface MerkleTrie<K, V> {
    */
   void put(K key, V value);
 
+  void putPath(K key, V value);
   /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist.

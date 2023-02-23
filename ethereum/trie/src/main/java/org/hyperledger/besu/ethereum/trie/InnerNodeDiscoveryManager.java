@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,9 +30,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
-import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
-import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
-import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.immutables.value.Value;
 
 public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {

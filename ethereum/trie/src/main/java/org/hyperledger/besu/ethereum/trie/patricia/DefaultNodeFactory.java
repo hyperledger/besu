@@ -14,6 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.trie.patricia;
 
+import org.hyperledger.besu.ethereum.trie.LeafNode;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeFactory;
+import org.hyperledger.besu.ethereum.trie.NullNode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,10 +26,6 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.trie.LeafNode;
-import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.NodeFactory;
-import org.hyperledger.besu.ethereum.trie.NullNode;
 
 public class DefaultNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")

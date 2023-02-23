@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
+
 import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 
@@ -29,9 +31,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toUnmodifiableSet;
-import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * A {@link MerkleTrie} that persists trie nodes to a {@link MerkleStorage} key/value store.
@@ -43,7 +44,6 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
   protected final NodeFactory<V> nodeFactory;
 
   private Node<V> root;
-
 
   /**
    * Create a trie.
@@ -63,9 +63,7 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
    * @param rootLocation The initial root location for the trie
    */
   public StoredMerkleTrie(
-      final NodeFactory<V> nodeFactory,
-      final Bytes32 rootHash,
-      final Bytes rootLocation) {
+      final NodeFactory<V> nodeFactory, final Bytes32 rootHash, final Bytes rootLocation) {
     this.nodeFactory = nodeFactory;
     this.root =
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
@@ -115,6 +113,13 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
     checkNotNull(key);
     checkNotNull(value);
     this.root = root.accept(getPutVisitor(value), bytesToPath(key));
+  }
+
+  @Override
+  public void putPath(final K path, final V value) {
+    checkNotNull(path);
+    checkNotNull(value);
+    this.root = root.accept(getPutVisitor(value), path);
   }
 
   @Override
@@ -211,12 +216,9 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
     return getClass().getSimpleName() + "[" + getRootHash() + "]";
   }
 
-
   public abstract PathNodeVisitor<V> getGetVisitor();
 
   public abstract PathNodeVisitor<V> getRemoveVisitor();
 
-
   public abstract PathNodeVisitor<V> getPutVisitor(final V value);
-
 }

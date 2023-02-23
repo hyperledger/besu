@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.sparse;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
@@ -24,24 +22,43 @@ import org.hyperledger.besu.ethereum.trie.StoredMerkleTrie;
 
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 /**
  * A {@link MerkleTrie} that persists trie nodes to a {@link MerkleStorage} key/value store.
  *
  * @param <V> The type of values stored by this trie.
  */
-public class StoredSparseMerkleTrie<K extends Bytes, V> extends StoredMerkleTrie<K, V> implements MerkleTrie<K, V> {
+public class StoredSparseMerkleTrie<K extends Bytes, V> extends StoredMerkleTrie<K, V>
+    implements MerkleTrie<K, V> {
 
   private final GetVisitor<V> getVisitor = new GetVisitor<>();
 
-  public StoredSparseMerkleTrie(final NodeLoader nodeLoader, final Function<V, Bytes> valueSerializer, final Function<Bytes, V> valueDeserializer) {
+  public StoredSparseMerkleTrie(
+      final NodeLoader nodeLoader,
+      final Function<V, Bytes> valueSerializer,
+      final Function<Bytes, V> valueDeserializer) {
     super(new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer));
   }
 
-  public StoredSparseMerkleTrie(final NodeLoader nodeLoader, final Bytes32 rootHash, final Bytes rootLocation, final Function<V, Bytes> valueSerializer, final Function<Bytes, V> valueDeserializer) {
-    super(new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer),  rootHash, rootLocation);
+  public StoredSparseMerkleTrie(
+      final NodeLoader nodeLoader,
+      final Bytes32 rootHash,
+      final Bytes rootLocation,
+      final Function<V, Bytes> valueSerializer,
+      final Function<Bytes, V> valueDeserializer) {
+    super(
+        new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer),
+        rootHash,
+        rootLocation);
   }
 
-  public StoredSparseMerkleTrie(final NodeLoader nodeLoader, final Bytes32 rootHash, final Function<V, Bytes> valueSerializer, final Function<Bytes, V> valueDeserializer) {
+  public StoredSparseMerkleTrie(
+      final NodeLoader nodeLoader,
+      final Bytes32 rootHash,
+      final Function<V, Bytes> valueSerializer,
+      final Function<Bytes, V> valueDeserializer) {
     super(new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer), rootHash);
   }
 
@@ -66,7 +83,8 @@ public class StoredSparseMerkleTrie<K extends Bytes, V> extends StoredMerkleTrie
 
   @Override
   public PathNodeVisitor<V> getRemoveVisitor() {
-    throw new UnsupportedOperationException("remove visitor is not implemented for sparse merkle trie");
+    throw new UnsupportedOperationException(
+        "remove visitor is not implemented for sparse merkle trie");
   }
 
   @Override
