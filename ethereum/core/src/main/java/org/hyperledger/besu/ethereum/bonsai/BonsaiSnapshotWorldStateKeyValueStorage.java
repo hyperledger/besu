@@ -135,6 +135,16 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
+  public void onCloseStorage() {
+    try {
+      // when the parent storage clears, close regardless of subscribers
+      doClose();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public void onClearStorage() {
     try {
       // when the parent storage clears, close regardless of subscribers

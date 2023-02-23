@@ -338,4 +338,13 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     // FIXME we can do proofs for layered tries and the persisted trie
     return Optional.empty();
   }
+
+  @Override
+  public void close() {
+    try {
+      worldStateStorage.close();
+    } catch (Exception e) {
+      // no op
+    }
+  }
 }

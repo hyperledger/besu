@@ -259,7 +259,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public void close() throws Exception {
-    // No need to close or notify because BonsaiWorldStateKeyValueStorage is persistent
+    subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {
