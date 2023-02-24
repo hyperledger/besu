@@ -17,6 +17,7 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.ethereum.bonsai.CachedSnapshotWorldstateManager.RETAINED_LAYERS;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -222,18 +223,30 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             (BonsaiWorldStateUpdateAccumulator) mutableState.updater();
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
-            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
+            debugLambda(
+                LOG,
+                "Attempting Rollback {} to {}",
+                () -> mutableState.getWorldStateStorage().getClass().getSimpleName(),
+                () -> rollBack.getBlockHash());
             bonsaiUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
-            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
-            bonsaiUpdater.rollForward(rollForwards.get(i));
+            final var forward = rollForwards.get(i);
+            debugLambda(
+                LOG,
+                "Attempting Rollforward {} to {}",
+                () -> mutableState.getWorldStateStorage().getClass().getSimpleName(),
+                () -> forward.getBlockHash());
+            bonsaiUpdater.rollForward(forward);
           }
           bonsaiUpdater.commit();
 
           mutableState.persist(blockchain.getBlockHeader(blockHash).get());
 
-          LOG.debug("Archive rolling finished, now at {}", blockHash);
+          LOG.debug(
+              "Archive rolling finished, {} now at {}",
+              mutableState.getWorldStateStorage().getClass().getSimpleName(),
+              blockHash);
           return Optional.of(mutableState);
         } catch (final MerkleTrieException re) {
           // need to throw to trigger the heal
@@ -241,7 +254,13 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         } catch (final Exception e) {
           // if we fail we must clean up the updater
           bonsaiUpdater.reset();
-          LOG.debug("State rolling failed for block hash " + blockHash, e);
+          LOG.debug(
+              "State rolling failed on "
+                  + mutableState.getWorldStateStorage().getClass().getSimpleName()
+                  + " for block hash "
+                  + blockHash,
+              e);
+
           return Optional.empty();
         }
       } catch (final RuntimeException re) {
