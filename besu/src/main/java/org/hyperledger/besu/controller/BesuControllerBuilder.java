@@ -934,7 +934,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         new SnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive));
   }
 
-  private WorldStateArchive createWorldStateArchive(
+  WorldStateArchive createWorldStateArchive(
       final WorldStateStorage worldStateStorage,
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
