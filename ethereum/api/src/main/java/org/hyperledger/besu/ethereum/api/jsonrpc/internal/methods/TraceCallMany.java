@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -154,7 +155,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final BlockHeader header,
       final WorldUpdater worldUpdater) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(buildTraceOptions(traceTypes), new InputDataManager());
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.processWithWorldUpdater(
             callParameter, buildTransactionValidationParams(), tracer, header, worldUpdater);

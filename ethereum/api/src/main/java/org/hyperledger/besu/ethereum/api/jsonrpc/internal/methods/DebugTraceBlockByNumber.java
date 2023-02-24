@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
@@ -64,7 +65,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
             hash ->
                 blockTracerSupplier
                     .get()
-                    .trace(hash, new DebugOperationTracer(traceOptions))
+                    .trace(hash, new DebugOperationTracer(traceOptions, new InputDataManager()))
                     .map(BlockTrace::getTransactionTraces)
                     .map(DebugTraceTransactionResult::of))
         .orElse(null);

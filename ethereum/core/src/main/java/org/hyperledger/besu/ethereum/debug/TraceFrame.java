@@ -49,7 +49,7 @@ public class TraceFrame {
   private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
 
-  private final InputDataMamanger dataMamanger;
+  private final InputDataManager dataManager;
   private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
@@ -78,7 +78,7 @@ public class TraceFrame {
       final Optional<Bytes32[]> stack,
       final Optional<Bytes[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
-      final InputDataMamanger dataMamanger,
+      final InputDataManager dataManager,
       final WorldUpdater worldUpdater,
       final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
@@ -98,8 +98,7 @@ public class TraceFrame {
     this.recipient = recipient;
     this.value = value;
     this.inputDataKey = Hash.hash(inputData);
-    this.dataMamanger = dataMamanger;
-    dataMamanger.addInputData(inputDataKey,inputData);
+    this.dataManager = dataManager;
     this.outputData = outputData;
     this.stack = stack;
     this.memory = memory;
@@ -114,6 +113,8 @@ public class TraceFrame {
     this.maybeUpdatedMemory = maybeUpdatedMemory;
     this.maybeUpdatedStorage = maybeUpdatedStorage;
     precompiledGasCost = OptionalLong.empty();
+
+    dataManager.addInputData(inputDataKey, inputData);
   }
 
   public int getPc() {
@@ -157,7 +158,7 @@ public class TraceFrame {
   }
 
   public Bytes getInputData() {
-    return dataMamanger.getInputData(inputDataKey);
+    return dataManager.getInputData(inputDataKey);
   }
 
   public Bytes getOutputData() {

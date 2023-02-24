@@ -14,24 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
-import org.apache.tuweni.bytes.Bytes;
-import  org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class InputDataMamanger {
+import org.apache.tuweni.bytes.Bytes;
 
+public class InputDataManager {
 
-    private final Map<Hash, Bytes> inputDataCollection = new ConcurrentHashMap<>();
+  private final Map<Hash, Bytes> inputDataCollection = new ConcurrentHashMap<>();
 
+  public Bytes getInputData(final Hash hash) {
+    return inputDataCollection.get(hash);
+  }
 
-    public Bytes getInputData(final Hash hash){
-        return inputDataCollection.get(hash);
-    }
-
-    public void addInputData(final Hash hash, final Bytes bytes){
-        if(!inputDataCollection.containsKey(hash))
-            inputDataCollection.put(hash, bytes);
-    }
+  public void addInputData(final Hash hash, final Bytes bytes) {
+    if (!inputDataCollection.containsKey(hash)) inputDataCollection.put(hash, bytes);
+  }
 }

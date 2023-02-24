@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -101,6 +102,7 @@ public class DebugTraceTransactionTest {
             Optional.of(stackBytes),
             Optional.of(memoryBytes),
             Optional.empty(),
+            new InputDataManager(),
             null,
             Optional.of(Bytes.fromHexString("0x1122334455667788")),
             Optional.empty(),
@@ -165,6 +167,7 @@ public class DebugTraceTransactionTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            new InputDataManager(),
             null,
             Optional.of(Bytes.fromHexString("0x1122334455667788")),
             Optional.empty(),

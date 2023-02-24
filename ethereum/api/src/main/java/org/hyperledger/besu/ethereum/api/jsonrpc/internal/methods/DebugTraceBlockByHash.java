@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
@@ -54,7 +55,7 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
     final Collection<DebugTraceTransactionResult> results =
         blockTracerSupplier
             .get()
-            .trace(blockHash, new DebugOperationTracer(traceOptions))
+            .trace(blockHash, new DebugOperationTracer(traceOptions, new InputDataManager()))
             .map(BlockTrace::getTransactionTraces)
             .map(DebugTraceTransactionResult::of)
             .orElse(null);

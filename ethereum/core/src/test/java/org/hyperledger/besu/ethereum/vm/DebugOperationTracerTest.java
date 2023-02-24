@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
+import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
@@ -159,7 +160,7 @@ public class DebugOperationTracerTest {
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
 
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(new TraceOptions(true, true, true));
+        new DebugOperationTracer(new TraceOptions(true, true, true), new InputDataManager());
     tracer.tracePostExecution(
         frame, new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
 
@@ -174,7 +175,8 @@ public class DebugOperationTracerTest {
   }
 
   private TraceFrame traceFrame(final MessageFrame frame, final TraceOptions traceOptions) {
-    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions);
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(traceOptions, new InputDataManager());
     tracer.tracePreExecution(frame);
     OperationResult operationResult = anOperation.execute(frame, null);
     tracer.tracePostExecution(frame, operationResult);

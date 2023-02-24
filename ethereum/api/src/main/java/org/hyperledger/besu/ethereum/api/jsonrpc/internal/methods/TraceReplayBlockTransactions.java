@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmT
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -115,7 +116,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
 
     return blockTracerSupplier
         .get()
-        .trace(block, new DebugOperationTracer(traceOptions))
+        .trace(block, new DebugOperationTracer(traceOptions, new InputDataManager()))
         .map(BlockTrace::getTransactionTraces)
         .map((traces) -> generateTracesFromTransactionTrace(traces, block, traceTypes))
         .orElse(null);

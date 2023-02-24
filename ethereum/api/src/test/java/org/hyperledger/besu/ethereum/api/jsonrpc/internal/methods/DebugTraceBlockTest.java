@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -93,6 +94,7 @@ public class DebugTraceBlockTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            new InputDataManager(),
             null,
             Optional.empty(),
             Optional.empty(),
