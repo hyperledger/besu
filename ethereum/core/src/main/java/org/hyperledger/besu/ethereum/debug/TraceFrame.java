@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.debug;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -42,11 +43,13 @@ public class TraceFrame {
   private Optional<ExceptionalHaltReason> exceptionalHaltReason;
   private final Address recipient;
   private final Wei value;
-  private final Bytes inputData;
+  private final Hash inputDataKey;
   private final Bytes outputData;
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
+
+  private final InputDataMamanger dataMamanger;
   private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
@@ -75,6 +78,7 @@ public class TraceFrame {
       final Optional<Bytes32[]> stack,
       final Optional<Bytes[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
+      final InputDataMamanger dataMamanger,
       final WorldUpdater worldUpdater,
       final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
@@ -93,7 +97,9 @@ public class TraceFrame {
     this.exceptionalHaltReason = exceptionalHaltReason;
     this.recipient = recipient;
     this.value = value;
-    this.inputData = inputData;
+    this.inputDataKey = Hash.hash(inputData);
+    this.dataMamanger = dataMamanger;
+    dataMamanger.addInputData(inputDataKey,inputData);
     this.outputData = outputData;
     this.stack = stack;
     this.memory = memory;
@@ -151,7 +157,7 @@ public class TraceFrame {
   }
 
   public Bytes getInputData() {
-    return inputData;
+    return dataMamanger.getInputData(inputDataKey);
   }
 
   public Bytes getOutputData() {
