@@ -19,8 +19,12 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InputDataManager {
+
+  private static final Logger LOG = LoggerFactory.getLogger(InputDataManager.class);
 
   private final List<Bytes> inputDataCollection = Collections.synchronizedList(new ArrayList<>());
 
@@ -30,6 +34,7 @@ public class InputDataManager {
 
   public int addInputData(final Bytes bytes) {
     int index = inputDataCollection.indexOf(bytes);
+    LOG.trace("index found " + index);
     if (index >= 0) return index;
     this.inputDataCollection.add(bytes);
     // return the index the last element, just added
