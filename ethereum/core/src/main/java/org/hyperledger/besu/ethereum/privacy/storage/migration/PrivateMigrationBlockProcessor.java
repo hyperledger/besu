@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -96,7 +97,7 @@ public class PrivateMigrationBlockProcessor {
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
-      final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
+      final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
@@ -125,8 +126,8 @@ public class PrivateMigrationBlockProcessor {
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       return BlockProcessingResult.FAILED;
     }
-    BlockProcessingOutputs yield = new BlockProcessingOutputs(worldState, receipts);
-    return new BlockProcessingResult(Optional.of(yield));
+    BlockProcessingOutputs blockProcessingOutput = new BlockProcessingOutputs(worldState, receipts);
+    return new BlockProcessingResult(Optional.of(blockProcessingOutput));
   }
 
   private boolean rewardCoinbase(
