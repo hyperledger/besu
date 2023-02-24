@@ -5,7 +5,7 @@ on:
   schedule:
     # * is a special character in YAML so you have to quote this string
     # expression evaluates to midnight on Tuesdays UTC
-    - cron:  '0 0 * * 2'
+    - cron:  '0 18 * * *'
 
 permissions:
   pull-requests: read # allows SonarCloud to decorate PRs with analysis results

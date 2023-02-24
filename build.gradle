@@ -860,8 +860,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*/.idea/.*)",
     "(.*/out/.*)",
     "(.*/build/.*)",
-    "(.*/src/[^/]+/generated/.*)",
-    "(.*/generated-sources/.*)",
+    "(.*/src/[^/]+/generated/.*)"
   ].join("|")
 
 }
