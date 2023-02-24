@@ -20,7 +20,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -34,7 +36,6 @@ import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.Log;
@@ -62,6 +63,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -150,7 +152,8 @@ public class StateTestSubCommand implements Runnable {
   }
 
   private void executeStateTest(final Map<String, GeneralStateTestCaseSpec> generalStateTests) {
-    for (final var generalStateTestEntry : generalStateTests.entrySet()) {
+    for (final Map.Entry<String, GeneralStateTestCaseSpec> generalStateTestEntry :
+        generalStateTests.entrySet()) {
       generalStateTestEntry
           .getValue()
           .finalStateSpecs()
@@ -161,7 +164,8 @@ public class StateTestSubCommand implements Runnable {
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
     Log4j2ConfiguratorUtil.setLevel(
         "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
-    final var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
+    final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
+        ReferenceTestProtocolSchedules.create();
     Log4j2ConfiguratorUtil.setLevel(
         "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
 
@@ -210,12 +214,14 @@ public class StateTestSubCommand implements Runnable {
           throw new UnsupportedForkException(forkName);
         }
 
-        ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
         final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
         final WorldUpdater worldStateUpdater = worldState.updater();
         final ReferenceTestBlockchain blockchain =
             new ReferenceTestBlockchain(blockHeader.getNumber());
         final Stopwatch timer = Stopwatch.createStarted();
+        // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
+        final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
         final TransactionProcessingResult result =
             processor.processTransaction(
                 blockchain,
@@ -223,10 +229,11 @@ public class StateTestSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                new BlockHashLookup(blockHeader, blockchain),
+                blockNumber -> Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
                 false,
                 TransactionValidationParams.processingBlock(),
-                tracer);
+                tracer,
+                dataGasPrice);
         timer.stop();
         if (shouldClearEmptyAccounts(spec.getFork())) {
           final Account coinbase =
@@ -242,9 +249,9 @@ public class StateTestSubCommand implements Runnable {
         worldStateUpdater.commit();
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-        final var gasUsed = transaction.getGasLimit() - result.getGasRemaining();
-        final var timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
-        final var mGps = gasUsed * 1000.0f / timeNs;
+        final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
+        final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+        final float mGps = gasUsed * 1000.0f / timeNs;
 
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
 
