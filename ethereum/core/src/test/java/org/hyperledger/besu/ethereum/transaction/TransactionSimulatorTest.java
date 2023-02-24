@@ -535,7 +535,7 @@ public class TransactionSimulatorTest {
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
     when(account.getNonce()).thenReturn(nonce);
-    when(worldStateArchive.getMutable(blockHeader, anyBoolean()))
+    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(updater.get(address)).thenReturn(account);

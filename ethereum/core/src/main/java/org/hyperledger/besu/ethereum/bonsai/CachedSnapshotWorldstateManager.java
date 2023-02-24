@@ -37,6 +37,7 @@ public class CachedSnapshotWorldstateManager extends AbstractTrieLogManager<Bons
       final long maxLayersToLoad,
       final Map<Bytes32, BonsaiSnapshotWorldStateKeyValueStorage> cachedWorldStatesByHash) {
     super(blockchain, worldStateStorage, maxLayersToLoad, cachedWorldStatesByHash);
+    worldStateStorage.subscribe(this);
   }
 
   public CachedSnapshotWorldstateManager(
@@ -67,5 +68,25 @@ public class CachedSnapshotWorldstateManager extends AbstractTrieLogManager<Bons
               blockHeader.getNumber(), forWorldState.worldStateStorage));
     }
     scrubCachedLayers(blockHeader.getNumber());
+  }
+
+  @Override
+  public void onClearStorage() {
+    this.cachedWorldStatesByHash.clear();
+  }
+
+  @Override
+  public void onClearFlatDatabaseStorage() {
+    this.cachedWorldStatesByHash.clear();
+  }
+
+  @Override
+  public void onClearTrieLog() {
+    this.cachedWorldStatesByHash.clear();
+  }
+
+  @Override
+  public void onCloseStorage() {
+    this.cachedWorldStatesByHash.clear();
   }
 }

@@ -135,7 +135,7 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(blockHeader, anyBoolean()))
+    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
@@ -158,7 +158,7 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(blockHeader, anyBoolean()))
+    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
@@ -184,7 +184,7 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(blockHeader, anyBoolean()))
+    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mockWorldState));
