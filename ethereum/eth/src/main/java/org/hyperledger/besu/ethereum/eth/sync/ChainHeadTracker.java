@@ -89,7 +89,7 @@ public class ChainHeadTracker implements ConnectCallback {
                                 + " ("
                                 + chainHeadHeader.getBlockHash()
                                 + ")")
-                    .addArgument(() -> peer)
+                    .addArgument(peer)
                     .log();
               } else {
                 LOG.debug("Failed to retrieve chain head info. Disconnecting {}", peer, error);

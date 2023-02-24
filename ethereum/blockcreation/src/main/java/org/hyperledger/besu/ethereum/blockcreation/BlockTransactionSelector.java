@@ -139,8 +139,8 @@ public class BlockTransactionSelector {
               "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative data gas used {}")
           .addArgument(transaction::toTraceLog)
           .addArgument(transactions::size)
-          .addArgument(() -> cumulativeGasUsed)
-          .addArgument(() -> cumulativeDataGasUsed)
+          .addArgument(cumulativeGasUsed)
+          .addArgument(cumulativeDataGasUsed)
           .log();
     }
 

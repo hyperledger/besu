@@ -65,7 +65,7 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
     LOG.atTrace()
         .setMessage("{} parameters: blockHashes {}")
         .addArgument(this::getName)
-        .addArgument(() -> blockHashes)
+        .addArgument(blockHashes)
         .log();
 
     if (blockHashes.length > getMaxRequestBlocks()) {

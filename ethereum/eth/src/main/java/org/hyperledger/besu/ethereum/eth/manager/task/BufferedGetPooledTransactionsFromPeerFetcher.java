@@ -131,7 +131,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
             "Transaction hashes to request from peer {}, fresh count {}, already seen count {}")
         .addArgument(peer)
         .addArgument(toRetrieve::size)
-        .addArgument(() -> alreadySeenCount)
+        .addArgument(alreadySeenCount)
         .log();
 
     return toRetrieve;

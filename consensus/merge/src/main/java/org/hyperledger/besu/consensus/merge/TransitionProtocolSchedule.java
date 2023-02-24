@@ -140,9 +140,9 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
       LOG.atDebug()
           .setMessage(" block {} ttd is: {}, parent total diff is: {}, this total diff is: {}")
           .addArgument(blockHeader::toLogString)
-          .addArgument(() -> terminalDifficulty)
-          .addArgument(() -> parentDifficulty)
-          .addArgument(() -> thisDifficulty)
+          .addArgument(terminalDifficulty)
+          .addArgument(parentDifficulty)
+          .addArgument(thisDifficulty)
           .log();
 
       // if this block is pre-merge or a TTD block

@@ -84,9 +84,9 @@ public class DynamicPivotBlockManager {
                   LOG.atDebug()
                       .setMessage(
                           "Searching for a new pivot: current pivot {} best chain height {} distance next pivot {} last pivot block found {}")
-                      .addArgument(() -> currentPivotBlockNumber)
-                      .addArgument(() -> bestChainHeight)
-                      .addArgument(() -> distanceNextPivotBlock)
+                      .addArgument(currentPivotBlockNumber)
+                      .addArgument(bestChainHeight)
+                      .addArgument(distanceNextPivotBlock)
                       .addArgument(this::logLastPivotBlockFound)
                       .log();
 
@@ -125,9 +125,9 @@ public class DynamicPivotBlockManager {
                               LOG.atDebug()
                                   .setMessage(
                                       "Switch to new pivot: current pivot {} is distant {} from current best chain height {} last pivot block found {}")
-                                  .addArgument(() -> currentPivotBlockNumber)
-                                  .addArgument(() -> distance)
-                                  .addArgument(() -> bestChainHeight)
+                                  .addArgument(currentPivotBlockNumber)
+                                  .addArgument(distance)
+                                  .addArgument(bestChainHeight)
                                   .addArgument(this::logLastPivotBlockFound)
                                   .log();
                               switchToNewPivotBlock(onNewPivotBlock);

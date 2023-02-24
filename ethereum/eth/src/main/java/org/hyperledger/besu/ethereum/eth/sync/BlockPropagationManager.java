@@ -187,7 +187,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         .setMessage("Block added event type {} for block {}. Current status {}")
         .addArgument(blockAddedEvent::getEventType)
         .addArgument(newBlock::toLogString)
-        .addArgument(() -> this)
+        .addArgument(this)
         .log();
 
     // If there is no children to process, maybe try non announced blocks
@@ -296,7 +296,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
           .setMessage("New block from network {} from peer {}. Current status {}")
           .addArgument(block::toLogString)
           .addArgument(message::getPeer)
-          .addArgument(() -> this)
+          .addArgument(this)
           .log();
 
       final Difficulty totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
@@ -312,8 +312,8 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
             .setMessage(
                 "Do not import new block from network {}, current chain heights are: local {}, best {}")
             .addArgument(block::toLogString)
-            .addArgument(() -> localChainHeight)
-            .addArgument(() -> bestChainHeight)
+            .addArgument(localChainHeight)
+            .addArgument(bestChainHeight)
             .log();
         return;
       }
@@ -354,7 +354,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
           .setMessage("New block hashes from network {} from peer {}. Current status {}")
           .addArgument(() -> toLogString(announcedBlocks))
           .addArgument(message::getPeer)
-          .addArgument(() -> this)
+          .addArgument(this)
           .log();
 
       for (final NewBlockHash announcedBlock : announcedBlocks) {

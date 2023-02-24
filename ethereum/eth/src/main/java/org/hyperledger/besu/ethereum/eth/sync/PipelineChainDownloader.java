@@ -160,7 +160,7 @@ public class PipelineChainDownloader implements ChainDownloader {
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
     LOG.atDebug()
         .setMessage("Starting download pipeline for sync target {}, common ancestor {} ({})")
-        .addArgument(() -> target)
+        .addArgument(target)
         .addArgument(() -> target.commonAncestor().getNumber())
         .addArgument(() -> target.commonAncestor().getBlockHash())
         .log();

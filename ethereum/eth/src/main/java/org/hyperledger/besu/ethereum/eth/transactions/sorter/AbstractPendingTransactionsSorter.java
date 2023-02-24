@@ -540,7 +540,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                       .setMessage(
                           "Transaction {} invalid since there is a lower invalid nonce {} for the sender")
                       .addArgument(pendingTx::toTraceLog)
-                      .addArgument(() -> invalidNonce)
+                      .addArgument(invalidNonce)
                       .log())
           .map(PendingTransaction::getTransaction)
           .collect(Collectors.toList());

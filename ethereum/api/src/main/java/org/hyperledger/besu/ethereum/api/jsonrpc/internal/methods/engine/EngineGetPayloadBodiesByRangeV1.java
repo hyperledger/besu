@@ -65,8 +65,8 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
     LOG.atTrace()
         .setMessage("{} parameters: start block number {} count {}")
         .addArgument(this::getName)
-        .addArgument(() -> startBlockNumber)
-        .addArgument(() -> count)
+        .addArgument(startBlockNumber)
+        .addArgument(count)
         .log();
 
     if (startBlockNumber < 1 || count < 1) {
