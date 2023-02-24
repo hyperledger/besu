@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.AbstractLayeredPendingTransactionsTest;
+import org.hyperledger.besu.ethereum.eth.transactions.AbstractTransactionsLayeredPendingTransactionsTest;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -55,7 +55,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
-public class LayeredPendingTransactionsLegacyTest extends AbstractLayeredPendingTransactionsTest {
+public class LayeredPendingTransactionsLegacyTest extends AbstractTransactionsLayeredPendingTransactionsTest {
 
   @Override
   protected PendingTransactions createPendingTransactionsSorter(

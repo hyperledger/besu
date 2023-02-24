@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.AbstractLayeredPendingTransactionsTest;
+import org.hyperledger.besu.ethereum.eth.transactions.AbstractTransactionsLayeredPendingTransactionsTest;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -56,7 +56,7 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
-public class LayeredPendingTransactionsLondonTest extends AbstractLayeredPendingTransactionsTest {
+public class LayeredPendingTransactionsLondonTest extends AbstractTransactionsLayeredPendingTransactionsTest {
 
   private static final Wei BASE_FEE_FLOOR = Wei.of(7L);
 

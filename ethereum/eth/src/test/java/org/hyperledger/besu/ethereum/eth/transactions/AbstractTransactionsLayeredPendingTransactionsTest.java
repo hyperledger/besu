@@ -88,7 +88,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
-public abstract class AbstractLayeredPendingTransactionsTest {
+public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
 
   protected static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();

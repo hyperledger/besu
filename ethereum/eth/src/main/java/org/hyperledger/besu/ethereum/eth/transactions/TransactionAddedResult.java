@@ -24,6 +24,7 @@ public final class TransactionAddedResult {
     INVALID,
     REPLACED,
     DROPPED,
+    TRY_NEXT_LAYER,
     ADDED
   }
 
@@ -40,6 +41,7 @@ public final class TransactionAddedResult {
   public static final TransactionAddedResult ADDED_SPARSE =
       new TransactionAddedResult(Status.ADDED, false);
   public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED, true);
+  public static final TransactionAddedResult TRY_NEXT_LAYER = new TransactionAddedResult(Status.TRY_NEXT_LAYER, false);
 
   private final Optional<TransactionInvalidReason> rejectReason;
 
@@ -50,11 +52,10 @@ public final class TransactionAddedResult {
   private final boolean prioritizable;
 
   private TransactionAddedResult(
-      final PendingTransaction replacedTransaction, final boolean prioritizable) {
+      final PendingTransaction replacedTransaction) {
     this.replacedTransaction = Optional.of(replacedTransaction);
     this.rejectReason = Optional.empty();
     this.status = Status.REPLACED;
-    this.prioritizable = prioritizable;
   }
 
   private TransactionAddedResult(final TransactionInvalidReason rejectReason) {
@@ -96,8 +97,8 @@ public final class TransactionAddedResult {
   }
 
   public static TransactionAddedResult createForReplacement(
-      final PendingTransaction replacedTransaction, final boolean prioritizable) {
-    return new TransactionAddedResult(replacedTransaction, prioritizable);
+      final PendingTransaction replacedTransaction) {
+    return new TransactionAddedResult(replacedTransaction);
   }
 
   @Override

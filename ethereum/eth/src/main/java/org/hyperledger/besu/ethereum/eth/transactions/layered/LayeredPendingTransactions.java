@@ -79,7 +79,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 //      new HashMap<>();
   private final NavigableSet<PendingTransaction> orderByMaxFee =
       new TreeSet<>(
-          Comparator.comparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasFee())
+          Comparator.comparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasPrice())
               .thenComparing(PendingTransaction::getSequence));
 /*
   private final Map<Address, NavigableMap<Long, PendingTransaction>> sparseBySender =
@@ -122,7 +122,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public synchronized void reset() {
-    super.reset();
  //   pendingTransactions.clear();
  //   readyBySender.clear();
     orderByMaxFee.clear();
@@ -153,7 +152,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
     return addedResult;
   }
-/*
+
   private TransactionAddedResult addTransaction(
       final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount) {
 
@@ -177,7 +176,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
     }
 
-    final var result = addAndPrioritize(pendingTransaction, senderNonce);
+    final TransactionAddedResult result = readyTransactions.add(pendingTransaction, senderNonce);    //addAndPrioritize(pendingTransaction, senderNonce);
     updateMetrics(pendingTransaction, result);
 
     if (LOG.isDebugEnabled()) {
@@ -186,9 +185,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     return result;
   }
- */
 
-  /*
   private void updateMetrics(
       final PendingTransaction pendingTransaction, final TransactionAddedResult result) {
     if (result.isSuccess()) {
@@ -219,8 +216,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
           rejectReason::toString);
     }
   }
-
-   */
 
 
 //  private TransactionAddedResult addAndPrioritize(

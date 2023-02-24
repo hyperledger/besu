@@ -72,7 +72,7 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
   protected Transaction createTransactionReplacement(
       final Transaction originalTransaction, final KeyPair keys) {
     return createTransaction(
-        originalTransaction.getNonce(), originalTransaction.getMaxGasFee().multiply(2), keys);
+        originalTransaction.getNonce(), originalTransaction.getMaxGasPrice().multiply(2), keys);
   }
 
   @Test

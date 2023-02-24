@@ -53,7 +53,7 @@ public class TransactionPoolMetrics {
             BesuMetricCategory.TRANSACTION_POOL,
             "transactions_added_total",
             "Count of transactions added to the transaction pool",
-            "source");
+            "source", "list");
 
     invalidCounter =
         metricsSystem.createLabelledCounter(
@@ -69,7 +69,7 @@ public class TransactionPoolMetrics {
             "transactions_removed_total",
             "Count of transactions removed from the transaction pool",
             "source",
-            "operation");
+            "operation", "list");
 
     replacedCount =
         metricsSystem.createLabelledCounter(
@@ -85,7 +85,7 @@ public class TransactionPoolMetrics {
             "transactions_rejected_total",
             "Count of transactions not accepted to the transaction pool",
             "source",
-            "operation");
+            "operation", "list");
 
     evictedCounter =
         metricsSystem.createLabelledCounter(
@@ -178,12 +178,12 @@ public class TransactionPoolMetrics {
         supplier);
   }
 
-  public void incrementAdded(final boolean receivedFromLocalSource) {
-    addedCounter.labels(location(receivedFromLocalSource)).inc();
+  public void incrementAdded(final boolean receivedFromLocalSource, final String list) {
+    addedCounter.labels(location(receivedFromLocalSource), list).inc();
   }
 
-  public void incrementRemoved(final boolean receivedFromLocalSource, final String operation) {
-    removedCounter.labels(location(receivedFromLocalSource), operation).inc();
+  public void incrementRemoved(final boolean receivedFromLocalSource, final String operation, final String list) {
+    removedCounter.labels(location(receivedFromLocalSource), operation, list).inc();
   }
 
   public void incrementReplaced(final boolean receivedFromLocalSource, final String list) {
@@ -196,8 +196,8 @@ public class TransactionPoolMetrics {
   }
 
   public void incrementRejected(
-      final boolean receivedFromLocalSource, final TransactionInvalidReason rejectReason) {
-    rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name()).inc();
+      final boolean receivedFromLocalSource, final TransactionInvalidReason rejectReason, final String list) {
+    rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), list).inc();
   }
 
   public void incrementExpiredTransactionsMessage() {

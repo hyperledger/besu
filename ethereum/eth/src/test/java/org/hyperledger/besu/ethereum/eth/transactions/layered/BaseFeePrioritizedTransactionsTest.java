@@ -96,7 +96,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
     return createTransaction(
         originalTransaction.getType(),
         originalTransaction.getNonce(),
-        originalTransaction.getMaxGasFee().multiply(2),
+        originalTransaction.getMaxGasPrice().multiply(2),
         keys);
   }
 

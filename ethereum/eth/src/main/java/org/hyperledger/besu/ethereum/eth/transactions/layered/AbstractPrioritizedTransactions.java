@@ -169,6 +169,21 @@ public abstract class AbstractPrioritizedTransactions {
         () -> expectedNonceForSender.remove(sender));
   }
 
+  void remove(final PendingTransaction pendingTransaction) {
+    expectedNonceForSender.computeIfPresent(pendingTransaction.getSender(), (sender, expectedNonce) -> {
+      final long nonceDistance = expectedNonce - pendingTransaction.getNonce();
+      if(nonceDistance > 1) {
+        throw new IllegalArgumentException("Prioritized transactions must be removed from highest nonce first");
+      } else if (nonceDistance == 1) {
+        removeFromOrderedTransactions(pendingTransaction, false);
+        traceLambda(LOG, "Demoted transaction {}", pendingTransaction::toTraceLog);
+        return pendingTransaction.getNonce();
+      }
+      return expectedNonce;
+    });
+
+  }
+
   public int size() {
     return prioritizedPendingTransactions.size();
   }
