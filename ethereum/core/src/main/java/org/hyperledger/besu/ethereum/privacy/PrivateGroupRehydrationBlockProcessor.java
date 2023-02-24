@@ -178,7 +178,8 @@ public class PrivateGroupRehydrationBlockProcessor {
               miningBeneficiary,
               blockHashLookup,
               false,
-              TransactionValidationParams.processingBlock());
+              TransactionValidationParams.processingBlock(),
+              Wei.ZERO);
       if (result.isInvalid()) {
         return BlockProcessingResult.FAILED;
       }

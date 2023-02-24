@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -97,6 +98,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
+
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
+
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
@@ -106,6 +110,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
+      final Wei dataGasPrice =
+          protocolSpec
+              .getFeeMarket()
+              .dataPrice(
+                  blockchain
+                      .getBlockHeader(blockHeader.getParentHash())
+                      .flatMap(BlockHeader::getExcessDataGas)
+                      .orElse(DataGas.ZERO));
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
@@ -118,7 +130,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               true,
               TransactionValidationParams.processingBlock(),
-              privateMetadataUpdater);
+              privateMetadataUpdater,
+              dataGasPrice);
       if (result.isInvalid()) {
         String errorMessage =
             MessageFormat.format(
@@ -142,7 +155,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
-        protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
+        protocolSpec.getWithdrawalsProcessor();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
       try {
         maybeWithdrawalsProcessor

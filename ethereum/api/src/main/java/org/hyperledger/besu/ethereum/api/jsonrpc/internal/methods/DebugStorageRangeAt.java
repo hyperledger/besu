@@ -96,7 +96,12 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
                     .afterTransactionInBlock(
                         blockHash,
                         transactionWithMetadata.getTransaction().getHash(),
-                        (transaction, blockHeader, blockchain, worldState, transactionProcessor) ->
+                        (transaction,
+                            blockHeader,
+                            blockchain,
+                            worldState,
+                            transactionProcessor,
+                            protocolSpec) ->
                             extractStorageAt(
                                 requestContext, accountAddress, startKey, limit, worldState))
                     .orElseGet(() -> emptyResponse(requestContext))))

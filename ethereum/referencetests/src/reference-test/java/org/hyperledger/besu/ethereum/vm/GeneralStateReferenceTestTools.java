@@ -16,12 +16,15 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
@@ -49,10 +52,14 @@ public class GeneralStateReferenceTestTools {
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
   private static MainnetTransactionProcessor transactionProcessor(final String name) {
-    return REFERENCE_TEST_PROTOCOL_SCHEDULES
-        .getByName(name)
-        .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
+    return protocolSpec(name)
         .getTransactionProcessor();
+  }
+
+  private static ProtocolSpec protocolSpec(final String name) {
+    return REFERENCE_TEST_PROTOCOL_SCHEDULES
+            .getByName(name)
+            .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
   }
 
   private static final List<String> EIPS_TO_RUN;
@@ -139,6 +146,8 @@ public class GeneralStateReferenceTestTools {
     final MainnetTransactionProcessor processor = transactionProcessor(spec.getFork());
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
+    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
+    final Wei dataGasPrice = protocolSpec(spec.getFork()).getFeeMarket().dataPrice(DataGas.ZERO);
     final TransactionProcessingResult result =
         processor.processTransaction(
             blockchain,
@@ -148,7 +157,8 @@ public class GeneralStateReferenceTestTools {
             blockHeader.getCoinbase(),
             new CachingBlockHashLookup(blockHeader, blockchain),
             false,
-            TransactionValidationParams.processingBlock());
+            TransactionValidationParams.processingBlock(),
+            dataGasPrice);
     if (result.isInvalid()) {
       assertThat(spec.getExpectException()).isNotNull();
       return;

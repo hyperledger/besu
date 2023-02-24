@@ -110,7 +110,8 @@ public class PrivateMigrationBlockProcessor {
               miningBeneficiary,
               blockHashLookup,
               true,
-              TransactionValidationParams.processingBlock());
+              TransactionValidationParams.processingBlock(),
+              Wei.ZERO);
       if (result.isInvalid()) {
         return BlockProcessingResult.FAILED;
       }

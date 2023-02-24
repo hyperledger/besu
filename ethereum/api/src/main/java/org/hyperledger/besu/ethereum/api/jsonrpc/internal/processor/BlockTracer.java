@@ -47,7 +47,12 @@ public class BlockTracer {
 
   private BlockReplay.TransactionAction<TransactionTrace> prepareReplayAction(
       final DebugOperationTracer tracer) {
-    return (transaction, header, blockchain, mutableWorldState, transactionProcessor) -> {
+    return (transaction,
+        header,
+        blockchain,
+        mutableWorldState,
+        transactionProcessor,
+        dataGasPrice) -> {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (chainedUpdater == null) {
         chainedUpdater = mutableWorldState.updater();
@@ -65,7 +70,8 @@ public class BlockTracer {
               header.getCoinbase(),
               tracer,
               new CachingBlockHashLookup(header, blockchain),
-              false);
+              false,
+              dataGasPrice);
       final List<TraceFrame> traceFrames = tracer.copyTraceFrames();
       tracer.reset();
       return new TransactionTrace(transaction, result, traceFrames);

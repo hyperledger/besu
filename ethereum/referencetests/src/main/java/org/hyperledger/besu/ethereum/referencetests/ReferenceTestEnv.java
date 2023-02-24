@@ -178,7 +178,7 @@ public class ReferenceTestEnv extends BlockHeader {
               .computeBaseFee(
                   number,
                   Wei.fromHexString(parentBaseFee),
-                  Long.parseLong(parentGasUsed),
+                  Long.decode(parentGasUsed),
                   gasLimit / 2));
     }
     if (difficulty == null && parentDifficulty != null) {
