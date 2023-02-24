@@ -33,8 +33,10 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -75,6 +77,8 @@ public class ReferenceTestEnv extends BlockHeader {
 
   private final List<Withdrawal> withdrawals;
 
+  private final Map<Long, Hash> blockHashes;
+
   /**
    * Public constructor.
    *
@@ -101,7 +105,8 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("parentGasUsed") final String parentGasUsed,
       @JsonProperty("parentGasLimit") final String parentGasLimit,
       @JsonProperty("parentTimestamp") final String parentTimestamp,
-      @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals) {
+      @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals,
+      @JsonProperty("blockHashes") final Map<String, String> blockHashes) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
@@ -131,6 +136,15 @@ public class ReferenceTestEnv extends BlockHeader {
         withdrawals == null
             ? List.of()
             : withdrawals.stream().map(EnvWithdrawal::asWithdrawal).toList();
+    this.blockHashes =
+        blockHashes == null
+            ? Map.of()
+            : blockHashes.entrySet().stream()
+                .map(
+                    entry ->
+                        Map.entry(
+                            Long.decode(entry.getKey()), Hash.fromHexString(entry.getValue())))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   @Override
@@ -186,6 +200,10 @@ public class ReferenceTestEnv extends BlockHeader {
 
   public List<Withdrawal> getWithdrawals() {
     return withdrawals;
+  }
+
+  public Optional<Hash> getBlockhashByNumber(final long number) {
+    return Optional.ofNullable(blockHashes.get(number));
   }
 
   @Override

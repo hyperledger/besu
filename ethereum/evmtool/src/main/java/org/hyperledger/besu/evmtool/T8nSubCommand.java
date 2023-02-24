@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
@@ -307,7 +306,7 @@ public class T8nSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                new CachingBlockHashLookup(referenceTestEnv, blockchain),
+                blockNumber -> referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer);
