@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.debug;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -30,6 +29,8 @@ public class InputDataManager {
   }
 
   public int addInputData(final Bytes bytes) {
+    int index = inputDataCollection.indexOf(bytes);
+    if (index >= 0) return index;
     this.inputDataCollection.add(bytes);
     // return the index the last element, just added
     return inputDataCollection.size() - 1;
