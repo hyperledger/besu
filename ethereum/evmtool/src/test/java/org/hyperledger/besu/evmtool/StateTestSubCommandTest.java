@@ -22,8 +22,7 @@ import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 
 import org.junit.Test;
 import picocli.CommandLine;
@@ -32,7 +31,10 @@ public class StateTestSubCommandTest {
 
   @Test
   public void shouldDetectUnsupportedFork() {
-    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(new EvmToolCommand());
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    EvmToolCommand parentCommand =
+        new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
+    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(stateTestSubCommand);
     cmd.parseArgs(
         StateTestSubCommandTest.class.getResource("unsupported-fork-state-test.json").getPath());
@@ -43,7 +45,10 @@ public class StateTestSubCommandTest {
 
   @Test
   public void shouldWorkWithValidStateTest() {
-    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(new EvmToolCommand());
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    EvmToolCommand parentCommand =
+        new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
+    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(stateTestSubCommand);
     cmd.parseArgs(StateTestSubCommandTest.class.getResource("valid-state-test.json").getPath());
     stateTestSubCommand.run();
@@ -51,7 +56,10 @@ public class StateTestSubCommandTest {
 
   @Test
   public void shouldWorkWithValidAccessListStateTest() {
-    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(new EvmToolCommand());
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    EvmToolCommand parentCommand =
+        new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
+    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(stateTestSubCommand);
     cmd.parseArgs(StateTestSubCommandTest.class.getResource("access-list.json").getPath());
     stateTestSubCommand.run();
@@ -60,11 +68,11 @@ public class StateTestSubCommandTest {
   @Test
   public void noJsonTracer() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    var parentCommand = new EvmToolCommand();
+    EvmToolCommand parentCommand =
+        new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
     CommandLine parentCmd = new CommandLine(parentCommand);
     parentCmd.parseArgs("--json=false");
-    final StateTestSubCommand stateTestSubCommand =
-        new StateTestSubCommand(parentCommand, System.in, new PrintStream(baos));
+    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(stateTestSubCommand);
     cmd.parseArgs(StateTestSubCommandTest.class.getResource("access-list.json").getPath());
     stateTestSubCommand.run();
@@ -81,13 +89,13 @@ public class StateTestSubCommandTest {
                 .getPath()
                 .getBytes(UTF_8));
     final StateTestSubCommand stateTestSubCommand =
-        new StateTestSubCommand(new EvmToolCommand(), bais, new PrintStream(baos));
+        new StateTestSubCommand(new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8)));
     stateTestSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("Transaction had out-of-bounds parameters");
   }
 
   @Test
-  public void shouldStreamTests() throws IOException {
+  public void shouldStreamTests() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream(
@@ -96,30 +104,30 @@ public class StateTestSubCommandTest {
                 .getPath()
                 .getBytes(UTF_8));
     final StateTestSubCommand stateTestSubCommand =
-        new StateTestSubCommand(new EvmToolCommand(), bais, new PrintStream(baos));
+        new StateTestSubCommand(new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8)));
     stateTestSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("\"pass\":true");
   }
 
   @Test
-  public void failStreamMissingFile() throws IOException {
+  public void failStreamMissingFile() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream("./file-dose-not-exist.json".getBytes(UTF_8));
     final StateTestSubCommand stateTestSubCommand =
-        new StateTestSubCommand(new EvmToolCommand(), bais, new PrintStream(baos));
+        new StateTestSubCommand(new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8)));
     stateTestSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("File not found: ./file-dose-not-exist.json");
   }
 
   @Test
-  public void failStreamBadFile() throws IOException {
+  public void failStreamBadFile() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream(
             StateTestSubCommandTest.class.getResource("bogus-test.json").getPath().getBytes(UTF_8));
     final StateTestSubCommand stateTestSubCommand =
-        new StateTestSubCommand(new EvmToolCommand(), bais, new PrintStream(baos));
+        new StateTestSubCommand(new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8)));
     stateTestSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("File content error: ");
   }

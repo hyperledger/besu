@@ -167,11 +167,15 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
-          Hash.fromHexString(uncleHash), // ommersHash
+          uncleHash == null ? Hash.EMPTY_LIST_HASH : Hash.fromHexString(uncleHash), // ommersHash
           Address.fromHexString(coinbase), // coinbase
           Hash.fromHexString(stateRoot), // stateRoot
-          Hash.fromHexString(transactionsTrie), // transactionsRoot
-          Hash.fromHexString(receiptTrie), // receiptTrie
+          transactionsTrie == null
+              ? Hash.EMPTY_TRIE_HASH
+              : Hash.fromHexString(transactionsTrie), // transactionsRoot
+          receiptTrie == null
+              ? Hash.EMPTY_TRIE_HASH
+              : Hash.fromHexString(receiptTrie), // receiptTrie
           LogsBloomFilter.fromHexString(bloom), // bloom
           Difficulty.fromHexString(difficulty), // difficulty
           Long.decode(number), // number
@@ -188,7 +192,7 @@ public class BlockchainReferenceTestCaseSpec {
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
-              return Hash.fromHexString(hash);
+              return hash == null ? null : Hash.fromHexString(hash);
             }
 
             @Override

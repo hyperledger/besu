@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
@@ -23,6 +24,10 @@ import java.util.Optional;
 public interface FeeMarket {
 
   default boolean implementsBaseFee() {
+    return false;
+  }
+
+  default boolean implementsDataFee() {
     return false;
   }
 
@@ -39,11 +44,20 @@ public interface FeeMarket {
     return new LondonFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
+  static BaseFeeMarket cancun(
+      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+    return new CancunFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
+  }
+
   static BaseFeeMarket zeroBaseFee(final long londonForkBlockNumber) {
     return new ZeroBaseFeeMarket(londonForkBlockNumber);
   }
 
   static FeeMarket legacy() {
     return new LegacyFeeMarket();
+  }
+
+  default Wei dataPrice(final DataGas excessDataGas) {
+    return Wei.ZERO;
   }
 }

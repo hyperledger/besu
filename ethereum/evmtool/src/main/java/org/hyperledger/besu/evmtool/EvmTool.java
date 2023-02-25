@@ -17,8 +17,6 @@ package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 
-import picocli.CommandLine;
-
 public final class EvmTool {
 
   public static void main(final String... args) {
@@ -26,6 +24,6 @@ public final class EvmTool {
 
     final EvmToolCommand evmToolCommand = new EvmToolCommand();
 
-    evmToolCommand.parse(new CommandLine.RunLast(), args);
+    evmToolCommand.execute(args);
   }
 }

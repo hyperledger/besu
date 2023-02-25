@@ -54,7 +54,8 @@ public class ProtocolSpecBuilder {
   private DifficultyCalculator difficultyCalculator;
   private EvmConfiguration evmConfiguration;
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
-  private Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder;
+  private BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
+      transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<HeaderBasedProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
@@ -125,7 +126,8 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder transactionValidatorBuilder(
-      final Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder) {
+      final BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
+          transactionValidatorBuilder) {
     this.transactionValidatorBuilder = transactionValidatorBuilder;
     return this;
   }
@@ -302,7 +304,7 @@ public class ProtocolSpecBuilder {
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final MainnetTransactionValidator transactionValidator =
-        transactionValidatorBuilder.apply(gasCalculator);
+        transactionValidatorBuilder.apply(gasCalculator, gasLimitCalculator);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
