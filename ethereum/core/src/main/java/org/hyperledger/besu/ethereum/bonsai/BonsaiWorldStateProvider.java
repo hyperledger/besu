@@ -76,12 +76,21 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
-    this(
-        new CachedSnapshotWorldstateManager(
-            blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS)),
-        worldStateStorage,
-        blockchain,
-        cachedMerkleTrieLoader);
+
+    //TODO: de-dup constructors
+    this.trieLogManager =new CachedSnapshotWorldstateManager(
+        this, blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS));
+    this.blockchain = blockchain;
+    this.worldStateStorage = worldStateStorage;
+    this.persistedState = new BonsaiWorldState(this, worldStateStorage);
+    this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+    blockchain
+        .getBlockHeader(persistedState.worldStateBlockHash)
+        .ifPresent(
+            blockHeader -> {
+              this.trieLogManager.addCachedLayer(
+                  blockHeader, persistedState.worldStateRootHash, persistedState);
+            });
   }
 
   @VisibleForTesting
@@ -106,20 +115,20 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    final Optional<BonsaiSnapshotWorldStateKeyValueStorage> layeredWorldState =
-        trieLogManager.getWorldStateStorage(blockHash);
-    if (layeredWorldState.isPresent()) {
-      return Optional.of(new BonsaiWorldState(this, layeredWorldState.get()));
-    } else if (rootHash.equals(persistedState.blockHash())) {
-      return Optional.of(persistedState);
-    } else {
-      return Optional.empty();
-    }
+    return trieLogManager.getWorldState(blockHash)
+        .or(() -> {
+          if (rootHash.equals(persistedState.blockHash())) {
+            return Optional.of(persistedState);
+          } else {
+            return Optional.empty();
+          }
+        })
+        .map(WorldState.class::cast);
   }
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return trieLogManager.getWorldStateStorage(blockHash).isPresent()
+    return trieLogManager.getWorldState(blockHash).isPresent()
         || persistedState.blockHash().equals(blockHash)
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
@@ -130,26 +139,19 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     if (shouldPersistState) {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
-      final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
-      if (chainHeadBlockNumber - blockHeader.getNumber() >= trieLogManager.getMaxLayersToLoad()) {
+      final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
+      if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber() >= trieLogManager.getMaxLayersToLoad()) {
         LOG.warn(
             "Exceeded the limit of back layers that can be loaded ({})",
             trieLogManager.getMaxLayersToLoad());
         return Optional.empty();
       }
-      final BonsaiSnapshotWorldStateKeyValueStorage worldStateKeyValueStorage =
+      final BonsaiWorldState worldState =
           trieLogManager
-              .getWorldStateStorage(blockHeader.getHash())
-              .or(
-                  () ->
-                      worldStateStorage
-                          .getWorldStateBlockHash()
-                          .flatMap(trieLogManager::getWorldStateStorage))
-              .orElse(
-                  new BonsaiSnapshotWorldStateKeyValueStorage(
-                      chainHeadBlockNumber, worldStateStorage));
+              .getWorldState(blockHeader.getHash())
+              .orElse(trieLogManager.getHeadWorldState());
       return rollMutableStateToBlockHash(
-              new BonsaiWorldState(this, worldStateKeyValueStorage), blockHeader.getHash())
+              worldState, blockHeader.getHash())
           .map(
               mutableWorldState -> {
                 if (!trieLogManager.containWorlStateStorage(blockHeader.getHash())) {

@@ -19,6 +19,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -42,12 +43,10 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-  private final long blockNumber;
   private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
   private final long subscribeParentId;
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
-      final long blockNumber,
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage accountStorage,
       final SnappedKeyValueStorage codeStorage,
@@ -55,15 +54,12 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final SnappedKeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
-    this.blockNumber = blockNumber;
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
-  public BonsaiSnapshotWorldStateKeyValueStorage(
-      final long blockNumber, final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+  public BonsaiSnapshotWorldStateKeyValueStorage(final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     this(
-        blockNumber,
         worldStateStorage,
         ((SnappableKeyValueStorage) worldStateStorage.accountStorage).takeSnapshot(),
         ((SnappableKeyValueStorage) worldStateStorage.codeStorage).takeSnapshot(),
@@ -75,7 +71,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   @Override
   public BonsaiSnapshotWorldStateKeyValueStorage clone() {
     return new BonsaiSnapshotWorldStateKeyValueStorage(
-        blockNumber,
         parentWorldStateStorage,
         ((SnappedKeyValueStorage) accountStorage).cloneFromSnapshot(),
         ((SnappedKeyValueStorage) codeStorage).cloneFromSnapshot(),
@@ -86,16 +81,12 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public BonsaiUpdater updater() {
-    return new SnapshotUpdater(
-        (SnappedKeyValueStorage) accountStorage,
-        (SnappedKeyValueStorage) codeStorage,
-        (SnappedKeyValueStorage) storageStorage,
-        (SnappedKeyValueStorage) trieBranchStorage,
-        trieLogStorage);
-  }
-
-  public long getBlockNumber() {
-    return blockNumber;
+    return new Updater(
+        ((SnappedKeyValueStorage) accountStorage).getSnapshotTransaction(),
+        ((SnappedKeyValueStorage) codeStorage).getSnapshotTransaction(),
+        ((SnappedKeyValueStorage) storageStorage).getSnapshotTransaction(),
+        ((SnappedKeyValueStorage) trieBranchStorage).getSnapshotTransaction(),
+        trieLogStorage.startTransaction());
   }
 
   @Override
@@ -204,137 +195,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
       // set storage closed
       isClosed.set(true);
-    }
-  }
-
-  public static class SnapshotUpdater implements BonsaiWorldStateKeyValueStorage.BonsaiUpdater {
-
-    private final KeyValueStorageTransaction accountStorageTransaction;
-    private final KeyValueStorageTransaction codeStorageTransaction;
-    private final KeyValueStorageTransaction storageStorageTransaction;
-    private final KeyValueStorageTransaction trieBranchStorageTransaction;
-    private final KeyValueStorageTransaction trieLogStorageTransaction;
-
-    public SnapshotUpdater(
-        final SnappedKeyValueStorage accountStorage,
-        final SnappedKeyValueStorage codeStorage,
-        final SnappedKeyValueStorage storageStorage,
-        final SnappedKeyValueStorage trieBranchStorage,
-        final KeyValueStorage trieLogStorage) {
-      this.accountStorageTransaction = accountStorage.getSnapshotTransaction();
-      this.codeStorageTransaction = codeStorage.getSnapshotTransaction();
-      this.storageStorageTransaction = storageStorage.getSnapshotTransaction();
-      this.trieBranchStorageTransaction = trieBranchStorage.getSnapshotTransaction();
-      this.trieLogStorageTransaction = trieLogStorage.startTransaction();
-    }
-
-    @Override
-    public BonsaiUpdater removeCode(final Hash accountHash) {
-      codeStorageTransaction.remove(accountHash.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public WorldStateStorage.Updater putCode(
-        final Hash accountHash, final Bytes32 nodeHash, final Bytes code) {
-      if (code.size() == 0) {
-        // Don't save empty values
-        return this;
-      }
-      codeStorageTransaction.put(accountHash.toArrayUnsafe(), code.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public BonsaiUpdater removeAccountInfoState(final Hash accountHash) {
-      accountStorageTransaction.remove(accountHash.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public BonsaiUpdater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
-      if (accountValue.size() == 0) {
-        // Don't save empty values
-        return this;
-      }
-      accountStorageTransaction.put(accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public BonsaiUpdater putStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash, final Bytes storage) {
-      storageStorageTransaction.put(
-          Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-      storageStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
-    }
-
-    @Override
-    public KeyValueStorageTransaction getTrieBranchStorageTransaction() {
-      return trieBranchStorageTransaction;
-    }
-
-    @Override
-    public KeyValueStorageTransaction getTrieLogStorageTransaction() {
-      return trieLogStorageTransaction;
-    }
-
-    @Override
-    public WorldStateStorage.Updater saveWorldState(
-        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
-      trieBranchStorageTransaction.put(Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
-      trieBranchStorageTransaction.put(WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
-      trieBranchStorageTransaction.put(WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public WorldStateStorage.Updater putAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-        // Don't save empty nodes
-        return this;
-      }
-      trieBranchStorageTransaction.put(location.toArrayUnsafe(), node.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public WorldStateStorage.Updater removeAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash) {
-      trieBranchStorageTransaction.remove(location.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public WorldStateStorage.Updater putAccountStorageTrieNode(
-        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-        // Don't save empty nodes
-        return this;
-      }
-      trieBranchStorageTransaction.put(
-          Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public void commit() {
-      accountStorageTransaction.commit();
-      codeStorageTransaction.commit();
-      storageStorageTransaction.commit();
-      trieBranchStorageTransaction.commit();
-      trieLogStorageTransaction.commit();
-    }
-
-    @Override
-    public void rollback() {
-      // no-op
     }
   }
 }

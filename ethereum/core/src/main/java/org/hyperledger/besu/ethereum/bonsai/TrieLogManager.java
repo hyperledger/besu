@@ -34,9 +34,18 @@ public interface TrieLogManager {
 
   boolean containWorlStateStorage(final Hash blockHash);
 
-  Optional<BonsaiSnapshotWorldStateKeyValueStorage> getWorldStateStorage(final Hash blockHash);
+  Optional<BonsaiWorldState> getWorldState(final Hash blockHash);
 
   long getMaxLayersToLoad();
 
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
+
+  BonsaiWorldState getHeadWorldState();
+
+  interface CacheLayer {
+    long getBlockNumber();
+    Hash getWorldStateBlockHash();
+
+    void close();
+  }
 }

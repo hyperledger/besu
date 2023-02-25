@@ -97,6 +97,22 @@ public class BonsaiWorldState
                     .preLoadStorageSlot(getWorldStateStorage(), addr, value));
   }
 
+  public BonsaiWorldState(
+      final BonsaiWorldStateProvider archive,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final boolean inMemory,
+      final BonsaiWorldStateUpdateAccumulator updater){
+    this.archive = archive;
+    this.worldStateStorage = worldStateStorage;
+    this.isFrozen = inMemory;
+    this.worldStateRootHash =
+        Hash.wrap(
+            Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
+    this.worldStateBlockHash =
+        Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
+    this.updater = updater;
+  }
+
   public BonsaiWorldStateProvider getArchive() {
     return archive;
   }

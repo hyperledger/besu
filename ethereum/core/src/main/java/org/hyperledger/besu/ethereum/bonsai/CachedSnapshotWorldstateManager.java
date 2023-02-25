@@ -20,31 +20,37 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CachedSnapshotWorldstateManager extends AbstractTrieLogManager<BonsaiWorldState>
+public class CachedSnapshotWorldstateManager
+    extends AbstractTrieLogManager<CachedSnapshotWorldstateManager.CachedWorldStateTuple>
     implements BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
   private static final Logger LOG = LoggerFactory.getLogger(CachedSnapshotWorldstateManager.class);
+  private final BonsaiWorldStateProvider archive;
 
   CachedSnapshotWorldstateManager(
+      final BonsaiWorldStateProvider archive,
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, BonsaiSnapshotWorldStateKeyValueStorage> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedSnapshotWorldstateManager.CachedWorldStateTuple> cachedWorldStatesByHash) {
     super(blockchain, worldStateStorage, maxLayersToLoad, cachedWorldStatesByHash);
     worldStateStorage.subscribe(this);
+    this.archive = archive;
   }
 
   public CachedSnapshotWorldstateManager(
+      final BonsaiWorldStateProvider archive,
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad) {
-    this(blockchain, worldStateStorage, maxLayersToLoad, new HashMap<>());
+    this(archive, blockchain, worldStateStorage, maxLayersToLoad, new ConcurrentHashMap<>());
   }
 
   @Override
@@ -60,14 +66,44 @@ public class CachedSnapshotWorldstateManager extends AbstractTrieLogManager<Bons
     if (forWorldState.worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage) {
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
-          ((BonsaiSnapshotWorldStateKeyValueStorage) forWorldState.worldStateStorage).clone());
+          new CachedWorldStateTuple(
+              blockHeader,
+              ((BonsaiSnapshotWorldStateKeyValueStorage) forWorldState.worldStateStorage).clone(),
+              ((BonsaiWorldStateUpdateAccumulator) forWorldState.updater())));
     } else {
+      // TODO: if it isn't a snapshot, this SHOULD be the one and only persisted worldstate.  in theory we should
+      //       be able to snap it and use an empty update accumulator here.
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
-          new BonsaiSnapshotWorldStateKeyValueStorage(
-              blockHeader.getNumber(), forWorldState.worldStateStorage));
+          new CachedWorldStateTuple(
+              blockHeader,
+              new BonsaiSnapshotWorldStateKeyValueStorage(
+                  forWorldState.worldStateStorage),
+              (BonsaiWorldStateUpdateAccumulator) forWorldState.updater()));
     }
     scrubCachedLayers(blockHeader.getNumber());
+  }
+
+  /**
+   * return a newly constructed worldstate using a clone of the snapshot worldstate storage and the updater
+   * @param blockHash
+   * @return
+   */
+  @Override
+  public Optional<BonsaiWorldState> getWorldState(
+      final Hash blockHash) {
+    if (cachedWorldStatesByHash.containsKey(blockHash)) {
+      return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
+          .map(cached -> new BonsaiWorldState(archive, cached.worldStateStorage.clone(), false, cached.updater));
+    }
+    return Optional.empty();
+  }
+
+  @Override
+  public BonsaiWorldState getHeadWorldState() {
+    return new BonsaiWorldState(
+        archive,
+        new BonsaiSnapshotWorldStateKeyValueStorage(rootWorldStateStorage));
   }
 
   @Override
@@ -89,4 +125,40 @@ public class CachedSnapshotWorldstateManager extends AbstractTrieLogManager<Bons
   public void onCloseStorage() {
     this.cachedWorldStatesByHash.clear();
   }
+
+  static class CachedWorldStateTuple implements CacheLayer {
+    private final BlockHeader blockHeader;
+    private final BonsaiSnapshotWorldStateKeyValueStorage worldStateStorage;
+    private final BonsaiWorldStateUpdateAccumulator updater;
+
+    public CachedWorldStateTuple(
+        BlockHeader blockHeader,
+        BonsaiSnapshotWorldStateKeyValueStorage worldStateStorage,
+        BonsaiWorldStateUpdateAccumulator updater) {
+      this.blockHeader = blockHeader;
+      this.worldStateStorage = worldStateStorage;
+      this.updater = updater;
+    }
+
+    @Override
+    public long getBlockNumber() {
+      //TODO: need to plumb this somewhere, prob from header
+      return blockHeader.getNumber();
+    }
+
+    @Override
+    public Hash getWorldStateBlockHash() {
+      return blockHeader.getBlockHash();
+    }
+
+    @Override
+    public void close() {
+      try {
+        worldStateStorage.close();
+      } catch (Exception ex) {
+        LOG.warn("Failed to closed cached snapshot worldstate", ex);
+      }
+    }
+  }
+
 }

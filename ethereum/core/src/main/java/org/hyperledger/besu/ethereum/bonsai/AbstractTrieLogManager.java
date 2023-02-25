@@ -32,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractTrieLogManager<T extends MutableWorldState>
+public abstract class AbstractTrieLogManager<T extends TrieLogManager.CacheLayer>
     implements TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTrieLogManager.class);
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
@@ -40,14 +40,14 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
   protected final Blockchain blockchain;
   protected final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
 
-  protected final Map<Bytes32, BonsaiSnapshotWorldStateKeyValueStorage> cachedWorldStatesByHash;
+  protected final Map<Bytes32, T> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
 
   AbstractTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, BonsaiSnapshotWorldStateKeyValueStorage> cachedWorldStatesByHash) {
+      final Map<Bytes32, T> cachedWorldStatesByHash) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
@@ -100,20 +100,11 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
       cachedWorldStatesByHash.values().stream()
           .filter(layer -> layer.getBlockNumber() < waterline)
           .toList()
-          .forEach(
-              layer -> {
-                layer
-                    .getWorldStateBlockHash()
-                    .ifPresent(
-                        hash -> {
-                          cachedWorldStatesByHash.remove(hash);
-                          try {
-                            layer.close();
-                          } catch (Exception e) {
-                            LOG.warn("Error closing bonsai worldstate layer", e);
-                          }
-                        });
-              });
+          .forEach(layer -> {
+            cachedWorldStatesByHash.remove(layer
+                .getWorldStateBlockHash());
+            layer.close();
+          });
     }
   }
 
@@ -137,15 +128,6 @@ public abstract class AbstractTrieLogManager<T extends MutableWorldState>
   @Override
   public boolean containWorlStateStorage(final Hash blockHash) {
     return cachedWorldStatesByHash.containsKey(blockHash);
-  }
-
-  @Override
-  public Optional<BonsaiSnapshotWorldStateKeyValueStorage> getWorldStateStorage(
-      final Hash blockHash) {
-    if (cachedWorldStatesByHash.containsKey(blockHash)) {
-      return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash).clone());
-    }
-    return Optional.empty();
   }
 
   @Override

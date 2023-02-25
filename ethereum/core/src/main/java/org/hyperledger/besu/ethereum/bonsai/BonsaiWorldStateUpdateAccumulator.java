@@ -53,9 +53,11 @@ public class BonsaiWorldStateUpdateAccumulator
   private static final Logger LOG =
       LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
 
-  private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
   private final Consumer<Hash> storagePreloader;
+
+  private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
+
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
   private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
@@ -68,19 +70,25 @@ public class BonsaiWorldStateUpdateAccumulator
 
   private boolean isAccumulatorStateChanged;
 
-  BonsaiWorldStateUpdateAccumulator(final BonsaiWorldView world) {
-    this(world, (__, ___) -> {}, (__, ___) -> {});
+  BonsaiWorldStateUpdateAccumulator(
+      final BonsaiWorldView world,
+      final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
+      final Consumer<Hash> storagePreloader) {
+    this(world, accountPreloader, storagePreloader, Optional.empty());
   }
 
   BonsaiWorldStateUpdateAccumulator(
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
-      final Consumer<Hash> storagePreloader) {
+      final Consumer<Hash> storagePreloader,
+      final Optional<BonsaiWorldStateUpdateAccumulator> parentAccumulator) {
     super(world);
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
     this.isAccumulatorStateChanged = false;
+    //TODO: clone our parent accumulator or simply compose it?  this is broken: need to split parent/child
+    parentAccumulator.ifPresent(this::cloneFromUpdater);
   }
 
   public BonsaiWorldStateUpdateAccumulator copy() {
@@ -92,6 +100,7 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   void cloneFromUpdater(final BonsaiWorldStateUpdateAccumulator source) {
+    //todo: needs to account for composed maps not just 'this' update maps
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
     storageToClear.addAll(source.storageToClear);
@@ -121,12 +130,13 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
-    if (bonsaiValue == null) {
-      bonsaiValue = new BonsaiValue<>(null, null);
-      accountsToUpdate.put(address, bonsaiValue);
-    } else if (bonsaiValue.getUpdated() != null) {
+    if (bonsaiValue != null) {
       throw new IllegalStateException("Cannot create an account when one already exists");
     }
+
+    bonsaiValue = new BonsaiValue<>(null, null);
+    accountsToUpdate.put(address, bonsaiValue);
+
     final BonsaiAccount newAccount =
         new BonsaiAccount(
             this,
