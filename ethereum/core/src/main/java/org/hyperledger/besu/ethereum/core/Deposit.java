@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
+import org.hyperledger.besu.datatypes.DepositDepositWithdrawalCredential;
 import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.datatypes.WithdrawalCredential;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -33,19 +33,19 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
   private final BLSPublicKey pubKey;
-  private final WithdrawalCredential withdrawalCredentials;
+  private final DepositDepositWithdrawalCredential depositWithdrawalCredentials;
   private final GWei amount;
   private final BLSSignature signature;
   private final UInt64 index;
 
   public Deposit(
       final BLSPublicKey pubKey,
-      final WithdrawalCredential withdrawalCredentials,
+      final DepositDepositWithdrawalCredential depositWithdrawalCredentials,
       final GWei amount,
       final BLSSignature signature,
       final UInt64 index) {
     this.pubKey = pubKey;
-    this.withdrawalCredentials = withdrawalCredentials;
+    this.depositWithdrawalCredentials = depositWithdrawalCredentials;
     this.amount = amount;
     this.signature = signature;
     this.index = index;
@@ -69,8 +69,8 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   }
 
   @Override
-  public WithdrawalCredential getWithdrawalCredentials() {
-    return withdrawalCredentials;
+  public DepositDepositWithdrawalCredential getWithdrawalCredentials() {
+    return depositWithdrawalCredentials;
   }
 
   @Override
@@ -94,7 +94,7 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
         + "pubKey="
         + pubKey
         + ", withdrawalCredentials="
-        + withdrawalCredentials
+        + depositWithdrawalCredentials
         + ", amount="
         + amount
         + ", signature="
@@ -110,7 +110,7 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
     if (o == null || getClass() != o.getClass()) return false;
     final Deposit that = (Deposit) o;
     return Objects.equals(pubKey, that.pubKey)
-        && Objects.equals(withdrawalCredentials, that.withdrawalCredentials)
+        && Objects.equals(depositWithdrawalCredentials, that.depositWithdrawalCredentials)
         && Objects.equals(amount, that.amount)
         && Objects.equals(signature, that.signature)
         && Objects.equals(index, that.index);
@@ -118,6 +118,6 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pubKey, withdrawalCredentials, amount, signature, index);
+    return Objects.hash(pubKey, depositWithdrawalCredentials, amount, signature, index);
   }
 }

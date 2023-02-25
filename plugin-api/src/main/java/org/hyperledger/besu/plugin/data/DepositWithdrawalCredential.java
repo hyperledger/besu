@@ -17,4 +17,4 @@ package org.hyperledger.besu.plugin.data;
 import org.apache.tuweni.bytes.Bytes;
 
 /** An interface for {@link Bytes} that also represents withdrawal credential of a Deposit */
-public interface WithdrawalCredential extends Bytes {}
+public interface DepositWithdrawalCredential extends Bytes {}

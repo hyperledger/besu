@@ -35,7 +35,7 @@ public interface Deposit {
    *
    * @return withdrawal credential
    */
-  WithdrawalCredential getWithdrawalCredentials();
+  DepositWithdrawalCredential getWithdrawalCredentials();
 
   /**
    * Amount of ether to be sent to the deposit contract
