@@ -335,6 +335,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         System.currentTimeMillis() / 1000,
         Bytes32.ZERO,
         suggestedFeeRecipient,
+        Optional.empty(),
         Optional.empty());
 
     verify(badBlockManager, never()).addBadBlock(any(), any());
