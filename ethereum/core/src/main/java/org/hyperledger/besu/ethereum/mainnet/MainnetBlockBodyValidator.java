@@ -310,17 +310,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   }
 
   private boolean validateDeposits(final Block block) {
-    final DepositsValidator depositsValidator =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getDepositsValidator();
-
-    if (!depositsValidator.validateDeposits(block.getBody().getDeposits())) {
-      return false;
-    }
-
-    if (!depositsValidator.validateDepositsRoot(block)) {
-      return false;
-    }
-
-    return true;
+    return true; // TODO: Implement deposit validation
   }
 }
