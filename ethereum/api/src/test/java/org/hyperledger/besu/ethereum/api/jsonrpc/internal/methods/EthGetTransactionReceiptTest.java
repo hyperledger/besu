@@ -115,7 +115,6 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          Optional.empty(),
           true);
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
@@ -145,7 +144,6 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          Optional.empty(),
           true);
 
   @SuppressWarnings("unchecked")

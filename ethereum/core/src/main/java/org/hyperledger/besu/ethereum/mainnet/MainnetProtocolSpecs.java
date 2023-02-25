@@ -795,7 +795,6 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.experimentalEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .depositsProcessor(new DepositsProcessor())
         .depositsValidator(new DepositsValidator.AllowedDeposits())
         .name("ExperimentalEips");
   }

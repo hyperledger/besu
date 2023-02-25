@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.DepositsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -203,18 +202,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final Optional<DepositsProcessor> maybeDepositsProcessor =
-          newProtocolSpec.getDepositsProcessor();
-      final boolean depositsCanBeProcessed =
-          maybeDepositsProcessor.isPresent() && maybeDeposits.isPresent();
-      if (depositsCanBeProcessed) {
-        maybeDepositsProcessor
-            .get()
-            .processDeposits(maybeDeposits.get(), disposableWorldState.updater());
-      }
-
-      throwIfStopped();
-
       if (rewardCoinbase
           && !rewardBeneficiary(
               disposableWorldState,
@@ -245,20 +232,18 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
-              .depositsRoot(
-                  depositsCanBeProcessed ? BodyValidation.depositsRoot(maybeDeposits.get()) : null)
+              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
       final Optional<List<Withdrawal>> withdrawals =
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
-      final Optional<List<Deposit>> deposits =
-          depositsCanBeProcessed ? maybeDeposits : Optional.empty();
       final Block block =
           new Block(
               blockHeader,
-              new BlockBody(transactionResults.getTransactions(), ommers, withdrawals, deposits));
+              new BlockBody(
+                  transactionResults.getTransactions(), ommers, withdrawals, maybeDeposits));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);

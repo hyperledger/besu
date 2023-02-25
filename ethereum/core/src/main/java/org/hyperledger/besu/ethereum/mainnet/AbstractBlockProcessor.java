@@ -155,17 +155,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    final Optional<DepositsProcessor> maybeDepositsProcessor =
-        protocolSchedule.getByBlockHeader(blockHeader).getDepositsProcessor();
-    if (maybeDepositsProcessor.isPresent() && maybeDeposits.isPresent()) {
-      try {
-        maybeDepositsProcessor.get().processDeposits(maybeDeposits.get(), worldState.updater());
-      } catch (final Exception e) {
-        LOG.error("failed processing deposits", e);
-        return new BlockProcessingResult(Optional.empty(), e);
-      }
-    }
-
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
       if (worldState instanceof BonsaiPersistedWorldState) {

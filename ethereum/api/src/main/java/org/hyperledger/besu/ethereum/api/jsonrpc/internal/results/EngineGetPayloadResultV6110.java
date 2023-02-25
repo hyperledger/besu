@@ -181,7 +181,7 @@ public class EngineGetPayloadResultV6110 {
       return withdrawals;
     }
 
-    @JsonGetter(value = "withdrawals")
+    @JsonGetter(value = "deposits")
     public List<DepositParameter> getDeposits() {
       return deposits;
     }
