@@ -84,11 +84,6 @@ public class CachedSnapshotWorldstateManager
     scrubCachedLayers(blockHeader.getNumber());
   }
 
-  /**
-   * return a newly constructed worldstate using a clone of the snapshot worldstate storage and the updater
-   * @param blockHash
-   * @return
-   */
   @Override
   public Optional<BonsaiWorldState> getWorldState(
       final Hash blockHash) {
@@ -132,9 +127,9 @@ public class CachedSnapshotWorldstateManager
     private final BonsaiWorldStateUpdateAccumulator updater;
 
     public CachedWorldStateTuple(
-        BlockHeader blockHeader,
-        BonsaiSnapshotWorldStateKeyValueStorage worldStateStorage,
-        BonsaiWorldStateUpdateAccumulator updater) {
+        final BlockHeader blockHeader,
+        final BonsaiSnapshotWorldStateKeyValueStorage worldStateStorage,
+        final BonsaiWorldStateUpdateAccumulator updater) {
       this.blockHeader = blockHeader;
       this.worldStateStorage = worldStateStorage;
       this.updater = updater;

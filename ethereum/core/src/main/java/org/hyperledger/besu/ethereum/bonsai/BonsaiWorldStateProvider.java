@@ -160,8 +160,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
                       mutableWorldState.rootHash(),
                       (BonsaiWorldState) mutableWorldState);
                 }
-                mutableWorldState.freeze();
-                return mutableWorldState;
+                return mutableWorldState.freeze();
               });
     }
   }

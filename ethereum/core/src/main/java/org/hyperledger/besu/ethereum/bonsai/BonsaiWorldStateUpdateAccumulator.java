@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -57,10 +58,12 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Consumer<Hash> storagePreloader;
 
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
-
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
   private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
+
+  private final ComposedMapOverlay<Address, BonsaiValue<BonsaiAccount>> composedAccountsToUpdate;
+  private final ComposedMapOverlay<Address, BonsaiValue<Bytes>> composedCodeToUpdate;
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
@@ -87,8 +90,14 @@ public class BonsaiWorldStateUpdateAccumulator
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
     this.isAccumulatorStateChanged = false;
-    //TODO: clone our parent accumulator or simply compose it?  this is broken: need to split parent/child
-    parentAccumulator.ifPresent(this::cloneFromUpdater);
+    this.composedAccountsToUpdate  = new ComposedMapOverlay<>(accountsToUpdate);
+    this.composedCodeToUpdate = new ComposedMapOverlay<>(codeToUpdate);
+
+    // clone parent accumulator contents if present
+    parentAccumulator.ifPresent(parent -> {
+      this.composedAccountsToUpdate.cloneFromAll(parent.composedAccountsToUpdate);
+      this.composedCodeToUpdate.cloneFromAll(parent.composedCodeToUpdate);
+    });
   }
 
   public BonsaiWorldStateUpdateAccumulator copy() {
@@ -100,7 +109,6 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   void cloneFromUpdater(final BonsaiWorldStateUpdateAccumulator source) {
-    //todo: needs to account for composed maps not just 'this' update maps
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
     storageToClear.addAll(source.storageToClear);
@@ -108,6 +116,10 @@ public class BonsaiWorldStateUpdateAccumulator
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
     emptySlot.addAll(source.emptySlot);
+
+    // clone the composed accumulator base only:
+    composedAccountsToUpdate.cloneFromBase(source.composedAccountsToUpdate);
+    composedCodeToUpdate.cloneFromBase(source.composedCodeToUpdate);
     this.isAccumulatorStateChanged = true;
   }
 
@@ -129,7 +141,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
+    BonsaiValue<BonsaiAccount> bonsaiValue = composedAccountsToUpdate.get(address);
     if (bonsaiValue != null) {
       throw new IllegalStateException("Cannot create an account when one already exists");
     }
@@ -176,7 +188,7 @@ public class BonsaiWorldStateUpdateAccumulator
       final Address address,
       final Function<BonsaiValue<BonsaiAccount>, BonsaiAccount> bonsaiAccountFunction) {
     try {
-      final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
+      final BonsaiValue<BonsaiAccount> bonsaiValue = composedAccountsToUpdate.get(address);
       if (bonsaiValue == null) {
         final Account account = wrappedWorldView().get(address);
         if (account instanceof BonsaiAccount) {
@@ -371,7 +383,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
-    final BonsaiValue<Bytes> localCode = codeToUpdate.get(address);
+    final BonsaiValue<Bytes> localCode = composedCodeToUpdate.get(address);
     if (localCode == null) {
       final Optional<Bytes> code = wrappedWorldView().getCode(address, codeHash);
       if (code.isEmpty() && !codeHash.equals(Hash.EMPTY)) {
@@ -588,7 +600,7 @@ public class BonsaiWorldStateUpdateAccumulator
       // non-change, a cached read.
       return;
     }
-    BonsaiValue<BonsaiAccount> accountValue = accountsToUpdate.get(address);
+    BonsaiValue<BonsaiAccount> accountValue = composedAccountsToUpdate.get(address);
     if (accountValue == null) {
       accountValue = loadAccountFromParent(address, accountValue);
     }
@@ -617,6 +629,7 @@ public class BonsaiWorldStateUpdateAccumulator
       }
       if (replacementValue == null) {
         if (accountValue.getPrior() == null) {
+          //TODO: should we remove from the parent accumulated change also?  only if it is a private copy
           accountsToUpdate.remove(address);
         } else {
           accountValue.setUpdated(null);
@@ -654,7 +667,7 @@ public class BonsaiWorldStateUpdateAccumulator
       // non-change, a cached read.
       return;
     }
-    BonsaiValue<Bytes> codeValue = codeToUpdate.get(address);
+    BonsaiValue<Bytes> codeValue = composedCodeToUpdate.get(address);
     if (codeValue == null) {
       final Bytes storedCode =
           wrappedWorldView()
@@ -805,15 +818,6 @@ public class BonsaiWorldStateUpdateAccumulator
     super.reset();
   }
 
-  public boolean isDirty() {
-    return !(accountsToUpdate.isEmpty()
-        && updatedAccounts.isEmpty()
-        && deletedAccounts.isEmpty()
-        && storageToUpdate.isEmpty()
-        && storageToClear.isEmpty()
-        && codeToUpdate.isEmpty());
-  }
-
   public static class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
 
     private final ConcurrentHashMap<Address, T> accounts;
@@ -875,5 +879,28 @@ public class BonsaiWorldStateUpdateAccumulator
 
   public interface Consumer<T> {
     void process(final Address address, T value);
+  }
+
+  static class ComposedMapOverlay<K,V> {
+    private final Map<K,V> overlayMap;
+    private final Map<K,V> baseMap;
+    public ComposedMapOverlay(final Map<K,V> overlayMap) {
+      this.overlayMap = overlayMap;
+      this.baseMap = new HashMap<>();
+    }
+
+    public V get(final K key) {
+      return Optional.ofNullable(overlayMap.get(key))
+          .or(() -> Optional.ofNullable(baseMap.get(key)))
+          .orElse(null);
+    }
+
+    public void cloneFromBase(final ComposedMapOverlay<K,V> source) {
+      baseMap.putAll(source.baseMap);
+    }
+    public void cloneFromAll(final ComposedMapOverlay<K,V> source) {
+      baseMap.putAll(source.baseMap);
+      baseMap.putAll(source.overlayMap);
+    }
   }
 }
