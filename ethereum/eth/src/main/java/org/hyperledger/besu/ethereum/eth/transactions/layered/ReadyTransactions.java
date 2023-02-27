@@ -192,10 +192,10 @@ public class ReadyTransactions extends AbstractTransactionsLayer {
         modifySenderReadyTxsWrapper(
             pendingTransaction.getSender(),
             senderTxs -> tryAddToReady(senderTxs, pendingTransaction, senderNonce));
-
-    if (addStatus.isSuccess()) {
-       prioritize(pendingTransaction, senderNonce, addStatus);
-    }
+//
+//    if (addStatus.isSuccess()) {
+//       prioritize(pendingTransaction, senderNonce, addStatus);
+//    }
 
     return addStatus;
   }
@@ -282,7 +282,12 @@ public class ReadyTransactions extends AbstractTransactionsLayer {
       return demotedTxs;
   }
 
-  private List<PendingTransaction> removeConfirmedTransactions(
+    @Override
+    protected void internalReplace(final PendingTransaction replacedTx) {
+        orderByMaxFee.remove(replacedTx);
+    }
+
+    private List<PendingTransaction> removeConfirmedTransactions(
       final Map<Address, Optional<Long>> orderedConfirmedNonceBySender) {
 
     final List<PendingTransaction> removed = new ArrayList<>();
@@ -299,7 +304,7 @@ public class ReadyTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
-  protected void innerRemoveConfirmed(final Map<Address, Optional<Long>> orderedConfirmedNonceBySender, final List<PendingTransaction> removedTransactions) {
+  protected void innerConfirmed(final PendingTransaction pendingTransaction) {
       prioritizedTransactions.removeConfirmedTransactions(
               orderedConfirmedNonceBySender, removedTransactions);
   }
@@ -480,12 +485,6 @@ public class ReadyTransactions extends AbstractTransactionsLayer {
         return ADDED;
       }
       return nextLayer.add(pendingTransaction, senderNonce);
-    }
-
-    // is replacing an existing one?
-    final var maybeReplaced = maybeReplaceTransaction(senderTxs, pendingTransaction);
-    if (maybeReplaced != null) {
-      return maybeReplaced;
     }
 
     // is the next one?

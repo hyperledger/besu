@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -87,25 +88,29 @@ public abstract class AbstractTransactionsLayer {
       return spaceUsed;
     }
 
-    final TransactionAddedResult add(
+    TransactionAddedResult add(
             final PendingTransaction pendingTransaction, final long senderNonce) {
 
-        final TransactionAddedResult addStatus = internalAdd(pendingTransaction, senderNonce);
+        // is replacing an existing one?
+        TransactionAddedResult addStatus = maybeReplaceTransaction(pendingTransaction);
+        if (addStatus != null) {
+            addStatus.maybeReplacedTransaction().ifPresent(this::replaced);
+        } else {
+            addStatus = internalAdd(pendingTransaction, senderNonce);
+        }
 
         if (addStatus.isSuccess()) {
-
-            addStatus
-                    .maybeReplacedTransaction()
-                    .ifPresent(
-                            this::replaced
-                            );
-
             pendingTransactions.put(pendingTransaction.getHash(), pendingTransaction);
+            readyBySender.computeIfAbsent(
+                    pendingTransaction.getSender(), s -> new TreeMap<>())
+                    .put(pendingTransaction.getNonce(), pendingTransaction);
             increaseSpaceUsed(pendingTransaction);
+
+            // ToDo: evict by count, evict last
 
             var cacheFreeSpace = cacheFreeSpace();
             if (cacheFreeSpace < 0) {
-                LOG.trace("Cache full, need to free space {}", cacheFreeSpace);
+                LOG.trace("Space full, need to free space {}", cacheFreeSpace);
 
                 // free some space moving trying first to evict older sparse txs,
                 // then less valuable ready to postponed
@@ -145,7 +150,6 @@ public abstract class AbstractTransactionsLayer {
         if (lessReadySenderTxs.isEmpty()) {
             readyBySender.remove(lessReadySender);
             // at this point lastTx was the first for the sender, then remove it from eviction order too
-//            orderByMaxFee.remove(lastTx);
             internalRemove(lastTx);
 
             if (!readyBySender.isEmpty()) {
@@ -187,34 +191,43 @@ public abstract class AbstractTransactionsLayer {
         }
     }
 
+    Optional<PendingTransaction> remove(final Transaction transaction) {
+        final PendingTransaction removed = pendingTransactions.remove(transaction.getHash());
+        if(removed != null) {
+            decreaseSpaceUsed(transaction);
+        }
+        return Optional.ofNullable(removed);
+    }
     void remove(final PendingTransaction pendingTransaction) {
-        pendingTransactions.remove(pendingTransaction.getHash());
-        decreaseSpaceUsed(pendingTransaction);
+        remove(pendingTransaction.getTransaction());
         // remove the transaction and move to the next layer any returned transaction
         nextLayer.fromPrevLayer(internalRemove(pendingTransaction));
     }
 
-    void replaced(final PendingTransaction pendingTransaction) {
-        pendingTransactions.remove(pendingTransaction.getHash());
-        decreaseSpaceUsed(pendingTransaction);
+    void replaced(final PendingTransaction replacedTx) {
+        remove(replacedTx.getTransaction());
+        internalReplace(replacedTx);
     }
 
-    protected TransactionAddedResult maybeReplaceTransaction(
-            final NavigableMap<Long, PendingTransaction> existingTxs,
-            final PendingTransaction incomingTx) {
+    protected abstract void internalReplace(final PendingTransaction replacedTx);
 
-        final var existingReadyTx = existingTxs.get(incomingTx.getNonce());
-        if (existingReadyTx != null) {
+    final protected TransactionAddedResult maybeReplaceTransaction(final PendingTransaction incomingTx) {
 
-            if (existingReadyTx.getHash().equals(incomingTx.getHash())) {
-                return ALREADY_KNOWN;
+        final var existingTxs = readyBySender.get(incomingTx.getSender());
+
+        if(existingTxs != null) {
+            final var existingReadyTx = existingTxs.get(incomingTx.getNonce());
+            if (existingReadyTx != null) {
+
+                if (existingReadyTx.getHash().equals(incomingTx.getHash())) {
+                    return ALREADY_KNOWN;
+                }
+
+                if (!transactionReplacementTester.apply(existingReadyTx, incomingTx)) {
+                    return REJECTED_UNDERPRICED_REPLACEMENT;
+                }
+                return TransactionAddedResult.createForReplacement(existingReadyTx);
             }
-
-            if (!transactionReplacementTester.apply(existingReadyTx, incomingTx)) {
-                return REJECTED_UNDERPRICED_REPLACEMENT;
-            }
-            existingTxs.put(incomingTx.getNonce(), incomingTx);
-            return TransactionAddedResult.createForReplacement(existingReadyTx);
         }
         return null;
     }
@@ -225,12 +238,17 @@ public abstract class AbstractTransactionsLayer {
             final FeeMarket feeMarket) {
         debugLambda(LOG, "Managing new added block {}", blockHeader::toLogString);
 
-        transactionsAddedToBlock(confirmedTransactions);
+        confirmed(confirmedTransactions);
         prioritizedTransactions.manageBlockAdded(blockHeader, feeMarket);
         prioritizeReadyTransactions();
     }
 
-    private void transactionsAddedToBlock(final List<Transaction> confirmedTransactions) {
+    private void confirmed(final Transaction confirmedTx) {
+            remove(confirmedTx).ifPresentOrElse(confirmedPendingTx -> {
+                metrics.incrementRemoved(confirmedPendingTx.isReceivedFromLocalSource(), "confirmed", name());
+                innerConfirmed(confirmedPendingTx);
+            }, () -> nextLayer.confirmed(confirmedTx));
+
         final var orderedConfirmedNonceBySender = maxConfirmedNonceBySender(confirmedTransactions);
         final var removedTransactions = removeConfirmed(orderedConfirmedNonceBySender);
         traceLambda(
@@ -253,7 +271,7 @@ public abstract class AbstractTransactionsLayer {
         innerRemoveConfirmed(orderedConfirmedNonceBySender, removedTransactions);
     }
 
-    protected abstract void innerRemoveConfirmed(final Map<Address, Optional<Long>> orderedConfirmedNonceBySender, final List<PendingTransaction> removedTransactions);
+    protected abstract void innerConfirmed(final PendingTransaction confirmedPendingTx);
 
     private Map<Address, Optional<Long>> maxConfirmedNonceBySender(
             final List<Transaction> confirmedTransactions) {

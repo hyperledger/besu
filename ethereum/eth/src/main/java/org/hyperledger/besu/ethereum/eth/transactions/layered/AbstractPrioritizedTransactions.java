@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
@@ -43,19 +44,19 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractPrioritizedTransactions {
+public abstract class AbstractPrioritizedTransactions extends AbstractTransactionsLayer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractPrioritizedTransactions.class);
 
   protected final Clock clock;
-  protected final TransactionPoolConfiguration poolConfig;
+//  protected final TransactionPoolConfiguration poolConfig;
 
-  protected final Map<Hash, PendingTransaction> prioritizedPendingTransactions;
+//  protected final Map<Hash, PendingTransaction> prioritizedPendingTransactions;
 
   protected final TreeSet<PendingTransaction> orderByFee;
-  protected final Map<Address, Long> expectedNonceForSender;
+//  protected final Map<Address, Long> expectedNonceForSender;
 
-  protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-      transactionReplacementTester;
+//  protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+//      transactionReplacementTester;
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
@@ -68,6 +69,35 @@ public abstract class AbstractPrioritizedTransactions {
     this.clock = clock;
     this.transactionReplacementTester = transactionReplacementTester;
     this.orderByFee = new TreeSet<>(this::compareByFee);
+  }
+
+  @Override
+  protected TransactionAddedResult internalAdd(final PendingTransaction pendingTransaction, final long senderNonce) {
+    final var senderTxs = readyBySender.get(pendingTransaction.getSender());
+
+    if(hasExpectedNonce(senderTxs, pendingTransaction, senderNonce) && hasPriority(pendingTransaction)) {
+      orderByFee.add(pendingTransaction);
+      return TransactionAddedResult.ADDED;
+    }
+
+    return nextLayer.add(pendingTransaction, senderNonce);
+  }
+
+  @Override
+  protected void internalReplace(final PendingTransaction replacedTx) {
+    orderByFee.remove(replacedTx);
+  }
+
+  private boolean hasExpectedNonce(final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction pendingTransaction, final long senderNonce) {
+    if(senderTxs == null) {
+      return pendingTransaction.getNonce() == senderNonce;
+    }
+    
+    return (senderTxs.lastKey() + 1) == pendingTransaction.getNonce();
+  }
+
+  private boolean hasPriority(final PendingTransaction pendingTransaction) {
+    return compareByFee(pendingTransaction, orderByFee.first()) > 0;
   }
 
   protected abstract int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2);
@@ -181,8 +211,22 @@ public abstract class AbstractPrioritizedTransactions {
       }
       return expectedNonce;
     });
-
   }
+
+  void confirmed(final PendingTransaction pendingTransaction) {
+    expectedNonceForSender.computeIfPresent(pendingTransaction.getSender(), (sender, expectedNonce) -> {
+      final long nonceDistance = expectedNonce - pendingTransaction.getNonce();
+      if(nonceDistance > 1) {
+        throw new IllegalArgumentException("Prioritized transactions must be removed from highest nonce first");
+      } else if (nonceDistance == 1) {
+        removeFromOrderedTransactions(pendingTransaction, false);
+        traceLambda(LOG, "Demoted transaction {}", pendingTransaction::toTraceLog);
+        return pendingTransaction.getNonce();
+      }
+      return expectedNonce;
+    });
+  }
+
 
   public int size() {
     return prioritizedPendingTransactions.size();
