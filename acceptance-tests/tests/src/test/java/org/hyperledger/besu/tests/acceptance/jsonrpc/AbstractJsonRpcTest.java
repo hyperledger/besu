@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
@@ -90,7 +91,8 @@ abstract class AbstractJsonRpcTest {
     final Response response = testRequest.execute();
 
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
-    assertThat(response.body().string()).isEqualTo(testCase.getResponse().toPrettyString());
+    assertThat(JsonUtil.objectNodeFromString(response.body().string()))
+        .isEqualTo(JsonUtil.objectNodeFromString(testCase.getResponse().toString()));
   }
 
   private String getRpcUrl(final String rpcMethod) {
