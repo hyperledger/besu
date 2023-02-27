@@ -77,7 +77,7 @@ public class TransactionAnnouncementDecoder {
       types.add(b == 0 ? TransactionType.FRONTIER : TransactionType.of(b));
     }
 
-    final List<Long> sizes = input.readList(RLPInput::readUnsignedInt);
+    final List<Long> sizes = input.readList(in -> (long) in.readBytes().toInt());
     final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
     input.leaveList();
     if (!(types.size() == hashes.size() && hashes.size() == sizes.size())) {

@@ -449,7 +449,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
                 TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
                     .decode(RLP.input(invalidMessageBytes)));
 
-    final String expectedMessage = "Cannot read a 4-byte int";
+    final String expectedMessage = "Value of size 5 has more than 4 bytes";
     final String actualMessage = exception.getCause().getMessage();
     assertThat(actualMessage).contains(expectedMessage);
   }
