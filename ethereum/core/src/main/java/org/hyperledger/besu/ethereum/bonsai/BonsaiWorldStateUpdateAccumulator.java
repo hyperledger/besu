@@ -62,9 +62,6 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
   private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
 
-  private final ComposedMapOverlay<Address, BonsaiValue<BonsaiAccount>> composedAccountsToUpdate;
-  private final ComposedMapOverlay<Address, BonsaiValue<Bytes>> composedCodeToUpdate;
-
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
@@ -77,27 +74,11 @@ public class BonsaiWorldStateUpdateAccumulator
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
       final Consumer<Hash> storagePreloader) {
-    this(world, accountPreloader, storagePreloader, Optional.empty());
-  }
-
-  BonsaiWorldStateUpdateAccumulator(
-      final BonsaiWorldView world,
-      final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
-      final Consumer<Hash> storagePreloader,
-      final Optional<BonsaiWorldStateUpdateAccumulator> parentAccumulator) {
     super(world);
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
     this.isAccumulatorStateChanged = false;
-    this.composedAccountsToUpdate  = new ComposedMapOverlay<>(accountsToUpdate);
-    this.composedCodeToUpdate = new ComposedMapOverlay<>(codeToUpdate);
-
-    // clone parent accumulator contents if present
-    parentAccumulator.ifPresent(parent -> {
-      this.composedAccountsToUpdate.cloneFromAll(parent.composedAccountsToUpdate);
-      this.composedCodeToUpdate.cloneFromAll(parent.composedCodeToUpdate);
-    });
   }
 
   public BonsaiWorldStateUpdateAccumulator copy() {
@@ -117,9 +98,6 @@ public class BonsaiWorldStateUpdateAccumulator
     deletedAccounts.addAll(source.deletedAccounts);
     emptySlot.addAll(source.emptySlot);
 
-    // clone the composed accumulator base only:
-    composedAccountsToUpdate.cloneFromBase(source.composedAccountsToUpdate);
-    composedCodeToUpdate.cloneFromBase(source.composedCodeToUpdate);
     this.isAccumulatorStateChanged = true;
   }
 
@@ -141,7 +119,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    BonsaiValue<BonsaiAccount> bonsaiValue = composedAccountsToUpdate.get(address);
+    BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
     if (bonsaiValue != null) {
       throw new IllegalStateException("Cannot create an account when one already exists");
     }
@@ -188,7 +166,7 @@ public class BonsaiWorldStateUpdateAccumulator
       final Address address,
       final Function<BonsaiValue<BonsaiAccount>, BonsaiAccount> bonsaiAccountFunction) {
     try {
-      final BonsaiValue<BonsaiAccount> bonsaiValue = composedAccountsToUpdate.get(address);
+      final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
       if (bonsaiValue == null) {
         final Account account = wrappedWorldView().get(address);
         if (account instanceof BonsaiAccount) {
@@ -383,7 +361,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
-    final BonsaiValue<Bytes> localCode = composedCodeToUpdate.get(address);
+    final BonsaiValue<Bytes> localCode = codeToUpdate.get(address);
     if (localCode == null) {
       final Optional<Bytes> code = wrappedWorldView().getCode(address, codeHash);
       if (code.isEmpty() && !codeHash.equals(Hash.EMPTY)) {
@@ -600,7 +578,7 @@ public class BonsaiWorldStateUpdateAccumulator
       // non-change, a cached read.
       return;
     }
-    BonsaiValue<BonsaiAccount> accountValue = composedAccountsToUpdate.get(address);
+    BonsaiValue<BonsaiAccount> accountValue = accountsToUpdate.get(address);
     if (accountValue == null) {
       accountValue = loadAccountFromParent(address, accountValue);
     }
@@ -629,7 +607,8 @@ public class BonsaiWorldStateUpdateAccumulator
       }
       if (replacementValue == null) {
         if (accountValue.getPrior() == null) {
-          //TODO: should we remove from the parent accumulated change also?  only if it is a private copy
+          // TODO: should we remove from the parent accumulated change also?  only if it is a
+          // private copy
           accountsToUpdate.remove(address);
         } else {
           accountValue.setUpdated(null);
@@ -667,7 +646,7 @@ public class BonsaiWorldStateUpdateAccumulator
       // non-change, a cached read.
       return;
     }
-    BonsaiValue<Bytes> codeValue = composedCodeToUpdate.get(address);
+    BonsaiValue<Bytes> codeValue = codeToUpdate.get(address);
     if (codeValue == null) {
       final Bytes storedCode =
           wrappedWorldView()
@@ -807,6 +786,14 @@ public class BonsaiWorldStateUpdateAccumulator
     isAccumulatorStateChanged = false;
   }
 
+  public Consumer<BonsaiValue<BonsaiAccount>> getAccountPreloader() {
+    return accountPreloader;
+  }
+
+  public Consumer<Hash> getStoragePreloader() {
+    return storagePreloader;
+  }
+
   @Override
   public void reset() {
     storageToClear.clear();
@@ -881,10 +868,11 @@ public class BonsaiWorldStateUpdateAccumulator
     void process(final Address address, T value);
   }
 
-  static class ComposedMapOverlay<K,V> {
-    private final Map<K,V> overlayMap;
-    private final Map<K,V> baseMap;
-    public ComposedMapOverlay(final Map<K,V> overlayMap) {
+  static class ComposedMapOverlay<K, V> {
+    private final Map<K, V> overlayMap;
+    private final Map<K, V> baseMap;
+
+    public ComposedMapOverlay(final Map<K, V> overlayMap) {
       this.overlayMap = overlayMap;
       this.baseMap = new HashMap<>();
     }
@@ -895,10 +883,11 @@ public class BonsaiWorldStateUpdateAccumulator
           .orElse(null);
     }
 
-    public void cloneFromBase(final ComposedMapOverlay<K,V> source) {
+    public void cloneFromBase(final ComposedMapOverlay<K, V> source) {
       baseMap.putAll(source.baseMap);
     }
-    public void cloneFromAll(final ComposedMapOverlay<K,V> source) {
+
+    public void cloneFromAll(final ComposedMapOverlay<K, V> source) {
       baseMap.putAll(source.baseMap);
       baseMap.putAll(source.overlayMap);
     }

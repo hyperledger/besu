@@ -59,7 +59,7 @@ public class BonsaiWorldState
   public final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   private final BonsaiWorldStateProvider archive;
-  private final BonsaiWorldStateUpdateAccumulator updater;
+  private BonsaiWorldStateUpdateAccumulator updater;
 
   public Hash worldStateRootHash;
   public Hash worldStateBlockHash;
@@ -101,7 +101,7 @@ public class BonsaiWorldState
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final boolean inMemory,
-      final BonsaiWorldStateUpdateAccumulator updater){
+      final BonsaiWorldStateUpdateAccumulator updater) {
     this.archive = archive;
     this.worldStateStorage = worldStateStorage;
     this.isFrozen = inMemory;
@@ -530,6 +530,11 @@ public class BonsaiWorldState
   @Override
   public MutableWorldState freeze() {
     this.isFrozen = true;
+    this.updater =
+        new BonsaiWorldStateUpdateAccumulator(
+            updater,
+            updater.getAccountPreloader(),
+            updater.getStoragePreloader()); // also freeze current updater
     return this;
   }
 
