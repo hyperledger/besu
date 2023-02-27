@@ -28,11 +28,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class BlockReplay {
 
@@ -75,7 +75,7 @@ public class BlockReplay {
                               mutableWorldState,
                               transactionProcessor,
                               dataGasPrice))
-                  .collect(Collectors.toList());
+                  .toList();
           return Optional.of(new BlockTrace(transactionTraces));
         });
   }
@@ -90,7 +90,7 @@ public class BlockReplay {
     return performActionWithBlock(
         blockHash,
         (body, header, blockchain, mutableWorldState, transactionProcessor, protocolSpec) -> {
-          final BlockHashLookup blockHashLookup = new BlockHashLookup(header, blockchain);
+          final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
           final Wei dataGasPrice =
               protocolSpec
                   .getFeeMarket()
@@ -140,7 +140,7 @@ public class BlockReplay {
               blockHeader,
               transaction,
               spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
-              new BlockHashLookup(blockHeader, blockchain),
+              new CachingBlockHashLookup(blockHeader, blockchain),
               false,
               TransactionValidationParams.blockReplay(),
               dataGasPrice);
@@ -172,7 +172,7 @@ public class BlockReplay {
     if (previous == null) {
       return Optional.empty();
     }
-    try (final var worldState =
+    try (final MutableWorldState worldState =
         worldStateArchive
             .getMutable(previous.getStateRoot(), previous.getBlockHash(), false)
             .map(
