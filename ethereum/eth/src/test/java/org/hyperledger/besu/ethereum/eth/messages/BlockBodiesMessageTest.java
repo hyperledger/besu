@@ -79,7 +79,7 @@ public final class BlockBodiesMessageTest {
   }
 
   @Test
-  public void shouldIgnoreEmptyBlocks() {
+  public void shouldParseEmptyBlocks() {
     final Bytes bytes = Bytes.fromHexString("0xc2c0c0");
 
     final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, bytes);
@@ -92,7 +92,7 @@ public final class BlockBodiesMessageTest {
                 false,
                 EvmConfiguration.DEFAULT));
 
-    Assertions.assertThat(bodies).isEmpty();
+    bodies.forEach(blockBody -> Assertions.assertThat(blockBody.isEmpty()).isTrue());
   }
 
   @Test
