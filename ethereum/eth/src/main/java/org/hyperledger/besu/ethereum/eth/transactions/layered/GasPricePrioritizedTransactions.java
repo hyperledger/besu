@@ -19,9 +19,9 @@ import static java.util.Comparator.comparing;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
-import java.time.Clock;
 import java.util.function.BiFunction;
 
 /**
@@ -34,14 +34,15 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
 
   public GasPricePrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
-      final Clock clock,
+      final TransactionsLayer nextLayer,
+      final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
-    super(poolConfig, clock, transactionReplacementTester);
+    super(poolConfig, nextLayer, metrics, transactionReplacementTester);
   }
 
   @Override
-  public int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
+  protected int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
     return comparing(PendingTransaction::isReceivedFromLocalSource)
         .thenComparing(PendingTransaction::getGasPrice)
         .thenComparing(PendingTransaction::getSequence)
@@ -49,14 +50,18 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   }
 
   @Override
-  public void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
+  public String name() {
+    return "prioritized-gas-price";
+  }
+
+  @Override
+  protected void internalBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     // no-op
   }
 
   @Override
-  protected void removeFromOrderedTransactions(
-      final PendingTransaction removedPendingTx, final boolean addedToBlock) {
-    orderByFee.remove(removedPendingTx);
+  protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
+    return true;
   }
 
   @Override

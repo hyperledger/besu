@@ -52,7 +52,7 @@ public interface PendingTransactions {
 
   Set<PendingTransaction> getPendingTransactions();
 
-  long subscribePendingTransactions(PendingTransactionListener listener);
+  long subscribePendingTransactions(PendingTransactionAddedListener listener);
 
   void unsubscribePendingTransactions(long id);
 

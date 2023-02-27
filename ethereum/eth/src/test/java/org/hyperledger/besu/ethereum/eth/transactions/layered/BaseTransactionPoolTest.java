@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Random;
 
@@ -70,6 +71,10 @@ public class BaseTransactionPoolTest {
   protected Transaction createTransaction(
       final long nonce, final Wei maxGasPrice, final KeyPair keys) {
     return createTransaction(nonce, maxGasPrice, 0, keys);
+  }
+
+  protected Transaction createEIP1559Transaction(final long nonce) {
+    return createTransaction(TransactionType.EIP1559, nonce, Wei.of(5000L), 0, KEYS1);
   }
 
   protected Transaction createTransaction(
@@ -126,25 +131,20 @@ public class BaseTransactionPoolTest {
   }
 
   protected void assertTransactionPendingAndReady(
-      final LayeredPendingTransactions pendingTransactions, final Transaction transaction) {
-    assertTransactionPending(pendingTransactions, transaction);
-    assertThat(pendingTransactions.getReady(transaction.getSender(), transaction.getNonce()))
-        .isPresent()
-        .map(PendingTransaction::getHash)
-        .hasValue(transaction.getHash());
+      final Transaction transaction, final TransactionsLayer... layers) {
+    assertThat(Arrays.stream(layers).filter(layer -> layer.contains(transaction)).findAny())
+        .isPresent();
+    //    assertTransactionPending(pendingTransactions, transaction);
+    //    assertThat(pendingTransactions.getReady(transaction.getSender(), transaction.getNonce()))
+    //        .isPresent()
+    //        .map(PendingTransaction::getHash)
+    //        .hasValue(transaction.getHash());
   }
 
   protected void assertTransactionPendingAndNotReady(
-      final LayeredPendingTransactions pendingTransactions, final Transaction transaction) {
-    assertTransactionPending(pendingTransactions, transaction);
-    final var maybeTransaction =
-        pendingTransactions.getReady(transaction.getSender(), transaction.getNonce());
-    if (!maybeTransaction.isEmpty()) {
-      assertThat(maybeTransaction)
-          .isPresent()
-          .map(PendingTransaction::getHash)
-          .isNotEqualTo(transaction.getHash());
-    }
+      final Transaction transaction, final TransactionsLayer... layers) {
+    assertThat(Arrays.stream(layers).filter(layer -> layer.contains(transaction)).findAny())
+        .isEmpty();
   }
 
   protected void assertTransactionPending(

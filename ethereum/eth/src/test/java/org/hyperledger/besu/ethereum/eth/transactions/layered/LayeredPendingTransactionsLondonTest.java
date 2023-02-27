@@ -45,10 +45,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -56,7 +54,8 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
-public class LayeredPendingTransactionsLondonTest extends AbstractTransactionsLayeredPendingTransactionsTest {
+public class LayeredPendingTransactionsLondonTest
+    extends AbstractTransactionsLayeredPendingTransactionsTest {
 
   private static final Wei BASE_FEE_FLOOR = Wei.of(7L);
 
@@ -65,16 +64,18 @@ public class LayeredPendingTransactionsLondonTest extends AbstractTransactionsLa
       final TransactionPoolConfiguration poolConfig,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
+
+    final var txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
     return new LayeredPendingTransactions(
         poolConfig,
         new BaseFeePrioritizedTransactions(
             poolConfig,
-            TestClock.system(ZoneId.systemDefault()),
             protocolContext.getBlockchain()::getChainHeadHeader,
+            new EndLayer(txPoolMetrics),
+            txPoolMetrics,
             transactionReplacementTester,
             FeeMarket.london(0L)),
-        new TransactionPoolMetrics(metricsSystem),
-        transactionReplacementTester);
+        new TransactionPoolMetrics(metricsSystem));
   }
 
   @Override

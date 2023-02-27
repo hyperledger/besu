@@ -41,10 +41,8 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -55,19 +53,21 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
-public class LayeredPendingTransactionsLegacyTest extends AbstractTransactionsLayeredPendingTransactionsTest {
+public class LayeredPendingTransactionsLegacyTest
+    extends AbstractTransactionsLayeredPendingTransactionsTest {
 
   @Override
   protected PendingTransactions createPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
+
+    final var txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
     return new LayeredPendingTransactions(
         poolConfig,
         new GasPricePrioritizedTransactions(
-            poolConfig, TestClock.system(ZoneId.systemDefault()), transactionReplacementTester),
-        new TransactionPoolMetrics(metricsSystem),
-        transactionReplacementTester);
+            poolConfig, new EndLayer(txPoolMetrics), txPoolMetrics, transactionReplacementTester),
+        txPoolMetrics);
   }
 
   @Override

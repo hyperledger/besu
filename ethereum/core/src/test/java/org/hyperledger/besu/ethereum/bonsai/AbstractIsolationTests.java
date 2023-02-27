@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -61,7 +62,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -105,13 +105,18 @@ public abstract class AbstractIsolationTests {
   protected final TransactionPoolConfiguration poolConfiguration =
       ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
 
+  protected TransactionPoolMetrics txPoolMetrics =
+      new TransactionPoolMetrics(new NoOpMetricsSystem());
+
   protected final PendingTransactions sorter =
       new LayeredPendingTransactions(
           poolConfiguration,
           new GasPricePrioritizedTransactions(
-              poolConfiguration, Clock.systemUTC(), transactionReplacementTester),
-          new TransactionPoolMetrics(new NoOpMetricsSystem()),
-          transactionReplacementTester);
+              poolConfiguration,
+              new EndLayer(txPoolMetrics),
+              txPoolMetrics,
+              transactionReplacementTester),
+          new TransactionPoolMetrics(new NoOpMetricsSystem()));
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()

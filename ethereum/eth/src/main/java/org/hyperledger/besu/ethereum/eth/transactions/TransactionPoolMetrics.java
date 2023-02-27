@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.eth.transactions.layered.AbstractPrioritizedTransactions;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
@@ -38,7 +37,7 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> invalidCounter;
   private final LabelledMetric<Counter> rejectedCounter;
   private final LabelledMetric<Counter> evictedCounter;
-  private final LabelledMetric<Counter> prioritizedCounter;
+  //  private final LabelledMetric<Counter> prioritizedCounter;
 
   private final Counter expiredTransactionsMessageCounter;
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
@@ -53,7 +52,8 @@ public class TransactionPoolMetrics {
             BesuMetricCategory.TRANSACTION_POOL,
             "transactions_added_total",
             "Count of transactions added to the transaction pool",
-            "source", "list");
+            "source",
+            "list");
 
     invalidCounter =
         metricsSystem.createLabelledCounter(
@@ -69,7 +69,8 @@ public class TransactionPoolMetrics {
             "transactions_removed_total",
             "Count of transactions removed from the transaction pool",
             "source",
-            "operation", "list");
+            "operation",
+            "list");
 
     replacedCount =
         metricsSystem.createLabelledCounter(
@@ -85,7 +86,8 @@ public class TransactionPoolMetrics {
             "transactions_rejected_total",
             "Count of transactions not accepted to the transaction pool",
             "source",
-            "operation", "list");
+            "operation",
+            "list");
 
     evictedCounter =
         metricsSystem.createLabelledCounter(
@@ -94,13 +96,13 @@ public class TransactionPoolMetrics {
             "Count of transactions evicted from the transaction pool when it is full",
             "list");
 
-    prioritizedCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_prioritized_total",
-            "Count of transactions prioritized in the pool by result",
-            "source",
-            "result");
+    //    prioritizedCounter =
+    //        metricsSystem.createLabelledCounter(
+    //            BesuMetricCategory.TRANSACTION_POOL,
+    //            "transactions_prioritized_total",
+    //            "Count of transactions prioritized in the pool by result",
+    //            "source",
+    //            "result");
 
     expiredTransactionsMessageCounter =
         new RunnableCounter(
@@ -182,7 +184,8 @@ public class TransactionPoolMetrics {
     addedCounter.labels(location(receivedFromLocalSource), list).inc();
   }
 
-  public void incrementRemoved(final boolean receivedFromLocalSource, final String operation, final String list) {
+  public void incrementRemoved(
+      final boolean receivedFromLocalSource, final String operation, final String list) {
     removedCounter.labels(location(receivedFromLocalSource), operation, list).inc();
   }
 
@@ -196,7 +199,9 @@ public class TransactionPoolMetrics {
   }
 
   public void incrementRejected(
-      final boolean receivedFromLocalSource, final TransactionInvalidReason rejectReason, final String list) {
+      final boolean receivedFromLocalSource,
+      final TransactionInvalidReason rejectReason,
+      final String list) {
     rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), list).inc();
   }
 
@@ -216,13 +221,13 @@ public class TransactionPoolMetrics {
     evictedCounter.labels(set).inc(count);
   }
 
-  public void incrementPrioritized(
-      final boolean receivedFromLocalSource,
-      final AbstractPrioritizedTransactions.PrioritizeResult prioritizeResult) {
-    prioritizedCounter
-        .labels(location(receivedFromLocalSource), prioritizeResult.toMetricLabel())
-        .inc();
-  }
+  //  public void incrementPrioritized(
+  //      final boolean receivedFromLocalSource,
+  //      final AbstractPrioritizedTransactions.PrioritizeResult prioritizeResult) {
+  //    prioritizedCounter
+  //        .labels(location(receivedFromLocalSource), prioritizeResult.toMetricLabel())
+  //        .inc();
+  //  }
 
   private String location(final boolean receivedFromLocalSource) {
     return receivedFromLocalSource ? "local" : "remote";

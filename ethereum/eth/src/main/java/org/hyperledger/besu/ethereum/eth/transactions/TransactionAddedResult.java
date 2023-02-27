@@ -38,10 +38,12 @@ public final class TransactionAddedResult {
       new TransactionAddedResult(TransactionInvalidReason.LOWER_NONCE_INVALID_TRANSACTION_EXISTS);
   public static final TransactionAddedResult TX_POOL_FULL =
       new TransactionAddedResult((TransactionInvalidReason.TX_POOL_FULL));
-  public static final TransactionAddedResult ADDED_SPARSE =
-      new TransactionAddedResult(Status.ADDED, false);
-  public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED, true);
-  public static final TransactionAddedResult TRY_NEXT_LAYER = new TransactionAddedResult(Status.TRY_NEXT_LAYER, false);
+
+  public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED);
+  public static final TransactionAddedResult TRY_NEXT_LAYER =
+      new TransactionAddedResult(Status.TRY_NEXT_LAYER);
+
+  public static final TransactionAddedResult DROPPED = new TransactionAddedResult(Status.DROPPED);
 
   private final Optional<TransactionInvalidReason> rejectReason;
 
@@ -49,10 +51,7 @@ public final class TransactionAddedResult {
 
   private final Status status;
 
-  private final boolean prioritizable;
-
-  private TransactionAddedResult(
-      final PendingTransaction replacedTransaction) {
+  private TransactionAddedResult(final PendingTransaction replacedTransaction) {
     this.replacedTransaction = Optional.of(replacedTransaction);
     this.rejectReason = Optional.empty();
     this.status = Status.REPLACED;
@@ -62,14 +61,12 @@ public final class TransactionAddedResult {
     this.replacedTransaction = Optional.empty();
     this.rejectReason = Optional.of(rejectReason);
     this.status = Status.INVALID;
-    this.prioritizable = false;
   }
 
-  private TransactionAddedResult(final Status status, final boolean prioritizable) {
+  private TransactionAddedResult(final Status status) {
     this.replacedTransaction = Optional.empty();
     this.rejectReason = Optional.empty();
     this.status = status;
-    this.prioritizable = prioritizable;
   }
 
   public boolean isSuccess() {
@@ -78,10 +75,6 @@ public final class TransactionAddedResult {
 
   public boolean isRejected() {
     return status == Status.INVALID;
-  }
-
-  public boolean isPrioritizable() {
-    return prioritizable;
   }
 
   public boolean isReplacement() {
@@ -106,15 +99,14 @@ public final class TransactionAddedResult {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     TransactionAddedResult that = (TransactionAddedResult) o;
-    return prioritizable == that.prioritizable
-        && Objects.equals(rejectReason, that.rejectReason)
+    return Objects.equals(rejectReason, that.rejectReason)
         && Objects.equals(replacedTransaction, that.replacedTransaction)
         && status == that.status;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(rejectReason, replacedTransaction, status, prioritizable);
+    return Objects.hash(rejectReason, replacedTransaction, status);
   }
 
   @Override
@@ -126,8 +118,6 @@ public final class TransactionAddedResult {
         + replacedTransaction
         + ", status="
         + status
-        + ", prioritizable="
-        + prioritizable
         + '}';
   }
 }

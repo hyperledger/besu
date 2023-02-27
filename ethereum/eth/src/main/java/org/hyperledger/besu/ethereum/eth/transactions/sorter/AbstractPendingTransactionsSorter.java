@@ -28,8 +28,8 @@ import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -85,7 +85,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   protected final LowestInvalidNonceCache lowestInvalidKnownNonceCache =
       new LowestInvalidNonceCache(DEFAULT_LOWEST_INVALID_KNOWN_NONCE_CACHE);
-  protected final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
+  protected final Subscribers<PendingTransactionAddedListener> pendingTransactionSubscribers =
       Subscribers.create();
 
   protected final Subscribers<PendingTransactionDroppedListener> transactionDroppedListeners =
@@ -378,7 +378,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   }
 
   @Override
-  public long subscribePendingTransactions(final PendingTransactionListener listener) {
+  public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
     return pendingTransactionSubscribers.subscribe(listener);
   }
 

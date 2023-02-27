@@ -37,8 +37,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.account.Account;
@@ -93,7 +93,8 @@ public abstract class AbstractPendingTransactionsTestBase {
   protected final Transaction transaction1 = createTransaction(2);
   protected final Transaction transaction2 = createTransaction(1);
 
-  protected final PendingTransactionListener listener = mock(PendingTransactionListener.class);
+  protected final PendingTransactionAddedListener listener =
+      mock(PendingTransactionAddedListener.class);
   protected final PendingTransactionDroppedListener droppedListener =
       mock(PendingTransactionDroppedListener.class);
   protected static final Address SENDER1 = Util.publicKeyToAddress(KEYS1.getPublicKey());

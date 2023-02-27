@@ -156,7 +156,7 @@ public class TransactionPool implements BlockAddedObserver {
               if (pendingTransactions.containsTransaction(transaction)) {
                 traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
                 // We already have this transaction, don't even validate it.
-                metrics.incrementRejected(false, TRANSACTION_ALREADY_KNOWN);
+                metrics.incrementRejected(false, TRANSACTION_ALREADY_KNOWN, "before");
 
               } else {
                 final ValidationResultAndAccount validationResult =
@@ -207,7 +207,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
   }
 
-  public long subscribePendingTransactions(final PendingTransactionListener listener) {
+  public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
     return pendingTransactions.subscribePendingTransactions(listener);
   }
 

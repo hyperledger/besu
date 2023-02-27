@@ -20,14 +20,15 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
-import java.time.Clock;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,28 +47,33 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   public BaseFeePrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
-      final Clock clock,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
+      final TransactionsLayer nextLayer,
+      final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BaseFeeMarket baseFeeMarket) {
-    super(poolConfig, clock, transactionReplacementTester);
+    super(poolConfig, nextLayer, metrics, transactionReplacementTester);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(baseFeeMarket, chainHeadHeaderSupplier.get()));
   }
 
   @Override
-  public int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
+  protected int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
     return Comparator.comparing(
             (PendingTransaction pendingTransaction) ->
                 pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee))
-        .thenComparing(PendingTransaction::getAddedToPoolAt)
-        .thenComparing(PendingTransaction::getSequence)
+        .thenComparing(Comparator.comparing(PendingTransaction::getSequence).reversed())
         .compare(pt1, pt2);
   }
 
   @Override
-  public void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
+  public String name() {
+    return "prioritized-basefee";
+  }
+
+  @Override
+  protected void internalBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     final BaseFeeMarket baseFeeMarket = (BaseFeeMarket) feeMarket;
     final Wei newNextBlockBaseFee = calculateNextBlockBaseFee(baseFeeMarket, blockHeader);
 
@@ -79,7 +85,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
     nextBlockBaseFee = Optional.of(newNextBlockBaseFee);
     orderByFee.clear();
-    orderByFee.addAll(prioritizedPendingTransactions.values());
+    orderByFee.addAll(pendingTransactions.values());
   }
 
   private Wei calculateNextBlockBaseFee(
@@ -92,39 +98,27 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   }
 
   @Override
-  protected void removeFromOrderedTransactions(
-      final PendingTransaction removedPendingTx, final boolean addedToBlock) {
-    // when added to block we can avoid removing from orderByFee since it will be recreated
-    if (!addedToBlock) {
-      orderByFee.remove(removedPendingTx);
-    }
-  }
-
-  @Override
-  public boolean isPromotable(final PendingTransaction pendingTransaction) {
-    return super.isPromotable(pendingTransaction)
-        && nextBlockBaseFee
-            .map(
-                baseFee ->
-                    pendingTransaction
-                        .getTransaction()
-                        .getEffectiveGasPrice(nextBlockBaseFee)
-                        .greaterOrEqualThan(baseFee))
-            .orElse(false);
+  protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
+    return nextBlockBaseFee
+        .map(
+            baseFee ->
+                pendingTransaction
+                    .getTransaction()
+                    .getEffectiveGasPrice(nextBlockBaseFee)
+                    .greaterOrEqualThan(baseFee))
+        .orElse(false);
   }
 
   @Override
   public String logStats() {
-    int aboveBaseFee = 0;
-    int belowBaseFee = 0;
-    final var txs = prioritizedTransactions();
-    while (txs.hasNext()) {
-      if (txs.next().getTransaction().getMaxGasPrice().greaterOrEqualThan(nextBlockBaseFee.get())) {
-        aboveBaseFee++;
-      } else {
-        belowBaseFee++;
-      }
-    }
+
+    final var baseFeePartition =
+        stream()
+            .map(PendingTransaction::getTransaction)
+            .collect(
+                Collectors.partitioningBy(
+                    tx -> tx.getMaxGasPrice().greaterOrEqualThan(nextBlockBaseFee.get()),
+                    Collectors.counting()));
 
     if (orderByFee.isEmpty()) {
       return "Empty";
@@ -149,8 +143,8 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         + "], Next block base fee: "
         + nextBlockBaseFee.get().toHumanReadableString()
         + ", Above next base fee: "
-        + aboveBaseFee
+        + baseFeePartition.get(true)
         + ", Below next base fee: "
-        + belowBaseFee;
+        + baseFeePartition.get(false);
   }
 }

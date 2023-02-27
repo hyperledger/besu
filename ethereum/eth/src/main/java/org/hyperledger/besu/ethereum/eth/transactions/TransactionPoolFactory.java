@@ -22,8 +22,11 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.AbstractPrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.ReadyTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.SparseTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
@@ -200,7 +203,6 @@ public class TransactionPoolFactory {
       return createLayeredPendingTransactions(
           protocolSchedule,
           protocolContext,
-          clock,
           metrics,
           transactionPoolConfiguration,
           isFeeMarketImplementBaseFee);
@@ -238,7 +240,6 @@ public class TransactionPoolFactory {
   private static PendingTransactions createLayeredPendingTransactions(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final Clock clock,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final boolean isFeeMarketImplementBaseFee) {
@@ -250,6 +251,19 @@ public class TransactionPoolFactory {
         (t1, t2) ->
             transactionReplacementHandler.shouldReplace(
                 t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
+
+    final EndLayer endLayer = new EndLayer(metrics);
+
+    final SparseTransactions sparseTransactions =
+        new SparseTransactions(
+            transactionPoolConfiguration, endLayer, metrics, transactionReplacementTester);
+
+    final ReadyTransactions readyTransactions =
+        new ReadyTransactions(
+            transactionPoolConfiguration,
+            sparseTransactions,
+            metrics,
+            transactionReplacementTester);
 
     final AbstractPrioritizedTransactions pendingTransactionsSorter;
     if (isFeeMarketImplementBaseFee) {
@@ -266,20 +280,21 @@ public class TransactionPoolFactory {
       pendingTransactionsSorter =
           new BaseFeePrioritizedTransactions(
               transactionPoolConfiguration,
-              clock,
               protocolContext.getBlockchain()::getChainHeadHeader,
+              readyTransactions,
+              metrics,
               transactionReplacementTester,
               baseFeeMarket);
     } else {
       pendingTransactionsSorter =
           new GasPricePrioritizedTransactions(
-              transactionPoolConfiguration, clock, transactionReplacementTester);
+              transactionPoolConfiguration,
+              readyTransactions,
+              metrics,
+              transactionReplacementTester);
     }
 
     return new LayeredPendingTransactions(
-        transactionPoolConfiguration,
-        pendingTransactionsSorter,
-        metrics,
-        transactionReplacementTester);
+        transactionPoolConfiguration, pendingTransactionsSorter, metrics);
   }
 }

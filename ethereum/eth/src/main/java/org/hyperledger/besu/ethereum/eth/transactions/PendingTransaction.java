@@ -97,6 +97,21 @@ public abstract class PendingTransaction {
     return 31 * (int) (sequence ^ (sequence >>> 32));
   }
 
+  @Override
+  public String toString() {
+    return "Hash="
+        + transaction.getHash().toShortHexString()
+        + ", sender="
+        + transaction.getSender().toShortHexString()
+        + ", nonce="
+        + transaction.getNonce()
+        + ", addedToPoolAt="
+        + addedToPoolAt
+        + ", sequence="
+        + sequence
+        + '}';
+  }
+
   public String toTraceLog() {
     return "{sequence: "
         + sequence

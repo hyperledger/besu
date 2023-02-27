@@ -96,7 +96,7 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
   private static final KeyPair KEY_PAIR2 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
   @Mock protected MainnetTransactionValidator transactionValidator;
-  @Mock protected PendingTransactionListener listener;
+  @Mock protected PendingTransactionAddedListener listener;
   @Mock protected MiningParameters miningParameters;
   @Mock protected TransactionsMessageSender transactionsMessageSender;
   @Mock protected NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
