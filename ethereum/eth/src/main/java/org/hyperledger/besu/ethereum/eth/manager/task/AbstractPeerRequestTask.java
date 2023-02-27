@@ -108,10 +108,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
           });
     } catch (final RLPException e) {
       // Peer sent us malformed data - disconnect
-      LOG.info("Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}", peer, e);
-      LOG.info("Peer capabilities: {}", peer.getAgreedCapabilities().toString());
-      LOG.info("Message data: {}", message.getData().toString());
-
+      LOG.debug("Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}", peer, e);
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       promise.completeExceptionally(new PeerBreachedProtocolException());
     }

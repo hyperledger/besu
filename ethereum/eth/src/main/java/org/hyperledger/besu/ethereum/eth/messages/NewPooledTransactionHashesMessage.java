@@ -47,10 +47,6 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
     return MESSAGE_CODE;
   }
 
-  public Capability getCapability() {
-    return this.capability;
-  }
-
   public static NewPooledTransactionHashesMessage create(
       final List<Transaction> pendingTransactions, final Capability capability) {
     return new NewPooledTransactionHashesMessage(
