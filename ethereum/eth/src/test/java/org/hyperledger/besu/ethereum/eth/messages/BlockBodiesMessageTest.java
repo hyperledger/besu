@@ -77,4 +77,27 @@ public final class BlockBodiesMessageTest {
       Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));
     }
   }
+
+  @Test
+  public void shouldIgnoreEmptyBlocks() {
+    final Bytes bytes = Bytes.fromHexString("0xc2c0c0");
+
+    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, bytes);
+    final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
+
+    final List<BlockBody> bodies =
+        message.bodies(
+            FixedDifficultyProtocolSchedule.create(
+                GenesisConfigFile.development().getConfigOptions(),
+                false,
+                EvmConfiguration.DEFAULT));
+
+    Assertions.assertThat(bodies).isEmpty();
+  }
+
+  @Test
+  public void checkIsEmpty() {
+    final BlockBody empty = BlockBody.empty();
+    Assertions.assertThat(empty.isEmpty()).isTrue();
+  }
 }
