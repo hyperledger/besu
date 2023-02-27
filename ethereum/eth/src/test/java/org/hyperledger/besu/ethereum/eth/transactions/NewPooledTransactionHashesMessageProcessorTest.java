@@ -212,7 +212,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldCreateAndDecodeForEth66() {
 
     final List<TransactionAnnouncement> expectedAnnouncementList =
-        transactionList.stream().map(TransactionAnnouncement::new).collect(Collectors.toList());
+        transactionList.stream().map(TransactionAnnouncement::new).toList();
 
     final NewPooledTransactionHashesMessage message =
         NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66);
@@ -268,7 +268,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldEncodeTransactionsCorrectly_Eth68() {
 
     final String expected =
-        "0xf879c3000102cf840000000184000000028400000003f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003";
+        "0xf87983000102cf840000000184000000028400000003f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003";
     final List<Hash> hashes =
         List.of(
             Hash.fromHexString(
@@ -289,7 +289,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldDecodeBytesCorrectly_Eth68() {
     /*
      * [
-     * ["0x00","0x01","0x02"]
+     * "0x00102"]
      * ["0x00000001","0x00000002","0x00000003"],
      * ["0x0000000000000000000000000000000000000000000000000000000000000001",
      *  "0x0000000000000000000000000000000000000000000000000000000000000002",
@@ -299,7 +299,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     final Bytes bytes =
         Bytes.fromHexString(
-            "0xf879c3000102cf840000000184000000028400000003f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003");
+            "0xf87983000102cf840000000184000000028400000003f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003");
 
     final List<TransactionAnnouncement> announcementList =
         getDecoder(EthProtocol.ETH68).decode(RLP.input(bytes));
@@ -375,9 +375,8 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     final Exception exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> {
-              TransactionAnnouncement.create(new ArrayList<>(), List.of(1L), new ArrayList<>());
-            });
+            () ->
+                TransactionAnnouncement.create(new ArrayList<>(), List.of(1L), new ArrayList<>()));
     final String expectedMessage = "Hashes, sizes and types must have the same number of elements";
     final String actualMessage = exception.getMessage();
     assertThat(actualMessage).isEqualTo(expectedMessage);
@@ -388,10 +387,9 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     final Exception exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> {
-              TransactionAnnouncementEncoder.encodeForEth68(
-                  new ArrayList<>(), List.of(1), new ArrayList<>());
-            });
+            () ->
+                TransactionAnnouncementEncoder.encodeForEth68(
+                    new ArrayList<>(), List.of(1), new ArrayList<>()));
     final String expectedMessage = "Hashes, sizes and types must have the same number of elements";
     final String actualMessage = exception.getMessage();
     assertThat(actualMessage).isEqualTo(expectedMessage);
@@ -401,18 +399,17 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   @SuppressWarnings("UnusedVariable")
   public void shouldThrowRLPExceptionWhenDecodingListsWithDifferentSizes() {
 
-    // [[],[],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
+    // ["0x000102",[],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
     final Bytes invalidMessageBytes =
         Bytes.fromHexString(
-            "0xe4c0c0e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
+            "0xe783000102c0e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
 
     final Exception exception =
         assertThrows(
             RLPException.class,
-            () -> {
-              TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
-                  .decode(RLP.input(invalidMessageBytes));
-            });
+            () ->
+                TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
+                    .decode(RLP.input(invalidMessageBytes)));
 
     final String expectedMessage = "Hashes, sizes and types must have the same number of elements";
     final String actualMessage = exception.getMessage();
@@ -423,19 +420,18 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldThrowRLPExceptionWhenTypeIsInvalid() {
     final Bytes invalidMessageBytes =
         Bytes.fromHexString(
-            // [["0x09"],["0x00000002"],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
-            "0xeac109c58400000002e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
+            // ["0x07",["0x00000002"],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
+            "0xe907c58400000002e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
 
     final Exception exception =
         assertThrows(
-            RLPException.class,
-            () -> {
-              TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
-                  .decode(RLP.input(invalidMessageBytes));
-            });
+            IllegalArgumentException.class,
+            () ->
+                TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
+                    .decode(RLP.input(invalidMessageBytes)));
 
     final String expectedMessage = "Unsupported transaction type";
-    final String actualMessage = exception.getCause().getMessage();
+    final String actualMessage = exception.getMessage();
     assertThat(actualMessage).contains(expectedMessage);
   }
 
@@ -443,16 +439,15 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldThrowRLPExceptionWhenSizeSizeGreaterThanFourBytes() {
     final Bytes invalidMessageBytes =
         Bytes.fromHexString(
-            // [["0x02"],["0xffffffff01"],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
-            "0xebc102c685ffffffff00e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
+            // ["0x02",["0xffffffff01"],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
+            "0xea02c685ffffffff00e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
 
     final Exception exception =
         assertThrows(
             RLPException.class,
-            () -> {
-              TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
-                  .decode(RLP.input(invalidMessageBytes));
-            });
+            () ->
+                TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
+                    .decode(RLP.input(invalidMessageBytes)));
 
     final String expectedMessage = "Cannot read a 4-byte int";
     final String actualMessage = exception.getCause().getMessage();

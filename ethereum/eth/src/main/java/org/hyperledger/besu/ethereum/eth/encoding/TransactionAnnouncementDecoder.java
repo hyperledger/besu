@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,12 +70,13 @@ public class TransactionAnnouncementDecoder {
    */
   private static List<TransactionAnnouncement> decodeForEth68(final RLPInput input) {
     input.enterList();
-    final List<TransactionType> types =
-        input.readList(
-            rlp -> {
-              final int type = rlp.readByte() & 0xff;
-              return type == 0 ? TransactionType.FRONTIER : TransactionType.of(type);
-            });
+
+    final List<TransactionType> types = new ArrayList<>();
+    final byte[] bytes = input.readBytes().toArray();
+    for (final byte b : bytes) {
+      types.add(b == 0 ? TransactionType.FRONTIER : TransactionType.of(b));
+    }
+
     final List<Long> sizes = input.readList(RLPInput::readUnsignedInt);
     final List<Hash> hashes = input.readList(rlp -> Hash.wrap(rlp.readBytes32()));
     input.leaveList();
