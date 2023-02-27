@@ -70,7 +70,7 @@ public class CachedSnapshotWorldstateManager
           new CachedWorldStateTuple(
               blockHeader,
               ((BonsaiSnapshotWorldStateKeyValueStorage) forWorldState.worldStateStorage).clone(),
-              ((BonsaiWorldStateUpdateAccumulator) forWorldState.updater())));
+              ((BonsaiWorldStateUpdateAccumulator) forWorldState.updater()).copy()));
     } else {
       // TODO: if it isn't a snapshot, this SHOULD be the one and only persisted worldstate.  in
       // theory we should
@@ -89,9 +89,7 @@ public class CachedSnapshotWorldstateManager
   public Optional<BonsaiWorldState> getWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
-          .map(
-              cached ->
-                  new BonsaiWorldState(archive, cached.worldStateStorage, false, cached.updater));
+          .map(cached -> new BonsaiWorldState(archive, cached.worldStateStorage, cached.updater));
     }
     return Optional.empty();
   }

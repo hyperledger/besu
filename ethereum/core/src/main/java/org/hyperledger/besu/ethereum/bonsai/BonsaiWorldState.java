@@ -71,16 +71,8 @@ public class BonsaiWorldState
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this(archive, worldStateStorage, false);
-  }
-
-  public BonsaiWorldState(
-      final BonsaiWorldStateProvider archive,
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final boolean inMemory) {
     this.archive = archive;
     this.worldStateStorage = worldStateStorage;
-    this.isFrozen = inMemory;
     worldStateRootHash =
         Hash.wrap(
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
@@ -103,11 +95,9 @@ public class BonsaiWorldState
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final boolean inMemory,
       final BonsaiWorldStateUpdateAccumulator updater) {
     this.archive = archive;
     this.worldStateStorage = worldStateStorage;
-    this.isFrozen = inMemory;
     this.worldStateRootHash =
         Hash.wrap(
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));

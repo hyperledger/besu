@@ -120,7 +120,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         .getWorldState(blockHash)
         .or(
             () -> {
-              if (rootHash.equals(persistedState.blockHash())) {
+              if (blockHash.equals(persistedState.blockHash())) {
                 return Optional.of(persistedState);
               } else {
                 return Optional.empty();

@@ -53,7 +53,6 @@ public class BonsaiWorldStateUpdateAccumulator
     extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount> implements BonsaiWorldView {
   private static final Logger LOG =
       LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
-
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
   private final Consumer<Hash> storagePreloader;
 
