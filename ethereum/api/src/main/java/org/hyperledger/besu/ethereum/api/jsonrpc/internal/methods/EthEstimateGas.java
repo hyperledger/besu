@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
-import java.util.function.Function;
+import java.util.Optional;
 
 public class EthEstimateGas extends AbstractEstimateGas {
 
@@ -61,28 +61,53 @@ public class EthEstimateGas extends AbstractEstimateGas {
     final CallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
 
+    final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
+
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
 
-    return transactionSimulator
-        .process(
-            modifiedCallParams,
-            ImmutableTransactionValidationParams.builder()
-                .from(TransactionValidationParams.transactionSimulator())
-                .isAllowExceedingBalance(!callParams.isMaybeStrict().orElse(Boolean.FALSE))
-                .build(),
-            operationTracer,
-            blockHeader.getNumber())
-        .map(gasEstimateResponse(requestContext, operationTracer))
-        .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
+    var gasUsed =
+        executeSimulation(
+            blockHeader, modifiedCallParams, operationTracer, isAllowExceedingBalance);
+
+    if (gasUsed.isEmpty()) {
+      return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
+    }
+
+    if (!gasUsed.get().isSuccessful()) {
+      return errorResponse(requestContext, gasUsed.get());
+    }
+
+    var lo = gasUsed.get().getResult().getEstimateGasUsedByTransaction();
+    var hi = processEstimateGas(gasUsed.get(), operationTracer);
+    var mid = hi;
+    while (lo+1 < hi) {
+      mid = (hi + lo) / 2;
+
+      var binarySearchResult =
+          executeSimulation(
+              blockHeader, overrideGasLimitAndPrice(callParams, mid), operationTracer, isAllowExceedingBalance);
+      if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(hi));
   }
 
-  private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
-      final JsonRpcRequestContext request, final EstimateGasOperationTracer operationTracer) {
-    return result ->
-        result.isSuccessful()
-            ? new JsonRpcSuccessResponse(
-                request.getRequest().getId(),
-                Quantity.create(processEstimateGas(result, operationTracer)))
-            : errorResponse(request, result);
+  private Optional<TransactionSimulatorResult> executeSimulation(
+      final BlockHeader blockHeader,
+      final CallParameter modifiedCallParams,
+      final EstimateGasOperationTracer operationTracer,
+      final boolean allowExceedingBalance) {
+    return transactionSimulator.process(
+        modifiedCallParams,
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator())
+            .isAllowExceedingBalance(allowExceedingBalance)
+            .build(),
+        operationTracer,
+        blockHeader.getNumber());
   }
 }
