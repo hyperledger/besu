@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -72,8 +71,6 @@ public final class BlockBodiesMessage extends AbstractMessageData {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
-        .readList(rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions)).stream()
-            .filter(body -> !body.isEmpty())
-            .collect(Collectors.toList());
+        .readList(rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions));
   }
 }
