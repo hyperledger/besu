@@ -17,21 +17,14 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +51,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
-  public BonsaiSnapshotWorldStateKeyValueStorage(final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+  public BonsaiSnapshotWorldStateKeyValueStorage(
+      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     this(
         worldStateStorage,
         ((SnappableKeyValueStorage) worldStateStorage.accountStorage).takeSnapshot(),

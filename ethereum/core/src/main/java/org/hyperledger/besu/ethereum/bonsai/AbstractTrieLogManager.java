@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiUpdater;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.Map;
@@ -100,11 +99,11 @@ public abstract class AbstractTrieLogManager<T extends TrieLogManager.CacheLayer
       cachedWorldStatesByHash.values().stream()
           .filter(layer -> layer.getBlockNumber() < waterline)
           .toList()
-          .forEach(layer -> {
-            cachedWorldStatesByHash.remove(layer
-                .getWorldStateBlockHash());
-            layer.close();
-          });
+          .forEach(
+              layer -> {
+                cachedWorldStatesByHash.remove(layer.getWorldStateBlockHash());
+                layer.close();
+              });
     }
   }
 

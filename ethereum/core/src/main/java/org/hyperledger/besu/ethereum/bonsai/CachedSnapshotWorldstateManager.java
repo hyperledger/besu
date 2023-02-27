@@ -39,7 +39,8 @@ public class CachedSnapshotWorldstateManager
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, CachedSnapshotWorldstateManager.CachedWorldStateTuple> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedSnapshotWorldstateManager.CachedWorldStateTuple>
+          cachedWorldStatesByHash) {
     super(blockchain, worldStateStorage, maxLayersToLoad, cachedWorldStatesByHash);
     worldStateStorage.subscribe(this);
     this.archive = archive;
@@ -71,25 +72,26 @@ public class CachedSnapshotWorldstateManager
               ((BonsaiSnapshotWorldStateKeyValueStorage) forWorldState.worldStateStorage).clone(),
               ((BonsaiWorldStateUpdateAccumulator) forWorldState.updater())));
     } else {
-      // TODO: if it isn't a snapshot, this SHOULD be the one and only persisted worldstate.  in theory we should
+      // TODO: if it isn't a snapshot, this SHOULD be the one and only persisted worldstate.  in
+      // theory we should
       //       be able to snap it and use an empty update accumulator here.
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
           new CachedWorldStateTuple(
               blockHeader,
-              new BonsaiSnapshotWorldStateKeyValueStorage(
-                  forWorldState.worldStateStorage),
+              new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage),
               (BonsaiWorldStateUpdateAccumulator) forWorldState.updater()));
     }
     scrubCachedLayers(blockHeader.getNumber());
   }
 
   @Override
-  public Optional<BonsaiWorldState> getWorldState(
-      final Hash blockHash) {
+  public Optional<BonsaiWorldState> getWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
-          .map(cached -> new BonsaiWorldState(archive, cached.worldStateStorage.clone(), false, cached.updater));
+          .map(
+              cached ->
+                  new BonsaiWorldState(archive, cached.worldStateStorage, false, cached.updater));
     }
     return Optional.empty();
   }
@@ -97,8 +99,7 @@ public class CachedSnapshotWorldstateManager
   @Override
   public BonsaiWorldState getHeadWorldState() {
     return new BonsaiWorldState(
-        archive,
-        new BonsaiSnapshotWorldStateKeyValueStorage(rootWorldStateStorage));
+        archive, new BonsaiSnapshotWorldStateKeyValueStorage(rootWorldStateStorage));
   }
 
   @Override
@@ -137,7 +138,7 @@ public class CachedSnapshotWorldstateManager
 
     @Override
     public long getBlockNumber() {
-      //TODO: need to plumb this somewhere, prob from header
+      // TODO: need to plumb this somewhere, prob from header
       return blockHeader.getNumber();
     }
 
@@ -155,5 +156,4 @@ public class CachedSnapshotWorldstateManager
       }
     }
   }
-
 }

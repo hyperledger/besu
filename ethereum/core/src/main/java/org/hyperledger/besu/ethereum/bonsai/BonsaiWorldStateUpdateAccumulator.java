@@ -168,7 +168,14 @@ public class BonsaiWorldStateUpdateAccumulator
     try {
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
       if (bonsaiValue == null) {
-        final Account account = wrappedWorldView().get(address);
+        final Account account;
+        if (wrappedWorldView() instanceof BonsaiWorldStateUpdateAccumulator) {
+          account =
+              ((BonsaiWorldStateUpdateAccumulator) wrappedWorldView())
+                  .loadAccount(address, bonsaiAccountFunction);
+        } else {
+          account = wrappedWorldView().get(address);
+        }
         if (account instanceof BonsaiAccount) {
           final BonsaiAccount mutableAccount =
               new BonsaiAccount((BonsaiAccount) account, this, true);
@@ -462,7 +469,11 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final Map<Bytes32, Bytes> results = wrappedWorldView().getAllAccountStorage(address, rootHash);
-    storageToUpdate.get(address).forEach((key, value) -> results.put(key, value.getUpdated()));
+    final StorageConsumingMap<BonsaiValue<UInt256>> bonsaiValueStorage =
+        storageToUpdate.get(address);
+    if (bonsaiValueStorage != null) {
+      bonsaiValueStorage.forEach((key, value) -> results.put(key, value.getUpdated()));
+    }
     return results;
   }
 

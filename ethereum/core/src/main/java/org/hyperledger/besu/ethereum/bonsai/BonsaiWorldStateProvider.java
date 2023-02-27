@@ -77,9 +77,10 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Optional<Long> maxLayersToLoad,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
 
-    //TODO: de-dup constructors
-    this.trieLogManager =new CachedSnapshotWorldstateManager(
-        this, blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS));
+    // TODO: de-dup constructors
+    this.trieLogManager =
+        new CachedSnapshotWorldstateManager(
+            this, blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS));
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);
@@ -115,14 +116,16 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    return trieLogManager.getWorldState(blockHash)
-        .or(() -> {
-          if (rootHash.equals(persistedState.blockHash())) {
-            return Optional.of(persistedState);
-          } else {
-            return Optional.empty();
-          }
-        })
+    return trieLogManager
+        .getWorldState(blockHash)
+        .or(
+            () -> {
+              if (rootHash.equals(persistedState.blockHash())) {
+                return Optional.of(persistedState);
+              } else {
+                return Optional.empty();
+              }
+            })
         .map(WorldState.class::cast);
   }
 
@@ -140,7 +143,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
-      if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber() >= trieLogManager.getMaxLayersToLoad()) {
+      if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
+          >= trieLogManager.getMaxLayersToLoad()) {
         LOG.warn(
             "Exceeded the limit of back layers that can be loaded ({})",
             trieLogManager.getMaxLayersToLoad());
@@ -150,8 +154,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
           trieLogManager
               .getWorldState(blockHeader.getHash())
               .orElse(trieLogManager.getHeadWorldState());
-      return rollMutableStateToBlockHash(
-              worldState, blockHeader.getHash())
+      return rollMutableStateToBlockHash(worldState, blockHeader.getHash())
           .map(
               mutableWorldState -> {
                 if (!trieLogManager.containWorlStateStorage(blockHeader.getHash())) {

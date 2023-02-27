@@ -44,6 +44,7 @@ public interface TrieLogManager {
 
   interface CacheLayer {
     long getBlockNumber();
+
     Hash getWorldStateBlockHash();
 
     void close();

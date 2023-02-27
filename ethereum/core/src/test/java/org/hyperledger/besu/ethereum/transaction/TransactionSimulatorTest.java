@@ -556,7 +556,8 @@ public class TransactionSimulatorTest {
 
   private void mockBlockchainForBlockHeader(final BlockHeader blockHeader) {
     when(blockchain.getBlockHeader(blockHeader.getNumber())).thenReturn(Optional.of(blockHeader));
-    when(blockchain.getBlockHeader(blockHeader.getBlockHash())).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(blockHeader.getBlockHash()))
+        .thenReturn(Optional.of(blockHeader));
   }
 
   private void mockProcessorStatusForTransaction(
@@ -578,7 +579,9 @@ public class TransactionSimulatorTest {
         when(result.isSuccessful()).thenReturn(false);
         break;
     }
-    doReturn(result).when(transactionProcessor).processTransaction(
+    doReturn(result)
+        .when(transactionProcessor)
+        .processTransaction(
             any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any(), any());
   }
 
