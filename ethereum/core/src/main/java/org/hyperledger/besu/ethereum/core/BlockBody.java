@@ -97,8 +97,16 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   public static BlockBody readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    return readFrom(input, blockHeaderFunctions, false);
+  }
+
+  public static BlockBody readFrom(
+      final RLPInput input,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final boolean allowEmptyBody) {
     input.enterList();
-    if (input.isEndOfCurrentList()) {
+    if (input.isEndOfCurrentList() && allowEmptyBody) {
+      // empty block [] -> Return empty body.
       input.leaveList();
       return empty();
     }
