@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -159,7 +158,8 @@ public class TraceBlock extends AbstractBlockParameterMethod {
               protocolSpec);
       Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> traceFlatTransactionStep =
           new TraceFlatTransactionStep(protocolSchedule, block, filterParameter);
-      Consumer<FlatTrace> buildArrayNodeStep = new BuildArrayNodeCompleterStep(resultArrayNode);
+      BuildArrayNodeCompleterStep buildArrayNodeStep =
+          new BuildArrayNodeCompleterStep(resultArrayNode);
       Pipeline<Transaction> traceBlockPipeline =
           createPipelineFrom(
                   "getTransactions",
@@ -175,16 +175,14 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
       try {
         ethScheduler.startPipeline(traceBlockPipeline).get();
-      } catch (InterruptedException e) {
-        // no-op
-      } catch (ExecutionException e) {
-        // no-op
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
       }
 
-      resultArrayNode = ((BuildArrayNodeCompleterStep) buildArrayNodeStep).getResultArrayNode();
+      resultArrayNode = buildArrayNodeStep.getResultArrayNode();
       generateRewardsFromBlock(filterParameter, block, resultArrayNode);
-    } catch (Exception exception) {
-      // no-op
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
     return resultArrayNode;
   }
