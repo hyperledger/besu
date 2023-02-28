@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
@@ -71,16 +70,17 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
             0, EngineExchangeTransitionConfigurationParameter.class);
     final Object reqId = requestContext.getRequest().getId();
 
-    traceLambda(
-        LOG,
-        "received transitionConfiguration: {}",
-        () -> {
-          try {
-            return mapperSupplier.get().writeValueAsString(remoteTransitionConfiguration);
-          } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-          }
-        });
+    LOG.atTrace()
+        .setMessage("received transitionConfiguration: {}")
+        .addArgument(
+            () -> {
+              try {
+                return mapperSupplier.get().writeValueAsString(remoteTransitionConfiguration);
+              } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+              }
+            })
+        .log();
 
     final Optional<BlockHeader> maybeTerminalPoWBlockHeader =
         mergeContextOptional.flatMap(MergeContext::getTerminalPoWBlock);
