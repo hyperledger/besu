@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -81,7 +80,6 @@ public class ExecuteTransactionStep implements Function<Transaction, Transaction
 
     final List<TraceFrame> traceFrames = tracer.copyTraceFrames();
     tracer.reset();
-    tracer.setInputDataManager(new InputDataManager());
     return new TransactionTrace(transaction, result, traceFrames);
   }
 }

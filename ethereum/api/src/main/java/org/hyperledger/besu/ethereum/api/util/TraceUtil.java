@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.F
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -74,9 +73,7 @@ public class TraceUtil {
       final Supplier<BlockTracer> blockTracerSupplier) {
     return blockTracerSupplier
         .get()
-        .trace(
-            block,
-            new DebugOperationTracer(new TraceOptions(false, false, true), new InputDataManager()))
+        .trace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
         .map(BlockTrace::getTransactionTraces)
         .orElse(Collections.emptyList())
         .stream()

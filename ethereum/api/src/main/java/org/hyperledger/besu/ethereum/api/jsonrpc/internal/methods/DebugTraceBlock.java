@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -82,7 +81,7 @@ public class DebugTraceBlock implements JsonRpcMethod {
       final Collection<DebugTraceTransactionResult> results =
           blockTracerSupplier
               .get()
-              .trace(block, new DebugOperationTracer(traceOptions, new InputDataManager()))
+              .trace(block, new DebugOperationTracer(traceOptions))
               .map(BlockTrace::getTransactionTraces)
               .map(DebugTraceTransactionResult::of)
               .orElse(null);

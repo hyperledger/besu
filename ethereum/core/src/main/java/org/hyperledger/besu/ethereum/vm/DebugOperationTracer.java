@@ -18,7 +18,6 @@ import static org.apache.tuweni.bytes.Bytes32.leftPad;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
@@ -45,23 +44,23 @@ public class DebugOperationTracer implements OperationTracer {
   private final TraceOptions options;
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
-  private InputDataManager inputDataManager;
 
   private Optional<Bytes32[]> preExecutionStack;
   private long gasRemaining;
   private Bytes inputData;
   private int pc;
 
-  public DebugOperationTracer(final TraceOptions options, final InputDataManager inputDataManager) {
+  public DebugOperationTracer(final TraceOptions options) {
     this.options = options;
-    this.inputDataManager = inputDataManager;
   }
 
   @Override
   public void tracePreExecution(final MessageFrame frame) {
     preExecutionStack = captureStack(frame);
     gasRemaining = frame.getRemainingGas();
-    inputData = frame.getInputData().copy();
+    if (lastFrame != null && frame.getMessageStackDepth() > lastFrame.getDepth())
+      inputData = frame.getInputData().copy();
+    else inputData = frame.getInputData();
     pc = frame.getPC();
   }
 
@@ -99,7 +98,6 @@ public class DebugOperationTracer implements OperationTracer {
             preExecutionStack,
             memory,
             storage,
-            inputDataManager,
             worldUpdater,
             frame.getRevertReason(),
             maybeRefunds,
@@ -133,7 +131,6 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.empty(),
               Optional.empty(),
               Optional.empty(),
-              inputDataManager,
               frame.getWorldUpdater(),
               Optional.empty(),
               Optional.ofNullable(frame.getRefunds()),
@@ -180,7 +177,6 @@ public class DebugOperationTracer implements OperationTracer {
                     Optional.empty(),
                     Optional.empty(),
                     Optional.empty(),
-                    inputDataManager,
                     frame.getWorldUpdater(),
                     Optional.empty(),
                     Optional.ofNullable(frame.getRefunds()),
@@ -244,10 +240,6 @@ public class DebugOperationTracer implements OperationTracer {
   public void reset() {
     traceFrames = new ArrayList<>();
     lastFrame = null;
-  }
-
-  public void setInputDataManager(final InputDataManager inputDataManager) {
-    this.inputDataManager = inputDataManager;
   }
 
   public List<TraceFrame> copyTraceFrames() {

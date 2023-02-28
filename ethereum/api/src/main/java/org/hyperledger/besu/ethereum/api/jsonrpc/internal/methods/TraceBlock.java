@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -149,7 +148,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                   "step",
                   "action");
       DebugOperationTracer debugOperationTracer =
-          new DebugOperationTracer(new TraceOptions(false, false, true), new InputDataManager());
+          new DebugOperationTracer(new TraceOptions(false, false, true));
       ExecuteTransactionStep executeTransactionStep =
           new ExecuteTransactionStep(
               chainUpdater,

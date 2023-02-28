@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.InputDataManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -90,8 +89,7 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
     }
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    final DebugOperationTracer tracer =
-        new DebugOperationTracer(buildTraceOptions(traceTypes), new InputDataManager());
+    final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
     final long headBlockNumber = blockchainQueriesSupplier.get().headBlockNumber();
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.process(
