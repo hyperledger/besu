@@ -120,6 +120,21 @@ allprojects {
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
     mavenCentral()
+
+    // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
+    def ethExecSpecTestsRepo = ivy {
+      url 'https://github.com'
+      patternLayout {
+        artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
+      }
+      metadataSources {
+        artifact()
+      }
+    }
+    exclusiveContent {
+      forRepositories(ethExecSpecTestsRepo)
+      filter { includeModule('ethereum', 'execution-spec-tests')}
+    }
   }
 
   dependencies { errorprone 'com.google.errorprone:error_prone_core' }
