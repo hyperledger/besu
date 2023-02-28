@@ -31,22 +31,21 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractTrieLogManager<T extends TrieLogManager.CacheLayer>
-    implements TrieLogManager {
+public abstract class AbstractTrieLogManager implements TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTrieLogManager.class);
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
 
   protected final Blockchain blockchain;
   protected final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
 
-  protected final Map<Bytes32, T> cachedWorldStatesByHash;
+  protected final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
 
   AbstractTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, T> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
@@ -101,7 +100,7 @@ public abstract class AbstractTrieLogManager<T extends TrieLogManager.CacheLayer
           .toList()
           .forEach(
               layer -> {
-                cachedWorldStatesByHash.remove(layer.getWorldStateBlockHash());
+                cachedWorldStatesByHash.remove(layer.getBlockHash());
                 layer.close();
               });
     }

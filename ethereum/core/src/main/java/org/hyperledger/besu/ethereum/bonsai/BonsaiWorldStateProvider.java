@@ -16,7 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.hyperledger.besu.ethereum.bonsai.CachedSnapshotWorldstateManager.RETAINED_LAYERS;
+import static org.hyperledger.besu.ethereum.bonsai.CachedWorldViewManager.RETAINED_LAYERS;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -79,7 +79,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
     // TODO: de-dup constructors
     this.trieLogManager =
-        new CachedSnapshotWorldstateManager(
+        new CachedWorldViewManager(
             this, blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS));
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;

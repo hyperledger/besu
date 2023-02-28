@@ -41,12 +41,4 @@ public interface TrieLogManager {
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
 
   BonsaiWorldState getHeadWorldState();
-
-  interface CacheLayer {
-    long getBlockNumber();
-
-    Hash getWorldStateBlockHash();
-
-    void close();
-  }
 }

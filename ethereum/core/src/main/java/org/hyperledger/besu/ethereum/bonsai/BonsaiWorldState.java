@@ -23,6 +23,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -50,9 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldState
-    implements MutableWorldState,
-        BonsaiWorldView,
-        BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
+    implements MutableWorldState, BonsaiWorldView, BonsaiStorageSubscriber {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldState.class);
 
@@ -120,6 +119,7 @@ public class BonsaiWorldState
     worldStateRootHash = Hash.fromPlugin(blockHeader.getStateRoot());
   }
 
+  @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
     return worldStateStorage;
   }
@@ -518,6 +518,16 @@ public class BonsaiWorldState
         createTrie(
             (location, key) -> getStorageTrieNode(Hash.hash(address), location, key), rootHash);
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+  }
+
+  @Override
+  public long subscribe(final BonsaiStorageSubscriber subscriber) {
+    return worldStateStorage.subscribe(subscriber);
+  }
+
+  @Override
+  public void unSubscribe(final long subscriberId) {
+    worldStateStorage.unSubscribe(subscriberId);
   }
 
   @Override
