@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.p2p.rlpx;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
@@ -270,7 +269,7 @@ public class RlpxAgent {
           }
         });
 
-    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
+    LOG.atTrace().setMessage("{}").addArgument(this::logConnectionsByIdToString).log();
 
     return connectionFuture.get();
   }
@@ -285,7 +284,7 @@ public class RlpxAgent {
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
-    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
+    LOG.atTrace().setMessage("{}").addArgument(this::logConnectionsByIdToString).log();
     cleanUpPeerConnection(peerConnection.getPeer().getId());
   }
 
@@ -431,7 +430,7 @@ public class RlpxAgent {
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();
     enforceConnectionLimits();
-    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
+    LOG.atTrace().setMessage("{}").addArgument(this::logConnectionsByIdToString).log();
   }
 
   private boolean shouldLimitRemoteConnections() {
