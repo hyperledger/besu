@@ -29,6 +29,37 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
     )
 }
 
+configurations {
+  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
+  tarConfig.extendsFrom referenceTestImplementation
+  tarConfig {
+    canBeResolved = true
+    canBeConsumed = false
+  }
+}
+
+def executionSpecTests = tasks.register("executionSpecTests") {
+  final referenceTestsPath = "$buildDir/execution-spec-tests/"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  def tarPath = configurations.tarConfig.files.find{ it.name.startsWith('execution-spec-tests')}
+
+  copy {
+    from tarTree(tarPath)
+    into "$referenceTestsPath"
+  }
+
+  inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures"),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    "ExecutionSpecTest",
+    ("fixtures/example/example") // exclude test for test filling tool
+    )
+}
+
 def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
   final referenceTestsPath = "src/reference-test/external-resources/GeneralStateTests"
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
@@ -66,13 +97,15 @@ sourceSets {
       runtimeClasspath += main.output
       srcDirs "src/reference-test/java",
         blockchainReferenceTests,
+        executionSpecTests,
         generalstateReferenceTests,
         generalstateRegressionReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
         'src/reference-test/external-resources',
-        'src/reference-test/templates'
+        'src/reference-test/templates',
+        'build/execution-spec-tests/'
     }
   }
 }
@@ -100,6 +133,8 @@ dependencies {
   referenceTestImplementation project(path: ':evm')
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
+  // the following will be resolved via custom ivy repository declared in root build.gradle
+  referenceTestImplementation 'ethereum:execution-spec-tests:0.2.3:fixtures@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
