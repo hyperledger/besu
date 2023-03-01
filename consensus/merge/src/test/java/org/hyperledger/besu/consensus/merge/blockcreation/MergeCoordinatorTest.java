@@ -26,7 +26,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -437,7 +436,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   .getTransactions()
                   .isEmpty()) {
                 // this is called by the first empty block
-                doThrow(new MerkleTrieException("lock")) // first fail
+                doCallRealMethod() // first work
+                    .doThrow(new MerkleTrieException("lock")) // second fail
                     .doCallRealMethod() // then work
                     .when(blockchain)
                     .getBlockHeader(any());
@@ -633,7 +633,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         coordinator.updateForkChoice(
             childHeader, terminalHeader.getHash(), terminalHeader.getHash());
 
-    assertThat(result.isValid()).isFalse();
+    assertThat(result.shouldNotProceedToPayloadBuildProcess()).isTrue();
     assertThat(result.getErrorMessage()).isPresent();
     assertThat(result.getErrorMessage().get())
         .isEqualTo("new head timestamp not greater than parent");
@@ -982,6 +982,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         coordinator.updateForkChoice(parentHeader, Hash.ZERO, terminalHeader.getHash());
 
     assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD);
+    assertThat(res.shouldNotProceedToPayloadBuildProcess()).isTrue();
     assertThat(res.getNewHead().isEmpty()).isTrue();
     assertThat(res.getLatestValid().isPresent()).isTrue();
     assertThat(res.getLatestValid().get()).isEqualTo(parentHeader.getHash());
@@ -1000,8 +1001,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                     block.getHeader(),
                     finalizedHeader.map(BlockHeader::getHash).orElse(Hash.ZERO),
                     safeHash)
-                .isValid())
-        .isTrue();
+                .shouldNotProceedToPayloadBuildProcess())
+        .isFalse();
 
     when(mergeContext.getFinalized()).thenReturn(finalizedHeader);
   }

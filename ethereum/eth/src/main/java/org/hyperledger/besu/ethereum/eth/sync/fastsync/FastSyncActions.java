@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -182,10 +181,10 @@ public class FastSyncActions {
               if (throwable != null) {
                 LOG.debug("Error downloading block header by hash {}", hash);
               } else {
-                debugLambda(
-                    LOG,
-                    "Successfully downloaded pivot block header by hash {}",
-                    blockHeader::toLogString);
+                LOG.atDebug()
+                    .setMessage("Successfully downloaded pivot block header by hash {}")
+                    .addArgument(blockHeader::toLogString)
+                    .log();
               }
             })
         .thenApply(FastSyncState::new);

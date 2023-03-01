@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -124,10 +122,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
       // if head is not post-merge, return pre-merge schedule:
       if (!mergeContext.isPostMerge()) {
-        debugLambda(
-            LOG,
-            "for {} returning a pre-merge schedule because we are not post-merge",
-            blockHeader::toLogString);
+        LOG.atDebug()
+            .setMessage("for {} returning a pre-merge schedule because we are not post-merge")
+            .addArgument(blockHeader::toLogString)
+            .log();
         return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
       }
 
@@ -139,26 +137,29 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
               .orElse(Difficulty.ZERO);
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
       Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
-      debugLambda(
-          LOG,
-          " block {} ttd is: {}, parent total diff is: {}, this total diff is: {}",
-          blockHeader::toLogString,
-          () -> terminalDifficulty,
-          () -> parentDifficulty,
-          () -> thisDifficulty);
+      LOG.atDebug()
+          .setMessage(" block {} ttd is: {}, parent total diff is: {}, this total diff is: {}")
+          .addArgument(blockHeader::toLogString)
+          .addArgument(terminalDifficulty)
+          .addArgument(parentDifficulty)
+          .addArgument(thisDifficulty)
+          .log();
 
       // if this block is pre-merge or a TTD block
       if (thisDifficulty.lessThan(terminalDifficulty)
           || TransitionUtils.isTerminalProofOfWorkBlock(blockHeader, protocolContext)) {
-        debugLambda(
-            LOG,
-            "returning a pre-merge schedule because block {} is pre-merge or TTD",
-            blockHeader::toLogString);
+        LOG.atDebug()
+            .setMessage("returning a pre-merge schedule because block {} is pre-merge or TTD")
+            .addArgument(blockHeader::toLogString)
+            .log();
         return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
       }
     }
     // else return post-merge schedule
-    debugLambda(LOG, " for {} returning a post-merge schedule", blockHeader::toLogString);
+    LOG.atDebug()
+        .setMessage(" for {} returning a post-merge schedule")
+        .addArgument(blockHeader::toLogString)
+        .log();
     return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
   }
 

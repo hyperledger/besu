@@ -230,6 +230,7 @@ public class RlpxAgent {
       LOG.debug(errorMsg);
       return CompletableFuture.failedFuture((new RuntimeException(errorMsg)));
     }
+
     return peerConnectionCompletableFuture;
   }
 

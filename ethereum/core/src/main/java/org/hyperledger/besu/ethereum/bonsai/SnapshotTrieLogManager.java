@@ -15,8 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -60,11 +58,11 @@ public class SnapshotTrieLogManager extends AbstractTrieLogManager<BonsaiSnapsho
       final BonsaiWorldStateArchive worldStateArchive,
       final BonsaiPersistedWorldState worldState) {
 
-    debugLambda(
-        LOG,
-        "adding snapshot world state for block {}, state root hash {}",
-        blockHeader::toLogString,
-        worldStateRootHash::toShortHexString);
+    LOG.atDebug()
+        .setMessage("adding snapshot world state for block {}, state root hash {}")
+        .addArgument(blockHeader::toLogString)
+        .addArgument(worldStateRootHash::toShortHexString)
+        .log();
 
     // TODO: add a generic param so we don't have to cast:
     BonsaiSnapshotWorldState snapshotWorldState;
