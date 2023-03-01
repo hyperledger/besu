@@ -13,48 +13,37 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldView;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
-  private BonsaiWorldView worldView;
+  private final BonsaiSnapshotWorldStateKeyValueStorage worldStateStorage;
   private final BlockHeader blockHeader;
   private long worldViewSubscriberId = -1L;
 
-  public CachedBonsaiWorldView(final BlockHeader blockHeader, final BonsaiWorldView worldView) {
+  public CachedBonsaiWorldView(final BlockHeader blockHeader, final BonsaiSnapshotWorldStateKeyValueStorage worldView) {
     this.blockHeader = blockHeader;
-    this.worldView = worldView;
+    this.worldStateStorage = worldView;
   }
 
-  public BonsaiWorldView getWorldView() {
-    return worldView;
-  }
-
-  public BonsaiWorldStateUpdateAccumulator cloneUpdater() {
-    if (worldView instanceof BonsaiWorldStateUpdateAccumulator) {
-      return ((BonsaiWorldStateUpdateAccumulator) worldView).copy();
-    } else if (worldView instanceof BonsaiWorldState) {
-      return ((BonsaiWorldStateUpdateAccumulator) worldView.updater()).copy();
-    }
-    throw new UnsupportedOperationException("unable to clone unknown world view type");
-  }
-
-  void updateWorldView(final BonsaiWorldView updatedWorldView) {
-    // update this worldview with a new one, such as a new snapshot BonsaiWorldView after a
-    // forkchoiceUpdate
-    this.worldView = updatedWorldView;
+  public BonsaiSnapshotWorldStateKeyValueStorage getWorldstateStorage() {
+    return worldStateStorage;
   }
 
   public long subscribe(final CachedBonsaiWorldView subscriber) {
-    this.worldViewSubscriberId = worldView.subscribe(subscriber);
+    this.worldViewSubscriberId = worldStateStorage.subscribe(subscriber);
     return this.worldViewSubscriberId;
   }
 
   public void unSubscribe(final long subscriberId) {
-    worldView.unSubscribe(subscriberId);
+    worldStateStorage.unSubscribe(subscriberId);
   }
 
   public long getBlockNumber() {
@@ -66,6 +55,6 @@ public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
   }
 
   public void close() {
-    worldView.unSubscribe(this.worldViewSubscriberId);
+    worldStateStorage.unSubscribe(this.worldViewSubscriberId);
   }
 }

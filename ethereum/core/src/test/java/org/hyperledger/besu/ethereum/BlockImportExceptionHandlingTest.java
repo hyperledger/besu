@@ -23,10 +23,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;

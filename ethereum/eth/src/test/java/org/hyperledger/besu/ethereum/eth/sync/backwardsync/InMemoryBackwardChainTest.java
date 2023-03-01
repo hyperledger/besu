@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.Optional;

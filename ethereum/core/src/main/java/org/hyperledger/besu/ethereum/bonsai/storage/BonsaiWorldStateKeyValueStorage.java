@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -414,7 +414,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
   }
 
-  interface BonsaiStorageSubscriber {
+  public interface BonsaiStorageSubscriber {
     default void onClearStorage() {}
 
     default void onClearFlatDatabaseStorage() {}

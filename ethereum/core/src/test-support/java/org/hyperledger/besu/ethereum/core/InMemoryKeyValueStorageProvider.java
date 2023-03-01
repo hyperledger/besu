@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 

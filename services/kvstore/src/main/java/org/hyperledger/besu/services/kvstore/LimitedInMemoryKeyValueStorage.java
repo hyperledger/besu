@@ -36,6 +36,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransactionTransitionValidatorDecorator;
 
 /**
  * This KeyValueStorage will keep data in memory up to some maximum number of elements. Elements are

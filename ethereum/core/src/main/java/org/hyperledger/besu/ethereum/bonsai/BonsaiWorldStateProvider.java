@@ -16,11 +16,18 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.hyperledger.besu.ethereum.bonsai.CachedWorldViewManager.RETAINED_LAYERS;
+import static org.hyperledger.besu.ethereum.bonsai.trielog.CachedWorldStorageManager.RETAINED_LAYERS;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.CachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -79,7 +86,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
     // TODO: de-dup constructors
     this.trieLogManager =
-        new CachedWorldViewManager(
+        new CachedWorldStorageManager(
             this, blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS));
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;

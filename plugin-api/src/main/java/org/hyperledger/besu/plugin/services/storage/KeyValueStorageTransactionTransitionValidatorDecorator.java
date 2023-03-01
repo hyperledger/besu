@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services.kvstore;
+package org.hyperledger.besu.plugin.services.storage;
 
 import static com.google.common.base.Preconditions.checkState;
 

@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.Collections;

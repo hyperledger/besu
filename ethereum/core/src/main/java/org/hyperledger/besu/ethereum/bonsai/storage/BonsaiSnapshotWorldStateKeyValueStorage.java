@@ -13,11 +13,11 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -37,6 +37,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
+
   private final long subscribeParentId;
 
   public BonsaiSnapshotWorldStateKeyValueStorage(

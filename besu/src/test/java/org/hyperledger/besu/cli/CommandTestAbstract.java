@@ -79,7 +79,7 @@ import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

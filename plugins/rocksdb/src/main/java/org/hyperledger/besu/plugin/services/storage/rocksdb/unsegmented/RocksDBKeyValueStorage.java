@@ -26,7 +26,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
-import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransactionTransitionValidatorDecorator;
 
 import java.util.Optional;
 import java.util.Set;

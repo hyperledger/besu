@@ -13,11 +13,12 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.cache;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;

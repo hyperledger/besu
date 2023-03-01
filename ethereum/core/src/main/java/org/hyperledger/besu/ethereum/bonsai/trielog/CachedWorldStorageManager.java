@@ -12,11 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -28,12 +32,12 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CachedWorldViewManager extends AbstractTrieLogManager
+public class CachedWorldStorageManager extends AbstractTrieLogManager
     implements BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
-  private static final Logger LOG = LoggerFactory.getLogger(CachedWorldViewManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CachedWorldStorageManager.class);
   private final BonsaiWorldStateProvider archive;
 
-  CachedWorldViewManager(
+  CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
@@ -44,7 +48,7 @@ public class CachedWorldViewManager extends AbstractTrieLogManager
     this.archive = archive;
   }
 
-  public CachedWorldViewManager(
+  public CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
@@ -68,15 +72,14 @@ public class CachedWorldViewManager extends AbstractTrieLogManager
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
           new CachedBonsaiWorldView(blockHeader,
-              forWorldState.getUpdateAccumulator().copy()));
+                  (BonsaiSnapshotWorldStateKeyValueStorage) forWorldState.getWorldStateStorage()));
     } else {
       // else take a snapshot with empty updater
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
           new CachedBonsaiWorldView(
               blockHeader,
-              new BonsaiWorldState(archive,
-                  new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage))));
+                  new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage)));
     }
     scrubCachedLayers(blockHeader.getNumber());
   }
@@ -90,8 +93,7 @@ public class CachedWorldViewManager extends AbstractTrieLogManager
               cached ->
                   new BonsaiWorldState(
                       archive,
-                      cached.getWorldView().getWorldStateStorage(),
-                      cached.cloneUpdater()));
+                      new BonsaiSnapshotWorldStateKeyValueStorage(cached.getWorldstateStorage())));
     }
     return Optional.empty();
   }

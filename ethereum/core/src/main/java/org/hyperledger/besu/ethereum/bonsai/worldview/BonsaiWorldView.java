@@ -14,11 +14,13 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.worldview;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -33,8 +35,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 public interface BonsaiWorldView extends WorldView {
 
   Optional<Bytes> getCode(Address address, final Hash codeHash);
-
-  Optional<Bytes> getStateTrieNode(Bytes location);
 
   UInt256 getStorageValue(Address address, UInt256 key);
 
@@ -66,7 +66,4 @@ public interface BonsaiWorldView extends WorldView {
 
   BonsaiWorldStateUpdateAccumulator getUpdateAccumulator();
 
-  long subscribe(final BonsaiStorageSubscriber subscriber);
-
-  void unSubscribe(final long subscriberId);
 }

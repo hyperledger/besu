@@ -14,12 +14,16 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.worldview;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -70,7 +74,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   private boolean isAccumulatorStateChanged;
 
-  BonsaiWorldStateUpdateAccumulator(
+  public BonsaiWorldStateUpdateAccumulator(
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
       final Consumer<Hash> storagePreloader) {
@@ -97,7 +101,6 @@ public class BonsaiWorldStateUpdateAccumulator
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
     emptySlot.addAll(source.emptySlot);
-
     this.isAccumulatorStateChanged = true;
   }
 
@@ -141,11 +144,11 @@ public class BonsaiWorldStateUpdateAccumulator
     return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
   }
 
-  Map<Address, BonsaiValue<BonsaiAccount>> getAccountsToUpdate() {
+  public Map<Address, BonsaiValue<BonsaiAccount>> getAccountsToUpdate() {
     return accountsToUpdate;
   }
 
-  Map<Address, BonsaiValue<Bytes>> getCodeToUpdate() {
+  public Map<Address, BonsaiValue<Bytes>> getCodeToUpdate() {
     return codeToUpdate;
   }
 
@@ -153,7 +156,7 @@ public class BonsaiWorldStateUpdateAccumulator
     return storageToClear;
   }
 
-  Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> getStorageToUpdate() {
+  public Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> getStorageToUpdate() {
     return storageToUpdate;
   }
 
@@ -382,12 +385,6 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
-  public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    // updater doesn't track trie nodes.  Always a miss.
-    return Optional.empty();
-  }
-
-  @Override
   public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     final Hash slotHashBytes = Hash.hash(storageKey);
@@ -490,16 +487,6 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public BonsaiWorldStateUpdateAccumulator getUpdateAccumulator() {
     return null;
-  }
-
-  @Override
-  public long subscribe(final BonsaiStorageSubscriber subscriber) {
-    return wrappedWorldView().subscribe(subscriber);
-  }
-
-  @Override
-  public void unSubscribe(final long subscriberId) {
-    wrappedWorldView().unSubscribe(subscriberId);
   }
 
   public TrieLogLayer generateTrieLog(final Hash blockHash) {

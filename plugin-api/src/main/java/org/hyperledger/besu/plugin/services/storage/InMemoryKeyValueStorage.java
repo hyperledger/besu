@@ -12,15 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services.kvstore;
+package org.hyperledger.besu.plugin.services.storage;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -42,8 +38,8 @@ import org.apache.tuweni.bytes.Bytes;
 public class InMemoryKeyValueStorage
     implements SnappedKeyValueStorage, SnappableKeyValueStorage, KeyValueStorage {
 
-  private final Map<Bytes, byte[]> hashValueStore;
-  private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+  protected final Map<Bytes, byte[]> hashValueStore;
+  protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   /** Instantiates a new In memory key value storage. */
   public InMemoryKeyValueStorage() {
@@ -172,10 +168,10 @@ public class InMemoryKeyValueStorage
     return takeSnapshot();
   }
 
-  private class InMemoryTransaction implements KeyValueStorageTransaction {
+  public class InMemoryTransaction implements KeyValueStorageTransaction {
 
-    private Map<Bytes, byte[]> updatedValues = new HashMap<>();
-    private Set<Bytes> removedKeys = new HashSet<>();
+    protected Map<Bytes, byte[]> updatedValues = new HashMap<>();
+    protected Set<Bytes> removedKeys = new HashSet<>();
 
     @Override
     public void put(final byte[] key, final byte[] value) {

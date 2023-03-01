@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -53,7 +54,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
 
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
-  BonsaiAccount(
+  public BonsaiAccount(
       final BonsaiWorldView context,
       final Address address,
       final Hash addressHash,
@@ -73,7 +74,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  BonsaiAccount(
+  public BonsaiAccount(
       final BonsaiWorldView context,
       final Address address,
       final StateTrieAccountValue stateTrieAccount,
@@ -89,11 +90,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
         mutable);
   }
 
-  BonsaiAccount(final BonsaiAccount toCopy) {
+  public BonsaiAccount(final BonsaiAccount toCopy) {
     this(toCopy, toCopy.context, false);
   }
 
-  BonsaiAccount(final BonsaiAccount toCopy, final BonsaiWorldView context, final boolean mutable) {
+  public BonsaiAccount(final BonsaiAccount toCopy, final BonsaiWorldView context, final boolean mutable) {
     this.context = context;
     this.address = toCopy.address;
     this.addressHash = toCopy.addressHash;
@@ -107,7 +108,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  BonsaiAccount(final BonsaiWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+  public BonsaiAccount(final BonsaiWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
     this.context = context;
     this.address = tracked.getAddress();
     this.addressHash = tracked.getAddressHash();
@@ -121,7 +122,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = true;
   }
 
-  static BonsaiAccount fromRLP(
+  public static BonsaiAccount fromRLP(
       final BonsaiWorldView context,
       final Address address,
       final Bytes encoded,
@@ -219,7 +220,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     throw new RuntimeException("Bonsai Tries does not currently support enumerating storage");
   }
 
-  Bytes serializeAccount() {
+  public Bytes serializeAccount() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
@@ -294,7 +295,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
    * @param context a description to be added to the thrown exceptions
    * @throws IllegalStateException if the stored values differ
    */
-  static void assertCloseEnoughForDiffing(
+  public static void assertCloseEnoughForDiffing(
       final BonsaiAccount source, final StateTrieAccountValue account, final String context) {
     if (source == null) {
       throw new IllegalStateException(context + ": source is null but target isn't");

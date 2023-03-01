@@ -14,17 +14,23 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.worldview;
 
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
-import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
-import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
+import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -58,7 +64,7 @@ public class BonsaiWorldState
   public final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   private final BonsaiWorldStateProvider archive;
-  private BonsaiWorldStateUpdateAccumulator updater;
+  private BonsaiWorldStateUpdateAccumulator accumulator;
 
   public Hash worldStateRootHash;
   public Hash worldStateBlockHash;
@@ -77,7 +83,7 @@ public class BonsaiWorldState
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
     worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
-    updater =
+    accumulator =
         new BonsaiWorldStateUpdateAccumulator(
             this,
             (addr, value) ->
@@ -102,7 +108,7 @@ public class BonsaiWorldState
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
     this.worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
-    this.updater = updater;
+    this.accumulator = updater;
   }
 
   public BonsaiWorldStateProvider getArchive() {
@@ -116,7 +122,7 @@ public class BonsaiWorldState
 
   @Override
   public BonsaiWorldStateUpdateAccumulator getUpdateAccumulator() {
-    return updater;
+    return accumulator;
   }
 
   @Override
@@ -347,7 +353,7 @@ public class BonsaiWorldState
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     debugLambda(LOG, "Persist world state for block {}", maybeBlockHeader::toString);
 
-    final BonsaiWorldStateUpdateAccumulator localCopy = updater.copy();
+    final BonsaiWorldStateUpdateAccumulator localCopy = accumulator.copy();
 
     boolean success = false;
 
@@ -356,7 +362,7 @@ public class BonsaiWorldState
 
     try {
       final Hash newWorldStateRootHash =
-          calculateRootHash(isFrozen ? Optional.empty() : Optional.of(stateUpdater), updater);
+          calculateRootHash(isFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
@@ -396,25 +402,25 @@ public class BonsaiWorldState
     } finally {
       if (success) {
         stateUpdater.commit();
-        updater.reset();
+        accumulator.reset();
         saveTrieLog.run();
       } else {
         stateUpdater.rollback();
-        updater.reset();
+        accumulator.reset();
       }
     }
   }
 
   @Override
   public WorldUpdater updater() {
-    return updater;
+    return accumulator;
   }
 
   @Override
   public Hash rootHash() {
-    if (isFrozen && updater.isAccumulatorStateChanged()) {
-      worldStateRootHash = calculateRootHash(Optional.empty(), updater.copy());
-      updater.resetAccumulatorStateChanged();
+    if (isFrozen && accumulator.isAccumulatorStateChanged()) {
+      worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
+      accumulator.resetAccumulatorStateChanged();
     }
     return Hash.wrap(worldStateRootHash);
   }
@@ -448,7 +454,7 @@ public class BonsaiWorldState
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(noOpTx, noOpTx, noOpTx, noOpTx, noOpTx)),
-        updater.copy());
+        accumulator.copy());
   }
 
   public Hash blockHash() {
@@ -464,7 +470,7 @@ public class BonsaiWorldState
   public Account get(final Address address) {
     return worldStateStorage
         .getAccount(Hash.hash(address))
-        .map(bytes -> fromRLP(updater, address, bytes, true))
+        .map(bytes -> fromRLP(accumulator, address, bytes, true))
         .orElse(null);
   }
 
@@ -489,11 +495,6 @@ public class BonsaiWorldState
       final Bytes32 nodeHash,
       final Bytes value) {
     stateUpdater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
-  }
-
-  @Override
-  public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    return worldStateStorage.getStateTrieNode(location);
   }
 
   @Override
@@ -531,23 +532,8 @@ public class BonsaiWorldState
   }
 
   @Override
-  public long subscribe(final BonsaiStorageSubscriber subscriber) {
-    return worldStateStorage.subscribe(subscriber);
-  }
-
-  @Override
-  public void unSubscribe(final long subscriberId) {
-    worldStateStorage.unSubscribe(subscriberId);
-  }
-
-  @Override
   public MutableWorldState freeze() {
     this.isFrozen = true;
-    this.updater =
-        new BonsaiWorldStateUpdateAccumulator(
-            updater,
-            updater.getAccountPreloader(),
-            updater.getStoragePreloader()); // also freeze current updater
     return this;
   }
 
