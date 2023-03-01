@@ -73,15 +73,27 @@ public class EthEstimateGas extends AbstractEstimateGas {
       return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
     }
 
-    if (!gasUsed.get().isSuccessful()) {
+    // if the transaction is invalid or doesn't have enough gas with the max it never will!
+    if (gasUsed.get().isInvalid() || !gasUsed.get().isSuccessful()) {
       return errorResponse(requestContext, gasUsed.get());
     }
 
-    var lo = gasUsed.get().getResult().getEstimateGasUsedByTransaction();
-    var hi = processEstimateGas(gasUsed.get(), operationTracer);
-    var mid = hi;
-    while (lo + 1 < hi) {
-      mid = (hi + lo) / 2;
+    var low = gasUsed.get().getResult().getEstimateGasUsedByTransaction();
+    var lowResult =
+        executeSimulation(
+            blockHeader,
+            overrideGasLimitAndPrice(callParams, low),
+            operationTracer,
+            isAllowExceedingBalance);
+
+    if (lowResult.isPresent() && lowResult.get().isSuccessful()) {
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(low));
+    }
+
+    var high = processEstimateGas(gasUsed.get(), operationTracer);
+    var mid = high;
+    while (low + 1 < high) {
+      mid = (high + low) / 2;
 
       var binarySearchResult =
           executeSimulation(
@@ -90,13 +102,13 @@ public class EthEstimateGas extends AbstractEstimateGas {
               operationTracer,
               isAllowExceedingBalance);
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
-        lo = mid;
+        low = mid;
       } else {
-        hi = mid;
+        high = mid;
       }
     }
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(hi));
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(high));
   }
 
   private Optional<TransactionSimulatorResult> executeSimulation(
