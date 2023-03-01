@@ -15,14 +15,7 @@
         "extraData": "0x",
         "baseFeePerGas": "0x7",
         "transactions": [],
-        "withdrawals": [
-          {
-            "index": "0x0",
-            "validatorIndex": "0x0",
-            "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "amount": "0x1"
-          }
-        ],
+        "withdrawals": null,
         "blockNumber": "0x2",
         "blockHash": "0x2126c2080357c74ace7ceba4777a37ba3c74cf0135f55afea048327b333ad7b4",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
@@ -33,10 +26,9 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 67,
-    "result": {
-      "status": "VALID",
-      "latestValidHash": "0x2126c2080357c74ace7ceba4777a37ba3c74cf0135f55afea048327b333ad7b4",
-      "validationError": null
+    "error": {
+      "code": -32602,
+      "message": "Invalid params"
     }
   },
   "statusCode": 200

@@ -14,10 +14,16 @@
         "suggestedFeeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
         "withdrawals": [
           {
-            "index": "0",
-            "validatorIndex": "0",
+            "index": "0x0",
+            "validatorIndex": "0x0",
             "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "amount": "1"
+            "amount": "0x1"
+          },
+          {
+            "index": "0x1",
+            "validatorIndex": "0x0",
+            "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+            "amount": "0x2"
           }
         ]
       }
