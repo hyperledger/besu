@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.List;
@@ -66,6 +67,7 @@ public class ExecuteTransactionStep implements Function<Transaction, Transaction
             .getFeeMarket()
             .dataPrice(
                 maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
+    final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
@@ -74,7 +76,7 @@ public class ExecuteTransactionStep implements Function<Transaction, Transaction
             transaction,
             header.getCoinbase(),
             tracer,
-            new BlockHashLookup(header, blockchain),
+            blockHashLookup,
             false,
             dataGasPrice);
 
