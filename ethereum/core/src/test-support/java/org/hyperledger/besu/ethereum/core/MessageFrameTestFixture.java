@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -155,9 +156,9 @@ public class MessageFrameTestFixture {
   }
 
   public MessageFrame build() {
-    final Blockchain blockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
-    final BlockHeader blockHeader =
-        this.blockHeader.orElseGet(() -> blockchain.getBlockHeader(0).get());
+    final Blockchain localBlockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
+    final BlockHeader localBlockHeader =
+        this.blockHeader.orElseGet(() -> localBlockchain.getBlockHeader(0).get());
     final MessageFrame frame =
         MessageFrame.builder()
             .type(type)
@@ -173,12 +174,13 @@ public class MessageFrameTestFixture {
             .apparentValue(value)
             .contract(contract)
             .code(code)
-            .blockValues(blockHeader)
+            .blockValues(localBlockHeader)
             .depth(depth)
             .completer(c -> {})
-            .miningBeneficiary(blockHeader.getCoinbase())
+            .miningBeneficiary(localBlockHeader.getCoinbase())
             .blockHashLookup(
-                blockHashLookup.orElseGet(() -> new BlockHashLookup(blockHeader, blockchain)))
+                blockHashLookup.orElseGet(
+                    () -> new CachingBlockHashLookup(localBlockHeader, localBlockchain)))
             .maxStackSize(maxStackSize)
             .build();
     stackItems.forEach(frame::pushStackItem);

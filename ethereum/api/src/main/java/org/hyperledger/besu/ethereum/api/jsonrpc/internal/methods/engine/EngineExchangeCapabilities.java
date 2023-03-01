@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.ENGINE_EXCHANGE_CAPABILITIES;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -51,10 +50,12 @@ public class EngineExchangeCapabilities extends ExecutionEngineJsonRpcMethod {
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     engineCallListener.executionEngineCalled();
 
-    final String[] remoteCapabilities = requestContext.getRequiredParameter(0, String[].class);
     final Object reqId = requestContext.getRequest().getId();
 
-    traceLambda(LOG, "received remote capabilities: {}", () -> remoteCapabilities);
+    LOG.atTrace()
+        .setMessage("received remote capabilities: {}")
+        .addArgument(() -> requestContext.getRequiredParameter(0, String[].class))
+        .log();
 
     final List<String> localCapabilities =
         Stream.of(RpcMethod.values())
