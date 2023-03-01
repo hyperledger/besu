@@ -104,7 +104,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateDeposits(block)) {
+    if (!validateDeposits(block, receipts)) {
       return false;
     }
 
@@ -309,11 +309,11 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private boolean validateDeposits(final Block block) {
+  private boolean validateDeposits(final Block block, List<TransactionReceipt> receipts) {
     final DepositsValidator depositsValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getDepositsValidator();
 
-    if (!depositsValidator.validateDeposits(block.getBody().getDeposits())) {
+    if (!depositsValidator.validateDeposits(block, receipts)) {
       return false;
     }
 
