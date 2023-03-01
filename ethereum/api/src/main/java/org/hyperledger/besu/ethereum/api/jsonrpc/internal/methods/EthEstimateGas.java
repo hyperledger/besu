@@ -80,12 +80,15 @@ public class EthEstimateGas extends AbstractEstimateGas {
     var lo = gasUsed.get().getResult().getEstimateGasUsedByTransaction();
     var hi = processEstimateGas(gasUsed.get(), operationTracer);
     var mid = hi;
-    while (lo+1 < hi) {
+    while (lo + 1 < hi) {
       mid = (hi + lo) / 2;
 
       var binarySearchResult =
           executeSimulation(
-              blockHeader, overrideGasLimitAndPrice(callParams, mid), operationTracer, isAllowExceedingBalance);
+              blockHeader,
+              overrideGasLimitAndPrice(callParams, mid),
+              operationTracer,
+              isAllowExceedingBalance);
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
         lo = mid;
       } else {

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.eth;
 
-import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
-
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
@@ -37,8 +35,6 @@ public class EthEstimateGasTransaction implements Transaction<EthEstimateGas> {
   @Override
   public EthEstimateGas execute(final NodeRequests node) {
     try {
-
-      node.eth().ethGetTransactionCount(from, LATEST);
 
       return node.eth()
           .ethEstimateGas(
