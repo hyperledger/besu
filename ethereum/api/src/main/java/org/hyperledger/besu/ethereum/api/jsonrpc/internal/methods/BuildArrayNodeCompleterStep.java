@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 
 import java.util.function.Consumer;
 
-public class BuildArrayNodeCompleterStep implements Consumer<FlatTrace> {
+public class BuildArrayNodeCompleterStep implements Consumer<Object> {
 
   private final ArrayNodeWrapper resultArrayNode;
 
@@ -28,8 +27,8 @@ public class BuildArrayNodeCompleterStep implements Consumer<FlatTrace> {
   }
 
   @Override
-  public void accept(final FlatTrace trace) {
-    resultArrayNode.addPOJO(trace);
+  public void accept(final Object object) {
+    resultArrayNode.addPOJO(object);
   }
 
   public ArrayNodeWrapper getResultArrayNode() {

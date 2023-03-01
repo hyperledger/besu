@@ -61,8 +61,7 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
             blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive());
     return mapOf(
-        new TraceReplayBlockTransactions(
-            () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
+        new TraceReplayBlockTransactions(protocolSchedule, blockchainQueries),
         new TraceFilter(() -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
         new TraceGet(() -> new BlockTracer(blockReplay), blockchainQueries, protocolSchedule),
         new TraceTransaction(
