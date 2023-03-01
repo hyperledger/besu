@@ -12,8 +12,8 @@
  */
 
 plugins {
-  id 'org.web3j' version '4.9.2'
   id 'org.web3j.solidity' version '0.3.5'
+  id 'org.web3j' version '4.9.4'
 }
 
 configurations.all {
