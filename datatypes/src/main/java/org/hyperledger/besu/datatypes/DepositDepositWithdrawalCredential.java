@@ -31,7 +31,7 @@ public class DepositDepositWithdrawalCredential extends DelegatingBytes
   public static final int SIZE = 32;
 
   /**
-   * Instantiates a new WIthdrawalCredential.
+   * Instantiates a new WithdrawalCredential.
    *
    * @param bytes the bytes
    */

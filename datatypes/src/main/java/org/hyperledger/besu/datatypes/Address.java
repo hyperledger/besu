@@ -74,6 +74,8 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static final Address KZG_POINT_EVAL = Address.precompiled(0x14);
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");
+  /** The deposit address. */
+  public static final Address DEPOSIT_ADDRESS = Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   /**
    * Instantiates a new Address.

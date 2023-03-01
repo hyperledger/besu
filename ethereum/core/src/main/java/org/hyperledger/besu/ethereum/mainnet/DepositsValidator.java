@@ -66,7 +66,11 @@ public interface DepositsValidator {
 
     @Override
     public boolean validateDeposits(final Optional<List<Deposit>> deposits) {
-      return true; // TODO: Validate deposits
+      final boolean isValid = deposits.isPresent();
+      if (!isValid) {
+        LOG.warn("Deposits must not be null when Deposits are activated");
+      }
+      return isValid;
     }
 
     @Override

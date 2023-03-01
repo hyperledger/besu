@@ -29,8 +29,9 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.jetbrains.annotations.NotNull;
 
-public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
+public class Deposit implements org.hyperledger.besu.plugin.data.Deposit, Comparable<Deposit> {
 
   private final BLSPublicKey pubKey;
   private final DepositDepositWithdrawalCredential depositWithdrawalCredentials;
@@ -62,6 +63,7 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   public void writeTo(final RLPOutput out) {
     DepositEncoder.encode(this, out);
   }
+
 
   @Override
   public PublicKey getPublicKey() {
@@ -119,5 +121,10 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   @Override
   public int hashCode() {
     return Objects.hash(pubKey, depositWithdrawalCredentials, amount, signature, index);
+  }
+
+  @Override
+  public int compareTo(@NotNull Deposit anotherDeposit) {
+    return signature.compareTo(anotherDeposit.getSignature());
   }
 }
