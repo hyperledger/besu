@@ -110,10 +110,9 @@ public class TraceBlock extends AbstractBlockParameterMethod {
             .getBlockchain()
             .getBlockHeader(block.getHeader().getParentHash())
             .orElse(null);
-    /*
     if (previous == null) {
-        return Optional.empty();
-    }*/
+      return emptyResult();
+    }
     try (final var worldState =
         getBlockchainQueries()
             .getWorldStateArchive()
