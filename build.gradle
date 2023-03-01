@@ -90,12 +90,12 @@ allprojects {
   }
 
   task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
   }
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.outputDirectory
   }
 
@@ -337,7 +337,7 @@ subprojects {
 
     task testSupportJar(type: Jar) {
       archiveBaseName = "${project.name}-support-test"
-      classifier = 'test-support'
+      archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
   }
@@ -874,7 +874,6 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true
-    xml.enabled = true
     csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
