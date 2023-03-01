@@ -62,11 +62,22 @@ public class CachedWorldViewManager extends AbstractTrieLogManager
         "adding layered world state for block {}, state root hash {}",
         blockHeader::toLogString,
         worldStateRootHash::toShortHexString);
-    cachedWorldStatesByHash.put(
-        blockHeader.getHash(),
-        // TODO: get rid of this cast
-        new CachedBonsaiWorldView(
-            blockHeader, (BonsaiWorldStateUpdateAccumulator) forWorldState.updater()));
+
+    if (forWorldState.isLayered()) {
+      // if storage is a snapshot, clone the BonsaiWorldStateUpdateAccumulator
+      cachedWorldStatesByHash.put(
+          blockHeader.getHash(),
+          new CachedBonsaiWorldView(blockHeader,
+              forWorldState.getUpdateAccumulator().copy()));
+    } else {
+      // else take a snapshot with empty updater
+      cachedWorldStatesByHash.put(
+          blockHeader.getHash(),
+          new CachedBonsaiWorldView(
+              blockHeader,
+              new BonsaiWorldState(archive,
+                  new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage))));
+    }
     scrubCachedLayers(blockHeader.getNumber());
   }
 

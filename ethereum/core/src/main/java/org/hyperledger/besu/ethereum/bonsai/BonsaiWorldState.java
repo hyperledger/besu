@@ -110,6 +110,16 @@ public class BonsaiWorldState
   }
 
   @Override
+  public boolean isLayered() {
+    return worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage;
+  }
+
+  @Override
+  public BonsaiWorldStateUpdateAccumulator getUpdateAccumulator() {
+    return updater;
+  }
+
+  @Override
   public Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash) {
     return worldStateStorage.getCode(codeHash, Hash.hash(address));
   }

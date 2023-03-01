@@ -114,7 +114,6 @@ public abstract class AbstractIsolationTests {
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    ws.persist(blockchain.getChainHeadHeader());
     protocolContext = new ProtocolContext(blockchain, archive, null);
   }
 

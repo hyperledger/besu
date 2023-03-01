@@ -478,8 +478,18 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
+  public boolean isLayered() {
+    return true;
+  }
+
+  @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
     return wrappedWorldView().getWorldStateStorage();
+  }
+
+  @Override
+  public BonsaiWorldStateUpdateAccumulator getUpdateAccumulator() {
+    return null;
   }
 
   @Override

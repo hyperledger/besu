@@ -114,7 +114,7 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(blockHeader, anyBoolean())).thenReturn(Optional.empty());
+    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean())).thenReturn(Optional.empty());
 
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
