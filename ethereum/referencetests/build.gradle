@@ -56,7 +56,7 @@ def execSpecTests = tasks.register("execSpecTests") {
     "fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
     "ExecutionSpecTest",
-    ("fixtures/example") // exclude test for test filling tool
+    ("fixtures/example/example") // exclude test for test filling tool
     )
 }
 
