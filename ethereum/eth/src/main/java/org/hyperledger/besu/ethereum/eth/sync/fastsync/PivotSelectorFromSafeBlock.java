@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
@@ -144,10 +142,10 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
               if (throwable != null) {
                 LOG.debug("Error downloading block header by hash {}", hash);
               } else {
-                debugLambda(
-                    LOG,
-                    "Successfully downloaded pivot block header by hash {}",
-                    blockHeader::toLogString);
+                LOG.atDebug()
+                    .setMessage("Successfully downloaded pivot block header by hash {}")
+                    .addArgument(blockHeader::toLogString)
+                    .log();
               }
             });
   }
