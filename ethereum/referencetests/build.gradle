@@ -30,7 +30,7 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
 }
 
 configurations {
-  // we need this because referenceTestImplementation is defined as 'canBeResolved=false'.
+  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
   tarConfig.extendsFrom referenceTestImplementation
   tarConfig {
     canBeResolved = true
@@ -38,8 +38,8 @@ configurations {
   }
 }
 
-def execSpecTests = tasks.register("execSpecTests") {
-  final referenceTestsPath = "$buildDir/tmp/execution-spec-tests/"
+def executionSpecTests = tasks.register("executionSpecTests") {
+  final referenceTestsPath = "$buildDir/execution-spec-tests/"
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
   def tarPath = configurations.tarConfig.files.find{ it.name.startsWith('execution-spec-tests')}
 
@@ -97,7 +97,7 @@ sourceSets {
       runtimeClasspath += main.output
       srcDirs "src/reference-test/java",
         blockchainReferenceTests,
-        execSpecTests,
+        executionSpecTests,
         generalstateReferenceTests,
         generalstateRegressionReferenceTests
     }
@@ -105,7 +105,7 @@ sourceSets {
       srcDirs 'src/reference-test/resources',
         'src/reference-test/external-resources',
         'src/reference-test/templates',
-        'build/tmp/execution-spec-tests/'
+        'build/execution-spec-tests/'
     }
   }
 }
