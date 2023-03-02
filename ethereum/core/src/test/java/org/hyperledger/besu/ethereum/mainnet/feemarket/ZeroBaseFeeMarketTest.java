@@ -67,6 +67,7 @@ public class ZeroBaseFeeMarketTest {
             .maxPriorityFeePerGas(Optional.of(Wei.of(8)))
             .gasPrice(null)
             .createTransaction(KEY_PAIR1);
+
     assertThat(
             zeroBaseFeeMarket
                 .getTransactionPriceCalculator()

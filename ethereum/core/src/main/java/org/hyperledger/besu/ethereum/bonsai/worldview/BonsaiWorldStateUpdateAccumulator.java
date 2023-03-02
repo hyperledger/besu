@@ -34,7 +34,6 @@ import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -883,30 +882,5 @@ public class BonsaiWorldStateUpdateAccumulator
 
   public interface Consumer<T> {
     void process(final Address address, T value);
-  }
-
-  static class ComposedMapOverlay<K, V> {
-    private final Map<K, V> overlayMap;
-    private final Map<K, V> baseMap;
-
-    public ComposedMapOverlay(final Map<K, V> overlayMap) {
-      this.overlayMap = overlayMap;
-      this.baseMap = new HashMap<>();
-    }
-
-    public V get(final K key) {
-      return Optional.ofNullable(overlayMap.get(key))
-          .or(() -> Optional.ofNullable(baseMap.get(key)))
-          .orElse(null);
-    }
-
-    public void cloneFromBase(final ComposedMapOverlay<K, V> source) {
-      baseMap.putAll(source.baseMap);
-    }
-
-    public void cloneFromAll(final ComposedMapOverlay<K, V> source) {
-      baseMap.putAll(source.baseMap);
-      baseMap.putAll(source.overlayMap);
-    }
   }
 }

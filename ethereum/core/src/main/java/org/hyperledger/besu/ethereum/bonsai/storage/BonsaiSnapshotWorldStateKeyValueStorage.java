@@ -15,8 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
-
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -105,7 +103,10 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     try {
       tryClose();
     } catch (Exception e) {
-      warnLambda(LOG, "exception while trying to close : {}", e::getMessage);
+      LOG.atWarn()
+          .setMessage("exception while trying to close : {}")
+          .addArgument(e::getMessage)
+          .log();
     }
   }
 

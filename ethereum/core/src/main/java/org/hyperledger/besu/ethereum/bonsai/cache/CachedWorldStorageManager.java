@@ -12,9 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.bonsai.trielog;
-
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
+package org.hyperledger.besu.ethereum.bonsai.cache;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
@@ -22,6 +20,7 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyV
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.AbstractTrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -63,12 +62,11 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final BonsaiWorldState forWorldState) {
-    infoLambda(
-        LOG,
-        "adding layered world state for block {}, state root hash {}",
-        blockHeader::toLogString,
-        worldStateRootHash::toShortHexString);
-
+    LOG.atWarn()
+        .setMessage("adding layered world state for block {}, state root hash {}")
+        .addArgument(blockHeader::toLogString)
+        .addArgument(worldStateRootHash::toShortHexString)
+        .log();
     if (forWorldState.isPersisted()) {
       // if this is the persisted worldstate, add a snapshot of it to the cache
       cachedWorldStatesByHash.put(

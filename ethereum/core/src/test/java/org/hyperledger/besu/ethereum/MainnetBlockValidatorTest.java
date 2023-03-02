@@ -223,4 +223,48 @@ public class MainnetBlockValidatorTest {
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlock(badBlock.getHash())).containsSame(badBlock);
   }
+
+  @Test
+  public void when_shouldRecordBadBlockIsFalse_Expect_BlockNotAddedToBadBlockManager() {
+    when(blockchain.getBlockHeader(any(Hash.class)))
+        .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
+    mainnetBlockValidator.validateAndProcessBlock(
+        protocolContext,
+        badBlock,
+        HeaderValidationMode.DETACHED_ONLY,
+        HeaderValidationMode.DETACHED_ONLY,
+        false,
+        false);
+
+    assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
+  }
+
+  @Test
+  public void when_shouldRecordBadBlockIsTrue_Expect_BlockAddedToBadBlockManager() {
+    when(blockchain.getBlockHeader(any(Hash.class)))
+        .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
+    mainnetBlockValidator.validateAndProcessBlock(
+        protocolContext,
+        badBlock,
+        HeaderValidationMode.DETACHED_ONLY,
+        HeaderValidationMode.DETACHED_ONLY,
+        false,
+        true);
+
+    assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
+  }
+
+  @Test
+  public void when_shouldRecordBadBlockIsNotSet_Expect_BlockAddedToBadBlockManager() {
+    when(blockchain.getBlockHeader(any(Hash.class)))
+        .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
+    mainnetBlockValidator.validateAndProcessBlock(
+        protocolContext,
+        badBlock,
+        HeaderValidationMode.DETACHED_ONLY,
+        HeaderValidationMode.DETACHED_ONLY,
+        false);
+
+    assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
+  }
 }

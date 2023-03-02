@@ -19,7 +19,6 @@ package org.hyperledger.besu.ethereum.bonsai.worldview;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -348,7 +347,10 @@ public class BonsaiWorldState
   @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
-    debugLambda(LOG, "Persist world state for block {}", maybeBlockHeader::toString);
+    LOG.atDebug()
+        .setMessage("Persist world state for block {}")
+        .addArgument(maybeBlockHeader)
+        .log();
 
     final BonsaiWorldStateUpdateAccumulator localCopy = accumulator.copy();
 

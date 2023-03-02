@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -568,6 +568,7 @@ public class TransactionSimulatorTest {
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
 
     final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
     switch (status) {
@@ -579,16 +580,34 @@ public class TransactionSimulatorTest {
         when(result.isSuccessful()).thenReturn(false);
         break;
     }
-    doReturn(result)
-        .when(transactionProcessor)
-        .processTransaction(
-            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any(), any());
+
+    when(transactionProcessor.processTransaction(
+            any(),
+            any(),
+            any(),
+            eq(transaction),
+            any(),
+            any(),
+            anyBoolean(),
+            any(),
+            any(),
+            any(Wei.class)))
+        .thenReturn(result);
   }
 
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(), any(), any(), eq(expectedTransaction), any(), any(), anyBoolean(), any(), any());
+            any(),
+            any(),
+            any(),
+            eq(expectedTransaction),
+            any(),
+            any(),
+            anyBoolean(),
+            any(),
+            any(),
+            any(Wei.class));
   }
 
   private CallParameter legacyTransactionCallParameter() {

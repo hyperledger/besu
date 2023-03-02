@@ -15,10 +15,9 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiUpdater;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
@@ -45,7 +44,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   protected final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
 
-  AbstractTrieLogManager(
+  protected AbstractTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
@@ -86,13 +85,16 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   @VisibleForTesting
   TrieLogLayer prepareTrieLog(
       final BlockHeader blockHeader, final BonsaiWorldStateUpdateAccumulator localUpdater) {
-    debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
+    LOG.atDebug()
+        .setMessage("Adding layered world state for {}")
+        .addArgument(blockHeader::toLogString)
+        .log();
     final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
     trieLog.freeze();
     return trieLog;
   }
 
-  synchronized void scrubCachedLayers(final long newMaxHeight) {
+  public synchronized void scrubCachedLayers(final long newMaxHeight) {
     if (cachedWorldStatesByHash.size() > RETAINED_LAYERS) {
       final long waterline = newMaxHeight - RETAINED_LAYERS;
       cachedWorldStatesByHash.values().stream()
@@ -111,11 +113,11 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
       final BonsaiUpdater stateUpdater) {
-    debugLambda(
-        LOG,
-        "Persisting trie log for block hash {} and world state root {}",
-        blockHeader::toLogString,
-        worldStateRootHash::toHexString);
+    LOG.atDebug()
+        .setMessage("Persisting trie log for block hash {} and world state root {}")
+        .addArgument(blockHeader::toLogString)
+        .addArgument(worldStateRootHash::toHexString)
+        .log();
     final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
     trieLog.writeTo(rlpLog);
     stateUpdater

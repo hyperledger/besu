@@ -16,14 +16,13 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.hyperledger.besu.ethereum.bonsai.trielog.CachedWorldStorageManager.RETAINED_LAYERS;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager.RETAINED_LAYERS;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.trielog.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
@@ -240,20 +239,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             (BonsaiWorldStateUpdateAccumulator) mutableState.updater();
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
-            debugLambda(
-                LOG,
-                "Attempting Rollback {} to {}",
-                () -> mutableState.getWorldStateStorage().getClass().getSimpleName(),
-                () -> rollBack.getBlockHash());
+            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
             bonsaiUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
             final var forward = rollForwards.get(i);
-            debugLambda(
-                LOG,
-                "Attempting Rollforward {} to {}",
-                () -> mutableState.getWorldStateStorage().getClass().getSimpleName(),
-                () -> forward.getBlockHash());
+            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
             bonsaiUpdater.rollForward(forward);
           }
           bonsaiUpdater.commit();

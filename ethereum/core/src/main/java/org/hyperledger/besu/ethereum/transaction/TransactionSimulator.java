@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -33,7 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -43,9 +44,9 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -144,7 +145,7 @@ public class TransactionSimulator {
       return Optional.empty();
     }
 
-    try (final var ws = getWorldState(header)) {
+    try (final MutableWorldState ws = getWorldState(header)) {
 
       WorldUpdater updater = getEffectiveWorldStateUpdater(header, ws);
 
@@ -222,6 +223,14 @@ public class TransactionSimulator {
       return Optional.empty();
     }
 
+    final Optional<BlockHeader> maybeParentHeader =
+        blockchain.getBlockHeader(blockHeaderToProcess.getParentHash());
+    final Wei dataGasPrice =
+        protocolSpec
+            .getFeeMarket()
+            .dataPrice(
+                maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
+
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
@@ -232,10 +241,11 @@ public class TransactionSimulator {
             protocolSpec
                 .getMiningBeneficiaryCalculator()
                 .calculateBeneficiary(blockHeaderToProcess),
-            new BlockHashLookup(blockHeaderToProcess, blockchain),
+            new CachingBlockHashLookup(blockHeaderToProcess, blockchain),
             false,
             transactionValidationParams,
-            operationTracer);
+            operationTracer,
+            dataGasPrice);
 
     // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
     // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
