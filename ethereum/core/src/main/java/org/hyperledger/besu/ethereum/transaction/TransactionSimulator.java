@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -44,9 +44,9 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -145,7 +145,7 @@ public class TransactionSimulator {
       return Optional.empty();
     }
 
-    try (final var ws = getWorldState(header)) {
+    try (final MutableWorldState ws = getWorldState(header)) {
 
       WorldUpdater updater = getEffectiveWorldStateUpdater(header, ws);
 
@@ -241,7 +241,7 @@ public class TransactionSimulator {
             protocolSpec
                 .getMiningBeneficiaryCalculator()
                 .calculateBeneficiary(blockHeaderToProcess),
-            new BlockHashLookup(blockHeaderToProcess, blockchain),
+            new CachingBlockHashLookup(blockHeaderToProcess, blockchain),
             false,
             transactionValidationParams,
             operationTracer,

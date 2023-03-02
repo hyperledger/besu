@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -73,7 +71,10 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
             blockWithReceipts.getHeader().getNumber(),
             blockWithReceipts.getHash());
       }
-      traceLambda(LOG, "Imported block {}", blockWithReceipts.getBlock()::toLogString);
+      LOG.atTrace()
+          .setMessage("Imported block {}")
+          .addArgument(blockWithReceipts.getBlock()::toLogString)
+          .log();
     }
     if (logStartBlock.isEmpty()) {
       logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());

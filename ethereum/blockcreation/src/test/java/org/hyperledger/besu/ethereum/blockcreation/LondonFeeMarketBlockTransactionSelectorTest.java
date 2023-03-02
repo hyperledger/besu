@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
@@ -130,6 +131,50 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     assertThat(results.getTransactions().size()).isEqualTo(1);
     assertThat(pendingTransactions.size()).isEqualTo(1);
+  }
+
+  @Test
+  public void transactionFromSameSenderWithMixedTypes() {
+    final ProcessableBlockHeader blockHeader = createBlock(5000);
+
+    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
+    final Transaction txFrontier1 =
+        txTestFixture
+            .type(TransactionType.FRONTIER)
+            .nonce(0)
+            .gasLimit(1)
+            .gasPrice(Wei.ONE)
+            .createTransaction(keyPair);
+    final Transaction txLondon1 = createEIP1559Transaction(1, Wei.ONE, Wei.ONE);
+    final Transaction txFrontier2 =
+        txTestFixture
+            .type(TransactionType.FRONTIER)
+            .nonce(2)
+            .gasLimit(1)
+            .gasPrice(Wei.ONE)
+            .createTransaction(keyPair);
+    final Transaction txLondon2 = createEIP1559Transaction(3, Wei.ONE, Wei.ONE);
+
+    pendingTransactions.addRemoteTransaction(txFrontier1, Optional.empty());
+    pendingTransactions.addRemoteTransaction(txLondon1, Optional.empty());
+    pendingTransactions.addRemoteTransaction(txFrontier2, Optional.empty());
+    pendingTransactions.addRemoteTransaction(txLondon2, Optional.empty());
+
+    ensureTransactionIsValid(txFrontier1);
+    ensureTransactionIsValid(txLondon1);
+    ensureTransactionIsValid(txFrontier2);
+    ensureTransactionIsValid(txLondon2);
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        createBlockSelector(
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions())
+        .containsExactly(txFrontier1, txLondon1, txFrontier2, txLondon2);
   }
 
   private Transaction createEIP1559Transaction(

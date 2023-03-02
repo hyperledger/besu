@@ -16,7 +16,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -91,18 +90,18 @@ public class BackwardsSyncAlgorithm implements BesuEvents.InitialSyncCompletionL
     }
 
     if (chainHeader.getNumber() > firstAncestorHeader.getNumber()) {
-      debugLambda(
-          LOG,
-          "Backward reached below current chain head {} : {}",
-          () -> blockchain.getChainHead().toLogString(),
-          firstAncestorHeader::toLogString);
+      LOG.atDebug()
+          .setMessage("Backward reached below current chain head {} : {}")
+          .addArgument(() -> blockchain.getChainHead().toLogString())
+          .addArgument(firstAncestorHeader::toLogString)
+          .log();
     }
 
     if (finalBlockConfirmation.ancestorHeaderReached(firstAncestorHeader)) {
-      debugLambda(
-          LOG,
-          "Backward sync reached ancestor header with {}, starting forward sync",
-          firstAncestorHeader::toLogString);
+      LOG.atDebug()
+          .setMessage("Backward sync reached ancestor header with {}, starting forward sync")
+          .addArgument(firstAncestorHeader::toLogString)
+          .log();
       return executeForwardAsync();
     }
 
