@@ -64,8 +64,9 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
-    assertThat(archive.getTrieLogManager().containWorlStateStorage(firstBlock.getHash())).isTrue();
-    assertThat(archive.getTrieLogManager().containWorlStateStorage(secondBlock.getHash())).isTrue();
+    assertThat(archive.getTrieLogManager().containWorldStateStorage(firstBlock.getHash())).isTrue();
+    assertThat(archive.getTrieLogManager().containWorldStateStorage(secondBlock.getHash()))
+        .isTrue();
 
     assertThat(archive.getMutable().get(testAddress)).isNotNull();
     assertThat(archive.getMutable().get(testAddress).getBalance())
@@ -98,7 +99,7 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(isolated.get(), firstBlock);
 
-    assertThat(archive.getTrieLogManager().containWorlStateStorage(firstBlock.getHash())).isTrue();
+    assertThat(archive.getTrieLogManager().containWorldStateStorage(firstBlock.getHash())).isTrue();
 
     assertThat(res.isSuccessful()).isTrue();
     assertThat(isolated.get().get(testAddress)).isNotNull();
@@ -191,7 +192,7 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     assertThat(firstBlockTrieLog).isNotEmpty();
     assertThat(firstBlockTrieLog.get().getAccount(testAddress)).isNotEmpty();
     assertThat(firstBlockTrieLog.get().getAccount(altTestAddress)).isEmpty();
-    assertThat(archive.getTrieLogManager().containWorlStateStorage(firstBlock.getHash())).isTrue();
+    assertThat(archive.getTrieLogManager().containWorldStateStorage(firstBlock.getHash())).isTrue();
 
     var cloneForkTrieLog = archive.getTrieLogManager().getTrieLogLayer(cloneForkBlock.getHash());
     assertThat(cloneForkTrieLog.get().getAccount(testAddress)).isEmpty();

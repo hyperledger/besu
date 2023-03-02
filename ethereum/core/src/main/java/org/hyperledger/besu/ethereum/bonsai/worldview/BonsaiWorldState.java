@@ -71,8 +71,6 @@ public class BonsaiWorldState
 
   private boolean isFrozen;
 
-  private long subscribeWorldstateId;
-
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
@@ -94,7 +92,6 @@ public class BonsaiWorldState
                 archive
                     .getCachedMerkleTrieLoader()
                     .preLoadStorageSlot(getWorldStateStorage(), addr, value));
-    subscribeWorldstateId = worldStateStorage.subscribe(this);
   }
 
   public BonsaiWorldState(
@@ -117,8 +114,8 @@ public class BonsaiWorldState
 
   @Override
   public boolean isPersisted() {
-    return !(worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage
-        || worldStateStorage instanceof BonsaiWorldStateLayerStorage);
+    return !(worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage)
+        && !(worldStateStorage instanceof BonsaiWorldStateLayerStorage);
   }
 
   @Override
@@ -545,7 +542,9 @@ public class BonsaiWorldState
   @Override
   public void close() {
     try {
-      this.worldStateStorage.unSubscribe(subscribeWorldstateId);
+      if (!isPersisted()) {
+        this.worldStateStorage.close();
+      }
     } catch (Exception e) {
       // no op
     }

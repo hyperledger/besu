@@ -36,7 +36,7 @@ public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
     this.worldViewSubscriberId = worldStateStorage.subscribe(this);
   }
 
-  public BonsaiWorldStateKeyValueStorage getWorldstateStorage() {
+  public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
     return worldStateStorage;
   }
 

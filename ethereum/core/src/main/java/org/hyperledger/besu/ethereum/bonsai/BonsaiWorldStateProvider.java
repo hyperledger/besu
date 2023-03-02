@@ -163,7 +163,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       return rollMutableStateToBlockHash(worldState, blockHeader.getHash())
           .map(
               mutableWorldState -> {
-                if (!trieLogManager.containWorlStateStorage(blockHeader.getHash())) {
+                if (!trieLogManager.containWorldStateStorage(blockHeader.getHash())) {
                   trieLogManager.addCachedLayer(
                       blockHeader,
                       mutableWorldState.rootHash(),
@@ -177,12 +177,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   @Override
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
-    Optional<MutableWorldState> newPersistedState =
-        rollMutableStateToBlockHash(persistedState, blockHash);
-    if (newPersistedState.isPresent()) {
-      trieLogManager.updateCachedLayer(blockHash, (BonsaiWorldState) newPersistedState.get());
-    }
-    return newPersistedState;
+    return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(

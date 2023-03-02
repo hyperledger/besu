@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.storage;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -31,7 +32,11 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage {
   private final KeyValueStorage parent;
 
   public LayeredKeyValueStorage(final KeyValueStorage parent) {
-    super(new ConcurrentHashMap<>());
+    this(new ConcurrentHashMap<>(), parent);
+  }
+
+  public LayeredKeyValueStorage(final Map<Bytes, byte[]> map, final KeyValueStorage parent) {
+    super(map);
     this.parent = parent;
   }
 
@@ -103,5 +108,10 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage {
             }
           }
         });
+  }
+
+  @Override
+  public SnappedKeyValueStorage clone() {
+    return new LayeredKeyValueStorage(hashValueStore, parent);
   }
 }

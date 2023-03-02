@@ -126,7 +126,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   }
 
   @Override
-  public boolean containWorlStateStorage(final Hash blockHash) {
+  public boolean containWorldStateStorage(final Hash blockHash) {
     return cachedWorldStatesByHash.containsKey(blockHash);
   }
 

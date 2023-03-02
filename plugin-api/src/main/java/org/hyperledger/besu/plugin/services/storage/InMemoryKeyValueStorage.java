@@ -216,4 +216,8 @@ public class InMemoryKeyValueStorage
       lock.unlock();
     }
   }
+
+  public Map<Bytes, byte[]> getHashValueStore() {
+    return hashValueStore;
+  }
 }

@@ -68,39 +68,33 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
         .addArgument(worldStateRootHash::toShortHexString)
         .log();
     if (forWorldState.isPersisted()) {
-      // if this is the persisted worldstate, add a snapshot of it to the cache
-      cachedWorldStatesByHash.put(
-          blockHeader.getHash(),
-          new CachedBonsaiWorldView(
-              blockHeader,
-              new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage)));
+      final Optional<CachedBonsaiWorldView> cachedBonsaiWorldView =
+          Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHeader.getBlockHash()));
+      if (cachedBonsaiWorldView.isPresent()) {
+        // only replace if it is a layered storage
+        if (cachedBonsaiWorldView.get().getWorldStateStorage()
+            instanceof BonsaiWorldStateLayerStorage) {
+          cachedBonsaiWorldView
+              .get()
+              .updateWorldStateStorage(
+                  new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage));
+        }
+      } else {
+        cachedWorldStatesByHash.put(
+            blockHeader.getHash(),
+            new CachedBonsaiWorldView(
+                blockHeader,
+                new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage)));
+      }
     } else {
       // otherwise, add the layer to the cache
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
-          new CachedBonsaiWorldView(blockHeader, forWorldState.getWorldStateStorage()));
+          new CachedBonsaiWorldView(
+              blockHeader,
+              ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage()).clone()));
     }
     scrubCachedLayers(blockHeader.getNumber());
-  }
-
-  /**
-   * This method when called with a persisted world state will replace a cached layered worldstate
-   * with a snapshot of the persisted storage.
-   *
-   * @param blockHash block hash of the world state
-   * @param persistedState the persisted world state
-   */
-  @Override
-  public void updateCachedLayer(final Hash blockHash, final BonsaiWorldState persistedState) {
-    if (persistedState.isPersisted()) {
-      Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHash))
-          .filter(storage -> storage.getWorldstateStorage() instanceof BonsaiWorldStateLayerStorage)
-          .ifPresent(
-              cachedWorldState ->
-                  cachedWorldState.updateWorldStateStorage(
-                      new BonsaiSnapshotWorldStateKeyValueStorage(
-                          persistedState.worldStateStorage)));
-    }
   }
 
   @Override
@@ -111,7 +105,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
           .map(
               cached ->
                   new BonsaiWorldState(
-                      archive, new BonsaiWorldStateLayerStorage(cached.getWorldstateStorage())));
+                      archive, new BonsaiWorldStateLayerStorage(cached.getWorldStateStorage())));
     }
     return Optional.empty();
   }

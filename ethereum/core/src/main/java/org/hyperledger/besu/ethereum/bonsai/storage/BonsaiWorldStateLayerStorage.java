@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.LayeredKeyValueStorage;
 
 public class BonsaiWorldStateLayerStorage extends BonsaiWorldStateKeyValueStorage
@@ -25,14 +26,36 @@ public class BonsaiWorldStateLayerStorage extends BonsaiWorldStateKeyValueStorag
   private final BonsaiWorldStateKeyValueStorage parent;
 
   public BonsaiWorldStateLayerStorage(final BonsaiWorldStateKeyValueStorage parent) {
-    super(
+    this(
         new LayeredKeyValueStorage(parent.accountStorage),
         new LayeredKeyValueStorage(parent.codeStorage),
         new LayeredKeyValueStorage(parent.storageStorage),
         new LayeredKeyValueStorage(parent.trieBranchStorage),
-        parent.trieLogStorage);
+        parent.trieLogStorage,
+        parent);
+  }
+
+  public BonsaiWorldStateLayerStorage(
+      final KeyValueStorage accountStorage,
+      final KeyValueStorage codeStorage,
+      final KeyValueStorage storageStorage,
+      final KeyValueStorage trieBranchStorage,
+      final KeyValueStorage trieLogStorage,
+      final BonsaiWorldStateKeyValueStorage parent) {
+    super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
     this.parent = parent;
-    subscribeParentId = parent.subscribe(this);
+    this.subscribeParentId = parent.subscribe(this);
+  }
+
+  @Override
+  public BonsaiWorldStateLayerStorage clone() {
+    return new BonsaiWorldStateLayerStorage(
+        ((LayeredKeyValueStorage) accountStorage).clone(),
+        ((LayeredKeyValueStorage) codeStorage).clone(),
+        ((LayeredKeyValueStorage) storageStorage).clone(),
+        ((LayeredKeyValueStorage) trieBranchStorage).clone(),
+        trieLogStorage,
+        parent);
   }
 
   @Override
