@@ -67,32 +67,33 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
         .addArgument(blockHeader::toLogString)
         .addArgument(worldStateRootHash::toShortHexString)
         .log();
-    if (forWorldState.isPersisted()) {
-      final Optional<CachedBonsaiWorldView> cachedBonsaiWorldView =
-          Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHeader.getBlockHash()));
-      if (cachedBonsaiWorldView.isPresent()) {
-        // only replace if it is a layered storage
-        if (cachedBonsaiWorldView.get().getWorldStateStorage()
-            instanceof BonsaiWorldStateLayerStorage) {
-          cachedBonsaiWorldView
-              .get()
-              .updateWorldStateStorage(
-                  new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage));
-        }
-      } else {
+    final Optional<CachedBonsaiWorldView> cachedBonsaiWorldView =
+        Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHeader.getBlockHash()));
+    if (cachedBonsaiWorldView.isPresent()) {
+      // only replace if it is a layered storage
+      if (forWorldState.isPersisted()
+          && cachedBonsaiWorldView.get().getWorldStateStorage()
+              instanceof BonsaiWorldStateLayerStorage) {
+        cachedBonsaiWorldView
+            .get()
+            .updateWorldStateStorage(
+                new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage));
+      }
+    } else {
+      if (forWorldState.isPersisted()) {
         cachedWorldStatesByHash.put(
             blockHeader.getHash(),
             new CachedBonsaiWorldView(
                 blockHeader,
                 new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage)));
+      } else {
+        // otherwise, add the layer to the cache
+        cachedWorldStatesByHash.put(
+            blockHeader.getHash(),
+            new CachedBonsaiWorldView(
+                blockHeader,
+                ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage()).clone()));
       }
-    } else {
-      // otherwise, add the layer to the cache
-      cachedWorldStatesByHash.put(
-          blockHeader.getHash(),
-          new CachedBonsaiWorldView(
-              blockHeader,
-              ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage()).clone()));
     }
     scrubCachedLayers(blockHeader.getNumber());
   }
