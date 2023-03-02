@@ -82,4 +82,9 @@ public class EndLayer extends BaseTransactionsLayer {
 
   @Override
   public void removeConfirmed(final Map<Address, Long> maxConfirmedNonceBySender) {}
+
+  @Override
+  public PendingTransaction promote(final Address sender, final long nonce) {
+    return null;
+  }
 }

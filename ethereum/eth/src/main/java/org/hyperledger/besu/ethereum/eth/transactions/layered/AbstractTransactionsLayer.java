@@ -1,5 +1,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
@@ -113,24 +114,67 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       processAdded(pendingTransaction);
       addStatus.maybeReplacedTransaction().ifPresent(this::replaced);
 
-      final long cacheFreeSpace = cacheFreeSpace();
-      final int overflowTxsCount = pendingTransactions.size() - maxTransactionsNumber();
-      if (cacheFreeSpace < 0 || overflowTxsCount > 0) {
-        debugLambda(
-            LOG,
-            "Layer full: {}",
-            () ->
-                cacheFreeSpace < 0
-                    ? "need to free " + (-cacheFreeSpace) + " space"
-                    : "need to evict " + overflowTxsCount + " transaction(s)");
-
-        evict(-cacheFreeSpace, overflowTxsCount);
+      if (!maybeFull()) {
+        // if there is space try to see if the added tx filled some gaps
+        tryFillGap(addStatus, pendingTransaction);
       }
 
       notifyTransactionAdded(pendingTransaction);
     }
     updateMetrics(pendingTransaction, addStatus);
     return addStatus;
+  }
+
+  private boolean maybeFull() {
+    final long cacheFreeSpace = cacheFreeSpace();
+    final int overflowTxsCount = pendingTransactions.size() - maxTransactionsNumber();
+    if (cacheFreeSpace < 0 || overflowTxsCount > 0) {
+      debugLambda(
+          LOG,
+          "Layer full: {}",
+          () ->
+              cacheFreeSpace < 0
+                  ? "need to free " + (-cacheFreeSpace) + " space"
+                  : "need to evict " + overflowTxsCount + " transaction(s)");
+
+      evict(-cacheFreeSpace, overflowTxsCount);
+      return true;
+    }
+    return false;
+  }
+
+  private void tryFillGap(
+      final TransactionAddedResult addStatus, final PendingTransaction pendingTransaction) {
+    // it makes sense to fill gaps only if the add is not a replacement and this layer does not
+    // allow gaps
+    if (!addStatus.isReplacement() && !gapsAllowed()) {
+      final PendingTransaction promotedTx =
+          nextLayer.promote(pendingTransaction.getSender(), pendingTransaction.getNonce());
+      if (promotedTx != null) {
+        processAdded(promotedTx);
+        if (!maybeFull()) {
+          tryFillGap(ADDED, promotedTx);
+        }
+      }
+    }
+  }
+
+  @Override
+  public PendingTransaction promote(final Address sender, final long nonce) {
+    final var senderTxs = readyBySender.get(sender);
+    if (senderTxs != null) {
+      long expectedNonce = nonce + 1;
+      if (senderTxs.firstKey() == expectedNonce) {
+        final PendingTransaction promotedTx = senderTxs.pollFirstEntry().getValue();
+        processRemove(senderTxs, promotedTx.getTransaction());
+
+        if (senderTxs.isEmpty()) {
+          readyBySender.remove(sender);
+        }
+        return promotedTx;
+      }
+    }
+    return nextLayer.promote(sender, nonce);
   }
 
   private TransactionAddedResult addToNextLayer(

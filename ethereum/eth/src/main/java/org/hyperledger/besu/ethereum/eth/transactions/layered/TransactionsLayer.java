@@ -53,4 +53,6 @@ public interface TransactionsLayer {
   long subscribeToDropped(PendingTransactionDroppedListener listener);
 
   void unsubscribeFromDropped(long id);
+
+  PendingTransaction promote(Address sender, long nonce);
 }
