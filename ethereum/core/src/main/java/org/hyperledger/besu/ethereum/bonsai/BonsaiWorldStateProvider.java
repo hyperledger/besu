@@ -176,8 +176,14 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    return rollMutableStateToBlockHash(persistedState, blockHash);
+  public synchronized Optional<MutableWorldState> getMutable(
+      final Hash rootHash, final Hash blockHash) {
+    Optional<MutableWorldState> newPersistedState =
+        rollMutableStateToBlockHash(persistedState, blockHash);
+    if (newPersistedState.isPresent()) {
+      trieLogManager.updateCachedLayer(blockHash, (BonsaiWorldState) newPersistedState.get());
+    }
+    return newPersistedState;
   }
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(

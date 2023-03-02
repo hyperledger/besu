@@ -20,10 +20,14 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
-  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  private BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final BlockHeader blockHeader;
-  private final long worldViewSubscriberId;
+  private long worldViewSubscriberId;
+  private static final Logger LOG = LoggerFactory.getLogger(CachedBonsaiWorldView.class);
 
   public CachedBonsaiWorldView(
       final BlockHeader blockHeader, final BonsaiWorldStateKeyValueStorage worldView) {
@@ -44,7 +48,29 @@ public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
     return blockHeader.getHash();
   }
 
-  public void close() {
+  public synchronized void close() {
     worldStateStorage.unSubscribe(this.worldViewSubscriberId);
+    try {
+      worldStateStorage.close();
+    } catch (final Exception e) {
+      LOG.warn("Failed to close worldstate storage for block " + blockHeader.toLogString(), e);
+    }
+  }
+
+  public synchronized void updateWorldStateStorage(
+      final BonsaiWorldStateKeyValueStorage newWorldStateStorage) {
+    long newSubscriberId = newWorldStateStorage.subscribe(this);
+    this.worldStateStorage.unSubscribe(this.worldViewSubscriberId);
+    BonsaiWorldStateKeyValueStorage oldWorldStateStorage = this.worldStateStorage;
+    this.worldStateStorage = newWorldStateStorage;
+    this.worldViewSubscriberId = newSubscriberId;
+    try {
+      oldWorldStateStorage.close();
+    } catch (final Exception e) {
+      LOG.warn(
+          "During update, failed to close prior worldstate storage for block "
+              + blockHeader.toLogString(),
+          e);
+    }
   }
 }

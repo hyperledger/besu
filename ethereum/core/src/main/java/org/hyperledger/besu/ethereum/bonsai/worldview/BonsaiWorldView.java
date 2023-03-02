@@ -56,7 +56,7 @@ public interface BonsaiWorldView extends WorldView {
     return out.encoded();
   }
 
-  boolean isLayered();
+  boolean isPersisted();
 
   BonsaiWorldStateKeyValueStorage getWorldStateStorage();
 

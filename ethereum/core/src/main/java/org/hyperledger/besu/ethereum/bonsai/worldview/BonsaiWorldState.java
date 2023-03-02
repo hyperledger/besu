@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -116,8 +117,9 @@ public class BonsaiWorldState
   }
 
   @Override
-  public boolean isLayered() {
-    return worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage;
+  public boolean isPersisted() {
+    return !(worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage
+        || worldStateStorage instanceof BonsaiWorldStateLayerStorage);
   }
 
   @Override

@@ -474,7 +474,7 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
-  public boolean isLayered() {
+  public boolean isPersisted() {
     return true;
   }
 

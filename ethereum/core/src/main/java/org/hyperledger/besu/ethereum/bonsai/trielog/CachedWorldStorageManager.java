@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -34,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CachedWorldStorageManager extends AbstractTrieLogManager
-    implements BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber {
+    implements BonsaiStorageSubscriber {
   private static final Logger LOG = LoggerFactory.getLogger(CachedWorldStorageManager.class);
   private final BonsaiWorldStateProvider archive;
 
@@ -68,20 +69,40 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
         blockHeader::toLogString,
         worldStateRootHash::toShortHexString);
 
-    if (forWorldState.isLayered()) {
-      // if storage is a snapshot, clone the BonsaiWorldStateUpdateAccumulator
-      cachedWorldStatesByHash.put(
-          blockHeader.getHash(),
-          new CachedBonsaiWorldView(blockHeader, forWorldState.getWorldStateStorage()));
-    } else {
-      // else take a snapshot with empty updater
+    if (forWorldState.isPersisted()) {
+      // if this is the persisted worldstate, add a snapshot of it to the cache
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
           new CachedBonsaiWorldView(
               blockHeader,
               new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage)));
+    } else {
+      // otherwise, add the layer to the cache
+      cachedWorldStatesByHash.put(
+          blockHeader.getHash(),
+          new CachedBonsaiWorldView(blockHeader, forWorldState.getWorldStateStorage()));
     }
     scrubCachedLayers(blockHeader.getNumber());
+  }
+
+  /**
+   * This method when called with a persisted world state will replace a cached layered worldstate
+   * with a snapshot of the persisted storage.
+   *
+   * @param blockHash block hash of the world state
+   * @param persistedState the persisted world state
+   */
+  @Override
+  public void updateCachedLayer(final Hash blockHash, final BonsaiWorldState persistedState) {
+    if (persistedState.isPersisted()) {
+      Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHash))
+          .filter(storage -> storage.getWorldstateStorage() instanceof BonsaiWorldStateLayerStorage)
+          .ifPresent(
+              cachedWorldState ->
+                  cachedWorldState.updateWorldStateStorage(
+                      new BonsaiSnapshotWorldStateKeyValueStorage(
+                          persistedState.worldStateStorage)));
+    }
   }
 
   @Override
