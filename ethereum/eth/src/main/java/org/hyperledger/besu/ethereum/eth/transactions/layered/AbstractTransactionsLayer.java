@@ -179,9 +179,18 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
 
   private TransactionAddedResult addToNextLayer(
       final PendingTransaction pendingTransaction, final int distance) {
-    final var senderTxs = readyBySender.get(pendingTransaction.getSender());
+    return addToNextLayer(
+        readyBySender.getOrDefault(pendingTransaction.getSender(), EMPTY_SENDER_TXS),
+        pendingTransaction,
+        distance);
+  }
+
+  private TransactionAddedResult addToNextLayer(
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final PendingTransaction pendingTransaction,
+      final int distance) {
     final int nextLayerDistance;
-    if (senderTxs != null) {
+    if (!senderTxs.isEmpty()) {
       nextLayerDistance = (int) (pendingTransaction.getNonce() - (senderTxs.lastKey() + 1));
     } else {
       nextLayerDistance = distance;
@@ -208,29 +217,29 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       final var lessReadySender = evictableTx.getSender();
       final var lessReadySenderTxs = readyBySender.get(lessReadySender);
 
-      final List<PendingTransaction> evictedTxs = new ArrayList<>();
       long evictedSize = 0;
+      int evictedCount = 0;
       PendingTransaction lastTx;
       // lastTx must never be null, because the sender have at least the lessReadyTx
-      while ((evictedSize < spaceToFree || txsToEvict > evictedTxs.size())
+      while ((evictedSize < spaceToFree || txsToEvict > evictedCount)
           && !lessReadySenderTxs.isEmpty()) {
         lastTx = lessReadySenderTxs.pollLastEntry().getValue();
-        evictLast(lessReadySenderTxs, lastTx);
-        evictedTxs.add(lastTx);
+        processEvict(lessReadySenderTxs, lastTx);
+        ++evictedCount;
         evictedSize += lastTx.getTransaction().getSize();
 
         // evicted can always be added to the next layer
-        addToNextLayer(lastTx, 0);
-
-        metrics.incrementEvicted(name(), 1);
+        addToNextLayer(lessReadySenderTxs, lastTx, 0);
       }
 
       if (lessReadySenderTxs.isEmpty()) {
         readyBySender.remove(lessReadySender);
       }
 
+      metrics.incrementEvicted(name(), evictedCount);
+
       final long newSpaceToFree = spaceToFree - evictedSize;
-      final int newTxsToEvict = txsToEvict - evictedTxs.size();
+      final int newTxsToEvict = txsToEvict - evictedCount;
 
       if ((newSpaceToFree > 0 || newTxsToEvict > 0) && !readyBySender.isEmpty()) {
         // try next less valuable sender
@@ -308,10 +317,14 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
     return removedTx;
   }
 
-  private void evictLast(
+  protected PendingTransaction processEvict(
       final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction evictedTx) {
-    internalEvict(senderTxs, evictedTx);
-    nextLayer.add(evictedTx, 0);
+    final PendingTransaction removedTx = pendingTransactions.remove(evictedTx.getHash());
+    if (removedTx != null) {
+      decreaseSpaceUsed(evictedTx);
+      internalEvict(senderTxs, removedTx);
+    }
+    return removedTx;
   }
 
   protected abstract void internalEvict(
@@ -321,10 +334,13 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   // ToDo: find a more efficient way to handle remove and gaps
   @Override
   public void remove(final PendingTransaction pendingTransaction) {
+    nextLayer.remove(pendingTransaction);
+
     final var senderTxs = readyBySender.get(pendingTransaction.getSender());
     if (senderTxs != null) {
       if (gapsAllowed()) {
         // if gaps are allowed then just remove
+        senderTxs.remove(pendingTransaction.getNonce());
         processRemove(senderTxs, pendingTransaction.getTransaction());
       } else {
         // on sequential layer we need to remove and push to next layer all the following txs
@@ -332,26 +348,18 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
         final var followingTxs =
             txsToRemove.values().stream()
                 .peek(pt -> processRemove(senderTxs, pt.getTransaction()))
+                .skip(txsToRemove.containsKey(pendingTransaction.getNonce()) ? 1 : 0)
                 .toList();
 
         txsToRemove.clear();
 
-        final int distance;
-        if (senderTxs.isEmpty()) {
-          distance = 0;
-        } else {
-          distance = (int) (pendingTransaction.getNonce() - senderTxs.lastKey());
-        }
-
-        followingTxs.forEach(followingTx -> nextLayer.add(followingTx, distance));
+        followingTxs.forEach(followingTx -> nextLayer.add(followingTx, 1));
       }
 
       if (senderTxs.isEmpty()) {
         readyBySender.remove(pendingTransaction.getSender());
       }
     }
-
-    nextLayer.remove(pendingTransaction);
   }
 
   @Override

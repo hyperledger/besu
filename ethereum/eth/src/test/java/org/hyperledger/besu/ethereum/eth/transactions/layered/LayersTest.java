@@ -12,6 +12,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
@@ -20,6 +21,7 @@ import org.hyperledger.besu.metrics.StubMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -50,9 +52,9 @@ public class LayersTest extends BaseTransactionPoolTest {
 
   final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
       (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2);
-  final EndLayer endLayer = new EndLayer(txPoolMetrics);
+  final EvictCollector evictCollector = new EvictCollector(txPoolMetrics);
   final SparseTransactions sparseTransactions =
-      new SparseTransactions(poolConfig, endLayer, txPoolMetrics, transactionReplacementTester);
+      new SparseTransactions(poolConfig, evictCollector, txPoolMetrics, transactionReplacementTester);
 
   final ReadyTransactions readyTransactions =
       new ReadyTransactions(
@@ -75,7 +77,16 @@ public class LayersTest extends BaseTransactionPoolTest {
   @ParameterizedTest
   @MethodSource("providerAddTransactions")
   void addTransactions(final Scenario scenario) {
+    assertScenario(scenario);
+  }
 
+  @ParameterizedTest
+  @MethodSource("providerRemoveTransactions")
+  void removeTransactions(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
+  private void assertScenario(final Scenario scenario) {
     scenario.execute(prioritizedTransactions);
 
     assertThat(prioritizedTransactions.stream())
@@ -83,7 +94,222 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     assertThat(readyTransactions.stream()).containsExactlyElementsOf(scenario.expectedReady);
 
+    // sparse txs are returned from the most recent to the oldest, so reverse it to make writing scenarios easier
+    Collections.reverse(scenario.expectedSparse);
     assertThat(sparseTransactions.stream()).containsExactlyElementsOf(scenario.expectedSparse);
+
+    assertThat(evictCollector.evictedTxs).containsExactlyInAnyOrderElementsOf(scenario.expectedDropped);
+  }
+
+  static Stream<Arguments> providerAddTransactions() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("add first").addForSender(S1, 0).expectedPrioritizedForSender(S1, 0)),
+        Arguments.of(
+            new Scenario("add first sparse").addForSender(S1, 1).expectedSparseForSender(S1, 1)),
+        Arguments.of(
+            new Scenario("fill prioritized")
+                .addForSender(S1, 0, 1, 2)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)),
+        Arguments.of(
+            new Scenario("fill prioritized reverse")
+                .addForSender(S1, 2, 1, 0)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)),
+        Arguments.of(
+            new Scenario("fill prioritized mixed order 1")
+                .addForSender(S1, 2, 0, 1)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)),
+        Arguments.of(
+            new Scenario("fill prioritized mixed order 2")
+                .addForSender(S1, 0, 2, 1)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)),
+        Arguments.of(
+            new Scenario("overflow to ready")
+                .addForSender(S1, 0, 1, 2, 3)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3)),
+        Arguments.of(
+            new Scenario("overflow to ready reverse")
+                .addForSender(S1, 3, 2, 1, 0)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3)),
+        Arguments.of(
+            new Scenario("overflow to ready mixed order 1")
+                .addForSender(S1, 3, 0, 2, 1)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3)),
+        Arguments.of(
+            new Scenario("overflow to ready mixed order 2")
+                .addForSender(S1, 0, 3, 1, 2)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3)),
+        Arguments.of(
+            new Scenario("overflow to sparse")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .expectedSparseForSender(S1, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse reverse")
+                .addForSender(S1, 6, 5, 4, 3, 2, 1, 0)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                // 4,5,6 are evicted since max capacity of sparse layer is 3 txs
+                .expectedReadyForSender(S1, 3)
+                    .expectedDroppedForSender(S1, 4, 5, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse mixed order 1")
+                .addForSender(S1, 6, 0, 4, 1, 3, 2, 5)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .expectedSparseForSender(S1, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse mixed order 2")
+                .addForSender(S1, 0, 4, 6, 1, 5, 2, 3)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .expectedSparseForSender(S1, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse mixed order 3")
+                .addForSender(S1, 0, 1, 2, 3, 5, 6, 4)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .expectedSparseForSender(S1, 6)),
+        Arguments.of(
+            new Scenario("nonce gap to sparse 1")
+                .addForSender(S1, 0, 2)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedSparseForSender(S1, 2)),
+        Arguments.of(
+            new Scenario("nonce gap to sparse 2")
+                .addForSender(S1, 0, 1, 2, 3, 5)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3)
+                .expectedSparseForSender(S1, 5)),
+        Arguments.of(
+            new Scenario("fill sparse 1")
+                .addForSender(S1, 2, 3, 5)
+                .expectedSparseForSender(S1, 2, 3, 5)),
+        Arguments.of(
+            new Scenario("fill sparse 2")
+                .addForSender(S1, 5, 3, 2)
+                .expectedSparseForSender(S1, 5, 3, 2)),
+        Arguments.of(
+            new Scenario("overflow sparse 1")
+                .addForSender(S1, 1, 2, 3, 4)
+                .expectedSparseForSender(S1, 1, 2, 3).expectedDroppedForSender(S1, 4)),
+        Arguments.of(
+            new Scenario("overflow sparse 2")
+                .addForSender(S1, 4, 2, 3, 1)
+                .expectedSparseForSender(S1, 2, 3, 1).expectedDroppedForSender(S1, 4)),
+            Arguments.of(
+                    new Scenario("overflow sparse 3")
+                            .addForSender(S1, 0, 4, 2, 3, 5)
+                            .expectedPrioritizedForSender(S1, 0)
+                            .expectedSparseForSender(S1, 4, 2, 3).expectedDroppedForSender(S1, 5)));
+  }
+
+  static Stream<Arguments> providerRemoveTransactions() {
+    return Stream.of(
+        Arguments.of(new Scenario("remove not existing").removeForSender(S1, 0)),
+        Arguments.of(new Scenario("add/remove first").addForSender(S1, 0).removeForSender(S1, 0)),
+        Arguments.of(
+            new Scenario("add/remove first sparse").addForSender(S1, 1).removeForSender(S1, 1)),
+        Arguments.of(
+            new Scenario("fill/remove prioritized 1")
+                .addForSender(S1, 0, 1, 2)
+                .removeForSender(S1, 0, 1, 2)),
+        Arguments.of(
+            new Scenario("fill/remove prioritized 2")
+                .addForSender(S1, 0, 1, 2)
+                .removeForSender(S1, 2, 1, 0)),
+        Arguments.of(
+            new Scenario("fill/remove prioritized reverse 1")
+                .addForSender(S1, 2, 1, 0)
+                .removeForSender(S1, 0, 1, 2)),
+        Arguments.of(
+            new Scenario("fill/remove prioritized reverse 2")
+                .addForSender(S1, 2, 1, 0)
+                .removeForSender(S1, 2, 1, 0)),
+        Arguments.of(
+            new Scenario("fill/remove first prioritized")
+                .addForSender(S1, 0, 1, 2)
+                .removeForSender(S1, 0)
+                .expectedSparseForSender(S1, 1, 2)),
+        Arguments.of(
+            new Scenario("fill/remove last prioritized")
+                .addForSender(S1, 0, 1, 2)
+                .removeForSender(S1, 2)
+                .expectedPrioritizedForSender(S1, 0, 1)),
+        Arguments.of(
+            new Scenario("fill/remove middle prioritized")
+                .addForSender(S1, 0, 1, 2)
+                .removeForSender(S1, 1)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedSparseForSender(S1, 2)),
+                    Arguments.of(
+                            new Scenario("overflow to ready then remove")
+                                    .addForSender(S1, 0, 1, 2, 3)
+                                    .removeForSender(S1, 2)
+                                    .expectedPrioritizedForSender(S1, 0, 1)
+                                    .expectedSparseForSender(S1, 3))
+        //            Arguments.of(
+        //                    new Scenario("overflow to ready reverse")
+        //                            .addForSender(S1, 3, 2, 1, 0)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            .expectedReadyForSender(S1, 3)),
+        //            Arguments.of(
+        //                    new Scenario("overflow to ready mixed order 1")
+        //                            .addForSender(S1, 3, 0, 2, 1)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            .expectedReadyForSender(S1, 3)),
+        //            Arguments.of(
+        //                    new Scenario("overflow to ready mixed order 2")
+        //                            .addForSender(S1, 0, 3, 1, 2)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            .expectedReadyForSender(S1, 3)),
+        //            Arguments.of(
+        //                    new Scenario("overflow to sparse")
+        //                            .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            .expectedReadyForSender(S1, 3, 4, 5)
+        //                            .expectedSparseForSender(S1, 6)),
+        //            Arguments.of(
+        //                    new Scenario("overflow to sparse reverse")
+        //                            .addForSender(S1, 6, 5, 4, 3, 2, 1, 0)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            // 4,5,6 are evicted since max capacity of sparse layer is 3
+        // txs
+        //                            .expectedReadyForSender(S1, 3)),
+        //            Arguments.of(
+        //                    new Scenario("overflow to sparse mixed order 1")
+        //                            .addForSender(S1, 6, 0, 4, 1, 3, 2, 5)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            .expectedReadyForSender(S1, 3, 4, 5)
+        //                            .expectedSparseForSender(S1, 6)),
+        //            Arguments.of(
+        //                    new Scenario("overflow to sparse mixed order 2")
+        //                            .addForSender(S1, 0, 4, 6, 1, 5, 2, 3)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            .expectedReadyForSender(S1, 3, 4, 5)
+        //                            .expectedSparseForSender(S1, 6)),
+        //            Arguments.of(
+        //                    new Scenario("overflow to sparse mixed order 3")
+        //                            .addForSender(S1, 0, 1, 2, 3, 5, 6, 4)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            .expectedReadyForSender(S1, 3, 4, 5)
+        //                            .expectedSparseForSender(S1, 6)),
+        //            Arguments.of(
+        //                    new Scenario("nonce gap to sparse 1")
+        //                            .addForSender(S1, 0, 2)
+        //                            .expectedPrioritizedForSender(S1, 0)
+        //                            .expectedSparseForSender(S1, 2)),
+        //            Arguments.of(
+        //                    new Scenario("nonce gap to sparse 2")
+        //                            .addForSender(S1, 0, 1, 2, 3, 5)
+        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
+        //                            .expectedReadyForSender(S1, 3)
+        //                            .expectedSparseForSender(S1, 5))
+        );
   }
 
   private static BlockHeader mockBlockHeader() {
@@ -101,65 +327,13 @@ public class LayersTest extends BaseTransactionPoolTest {
     return transactionReplacementHandler.shouldReplace(pt1, pt2, mockBlockHeader());
   }
 
-  static Stream<Arguments> providerAddTransactions() {
-    return Stream.of(
-        Arguments.of(
-            new Scenario("add first").addForSender(S1, 0).expectedPrioritizedForSender(S1, 0)),
-        Arguments.of(
-            new Scenario("fill prioritized")
-                .addForSender(S1, 0, 1, 2)
-                .expectedPrioritizedForSender(S1, 0, 1, 2)),
-        Arguments.of(
-            new Scenario("reverse fill prioritized")
-                .addForSender(S1, 2, 1, 0)
-                .expectedPrioritizedForSender(S1, 0, 1, 2)));
-    /*
-       Arguments.of(
-           "fill prioritized",
-           0,
-           new int[] {1, 2, 3},
-           new int[] {1, 2, 3},
-           new int[0],
-           new int[0]),
-       Arguments.of(
-           "overflow to ready",
-           0,
-           new int[] {1, 2, 3, 4},
-           new int[] {1, 2, 3},
-           new int[] {4},
-           new int[0]),
-       Arguments.of(
-           "overflow to sparse",
-           0,
-           new int[] {1, 2, 3, 4, 5, 6, 7},
-           new int[] {1, 2, 3},
-           new int[] {4, 5, 6},
-           new int[] {7}),
-       Arguments.of(
-           "nonce gap to sparse",
-           0,
-           new int[] {1, 2, 3, 6},
-           new int[] {1, 2, 3},
-           new int[0],
-           new int[] {6}),
-       Arguments.of(
-           "overflow to ready and nonce gap to sparse",
-           0,
-           new int[] {1, 2, 3, 4, 6},
-           new int[] {1, 2, 3},
-           new int[] {4},
-           new int[] {6}),
-       Arguments.of("first is sparse", 1, new int[] {1}, new int[0], new int[0], new int[] {1}));
-
-    */
-  }
-
   static class Scenario extends BaseTransactionPoolTest {
     final String description;
     final List<Consumer<TransactionsLayer>> actions = new ArrayList<>();
     final List<PendingTransaction> expectedPrioritized = new ArrayList<>();
     final List<PendingTransaction> expectedReady = new ArrayList<>();
     final List<PendingTransaction> expectedSparse = new ArrayList<>();
+    final List<PendingTransaction> expectedDropped = new ArrayList<>();
 
     final EnumMap<Sender, Integer> nonceBySender = new EnumMap<>(Sender.class);
 
@@ -229,6 +403,10 @@ public class LayersTest extends BaseTransactionPoolTest {
       return expectedForSender(expectedSparse, sender, nonce);
     }
 
+    public Scenario expectedDroppedForSender(final Sender sender, final long... nonce) {
+      return expectedForSender(expectedDropped, sender, nonce);
+    }
+
     public Scenario expectedPrioritizedForSenders(final Object... args) {
       return expectedForSenders(expectedPrioritized, args);
     }
@@ -239,6 +417,10 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     public Scenario expectedSparseForSenders(final Object... args) {
       return expectedForSenders(expectedSparse, args);
+    }
+
+    public Scenario expectedDroppedForSenders(final Object... args) {
+      return expectedForSenders(expectedDropped, args);
     }
 
     private Scenario expectedForSenders(
@@ -265,6 +447,16 @@ public class LayersTest extends BaseTransactionPoolTest {
     public String toString() {
       return description;
     }
+
+    public Scenario removeForSender(final Sender sender, final long... nonce) {
+      Arrays.stream(nonce)
+          .forEach(
+              n -> {
+                final var pendingTx = getOrCreate(sender, n);
+                actions.add(layer -> layer.remove(pendingTx));
+              });
+      return this;
+    }
   }
 
   enum Sender {
@@ -278,6 +470,20 @@ public class LayersTest extends BaseTransactionPoolTest {
     Sender() {
       key = SIGNATURE_ALGORITHM.get().generateKeyPair();
       address = Util.publicKeyToAddress(key.getPublicKey());
+    }
+  }
+
+  static class EvictCollector extends EndLayer {
+    final List<PendingTransaction> evictedTxs = new ArrayList<>();
+    public EvictCollector(final TransactionPoolMetrics metrics) {
+      super(metrics);
+    }
+
+    @Override
+    public TransactionAddedResult add(final PendingTransaction pendingTransaction, final int gap) {
+      final var res = super.add(pendingTransaction, gap);
+      evictedTxs.add(pendingTransaction);
+      return res;
     }
   }
 }

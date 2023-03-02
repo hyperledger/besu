@@ -101,10 +101,10 @@ public abstract class PendingTransaction {
   public String toString() {
     return "Hash="
         + transaction.getHash().toShortHexString()
-        + ", sender="
-        + transaction.getSender().toShortHexString()
         + ", nonce="
         + transaction.getNonce()
+        + ", sender="
+        + transaction.getSender().toShortHexString()
         + ", addedToPoolAt="
         + addedToPoolAt
         + ", sequence="

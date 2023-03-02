@@ -38,7 +38,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   @Override
   protected void internalEvict(
       final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction evictedTx) {
-    processRemove(senderTxs, evictedTx.getTransaction());
+    internalRemove(senderTxs, evictedTx);
   }
 
   @Override

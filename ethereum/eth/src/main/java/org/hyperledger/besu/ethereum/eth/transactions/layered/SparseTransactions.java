@@ -159,6 +159,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final NavigableMap<Long, PendingTransaction> lessReadySenderTxs,
       final PendingTransaction evictedTx) {
     sparseEvictionOrder.remove(evictedTx);
+
     if (lessReadySenderTxs.isEmpty()) {
       orderByGap.get(gapBySender.get(evictedTx.getSender())).remove(evictedTx.getSender());
     }
@@ -167,6 +168,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   @Override
   protected void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction removedTx) {
+
     sparseEvictionOrder.remove(removedTx);
 
     if (senderTxs != null && !senderTxs.isEmpty()) {
