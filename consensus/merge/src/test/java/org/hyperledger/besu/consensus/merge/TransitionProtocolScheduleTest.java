@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -75,7 +76,7 @@ public class TransitionProtocolScheduleTest {
 
     transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
-    verifyPostMergeProtocolScheduleReturned();
+    verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
   @Test
@@ -85,7 +86,7 @@ public class TransitionProtocolScheduleTest {
 
     transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
-    verifyPreMergeProtocolScheduleReturned();
+    verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
   @Test
@@ -103,7 +104,7 @@ public class TransitionProtocolScheduleTest {
 
     transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
-    verifyPreMergeProtocolScheduleReturned();
+    verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
   @Test
@@ -121,7 +122,7 @@ public class TransitionProtocolScheduleTest {
 
     transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
-    verifyPreMergeProtocolScheduleReturned();
+    verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
   @Test
@@ -140,7 +141,45 @@ public class TransitionProtocolScheduleTest {
 
     transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
 
-    verifyPostMergeProtocolScheduleReturned();
+    verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
+  }
+
+  @Test
+  public void getByBlockNumber_returnsTimestampScheduleIfPresent() {
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
+    when(timestampSchedule.getByBlockHeader(blockHeader)).thenReturn(mock(ProtocolSpec.class));
+
+    assertThat(transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER)).isNotNull();
+
+    verify(timestampSchedule).getByBlockHeader(blockHeader);
+    verifyNoMergeScheduleInteractions();
+  }
+
+  @Test
+  public void getByBlockNumber_delegatesToPreMergeScheduleWhenBlockNotFound() {
+    when(mergeContext.isPostMerge()).thenReturn(false);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPreMergeProtocolScheduleReturnedUsingBlockNumber();
+  }
+
+  @Test
+  public void getByBlockNumber_delegatesToPostMergeScheduleWhenBlockNotFound() {
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPostMergeProtocolScheduleReturnedUsingBlockNumber();
+  }
+
+  @Test
+  public void getByBlockNumber_delegatesToPostMergeScheduleWhenTimestampScheduleDoesNotExist() {
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPostMergeProtocolScheduleReturnedUsingBlockNumber();
   }
 
   @Test
@@ -158,41 +197,45 @@ public class TransitionProtocolScheduleTest {
   public void getByBlockHeader_delegatesToPreMergeScheduleWhenBlockNotFound() {
     when(mergeContext.isPostMerge()).thenReturn(false);
 
-    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
-    verifyPreMergeProtocolScheduleReturned();
+    verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
   @Test
   public void getByBlockHeader_delegatesToPostMergeScheduleWhenBlockNotFound() {
-    when(blockHeader.getNumber()).thenReturn(BLOCK_NUMBER);
-    when(blockHeader.getDifficulty()).thenReturn(Difficulty.ZERO);
-    when(blockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(TTD));
     when(mergeContext.isPostMerge()).thenReturn(true);
 
-    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
-    verifyPostMergeProtocolScheduleReturned();
+    verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
   @Test
   public void getByBlockHeader_delegatesToPostMergeScheduleWhenTimestampScheduleDoesNotExist() {
     when(mergeContext.isPostMerge()).thenReturn(true);
-    when(blockHeader.getDifficulty()).thenReturn(Difficulty.ZERO);
-    when(blockHeader.getNumber()).thenReturn(BLOCK_NUMBER);
-    when(blockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(TTD));
 
-    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
-    verifyPostMergeProtocolScheduleReturned();
+    verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
-  private void verifyPreMergeProtocolScheduleReturned() {
+  private void verifyPreMergeProtocolScheduleReturnedUsingBlockNumber() {
+    verify(preMergeProtocolSchedule).getByBlockNumber(anyLong());
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  private void verifyPostMergeProtocolScheduleReturnedUsingBlockNumber() {
+    verify(postMergeProtocolSchedule).getByBlockNumber(anyLong());
+    verifyNoInteractions(preMergeProtocolSchedule);
+  }
+
+  private void verifyPreMergeProtocolScheduleReturnedUsingBlockHeader() {
     verify(preMergeProtocolSchedule).getByBlockHeader(any());
     verifyNoInteractions(postMergeProtocolSchedule);
   }
 
-  private void verifyPostMergeProtocolScheduleReturned() {
+  private void verifyPostMergeProtocolScheduleReturnedUsingBlockHeader() {
     verify(postMergeProtocolSchedule).getByBlockHeader(any());
     verifyNoInteractions(preMergeProtocolSchedule);
   }
