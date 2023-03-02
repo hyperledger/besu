@@ -1,0 +1,48 @@
+{
+  "request": {
+    "jsonrpc":"2.0","method":"eth_getBlockByHash","params":["0x77edeba4adb3cb3e365fccb48393c8445a5c4c6648ec660806c2ce1e9de13fd3", false],"id":1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result" : {
+      "number" : "0x3",
+      "hash" : "0x77edeba4adb3cb3e365fccb48393c8445a5c4c6648ec660806c2ce1e9de13fd3",
+      "mixHash" : "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "parentHash" : "0x7c2a09bedc85268606805e6df579e758af8d832ef9826927ce4b4b14452a32cf",
+      "nonce" : "0x0000000000000000",
+      "sha3Uncles" : "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      "logsBloom" : "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "transactionsRoot" : "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "stateRoot" : "0x7a6f2e03f2348dc75731e6e767c97a88da50430748a030874e27f7c3fac3d49d",
+      "receiptsRoot" : "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "miner" : "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "difficulty" : "0x0",
+      "totalDifficulty" : "0x400000000",
+      "extraData" : "0x",
+      "baseFeePerGas" : "0x7",
+      "size" : "0x24e",
+      "gasLimit" : "0x1c9c380",
+      "gasUsed" : "0x0",
+      "timestamp" : "0x11",
+      "uncles" : [ ],
+      "transactions" : [ ],
+      "withdrawalsRoot" : "0x18f3a249d9eb5115c5a632731a8ae4014b874bad61d4e1658a75aa190256c3b0",
+      "withdrawals": [
+        {
+          "index": "0x0",
+          "validatorIndex": "0x0",
+          "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "amount": "0x1"
+        },
+        {
+          "index": "0x1",
+          "validatorIndex": "0x0",
+          "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "amount": "0x2"
+        }
+      ]
+    }
+  },
+  "statusCode": 200
+}
