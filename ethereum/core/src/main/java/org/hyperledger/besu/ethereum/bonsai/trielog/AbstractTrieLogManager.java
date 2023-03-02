@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractTrieLogManager implements TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTrieLogManager.class);
-  public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
+  public static final long RETAINED_LAYERS = 10; // at least 256 + typical rollbacks
 
   protected final Blockchain blockchain;
   protected final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;

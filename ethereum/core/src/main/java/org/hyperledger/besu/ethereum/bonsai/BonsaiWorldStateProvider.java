@@ -161,16 +161,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
               .getWorldState(blockHeader.getHash())
               .orElse(trieLogManager.getHeadWorldState());
       return rollMutableStateToBlockHash(worldState, blockHeader.getHash())
-          .map(
-              mutableWorldState -> {
-                if (!trieLogManager.containWorldStateStorage(blockHeader.getHash())) {
-                  trieLogManager.addCachedLayer(
-                      blockHeader,
-                      mutableWorldState.rootHash(),
-                      (BonsaiWorldState) mutableWorldState);
-                }
-                return mutableWorldState.freeze();
-              });
+          .map(MutableWorldState::freeze);
     }
   }
 
