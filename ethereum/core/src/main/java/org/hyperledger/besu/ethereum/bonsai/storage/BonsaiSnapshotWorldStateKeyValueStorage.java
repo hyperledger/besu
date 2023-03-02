@@ -158,8 +158,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   protected synchronized void tryClose() throws Exception {
-    System.out.println(
-        "tryClose " + this + " " + shouldClose.get() + " " + subscribers.getSubscriberCount());
     if (shouldClose.get() && subscribers.getSubscriberCount() < 1) {
       // attempting to close already closed snapshots will segfault
       doClose();
