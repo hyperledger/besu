@@ -74,7 +74,7 @@ public class TransitionProtocolScheduleTest {
   public void returnPostMergeIfFinalizedExists() {
     when(mergeContext.getFinalized()).thenReturn(Optional.of(mock(BlockHeader.class)));
 
-    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(blockHeader);
 
     verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }
@@ -84,7 +84,7 @@ public class TransitionProtocolScheduleTest {
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
     when(mergeContext.isPostMerge()).thenReturn(false);
 
-    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(blockHeader);
 
     verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
   }
@@ -102,7 +102,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(95L)));
 
-    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(blockHeader);
 
     verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
   }
@@ -120,7 +120,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(95L)));
 
-    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(blockHeader);
 
     verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
   }
@@ -139,7 +139,7 @@ public class TransitionProtocolScheduleTest {
     when(blockchain.getTotalDifficultyByHash(parentHash))
         .thenReturn(Optional.of(Difficulty.of(105L)));
 
-    transitionProtocolSchedule.getByBlockHeaderForBws(blockHeader);
+    transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(blockHeader);
 
     verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }

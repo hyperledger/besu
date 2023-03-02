@@ -124,7 +124,8 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    * @param blockHeader the block header
    * @return the ProtocolSpec to be used by the provided block
    */
-  public ProtocolSpec getByBlockHeaderForBws(final ProcessableBlockHeader blockHeader) {
+  public ProtocolSpec getByBlockHeaderWithTransitionReorgHandling(
+      final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
         .getByTimestamp(blockHeader.getTimestamp())
         .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));

@@ -131,7 +131,7 @@ public class TransitionControllerBuilderTest {
     when(mergeContext.isPostMerge()).thenReturn(Boolean.FALSE);
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
     when(preMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(preMergeProtocolSpec);
-    assertThat(transitionProtocolSchedule.getByBlockHeaderForBws(mockBlock))
+    assertThat(transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(mockBlock))
         .isEqualTo(preMergeProtocolSpec);
   }
 
@@ -141,7 +141,7 @@ public class TransitionControllerBuilderTest {
     var postMergeProtocolSpec = mock(ProtocolSpec.class);
     when(mergeContext.getFinalized()).thenReturn(Optional.of(mockBlock));
     when(postMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(postMergeProtocolSpec);
-    assertThat(transitionProtocolSchedule.getByBlockHeaderForBws(mockBlock))
+    assertThat(transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(mockBlock))
         .isEqualTo(postMergeProtocolSpec);
   }
 
@@ -164,7 +164,7 @@ public class TransitionControllerBuilderTest {
         .thenReturn(Optional.of(Difficulty.of(1335L)));
 
     when(preMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(preMergeProtocolSpec);
-    assertThat(transitionProtocolSchedule.getByBlockHeaderForBws(mockBlock))
+    assertThat(transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(mockBlock))
         .isEqualTo(preMergeProtocolSpec);
   }
 
@@ -187,7 +187,7 @@ public class TransitionControllerBuilderTest {
         .thenReturn(Optional.of(Difficulty.of(1337L)));
 
     when(postMergeProtocolSchedule.getByBlockHeader(any())).thenReturn(postMergeProtocolSpec);
-    assertThat(transitionProtocolSchedule.getByBlockHeaderForBws(mockBlock))
+    assertThat(transitionProtocolSchedule.getByBlockHeaderWithTransitionReorgHandling(mockBlock))
         .isEqualTo(postMergeProtocolSpec);
   }
 
