@@ -17,7 +17,6 @@ package org.hyperledger.besu.plugin.services.storage;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 /** The Key value storage transaction transition validator decorator. */
 public class KeyValueStorageTransactionTransitionValidatorDecorator

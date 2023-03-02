@@ -30,8 +30,8 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKey
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.math.BigInteger;
 import java.util.function.Function;

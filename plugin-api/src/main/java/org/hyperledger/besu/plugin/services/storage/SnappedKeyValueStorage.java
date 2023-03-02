@@ -24,11 +24,4 @@ public interface SnappedKeyValueStorage extends KeyValueStorage {
    * @return the snapshot transaction
    */
   KeyValueStorageTransaction getSnapshotTransaction();
-
-  /**
-   * Clone from snapshot.
-   *
-   * @return the snapped key value storage
-   */
-  SnappedKeyValueStorage cloneFromSnapshot();
 }

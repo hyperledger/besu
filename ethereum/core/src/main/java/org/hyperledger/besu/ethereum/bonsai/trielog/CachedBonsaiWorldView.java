@@ -16,34 +16,24 @@
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldView;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
-  private final BonsaiSnapshotWorldStateKeyValueStorage worldStateStorage;
+  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final BlockHeader blockHeader;
-  private long worldViewSubscriberId = -1L;
+  private final long worldViewSubscriberId;
 
-  public CachedBonsaiWorldView(final BlockHeader blockHeader, final BonsaiSnapshotWorldStateKeyValueStorage worldView) {
+  public CachedBonsaiWorldView(
+      final BlockHeader blockHeader, final BonsaiWorldStateKeyValueStorage worldView) {
     this.blockHeader = blockHeader;
     this.worldStateStorage = worldView;
+    this.worldViewSubscriberId = worldStateStorage.subscribe(this);
   }
 
-  public BonsaiSnapshotWorldStateKeyValueStorage getWorldstateStorage() {
+  public BonsaiWorldStateKeyValueStorage getWorldstateStorage() {
     return worldStateStorage;
-  }
-
-  public long subscribe(final CachedBonsaiWorldView subscriber) {
-    this.worldViewSubscriberId = worldStateStorage.subscribe(subscriber);
-    return this.worldViewSubscriberId;
-  }
-
-  public void unSubscribe(final long subscriberId) {
-    worldStateStorage.unSubscribe(subscriberId);
   }
 
   public long getBlockNumber() {

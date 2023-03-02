@@ -163,11 +163,6 @@ public class InMemoryKeyValueStorage
     return startTransaction();
   }
 
-  @Override
-  public SnappedKeyValueStorage cloneFromSnapshot() {
-    return takeSnapshot();
-  }
-
   public class InMemoryTransaction implements KeyValueStorageTransaction {
 
     protected Map<Bytes, byte[]> updatedValues = new HashMap<>();

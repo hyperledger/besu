@@ -94,7 +94,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this(toCopy, toCopy.context, false);
   }
 
-  public BonsaiAccount(final BonsaiAccount toCopy, final BonsaiWorldView context, final boolean mutable) {
+  public BonsaiAccount(
+      final BonsaiAccount toCopy, final BonsaiWorldView context, final boolean mutable) {
     this.context = context;
     this.address = toCopy.address;
     this.addressHash = toCopy.addressHash;
@@ -108,7 +109,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  public BonsaiAccount(final BonsaiWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+  public BonsaiAccount(
+      final BonsaiWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
     this.context = context;
     this.address = tracked.getAddress();
     this.addressHash = tracked.getAddressHash();

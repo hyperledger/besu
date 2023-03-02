@@ -29,8 +29,8 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldState.StreamableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.List;

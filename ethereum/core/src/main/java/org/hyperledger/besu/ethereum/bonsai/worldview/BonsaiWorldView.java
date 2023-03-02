@@ -18,9 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai.worldview;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -63,7 +61,4 @@ public interface BonsaiWorldView extends WorldView {
   BonsaiWorldStateKeyValueStorage getWorldStateStorage();
 
   WorldUpdater updater();
-
-  BonsaiWorldStateUpdateAccumulator getUpdateAccumulator();
-
 }

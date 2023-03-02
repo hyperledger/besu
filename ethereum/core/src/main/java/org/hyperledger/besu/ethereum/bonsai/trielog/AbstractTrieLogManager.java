@@ -18,11 +18,11 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiUpdater;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -70,8 +70,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
       final BonsaiUpdater stateUpdater = forWorldState.getWorldStateStorage().updater();
       boolean success = false;
       try {
-        final TrieLogLayer trieLog =
-            prepareTrieLog(forBlockHeader, localUpdater);
+        final TrieLogLayer trieLog = prepareTrieLog(forBlockHeader, localUpdater);
         persistTrieLog(forBlockHeader, forWorldStateRootHash, trieLog, stateUpdater);
         success = true;
       } finally {
@@ -86,8 +85,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
 
   @VisibleForTesting
   TrieLogLayer prepareTrieLog(
-      final BlockHeader blockHeader,
-      final BonsaiWorldStateUpdateAccumulator localUpdater) {
+      final BlockHeader blockHeader, final BonsaiWorldStateUpdateAccumulator localUpdater) {
     debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
     final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
     trieLog.freeze();

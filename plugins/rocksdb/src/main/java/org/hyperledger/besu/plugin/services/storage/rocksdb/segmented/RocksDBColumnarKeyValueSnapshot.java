@@ -19,13 +19,11 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.LayeredKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -54,12 +52,6 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
       final RocksDBMetrics metrics) {
     this.db = db;
     this.snapTx = new RocksDBSnapshotTransaction(db, segment.get(), metrics);
-  }
-
-  private RocksDBColumnarKeyValueSnapshot(
-      final OptimisticTransactionDB db, final RocksDBSnapshotTransaction snapTx) {
-    this.db = db;
-    this.snapTx = snapTx;
   }
 
   @Override
@@ -122,10 +114,5 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   @Override
   public KeyValueStorageTransaction getSnapshotTransaction() {
     return snapTx;
-  }
-
-  @Override
-  public SnappedKeyValueStorage cloneFromSnapshot() {
-    return new LayeredKeyValueStorage(this,new HashMap<>());
   }
 }

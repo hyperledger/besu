@@ -65,8 +65,7 @@ public class BonsaiWorldStateArchiveTest {
 
   BonsaiWorldStateProvider bonsaiWorldStateArchive;
 
-  @Mock
-  TrieLogManager trieLogManager;
+  @Mock TrieLogManager trieLogManager;
 
   @Before
   public void setUp() {
@@ -227,7 +226,7 @@ public class BonsaiWorldStateArchiveTest {
 
   @SuppressWarnings({"unchecked"})
   @Test
-  //TODO: refactor to test original intent
+  // TODO: refactor to test original intent
   @Ignore("needs refactor, getMutable(hash, hash) cannot trigger saveTrieLog")
   public void testGetMutableWithRollbackNotOverrideTrieLogLayer() {
     final KeyValueStorageTransaction keyValueStorageTransaction =

@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransactionTransitionValidatorDecorator;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,7 +37,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransactionTransitionValidatorDecorator;
 
 /**
  * This KeyValueStorage will keep data in memory up to some maximum number of elements. Elements are

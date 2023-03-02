@@ -64,17 +64,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public BonsaiSnapshotWorldStateKeyValueStorage clone() {
-    return new BonsaiSnapshotWorldStateKeyValueStorage(
-        parentWorldStateStorage,
-        ((SnappedKeyValueStorage) accountStorage).cloneFromSnapshot(),
-        ((SnappedKeyValueStorage) codeStorage).cloneFromSnapshot(),
-        ((SnappedKeyValueStorage) storageStorage).cloneFromSnapshot(),
-        ((SnappedKeyValueStorage) trieBranchStorage).cloneFromSnapshot(),
-        trieLogStorage);
-  }
-
-  @Override
   public BonsaiUpdater updater() {
     return new Updater(
         ((SnappedKeyValueStorage) accountStorage).getSnapshotTransaction(),

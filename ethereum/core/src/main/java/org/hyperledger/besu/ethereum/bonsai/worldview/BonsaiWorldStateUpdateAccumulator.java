@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -482,11 +481,6 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
     return wrappedWorldView().getWorldStateStorage();
-  }
-
-  @Override
-  public BonsaiWorldStateUpdateAccumulator getUpdateAccumulator() {
-    return null;
   }
 
   public TrieLogLayer generateTrieLog(final Hash blockHash) {

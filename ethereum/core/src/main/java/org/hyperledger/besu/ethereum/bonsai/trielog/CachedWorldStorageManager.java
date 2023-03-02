@@ -17,9 +17,10 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -71,15 +72,14 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       // if storage is a snapshot, clone the BonsaiWorldStateUpdateAccumulator
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
-          new CachedBonsaiWorldView(blockHeader,
-                  (BonsaiSnapshotWorldStateKeyValueStorage) forWorldState.getWorldStateStorage()));
+          new CachedBonsaiWorldView(blockHeader, forWorldState.getWorldStateStorage()));
     } else {
       // else take a snapshot with empty updater
       cachedWorldStatesByHash.put(
           blockHeader.getHash(),
           new CachedBonsaiWorldView(
               blockHeader,
-                  new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage)));
+              new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage)));
     }
     scrubCachedLayers(blockHeader.getNumber());
   }
@@ -92,8 +92,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
           .map(
               cached ->
                   new BonsaiWorldState(
-                      archive,
-                      new BonsaiSnapshotWorldStateKeyValueStorage(cached.getWorldstateStorage())));
+                      archive, new BonsaiWorldStateLayerStorage(cached.getWorldstateStorage())));
     }
     return Optional.empty();
   }

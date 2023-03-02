@@ -15,32 +15,25 @@
  */
 package org.hyperledger.besu.plugin.services.storage;
 
+import org.hyperledger.besu.plugin.services.exception.StorageException;
+
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.stream.Stream;
+
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
+public class LayeredKeyValueStorage extends InMemoryKeyValueStorage {
 
-public class LayeredKeyValueStorage extends InMemoryKeyValueStorage implements SnappedKeyValueStorage{
+  private final KeyValueStorage parent;
 
-  private final SnappedKeyValueStorage parent;
-
-  public LayeredKeyValueStorage(final SnappedKeyValueStorage parent) {
-    super();
+  public LayeredKeyValueStorage(final KeyValueStorage parent) {
+    super(new ConcurrentHashMap<>());
     this.parent = parent;
   }
-
-  public LayeredKeyValueStorage(final SnappedKeyValueStorage parent, final Map<Bytes, byte[]> hashValueStore) {
-    super(hashValueStore);
-    this.parent = parent;
-  }
-
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
@@ -49,64 +42,66 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage implements S
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
+    return Optional.of(Bytes.wrap(key))
+        .map(Bytes::wrap)
+        .flatMap(
+            keyWrapped ->
+                Optional.ofNullable(hashValueStore.get(keyWrapped)).or(() -> parent.get(key)))
+        .filter(bytes -> bytes.length > 0);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> stream() {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      final Bytes keyWrapped = Bytes.wrap(key);
-      byte[] res = hashValueStore.get(keyWrapped);
-      if(res.length==0) {
-        return Optional.empty();
-      }
-      return Optional.ofNullable(hashValueStore.get(keyWrapped)).or(() -> parent.get(key));
+      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+          .filter(entry -> entry.getValue().length > 0)
+          .map(bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()));
     } finally {
       lock.unlock();
     }
   }
 
-
-
-  @Override
-  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    // TODO
-  }
-
-  @Override
-  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
-    // TODO
-  }
-
-  @Override
-  public Stream<Pair<byte[], byte[]>> stream() {
-    // TODO
-  }
-
   @Override
   public Stream<byte[]> streamKeys() {
-    // TODO
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+          .filter(entry -> entry.getValue().length > 0)
+          .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe());
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
   public boolean tryDelete(final byte[] key) {
-    // TODO
+    // TODO: can we rely on zero byte array to indicate deletion?
+    hashValueStore.put(Bytes.wrap(key), new byte[0]);
+    return true;
   }
 
   @Override
-    public KeyValueStorageTransaction startTransaction() {
-      return new KeyValueStorageTransactionTransitionValidatorDecorator(new InMemoryTransaction(){
-        @Override
-        public void commit() throws StorageException {
-          final Lock lock = rwLock.writeLock();
-          lock.lock();
-          try {
-            hashValueStore.putAll(updatedValues);
-            removedKeys.forEach(key -> hashValueStore.put(key , new byte[]{}));
-            // put empty and not removed to not ask parent in case of deletion
-            updatedValues = null;
-            removedKeys = null;
-          } finally {
-            lock.unlock();
+  public KeyValueStorageTransaction startTransaction() {
+    return new KeyValueStorageTransactionTransitionValidatorDecorator(
+        new InMemoryTransaction() {
+          @Override
+          public void commit() throws StorageException {
+
+            final Lock lock = rwLock.writeLock();
+            lock.lock();
+            try {
+              hashValueStore.putAll(updatedValues);
+              removedKeys.forEach(key -> hashValueStore.put(key, new byte[] {}));
+              // put empty and not removed to not ask parent in case of deletion
+              updatedValues = null;
+              removedKeys = null;
+            } finally {
+              lock.unlock();
+            }
           }
-        }
-      });
-    }
+        });
+  }
 }

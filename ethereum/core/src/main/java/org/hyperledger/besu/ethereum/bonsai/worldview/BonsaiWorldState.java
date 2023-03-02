@@ -24,13 +24,13 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -64,7 +64,7 @@ public class BonsaiWorldState
   public final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   private final BonsaiWorldStateProvider archive;
-  private BonsaiWorldStateUpdateAccumulator accumulator;
+  private final BonsaiWorldStateUpdateAccumulator accumulator;
 
   public Hash worldStateRootHash;
   public Hash worldStateBlockHash;
@@ -118,11 +118,6 @@ public class BonsaiWorldState
   @Override
   public boolean isLayered() {
     return worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage;
-  }
-
-  @Override
-  public BonsaiWorldStateUpdateAccumulator getUpdateAccumulator() {
-    return accumulator;
   }
 
   @Override

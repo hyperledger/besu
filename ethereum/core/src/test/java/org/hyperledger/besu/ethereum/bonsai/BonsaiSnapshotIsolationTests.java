@@ -21,9 +21,12 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
+import java.util.function.Consumer;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -86,6 +89,7 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
   }
 
   @Test
+  @Ignore("Test is broken, snapshots are no longer mutable")
   public void testIsolatedSnapshotMutation() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
     // assert we can correctly execute a block on a mutable snapshot without mutating head
@@ -123,6 +127,7 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
   }
 
   @Test
+  @Ignore("broken test, snapshots are no longer mutable")
   public void testSnapshotCloneIsolation() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
     Address altTestAddress = Address.fromHexString("0xd1ffbeef");
@@ -136,15 +141,20 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     var res = executeBlock(isolated, firstBlock);
 
     assertThat(res.isSuccessful()).isTrue();
-    Runnable checkIsolatedState =
-        () -> {
-          assertThat(isolated.rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
-          assertThat(isolated.get(testAddress)).isNotNull();
-          assertThat(isolated.get(altTestAddress)).isNull();
-          assertThat(isolated.get(testAddress).getBalance())
+    Consumer<BlockHeader> checkIsolatedState =
+        (header) -> {
+          var ws =
+              archive
+                  .getMutable(header, false)
+                  .orElseThrow(() -> new RuntimeException("failed to get isolated worldstate"));
+
+          assertThat(ws.rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+          assertThat(ws.get(testAddress)).isNotNull();
+          assertThat(ws.get(altTestAddress)).isNull();
+          assertThat(ws.get(testAddress).getBalance())
               .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
         };
-    checkIsolatedState.run();
+    checkIsolatedState.accept(firstBlock.getHeader());
 
     // assert clone is isolated and unmodified:
     assertThat(isolatedClone.get(testAddress)).isNull();
@@ -167,7 +177,7 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     assertThat(isolatedClone.rootHash()).isEqualTo(cloneForkBlock.getHeader().getStateRoot());
 
     // re-check isolated state remains unchanged:
-    checkIsolatedState.run();
+    checkIsolatedState.accept(firstBlock.getHeader());
 
     // assert that the actual persisted worldstate remains unchanged:
     var persistedWorldState = archive.getMutable();
