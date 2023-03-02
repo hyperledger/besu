@@ -138,9 +138,9 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
       // if head is not post-merge, return pre-merge schedule:
       if (!mergeContext.isPostMerge()) {
         LOG.atDebug()
-                .setMessage("for {} returning a pre-merge schedule because we are not post-merge")
-                .addArgument(blockHeader::toLogString)
-                .log();
+            .setMessage("for {} returning a pre-merge schedule because we are not post-merge")
+            .addArgument(blockHeader::toLogString)
+            .log();
         return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
 
