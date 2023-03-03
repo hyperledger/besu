@@ -15,7 +15,6 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -97,12 +96,12 @@ public class BackwardChain {
     headers.put(blockHeader.getHash(), blockHeader);
     chainStorage.put(blockHeader.getHash(), firstHeader.getHash());
     firstStoredAncestor = Optional.of(blockHeader);
-    debugLambda(
-        LOG,
-        "Added header {} to backward chain led by pivot {} on height {}",
-        blockHeader::toLogString,
-        () -> lastStoredPivot.orElseThrow().toLogString(),
-        firstHeader::getNumber);
+    LOG.atDebug()
+        .setMessage("Added header {} to backward chain led by pivot {} on height {}")
+        .addArgument(blockHeader::toLogString)
+        .addArgument(() -> lastStoredPivot.orElseThrow().toLogString())
+        .addArgument(firstHeader::getNumber)
+        .log();
   }
 
   public synchronized Optional<Block> getPivot() {
@@ -126,23 +125,26 @@ public class BackwardChain {
   }
 
   public synchronized void appendTrustedBlock(final Block newPivot) {
-    debugLambda(LOG, "Appending trusted block {}", newPivot::toLogString);
+    LOG.atDebug().setMessage("Appending trusted block {}").addArgument(newPivot::toLogString).log();
     headers.put(newPivot.getHash(), newPivot.getHeader());
     blocks.put(newPivot.getHash(), newPivot);
     if (lastStoredPivot.isEmpty()) {
       firstStoredAncestor = Optional.of(newPivot.getHeader());
     } else {
       if (newPivot.getHeader().getParentHash().equals(lastStoredPivot.get().getHash())) {
-        debugLambda(
-            LOG,
-            "Added block {} to backward chain led by pivot {} on height {}",
-            newPivot::toLogString,
-            lastStoredPivot.get()::toLogString,
-            firstStoredAncestor.get()::getNumber);
+        LOG.atDebug()
+            .setMessage("Added block {} to backward chain led by pivot {} on height {}")
+            .addArgument(newPivot::toLogString)
+            .addArgument(lastStoredPivot.get()::toLogString)
+            .addArgument(firstStoredAncestor.get()::getNumber)
+            .log();
         chainStorage.put(lastStoredPivot.get().getHash(), newPivot.getHash());
       } else {
         firstStoredAncestor = Optional.of(newPivot.getHeader());
-        debugLambda(LOG, "Re-pivoting to new target block {}", newPivot::toLogString);
+        LOG.atDebug()
+            .setMessage("Re-pivoting to new target block {}")
+            .addArgument(newPivot::toLogString)
+            .log();
       }
     }
     lastStoredPivot = Optional.of(newPivot.getHeader());

@@ -72,7 +72,7 @@ public class TraceTransactionIntegrationTest {
     worldStateArchive = contextTestFixture.getStateArchive();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
     transactionProcessor = protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
-    blockHashLookup = new BlockHashLookup(genesisBlock.getHeader(), blockchain);
+    blockHashLookup = new CachingBlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
 
   @Test
@@ -103,7 +103,8 @@ public class TraceTransactionIntegrationTest {
             genesisBlockHeader.getCoinbase(),
             blockHashLookup,
             false,
-            TransactionValidationParams.blockReplay());
+            TransactionValidationParams.blockReplay(),
+            Wei.ZERO);
     assertThat(result.isSuccessful()).isTrue();
     final Account createdContract =
         createTransactionUpdater.getTouchedAccounts().stream()
@@ -135,7 +136,8 @@ public class TraceTransactionIntegrationTest {
             genesisBlockHeader.getCoinbase(),
             tracer,
             blockHashLookup,
-            false);
+            false,
+            Wei.ZERO);
 
     assertThat(result.isSuccessful()).isTrue();
 
@@ -175,8 +177,9 @@ public class TraceTransactionIntegrationTest {
         transaction,
         genesisBlockHeader.getCoinbase(),
         tracer,
-        new BlockHashLookup(genesisBlockHeader, blockchain),
-        false);
+        new CachingBlockHashLookup(genesisBlockHeader, blockchain),
+        false,
+        Wei.ZERO);
 
     final int expectedDepth = 0; // Reference impl returned 1. Why the difference?
 

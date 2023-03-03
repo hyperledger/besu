@@ -18,8 +18,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedSta
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -151,7 +149,10 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         .filter(transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
         .forEach(
             transactionInfo -> {
-              traceLambda(LOG, "Evicted {} due to age", transactionInfo::toTraceLog);
+              LOG.atTrace()
+                  .setMessage("Evicted {} due to age")
+                  .addArgument(transactionInfo::toTraceLog)
+                  .log();
               removeTransaction(transactionInfo.getTransaction());
             });
   }
@@ -169,10 +170,11 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
     if (lowestInvalidKnownNonceCache.hasInvalidLowerNonce(transaction)) {
-      debugLambda(
-          LOG,
-          "Dropping transaction {} since the sender has an invalid transaction with lower nonce",
-          transaction::toTraceLog);
+      LOG.atDebug()
+          .setMessage(
+              "Dropping transaction {} since the sender has an invalid transaction with lower nonce")
+          .addArgument(transaction::toTraceLog)
+          .log();
       return LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
     }
 
@@ -286,15 +288,17 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     if (existingPendingTx != null) {
       if (!transactionReplacementHandler.shouldReplace(
           existingPendingTx, pendingTransaction, chainHeadHeaderSupplier.get())) {
-        traceLambda(
-            LOG, "Reject underpriced transaction replacement {}", pendingTransaction::toTraceLog);
+        LOG.atTrace()
+            .setMessage("Reject underpriced transaction replacement {}")
+            .addArgument(pendingTransaction::toTraceLog)
+            .log();
         return REJECTED_UNDERPRICED_REPLACEMENT;
       }
-      traceLambda(
-          LOG,
-          "Replace existing transaction {}, with new transaction {}",
-          existingPendingTx::toTraceLog,
-          pendingTransaction::toTraceLog);
+      LOG.atTrace()
+          .setMessage("Replace existing transaction {}, with new transaction {}")
+          .addArgument(existingPendingTx::toTraceLog)
+          .addArgument(pendingTransaction::toTraceLog)
+          .log();
       maybeReplacedTransaction = Optional.of(existingPendingTx.getTransaction());
     } else {
       maybeReplacedTransaction = Optional.empty();
@@ -302,7 +306,10 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
     pendingTxsForSender.updateSenderAccount(maybeSenderAccount);
     pendingTxsForSender.trackPendingTransaction(pendingTransaction);
-    traceLambda(LOG, "Tracked transaction by sender {}", pendingTxsForSender::toTraceLog);
+    LOG.atTrace()
+        .setMessage("Tracked transaction by sender {}")
+        .addArgument(pendingTxsForSender::toTraceLog)
+        .log();
     maybeReplacedTransaction.ifPresent(this::removeTransaction);
     return ADDED;
   }
@@ -320,11 +327,11 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                     transaction.getSender());
                 transactionsBySender.remove(transaction.getSender());
               } else {
-                traceLambda(
-                    LOG,
-                    "Tracked transaction by sender {} after the removal of {}",
-                    pendingTxsForSender::toTraceLog,
-                    transaction::toTraceLog);
+                LOG.atTrace()
+                    .setMessage("Tracked transaction by sender {} after the removal of {}")
+                    .addArgument(pendingTxsForSender::toTraceLog)
+                    .addArgument(transaction::toTraceLog)
+                    .log();
               }
             });
   }
@@ -418,21 +425,26 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     final Transaction transaction = pendingTransaction.getTransaction();
     synchronized (lock) {
       if (pendingTransactions.containsKey(pendingTransaction.getHash())) {
-        traceLambda(LOG, "Already known transaction {}", pendingTransaction::toTraceLog);
+        LOG.atTrace()
+            .setMessage("Already known transaction {}")
+            .addArgument(pendingTransaction::toTraceLog)
+            .log();
         return TransactionAddedStatus.ALREADY_KNOWN;
       }
 
       if (transaction.getNonce() - maybeSenderAccount.map(AccountState::getNonce).orElse(0L)
           >= poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
-        traceLambda(
-            LOG,
-            "Transaction {} not added because nonce too far in the future for sender {}",
-            transaction::toTraceLog,
-            () ->
-                maybeSenderAccount
-                    .map(Account::getAddress)
-                    .map(Address::toString)
-                    .orElse("unknown"));
+        LOG.atTrace()
+            .setMessage(
+                "Transaction {} not added because nonce too far in the future for sender {}")
+            .addArgument(transaction::toTraceLog)
+            .addArgument(
+                () ->
+                    maybeSenderAccount
+                        .map(Account::getAddress)
+                        .map(Address::toString)
+                        .orElse("unknown"))
+            .log();
         return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
       }
 
@@ -524,11 +536,12 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
           .filter(pendingTx -> pendingTx.getTransaction().getNonce() > invalidNonce)
           .peek(
               pendingTx ->
-                  traceLambda(
-                      LOG,
-                      "Transaction {} invalid since there is a lower invalid nonce {} for the sender",
-                      pendingTx::toTraceLog,
-                      () -> invalidNonce))
+                  LOG.atTrace()
+                      .setMessage(
+                          "Transaction {} invalid since there is a lower invalid nonce {} for the sender")
+                      .addArgument(pendingTx::toTraceLog)
+                      .addArgument(invalidNonce)
+                      .log())
           .map(PendingTransaction::getTransaction)
           .collect(Collectors.toList());
     }

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
@@ -317,7 +316,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     lines.add("Besu has identified a problem with its worldstate database.");
     lines.add("Your node will fetch the correct data from peers to repair the problem.");
     lines.add("Starting the sync pipeline...");
-    infoLambda(LOG, FramedLogMessage.generate(lines));
+    LOG.atInfo().setMessage(FramedLogMessage.generate(lines)).log();
 
     this.syncState.markInitialSyncRestart();
     this.syncState.markResyncNeeded();

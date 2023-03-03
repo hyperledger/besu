@@ -44,7 +44,7 @@ public class DebugResyncWorldstate implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     protocolSchedule
-        .getByBlockNumber(blockchain.getChainHeadBlockNumber())
+        .getByBlockHeader(blockchain.getChainHeadHeader())
         .getBadBlocksManager()
         .reset();
     return new JsonRpcSuccessResponse(

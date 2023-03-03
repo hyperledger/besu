@@ -150,6 +150,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
@@ -541,6 +542,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
       arity = "1")
   private final BigInteger networkId = null;
+
+  @Option(
+      names = {"--kzg-trusted-setup"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Path to file containing the KZG trusted setup, mandatory for custom networks that support data blobs, "
+              + "optional for overriding named networks default.",
+      arity = "1")
+  private final Path kzgTrustedSetupFile = null;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
   GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
@@ -1837,6 +1847,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       Blake2bfMessageDigest.Blake2bfDigest.disableNative();
       logger.info("Using the Java implementation of the blake2bf algorithm");
+    }
+
+    if (getActualGenesisConfigOptions().getCancunTime().isPresent()) {
+      // if custom genesis provided, then trusted setup file is mandatory
+      if (genesisFile != null && kzgTrustedSetupFile == null) {
+        throw new ParameterException(
+            this.commandLine,
+            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
+      }
+      if (kzgTrustedSetupFile != null) {
+        KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
+      } else {
+        KZGPointEvalPrecompiledContract.init(network.name());
+      }
+    } else if (kzgTrustedSetupFile != null) {
+      throw new ParameterException(
+          this.commandLine,
+          "--kzg-trusted-setup can only be specified on networks with data blobs enabled");
     }
   }
 
@@ -3486,16 +3514,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     isGoQuorumCompatibilityMode = true;
   }
 
+  private GenesisConfigOptions getActualGenesisConfigOptions() {
+    return Optional.ofNullable(genesisConfigOptions)
+        .orElseGet(
+            () ->
+                GenesisConfigFile.fromConfig(
+                        genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
+                    .getConfigOptions(genesisConfigOverrides));
+  }
+
   private void setMergeConfigOptions() {
     MergeConfigOptions.setMergeEnabled(
-        Optional.ofNullable(genesisConfigOptions)
-            .orElseGet(
-                () ->
-                    GenesisConfigFile.fromConfig(
-                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
-                        .getConfigOptions(genesisConfigOverrides))
-            .getTerminalTotalDifficulty()
-            .isPresent());
+        getActualGenesisConfigOptions().getTerminalTotalDifficulty().isPresent());
   }
 
   private void setIgnorableStorageSegments() {
@@ -3505,13 +3535,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validatePostMergeCheckpointBlockRequirements() {
-    final GenesisConfigOptions genesisOptions =
-        Optional.ofNullable(genesisConfigOptions)
-            .orElseGet(
-                () ->
-                    GenesisConfigFile.fromConfig(
-                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
-                        .getConfigOptions(genesisConfigOverrides));
+    final GenesisConfigOptions genesisOptions = getActualGenesisConfigOptions();
     final SynchronizerConfiguration synchronizerConfiguration =
         unstableSynchronizerOptions.toDomainObject().build();
     final Optional<UInt256> terminalTotalDifficulty = genesisOptions.getTerminalTotalDifficulty();

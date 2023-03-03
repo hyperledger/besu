@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -126,11 +125,11 @@ public abstract class AbstractGetHeadersFromPeerTask
 
   private void updatePeerChainState(final EthPeer peer, final BlockHeader blockHeader) {
     if (blockHeader.getNumber() > peer.chainState().getEstimatedHeight()) {
-      traceLambda(
-          LOG,
-          "Updating chain state for peer {} to block header {}",
-          peer::getShortNodeId,
-          blockHeader::toLogString);
+      LOG.atTrace()
+          .setMessage("Updating chain state for peer {} to block header {}")
+          .addArgument(peer::getShortNodeId)
+          .addArgument(blockHeader::toLogString)
+          .log();
       peer.chainState().update(blockHeader);
     }
     LOG.trace("Peer chain state {}", peer.chainState());

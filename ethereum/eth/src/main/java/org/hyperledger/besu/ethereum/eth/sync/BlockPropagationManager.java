@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
@@ -185,18 +183,19 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
-
-    traceLambda(
-        LOG,
-        "Block added event type {} for block {}. Current status {}",
-        blockAddedEvent::getEventType,
-        newBlock::toLogString,
-        () -> this);
+    LOG.atTrace()
+        .setMessage("Block added event type {} for block {}. Current status {}")
+        .addArgument(blockAddedEvent::getEventType)
+        .addArgument(newBlock::toLogString)
+        .addArgument(this)
+        .log();
 
     // If there is no children to process, maybe try non announced blocks
     if (!maybeProcessPendingChildrenBlocks(newBlock)) {
-      traceLambda(
-          LOG, "There are no pending blocks ready to import for block {}", newBlock::toLogString);
+      LOG.atTrace()
+          .setMessage("There are no pending blocks ready to import for block {}")
+          .addArgument(newBlock::toLogString)
+          .log();
       maybeProcessNonAnnouncedBlocks(newBlock);
     }
 
@@ -224,11 +223,14 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     }
 
     if (!readyForImport.isEmpty()) {
-      traceLambda(
-          LOG,
-          "Ready to import pending blocks found [{}] for block {}",
-          () -> readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")),
-          block::toLogString);
+
+      LOG.atTrace()
+          .setMessage("Ready to import pending blocks found [{}] for block {}")
+          .addArgument(
+              () ->
+                  readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")))
+          .addArgument(block::toLogString)
+          .log();
 
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
           PersistBlockTask.forUnorderedBlocks(
@@ -290,12 +292,12 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {
       final Block block = newBlockMessage.block(protocolSchedule);
-      traceLambda(
-          LOG,
-          "New block from network {} from peer {}. Current status {}",
-          block::toLogString,
-          message::getPeer,
-          () -> this);
+      LOG.atTrace()
+          .setMessage("New block from network {} from peer {}. Current status {}")
+          .addArgument(block::toLogString)
+          .addArgument(message::getPeer)
+          .addArgument(this)
+          .log();
 
       final Difficulty totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
 
@@ -306,20 +308,27 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
       if (!shouldImportBlockAtHeight(
           block.getHeader().getNumber(), localChainHeight, bestChainHeight)) {
-        traceLambda(
-            LOG,
-            "Do not import new block from network {}, current chain heights are: local {}, best {}",
-            block::toLogString,
-            () -> localChainHeight,
-            () -> bestChainHeight);
+        LOG.atTrace()
+            .setMessage(
+                "Do not import new block from network {}, current chain heights are: local {}, best {}")
+            .addArgument(block::toLogString)
+            .addArgument(localChainHeight)
+            .addArgument(bestChainHeight)
+            .log();
         return;
       }
       if (pendingBlocksManager.contains(block.getHash())) {
-        traceLambda(LOG, "New block from network {} is already pending", block::toLogString);
+        LOG.atTrace()
+            .setMessage("New block from network {} is already pending")
+            .addArgument(block::toLogString)
+            .log();
         return;
       }
       if (blockchain.contains(block.getHash())) {
-        traceLambda(LOG, "New block from network {} is already present", block::toLogString);
+        LOG.atTrace()
+            .setMessage("New block from network {} is already present")
+            .addArgument(block::toLogString)
+            .log();
         return;
       }
 
@@ -341,12 +350,12 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       // Register announced blocks
       final List<NewBlockHash> announcedBlocks =
           Lists.newArrayList(newBlockHashesMessage.getNewHashes());
-      traceLambda(
-          LOG,
-          "New block hashes from network {} from peer {}. Current status {}",
-          () -> toLogString(announcedBlocks),
-          message::getPeer,
-          () -> this);
+      LOG.atTrace()
+          .setMessage("New block hashes from network {} from peer {}. Current status {}")
+          .addArgument(() -> toLogString(announcedBlocks))
+          .addArgument(message::getPeer)
+          .addArgument(this)
+          .log();
 
       for (final NewBlockHash announcedBlock : announcedBlocks) {
         message.getPeer().registerKnownBlock(announcedBlock.hash());
@@ -432,7 +441,10 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         .whenComplete(
             (block, throwable) -> {
               if (block != null) {
-                debugLambda(LOG, "Successfully retrieved block {}", block::toLogString);
+                LOG.atDebug()
+                    .setMessage("Successfully retrieved block {}")
+                    .addArgument(block::toLogString)
+                    .log();
                 processingBlocksManager.registerReceivedBlock(block);
               } else {
                 if (throwable != null) {
@@ -443,10 +455,10 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
                 } else {
                   // this could happen if we give up at some point since we find that it make no
                   // sense to retry
-                  debugLambda(
-                      LOG,
-                      "Block {} not retrieved",
-                      () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash));
+                  LOG.atDebug()
+                      .setMessage("Block {} not retrieved")
+                      .addArgument(() -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash))
+                      .log();
                 }
                 processingBlocksManager.registerFailedGetBlock(blockNumber, maybeBlockHash);
               }
@@ -466,11 +478,11 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private Function<Throwable, CompletionStage<Block>> handleGetBlockErrors(
       final long blockNumber, final Optional<Hash> maybeBlockHash) {
     return throwable -> {
-      debugLambda(
-          LOG,
-          "Temporary failure retrieving block {} from peers with error {}",
-          () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
-          throwable::toString);
+      LOG.atDebug()
+          .setMessage("Temporary failure retrieving block {} from peers with error {}")
+          .addArgument(() -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash))
+          .addArgument(throwable)
+          .log();
       return CompletableFuture.completedFuture(null);
     };
   }
@@ -486,26 +498,28 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     // check if we got this block by other means
     if (maybeBlock.isPresent()) {
       final Block block = maybeBlock.get();
-      debugLambda(
-          LOG, "No need to retry to get block {} since it is already present", block::toLogString);
+      LOG.atDebug()
+          .setMessage("No need to retry to get block {} since it is already present")
+          .addArgument(block::toLogString)
+          .log();
       return CompletableFuture.completedFuture(block);
     }
 
     final long localChainHeight = blockchain.getChainHeadBlockNumber();
     final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
     if (!shouldImportBlockAtHeight(blockNumber, localChainHeight, bestChainHeight)) {
-      debugLambda(
-          LOG,
-          "Not retrying to get block {} since we are too far from local chain head {}",
-          () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
-          blockchain.getChainHead()::toLogString);
+      LOG.atDebug()
+          .setMessage("Not retrying to get block {} since we are too far from local chain head {}")
+          .addArgument(() -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash))
+          .addArgument(blockchain.getChainHead()::toLogString)
+          .log();
       return CompletableFuture.completedFuture(null);
     }
 
-    debugLambda(
-        LOG,
-        "Retrying to get block {}",
-        () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash));
+    LOG.atDebug()
+        .setMessage("Retrying to get block {}")
+        .addArgument(() -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash))
+        .log();
 
     return ethContext
         .getScheduler()
@@ -553,7 +567,10 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     // Synchronize to avoid race condition where block import event fires after the
     // blockchain.contains() check and before the block is registered, causing onBlockAdded() to be
     // invoked for the parent of this block before we are able to register it.
-    traceLambda(LOG, "Import or save pending block {}", block::toLogString);
+    LOG.atTrace()
+        .setMessage("Import or save pending block {}")
+        .addArgument(block::toLogString)
+        .log();
 
     if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
       // Block isn't connected to local chain, save it to pending blocks collection
@@ -565,12 +582,18 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     }
 
     if (!processingBlocksManager.addImportingBlock(block.getHash())) {
-      traceLambda(LOG, "We're already importing this block {}", block::toLogString);
+      LOG.atTrace()
+          .setMessage("We're already importing this block {}")
+          .addArgument(block::toLogString)
+          .log();
       return CompletableFuture.completedFuture(block);
     }
 
     if (protocolContext.getBlockchain().contains(block.getHash())) {
-      traceLambda(LOG, "We've already imported this block {}", block::toLogString);
+      LOG.atTrace()
+          .setMessage("We've already imported this block {}")
+          .addArgument(block::toLogString)
+          .log();
       processingBlocksManager.registerBlockImportDone(block.getHash());
       return CompletableFuture.completedFuture(block);
     }
@@ -584,8 +607,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
                     new IllegalArgumentException(
                         "Incapable of retrieving header from non-existent parent of "
                             + block.toLogString()));
-    final ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
     return ethContext
