@@ -138,6 +138,7 @@ public class NewPooledTransactionHashesMessageProcessor {
             "Malformed pooled transaction hashes message received (BREACH_OF_PROTOCOL), disconnecting: {}",
             peer,
             ex);
+        LOG.trace("Message data: {}", transactionsMessage.getData());
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }
     }
