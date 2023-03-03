@@ -141,17 +141,19 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   @Override
   public Optional<BonsaiWorldState> getHeadWorldState(
       final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction) {
-    final Optional<BlockHeader> maybeBlockHeader =
-        hashBlockHeaderFunction.apply(rootWorldStateStorage.getWorldStateBlockHash().orElseThrow());
-    return maybeBlockHeader.flatMap(
-        blockHeader -> {
-          // add the head to the cache
-          addCachedLayer(
-              blockHeader,
-              blockHeader.getStateRoot(),
-              new BonsaiWorldState(archive, rootWorldStateStorage));
-          return getWorldState(blockHeader.getHash());
-        });
+
+    return rootWorldStateStorage
+        .getWorldStateBlockHash()
+        .flatMap(hashBlockHeaderFunction)
+        .flatMap(
+            blockHeader -> {
+              // add the head to the cache
+              addCachedLayer(
+                  blockHeader,
+                  blockHeader.getStateRoot(),
+                  new BonsaiWorldState(archive, rootWorldStateStorage));
+              return getWorldState(blockHeader.getHash());
+            });
   }
 
   @Override

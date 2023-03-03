@@ -27,9 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * Key value storage which stores in memory all updates to a parent worldstate storage.
- */
+/** Key value storage which stores in memory all updates to a parent worldstate storage. */
 public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     implements SnappedKeyValueStorage {
 

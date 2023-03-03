@@ -136,11 +136,11 @@ public class TransactionPoolFactory {
           @Override
           public void onInitialSyncCompleted() {
             LOG.info("Enabling transaction handling following initial sync");
-            /*transactionPool.reset();
+            transactionPool.reset();
             transactionTracker.reset();
             transactionPool.setEnabled();
             transactionsMessageHandler.setEnabled();
-            pooledTransactionsMessageHandler.setEnabled();*/
+            pooledTransactionsMessageHandler.setEnabled();
           }
 
           @Override
@@ -151,10 +151,6 @@ public class TransactionPoolFactory {
             transactionPool.setDisabled();
           }
         });
-
-    pooledTransactionsMessageHandler.setDisabled();
-    transactionsMessageHandler.setDisabled();
-    transactionPool.setDisabled();
 
     return transactionPool;
   }

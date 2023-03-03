@@ -166,9 +166,7 @@ public class InMemoryKeyValueStorage
     return startTransaction();
   }
 
-  /**
-   * In memory transaction.
-   */
+  /** In memory transaction. */
   public class InMemoryTransaction implements KeyValueStorageTransaction {
 
     /** protected access to updatedValues map for the transaction. */

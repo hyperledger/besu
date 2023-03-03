@@ -129,7 +129,6 @@ public class BonsaiWorldStateArchiveTest {
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(Long.valueOf(512));
     when(trieLogManager.getWorldState(blockHeader.getHash()))
         .thenReturn(Optional.of(mockWorldState));
-    when(trieLogManager.containWorldStateStorage(blockHeader.getHash())).thenReturn(true);
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
     assertThat(bonsaiWorldStateArchive.getMutable(blockHeader, false))
         .containsInstanceOf(BonsaiWorldState.class);
