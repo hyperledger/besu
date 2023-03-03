@@ -58,7 +58,7 @@ public interface EnodeURL {
   int getListeningPortOrZero();
 
   /**
-   * Enode To URI .
+   * Enode To URI.
    *
    * @return the uri
    */

@@ -60,7 +60,7 @@ public class DebugStandardTraceBadBlockToFile extends DebugStandardTraceBlockToF
 
     final Blockchain blockchain = blockchainQueries.get().getBlockchain();
     final ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockNumber(blockchain.getChainHeadHeader().getNumber());
+        protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
     final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
 
     return badBlockManager

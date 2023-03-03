@@ -106,7 +106,7 @@ public interface Transaction {
 
   /**
    * A scalar value equal to the number of Wei to be transferred to the message call’s recipient or,
-   * in the case of contract creation, as an endowment to the newly created account
+   * in the case of contract creation, as an endowment to the newly created account.
    *
    * @return value equal to the number of Wei to be transferred
    */
@@ -143,7 +143,7 @@ public interface Transaction {
 
   /**
    * The chainId, computed from the 'V' portion of the signature. Used for replay protection. If
-   * replay protection is not enabled this value will not be present.
+   * replay protection is not enabled, this value will not be present.
    *
    * @return The chainId for transaction.
    */

@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 

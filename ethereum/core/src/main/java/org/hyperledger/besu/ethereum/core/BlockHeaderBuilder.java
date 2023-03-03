@@ -385,7 +385,6 @@ public class BlockHeaderBuilder {
   }
 
   public BlockHeaderBuilder excessDataGas(final DataGas excessDataGas) {
-    checkArgument(gasLimit >= 0L);
     this.excessDataGas = excessDataGas;
     return this;
   }

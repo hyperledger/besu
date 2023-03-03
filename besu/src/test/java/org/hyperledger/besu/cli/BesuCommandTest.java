@@ -102,6 +102,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -187,6 +188,9 @@ public class BesuCommandTest extends CommandTestAbstract {
                       new JsonObject()
                           .put("bootnodes", List.of(VALID_ENODE_STRINGS))
                           .put("dns", DNS_DISCOVERY_URL)));
+
+  private static final JsonObject GENESIS_WITH_DATA_BLOBS_ENABLED =
+      new JsonObject().put("config", new JsonObject().put("cancunTime", 1L));
 
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
@@ -5597,5 +5601,48 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+  }
+
+  @Test
+  public void kzgTrustedSetupFileRequiresDataBlobEnabledNetwork() throws IOException {
+    final Path genesisFileWithoutBlobs =
+        createFakeGenesisFile(new JsonObject().put("config", new JsonObject()));
+    parseCommand(
+        "--genesis-file",
+        genesisFileWithoutBlobs.toString(),
+        "--kzg-trusted-setup",
+        "/etc/besu/kzg-trusted-setup.txt");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--kzg-trusted-setup can only be specified on networks with data blobs enabled");
+  }
+
+  @Test
+  public void kzgTrustedSetupFileIsMandatoryWithCustomGenesisFile()
+      throws IOException, URISyntaxException {
+    final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
+    parseCommand("--genesis-file", genesisFileWithBlobs.toString());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
+  }
+
+  @Test
+  public void kzgTrustedSetupFileLoadedWithCustomGenesisFile()
+      throws IOException, URISyntaxException {
+    final Path testSetupAbsolutePath =
+        Path.of(BesuCommandTest.class.getResource("/trusted_setup.txt").toURI());
+    final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
+    parseCommand(
+        "--genesis-file",
+        genesisFileWithBlobs.toString(),
+        "--kzg-trusted-setup",
+        testSetupAbsolutePath.toString());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }

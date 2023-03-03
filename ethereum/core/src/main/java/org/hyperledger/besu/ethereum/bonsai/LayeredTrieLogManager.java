@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -62,11 +60,11 @@ public class LayeredTrieLogManager extends AbstractTrieLogManager<BonsaiLayeredW
             blockHeader.getNumber(),
             worldStateRootHash,
             trieLog);
-    debugLambda(
-        LOG,
-        "adding layered world state for block {}, state root hash {}",
-        blockHeader::toLogString,
-        worldStateRootHash::toShortHexString);
+    LOG.atDebug()
+        .setMessage("adding layered world state for block {}, state root hash {}")
+        .addArgument(blockHeader::toLogString)
+        .addArgument(worldStateRootHash::toShortHexString)
+        .log();
     cachedWorldStatesByHash.put(
         blockHeader.getHash(), new LayeredWorldStateCache(bonsaiLayeredWorldState));
   }

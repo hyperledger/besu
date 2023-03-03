@@ -67,6 +67,10 @@ public final class Difficulty extends BaseUInt256Value<Difficulty> implements Qu
     return new Difficulty(str);
   }
 
+  public static Difficulty fromHexOrDecimalString(final String str) {
+    return str.startsWith("0x") ? new Difficulty(str) : new Difficulty(new BigInteger(str));
+  }
+
   @Override
   public Number getValue() {
     return getAsBigInteger();
