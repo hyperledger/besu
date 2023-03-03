@@ -99,14 +99,11 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   @Override
   protected void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction removedTx) {
-    if (senderTxs.firstKey() == removedTx.getNonce()) {
+    if (senderTxs.isEmpty()) {
       orderByMaxFee.remove(removedTx);
-      senderTxs.computeIfPresent(
-          removedTx.getNonce() + 1,
-          (nonce, nextTx) -> {
-            orderByMaxFee.add(nextTx);
-            return nextTx;
-          });
+    } else if (senderTxs.firstKey() == removedTx.getNonce() + 1) {
+      orderByMaxFee.remove(removedTx);
+      orderByMaxFee.add(senderTxs.firstEntry().getValue());
     }
   }
 

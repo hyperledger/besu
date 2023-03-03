@@ -343,16 +343,18 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
         processRemove(senderTxs, pendingTransaction.getTransaction());
       } else {
         // on sequential layer we need to remove and push to next layer all the following txs
-        final var txsToRemove = senderTxs.tailMap(pendingTransaction.getNonce(), true);
-        final var followingTxs =
-            txsToRemove.values().stream()
-                .peek(pt -> processRemove(senderTxs, pt.getTransaction()))
-                .skip(txsToRemove.containsKey(pendingTransaction.getNonce()) ? 1 : 0)
-                .toList();
-
-        txsToRemove.clear();
-
-        followingTxs.forEach(followingTx -> nextLayer.add(followingTx, 1));
+        final List<PendingTransaction> txsToRemove =
+            new ArrayList<>(senderTxs.tailMap(pendingTransaction.getNonce(), true).values());
+        final boolean skipFirst =
+            !txsToRemove.isEmpty() && txsToRemove.get(0).equals(pendingTransaction);
+        txsToRemove.stream()
+            .peek(
+                txToRemove -> {
+                  senderTxs.remove(txToRemove.getNonce());
+                  processRemove(senderTxs, txToRemove.getTransaction());
+                })
+            .skip(skipFirst ? 1 : 0)
+            .forEach(followingTx -> nextLayer.add(followingTx, 1));
       }
 
       if (senderTxs.isEmpty()) {

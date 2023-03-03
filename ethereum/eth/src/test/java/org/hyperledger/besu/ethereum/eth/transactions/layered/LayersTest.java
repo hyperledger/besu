@@ -253,11 +253,31 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedPrioritizedForSender(S1, 0)
                 .expectedSparseForSender(S1, 2)),
         Arguments.of(
-            new Scenario("overflow to ready then remove")
+            new Scenario("overflow to ready then remove 1")
                 .addForSender(S1, 0, 1, 2, 3)
                 .removeForSender(S1, 2)
                 .expectedPrioritizedForSender(S1, 0, 1)
-                .expectedSparseForSender(S1, 3))
+                .expectedSparseForSender(S1, 3)),
+        Arguments.of(
+            new Scenario("overflow to ready then remove 2")
+                .addForSender(S1, 0, 1, 2, 3, 4)
+                .removeForSender(S1, 4)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3)),
+        Arguments.of(
+            new Scenario("overflow to ready then remove 3")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5)
+                .removeForSender(S1, 4)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3)
+                .expectedSparseForSender(S1, 5)),
+        Arguments.of(
+            new Scenario("overflow to ready then remove 4")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5)
+                .removeForSender(S1, 0)
+                .expectedSparseForSender(S1, 1, 2, 3)
+                .expectedDroppedForSender(S1, 4, 5))
+
         //            Arguments.of(
         //                    new Scenario("overflow to ready reverse")
         //                            .addForSender(S1, 3, 2, 1, 0)
