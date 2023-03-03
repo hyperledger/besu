@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -73,15 +72,16 @@ class TransactionsMessageProcessor {
 
       metrics.incrementAlreadySeenTransactions(
           "transactions", (long) incomingTransactions.size() - freshTransactions.size());
-      traceLambda(
-          LOG,
-          "Received transactions message from {}, incoming transactions {}, incoming list {}"
-              + ", fresh transactions {}, fresh list {}",
-          peer::toString,
-          incomingTransactions::size,
-          () -> toHashList(incomingTransactions),
-          freshTransactions::size,
-          () -> toHashList(freshTransactions));
+      LOG.atTrace()
+          .setMessage(
+              "Received transactions message from {}, incoming transactions {}, incoming list {}"
+                  + ", fresh transactions {}, fresh list {}")
+          .addArgument(peer)
+          .addArgument(incomingTransactions::size)
+          .addArgument(() -> toHashList(incomingTransactions))
+          .addArgument(freshTransactions::size)
+          .addArgument(() -> toHashList(freshTransactions))
+          .log();
 
       transactionPool.addRemoteTransactions(freshTransactions);
 

@@ -54,7 +54,8 @@ public class LayersTest extends BaseTransactionPoolTest {
       (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2);
   final EvictCollector evictCollector = new EvictCollector(txPoolMetrics);
   final SparseTransactions sparseTransactions =
-      new SparseTransactions(poolConfig, evictCollector, txPoolMetrics, transactionReplacementTester);
+      new SparseTransactions(
+          poolConfig, evictCollector, txPoolMetrics, transactionReplacementTester);
 
   final ReadyTransactions readyTransactions =
       new ReadyTransactions(
@@ -94,11 +95,13 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     assertThat(readyTransactions.stream()).containsExactlyElementsOf(scenario.expectedReady);
 
-    // sparse txs are returned from the most recent to the oldest, so reverse it to make writing scenarios easier
+    // sparse txs are returned from the most recent to the oldest, so reverse it to make writing
+    // scenarios easier
     Collections.reverse(scenario.expectedSparse);
     assertThat(sparseTransactions.stream()).containsExactlyElementsOf(scenario.expectedSparse);
 
-    assertThat(evictCollector.evictedTxs).containsExactlyInAnyOrderElementsOf(scenario.expectedDropped);
+    assertThat(evictCollector.evictedTxs)
+        .containsExactlyInAnyOrderElementsOf(scenario.expectedDropped);
   }
 
   static Stream<Arguments> providerAddTransactions() {
@@ -155,7 +158,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedPrioritizedForSender(S1, 0, 1, 2)
                 // 4,5,6 are evicted since max capacity of sparse layer is 3 txs
                 .expectedReadyForSender(S1, 3)
-                    .expectedDroppedForSender(S1, 4, 5, 6)),
+                .expectedDroppedForSender(S1, 4, 5, 6)),
         Arguments.of(
             new Scenario("overflow to sparse mixed order 1")
                 .addForSender(S1, 6, 0, 4, 1, 3, 2, 5)
@@ -196,16 +199,19 @@ public class LayersTest extends BaseTransactionPoolTest {
         Arguments.of(
             new Scenario("overflow sparse 1")
                 .addForSender(S1, 1, 2, 3, 4)
-                .expectedSparseForSender(S1, 1, 2, 3).expectedDroppedForSender(S1, 4)),
+                .expectedSparseForSender(S1, 1, 2, 3)
+                .expectedDroppedForSender(S1, 4)),
         Arguments.of(
             new Scenario("overflow sparse 2")
                 .addForSender(S1, 4, 2, 3, 1)
-                .expectedSparseForSender(S1, 2, 3, 1).expectedDroppedForSender(S1, 4)),
-            Arguments.of(
-                    new Scenario("overflow sparse 3")
-                            .addForSender(S1, 0, 4, 2, 3, 5)
-                            .expectedPrioritizedForSender(S1, 0)
-                            .expectedSparseForSender(S1, 4, 2, 3).expectedDroppedForSender(S1, 5)));
+                .expectedSparseForSender(S1, 2, 3, 1)
+                .expectedDroppedForSender(S1, 4)),
+        Arguments.of(
+            new Scenario("overflow sparse 3")
+                .addForSender(S1, 0, 4, 2, 3, 5)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedSparseForSender(S1, 4, 2, 3)
+                .expectedDroppedForSender(S1, 5)));
   }
 
   static Stream<Arguments> providerRemoveTransactions() {
@@ -246,12 +252,12 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .removeForSender(S1, 1)
                 .expectedPrioritizedForSender(S1, 0)
                 .expectedSparseForSender(S1, 2)),
-                    Arguments.of(
-                            new Scenario("overflow to ready then remove")
-                                    .addForSender(S1, 0, 1, 2, 3)
-                                    .removeForSender(S1, 2)
-                                    .expectedPrioritizedForSender(S1, 0, 1)
-                                    .expectedSparseForSender(S1, 3))
+        Arguments.of(
+            new Scenario("overflow to ready then remove")
+                .addForSender(S1, 0, 1, 2, 3)
+                .removeForSender(S1, 2)
+                .expectedPrioritizedForSender(S1, 0, 1)
+                .expectedSparseForSender(S1, 3))
         //            Arguments.of(
         //                    new Scenario("overflow to ready reverse")
         //                            .addForSender(S1, 3, 2, 1, 0)
@@ -475,6 +481,7 @@ public class LayersTest extends BaseTransactionPoolTest {
 
   static class EvictCollector extends EndLayer {
     final List<PendingTransaction> evictedTxs = new ArrayList<>();
+
     public EvictCollector(final TransactionPoolMetrics metrics) {
       super(metrics);
     }

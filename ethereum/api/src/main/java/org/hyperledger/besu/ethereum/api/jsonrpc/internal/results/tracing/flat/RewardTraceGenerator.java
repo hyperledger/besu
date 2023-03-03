@@ -46,7 +46,7 @@ public class RewardTraceGenerator {
 
     final BlockHeader blockHeader = block.getHeader();
     final List<BlockHeader> ommers = block.getBody().getOmmers();
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
     final Wei blockReward = protocolSpec.getBlockReward();
     final MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         protocolSpec.getMiningBeneficiaryCalculator();

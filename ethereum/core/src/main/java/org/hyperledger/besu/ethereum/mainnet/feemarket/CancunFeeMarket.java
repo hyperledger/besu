@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -46,11 +44,11 @@ public class CancunFeeMarket extends LondonFeeMarket {
         Wei.of(
             fakeExponential(
                 MIN_DATA_GAS_PRICE, excessDataGas.toBigInteger(), DATA_GAS_PRICE_UPDATE_FRACTION));
-    traceLambda(
-        LOG,
-        "parentExcessDataGas: {} dataGasPrice: {}",
-        excessDataGas::toShortHexString,
-        dataGasPrice::toHexString);
+    LOG.atTrace()
+        .setMessage("parentExcessDataGas: {} dataGasPrice: {}")
+        .addArgument(excessDataGas::toShortHexString)
+        .addArgument(dataGasPrice::toHexString)
+        .log();
 
     return dataGasPrice;
   }

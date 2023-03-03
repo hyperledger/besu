@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -78,11 +76,11 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     final BaseFeeMarket baseFeeMarket = (BaseFeeMarket) feeMarket;
     final Wei newNextBlockBaseFee = calculateNextBlockBaseFee(baseFeeMarket, blockHeader);
 
-    traceLambda(
-        LOG,
-        "Updating base fee from {} to {}",
-        nextBlockBaseFee.get()::toHumanReadableString,
-        newNextBlockBaseFee::toHumanReadableString);
+    LOG.atTrace()
+        .setMessage("Updating base fee from {} to {}")
+        .addArgument(nextBlockBaseFee.get()::toHumanReadableString)
+        .addArgument(newNextBlockBaseFee::toHumanReadableString)
+        .log();
 
     nextBlockBaseFee = Optional.of(newNextBlockBaseFee);
     orderByFee.clear();

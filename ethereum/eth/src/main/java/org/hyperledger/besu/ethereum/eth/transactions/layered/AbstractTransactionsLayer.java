@@ -5,8 +5,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -129,13 +127,14 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
     final long cacheFreeSpace = cacheFreeSpace();
     final int overflowTxsCount = pendingTransactions.size() - maxTransactionsNumber();
     if (cacheFreeSpace < 0 || overflowTxsCount > 0) {
-      debugLambda(
-          LOG,
-          "Layer full: {}",
-          () ->
-              cacheFreeSpace < 0
-                  ? "need to free " + (-cacheFreeSpace) + " space"
-                  : "need to evict " + overflowTxsCount + " transaction(s)");
+      LOG.atDebug()
+          .setMessage("Layer full: {}")
+          .addArgument(
+              () ->
+                  cacheFreeSpace < 0
+                      ? "need to free " + (-cacheFreeSpace) + " space"
+                      : "need to evict " + overflowTxsCount + " transaction(s)")
+          .log();
 
       evict(-cacheFreeSpace, overflowTxsCount);
       return true;
@@ -270,11 +269,11 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
                     return INTERNAL_ERROR;
                   });
       metrics.incrementRejected(false, rejectReason, name());
-      traceLambda(
-          LOG,
-          "Transaction {} rejected reason {}",
-          pendingTransaction::toTraceLog,
-          rejectReason::toString);
+      LOG.atTrace()
+          .setMessage("Transaction {} rejected reason {}")
+          .addArgument(pendingTransaction::toTraceLog)
+          .addArgument(rejectReason)
+          .log();
     }
   }
 
@@ -370,7 +369,10 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
 
   @Override
   public final void blockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
-    debugLambda(LOG, "Managing new added block {}", blockHeader::toLogString);
+    LOG.atDebug()
+        .setMessage("Managing new added block {}")
+        .addArgument(blockHeader::toLogString)
+        .log();
 
     nextLayer.blockAdded(blockHeader, feeMarket);
 
@@ -403,8 +405,10 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
           .map(pt -> processRemove(senderTxs, pt.getTransaction()))
           .forEach(
               removedTx -> {
-                traceLambda(
-                    LOG, "Removed confirmed pending transactions {}", removedTx::toTraceLog);
+                LOG.atTrace()
+                    .setMessage("Removed confirmed pending transactions {}")
+                    .addArgument(removedTx::toTraceLog)
+                    .log();
                 metrics.incrementRemoved(
                     removedTx.isReceivedFromLocalSource(), "confirmed", name());
               });

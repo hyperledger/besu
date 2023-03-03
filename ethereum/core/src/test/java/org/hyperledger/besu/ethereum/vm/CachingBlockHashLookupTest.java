@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class BlockHashLookupTest {
+public class CachingBlockHashLookupTest {
 
   private static final int CURRENT_BLOCK_NUMBER = 256;
   private final Blockchain blockchain = mock(Blockchain.class);
@@ -54,7 +54,7 @@ public class BlockHashLookupTest {
       parentHeader = headers[i];
     }
     lookup =
-        new BlockHashLookup(
+        new CachingBlockHashLookup(
             createHeader(CURRENT_BLOCK_NUMBER, headers[headers.length - 1]), blockchain);
   }
 
@@ -89,7 +89,7 @@ public class BlockHashLookupTest {
   @Test
   public void shouldReturnEmptyHashWhenParentBlockNotOnchain() {
     final BlockHashLookup lookupWithUnavailableParent =
-        new BlockHashLookup(
+        new CachingBlockHashLookup(
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER + 20).buildHeader(),
             blockchain);
     Assertions.assertThat(lookupWithUnavailableParent.apply((long) CURRENT_BLOCK_NUMBER))

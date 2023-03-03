@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -86,12 +85,12 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
                 List<Transaction> retrievedTransactions = result.getResult();
                 transactionTracker.markTransactionsAsSeen(peer, retrievedTransactions);
 
-                traceLambda(
-                    LOG,
-                    "Got {} transactions of {} hashes requested from peer {}",
-                    retrievedTransactions::size,
-                    task.getTransactionHashes()::size,
-                    peer::toString);
+                LOG.atTrace()
+                    .setMessage("Got {} transactions of {} hashes requested from peer {}")
+                    .addArgument(retrievedTransactions::size)
+                    .addArgument(task.getTransactionHashes()::size)
+                    .addArgument(peer)
+                    .log();
 
                 transactionPool.addRemoteTransactions(retrievedTransactions);
               });
@@ -116,12 +115,13 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
 
     final int alreadySeenCount = discarded;
     metrics.incrementAlreadySeenTransactions("new_pooled_transaction_hashes", alreadySeenCount);
-    traceLambda(
-        LOG,
-        "Transaction hashes to request from peer {}, fresh count {}, already seen count {}",
-        peer::toString,
-        toRetrieve::size,
-        () -> alreadySeenCount);
+    LOG.atTrace()
+        .setMessage(
+            "Transaction hashes to request from peer {}, fresh count {}, already seen count {}")
+        .addArgument(peer)
+        .addArgument(toRetrieve::size)
+        .addArgument(alreadySeenCount)
+        .log();
 
     return toRetrieve;
   }

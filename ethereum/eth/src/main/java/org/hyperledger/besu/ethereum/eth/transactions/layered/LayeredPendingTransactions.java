@@ -19,8 +19,6 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -125,18 +123,19 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long senderNonce,
       final long nonceDistance) {
     if (nonceDistance < 0) {
-      traceLambda(
-          LOG,
-          "Drop already confirmed transaction {}, since current sender nonce is {}",
-          pendingTransaction::toTraceLog,
-          () -> senderNonce);
+      LOG.atTrace()
+          .setMessage("Drop already confirmed transaction {}, since current sender nonce is {}")
+          .addArgument(pendingTransaction::toTraceLog)
+          .addArgument(senderNonce)
+          .log();
       return ALREADY_KNOWN;
     } else if (nonceDistance >= poolConfig.getMaxFutureBySender()) {
-      traceLambda(
-          LOG,
-          "Drop too much in the future transaction {}, since current sender nonce is {}",
-          pendingTransaction::toTraceLog,
-          () -> senderNonce);
+      LOG.atTrace()
+          .setMessage(
+              "Drop too much in the future transaction {}, since current sender nonce is {}")
+          .addArgument(pendingTransaction::toTraceLog)
+          .addArgument(senderNonce)
+          .log();
       return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
     }
     return null;
@@ -255,7 +254,10 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final BlockHeader blockHeader,
       final List<Transaction> confirmedTransactions,
       final FeeMarket feeMarket) {
-    debugLambda(LOG, "Managing new added block {}", blockHeader::toLogString);
+    LOG.atDebug()
+        .setMessage("Managing new added block {}")
+        .addArgument(blockHeader::toLogString)
+        .log();
 
     prioritizedTransactions.removeConfirmed(maxConfirmedNonceBySender(confirmedTransactions));
 
