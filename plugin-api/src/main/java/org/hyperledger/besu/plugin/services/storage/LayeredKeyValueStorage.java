@@ -48,11 +48,14 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
-    return Optional.of(Bytes.wrap(key))
-        .map(Bytes::wrap)
+    Bytes wrapKey = Bytes.wrap(key);
+    return Optional.of(wrapKey)
         .flatMap(
             keyWrapped ->
-                Optional.ofNullable(hashValueStore.get(keyWrapped)).or(() -> parent.get(key)))
+                Optional.ofNullable(hashValueStore.get(keyWrapped)).or(() -> parent.get(key).map(bytes1 -> {
+                  hashValueStore.put(wrapKey, bytes1);
+                  return bytes1;
+                })))
         .filter(bytes -> bytes.length > 0);
   }
 
