@@ -18,12 +18,10 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.LayeredKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
-public class BonsaiWorldStateLayerStorage extends BonsaiWorldStateKeyValueStorage
+public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyValueStorage
     implements BonsaiStorageSubscriber {
-
-  private final long subscribeParentId;
-  private final BonsaiWorldStateKeyValueStorage parent;
 
   public BonsaiWorldStateLayerStorage(final BonsaiWorldStateKeyValueStorage parent) {
     this(
@@ -36,15 +34,13 @@ public class BonsaiWorldStateLayerStorage extends BonsaiWorldStateKeyValueStorag
   }
 
   public BonsaiWorldStateLayerStorage(
-      final KeyValueStorage accountStorage,
-      final KeyValueStorage codeStorage,
-      final KeyValueStorage storageStorage,
-      final KeyValueStorage trieBranchStorage,
+      final SnappedKeyValueStorage accountStorage,
+      final SnappedKeyValueStorage codeStorage,
+      final SnappedKeyValueStorage storageStorage,
+      final SnappedKeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage,
       final BonsaiWorldStateKeyValueStorage parent) {
-    super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
-    this.parent = parent;
-    this.subscribeParentId = parent.subscribe(this);
+    super(parent, accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
   }
 
   @Override
@@ -55,11 +51,6 @@ public class BonsaiWorldStateLayerStorage extends BonsaiWorldStateKeyValueStorag
         ((LayeredKeyValueStorage) storageStorage).clone(),
         ((LayeredKeyValueStorage) trieBranchStorage).clone(),
         trieLogStorage,
-        parent);
-  }
-
-  @Override
-  public void close() throws Exception {
-    parent.unSubscribe(subscribeParentId);
+        parentWorldStateStorage);
   }
 }

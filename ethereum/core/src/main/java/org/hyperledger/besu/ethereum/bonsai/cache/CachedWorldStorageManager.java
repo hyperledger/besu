@@ -25,9 +25,13 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -112,9 +116,42 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   }
 
   @Override
-  public BonsaiWorldState getHeadWorldState() {
-    return new BonsaiWorldState(
-        archive, new BonsaiSnapshotWorldStateKeyValueStorage(rootWorldStateStorage));
+  public Optional<BonsaiWorldState> getNearestWorldState(final BlockHeader blockHeader) {
+    return Optional.ofNullable(
+            cachedWorldStatesByHash.get(blockHeader.getParentHash())) // search parent block
+        .map(CachedBonsaiWorldView::getWorldStateStorage)
+        .or(
+            () -> {
+              // or else search the nearest state in the cache
+              final List<CachedBonsaiWorldView> cachedBonsaiWorldViews =
+                  new ArrayList<>(cachedWorldStatesByHash.values());
+              return cachedBonsaiWorldViews.stream()
+                  .sorted(
+                      Comparator.comparingLong(
+                          view -> Math.abs(blockHeader.getNumber() - view.getBlockNumber())))
+                  .map(CachedBonsaiWorldView::getWorldStateStorage)
+                  .findFirst();
+            })
+        .map(
+            storage ->
+                new BonsaiWorldState( // wrap the state in a layered worldstate
+                    archive, new BonsaiWorldStateLayerStorage(storage)));
+  }
+
+  @Override
+  public Optional<BonsaiWorldState> getHeadWorldState(
+      final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction) {
+    final Optional<BlockHeader> maybeBlockHeader =
+        hashBlockHeaderFunction.apply(rootWorldStateStorage.getWorldStateBlockHash().orElseThrow());
+    return maybeBlockHeader.flatMap(
+        blockHeader -> {
+          // add the head to the cache
+          addCachedLayer(
+              blockHeader,
+              blockHeader.getStateRoot(),
+              new BonsaiWorldState(archive, rootWorldStateStorage));
+          return getWorldState(blockHeader.getHash());
+        });
   }
 
   @Override

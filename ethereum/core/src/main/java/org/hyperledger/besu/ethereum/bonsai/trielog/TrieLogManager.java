@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccu
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 public interface TrieLogManager {
 
@@ -39,9 +40,12 @@ public interface TrieLogManager {
 
   Optional<BonsaiWorldState> getWorldState(final Hash blockHash);
 
+  Optional<BonsaiWorldState> getNearestWorldState(final BlockHeader blockHeader);
+
+  Optional<BonsaiWorldState> getHeadWorldState(
+      final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction);
+
   long getMaxLayersToLoad();
 
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
-
-  BonsaiWorldState getHeadWorldState();
 }

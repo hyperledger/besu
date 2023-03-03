@@ -34,7 +34,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-  private final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
+  protected final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
 
   private final long subscribeParentId;
 
@@ -158,8 +158,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   protected synchronized void tryClose() throws Exception {
-    System.out.println(
-        "tryClose " + this + " " + shouldClose.get() + " " + subscribers.getSubscriberCount());
     if (shouldClose.get() && subscribers.getSubscriberCount() < 1) {
       // attempting to close already closed snapshots will segfault
       doClose();

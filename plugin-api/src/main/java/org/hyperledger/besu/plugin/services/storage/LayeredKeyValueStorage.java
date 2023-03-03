@@ -27,7 +27,8 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
-public class LayeredKeyValueStorage extends InMemoryKeyValueStorage {
+public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
+    implements SnappedKeyValueStorage {
 
   private final KeyValueStorage parent;
 

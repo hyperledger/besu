@@ -137,7 +137,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return trieLogManager.getWorldState(blockHash).isPresent()
+    return trieLogManager.containWorldStateStorage(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
@@ -156,11 +156,13 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             trieLogManager.getMaxLayersToLoad());
         return Optional.empty();
       }
-      final BonsaiWorldState worldState =
-          trieLogManager
-              .getWorldState(blockHeader.getHash())
-              .orElse(trieLogManager.getHeadWorldState());
-      return rollMutableStateToBlockHash(worldState, blockHeader.getHash())
+      return trieLogManager
+          .getWorldState(blockHeader.getHash())
+          .or(() -> trieLogManager.getNearestWorldState(blockHeader))
+          .or(() -> trieLogManager.getHeadWorldState(blockchain::getBlockHeader))
+          .flatMap(
+              bonsaiWorldState ->
+                  rollMutableStateToBlockHash(bonsaiWorldState, blockHeader.getHash()))
           .map(MutableWorldState::freeze);
     }
   }
