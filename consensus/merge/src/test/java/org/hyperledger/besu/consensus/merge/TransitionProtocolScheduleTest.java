@@ -157,6 +157,7 @@ public class TransitionProtocolScheduleTest {
 
   @Test
   public void getByBlockNumber_delegatesToPreMergeScheduleWhenBlockNotFound() {
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.empty());
     when(mergeContext.isPostMerge()).thenReturn(false);
 
     transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
@@ -166,6 +167,7 @@ public class TransitionProtocolScheduleTest {
 
   @Test
   public void getByBlockNumber_delegatesToPostMergeScheduleWhenBlockNotFound() {
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.empty());
     when(mergeContext.isPostMerge()).thenReturn(true);
 
     transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
@@ -174,7 +176,18 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
+  public void getByBlockNumber_delegatesToPreMergeScheduleWhenTimestampScheduleDoesNotExist() {
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
+    when(mergeContext.isPostMerge()).thenReturn(false);
+
+    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
+
+    verifyPreMergeProtocolScheduleReturnedUsingBlockNumber();
+  }
+
+  @Test
   public void getByBlockNumber_delegatesToPostMergeScheduleWhenTimestampScheduleDoesNotExist() {
+    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
     when(mergeContext.isPostMerge()).thenReturn(true);
 
     transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
@@ -194,21 +207,12 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void getByBlockHeader_delegatesToPreMergeScheduleWhenBlockNotFound() {
+  public void getByBlockHeader_delegatesToPreMergeScheduleWhenTimestampScheduleDoesNotExist() {
     when(mergeContext.isPostMerge()).thenReturn(false);
 
     transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
-  }
-
-  @Test
-  public void getByBlockHeader_delegatesToPostMergeScheduleWhenBlockNotFound() {
-    when(mergeContext.isPostMerge()).thenReturn(true);
-
-    transitionProtocolSchedule.getByBlockHeader(blockHeader);
-
-    verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
   @Test
