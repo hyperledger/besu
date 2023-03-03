@@ -27,15 +27,29 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * Key value storage which stores in memory all updates to a parent worldstate storage.
+ */
 public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     implements SnappedKeyValueStorage {
 
   private final KeyValueStorage parent;
 
+  /**
+   * Instantiates a new Layered key value storage.
+   *
+   * @param parent the parent key value storage for this layered storage.
+   */
   public LayeredKeyValueStorage(final KeyValueStorage parent) {
     this(new ConcurrentHashMap<>(), parent);
   }
 
+  /**
+   * Constructor which takes an explicit backing map for the layered key value storage.
+   *
+   * @param map the backing map
+   * @param parent the parent key value storage for this layered storage.
+   */
   public LayeredKeyValueStorage(final Map<Bytes, byte[]> map, final KeyValueStorage parent) {
     super(map);
     this.parent = parent;

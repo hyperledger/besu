@@ -38,7 +38,10 @@ import org.apache.tuweni.bytes.Bytes;
 public class InMemoryKeyValueStorage
     implements SnappedKeyValueStorage, SnappableKeyValueStorage, KeyValueStorage {
 
+  /** protected access for the backing hash map. */
   protected final Map<Bytes, byte[]> hashValueStore;
+
+  /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   /** Instantiates a new In memory key value storage. */
@@ -163,9 +166,14 @@ public class InMemoryKeyValueStorage
     return startTransaction();
   }
 
+  /**
+   * In memory transaction.
+   */
   public class InMemoryTransaction implements KeyValueStorageTransaction {
 
+    /** protected access to updatedValues map for the transaction. */
     protected Map<Bytes, byte[]> updatedValues = new HashMap<>();
+    /** protected access to deletedValues set for the transaction. */
     protected Set<Bytes> removedKeys = new HashSet<>();
 
     @Override
@@ -217,6 +225,11 @@ public class InMemoryKeyValueStorage
     }
   }
 
+  /**
+   * Accessor for the backing hash map.
+   *
+   * @return the backing hash map
+   */
   public Map<Bytes, byte[]> getHashValueStore() {
     return hashValueStore;
   }
