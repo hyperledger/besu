@@ -50,7 +50,7 @@ public class DebugGetBadBlocks implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final List<BadBlockResult> response =
         protocolSchedule
-            .getByBlockNumber(blockchain.headBlockNumber())
+            .getByBlockHeader(blockchain.headBlockHeader())
             .getBadBlocksManager()
             .getBadBlocks()
             .stream()
