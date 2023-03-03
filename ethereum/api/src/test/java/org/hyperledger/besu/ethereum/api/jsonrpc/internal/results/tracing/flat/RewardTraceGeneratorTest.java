@@ -72,7 +72,7 @@ public class RewardTraceGeneratorTest {
     final BlockHeader blockHeader =
         gen.header(0x0A, blockBody, new BlockDataGenerator.BlockOptions());
     block = new Block(blockHeader, blockBody);
-    when(protocolSchedule.getByBlockNumber(block.getHeader().getNumber())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(block.getHeader())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockReward()).thenReturn(blockReward);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(miningBeneficiaryCalculator);
     when(miningBeneficiaryCalculator.calculateBeneficiary(block.getHeader()))
