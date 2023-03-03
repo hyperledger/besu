@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiUpdater;
@@ -57,7 +56,6 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
 
   @Override
   public synchronized void saveTrieLog(
-      final BonsaiWorldStateProvider worldStateArchive,
       final BonsaiWorldStateUpdateAccumulator localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,

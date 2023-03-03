@@ -52,12 +52,18 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     return Optional.of(wrapKey)
         .flatMap(
             keyWrapped ->
-                Optional.ofNullable(hashValueStore.get(keyWrapped)).or(() -> parent.get(key).map(bytes1 -> {
-                  if(!(parent instanceof LayeredKeyValueStorage)) {
-                    hashValueStore.put(wrapKey, bytes1);
-                  }
-                  return bytes1;
-                })))
+                Optional.ofNullable(hashValueStore.get(keyWrapped))
+                    .or(
+                        () ->
+                            parent
+                                .get(key)
+                                .map(
+                                    bytes1 -> {
+                                      if (!(parent instanceof LayeredKeyValueStorage)) {
+                                        hashValueStore.put(wrapKey, bytes1);
+                                      }
+                                      return bytes1;
+                                    })))
         .filter(bytes -> bytes.length > 0);
   }
 
