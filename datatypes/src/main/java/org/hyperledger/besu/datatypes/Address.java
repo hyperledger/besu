@@ -53,7 +53,9 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x11);
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x12);
 
-  public static final Address ED25519 = Address.precompiled(0x66);
+  public static final Address DEPRECATED_CARDANO_SIG_PRECOMPILE = Address.precompiled(0x66);
+
+  public static final Address L1_MSG_VERIFY = Address.precompiled(0x67);
 
   public static final Address ZERO = Address.fromHexString("0x0");
 

@@ -34,7 +34,8 @@ public abstract class MainnetPrecompiledContracts {
     registry.put(Address.SHA256, new SHA256PrecompiledContract(gasCalculator));
     registry.put(Address.RIPEMD160, new RIPEMD160PrecompiledContract(gasCalculator));
     registry.put(Address.ID, new IDPrecompiledContract(gasCalculator));
-    registry.put(Address.ED25519, new CardanoSigVerificationPrecompiledContract(gasCalculator));
+    registry.put(Address.DEPRECATED_CARDANO_SIG_PRECOMPILE, new CardanoSigVerificationPrecompiledContract(gasCalculator));
+    registry.put(Address.L1_MSG_VERIFY, new L1MsgVerifyPrecompiledContract(gasCalculator));
   }
 
   public static PrecompileContractRegistry homestead(final GasCalculator gasCalculator) {
