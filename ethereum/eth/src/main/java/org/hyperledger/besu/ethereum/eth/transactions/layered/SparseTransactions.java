@@ -172,10 +172,12 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     sparseEvictionOrder.remove(removedTx);
 
     if (senderTxs != null && !senderTxs.isEmpty()) {
-      final int currGap = gapBySender.get(removedTx.getSender());
-      orderByGap.get(currGap).remove(removedTx.getSender());
-      final int newGap = (int) (senderTxs.firstKey() - (removedTx.getNonce() + 1));
-      orderByGap.get(newGap).add(removedTx.getSender());
+      if (senderTxs.firstKey() > removedTx.getNonce()) {
+        final int currGap = gapBySender.get(removedTx.getSender());
+        orderByGap.get(currGap).remove(removedTx.getSender());
+        final int newGap = (int) (senderTxs.firstKey() - (removedTx.getNonce() + 1));
+        orderByGap.get(newGap).add(removedTx.getSender());
+      }
     } else {
       final int gap = gapBySender.remove(removedTx.getSender());
       orderByGap.get(gap).remove(removedTx.getSender());

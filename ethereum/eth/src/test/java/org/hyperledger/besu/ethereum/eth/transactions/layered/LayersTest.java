@@ -274,68 +274,56 @@ public class LayersTest extends BaseTransactionPoolTest {
         Arguments.of(
             new Scenario("overflow to ready then remove 4")
                 .addForSender(S1, 0, 1, 2, 3, 4, 5)
+                .removeForSender(S1, 3)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedSparseForSender(S1, 4, 5)),
+        Arguments.of(
+            new Scenario("overflow to ready then remove 5")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5)
                 .removeForSender(S1, 0)
                 .expectedSparseForSender(S1, 1, 2, 3)
-                .expectedDroppedForSender(S1, 4, 5))
-
-        //            Arguments.of(
-        //                    new Scenario("overflow to ready reverse")
-        //                            .addForSender(S1, 3, 2, 1, 0)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            .expectedReadyForSender(S1, 3)),
-        //            Arguments.of(
-        //                    new Scenario("overflow to ready mixed order 1")
-        //                            .addForSender(S1, 3, 0, 2, 1)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            .expectedReadyForSender(S1, 3)),
-        //            Arguments.of(
-        //                    new Scenario("overflow to ready mixed order 2")
-        //                            .addForSender(S1, 0, 3, 1, 2)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            .expectedReadyForSender(S1, 3)),
-        //            Arguments.of(
-        //                    new Scenario("overflow to sparse")
-        //                            .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            .expectedReadyForSender(S1, 3, 4, 5)
-        //                            .expectedSparseForSender(S1, 6)),
-        //            Arguments.of(
-        //                    new Scenario("overflow to sparse reverse")
-        //                            .addForSender(S1, 6, 5, 4, 3, 2, 1, 0)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            // 4,5,6 are evicted since max capacity of sparse layer is 3
-        // txs
-        //                            .expectedReadyForSender(S1, 3)),
-        //            Arguments.of(
-        //                    new Scenario("overflow to sparse mixed order 1")
-        //                            .addForSender(S1, 6, 0, 4, 1, 3, 2, 5)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            .expectedReadyForSender(S1, 3, 4, 5)
-        //                            .expectedSparseForSender(S1, 6)),
-        //            Arguments.of(
-        //                    new Scenario("overflow to sparse mixed order 2")
-        //                            .addForSender(S1, 0, 4, 6, 1, 5, 2, 3)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            .expectedReadyForSender(S1, 3, 4, 5)
-        //                            .expectedSparseForSender(S1, 6)),
-        //            Arguments.of(
-        //                    new Scenario("overflow to sparse mixed order 3")
-        //                            .addForSender(S1, 0, 1, 2, 3, 5, 6, 4)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            .expectedReadyForSender(S1, 3, 4, 5)
-        //                            .expectedSparseForSender(S1, 6)),
-        //            Arguments.of(
-        //                    new Scenario("nonce gap to sparse 1")
-        //                            .addForSender(S1, 0, 2)
-        //                            .expectedPrioritizedForSender(S1, 0)
-        //                            .expectedSparseForSender(S1, 2)),
-        //            Arguments.of(
-        //                    new Scenario("nonce gap to sparse 2")
-        //                            .addForSender(S1, 0, 1, 2, 3, 5)
-        //                            .expectedPrioritizedForSender(S1, 0, 1, 2)
-        //                            .expectedReadyForSender(S1, 3)
-        //                            .expectedSparseForSender(S1, 5))
-        );
+                .expectedDroppedForSender(S1, 4, 5)),
+        Arguments.of(
+            new Scenario("overflow to sparse then remove 1")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
+                .removeForSender(S1, 6)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)),
+        Arguments.of(
+            new Scenario("overflow to sparse then remove 2")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
+                .removeForSender(S1, 5)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4)
+                .expectedSparseForSender(S1, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse then remove 3")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
+                .removeForSender(S1, 2)
+                .expectedPrioritizedForSender(S1, 0, 1)
+                .expectedSparseForSender(S1, 3, 4, 5)
+                .expectedDroppedForSender(S1, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse then remove 4")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6, 7, 8)
+                .removeForSender(S1, 7)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .expectedSparseForSender(S1, 6, 8)),
+        Arguments.of(
+            new Scenario("overflow to sparse then remove 5")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6, 7, 8)
+                .removeForSender(S1, 6)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .expectedSparseForSender(S1, 7, 8)),
+        Arguments.of(
+            new Scenario("overflow to sparse then remove 6")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6, 7, 8)
+                .removeForSender(S1, 6)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .expectedSparseForSender(S1, 7, 8)));
   }
 
   private static BlockHeader mockBlockHeader() {
