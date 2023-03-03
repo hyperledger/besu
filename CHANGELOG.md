@@ -8,6 +8,7 @@ This update is required for the Goerli Shanghai/Capella upgrade and recommended 
 ### Additions and Improvements
 - Added the option --kzg-trusted-setup to pass a custom setup file for custom networks or to override the default one for named networks [#5084](https://github.com/hyperledger/besu/pull/5084)
 - Gas accounting for EIP-4844 [#4992](https://github.com/hyperledger/besu/pull/4992)
+- Goerli configs for shapella [#5151](https://github.com/hyperledger/besu/pull/5151)
 
 ### Bug Fixes
 
