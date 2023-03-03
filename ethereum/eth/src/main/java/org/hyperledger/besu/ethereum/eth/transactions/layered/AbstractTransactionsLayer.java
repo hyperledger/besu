@@ -364,22 +364,18 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   }
 
   @Override
-  public void removeConfirmed(final Map<Address, Long> maxConfirmedNonceBySender) {
-    nextLayer.removeConfirmed(maxConfirmedNonceBySender);
-    maxConfirmedNonceBySender.forEach(this::confirmed);
-  }
-
-  @Override
-  public final void blockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
+  public final void blockAdded(
+      final FeeMarket feeMarket,
+      final BlockHeader blockHeader,
+      final Map<Address, Long> maxConfirmedNonceBySender) {
     LOG.atDebug()
         .setMessage("Managing new added block {}")
         .addArgument(blockHeader::toLogString)
         .log();
 
-    nextLayer.blockAdded(blockHeader, feeMarket);
-
+    nextLayer.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
+    maxConfirmedNonceBySender.forEach(this::confirmed);
     internalBlockAdded(blockHeader, feeMarket);
-    promoteTransactions();
   }
 
   protected abstract void internalBlockAdded(
@@ -394,40 +390,47 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
         processAdded(promotedTx);
         --freeSlots;
       } else {
-        return;
+        break;
       }
     }
   }
 
   private void confirmed(final Address sender, final long maxConfirmedNonce) {
     final var senderTxs = readyBySender.get(sender);
+
     if (senderTxs != null) {
       final var confirmedTxs = senderTxs.headMap(maxConfirmedNonce, true);
-      confirmedTxs.values().stream()
-          .map(pt -> processRemove(senderTxs, pt.getTransaction()))
-          .forEach(
-              removedTx -> {
-                LOG.atTrace()
-                    .setMessage("Removed confirmed pending transactions {}")
-                    .addArgument(removedTx::toTraceLog)
-                    .log();
-                metrics.incrementRemoved(
-                    removedTx.isReceivedFromLocalSource(), "confirmed", name());
-              });
+      final var highestNonceRemovedTx =
+          confirmedTxs.isEmpty() ? null : confirmedTxs.lastEntry().getValue();
 
-      confirmedTxs.clear();
+      final var itConfirmedTxs = confirmedTxs.values().iterator();
+      while (itConfirmedTxs.hasNext()) {
+        final var confirmedTx = itConfirmedTxs.next();
+        itConfirmedTxs.remove();
+        processRemove(senderTxs, confirmedTx.getTransaction());
+
+        metrics.incrementRemoved(confirmedTx.isReceivedFromLocalSource(), "confirmed", name());
+        LOG.atTrace()
+            .setMessage("Removed confirmed pending transactions {}")
+            .addArgument(confirmedTx::toTraceLog)
+            .log();
+      }
 
       if (senderTxs.isEmpty()) {
         readyBySender.remove(sender);
+      } else {
+        internalConfirmed(senderTxs, sender, maxConfirmedNonce, highestNonceRemovedTx);
       }
-      internalConfirmed(senderTxs, sender, maxConfirmedNonce);
     }
+
+    promoteTransactions();
   }
 
   protected abstract void internalConfirmed(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final Address sender,
-      final long maxConfirmedNonce);
+      final long maxConfirmedNonce,
+      final PendingTransaction highestNonceRemovedTx);
 
   protected abstract void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs,

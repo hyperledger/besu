@@ -31,7 +31,8 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   protected void internalConfirmed(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final Address sender,
-      final long maxConfirmedNonce) {
+      final long maxConfirmedNonce,
+      final PendingTransaction highestNonceRemovedTx) {
     // no -op
   }
 

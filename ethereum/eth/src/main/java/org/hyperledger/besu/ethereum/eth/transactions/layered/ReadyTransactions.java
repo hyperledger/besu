@@ -148,9 +148,13 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
       if (promotedTx != null) {
         processRemove(senderTxs, promotedTx.getTransaction());
+
+        promoteTransactions();
+
         if (senderTxs.isEmpty()) {
           readyBySender.remove(promotedTx.getSender());
         }
+
         return promotedTx;
       }
     }

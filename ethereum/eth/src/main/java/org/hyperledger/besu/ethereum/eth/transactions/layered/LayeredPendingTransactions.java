@@ -259,9 +259,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .addArgument(blockHeader::toLogString)
         .log();
 
-    prioritizedTransactions.removeConfirmed(maxConfirmedNonceBySender(confirmedTransactions));
-
-    prioritizedTransactions.blockAdded(blockHeader, feeMarket);
+    prioritizedTransactions.blockAdded(
+        feeMarket, blockHeader, maxConfirmedNonceBySender(confirmedTransactions));
   }
 
   private Map<Address, Long> maxConfirmedNonceBySender(

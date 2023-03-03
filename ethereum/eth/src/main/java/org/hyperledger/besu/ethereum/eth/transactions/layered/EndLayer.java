@@ -58,7 +58,10 @@ public class EndLayer extends BaseTransactionsLayer {
   public void remove(final PendingTransaction pendingTransaction) {}
 
   @Override
-  public void blockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {}
+  public void blockAdded(
+      final FeeMarket feeMarket,
+      final BlockHeader blockHeader,
+      final Map<Address, Long> maxConfirmedNonceBySender) {}
 
   @Override
   public List<Transaction> getAllLocal() {
@@ -79,9 +82,6 @@ public class EndLayer extends BaseTransactionsLayer {
   public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
     return null;
   }
-
-  @Override
-  public void removeConfirmed(final Map<Address, Long> maxConfirmedNonceBySender) {}
 
   @Override
   public PendingTransaction promote(final Address sender, final long nonce) {

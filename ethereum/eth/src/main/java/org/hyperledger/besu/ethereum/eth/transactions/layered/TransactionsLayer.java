@@ -34,7 +34,10 @@ public interface TransactionsLayer {
   // ToDo: find a more efficient way to handle remove and gaps
   void remove(PendingTransaction pendingTransaction);
 
-  void blockAdded(BlockHeader blockHeader, FeeMarket feeMarket);
+  void blockAdded(
+      FeeMarket feeMarket,
+      BlockHeader blockHeader,
+      final Map<Address, Long> maxConfirmedNonceBySender);
 
   List<Transaction> getAllLocal();
 
@@ -43,8 +46,6 @@ public interface TransactionsLayer {
   OptionalLong getNextNonceFor(Address sender);
 
   PendingTransaction promote(Predicate<PendingTransaction> promotionFilter);
-
-  void removeConfirmed(Map<Address, Long> maxConfirmedNonceBySender);
 
   long subscribeToAdded(PendingTransactionAddedListener listener);
 

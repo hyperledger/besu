@@ -44,7 +44,7 @@ public class LayersTest extends BaseTransactionPoolTest {
       ImmutableTransactionPoolConfiguration.builder()
           .maxPrioritizedTransactions(MAX_PRIO_TRANSACTIONS)
           .maxFutureBySender(MAX_FUTURE_FOR_SENDER)
-          .pendingTransactionsMaxCapacityBytes(createEIP1559Transaction(0).getSize() * 3)
+          .pendingTransactionsMaxCapacityBytes(createEIP1559Transaction(0, KEYS1).getSize() * 3)
           .build();
 
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
@@ -84,6 +84,18 @@ public class LayersTest extends BaseTransactionPoolTest {
   @ParameterizedTest
   @MethodSource("providerRemoveTransactions")
   void removeTransactions(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
+  @ParameterizedTest
+  @MethodSource("providerInterleavedAddRemoveTransactions")
+  void interleavedAddRemoveTransactions(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
+  @ParameterizedTest
+  @MethodSource("providerRemoveConfirmedTransactions")
+  void removeConfirmedTransactions(final Scenario scenario) {
     assertScenario(scenario);
   }
 
@@ -326,6 +338,114 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedSparseForSender(S1, 7, 8)));
   }
 
+  static Stream<Arguments> providerInterleavedAddRemoveTransactions() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("interleaved add/remove 1")
+                .addForSender(S1, 0)
+                .removeForSender(S1, 0)
+                .addForSender(S1, 0)
+                .expectedPrioritizedForSender(S1, 0)),
+        Arguments.of(
+            new Scenario("interleaved add/remove 2")
+                .addForSender(S1, 0)
+                .removeForSender(S1, 0)
+                .addForSender(S1, 1)
+                .expectedSparseForSender(S1, 1)),
+        Arguments.of(
+            new Scenario("interleaved add/remove 3")
+                .addForSender(S1, 0)
+                .removeForSender(S1, 0)
+                .addForSender(S1, 1, 0)
+                .expectedPrioritizedForSender(S1, 0, 1)));
+  }
+
+  static Stream<Arguments> providerRemoveConfirmedTransactions() {
+    return Stream.of(
+        Arguments.of(new Scenario("confirmed not exist").confirmedForSenders(S1, 0)),
+        Arguments.of(
+            new Scenario("confirmed below existing lower nonce")
+                .addForSender(S1, 1)
+                .confirmedForSenders(S1, 0)
+                .expectedPrioritizedForSender(S1, 1)),
+        Arguments.of(
+            new Scenario("confirmed only one existing")
+                .addForSender(S1, 0)
+                .confirmedForSenders(S1, 0)),
+        Arguments.of(
+            new Scenario("confirmed above existing")
+                .addForSender(S1, 0)
+                .confirmedForSenders(S1, 1)),
+        Arguments.of(
+            new Scenario("confirmed some existing 1")
+                .addForSender(S1, 0, 1)
+                .confirmedForSenders(S1, 0)
+                .expectedPrioritizedForSender(S1, 1)),
+        Arguments.of(
+            new Scenario("confirmed some existing 2")
+                .addForSender(S1, 0, 1, 2)
+                .confirmedForSenders(S1, 1)
+                .expectedPrioritizedForSender(S1, 2)),
+        Arguments.of(
+            new Scenario("overflow to ready and confirmed some existing 1")
+                .addForSender(S1, 0, 1, 2, 3)
+                .confirmedForSenders(S1, 3)),
+        Arguments.of(
+            new Scenario("overflow to ready and confirmed some existing 2")
+                .addForSender(S1, 0, 1, 2, 3)
+                .confirmedForSenders(S1, 0)
+                .expectedPrioritizedForSender(S1, 1, 2, 3)),
+        Arguments.of(
+            new Scenario("overflow to ready and confirmed some existing 3")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5)
+                .confirmedForSenders(S1, 1)
+                .expectedPrioritizedForSender(S1, 2, 3, 4)
+                .expectedReadyForSender(S1, 5)),
+        Arguments.of(
+            new Scenario("overflow to ready and confirmed all existing")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5)
+                .confirmedForSenders(S1, 5)),
+        Arguments.of(
+            new Scenario("overflow to ready and confirmed above highest nonce")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5)
+                .confirmedForSenders(S1, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse and confirmed some existing 1")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
+                .confirmedForSenders(S1, 0)
+                .expectedPrioritizedForSender(S1, 1, 2, 3)
+                .expectedReadyForSender(S1, 4, 5, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse and confirmed some existing 2")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
+                .confirmedForSenders(S1, 2)
+                .expectedPrioritizedForSender(S1, 3, 4, 5)
+                .expectedReadyForSender(S1, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse and confirmed some existing 3")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6)
+                .confirmedForSenders(S1, 3)
+                .expectedPrioritizedForSender(S1, 4, 5, 6)),
+        Arguments.of(
+            new Scenario("overflow to sparse and confirmed some existing 4")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6, 7, 8)
+                .confirmedForSenders(S1, 0)
+                .expectedPrioritizedForSender(S1, 1, 2, 3)
+                .expectedReadyForSender(S1, 4, 5, 6)
+                .expectedSparseForSender(S1, 7, 8)),
+        Arguments.of(
+            new Scenario("overflow to sparse and confirmed some existing with gap")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 7, 8)
+                .confirmedForSenders(S1, 0)
+                .expectedPrioritizedForSender(S1, 1, 2, 3)
+                .expectedReadyForSender(S1, 4, 5)
+                .expectedSparseForSender(S1, 7, 8)),
+        Arguments.of(
+            new Scenario("overflow to sparse and confirmed all w/o gap")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5, 6, 7, 8)
+                .confirmedForSenders(S1, 8)));
+  }
+
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
@@ -384,6 +504,19 @@ public class LayersTest extends BaseTransactionPoolTest {
       return this;
     }
 
+    public Scenario confirmedForSenders(final Object... args) {
+      final Map<Address, Long> maxConfirmedNonceBySender = new HashMap<>();
+      for (int i = 0; i < args.length; i = i + 2) {
+        final Sender sender = (Sender) args[i];
+        final long nonce = (int) args[i + 1];
+        maxConfirmedNonceBySender.put(sender.address, nonce);
+      }
+      actions.add(
+          layer ->
+              layer.blockAdded(FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender));
+      return this;
+    }
+
     Scenario setGap(final Sender sender, final int gap) {
       nonceBySender.put(sender, gap);
       return this;
@@ -394,15 +527,18 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     private PendingTransaction getOrCreate(final Sender sender, final long nonce) {
-      return txsBySender.get(sender).computeIfAbsent(nonce, this::createEIP1559PendingTransactions);
+      return txsBySender
+          .get(sender)
+          .computeIfAbsent(nonce, n -> createEIP1559PendingTransactions(n, sender.key));
     }
 
     private PendingTransaction get(final Sender sender, final long nonce) {
       return txsBySender.get(sender).get(nonce);
     }
 
-    private PendingTransaction createEIP1559PendingTransactions(final long nonce) {
-      return createRemotePendingTransaction(createEIP1559Transaction(nonce));
+    private PendingTransaction createEIP1559PendingTransactions(
+        final long nonce, final KeyPair keys) {
+      return createRemotePendingTransaction(createEIP1559Transaction(nonce, keys));
     }
 
     public Scenario expectedPrioritizedForSender(final Sender sender, final long... nonce) {

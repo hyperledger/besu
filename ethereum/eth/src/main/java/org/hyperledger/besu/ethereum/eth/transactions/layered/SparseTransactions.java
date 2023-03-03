@@ -140,13 +140,21 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   protected void internalConfirmed(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final Address sender,
-      final long maxConfirmedNonce) {
-    if (senderTxs.isEmpty()) {
-      orderByGap.get(gapBySender.remove(sender)).remove(sender);
+      final long maxConfirmedNonce,
+      final PendingTransaction highestNonceRemovedTx) {
+
+    if (highestNonceRemovedTx != null) {
+      final int currGap = gapBySender.get(sender);
+      final int newGap = (int) (senderTxs.firstKey() - (highestNonceRemovedTx.getNonce() + 1));
+      if (currGap != newGap) {
+        gapBySender.put(sender, newGap);
+        orderByGap.get(currGap).remove(sender);
+        orderByGap.get(newGap).add(sender);
+      }
     } else {
       final int currGap = gapBySender.get(sender);
       final int newGap = (int) (senderTxs.firstKey() - (maxConfirmedNonce + 1));
-      if (currGap != newGap) {
+      if (newGap < currGap) {
         gapBySender.put(sender, newGap);
         orderByGap.get(currGap).remove(sender);
         orderByGap.get(newGap).add(sender);
@@ -171,16 +179,21 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
     sparseEvictionOrder.remove(removedTx);
 
+    final Address sender = removedTx.getSender();
+
     if (senderTxs != null && !senderTxs.isEmpty()) {
       if (senderTxs.firstKey() > removedTx.getNonce()) {
-        final int currGap = gapBySender.get(removedTx.getSender());
-        orderByGap.get(currGap).remove(removedTx.getSender());
+        final int currGap = gapBySender.get(sender);
         final int newGap = (int) (senderTxs.firstKey() - (removedTx.getNonce() + 1));
-        orderByGap.get(newGap).add(removedTx.getSender());
+        if (currGap != newGap) {
+          orderByGap.get(currGap).remove(sender);
+          orderByGap.get(newGap).add(sender);
+          gapBySender.put(sender, newGap);
+        }
       }
     } else {
-      final int gap = gapBySender.remove(removedTx.getSender());
-      orderByGap.get(gap).remove(removedTx.getSender());
+      final int gap = gapBySender.remove(sender);
+      orderByGap.get(gap).remove(sender);
     }
   }
 
