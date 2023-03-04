@@ -15,14 +15,19 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +74,71 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         ((SnappedKeyValueStorage) storageStorage).getSnapshotTransaction(),
         ((SnappedKeyValueStorage) trieBranchStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction());
+  }
+
+  @Override
+  public Optional<Bytes> getAccount(final Hash accountHash) {
+    return isClosed.get() ? Optional.empty() : super.getAccount(accountHash);
+  }
+
+  @Override
+  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
+    return isClosed.get() ? Optional.empty() : super.getCode(codeHash, accountHash);
+  }
+
+  @Override
+  public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
+    return isClosed.get() ? Optional.empty() : super.getAccountStateTrieNode(location, nodeHash);
+  }
+
+  @Override
+  public Optional<Bytes> getAccountStorageTrieNode(
+      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
+    return isClosed.get()
+        ? Optional.empty()
+        : super.getAccountStorageTrieNode(accountHash, location, nodeHash);
+  }
+
+  @Override
+  public Optional<byte[]> getTrieLog(final Hash blockHash) {
+    return isClosed.get() ? Optional.empty() : super.getTrieLog(blockHash);
+  }
+
+  @Override
+  public Optional<Bytes> getStateTrieNode(final Bytes location) {
+    return isClosed.get() ? Optional.empty() : super.getStateTrieNode(location);
+  }
+
+  @Override
+  public Optional<Bytes> getWorldStateRootHash() {
+    return isClosed.get() ? Optional.empty() : super.getWorldStateRootHash();
+  }
+
+  @Override
+  public Optional<Hash> getWorldStateBlockHash() {
+    return isClosed.get() ? Optional.empty() : super.getWorldStateBlockHash();
+  }
+
+  @Override
+  public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
+    return isClosed.get()
+        ? Optional.empty()
+        : super.getStorageValueBySlotHash(accountHash, slotHash);
+  }
+
+  @Override
+  public Optional<Bytes> getStorageValueBySlotHash(
+      final Supplier<Optional<Hash>> storageRootSupplier,
+      final Hash accountHash,
+      final Hash slotHash) {
+    return isClosed.get()
+        ? Optional.empty()
+        : super.getStorageValueBySlotHash(storageRootSupplier, accountHash, slotHash);
+  }
+
+  @Override
+  public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
+    return isClosed.get() ? false : super.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override
