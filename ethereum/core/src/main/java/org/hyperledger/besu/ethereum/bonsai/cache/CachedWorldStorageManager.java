@@ -151,7 +151,8 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
               addCachedLayer(
                   blockHeader,
                   blockHeader.getStateRoot(),
-                  new BonsaiWorldState(archive, rootWorldStateStorage));
+                  new BonsaiWorldState(
+                      archive, new BonsaiSnapshotWorldStateKeyValueStorage(rootWorldStateStorage)));
               return getWorldState(blockHeader.getHash());
             });
   }
