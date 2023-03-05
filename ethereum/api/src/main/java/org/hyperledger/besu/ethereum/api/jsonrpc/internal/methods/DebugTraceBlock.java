@@ -78,13 +78,12 @@ public class DebugTraceBlock implements JsonRpcMethod {
             .orElse(TraceOptions.DEFAULT);
 
     if (this.blockchain.blockByHash(block.getHeader().getParentHash()).isPresent()) {
-      final Collection<DebugTraceTransactionResult> results =
-          blockTracerSupplier
+      final Collection<DebugTraceTransactionResult> results = blockchain
+              .getAndMapWorldState(block.getHash(), mutableWorldState -> blockTracerSupplier
               .get()
-              .trace(block, new DebugOperationTracer(traceOptions))
+              .trace(mutableWorldState, block, new DebugOperationTracer(traceOptions))
               .map(BlockTrace::getTransactionTraces)
-              .map(DebugTraceTransactionResult::of)
-              .orElse(null);
+              .map(DebugTraceTransactionResult::of)).orElse(null);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
     } else {
       return new JsonRpcErrorResponse(

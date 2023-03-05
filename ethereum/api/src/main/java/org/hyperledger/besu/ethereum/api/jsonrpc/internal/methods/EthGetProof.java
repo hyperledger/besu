@@ -72,9 +72,9 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
                               new JsonRpcSuccessResponse(
                                   requestContext.getRequest().getId(),
                                   GetProofResult.buildGetProofResult(address, proof)))
-                  .orElse(
+                  .or(()-> Optional.of(
                       new JsonRpcErrorResponse(
-                          requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND));
+                          requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND)));
             })
         .orElse(
             new JsonRpcErrorResponse(

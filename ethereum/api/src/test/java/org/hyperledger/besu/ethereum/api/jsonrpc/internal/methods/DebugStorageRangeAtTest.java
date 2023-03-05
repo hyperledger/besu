@@ -157,6 +157,6 @@ public class DebugStorageRangeAtTest {
     return Optional.of(
         ((BlockReplay.TransactionAction) invocation.getArgument(2))
             .performAction(
-                transaction, blockHeader, blockchain, worldState, transactionProcessor, Wei.ZERO));
+                transaction, blockHeader, blockchain, transactionProcessor, Wei.ZERO));
   }
 }

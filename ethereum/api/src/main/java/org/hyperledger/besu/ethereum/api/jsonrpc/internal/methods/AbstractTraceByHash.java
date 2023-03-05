@@ -23,11 +23,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.F
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -62,14 +64,16 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
     if (block == null || block.getBody().getTransactions().isEmpty()) {
       return Stream.empty();
     }
-    final TransactionTrace transactionTrace = getTransactionTrace(block, transactionHash);
-    return getTraceStream(transactionTrace, block);
+    return blockchainQueries.getAndMapWorldState(block.getHash(), mutableWorldState -> {
+      final TransactionTrace transactionTrace = getTransactionTrace(mutableWorldState, block, transactionHash);
+      return Optional.ofNullable(getTraceStream(transactionTrace, block));
+    }).orElse(Stream.empty());
   }
 
-  private TransactionTrace getTransactionTrace(final Block block, final Hash transactionHash) {
+  private TransactionTrace getTransactionTrace(final MutableWorldState mutableWorldState, final Block block, final Hash transactionHash) {
     return blockTracerSupplier
         .get()
-        .trace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
+        .trace(mutableWorldState, block, new DebugOperationTracer(new TraceOptions(false, false, true)))
         .map(BlockTrace::getTransactionTraces)
         .orElse(Collections.emptyList())
         .stream()
