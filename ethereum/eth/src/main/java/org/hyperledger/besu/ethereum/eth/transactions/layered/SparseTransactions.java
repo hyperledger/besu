@@ -85,7 +85,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
-  protected void internalAdd(final PendingTransaction addedTx) {
+  protected void internalAdd(
+      final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction addedTx) {
     sparseEvictionOrder.add(addedTx);
   }
 

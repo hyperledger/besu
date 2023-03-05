@@ -59,7 +59,8 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   @Override
-  protected void internalAdd(final PendingTransaction addedTx) {
+  protected void internalAdd(
+      final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction addedTx) {
     orderByFee.add(addedTx);
   }
 

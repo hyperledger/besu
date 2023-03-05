@@ -73,8 +73,10 @@ public class BaseTransactionPoolTest {
     return createTransaction(nonce, maxGasPrice, 0, keys);
   }
 
-  protected Transaction createEIP1559Transaction(final long nonce, final KeyPair keys) {
-    return createTransaction(TransactionType.EIP1559, nonce, Wei.of(5000L), 0, keys);
+  protected Transaction createEIP1559Transaction(
+      final long nonce, final KeyPair keys, final int gasFeeMultiplier) {
+    return createTransaction(
+        TransactionType.EIP1559, nonce, Wei.of(5000L).multiply(gasFeeMultiplier), 0, keys);
   }
 
   protected Transaction createTransaction(

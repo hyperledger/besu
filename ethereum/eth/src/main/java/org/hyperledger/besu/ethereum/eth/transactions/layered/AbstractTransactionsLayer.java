@@ -199,14 +199,14 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
 
   private void processAdded(final PendingTransaction addedTx) {
     pendingTransactions.put(addedTx.getHash(), addedTx);
-    readyBySender
-        .computeIfAbsent(addedTx.getSender(), s -> new TreeMap<>())
-        .put(addedTx.getNonce(), addedTx);
+    final var senderTxs = readyBySender.computeIfAbsent(addedTx.getSender(), s -> new TreeMap<>());
+    senderTxs.put(addedTx.getNonce(), addedTx);
     increaseSpaceUsed(addedTx);
-    internalAdd(addedTx);
+    internalAdd(senderTxs, addedTx);
   }
 
-  protected abstract void internalAdd(final PendingTransaction addedTx);
+  protected abstract void internalAdd(
+      final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction addedTx);
 
   protected abstract int maxTransactionsNumber();
 

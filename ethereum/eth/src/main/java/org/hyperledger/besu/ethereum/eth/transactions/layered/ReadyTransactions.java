@@ -80,13 +80,21 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
       return gap == 0;
     }
 
-    return (senderTxs.lastKey() + 1) == pendingTransaction.getNonce();
+    // true if prepend or append
+    return (senderTxs.lastKey() + 1) == pendingTransaction.getNonce()
+        || (senderTxs.firstKey() - 1) == pendingTransaction.getNonce();
   }
 
   @Override
-  protected void internalAdd(final PendingTransaction pendingTransaction) {
-    if (readyBySender.get(pendingTransaction.getSender()).firstKey()
-        == (pendingTransaction.getNonce())) {
+  protected void internalAdd(
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final PendingTransaction pendingTransaction) {
+    if (senderTxs.firstKey() == pendingTransaction.getNonce()) {
+      // replace previous if exists
+      if (senderTxs.size() > 1) {
+        final PendingTransaction secondTx = senderTxs.get(pendingTransaction.getNonce() + 1);
+        orderByMaxFee.remove(secondTx);
+      }
       orderByMaxFee.add(pendingTransaction);
     }
   }
