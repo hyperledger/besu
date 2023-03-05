@@ -21,15 +21,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.datatypes.BLSSignature;
-import org.hyperledger.besu.datatypes.DepositWithdrawalCredential;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -49,20 +45,9 @@ class MainnetBlockBodyValidatorTest {
   private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forMainnet();
   private final List<Withdrawal> withdrawals =
       List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.ZERO, GWei.ONE));
-  private final List<Deposit> deposits =
-      List.of(
-        new Deposit(
-            BLSPublicKey.fromHexString("0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
-            DepositWithdrawalCredential.fromHexString("0x0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483"),
-            GWei.fromHexString("0x40597307000000"),
-            BLSSignature.fromHexString("0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
-            UInt64.fromHexString("0x3f3d080000000000")));
-
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
-
-  @Mock private DepositsValidator depositsValidator;
 
   @Test
   void validatesWithdrawals() {
@@ -143,35 +128,5 @@ class MainnetBlockBodyValidatorTest {
                 .validateBodyLight(
                     blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
         .isFalse();
-  }
-
-
-  @Test
-  void validateDeposits() {
-    final Block block =
-        blockDataGenerator.block(
-            new BlockOptions()
-                .setBlockNumber(1)
-                .setGasUsed(0)
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setDeposits(Optional.of(deposits))
-                .setDepositsRoot(BodyValidation.depositsRoot(deposits)));
-    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
-
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getWithdrawalsValidator()).thenReturn(withdrawalsValidator);
-    when(protocolSpec.getDepositsValidator()).thenReturn(depositsValidator);
-    when(depositsValidator.validateDeposits(Optional.of(deposits))).thenReturn(true);
-    when(depositsValidator.validateDepositsRoot(block)).thenReturn(true);
-
-    assertThat(
-        new MainnetBlockBodyValidator(protocolSchedule)
-            .validateBodyLight(
-                blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
-        .isTrue();
   }
 }

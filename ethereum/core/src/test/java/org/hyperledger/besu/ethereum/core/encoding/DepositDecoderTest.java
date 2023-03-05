@@ -17,45 +17,33 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.datatypes.BLSSignature;
+import org.hyperledger.besu.datatypes.DepositWithdrawalCredential;
 import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DepositDecoderTest {
-
   @Test
-  void shouldDecodeWithdrawalForZeroCase() {
-    Withdrawal withdrawal =
-        WithdrawalDecoder.decodeOpaqueBytes(
-            Bytes.fromHexString(WithdrawalEncoderTest.WITHDRAWAL_ZERO_CASE));
-    assertThat(withdrawal.getIndex()).isEqualTo(UInt64.ZERO);
-    assertThat(withdrawal.getValidatorIndex()).isEqualTo(UInt64.ZERO);
-    assertThat(withdrawal.getAddress()).isEqualTo(Address.ZERO);
-    assertThat(withdrawal.getAmount()).isEqualTo(GWei.ZERO);
+  void shouldDecodeDeposit() {
+    final Deposit expectedDeposit =
+        new Deposit(
+            BLSPublicKey.fromHexString("0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
+            DepositWithdrawalCredential.fromHexString("0x0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483"),
+            GWei.of(32000000000L),
+            BLSSignature.fromHexString("0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
+            UInt64.ONE);
+
+    final Deposit deposit =
+            DepositDecoder.decodeOpaqueBytes(
+                    Bytes.fromHexString("0xf8bbb0b10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416ea00017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483850773594000b860a889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb501")
+            );
+
+    assertThat(deposit).isEqualTo(expectedDeposit);
   }
 
-  @Test
-  void shouldDecodeWithdrawalForMaxValue() {
-    Withdrawal withdrawal =
-        WithdrawalDecoder.decodeOpaqueBytes(
-            Bytes.fromHexString(WithdrawalEncoderTest.WITHDRAWAL_MAX_VALUE));
-    assertThat(withdrawal.getIndex()).isEqualTo(UInt64.MAX_VALUE);
-    assertThat(withdrawal.getValidatorIndex()).isEqualTo(UInt64.MAX_VALUE);
-    assertThat(withdrawal.getAddress()).isEqualTo(WithdrawalEncoderTest.MAX_ADDRESS);
-    assertThat(withdrawal.getAmount()).isEqualTo(GWei.MAX_GWEI);
-  }
-
-  @Test
-  void shouldDecodeWithdrawal() {
-    final Withdrawal expectedWithdrawal =
-        new Withdrawal(
-            UInt64.valueOf(3), UInt64.valueOf(1), Address.fromHexString("0xdeadbeef"), GWei.of(5));
-    final Withdrawal withdrawal =
-        WithdrawalDecoder.decodeOpaqueBytes(
-            Bytes.fromHexString("0xd803019400000000000000000000000000000000deadbeef05"));
-
-    assertThat(withdrawal).isEqualTo(expectedWithdrawal);
-  }
 }
