@@ -87,8 +87,8 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockReplay blockReplay =
         new BlockReplay(
             protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            blockchainQueries.getWorldStateArchive());
+            blockchainQueries.getBlockchain()
+        );
 
     return mapOf(
         new DebugTraceTransaction(blockchainQueries, new TransactionTracer(blockReplay)),
@@ -103,7 +103,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugSetHead(blockchainQueries, protocolContext),
         new DebugReplayBlock(blockchainQueries, protocolContext, protocolSchedule),
         new DebugTraceBlockByNumber(() -> new BlockTracer(blockReplay), blockchainQueries),
-        new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay)),
+        new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay), () -> blockchainQueries),
         new DebugBatchSendRawTransaction(transactionPool),
         new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult),
         new DebugStandardTraceBlockToFile(
