@@ -32,7 +32,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
-// TODO: Add deposit related tests
 public final class GenesisStateTest {
 
   /** Known RLP encoded bytes of the Olympic Genesis Block. */
