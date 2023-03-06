@@ -19,8 +19,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
@@ -151,11 +149,14 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     if (maybePayloadAttributes.isPresent()
         && !isPayloadAttributesValid(maybePayloadAttributes.get(), withdrawals, newHead)) {
-      warnLambda(
-          LOG,
-          "Invalid payload attributes: {}",
-          () ->
-              maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize).orElse(null));
+      LOG.atWarn()
+          .setMessage("Invalid payload attributes: {}")
+          .addArgument(
+              () ->
+                  maybePayloadAttributes
+                      .map(EnginePayloadAttributesParameter::serialize)
+                      .orElse(null))
+          .log();
       return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
     }
 
@@ -182,11 +183,12 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     payloadId.ifPresent(
         pid ->
-            debugLambda(
-                LOG,
-                "returning identifier {} for requested payload {}",
-                pid::toHexString,
-                () -> maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
+            LOG.atDebug()
+                .setMessage("returning identifier {} for requested payload {}")
+                .addArgument(pid::toHexString)
+                .addArgument(
+                    () -> maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize))
+                .log());
 
     logForkchoiceUpdatedCall(VALID, forkChoice);
     return new JsonRpcSuccessResponse(
@@ -242,12 +244,12 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   private void logPayload(final EnginePayloadAttributesParameter payloadAttributes) {
-    debugLambda(
-        LOG,
-        "timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}",
-        payloadAttributes::getTimestamp,
-        () -> payloadAttributes.getPrevRandao().toHexString(),
-        () -> payloadAttributes.getSuggestedFeeRecipient().toHexString());
+    LOG.atDebug()
+        .setMessage("timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}")
+        .addArgument(payloadAttributes::getTimestamp)
+        .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
+        .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString())
+        .log();
   }
 
   private boolean isValidForkchoiceState(

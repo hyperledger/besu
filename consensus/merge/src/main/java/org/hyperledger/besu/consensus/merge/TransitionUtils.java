@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -124,11 +122,11 @@ public class TransitionUtils<SwitchingObject> {
     }
 
     if (currentChainTotalDifficulty.isZero()) {
-      warnLambda(
-          LOG,
-          "unable to get total difficulty for {}, parent hash {} difficulty not found",
-          header::toLogString,
-          header::getParentHash);
+      LOG.atWarn()
+          .setMessage("unable to get total difficulty for {}, parent hash {} difficulty not found")
+          .addArgument(header::toLogString)
+          .addArgument(header::getParentHash)
+          .log();
     }
     Difficulty configuredTotalTerminalDifficulty = consensusContext.getTerminalTotalDifficulty();
 

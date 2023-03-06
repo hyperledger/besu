@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -105,13 +103,29 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   /**
-   * Gets by block header.
+   * Gets protocol spec by block header.
    *
    * @param blockHeader the block header
-   * @return the by block header
+   * @return the ProtocolSpec to be used by the provided block
    */
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    return this.timestampSchedule
+        .getByTimestamp(blockHeader.getTimestamp())
+        .orElseGet(
+            () ->
+                transitionUtils.dispatchFunctionAccordingToMergeState(
+                    protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader)));
+  }
+
+  /**
+   * Gets the protocol spec by block header, with some additional logic used by backwards sync (BWS)
+   *
+   * @param blockHeader the block header
+   * @return the ProtocolSpec to be used by the provided block
+   */
+  public ProtocolSpec getByBlockHeaderWithTransitionReorgHandling(
+      final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
         .getByTimestamp(blockHeader.getTimestamp())
         .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
@@ -124,11 +138,11 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
       // if head is not post-merge, return pre-merge schedule:
       if (!mergeContext.isPostMerge()) {
-        debugLambda(
-            LOG,
-            "for {} returning a pre-merge schedule because we are not post-merge",
-            blockHeader::toLogString);
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+        LOG.atDebug()
+            .setMessage("for {} returning a pre-merge schedule because we are not post-merge")
+            .addArgument(blockHeader::toLogString)
+            .log();
+        return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
 
       // otherwise check to see if this block represents a re-org TTD block:
@@ -139,27 +153,30 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
               .orElse(Difficulty.ZERO);
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
       Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
-      debugLambda(
-          LOG,
-          " block {} ttd is: {}, parent total diff is: {}, this total diff is: {}",
-          blockHeader::toLogString,
-          () -> terminalDifficulty,
-          () -> parentDifficulty,
-          () -> thisDifficulty);
+      LOG.atDebug()
+          .setMessage(" block {} ttd is: {}, parent total diff is: {}, this total diff is: {}")
+          .addArgument(blockHeader::toLogString)
+          .addArgument(terminalDifficulty)
+          .addArgument(parentDifficulty)
+          .addArgument(thisDifficulty)
+          .log();
 
       // if this block is pre-merge or a TTD block
       if (thisDifficulty.lessThan(terminalDifficulty)
           || TransitionUtils.isTerminalProofOfWorkBlock(blockHeader, protocolContext)) {
-        debugLambda(
-            LOG,
-            "returning a pre-merge schedule because block {} is pre-merge or TTD",
-            blockHeader::toLogString);
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+        LOG.atDebug()
+            .setMessage("returning a pre-merge schedule because block {} is pre-merge or TTD")
+            .addArgument(blockHeader::toLogString)
+            .log();
+        return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
     }
     // else return post-merge schedule
-    debugLambda(LOG, " for {} returning a post-merge schedule", blockHeader::toLogString);
-    return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+    LOG.atDebug()
+        .setMessage(" for {} returning a post-merge schedule")
+        .addArgument(blockHeader::toLogString)
+        .log();
+    return getPostMergeSchedule().getByBlockHeader(blockHeader);
   }
 
   /**

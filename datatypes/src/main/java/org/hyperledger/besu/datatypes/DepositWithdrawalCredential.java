@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A withdrawal credential of a Deposit. */
-public class DepositDepositWithdrawalCredential extends DelegatingBytes
+public class DepositWithdrawalCredential extends DelegatingBytes
     implements org.hyperledger.besu.plugin.data.DepositWithdrawalCredential {
 
   /** The constant SIZE. */
@@ -35,7 +35,7 @@ public class DepositDepositWithdrawalCredential extends DelegatingBytes
    *
    * @param bytes the bytes
    */
-  protected DepositDepositWithdrawalCredential(final Bytes bytes) {
+  protected DepositWithdrawalCredential(final Bytes bytes) {
     super(bytes);
   }
 
@@ -45,13 +45,13 @@ public class DepositDepositWithdrawalCredential extends DelegatingBytes
    * @param value the value
    * @return the withdrawal credential
    */
-  public static DepositDepositWithdrawalCredential wrap(final Bytes value) {
+  public static DepositWithdrawalCredential wrap(final Bytes value) {
     checkArgument(
         value.size() == SIZE,
         "A withdrawal credential must be %s bytes long, got %s",
         SIZE,
         value.size());
-    return new DepositDepositWithdrawalCredential(value);
+    return new DepositWithdrawalCredential(value);
   }
 
   /**
@@ -60,14 +60,14 @@ public class DepositDepositWithdrawalCredential extends DelegatingBytes
    * @param input The input to read from
    * @return the input's corresponding withdrawal credential
    */
-  public static DepositDepositWithdrawalCredential readFrom(final RLPInput input) {
+  public static DepositWithdrawalCredential readFrom(final RLPInput input) {
     final Bytes bytes = input.readBytes();
     if (bytes.size() != SIZE) {
       throw new RLPException(
           String.format(
               "Withdrawal credential unexpected size of %s (needs %s)", bytes.size(), SIZE));
     }
-    return DepositDepositWithdrawalCredential.wrap(bytes);
+    return DepositWithdrawalCredential.wrap(bytes);
   }
 
   /**
@@ -80,7 +80,7 @@ public class DepositDepositWithdrawalCredential extends DelegatingBytes
    *     representation of a withdrawal credential.
    */
   @JsonCreator
-  public static DepositDepositWithdrawalCredential fromHexString(final String str) {
+  public static DepositWithdrawalCredential fromHexString(final String str) {
     if (str == null) return null;
     return wrap(Bytes.fromHexStringLenient(str, SIZE));
   }

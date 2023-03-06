@@ -112,7 +112,19 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   public static BlockBody readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    return readFrom(input, blockHeaderFunctions, false);
+  }
+
+  public static BlockBody readFrom(
+      final RLPInput input,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final boolean allowEmptyBody) {
     input.enterList();
+    if (input.isEndOfCurrentList() && allowEmptyBody) {
+      // empty block [] -> Return empty body.
+      input.leaveList();
+      return empty();
+    }
     // TODO: Support multiple hard fork transaction formats.
     final BlockBody body =
         new BlockBody(
@@ -142,6 +154,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   @Override
   public int hashCode() {
     return Objects.hash(transactions, ommers, withdrawals, deposits);
+  }
+
+  public boolean isEmpty() {
+    return transactions.isEmpty() && ommers.isEmpty() && withdrawals.isEmpty();
   }
 
   @Override
