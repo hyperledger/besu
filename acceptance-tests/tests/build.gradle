@@ -32,6 +32,8 @@ sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 solidity { resolvePackages = false }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation project(':crypto')
 
   testImplementation project(':acceptance-tests:dsl')
