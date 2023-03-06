@@ -121,12 +121,13 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
-    if (bonsaiValue != null) {
+
+    if (bonsaiValue == null) {
+      bonsaiValue = new BonsaiValue<>(null, null);
+      accountsToUpdate.put(address, bonsaiValue);
+    } else if (bonsaiValue.getUpdated() != null) {
       throw new IllegalStateException("Cannot create an account when one already exists");
     }
-
-    bonsaiValue = new BonsaiValue<>(null, null);
-    accountsToUpdate.put(address, bonsaiValue);
 
     final BonsaiAccount newAccount =
         new BonsaiAccount(
