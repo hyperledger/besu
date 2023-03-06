@@ -66,7 +66,7 @@ public interface DepositsValidator {
 
     @Override
     public boolean validateDeposits(final Optional<List<Deposit>> deposits) {
-      return true; // TODO: Validate deposits
+      return true; // TODO: Validate deposits in the next PR
     }
 
     @Override
