@@ -23,7 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -84,9 +85,17 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
-          .filter(entry -> entry.getValue().length > 0)
-          .map(bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()));
+      // immutable copy of our in memory store to use for streaming and filtering:
+      Map<Bytes, byte[]> ourLayerState = ImmutableMap.copyOf(hashValueStore);
+
+      return Streams.concat(
+          ourLayerState.entrySet().stream()
+              .filter(entry -> entry.getValue().length > 0)
+              .map(
+                  bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()))
+          // since we are layered, concat a parent stream filtered by our map entries:
+          ,
+          parent.stream().filter(e -> !ourLayerState.containsKey(Bytes.of(e.getLeft()))));
     } finally {
       lock.unlock();
     }
@@ -97,9 +106,17 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
-          .filter(entry -> entry.getValue().length > 0)
-          .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe());
+      // immutable copy of our in memory store to use for streaming and filtering:
+      Map<Bytes, byte[]> ourLayerState = ImmutableMap.copyOf(hashValueStore);
+
+      return Streams.concat(
+          ourLayerState.entrySet().stream()
+              .filter(entry -> entry.getValue().length > 0)
+              .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe())
+          // since we are layered, concat a parent stream filtered by our map entries:
+          ,
+          parent.streamKeys().filter(e -> !ourLayerState.containsKey(Bytes.of(e))));
+
     } finally {
       lock.unlock();
     }
