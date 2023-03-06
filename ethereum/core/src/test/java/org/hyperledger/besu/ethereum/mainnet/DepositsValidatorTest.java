@@ -15,39 +15,37 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.Optional;
 
-import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 public class DepositsValidatorTest {
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Test
   public void validateProhibitedDeposits() {
-    assertThat(
-            new DepositsValidator.ProhibitedDeposits().validateDeposits(Optional.empty()))
+    assertThat(new DepositsValidator.ProhibitedDeposits().validateDeposits(Optional.empty()))
         .isTrue();
   }
 
   @Test
   public void validateProhibitedDepositsRoot() {
     final Block block = blockDataGenerator.block();
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositsRoot(block))
-        .isTrue();
+    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositsRoot(block)).isTrue();
   }
 
   @Test
   public void invalidateProhibitedDeposits() {
     assertThat(
-            new DepositsValidator.ProhibitedDeposits()
-                .validateDeposits(Optional.of(emptyList())))
+            new DepositsValidator.ProhibitedDeposits().validateDeposits(Optional.of(emptyList())))
         .isFalse();
   }
 
@@ -56,8 +54,7 @@ public class DepositsValidatorTest {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create().setDepositsRoot(Hash.EMPTY_LIST_HASH);
     final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositsRoot(block))
-        .isFalse();
+    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositsRoot(block)).isFalse();
   }
 
   @Test
@@ -72,8 +69,7 @@ public class DepositsValidatorTest {
             .setDeposits(Optional.of(Collections.emptyList()))
             .setDepositsRoot(Hash.EMPTY_TRIE_HASH);
     final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositsRoot(block))
-        .isTrue();
+    assertThat(new DepositsValidator.AllowedDeposits().validateDepositsRoot(block)).isTrue();
   }
 
   @Test
