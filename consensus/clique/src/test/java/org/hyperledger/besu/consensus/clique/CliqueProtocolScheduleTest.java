@@ -176,7 +176,7 @@ public class CliqueProtocolScheduleTest {
       final BlockHeader parentBlockHeader) {
 
     return schedule
-        .getByBlockNumber(blockHeader.getNumber())
+        .getByBlockHeader(blockHeader)
         .getBlockHeaderValidator()
         .validateHeader(blockHeader, parentBlockHeader, null, HeaderValidationMode.LIGHT);
   }

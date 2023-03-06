@@ -1,0 +1,11 @@
+{
+  "request": {
+    "jsonrpc":"2.0","method":"eth_getBalance","params":["0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b","latest"],"id":1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": "0x6d61726975737664b29aca00"
+  },
+  "statusCode": 200
+}

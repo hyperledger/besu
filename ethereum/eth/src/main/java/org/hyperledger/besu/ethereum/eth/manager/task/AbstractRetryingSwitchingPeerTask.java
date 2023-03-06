@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -69,11 +66,11 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
             .orElseGet(this::selectNextPeer); // otherwise, select a new one from the pool
 
     if (maybePeer.isEmpty()) {
-      traceLambda(
-          LOG,
-          "No peer found to try to execute task at attempt {}, tried peers {}",
-          this::getRetryCount,
-          triedPeers::toString);
+      LOG.atTrace()
+          .setMessage("No peer found to try to execute task at attempt {}, tried peers {}")
+          .addArgument(this::getRetryCount)
+          .addArgument(triedPeers)
+          .log();
       final var ex = new NoAvailablePeersException();
       return CompletableFuture.failedFuture(ex);
     }
@@ -81,21 +78,21 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     final EthPeer peerToUse = maybePeer.get();
     assignPeer(peerToUse);
 
-    traceLambda(
-        LOG,
-        "Trying to execute task on peer {}, attempt {}",
-        this::getAssignedPeer,
-        this::getRetryCount);
+    LOG.atTrace()
+        .setMessage("Trying to execute task on peer {}, attempt {}")
+        .addArgument(this::getAssignedPeer)
+        .addArgument(this::getRetryCount)
+        .log();
 
     return executeTaskOnCurrentPeer(peerToUse)
         .thenApply(
             peerResult -> {
-              traceLambda(
-                  LOG,
-                  "Got result {} from peer {}, attempt {}",
-                  peerResult::toString,
-                  peerToUse::toString,
-                  this::getRetryCount);
+              LOG.atTrace()
+                  .setMessage("Got result {} from peer {}, attempt {}")
+                  .addArgument(peerResult)
+                  .addArgument(peerToUse)
+                  .addArgument(this::getRetryCount)
+                  .log();
               result.complete(peerResult);
               return peerResult;
             });
@@ -146,12 +143,13 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
           .or(() -> peers.streamAvailablePeers().sorted(peers.getBestChainComparator()).findFirst())
           .ifPresent(
               peer -> {
-                debugLambda(
-                    LOG,
-                    "Refresh peers disconnecting peer {}. Waiting for better peers. Current {} of max {}",
-                    peer::toString,
-                    peers::peerCount,
-                    peers::getMaxPeers);
+                LOG.atDebug()
+                    .setMessage(
+                        "Refresh peers disconnecting peer {}. Waiting for better peers. Current {} of max {}")
+                    .addArgument(peer)
+                    .addArgument(peers::peerCount)
+                    .addArgument(peers::getMaxPeers)
+                    .log();
                 peer.disconnect(DisconnectReason.USELESS_PEER);
               });
     }

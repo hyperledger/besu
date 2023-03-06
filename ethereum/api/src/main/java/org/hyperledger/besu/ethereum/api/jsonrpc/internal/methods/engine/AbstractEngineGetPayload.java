@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
-
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -62,15 +59,16 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     if (blockWithReceipts.isPresent()) {
       final var proposal = blockWithReceipts.get();
       final var proposalHeader = proposal.getHeader();
-      infoLambda(
-          LOG,
-          "Fetch block proposal by identifier: {}, hash: {}, number: {}, coinbase: {}, transaction count: {}",
-          payloadId::toHexString,
-          proposalHeader::getHash,
-          proposalHeader::getNumber,
-          proposalHeader::getCoinbase,
-          () -> proposal.getBlock().getBody().getTransactions().size());
-      debugLambda(LOG, "assembledBlock {}", () -> proposal);
+      LOG.atInfo()
+          .setMessage(
+              "Fetch block proposal by identifier: {}, hash: {}, number: {}, coinbase: {}, transaction count: {}")
+          .addArgument(payloadId::toHexString)
+          .addArgument(proposalHeader::getHash)
+          .addArgument(proposalHeader::getNumber)
+          .addArgument(proposalHeader::getCoinbase)
+          .addArgument(() -> proposal.getBlock().getBody().getTransactions().size())
+          .log();
+      LOG.atDebug().setMessage("assembledBlock {}").addArgument(() -> proposal).log();
       return createResponse(request, proposal);
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_PAYLOAD);

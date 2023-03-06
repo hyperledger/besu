@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
@@ -153,10 +151,11 @@ public class BackwardSyncContext {
 
   private boolean isTrusted(final Hash hash) {
     if (backwardChain.isTrusted(hash)) {
-      debugLambda(
-          LOG,
-          "not fetching or appending hash {} to backwards sync since it is present in successors",
-          hash::toHexString);
+      LOG.atDebug()
+          .setMessage(
+              "not fetching or appending hash {} to backwards sync since it is present in successors")
+          .addArgument(hash::toHexString)
+          .log();
       return true;
     }
     return false;
@@ -206,8 +205,10 @@ public class BackwardSyncContext {
                     ethContext.getEthPeers().peerCount(),
                     millisBetweenRetries);
               } else {
-                debugLambda(
-                    LOG, "Not recoverable backward sync exception {}", throwable::getMessage);
+                LOG.atDebug()
+                    .setMessage("Not recoverable backward sync exception {}")
+                    .addArgument(throwable::getMessage)
+                    .log();
                 throw backwardSyncException;
               }
             },
@@ -260,12 +261,12 @@ public class BackwardSyncContext {
     return protocolContext;
   }
 
-  public BlockValidator getBlockValidator(final long blockNumber) {
-    return protocolSchedule.getByBlockNumber(blockNumber).getBlockValidator();
+  public BlockValidator getBlockValidator(final BlockHeader blockHeader) {
+    return protocolSchedule.getByBlockHeader(blockHeader).getBlockValidator();
   }
 
   public BlockValidator getBlockValidatorForBlock(final Block block) {
-    return getBlockValidator(block.getHeader().getNumber());
+    return getBlockValidator(block.getHeader());
   }
 
   public boolean isReady() {
@@ -296,7 +297,7 @@ public class BackwardSyncContext {
   }
 
   protected Void saveBlock(final Block block) {
-    traceLambda(LOG, "Going to validate block {}", block::toLogString);
+    LOG.atTrace().setMessage("Going to validate block {}").addArgument(block::toLogString).log();
     var optResult =
         this.getBlockValidatorForBlock(block)
             .validateAndProcessBlock(
@@ -305,7 +306,10 @@ public class BackwardSyncContext {
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE);
     if (optResult.isSuccessful()) {
-      traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
+      LOG.atTrace()
+          .setMessage("Block {} was validated, going to import it")
+          .addArgument(block::toLogString)
+          .log();
       optResult.getYield().get().getWorldState().persist(block.getHeader());
       this.getProtocolContext()
           .getBlockchain()
@@ -344,7 +348,10 @@ public class BackwardSyncContext {
       return;
     }
 
-    debugLambda(LOG, "Rewinding head to last saved block {}", lastSavedBlock::toLogString);
+    LOG.atDebug()
+        .setMessage("Rewinding head to last saved block {}")
+        .addArgument(lastSavedBlock::toLogString)
+        .log();
     blockchain.rewindToBlock(lastSavedBlock.getHash());
   }
 
