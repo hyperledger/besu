@@ -79,7 +79,11 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
 
   private boolean hasEmptyBody(final BlockHeader header) {
     return header.getOmmersHash().equals(Hash.EMPTY_LIST_HASH)
-        && header.getTransactionsRoot().equals(Hash.EMPTY_TRIE_HASH);
+        && header.getTransactionsRoot().equals(Hash.EMPTY_TRIE_HASH)
+        && header
+            .getWithdrawalsRoot()
+            .map(wsRoot -> wsRoot.equals(Hash.EMPTY_TRIE_HASH))
+            .orElse(true);
   }
 
   public static CompleteBlocksTask forHeaders(
