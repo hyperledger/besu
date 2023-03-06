@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 public class NetworkRunner implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(NetworkRunner.class);
-  private static P2PNetwork p2PNetwork;
 
   private final CountDownLatch shutdown = new CountDownLatch(1);
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -176,7 +175,7 @@ public class NetworkRunner implements AutoCloseable {
   }
 
   public RlpxAgent getRlpxAgent() {
-    return p2PNetwork.getRlpxAgent();
+    return network.getRlpxAgent();
   }
 
   public static class Builder {
@@ -200,8 +199,8 @@ public class NetworkRunner implements AutoCloseable {
               "No sub-protocol found corresponding to supported capability: " + cap);
         }
       }
-      p2PNetwork = networkProvider.build(caps);
-      return new NetworkRunner(p2PNetwork, subProtocolMap, protocolManagers, metricsSystem);
+      final P2PNetwork network = networkProvider.build(caps);
+      return new NetworkRunner(network, subProtocolMap, protocolManagers, metricsSystem);
     }
 
     public Builder protocolManagers(final List<ProtocolManager> protocolManagers) {

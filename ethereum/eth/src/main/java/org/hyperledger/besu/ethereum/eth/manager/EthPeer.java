@@ -487,9 +487,8 @@ public class EthPeer implements Comparable<EthPeer> {
             // We have two connections that are ready for requests, figure out which connection to
             // keep
             if (compareDuplicateConnections(this.connection, newConnection) > 0) {
-              final PeerConnection oldConnection = this.connection;
+              LOG.debug("Changed connection from {} to {}", this.connection, newConnection);
               this.connection = newConnection;
-              LOG.debug("Changed connection from {} to {}", oldConnection, newConnection);
             }
           } else {
             // use the new connection for now, as it is ready for requests, which the "old" one is

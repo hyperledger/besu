@@ -564,11 +564,11 @@ public class EthPeers {
       final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
       if (added) {
         LOG.debug(
-            "Added peer {} with connection {} to completeConnections", peer.getId(), connection);
+            "Added peer {} with connection {} to completeConnections", id, connection);
       } else {
         LOG.debug(
             "Did not add peer {} with connection {} to completeConnections",
-            peer.getId(),
+            id,
             connection);
       }
       return added;
