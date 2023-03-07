@@ -23,8 +23,9 @@ This update is required for the Goerli Shanghai/Capella upgrade and recommended 
 - Goerli configs for shapella [#5151](https://github.com/hyperledger/besu/pull/5151)
 
 ### Bug Fixes
-- Fix engine_getPayloadV2 block value calculation https://github.com/hyperledger/besu/issues/5040
-- Moves check for init code length before balance check https://github.com/hyperledger/besu/pull/5077
+- Fix engine_getPayloadV2 block value calculation [#5040](https://github.com/hyperledger/besu/issues/5040)
+- Moves check for init code length before balance check [#5077](https://github.com/hyperledger/besu/pull/5077)
+- Address concurrency problems with eth_call [#5179](https://github.com/hyperledger/besu/pull/5179)
 
 ## 23.1.1-RC1
 ### Sepolia Shanghai Release aka Sepolia Shapella aka Shapolia
