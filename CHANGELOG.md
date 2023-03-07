@@ -1,5 +1,15 @@
 # Changelog
 
+## 23.1.2-SNAPSHOT
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
 ## 23.1.1
 This update is required for the Goerli Shanghai/Capella upgrade and recommended for all Mainnet users. If you use Besu on Goerli, update to 23.1.1. If you previously used 23.1.1-RC1, update to test 23.1.1 on Goerli. 
 
@@ -19,6 +29,10 @@ This update is required for the Goerli Shanghai/Capella upgrade and recommended 
 - Fix engine_getPayloadV2 block value calculation [#5040](https://github.com/hyperledger/besu/issues/5040)
 - Moves check for init code length before balance check [#5077](https://github.com/hyperledger/besu/pull/5077)
 - Address concurrency problems with eth_call [#5179](https://github.com/hyperledger/besu/pull/5179)
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.1/besu-23.1.1.tar.gz / sha256: 11c3e5cdbc06df16a690e7ee9f98eefa46848f9fa280824b6e4c896d88f6b975
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.1/besu-23.1.1.zip / sha256: afcf852f193adb8e82d187aa4f02e4669f12cc680270624d37101b94cf37adec
 
 ## 23.1.1-RC1
 ### Sepolia Shanghai Release aka Sepolia Shapella aka Shapolia
