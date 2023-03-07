@@ -113,11 +113,17 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     final TraceOptions traceOptions =
         new TraceOptions(false, false, traceTypes.contains(VM_TRACE) || traceTypes.contains(TRACE));
 
-    return blockchainQueriesSupplier.get().getAndMapWorldState(block.getHash(), mutableWorldState -> blockTracerSupplier
-            .get()
-            .trace(mutableWorldState, block, new DebugOperationTracer(traceOptions))
-            .map(BlockTrace::getTransactionTraces)
-            .map((traces) -> generateTracesFromTransactionTrace(traces, block, traceTypes))).orElse(null);
+    return blockchainQueriesSupplier
+        .get()
+        .getAndMapWorldState(
+            block.getHash(),
+            mutableWorldState ->
+                blockTracerSupplier
+                    .get()
+                    .trace(mutableWorldState, block, new DebugOperationTracer(traceOptions))
+                    .map(BlockTrace::getTransactionTraces)
+                    .map((traces) -> generateTracesFromTransactionTrace(traces, block, traceTypes)))
+        .orElse(null);
   }
 
   private JsonNode generateTracesFromTransactionTrace(

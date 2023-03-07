@@ -89,17 +89,26 @@ public class TraceBlock extends AbstractBlockParameterMethod {
     }
     final ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
 
-    blockchainQueriesSupplier.get().getAndMapWorldState(block.getHash(), mutableWorldState -> {
-      blockTracerSupplier
-              .get()
-              .trace(mutableWorldState, block, new DebugOperationTracer(new TraceOptions(false, false, true)))
-              .ifPresent(
+    blockchainQueriesSupplier
+        .get()
+        .getAndMapWorldState(
+            block.getHash(),
+            mutableWorldState -> {
+              blockTracerSupplier
+                  .get()
+                  .trace(
+                      mutableWorldState,
+                      block,
+                      new DebugOperationTracer(new TraceOptions(false, false, true)))
+                  .ifPresent(
                       blockTrace ->
-                              generateTracesFromTransactionTraceAndBlock(
-                                      filterParameter, blockTrace.getTransactionTraces(), block, resultArrayNode));
-      return Optional.empty(); // return is useless
-    });
-
+                          generateTracesFromTransactionTraceAndBlock(
+                              filterParameter,
+                              blockTrace.getTransactionTraces(),
+                              block,
+                              resultArrayNode));
+              return Optional.empty(); // return is useless
+            });
 
     generateRewardsFromBlock(filterParameter, block, resultArrayNode);
 

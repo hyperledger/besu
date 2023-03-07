@@ -64,9 +64,12 @@ public class TransactionTracer {
   }
 
   public Optional<TransactionTrace> traceTransaction(
-          final MutableWorldState mutableWorldState, final Hash blockHash, final Hash transactionHash, final DebugOperationTracer tracer) {
+      final MutableWorldState mutableWorldState,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final DebugOperationTracer tracer) {
     return blockReplay.beforeTransactionInBlock(
-            mutableWorldState,
+        mutableWorldState,
         blockHash,
         transactionHash,
         (transaction, header, blockchain, transactionProcessor, dataGasPrice) -> {
@@ -84,7 +87,7 @@ public class TransactionTracer {
   }
 
   public List<String> traceTransactionToFile(
-          final MutableWorldState mutableWorldState,
+      final MutableWorldState mutableWorldState,
       final Hash blockHash,
       final Optional<TransactionTraceParams> transactionTraceParams,
       final Path traceDir) {
@@ -106,7 +109,7 @@ public class TransactionTracer {
 
     return blockReplay
         .performActionWithBlock(
-                mutableWorldState,
+            mutableWorldState,
             blockHash,
             (body, header, blockchain, transactionProcessor, protocolSpec) -> {
               WorldUpdater stackedUpdater = mutableWorldState.updater().updater();

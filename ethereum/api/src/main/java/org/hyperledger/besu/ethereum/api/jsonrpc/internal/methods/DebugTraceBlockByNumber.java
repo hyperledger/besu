@@ -60,11 +60,19 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
             .orElse(TraceOptions.DEFAULT);
 
     return blockHash
-            .flatMap(hash -> blockchainQueriesSupplier.get()
-                    .getAndMapWorldState(hash, mutableWorldState -> blockTracerSupplier
-            .get()
-            .trace(mutableWorldState, hash, new DebugOperationTracer(traceOptions))
-            .map(BlockTrace::getTransactionTraces)
-            .map(DebugTraceTransactionResult::of))) .orElse(null);
+        .flatMap(
+            hash ->
+                blockchainQueriesSupplier
+                    .get()
+                    .getAndMapWorldState(
+                        hash,
+                        mutableWorldState ->
+                            blockTracerSupplier
+                                .get()
+                                .trace(
+                                    mutableWorldState, hash, new DebugOperationTracer(traceOptions))
+                                .map(BlockTrace::getTransactionTraces)
+                                .map(DebugTraceTransactionResult::of)))
+        .orElse(null);
   }
 }

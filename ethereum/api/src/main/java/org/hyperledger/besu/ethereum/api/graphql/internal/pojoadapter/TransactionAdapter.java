@@ -85,8 +85,9 @@ public class TransactionAdapter extends AdapterBase {
     return query.getAndMapWorldState(
         blockNumber,
         mutableWorldState ->
-            Optional.of(new AccountAdapter(
-                mutableWorldState.get(transactionWithMetadata.getTransaction().getSender()))));
+            Optional.of(
+                new AccountAdapter(
+                    mutableWorldState.get(transactionWithMetadata.getTransaction().getSender()))));
   }
 
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
@@ -172,7 +173,8 @@ public class TransactionAdapter extends AdapterBase {
           return Optional.empty();
         }
         final long blockNumber = bn.orElseGet(txBlockNumber::get);
-        return query.getAndMapWorldState(blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(addr.get()))));
+        return query.getAndMapWorldState(
+            blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(addr.get()))));
       }
     }
     return Optional.empty();

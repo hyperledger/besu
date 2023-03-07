@@ -35,7 +35,9 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final Supplier<BlockchainQueries> blockchainQueriesSupplier;
 
-  public DebugTraceBlockByHash(final Supplier<BlockTracer> blockTracerSupplier, final Supplier<BlockchainQueries> blockchainQueriesSupplier) {
+  public DebugTraceBlockByHash(
+      final Supplier<BlockTracer> blockTracerSupplier,
+      final Supplier<BlockchainQueries> blockchainQueriesSupplier) {
     this.blockTracerSupplier = blockTracerSupplier;
     this.blockchainQueriesSupplier = blockchainQueriesSupplier;
   }
@@ -54,12 +56,18 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
             .map(TransactionTraceParams::traceOptions)
             .orElse(TraceOptions.DEFAULT);
 
-    final Collection<DebugTraceTransactionResult> results = blockchainQueriesSupplier.get()
-            .getAndMapWorldState(blockHash, mutableWorldState -> blockTracerSupplier
-                    .get()
-                    .trace(mutableWorldState, blockHash, new DebugOperationTracer(traceOptions))
-                    .map(BlockTrace::getTransactionTraces)
-                    .map(DebugTraceTransactionResult::of)).orElse(null);
+    final Collection<DebugTraceTransactionResult> results =
+        blockchainQueriesSupplier
+            .get()
+            .getAndMapWorldState(
+                blockHash,
+                mutableWorldState ->
+                    blockTracerSupplier
+                        .get()
+                        .trace(mutableWorldState, blockHash, new DebugOperationTracer(traceOptions))
+                        .map(BlockTrace::getTransactionTraces)
+                        .map(DebugTraceTransactionResult::of))
+            .orElse(null);
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }

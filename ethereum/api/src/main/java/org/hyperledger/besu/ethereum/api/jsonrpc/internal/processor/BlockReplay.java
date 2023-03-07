@@ -38,9 +38,7 @@ public class BlockReplay {
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
 
-  public BlockReplay(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain) {
+  public BlockReplay(final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
     this.protocolSchedule = protocolSchedule;
     this.blockchain = blockchain;
   }
@@ -48,7 +46,7 @@ public class BlockReplay {
   public Optional<BlockTrace> block(
       final Block block, final TransactionAction<TransactionTrace> action) {
     return performActionWithBlock(
-            block.getHeader(),
+        block.getHeader(),
         block.getBody(),
         (body, header, blockchain, transactionProcessor, protocolSpec) -> {
           final Wei dataGasPrice =
@@ -65,25 +63,26 @@ public class BlockReplay {
                   .map(
                       transaction ->
                           action.performAction(
-                              transaction,
-                              header,
-                              blockchain,
-                                  transactionProcessor,
-                              dataGasPrice))
+                              transaction, header, blockchain, transactionProcessor, dataGasPrice))
                   .toList();
           return Optional.of(new BlockTrace(transactionTraces));
         });
   }
 
   public Optional<BlockTrace> block(
-          final MutableWorldState mutableWorldState, final Hash blockHash, final TransactionAction<TransactionTrace> action) {
+      final MutableWorldState mutableWorldState,
+      final Hash blockHash,
+      final TransactionAction<TransactionTrace> action) {
     return getBlock(blockHash).flatMap(block -> block(block, action));
   }
 
   public <T> Optional<T> beforeTransactionInBlock(
-      final MutableWorldState mutableWorldState, final Hash blockHash, final Hash transactionHash, final TransactionAction<T> action) {
+      final MutableWorldState mutableWorldState,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final TransactionAction<T> action) {
     return performActionWithBlock(
-           mutableWorldState,
+        mutableWorldState,
         blockHash,
         (body, header, blockchain, transactionProcessor, protocolSpec) -> {
           final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
@@ -100,11 +99,7 @@ public class BlockReplay {
             if (transaction.getHash().equals(transactionHash)) {
               return Optional.of(
                   action.performAction(
-                      transaction,
-                      header,
-                      blockchain,
-                          transactionProcessor,
-                      dataGasPrice));
+                      transaction, header, blockchain, transactionProcessor, dataGasPrice));
             } else {
               transactionProcessor.processTransaction(
                   blockchain,
@@ -123,9 +118,12 @@ public class BlockReplay {
   }
 
   public <T> Optional<T> afterTransactionInBlock(
-      final MutableWorldState mutableWorldState, final Hash blockHash, final Hash transactionHash, final TransactionAction<T> action) {
+      final MutableWorldState mutableWorldState,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final TransactionAction<T> action) {
     return beforeTransactionInBlock(
-            mutableWorldState,
+        mutableWorldState,
         blockHash,
         transactionHash,
         (transaction, blockHeader, blockchain, transactionProcessor, dataGasPrice) -> {
@@ -145,7 +143,10 @@ public class BlockReplay {
         });
   }
 
-  public <T> Optional<T> performActionWithBlock(final MutableWorldState mutableWorldState, final Hash blockHash, final BlockAction<T> action) {
+  public <T> Optional<T> performActionWithBlock(
+      final MutableWorldState mutableWorldState,
+      final Hash blockHash,
+      final BlockAction<T> action) {
     Optional<Block> maybeBlock = getBlock(blockHash);
     if (maybeBlock.isEmpty()) {
       maybeBlock = getBadBlock(blockHash);
@@ -168,8 +169,7 @@ public class BlockReplay {
     if (previous == null) {
       return Optional.empty();
     }
-    return action.perform(
-            body, header, blockchain, transactionProcessor, protocolSpec);
+    return action.perform(body, header, blockchain, transactionProcessor, protocolSpec);
   }
 
   private Optional<Block> getBlock(final Hash blockHash) {

@@ -74,8 +74,13 @@ public class DebugTraceTransaction implements JsonRpcMethod {
 
     final DebugOperationTracer execTracer = new DebugOperationTracer(traceOptions);
 
-    return blockchain.getAndMapWorldState(blockHash, mutableWorldState -> transactionTracer
-            .traceTransaction(mutableWorldState,blockHash, hash, execTracer)
-            .map(DebugTraceTransactionResult::new)) .orElse(null);
+    return blockchain
+        .getAndMapWorldState(
+            blockHash,
+            mutableWorldState ->
+                transactionTracer
+                    .traceTransaction(mutableWorldState, blockHash, hash, execTracer)
+                    .map(DebugTraceTransactionResult::new))
+        .orElse(null);
   }
 }

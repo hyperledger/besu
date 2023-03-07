@@ -56,10 +56,7 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final BlockReplay blockReplay =
-        new BlockReplay(
-            protocolSchedule,
-            blockchainQueries.getBlockchain()
-        );
+        new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
     return mapOf(
         new TraceReplayBlockTransactions(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),

@@ -80,10 +80,20 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
 
   protected List<String> traceBlock(
       final Block block, final Optional<TransactionTraceParams> transactionTraceParams) {
-    return blockchainQueries.get().getAndMapWorldState(block.getHash(), mutableWorldState -> Optional.of(transactionTracerSupplier
-            .get()
-            .traceTransactionToFile(mutableWorldState,
-                    block.getHash(), transactionTraceParams, dataDir.resolve(TRACE_PATH)))).orElse(new ArrayList<>());
+    return blockchainQueries
+        .get()
+        .getAndMapWorldState(
+            block.getHash(),
+            mutableWorldState ->
+                Optional.of(
+                    transactionTracerSupplier
+                        .get()
+                        .traceTransactionToFile(
+                            mutableWorldState,
+                            block.getHash(),
+                            transactionTraceParams,
+                            dataDir.resolve(TRACE_PATH))))
+        .orElse(new ArrayList<>());
   }
 
   protected Object emptyResult() {
