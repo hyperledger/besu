@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,7 +75,23 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
     this.blocks =
         headers.stream()
             .filter(this::hasEmptyBody)
-            .collect(toMap(BlockHeader::getNumber, header -> new Block(header, BlockBody.empty())));
+            .collect(
+                toMap(
+                    BlockHeader::getNumber,
+                    header ->
+                        new Block(
+                            header,
+                            new BlockBody(
+                                Collections.emptyList(),
+                                Collections.emptyList(),
+                                isWithdrawalsEnabled(protocolSchedule, header)
+                                    ? Optional.of(Collections.emptyList())
+                                    : Optional.empty()))));
+  }
+
+  private static boolean isWithdrawalsEnabled(
+      final ProtocolSchedule protocolSchedule, final BlockHeader header) {
+    return protocolSchedule.getByBlockHeader(header).getWithdrawalsProcessor().isPresent();
   }
 
   private boolean hasEmptyBody(final BlockHeader header) {
