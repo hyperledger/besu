@@ -64,7 +64,10 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
       return executeSyncStep(firstHash.get())
           .thenAccept(
               result -> {
-                LOG.atDebug().setMessage("Backward sync target block is {}").addArgument(result::toLogString).log();
+                LOG.atDebug()
+                    .setMessage("Backward sync target block is {}")
+                    .addArgument(result::toLogString)
+                    .log();
                 context.getBackwardChain().removeFromHashToAppend(firstHash.get());
                 context.getStatus().updateTargetHeight(result.getHeader().getNumber());
               });

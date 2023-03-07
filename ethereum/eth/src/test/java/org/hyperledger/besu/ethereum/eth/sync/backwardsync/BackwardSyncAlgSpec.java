@@ -66,8 +66,7 @@ public class BackwardSyncAlgSpec {
   @Captor ArgumentCaptor<BesuEvents.TTDReachedListener> ttdCaptor;
   @Captor ArgumentCaptor<BesuEvents.InitialSyncCompletionListener> completionCaptor;
 
-  @InjectMocks
-  BackwardSyncAlgorithm algorithm;
+  @InjectMocks BackwardSyncAlgorithm algorithm;
   @Mock private Hash hash;
 
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();

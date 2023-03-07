@@ -36,8 +36,8 @@ import org.slf4j.Logger;
 public class BackwardChain {
   private static final Logger LOG = getLogger(BackwardChain.class);
 
-  private final static String FIRST_STORED_ANCESTOR_KEY = "firstStoredAncestor";
-  private final static String LAST_STORED_PIVOT_KEY = "lastStoredPivot";
+  private static final String FIRST_STORED_ANCESTOR_KEY = "firstStoredAncestor";
+  private static final String LAST_STORED_PIVOT_KEY = "lastStoredPivot";
 
   private final GenericKeyValueStorageFacade<Hash, BlockHeader> headers;
   private final GenericKeyValueStorageFacade<Hash, Block> blocks;
@@ -56,8 +56,28 @@ public class BackwardChain {
     this.blocks = blocksStorage;
     this.chainStorage = chainStorage;
     this.variablesStorage = variablesStorage;
-    firstStoredAncestor = variablesStorage.get(FIRST_STORED_ANCESTOR_KEY);
-    lastStoredPivot = variablesStorage.get(LAST_STORED_PIVOT_KEY);
+    firstStoredAncestor =
+        variablesStorage
+            .get(FIRST_STORED_ANCESTOR_KEY)
+            .map(
+                header -> {
+                  LOG.atDebug()
+                      .setMessage(FIRST_STORED_ANCESTOR_KEY + " loaded from storage with value {}")
+                      .addArgument(header::toLogString)
+                      .log();
+                  return header;
+                });
+    lastStoredPivot =
+        variablesStorage
+            .get(LAST_STORED_PIVOT_KEY)
+            .map(
+                header -> {
+                  LOG.atDebug()
+                      .setMessage(LAST_STORED_PIVOT_KEY + " loaded from storage with value {}")
+                      .addArgument(header::toLogString)
+                      .log();
+                  return header;
+                });
   }
 
   public static BackwardChain from(
@@ -78,12 +98,11 @@ public class BackwardChain {
             new HashConvertor(),
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN)),
-            new GenericKeyValueStorageFacade<>(
-                    key -> key.getBytes(StandardCharsets.UTF_8),
-                    BlocksHeadersConvertor.of(blockHeaderFunctions),
-                    storageProvider.getStorageBySegmentIdentifier(
-                            KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN))
-            );
+        new GenericKeyValueStorageFacade<>(
+            key -> key.getBytes(StandardCharsets.UTF_8),
+            BlocksHeadersConvertor.of(blockHeaderFunctions),
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN)));
   }
 
   public synchronized Optional<BlockHeader> getFirstAncestorHeader() {
@@ -103,8 +122,10 @@ public class BackwardChain {
   public synchronized void prependAncestorsHeader(final BlockHeader blockHeader) {
     prependAncestorsHeader(blockHeader, false);
   }
-  public synchronized void prependAncestorsHeader(final BlockHeader blockHeader, final boolean alreadyStored) {
-    if(!alreadyStored) {
+
+  public synchronized void prependAncestorsHeader(
+      final BlockHeader blockHeader, final boolean alreadyStored) {
+    if (!alreadyStored) {
       headers.put(blockHeader.getHash(), blockHeader);
     }
 
@@ -114,25 +135,27 @@ public class BackwardChain {
       final BlockHeader firstHeader = firstStoredAncestor.get();
       chainStorage.put(blockHeader.getHash(), firstHeader.getHash());
       LOG.atDebug()
-              .setMessage("Added header {} to backward chain led by pivot {} on height {}")
-              .addArgument(blockHeader::toLogString)
-              .addArgument(() -> lastStoredPivot.orElseThrow().toLogString())
-              .addArgument(firstHeader::getNumber)
-              .log();
+          .setMessage("Added header {} to backward chain led by pivot {} on height {}")
+          .addArgument(blockHeader::toLogString)
+          .addArgument(() -> lastStoredPivot.orElseThrow().toLogString())
+          .addArgument(firstHeader::getNumber)
+          .log();
     }
 
     updateFirstStoredAncestor(Optional.of(blockHeader));
   }
 
   private void updateFirstStoredAncestor(final Optional<BlockHeader> maybeHeader) {
-    maybeHeader.ifPresentOrElse(header ->
-    variablesStorage.put(FIRST_STORED_ANCESTOR_KEY, header), () -> variablesStorage.drop(FIRST_STORED_ANCESTOR_KEY));
+    maybeHeader.ifPresentOrElse(
+        header -> variablesStorage.put(FIRST_STORED_ANCESTOR_KEY, header),
+        () -> variablesStorage.drop(FIRST_STORED_ANCESTOR_KEY));
     firstStoredAncestor = maybeHeader;
   }
 
   private void updateLastStorePivot(final Optional<BlockHeader> maybeHeader) {
-    maybeHeader.ifPresentOrElse(header ->
-            variablesStorage.put(LAST_STORED_PIVOT_KEY, header), () -> variablesStorage.drop(LAST_STORED_PIVOT_KEY));
+    maybeHeader.ifPresentOrElse(
+        header -> variablesStorage.put(LAST_STORED_PIVOT_KEY, header),
+        () -> variablesStorage.drop(LAST_STORED_PIVOT_KEY));
     lastStoredPivot = maybeHeader;
   }
 
