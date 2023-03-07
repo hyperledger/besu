@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -50,14 +49,15 @@ class TransactionsMessageSender {
           LimitedTransactionsMessages.createLimited(allTxToSend);
       final Set<Transaction> includedTransactions =
           limitedTransactionsMessages.getIncludedTransactions();
-      traceLambda(
-          LOG,
-          "Sending transactions to peer {} all transactions count {}, "
-              + "single message transactions {}, single message list {}",
-          peer::toString,
-          allTxToSend::size,
-          includedTransactions::size,
-          () -> toHashList(includedTransactions));
+      LOG.atTrace()
+          .setMessage(
+              "Sending transactions to peer {} all transactions count {}, "
+                  + "single message transactions {}, single message list {}")
+          .addArgument(peer)
+          .addArgument(allTxToSend::size)
+          .addArgument(includedTransactions::size)
+          .addArgument(() -> toHashList(includedTransactions))
+          .log();
       allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
       try {
         peer.send(limitedTransactionsMessages.getTransactionsMessage());

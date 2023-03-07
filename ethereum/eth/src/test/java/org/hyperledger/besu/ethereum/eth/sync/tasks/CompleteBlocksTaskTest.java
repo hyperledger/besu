@@ -17,26 +17,42 @@ package org.hyperledger.besu.ethereum.eth.sync.tasks;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>> {
 
@@ -77,6 +93,114 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final List<Block> blocks = asList(block1, block2, block3);
     final EthTask<List<Block>> task = createTask(blocks);
     assertThat(task.run()).isCompletedWithValue(blocks);
+  }
+
+  @Test
+  public void shouldCreateWithdrawalsAwareEmptyBlock_whenWithdrawalsAreEnabled() {
+    final ProtocolSchedule mockProtocolSchedule = Mockito.mock(ProtocolSchedule.class);
+    final ProtocolSpec mockParisSpec = Mockito.mock(ProtocolSpec.class);
+    final ProtocolSpec mockShanghaiSpec = Mockito.mock(ProtocolSpec.class);
+    final WithdrawalsProcessor mockWithdrawalsProcessor = Mockito.mock(WithdrawalsProcessor.class);
+
+    final BlockHeader header1 =
+        new BlockHeaderTestFixture().number(1).withdrawalsRoot(null).buildHeader();
+    final BlockHeader header2 =
+        new BlockHeaderTestFixture().number(2).withdrawalsRoot(Hash.EMPTY_TRIE_HASH).buildHeader();
+
+    when(mockProtocolSchedule.getByBlockHeader((eq(header1)))).thenReturn(mockParisSpec);
+    when(mockParisSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
+    when(mockProtocolSchedule.getByBlockHeader((eq(header2)))).thenReturn(mockShanghaiSpec);
+    when(mockShanghaiSpec.getWithdrawalsProcessor())
+        .thenReturn(Optional.of(mockWithdrawalsProcessor));
+
+    final Block block1 =
+        new Block(
+            header1,
+            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
+    final Block block2 =
+        new Block(
+            header2,
+            new BlockBody(
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Optional.of(Collections.emptyList())));
+
+    final List<Block> expectedBlocks = asList(block1, block2);
+    final EthTask<List<Block>> task =
+        CompleteBlocksTask.forHeaders(
+            mockProtocolSchedule,
+            ethContext,
+            List.of(header1, header2),
+            maxRetries,
+            new NoOpMetricsSystem());
+    assertThat(task.run()).isCompletedWithValue(expectedBlocks);
+  }
+
+  @Test
+  public void shouldCompleteBlockThatOnlyContainsWithdrawals_whenWithdrawalsAreEnabled() {
+    final ProtocolSchedule mockProtocolSchedule = Mockito.mock(ProtocolSchedule.class);
+    final ProtocolSpec mockParisSpec = Mockito.mock(ProtocolSpec.class);
+    final ProtocolSpec mockShanghaiSpec = Mockito.mock(ProtocolSpec.class);
+    final WithdrawalsProcessor mockWithdrawalsProcessor = Mockito.mock(WithdrawalsProcessor.class);
+
+    final Withdrawal withdrawal =
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
+    final List<Withdrawal> withdrawals = List.of(withdrawal);
+    final Hash withdrawalsRoot = BodyValidation.withdrawalsRoot(withdrawals);
+
+    final BlockHeader header1 = new BlockHeaderTestFixture().number(1).buildHeader();
+    final BlockHeader header2 =
+        new BlockHeaderTestFixture().number(2).withdrawalsRoot(withdrawalsRoot).buildHeader();
+    final BlockHeader header3 =
+        new BlockHeaderTestFixture().number(3).withdrawalsRoot(Hash.EMPTY_TRIE_HASH).buildHeader();
+
+    final Block block1 = new Block(header1, BlockBody.empty());
+    final Block block2 =
+        new Block(
+            header2,
+            new BlockBody(
+                Collections.emptyList(), Collections.emptyList(), Optional.of(withdrawals)));
+    final Block block3 =
+        new Block(
+            header3,
+            new BlockBody(
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Optional.of(Collections.emptyList())));
+    final List<Block> expected = asList(block1, block2, block3);
+
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final RespondingEthPeer.Responder responder = responderForFakeBlocks(expected);
+
+    when(mockProtocolSchedule.getByBlockHeader((eq(header1)))).thenReturn(mockParisSpec);
+    when(mockParisSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
+    when(mockProtocolSchedule.getByBlockHeader((eq(header3)))).thenReturn(mockShanghaiSpec);
+    when(mockShanghaiSpec.getWithdrawalsProcessor())
+        .thenReturn(Optional.of(mockWithdrawalsProcessor));
+
+    final EthTask<List<Block>> task =
+        CompleteBlocksTask.forHeaders(
+            mockProtocolSchedule,
+            ethContext,
+            List.of(header1, header2, header3),
+            maxRetries,
+            new NoOpMetricsSystem());
+
+    final CompletableFuture<List<Block>> runningTask = task.run();
+
+    assertThat(runningTask).isNotDone();
+    respondingPeer.respond(responder);
+    assertThat(runningTask).isCompletedWithValue(expected);
+  }
+
+  private RespondingEthPeer.Responder responderForFakeBlocks(final List<Block> blocks) {
+    final Blockchain mockBlockchain = spy(blockchain);
+    for (Block block : blocks) {
+      when(mockBlockchain.getBlockBody(block.getHash())).thenReturn(Optional.of(block.getBody()));
+    }
+
+    return RespondingEthPeer.blockchainResponder(mockBlockchain);
   }
 
   @SuppressWarnings("unchecked")

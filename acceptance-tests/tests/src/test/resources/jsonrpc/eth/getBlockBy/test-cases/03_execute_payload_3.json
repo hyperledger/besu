@@ -1,0 +1,49 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_newPayloadV2",
+    "params": [
+      {
+        "parentHash": "0x7c2a09bedc85268606805e6df579e758af8d832ef9826927ce4b4b14452a32cf",
+        "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "stateRoot": "0x7a6f2e03f2348dc75731e6e767c97a88da50430748a030874e27f7c3fac3d49d",
+        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "blockNumber": "0x3",
+        "gasLimit": "0x1c9c380",
+        "gasUsed": "0x0",
+        "timestamp": "0x11",
+        "extraData": "0x",
+        "baseFeePerGas": "0x7",
+        "blockHash": "0x77edeba4adb3cb3e365fccb48393c8445a5c4c6648ec660806c2ce1e9de13fd3",
+        "transactions": [],
+        "withdrawals": [
+          {
+            "index": "0x0",
+            "validatorIndex": "0x0",
+            "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "amount": "0x1"
+          },
+          {
+            "index": "0x1",
+            "validatorIndex": "0x0",
+            "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+            "amount": "0x2"
+          }
+        ]
+      }
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "result": {
+      "status": "VALID",
+      "latestValidHash": "0x77edeba4adb3cb3e365fccb48393c8445a5c4c6648ec660806c2ce1e9de13fd3",
+      "validationError": null
+    }
+  },
+  "statusCode": 200
+}

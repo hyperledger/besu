@@ -71,6 +71,6 @@ public final class BlockBodiesMessage extends AbstractMessageData {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
-        .readList(rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions));
+        .readList(rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions, true));
   }
 }
