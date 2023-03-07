@@ -122,7 +122,6 @@ public class DepositsValidatorTest {
 
   @Test
   public void validateAllowedDeposits() {
-    System.out.println("hi");
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
     final Block block = blockDataGenerator.block(blockOptions);
