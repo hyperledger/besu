@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
@@ -73,6 +74,7 @@ public class BackwardSyncStepTest {
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
   GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
+  GenericKeyValueStorageFacade<String, BlockHeader> variablesStorage;
 
   @Before
   public void setup() {
@@ -86,10 +88,14 @@ public class BackwardSyncStepTest {
             Hash::toArrayUnsafe,
             new BlocksConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
-
     chainStorage =
         new GenericKeyValueStorageFacade<>(
             Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
+    variablesStorage =
+        new GenericKeyValueStorageFacade<>(
+            key -> key.getBytes(StandardCharsets.UTF_8),
+            new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
 
     Block genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
@@ -234,7 +240,7 @@ public class BackwardSyncStepTest {
   @Nonnull
   private BackwardChain createBackwardChain(final int number) {
     final BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, chainStorage);
+        new BackwardChain(headersStorage, blocksStorage, chainStorage, variablesStorage);
     backwardChain.appendTrustedBlock(remoteBlockchain.getBlockByNumber(number).orElseThrow());
     return backwardChain;
   }

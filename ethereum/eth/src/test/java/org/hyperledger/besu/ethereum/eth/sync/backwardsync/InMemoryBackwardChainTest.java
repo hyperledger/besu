@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -45,6 +46,7 @@ public class InMemoryBackwardChainTest {
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
   GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
+  GenericKeyValueStorageFacade<String, BlockHeader> variablesStorage;
 
   @Before
   public void prepareData() {
@@ -61,6 +63,11 @@ public class InMemoryBackwardChainTest {
     chainStorage =
         new GenericKeyValueStorageFacade<>(
             Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
+    variablesStorage =
+        new GenericKeyValueStorageFacade<>(
+            key -> key.getBytes(StandardCharsets.UTF_8),
+            new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
 
     blocks = prepareChain(ELEMENTS, HEIGHT);
   }
@@ -78,7 +85,7 @@ public class InMemoryBackwardChainTest {
   @Nonnull
   private BackwardChain createChainFromBlock(final Block pivot) {
     final BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, chainStorage);
+        new BackwardChain(headersStorage, blocksStorage, chainStorage, variablesStorage);
     backwardChain.appendTrustedBlock(pivot);
     return backwardChain;
   }
@@ -138,15 +145,15 @@ public class InMemoryBackwardChainTest {
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(7).getHash());
-    backwardChain.processing(firstHash.get());
+    backwardChain.removeFromHashToAppend(firstHash.get());
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(9).getHash());
-    backwardChain.processing(firstHash.get());
+    backwardChain.removeFromHashToAppend(firstHash.get());
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(11).getHash());
-    backwardChain.processing(firstHash.get());
+    backwardChain.removeFromHashToAppend(firstHash.get());
   }
 
   @Test

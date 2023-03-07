@@ -52,6 +52,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -193,7 +194,12 @@ public class BackwardSyncContextTest {
     final GenericKeyValueStorageFacade<Hash, Hash> chainStorage =
         new GenericKeyValueStorageFacade<>(
             Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
-    return new BackwardChain(headersStorage, blocksStorage, chainStorage);
+    final GenericKeyValueStorageFacade<String, BlockHeader> variablesStorage =
+        new GenericKeyValueStorageFacade<>(
+            key -> key.getBytes(StandardCharsets.UTF_8),
+            BlocksHeadersConvertor.of(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
+    return new BackwardChain(headersStorage, blocksStorage, chainStorage, variablesStorage);
   }
 
   @Test
