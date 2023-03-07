@@ -116,9 +116,7 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    if (!isTrusted(newBlockHash)) {
-      backwardChain.addNewHash(newBlockHash);
-    }
+    backwardChain.addNewHash(newBlockHash);
 
     final Status status = getOrStartSyncSession();
     backwardChain
@@ -133,9 +131,7 @@ public class BackwardSyncContext {
       backwardChain.appendTrustedBlock(newPivot);
     }
 
-    final Status status = getOrStartSyncSession();
-    status.updateTargetHeight(newPivot.getHeader().getNumber());
-    return status.currentFuture;
+    return syncBackwardsUntil(newPivot.getHash());
   }
 
   private Status getOrStartSyncSession() {
@@ -153,7 +149,7 @@ public class BackwardSyncContext {
     if (backwardChain.isTrusted(hash)) {
       LOG.atDebug()
           .setMessage(
-              "not fetching or appending hash {} to backwards sync since it is present in successors")
+              "Not fetching or appending hash {} to backwards sync since it is present in successors")
           .addArgument(hash::toHexString)
           .log();
       return true;
