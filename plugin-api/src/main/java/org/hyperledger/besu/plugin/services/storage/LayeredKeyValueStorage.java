@@ -172,6 +172,11 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     return new LayeredKeyValueStorage(hashValueStore, parent);
   }
 
+  /**
+   * The call to this method freeze the storage and prevent any future modification
+   *
+   * @return current SnappedKeyValueStorage
+   */
   public SnappedKeyValueStorage freeze() {
     isFrozen = true;
     return this;
