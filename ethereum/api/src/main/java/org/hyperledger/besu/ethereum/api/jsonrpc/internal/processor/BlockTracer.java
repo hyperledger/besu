@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
@@ -37,21 +38,19 @@ public class BlockTracer {
     this.blockReplay = blockReplay;
   }
 
-  public Optional<BlockTrace> trace(final Hash blockHash, final DebugOperationTracer tracer) {
-    return blockReplay.block(blockHash, prepareReplayAction(tracer));
+  public Optional<BlockTrace> trace(final MutableWorldState mutableWorldState, final Hash blockHash, final DebugOperationTracer tracer) {
+    return blockReplay.block(mutableWorldState, blockHash, prepareReplayAction(mutableWorldState, tracer));
   }
 
-  public Optional<BlockTrace> trace(final Block block, final DebugOperationTracer tracer) {
-    return blockReplay.block(block, prepareReplayAction(tracer));
+  public Optional<BlockTrace> trace(final MutableWorldState mutableWorldState, final Block block, final DebugOperationTracer tracer) {
+    return blockReplay.block(block, prepareReplayAction(mutableWorldState, tracer));
   }
 
-  private BlockReplay.TransactionAction<TransactionTrace> prepareReplayAction(
-      final DebugOperationTracer tracer) {
+  private BlockReplay.TransactionAction<TransactionTrace> prepareReplayAction(final MutableWorldState mutableWorldState, final DebugOperationTracer tracer) {
     return (transaction,
         header,
         blockchain,
-        mutableWorldState,
-        transactionProcessor,
+            transactionProcessor,
         dataGasPrice) -> {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (chainedUpdater == null) {

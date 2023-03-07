@@ -88,7 +88,7 @@ public class DebugAccountRange implements JsonRpcMethod {
                 accounts.remove(maxResults);
               }
 
-              return new JsonRpcSuccessResponse(
+              return Optional.of(new JsonRpcSuccessResponse(
                   requestContext.getRequest().getId(),
                   new DebugAccountRangeAtResult(
                       accounts.stream()
@@ -96,7 +96,7 @@ public class DebugAccountRange implements JsonRpcMethod {
                               Collectors.toMap(
                                   account -> account.getAddressHash().toString(),
                                   account -> account.getAddress().orElse(Address.ZERO).toString())),
-                      nextKey.toString()));
+                      nextKey.toString())));
             })
         .orElse(emptyResponse(requestContext));
   }

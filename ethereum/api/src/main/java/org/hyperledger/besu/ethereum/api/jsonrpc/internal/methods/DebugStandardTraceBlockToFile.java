@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -79,10 +80,10 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
 
   protected List<String> traceBlock(
       final Block block, final Optional<TransactionTraceParams> transactionTraceParams) {
-    return transactionTracerSupplier
-        .get()
-        .traceTransactionToFile(
-            block.getHash(), transactionTraceParams, dataDir.resolve(TRACE_PATH));
+    return blockchainQueries.get().getAndMapWorldState(block.getHash(), mutableWorldState -> Optional.of(transactionTracerSupplier
+            .get()
+            .traceTransactionToFile(mutableWorldState,
+                    block.getHash(), transactionTraceParams, dataDir.resolve(TRACE_PATH)))).orElse(new ArrayList<>());
   }
 
   protected Object emptyResult() {

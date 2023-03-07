@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
@@ -63,16 +64,17 @@ public class TransactionTracer {
   }
 
   public Optional<TransactionTrace> traceTransaction(
-      final Hash blockHash, final Hash transactionHash, final DebugOperationTracer tracer) {
+          final MutableWorldState mutableWorldState, final Hash blockHash, final Hash transactionHash, final DebugOperationTracer tracer) {
     return blockReplay.beforeTransactionInBlock(
+            mutableWorldState,
         blockHash,
         transactionHash,
-        (transaction, header, blockchain, worldState, transactionProcessor, dataGasPrice) -> {
+        (transaction, header, blockchain, transactionProcessor, dataGasPrice) -> {
           final TransactionProcessingResult result =
               processTransaction(
                   header,
                   blockchain,
-                  worldState.updater(),
+                  mutableWorldState.updater(),
                   transaction,
                   transactionProcessor,
                   tracer,
@@ -82,6 +84,7 @@ public class TransactionTracer {
   }
 
   public List<String> traceTransactionToFile(
+          final MutableWorldState mutableWorldState,
       final Hash blockHash,
       final Optional<TransactionTraceParams> transactionTraceParams,
       final Path traceDir) {
@@ -103,9 +106,10 @@ public class TransactionTracer {
 
     return blockReplay
         .performActionWithBlock(
+                mutableWorldState,
             blockHash,
-            (body, header, blockchain, worldState, transactionProcessor, protocolSpec) -> {
-              WorldUpdater stackedUpdater = worldState.updater().updater();
+            (body, header, blockchain, transactionProcessor, protocolSpec) -> {
+              WorldUpdater stackedUpdater = mutableWorldState.updater().updater();
               final List<String> traces = new ArrayList<>();
               final Wei dataGasPrice =
                   protocolSpec
