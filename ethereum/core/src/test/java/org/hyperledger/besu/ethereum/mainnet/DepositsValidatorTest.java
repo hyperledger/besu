@@ -34,10 +34,12 @@ import java.util.List;
 import java.util.Optional;
 
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.vm.LogMock;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class DepositsValidatorTest {
@@ -47,8 +49,9 @@ public class DepositsValidatorTest {
   private static Log LOG_1;
   private static Log LOG_2;
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() {
+    System.out.println("setting");
     DEPOSIT_1 = new Deposit(
             BLSPublicKey.fromHexString(
                     "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
@@ -57,7 +60,7 @@ public class DepositsValidatorTest {
             GWei.of(32000000000L),
             BLSSignature.fromHexString(
                     "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
-            UInt64.ONE);
+            UInt64.valueOf(539967));
 
     DEPOSIT_2 = new Deposit(
             BLSPublicKey.fromHexString(
@@ -67,8 +70,7 @@ public class DepositsValidatorTest {
             GWei.of(32000000000L),
             BLSSignature.fromHexString(
                     "0x801b08ca107b623eca32ee9f9111b4e50eb9cfe19e38204b72de7dc04c5a5e00f61bab96f10842576f66020ce851083f1583dd9a6b73301bea6c245cf51f27cf96aeb018852c5f70bf485d16b957cfe49ca008913346b431e7653ae3ddb23b07"),
-            UInt64.valueOf(3)
-    );
+            UInt64.valueOf(559887));
 
     LOG_1 = new Log(
             Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"),
@@ -78,7 +80,7 @@ public class DepositsValidatorTest {
 
     LOG_2 = new Log(
             Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"),
-            Bytes.fromHexString("0x00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000308706d19a62f28a6a6549f96c5adaebac9124a61d44868ec94f6d2d707c6a2f82c9162071231dfeb40e24bfde4ffdf243000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020006a8dc800c6d8dd6977ef53264e2d030350f0145a91bcd167b4f1c3ea21b271000000000000000000000000000000000000000000000000000000000000000800405973070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060801b08ca107b623eca32ee9f9111b4e50eb9cfe19e38204b72de7dc04c5a5e00f61bab96f10842576f66020ce851083f1583dd9a6b73301bea6c245cf51f27cf96aeb018852c5f70bf485d16b957cfe49ca008913346b431e7653ae3ddb23b0700000000000000000000000000000000000000000000000000000000000000080f8b080000000000000000000000000000000000000000000000000000000000")
+            Bytes.fromHexString("0x00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000308706d19a62f28a6a6549f96c5adaebac9124a61d44868ec94f6d2d707c6a2f82c9162071231dfeb40e24bfde4ffdf243000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020006a8dc800c6d8dd6977ef53264e2d030350f0145a91bcd167b4f1c3ea21b271000000000000000000000000000000000000000000000000000000000000000800405973070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060801b08ca107b623eca32ee9f9111b4e50eb9cfe19e38204b72de7dc04c5a5e00f61bab96f10842576f66020ce851083f1583dd9a6b73301bea6c245cf51f27cf96aeb018852c5f70bf485d16b957cfe49ca008913346b431e7653ae3ddb23b0700000000000000000000000000000000000000000000000000000000000000080f8b080000000000000000000000000000000000000000000000000000000000"),
             List.of(LogTopic.fromHexString("0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5"))
     );
 
@@ -120,7 +122,28 @@ public class DepositsValidatorTest {
 
   @Test
   public void validateAllowedDeposits() {
-    // TODO: Validate deposits in AllowedDeposits to be included in next PR
+    System.out.println("hi");
+    final BlockDataGenerator.BlockOptions blockOptions =
+        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+    final Block block = blockDataGenerator.block(blockOptions);
+
+    final TransactionReceipt receipt = new TransactionReceipt(null, 0L, List.of(LOG_2, LOG_1), Optional.empty());
+
+
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt))).isTrue();
+
+  }
+
+  @Test
+  public void validateAllowedDeposits2() {
+    final BlockDataGenerator.BlockOptions blockOptions =
+        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+    final Block block = blockDataGenerator.block(blockOptions);
+
+    final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
+    final TransactionReceipt receipt2 = new TransactionReceipt(null, 0L, List.of(LOG_1), Optional.empty());
+
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1, receipt2))).isTrue();
   }
 
   @Test
@@ -135,11 +158,44 @@ public class DepositsValidatorTest {
 
   @Test
   public void invalidateAllowedDeposits() {
-    // TODO: Validate deposits in AllowedDeposits to be included in next PR
+    final BlockDataGenerator.BlockOptions blockOptions =
+      BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1)));
+    final Block block = blockDataGenerator.block(blockOptions);
+
+    final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
+
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isTrue();
+  }
+
+  @Test
+  public void invalidateAllowedDeposits2() {
+    final BlockDataGenerator.BlockOptions blockOptions =
+        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+    final Block block = blockDataGenerator.block(blockOptions);
+
+    final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
+
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isTrue();
+  }
+
+  @Test
+  public void invalidateAllowedDeposits3() {
+    final BlockDataGenerator.BlockOptions blockOptions =
+        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1)));
+    final Block block = blockDataGenerator.block(blockOptions);
+
+    final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
+
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isTrue();
   }
 
   @Test
   public void invalidateAllowedDepositsRoot() {
-    // TODO: Validate deposits in AllowedDeposits to be included in next PR
+    final BlockDataGenerator.BlockOptions blockOptions = BlockDataGenerator.BlockOptions.create()
+        .setDeposits(Optional.of(Collections.emptyList()))
+        .setDepositsRoot(Hash.ZERO); // this is invalid it should be empty trie hash
+    final Block block = blockDataGenerator.block(blockOptions);
+    assertThat(new DepositsValidator.AllowedDeposits().validateDepositsRoot(block))
+        .isFalse();
   }
 }

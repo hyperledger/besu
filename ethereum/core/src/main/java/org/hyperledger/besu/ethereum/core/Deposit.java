@@ -124,7 +124,7 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit, Compar
   }
 
   @Override
-  public int compareTo(@NotNull Deposit anotherDeposit) {
+  public int compareTo(@NotNull final Deposit anotherDeposit) {
     return signature.compareTo(anotherDeposit.getSignature());
   }
 }

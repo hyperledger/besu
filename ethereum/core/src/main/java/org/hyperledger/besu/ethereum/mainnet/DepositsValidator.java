@@ -44,7 +44,7 @@ public interface DepositsValidator {
     private static final Logger LOG = LoggerFactory.getLogger(ProhibitedDeposits.class);
 
     @Override
-    public boolean validateDeposits(Block block, List<TransactionReceipt> receipts) {
+    public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
       Optional<List<Deposit>> deposits = block.getBody().getDeposits();
       final boolean isValid = deposits.isEmpty();
       if (!isValid) {
@@ -72,7 +72,7 @@ public interface DepositsValidator {
     private static final Logger LOG = LoggerFactory.getLogger(AllowedDeposits.class);
 
     @Override
-    public boolean validateDeposits(Block block, List<TransactionReceipt> receipts) {
+    public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
       if (block.getBody().getDeposits().isEmpty()) {
         LOG.warn("Deposits must not be null when Deposits are activated");
         return false;

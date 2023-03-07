@@ -309,7 +309,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private boolean validateDeposits(final Block block, List<TransactionReceipt> receipts) {
+  private boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
     final DepositsValidator depositsValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getDepositsValidator();
 

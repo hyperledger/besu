@@ -25,11 +25,11 @@ public class DepositContract extends Contract {
               new TypeReference<DynamicBytes>() {},
               new TypeReference<DynamicBytes>() {}));
 
-  protected DepositContract(String contractBinary, String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider gasProvider) {
+  protected DepositContract(final String contractBinary, final String contractAddress, final Web3j web3j, final TransactionManager transactionManager, final ContractGasProvider gasProvider) {
     super(contractBinary, contractAddress, web3j, transactionManager, gasProvider);
   }
 
-  public static EventValuesWithLog staticExtractDepositEventWithLog(org.hyperledger.besu.evm.log.Log log) {
+  public static EventValuesWithLog staticExtractDepositEventWithLog(final org.hyperledger.besu.evm.log.Log log) {
     Log web3jLog = new Log();
     web3jLog.setTopics(log.getTopics().stream().map(LogTopic::toHexString).collect(Collectors.toList()));
     web3jLog.setData(log.getData().toHexString());
