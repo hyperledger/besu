@@ -146,21 +146,21 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final List<Withdrawal> withdrawals = List.of(withdrawal);
     final Hash withdrawalsRoot = BodyValidation.withdrawalsRoot(withdrawals);
 
-    final BlockHeader preWithdrawalsHeader = new BlockHeaderTestFixture().number(1).buildHeader();
-    final BlockHeader firstWithdrawalsHeader =
+    final BlockHeader header1 = new BlockHeaderTestFixture().number(1).buildHeader();
+    final BlockHeader header2 =
         new BlockHeaderTestFixture().number(2).withdrawalsRoot(withdrawalsRoot).buildHeader();
-    final BlockHeader secondWithdrawalsHeader =
+    final BlockHeader header3 =
         new BlockHeaderTestFixture().number(3).withdrawalsRoot(Hash.EMPTY_TRIE_HASH).buildHeader();
 
-    final Block block1 = new Block(preWithdrawalsHeader, BlockBody.empty());
+    final Block block1 = new Block(header1, BlockBody.empty());
     final Block block2 =
         new Block(
-            firstWithdrawalsHeader,
+            header2,
             new BlockBody(
                 Collections.emptyList(), Collections.emptyList(), Optional.of(withdrawals)));
     final Block block3 =
         new Block(
-            secondWithdrawalsHeader,
+            header3,
             new BlockBody(
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -171,11 +171,9 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     final RespondingEthPeer.Responder responder = responderForFakeBlocks(expected);
 
-    when(mockProtocolSchedule.getByBlockHeader((eq(preWithdrawalsHeader))))
-        .thenReturn(mockParisSpec);
+    when(mockProtocolSchedule.getByBlockHeader((eq(header1)))).thenReturn(mockParisSpec);
     when(mockParisSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
-    when(mockProtocolSchedule.getByBlockHeader((eq(secondWithdrawalsHeader))))
-        .thenReturn(mockShanghaiSpec);
+    when(mockProtocolSchedule.getByBlockHeader((eq(header3)))).thenReturn(mockShanghaiSpec);
     when(mockShanghaiSpec.getWithdrawalsProcessor())
         .thenReturn(Optional.of(mockWithdrawalsProcessor));
 
@@ -183,7 +181,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
         CompleteBlocksTask.forHeaders(
             mockProtocolSchedule,
             ethContext,
-            List.of(preWithdrawalsHeader, firstWithdrawalsHeader, secondWithdrawalsHeader),
+            List.of(header1, header2, header3),
             maxRetries,
             new NoOpMetricsSystem());
 
@@ -192,7 +190,6 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     assertThat(runningTask).isNotDone();
     respondingPeer.respond(responder);
     assertThat(runningTask).isCompletedWithValue(expected);
-    //    assertThat(task.run()).isCompletedWithValue(expected);
   }
 
   private RespondingEthPeer.Responder responderForFakeBlocks(final List<Block> blocks) {
