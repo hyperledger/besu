@@ -211,6 +211,10 @@ public class ECIESHandshaker implements Handshaker {
       throw new HandshakeException("Decrypting an incoming handshake message failed", e);
     } catch (final SecurityModuleException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
+      LOG.debug(
+          "stefan: Buffer in handleMessage(ECIESHandshaker): expectedLength: {}, encryptedMessage: {}",
+          expectedLength,
+          encryptedMsg);
       throw new HandshakeException(
           "Unable to create ECDH Key agreement due to Crypto engine failure", e);
     }

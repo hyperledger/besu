@@ -25,9 +25,12 @@ import org.apache.tuweni.bytes.MutableBytes;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The Secp public key. */
 public class SECPPublicKey implements java.security.PublicKey {
+  private static final Logger LOG = LoggerFactory.getLogger(SECPPublicKey.class);
 
   /** The constant BYTE_LENGTH. */
   public static final int BYTE_LENGTH = 64;
@@ -119,7 +122,13 @@ public class SECPPublicKey implements java.security.PublicKey {
   public ECPoint asEcPoint(final ECDomainParameters curve) {
     // 0x04 is the prefix for uncompressed keys.
     final Bytes val = Bytes.concatenate(Bytes.of(0x04), encoded);
-    return curve.getCurve().decodePoint(val.toArrayUnsafe());
+    ECPoint ecPoint = null;
+    try {
+      ecPoint = curve.getCurve().decodePoint(val.toArrayUnsafe());
+    } catch (final Exception e) {
+      LOG.debug("stefan: Msg: {}, encoded: {}", e.getMessage(), encoded);
+    }
+    return ecPoint;
   }
 
   @Override
