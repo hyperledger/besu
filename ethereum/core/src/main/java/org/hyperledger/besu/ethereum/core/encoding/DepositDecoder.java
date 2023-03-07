@@ -49,13 +49,13 @@ public class DepositDecoder {
     Contract.EventValuesWithLog eventValues = DepositContract.staticExtractDepositEventWithLog(log);
     byte[] rawPublicKey = (byte[]) eventValues.getNonIndexedValues().get(0).getValue();
     byte[] rawWithdrawalCredential = (byte[]) eventValues.getNonIndexedValues().get(1).getValue();
-    byte[] rawSignature = (byte[]) eventValues.getNonIndexedValues().get(2).getValue();
-    byte[] rawAmount = (byte[]) eventValues.getNonIndexedValues().get(3).getValue();
+    byte[] rawAmount = (byte[]) eventValues.getNonIndexedValues().get(2).getValue();
+    byte[] rawSignature = (byte[]) eventValues.getNonIndexedValues().get(3).getValue();
     byte[] rawIndex = (byte[]) eventValues.getNonIndexedValues().get(4).getValue();
 
     return new Deposit(
       BLSPublicKey.wrap(Bytes.wrap(rawPublicKey)),
-      DepositDepositWithdrawalCredential.wrap(Bytes.wrap(rawWithdrawalCredential)),
+      DepositWithdrawalCredential.wrap(Bytes.wrap(rawWithdrawalCredential)),
       GWei.of(Bytes.wrap(rawAmount).reverse().toLong()),
       BLSSignature.wrap(Bytes.wrap(rawSignature)),
       UInt64.valueOf(Bytes.wrap(rawIndex).reverse().toLong())
