@@ -131,7 +131,7 @@ public class BackwardSyncContext {
       backwardChain.appendTrustedBlock(newPivot);
     }
 
-    return syncBackwardsUntil(newPivot.getHash());
+    return syncBackwardsUntil(newPivot.getHeader().getParentHash());
   }
 
   private Status getOrStartSyncSession() {
@@ -233,7 +233,7 @@ public class BackwardSyncContext {
   @VisibleForTesting
   CompletableFuture<Void> prepareBackwardSyncFuture() {
     final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
-    return new BackwardsSyncAlgorithm(
+    return new BackwardSyncAlgorithm(
             this,
             FinalBlockConfirmation.confirmationChain(
                 FinalBlockConfirmation.genesisConfirmation(blockchain),

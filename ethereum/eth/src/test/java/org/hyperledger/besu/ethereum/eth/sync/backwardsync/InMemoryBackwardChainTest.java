@@ -138,15 +138,15 @@ public class InMemoryBackwardChainTest {
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(7).getHash());
-    backwardChain.removeFromHashToAppend(firstHash.get());
+    backwardChain.processing(firstHash.get());
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(9).getHash());
-    backwardChain.removeFromHashToAppend(firstHash.get());
+    backwardChain.processing(firstHash.get());
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(11).getHash());
-    backwardChain.removeFromHashToAppend(firstHash.get());
+    backwardChain.processing(firstHash.get());
   }
 
   @Test
