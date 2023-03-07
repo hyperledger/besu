@@ -53,4 +53,12 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         trieLogStorage,
         parentWorldStateStorage);
   }
+
+  public BonsaiWorldStateLayerStorage freeze() {
+    ((LayeredKeyValueStorage) accountStorage).freeze();
+    ((LayeredKeyValueStorage) codeStorage).freeze();
+    ((LayeredKeyValueStorage) storageStorage).freeze();
+    ((LayeredKeyValueStorage) trieBranchStorage).freeze();
+    return this;
+  }
 }

@@ -34,6 +34,8 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   private final KeyValueStorage parent;
 
+  private boolean isFrozen;
+
   /**
    * Instantiates a new Layered key value storage.
    *
@@ -52,6 +54,7 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   public LayeredKeyValueStorage(final Map<Bytes, byte[]> map, final KeyValueStorage parent) {
     super(map);
     this.parent = parent;
+    this.isFrozen = false;
   }
 
   @Override
@@ -71,13 +74,23 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
                             parent
                                 .get(key)
                                 .map(
-                                    bytes1 -> {
-                                      if (!(parent instanceof LayeredKeyValueStorage)) {
-                                        hashValueStore.put(wrapKey, bytes1);
-                                      }
-                                      return bytes1;
+                                    value -> {
+                                      cacheFromParent(wrapKey, value);
+                                      return value;
                                     })))
         .filter(bytes -> bytes.length > 0);
+  }
+
+  private void cacheFromParent(final Bytes key, final byte[] value) {
+    if (!isFrozen) {
+      if (parent instanceof LayeredKeyValueStorage) {
+        if (((LayeredKeyValueStorage) parent).isFrozen) {
+          hashValueStore.put(key, value);
+        }
+      } else {
+        hashValueStore.put(key, value);
+      }
+    }
   }
 
   @Override
@@ -131,6 +144,9 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public KeyValueStorageTransaction startTransaction() {
+    if (isFrozen) {
+      throw new UnsupportedOperationException("cannot start a transaction in a frozen storage");
+    }
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
         new InMemoryTransaction() {
           @Override
@@ -154,5 +170,10 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   @Override
   public SnappedKeyValueStorage clone() {
     return new LayeredKeyValueStorage(hashValueStore, parent);
+  }
+
+  public SnappedKeyValueStorage freeze() {
+    isFrozen = true;
+    return this;
   }
 }

@@ -96,7 +96,9 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
             blockHeader.getHash(),
             new CachedBonsaiWorldView(
                 blockHeader,
-                ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage()).clone()));
+                ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage())
+                    .clone()
+                    .freeze()));
       }
     }
     scrubCachedLayers(blockHeader.getNumber());
@@ -151,8 +153,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
               addCachedLayer(
                   blockHeader,
                   blockHeader.getStateRoot(),
-                  new BonsaiWorldState(
-                      archive, new BonsaiSnapshotWorldStateKeyValueStorage(rootWorldStateStorage)));
+                  new BonsaiWorldState(archive, rootWorldStateStorage));
               return getWorldState(blockHeader.getHash());
             });
   }
