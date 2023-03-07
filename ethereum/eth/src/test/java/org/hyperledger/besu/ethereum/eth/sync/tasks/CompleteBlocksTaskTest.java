@@ -96,7 +96,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
   }
 
   @Test
-  public void shouldCreateCorrectEmptyBlockWhenWithdrawalsAreEnabled() {
+  public void shouldCreateWithdrawalsAwareEmptyBlock_whenWithdrawalsAreEnabled() {
     final ProtocolSchedule mockProtocolSchedule = Mockito.mock(ProtocolSchedule.class);
     final ProtocolSpec mockParisSpec = Mockito.mock(ProtocolSpec.class);
     final ProtocolSpec mockShanghaiSpec = Mockito.mock(ProtocolSpec.class);
@@ -114,7 +114,9 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
         .thenReturn(Optional.of(mockWithdrawalsProcessor));
 
     final Block block1 =
-        new Block(header1, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+        new Block(
+            header1,
+            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
     final Block block2 =
         new Block(
             header2,
@@ -135,7 +137,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
   }
 
   @Test
-  public void shouldCompleteWhenBlocksAreEmptyExceptForWithdrawals() {
+  public void shouldCompleteBlockThatOnlyContainsWithdrawals_whenWithdrawalsAreEnabled() {
     final ProtocolSchedule mockProtocolSchedule = Mockito.mock(ProtocolSchedule.class);
     final ProtocolSpec mockParisSpec = Mockito.mock(ProtocolSpec.class);
     final ProtocolSpec mockShanghaiSpec = Mockito.mock(ProtocolSpec.class);
