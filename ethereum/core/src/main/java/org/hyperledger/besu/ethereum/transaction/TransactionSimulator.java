@@ -166,6 +166,13 @@ public class TransactionSimulator {
   private MutableWorldState getWorldState(final BlockHeader header) {
     return worldStateArchive
         .getMutable(header.getStateRoot(), header.getHash(), false)
+        .map(
+            ws -> {
+              if (!ws.isPersistable()) {
+                return ws.copy();
+              }
+              return ws;
+            })
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
