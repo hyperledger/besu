@@ -729,9 +729,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public Optional<Hash> getLatestValidAncestor(final Hash blockHash) {
     final var chain = protocolContext.getBlockchain();
-    final var chainHeadNum = chain.getChainHeadBlockNumber();
+    final var chainHeadHeader = chain.getChainHeadHeader();
     return findValidAncestor(
-        chain, blockHash, protocolSchedule.getByBlockNumber(chainHeadNum).getBadBlocksManager());
+        chain, blockHash, protocolSchedule.getByBlockHeader(chainHeadHeader).getBadBlocksManager());
   }
 
   @Override
@@ -740,8 +740,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final var self = chain.getBlockHeader(blockHeader.getHash());
 
     if (self.isEmpty()) {
-      final var badBlocks =
-          protocolSchedule.getByBlockNumber(blockHeader.getNumber()).getBadBlocksManager();
+      final var badBlocks = protocolSchedule.getByBlockHeader(blockHeader).getBadBlocksManager();
       return findValidAncestor(chain, blockHeader.getParentHash(), badBlocks);
     }
     return self.map(BlockHeader::getHash);
@@ -872,7 +871,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
     protocolSchedule
-        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
         .getBadBlocksManager()
         .addBadBlock(block, maybeCause);
   }
@@ -887,7 +886,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private BadBlockManager getBadBlockManager() {
     final BadBlockManager badBlocksManager =
         protocolSchedule
-            .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+            .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
             .getBadBlocksManager();
     return badBlocksManager;
   }
@@ -895,7 +894,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public Optional<Hash> getLatestValidHashOfBadBlock(Hash blockHash) {
     return protocolSchedule
-        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
         .getBadBlocksManager()
         .getLatestValidHash(blockHash);
   }

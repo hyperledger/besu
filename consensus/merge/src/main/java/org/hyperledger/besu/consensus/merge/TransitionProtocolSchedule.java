@@ -103,13 +103,29 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   /**
-   * Gets by block header.
+   * Gets protocol spec by block header.
    *
    * @param blockHeader the block header
-   * @return the by block header
+   * @return the ProtocolSpec to be used by the provided block
    */
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    return this.timestampSchedule
+        .getByTimestamp(blockHeader.getTimestamp())
+        .orElseGet(
+            () ->
+                transitionUtils.dispatchFunctionAccordingToMergeState(
+                    protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader)));
+  }
+
+  /**
+   * Gets the protocol spec by block header, with some additional logic used by backwards sync (BWS)
+   *
+   * @param blockHeader the block header
+   * @return the ProtocolSpec to be used by the provided block
+   */
+  public ProtocolSpec getByBlockHeaderWithTransitionReorgHandling(
+      final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
         .getByTimestamp(blockHeader.getTimestamp())
         .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
@@ -126,7 +142,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
             .setMessage("for {} returning a pre-merge schedule because we are not post-merge")
             .addArgument(blockHeader::toLogString)
             .log();
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+        return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
 
       // otherwise check to see if this block represents a re-org TTD block:
@@ -152,7 +168,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
             .setMessage("returning a pre-merge schedule because block {} is pre-merge or TTD")
             .addArgument(blockHeader::toLogString)
             .log();
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+        return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
     }
     // else return post-merge schedule
@@ -160,7 +176,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         .setMessage(" for {} returning a post-merge schedule")
         .addArgument(blockHeader::toLogString)
         .log();
-    return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+    return getPostMergeSchedule().getByBlockHeader(blockHeader);
   }
 
   /**
