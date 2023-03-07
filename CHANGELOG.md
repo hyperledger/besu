@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### Additions and Improvements
+
+### Bug Fixes
+- Fix for backward sync wrongly thinking it is done after a restart [#5182](https://github.com/hyperledger/besu/pull/5182)
+
 ## 23.1.1
 This update is required for the Goerli Shanghai/Capella upgrade and recommended for all Mainnet users. If you use Besu on Goerli, update to 23.1.1. If you previously used 23.1.1-RC1, update to test 23.1.1 on Goerli. 
 
