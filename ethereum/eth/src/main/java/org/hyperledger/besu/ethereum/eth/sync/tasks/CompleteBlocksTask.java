@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,15 +82,21 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
                     header ->
                         new Block(
                             header,
-                            new BlockBody(
-                                Collections.emptyList(),
-                                Collections.emptyList(),
-                                isWithdrawalsEnabled(protocolSchedule, header)
-                                    ? Optional.of(Collections.emptyList())
-                                    : Optional.empty()))));
+                            createEmptyBodyBasedOnProtocolSchedule(protocolSchedule, header))));
   }
 
-  private static boolean isWithdrawalsEnabled(
+  @NotNull
+  private BlockBody createEmptyBodyBasedOnProtocolSchedule(
+      final ProtocolSchedule protocolSchedule, final BlockHeader header) {
+    return new BlockBody(
+        Collections.emptyList(),
+        Collections.emptyList(),
+        isWithdrawalsEnabled(protocolSchedule, header)
+            ? Optional.of(Collections.emptyList())
+            : Optional.empty());
+  }
+
+  private boolean isWithdrawalsEnabled(
       final ProtocolSchedule protocolSchedule, final BlockHeader header) {
     return protocolSchedule.getByBlockHeader(header).getWithdrawalsProcessor().isPresent();
   }
