@@ -14,25 +14,21 @@
  */
 package org.hyperledger.besu.util;
 
+@SuppressWarnings("CatchAndPrintStackTrace")
 public interface LogConfigurator {
 
   static void setLevel(final String parentLogger, final String level) {
     try {
       Log4j2ConfiguratorUtil.setAllLevels(parentLogger, level);
-    } catch (Throwable t) {
+    } catch (NoClassDefFoundError ncdfe) {
       // This is expected when Log4j support is not in the classpath, so ignore
-    }
-    try {
-      JulConfiguratorUtil.setAllLevels(parentLogger, level);
-    } catch (Throwable t) {
-      // This is expected when java.util.logging support is not in the classpath, so ignore
     }
   }
 
   static void reconfigure() {
     try {
       Log4j2ConfiguratorUtil.reconfigure();
-    } catch (Throwable t) {
+    } catch (NoClassDefFoundError ncdfe) {
       // This is expected when Log4j support is not in the classpath, so ignore
     }
   }
@@ -40,8 +36,8 @@ public interface LogConfigurator {
   static void shutdown() {
     try {
       Log4j2ConfiguratorUtil.shutdown();
-    } catch (Throwable t) {
-      // This is expected when Log4j is not in the classpath, so ignore
+    } catch (NoClassDefFoundError ncdfe) {
+      // This is expected when Log4j support is not in the classpath, so ignore
     }
   }
 }
