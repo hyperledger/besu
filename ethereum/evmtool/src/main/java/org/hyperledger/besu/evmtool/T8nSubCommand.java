@@ -152,7 +152,6 @@ public class T8nSubCommand implements Runnable {
       description = "The summary of the transition")
   private final Path outResult = Path.of("result.json");
 
-  @SuppressWarnings("UnusedVariable")
   @Option(
       names = {"--output.body"},
       paramLabel = "file name",
@@ -165,12 +164,12 @@ public class T8nSubCommand implements Runnable {
       description = "The chain Id to use")
   private final Long chainId = 1L;
 
-  @SuppressWarnings("UnusedVariable")
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--state.reward"},
       paramLabel = "block mining reward",
       description = "The block reward to use in block tess")
-  private final Wei reward = null;
+  private String rewardString = null;
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
@@ -379,11 +378,16 @@ public class T8nSubCommand implements Runnable {
     final ObjectNode resultObject = objectMapper.createObjectNode();
 
     // block reward
-    if (!validTransactions.isEmpty()) {
+    // The max production reward was 5 Eth, longs can hold over 18 Eth.
+    if (!validTransactions.isEmpty() && (rewardString == null || Long.decode(rewardString) > 0)) {
+      Wei reward =
+          (rewardString == null)
+              ? protocolSpec.getBlockReward()
+              : Wei.of(Long.decode(rewardString));
       worldStateUpdater
           .getOrCreateSenderAccount(blockHeader.getCoinbase())
           .getMutable()
-          .incrementBalance((reward == null) ? protocolSpec.getBlockReward() : reward);
+          .incrementBalance(reward);
     }
 
     // Invoke the withdrawal processor to handle CL withdrawals.
