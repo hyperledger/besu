@@ -56,8 +56,6 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
 
-  runtimeOnly 'org.slf4j:slf4j-nop'
-
   annotationProcessor 'com.google.dagger:dagger-compiler'
 
   testImplementation 'junit:junit'

@@ -54,6 +54,7 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -185,6 +186,7 @@ public class T8nSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
     final ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setDefaultPrettyPrinter(
         (new DefaultPrettyPrinter())
