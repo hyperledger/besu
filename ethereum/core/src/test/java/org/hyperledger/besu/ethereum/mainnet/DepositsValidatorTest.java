@@ -126,7 +126,7 @@ public class DepositsValidatorTest {
         BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
     final Block block = blockDataGenerator.block(blockOptions);
 
-    final TransactionReceipt receipt = new TransactionReceipt(null, 0L, List.of(LOG_2, LOG_1), Optional.empty());
+    final TransactionReceipt receipt = new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
 
     assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt))).isTrue();
@@ -139,8 +139,8 @@ public class DepositsValidatorTest {
         BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
     final Block block = blockDataGenerator.block(blockOptions);
 
-    final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
-    final TransactionReceipt receipt2 = new TransactionReceipt(null, 0L, List.of(LOG_1), Optional.empty());
+    final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_1), Optional.empty());
+    final TransactionReceipt receipt2 = new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
     assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1, receipt2))).isTrue();
   }
@@ -163,7 +163,7 @@ public class DepositsValidatorTest {
 
     final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isTrue();
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isFalse();
   }
 
   @Test
@@ -174,7 +174,7 @@ public class DepositsValidatorTest {
 
     final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isTrue();
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isFalse();
   }
 
   @Test
@@ -185,7 +185,18 @@ public class DepositsValidatorTest {
 
     final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isTrue();
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isFalse();
+  }
+
+  @Test
+  public void invalidateAllowedDeposits4() {
+    final BlockDataGenerator.BlockOptions blockOptions =
+        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+    final Block block = blockDataGenerator.block(blockOptions);
+
+    final TransactionReceipt receipt1 = new TransactionReceipt(null, 0L, List.of(LOG_2, LOG_1), Optional.empty());
+
+    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1))).isFalse();
   }
 
   @Test

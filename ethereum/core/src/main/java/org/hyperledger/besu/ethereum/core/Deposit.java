@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jetbrains.annotations.NotNull;
 
-public class Deposit implements org.hyperledger.besu.plugin.data.Deposit, Comparable<Deposit> {
+public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
   private final BLSPublicKey pubKey;
   private final DepositWithdrawalCredential depositWithdrawalCredentials;
@@ -123,8 +123,4 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit, Compar
     return Objects.hash(pubKey, depositWithdrawalCredentials, amount, signature, index);
   }
 
-  @Override
-  public int compareTo(@NotNull final Deposit anotherDeposit) {
-    return signature.compareTo(anotherDeposit.getSignature());
-  }
 }

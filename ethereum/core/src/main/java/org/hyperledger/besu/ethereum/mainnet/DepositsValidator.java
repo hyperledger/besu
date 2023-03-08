@@ -90,9 +90,6 @@ public interface DepositsValidator {
         }
       }
 
-      Collections.sort(actualDeposits);
-      Collections.sort(expectedDeposits);
-
       return actualDeposits.equals(expectedDeposits);
     }
 
