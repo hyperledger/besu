@@ -15,7 +15,6 @@
 package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
-import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 public class InMemoryKeyValueStorageTest extends AbstractKeyValueStorageTest {

@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 

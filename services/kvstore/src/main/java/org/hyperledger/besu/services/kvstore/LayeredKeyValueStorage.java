@@ -13,9 +13,12 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.plugin.services.storage;
+package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.Map;
 import java.util.Optional;
@@ -33,8 +36,6 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     implements SnappedKeyValueStorage {
 
   private final KeyValueStorage parent;
-
-  private boolean isFrozen;
 
   /**
    * Instantiates a new Layered key value storage.
@@ -54,7 +55,6 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   public LayeredKeyValueStorage(final Map<Bytes, byte[]> map, final KeyValueStorage parent) {
     super(map);
     this.parent = parent;
-    this.isFrozen = false;
   }
 
   @Override
@@ -82,14 +82,8 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   }
 
   private void cacheFromParent(final Bytes key, final byte[] value) {
-    if (!isFrozen) {
-      if (parent instanceof LayeredKeyValueStorage) {
-        if (((LayeredKeyValueStorage) parent).isFrozen) {
-          hashValueStore.put(key, value);
-        }
-      } else {
-        hashValueStore.put(key, value);
-      }
+    if (!(parent instanceof LayeredKeyValueStorage)) {
+      hashValueStore.put(key, value);
     }
   }
 
@@ -144,9 +138,6 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public KeyValueStorageTransaction startTransaction() {
-    if (isFrozen) {
-      throw new UnsupportedOperationException("cannot start a transaction in a frozen storage");
-    }
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
         new InMemoryTransaction() {
           @Override
@@ -169,16 +160,6 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public SnappedKeyValueStorage clone() {
-    return new LayeredKeyValueStorage(new ConcurrentHashMap<>(hashValueStore), parent);
-  }
-
-  /**
-   * The call to this method freeze the storage and prevent any future modification
-   *
-   * @return current SnappedKeyValueStorage
-   */
-  public SnappedKeyValueStorage freeze() {
-    isFrozen = true;
-    return this;
+    return new LayeredKeyValueStorage(hashValueStore, parent);
   }
 }
