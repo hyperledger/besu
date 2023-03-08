@@ -46,6 +46,11 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   @Override
+  public String name() {
+    return "prioritized";
+  }
+
+  @Override
   protected TransactionAddedResult canAdd(
       final PendingTransaction pendingTransaction, final int gap) {
     final var senderTxs = readyBySender.get(pendingTransaction.getSender());
@@ -114,6 +119,11 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   @Override
   public Stream<PendingTransaction> stream() {
     return orderByFee.descendingSet().stream();
+  }
+
+  @Override
+  protected long cacheFreeSpace() {
+    return Integer.MAX_VALUE;
   }
 
   public abstract String logStats();

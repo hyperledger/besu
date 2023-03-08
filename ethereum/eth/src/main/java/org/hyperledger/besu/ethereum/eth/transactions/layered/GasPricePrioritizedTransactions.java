@@ -50,11 +50,6 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   }
 
   @Override
-  public String name() {
-    return "prioritized-gas-price";
-  }
-
-  @Override
   protected void internalBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     // no-op
   }

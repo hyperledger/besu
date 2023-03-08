@@ -51,6 +51,11 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
+  protected long cacheFreeSpace() {
+    return poolConfig.getPendingTransactionsMaxCapacityBytes() - getUsedSpace();
+  }
+
+  @Override
   protected boolean gapsAllowed() {
     return true;
   }
@@ -164,7 +169,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     sparseEvictionOrder.remove(evictedTx);
 
     if (lessReadySenderTxs.isEmpty()) {
-      orderByGap.get(gapBySender.get(evictedTx.getSender())).remove(evictedTx.getSender());
+      orderByGap.get(gapBySender.remove(evictedTx.getSender())).remove(evictedTx.getSender());
     }
   }
 
@@ -217,7 +222,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
         }
         currNonce = nextNonce;
       }
-      return OptionalLong.of(currNonce);
+      return OptionalLong.of(currNonce + 1);
     }
     return OptionalLong.empty();
   }

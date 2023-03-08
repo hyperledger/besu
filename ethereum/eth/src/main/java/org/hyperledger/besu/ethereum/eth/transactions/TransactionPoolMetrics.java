@@ -53,7 +53,7 @@ public class TransactionPoolMetrics {
             "transactions_added_total",
             "Count of transactions added to the transaction pool",
             "source",
-            "list");
+            "layer");
 
     invalidCounter =
         metricsSystem.createLabelledCounter(
@@ -70,7 +70,7 @@ public class TransactionPoolMetrics {
             "Count of transactions removed from the transaction pool",
             "source",
             "operation",
-            "list");
+            "layer");
 
     replacedCount =
         metricsSystem.createLabelledCounter(
@@ -78,7 +78,7 @@ public class TransactionPoolMetrics {
             "transactions_replaced_total",
             "Count of transactions replaced in the transaction pool",
             "source",
-            "list");
+            "layer");
 
     rejectedCounter =
         metricsSystem.createLabelledCounter(
@@ -87,14 +87,14 @@ public class TransactionPoolMetrics {
             "Count of transactions not accepted to the transaction pool",
             "source",
             "operation",
-            "list");
+            "layer");
 
     evictedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
             "transactions_evicted_total",
             "Count of transactions evicted from the transaction pool when it is full",
-            "list");
+            "layer");
 
     //    prioritizedCounter =
     //        metricsSystem.createLabelledCounter(
@@ -180,17 +180,17 @@ public class TransactionPoolMetrics {
         supplier);
   }
 
-  public void incrementAdded(final boolean receivedFromLocalSource, final String list) {
-    addedCounter.labels(location(receivedFromLocalSource), list).inc();
+  public void incrementAdded(final boolean receivedFromLocalSource, final String layer) {
+    addedCounter.labels(location(receivedFromLocalSource), layer).inc();
   }
 
   public void incrementRemoved(
-      final boolean receivedFromLocalSource, final String operation, final String list) {
-    removedCounter.labels(location(receivedFromLocalSource), operation, list).inc();
+      final boolean receivedFromLocalSource, final String operation, final String layer) {
+    removedCounter.labels(location(receivedFromLocalSource), operation, layer).inc();
   }
 
-  public void incrementReplaced(final boolean receivedFromLocalSource, final String list) {
-    replacedCount.labels(location(receivedFromLocalSource), list).inc();
+  public void incrementReplaced(final boolean receivedFromLocalSource, final String layer) {
+    replacedCount.labels(location(receivedFromLocalSource), layer).inc();
   }
 
   public void incrementInvalid(
@@ -201,8 +201,8 @@ public class TransactionPoolMetrics {
   public void incrementRejected(
       final boolean receivedFromLocalSource,
       final TransactionInvalidReason rejectReason,
-      final String list) {
-    rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), list).inc();
+      final String layer) {
+    rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), layer).inc();
   }
 
   public void incrementExpiredTransactionsMessage() {
@@ -217,8 +217,8 @@ public class TransactionPoolMetrics {
     expiredNewPooledTransactionHashesMessageCounter.inc();
   }
 
-  public void incrementEvicted(final String set, final int count) {
-    evictedCounter.labels(set).inc(count);
+  public void incrementEvicted(final String layer, final int count) {
+    evictedCounter.labels(layer).inc(count);
   }
 
   //  public void incrementPrioritized(

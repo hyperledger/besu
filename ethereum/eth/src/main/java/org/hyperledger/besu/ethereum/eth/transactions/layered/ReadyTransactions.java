@@ -61,6 +61,11 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   }
 
   @Override
+  protected long cacheFreeSpace() {
+    return poolConfig.getPendingTransactionsMaxCapacityBytes() - getUsedSpace();
+  }
+
+  @Override
   protected TransactionAddedResult canAdd(
       final PendingTransaction pendingTransaction, final int gap) {
     final var senderTxs = readyBySender.get(pendingTransaction.getSender());

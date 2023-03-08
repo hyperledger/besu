@@ -35,7 +35,6 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionsLayer.class);
   private static final NavigableMap<Long, PendingTransaction> EMPTY_SENDER_TXS = new TreeMap<>();
   protected final TransactionPoolConfiguration poolConfig;
-  protected final TransactionsLayer nextLayer;
   protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
       transactionReplacementTester;
   protected final TransactionPoolMetrics metrics;
@@ -50,8 +49,8 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final TransactionPoolMetrics metrics) {
+    super(nextLayer);
     this.poolConfig = poolConfig;
-    this.nextLayer = nextLayer;
     this.transactionReplacementTester = transactionReplacementTester;
     this.metrics = metrics;
   }
@@ -88,8 +87,9 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
     return allTxs;
   }
 
-  protected long getUsedSpace() {
-    return spaceUsed;
+  @Override
+  public long getUsedSpace() {
+    return spaceUsed + nextLayer.getUsedSpace();
   }
 
   protected abstract TransactionAddedResult canAdd(
@@ -452,9 +452,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
     spaceUsed -= transaction.getSize();
   }
 
-  protected long cacheFreeSpace() {
-    return poolConfig.getPendingTransactionsMaxCapacityBytes() - getUsedSpace();
-  }
+  protected abstract long cacheFreeSpace();
 
   protected abstract boolean promotionFilter(PendingTransaction pendingTransaction);
 

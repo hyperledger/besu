@@ -67,11 +67,6 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   }
 
   @Override
-  public String name() {
-    return "prioritized-basefee";
-  }
-
-  @Override
   protected void internalBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     final BaseFeeMarket baseFeeMarket = (BaseFeeMarket) feeMarket;
     final Wei newNextBlockBaseFee = calculateNextBlockBaseFee(baseFeeMarket, blockHeader);

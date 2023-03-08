@@ -58,4 +58,6 @@ public interface TransactionsLayer {
   PendingTransaction promote(Address sender, long nonce);
 
   void notifyAdded(PendingTransaction pendingTransaction);
+
+  long getUsedSpace();
 }

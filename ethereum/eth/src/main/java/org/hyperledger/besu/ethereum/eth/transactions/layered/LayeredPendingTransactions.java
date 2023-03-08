@@ -339,6 +339,10 @@ public class LayeredPendingTransactions implements PendingTransactions {
     //
     //    prioritizedCheck();
   }
+
+  public long getUsedSpace() {
+    return prioritizedTransactions.getUsedSpace();
+  }
   //
   //  private void readyCheck() {
   //    if (orderByMaxFee.size() != readyBySender.size()) {
