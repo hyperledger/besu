@@ -15,6 +15,7 @@
 package org.hyperledger.besu.crypto;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.bouncycastle.jcajce.provider.asymmetric.ec.KeyPairGeneratorSpi.ECDSA;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -43,13 +44,6 @@ import org.bouncycastle.math.ec.ECPoint;
 
 /** The Abstract secp256. */
 public abstract class AbstractSECP256 implements SignatureAlgorithm {
-
-  /** The constant PRIVATE_KEY_BYTE_LENGTH. */
-  protected static final int PRIVATE_KEY_BYTE_LENGTH = 32;
-  /** The constant PUBLIC_KEY_BYTE_LENGTH. */
-  protected static final int PUBLIC_KEY_BYTE_LENGTH = 64;
-  /** The constant SIGNATURE_BYTE_LENGTH. */
-  protected static final int SIGNATURE_BYTE_LENGTH = 65;
 
   /** The constant PROVIDER. */
   public static final String PROVIDER = "BC";
@@ -82,7 +76,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
     curveOrder = curve.getN();
     halfCurveOrder = curveOrder.shiftRight(1);
     try {
-      keyPairGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
+      keyPairGenerator = new ECDSA();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
