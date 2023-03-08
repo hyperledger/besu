@@ -14,9 +14,16 @@
  */
 package org.hyperledger.besu.util;
 
+/** The library independent logger configurator util. */
 @SuppressWarnings("CatchAndPrintStackTrace")
 public interface LogConfigurator {
 
+  /**
+   * Sets level to specified logger.
+   *
+   * @param parentLogger the logger name
+   * @param level the level
+   */
   static void setLevel(final String parentLogger, final String level) {
     try {
       Log4j2ConfiguratorUtil.setAllLevels(parentLogger, level);
@@ -25,6 +32,7 @@ public interface LogConfigurator {
     }
   }
 
+  /** Reconfigure. */
   static void reconfigure() {
     try {
       Log4j2ConfiguratorUtil.reconfigure();
@@ -33,6 +41,7 @@ public interface LogConfigurator {
     }
   }
 
+  /** Shutdown. */
   static void shutdown() {
     try {
       Log4j2ConfiguratorUtil.shutdown();
