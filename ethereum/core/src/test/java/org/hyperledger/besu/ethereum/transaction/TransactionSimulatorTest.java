@@ -88,7 +88,6 @@ public class TransactionSimulatorTest {
 
   @Before
   public void setUp() {
-    when(this.worldState.isPersistable()).thenReturn(true);
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
 
