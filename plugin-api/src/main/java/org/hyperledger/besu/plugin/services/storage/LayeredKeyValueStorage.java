@@ -169,7 +169,7 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public SnappedKeyValueStorage clone() {
-    return new LayeredKeyValueStorage(hashValueStore, parent);
+    return new LayeredKeyValueStorage(new ConcurrentHashMap<>(hashValueStore), parent);
   }
 
   /**
