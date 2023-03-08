@@ -88,6 +88,7 @@ public class TransactionSimulatorTest {
 
   @Before
   public void setUp() {
+    when(this.worldState.isPersistable()).thenReturn(true);
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
 
@@ -127,7 +128,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
@@ -159,7 +160,7 @@ public class TransactionSimulatorTest {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
         callParameter,
@@ -194,7 +195,7 @@ public class TransactionSimulatorTest {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
         callParameter,
@@ -228,7 +229,7 @@ public class TransactionSimulatorTest {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
         callParameter,
@@ -263,7 +264,7 @@ public class TransactionSimulatorTest {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
         callParameter,
@@ -296,7 +297,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, 1L);
 
@@ -325,7 +326,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, 1L);
 
@@ -354,7 +355,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.FAILED);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
@@ -395,7 +396,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, blockHeader.getBlockHash());
@@ -426,7 +427,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
@@ -455,7 +456,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
@@ -484,7 +485,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.FAILED);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, blockHeader.getBlockHash());
@@ -516,7 +517,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
@@ -561,10 +562,10 @@ public class TransactionSimulatorTest {
   }
 
   private void mockProcessorStatusForTransaction(
-      final long blockNumber, final Transaction transaction, final Status status) {
+      final Transaction transaction, final Status status) {
     final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
-    when(protocolSchedule.getByBlockNumber(eq(blockNumber))).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
