@@ -56,4 +56,6 @@ public interface TransactionsLayer {
   void unsubscribeFromDropped(long id);
 
   PendingTransaction promote(Address sender, long nonce);
+
+  void notifyAdded(PendingTransaction pendingTransaction);
 }

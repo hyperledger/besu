@@ -112,6 +112,8 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       processAdded(pendingTransaction);
       addStatus.maybeReplacedTransaction().ifPresent(this::replaced);
 
+      nextLayer.notifyAdded(pendingTransaction);
+
       if (!maybeFull()) {
         // if there is space try to see if the added tx filled some gaps
         tryFillGap(addStatus, pendingTransaction);

@@ -53,4 +53,9 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
     }
     return nextLayerRes;
   }
+
+  @Override
+  public void notifyAdded(final PendingTransaction pendingTransaction) {
+    nextLayer.notifyAdded(pendingTransaction);
+  }
 }

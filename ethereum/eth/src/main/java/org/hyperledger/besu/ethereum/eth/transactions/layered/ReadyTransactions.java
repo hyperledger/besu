@@ -137,7 +137,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   @Override
   public Stream<PendingTransaction> stream() {
-    return orderByMaxFee.stream()
+    return orderByMaxFee.descendingSet().stream()
         .map(PendingTransaction::getSender)
         .flatMap(sender -> readyBySender.get(sender).values().stream());
   }

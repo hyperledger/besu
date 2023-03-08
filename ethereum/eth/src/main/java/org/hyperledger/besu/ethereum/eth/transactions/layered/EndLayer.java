@@ -87,4 +87,9 @@ public class EndLayer extends BaseTransactionsLayer {
   public PendingTransaction promote(final Address sender, final long nonce) {
     return null;
   }
+
+  @Override
+  public void notifyAdded(final PendingTransaction pendingTransaction) {
+    // no-op
+  }
 }

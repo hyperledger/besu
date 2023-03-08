@@ -127,9 +127,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
         final long firstNonce = senderTxs.firstKey();
         final int newGap = (int) (firstNonce - (promotedTx.getNonce() + 1));
         if (newGap != 0) {
-          orderByGap.get(0).remove(sender);
-          orderByGap.get(newGap).add(sender);
-          gapBySender.put(sender, newGap);
+          updateGap(sender, 0, newGap);
         }
       }
     }
@@ -148,17 +146,13 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final int currGap = gapBySender.get(sender);
       final int newGap = (int) (senderTxs.firstKey() - (highestNonceRemovedTx.getNonce() + 1));
       if (currGap != newGap) {
-        gapBySender.put(sender, newGap);
-        orderByGap.get(currGap).remove(sender);
-        orderByGap.get(newGap).add(sender);
+        updateGap(sender, currGap, newGap);
       }
     } else {
       final int currGap = gapBySender.get(sender);
       final int newGap = (int) (senderTxs.firstKey() - (maxConfirmedNonce + 1));
       if (newGap < currGap) {
-        gapBySender.put(sender, newGap);
-        orderByGap.get(currGap).remove(sender);
-        orderByGap.get(newGap).add(sender);
+        updateGap(sender, currGap, newGap);
       }
     }
   }
@@ -187,9 +181,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
         final int currGap = gapBySender.get(sender);
         final int newGap = (int) (senderTxs.firstKey() - (removedTx.getNonce() + 1));
         if (currGap != newGap) {
-          orderByGap.get(currGap).remove(sender);
-          orderByGap.get(newGap).add(sender);
-          gapBySender.put(sender, newGap);
+          updateGap(sender, currGap, newGap);
         }
       }
     } else {
@@ -228,6 +220,26 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       return OptionalLong.of(currNonce);
     }
     return OptionalLong.empty();
+  }
+
+  @Override
+  public void notifyAdded(final PendingTransaction pendingTransaction) {
+    final Address sender = pendingTransaction.getSender();
+    final Integer currGap = gapBySender.get(sender);
+    if (currGap != null) {
+      final var senderTxs = readyBySender.get(sender);
+      final int newGap = (int) (senderTxs.firstKey() - (pendingTransaction.getNonce() + 1));
+      if (newGap < currGap) {
+        updateGap(sender, currGap, newGap);
+      }
+    }
+    nextLayer.notifyAdded(pendingTransaction);
+  }
+
+  private void updateGap(final Address sender, final int currGap, final int newGap) {
+    orderByGap.get(currGap).remove(sender);
+    orderByGap.get(newGap).add(sender);
+    gapBySender.put(sender, newGap);
   }
 
   //  synchronized int getSparseCount() {
