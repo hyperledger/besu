@@ -27,7 +27,7 @@ public interface LogConfigurator {
   static void setLevel(final String parentLogger, final String level) {
     try {
       Log4j2ConfiguratorUtil.setAllLevels(parentLogger, level);
-    } catch (NoClassDefFoundError ncdfe) {
+    } catch (NoClassDefFoundError | ClassCastException e) {
       // This is expected when Log4j support is not in the classpath, so ignore
     }
   }
@@ -36,7 +36,7 @@ public interface LogConfigurator {
   static void reconfigure() {
     try {
       Log4j2ConfiguratorUtil.reconfigure();
-    } catch (NoClassDefFoundError ncdfe) {
+    } catch (NoClassDefFoundError | ClassCastException e) {
       // This is expected when Log4j support is not in the classpath, so ignore
     }
   }
