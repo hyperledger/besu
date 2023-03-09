@@ -186,6 +186,10 @@ public class ECIESHandshaker implements Handshaker {
     Bytes bytes = Bytes.wrap(encryptedBytes);
 
     Bytes encryptedMsg = bytes;
+    LOG.debug(
+        "stefan: handleMessage ECIESHandshaker instance {}, encryptedMsg {}",
+        System.identityHashCode(this),
+        encryptedMsg);
     try {
       // Decrypt the message with our private key.
       try {
@@ -203,6 +207,8 @@ public class ECIESHandshaker implements Handshaker {
           throw new HandshakeException("Failed to decrypt handshake message");
         }
       } catch (final Exception ex) {
+        LOG.debug(
+            "stefan: ECIESHandshaker instance {} is NOT version 4", System.identityHashCode(this));
         bytes = EncryptedMessage.decryptMsg(bytes, nodeKey);
         version4 = false;
       }
