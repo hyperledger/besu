@@ -169,11 +169,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
     final AtomicBoolean completed = new AtomicBoolean(false);
 
     prioritizedTransactions.stream()
-        .takeWhile(unsed -> !completed.get())
+        .takeWhile(unused -> !completed.get())
         .forEach(
             highPrioPendingTx ->
                 prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                    .takeWhile(unsed -> !completed.get())
+                    .takeWhile(unused -> !completed.get())
                     .filter(
                         candidatePendingTx ->
                             !alreadyChecked.contains(candidatePendingTx.getHash()))

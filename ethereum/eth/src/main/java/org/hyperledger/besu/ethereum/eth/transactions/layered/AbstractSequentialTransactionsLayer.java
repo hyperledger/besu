@@ -46,7 +46,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   public OptionalLong getNextNonceFor(final Address sender) {
     final OptionalLong nextLayerRes = nextLayer.getNextNonceFor(sender);
     if (nextLayerRes.isEmpty()) {
-      final var senderTxs = readyBySender.get(sender);
+      final var senderTxs = txsBySender.get(sender);
       if (senderTxs != null) {
         return OptionalLong.of(senderTxs.lastKey() + 1);
       }

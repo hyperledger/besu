@@ -39,7 +39,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       transactionReplacementTester;
   protected final TransactionPoolMetrics metrics;
   protected final Map<Hash, PendingTransaction> pendingTransactions = new HashMap<>();
-  protected final Map<Address, NavigableMap<Long, PendingTransaction>> readyBySender =
+  protected final Map<Address, NavigableMap<Long, PendingTransaction>> txsBySender =
       new HashMap<>();
   protected long spaceUsed = 0;
 
@@ -60,7 +60,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   @Override
   public void reset() {
     pendingTransactions.clear();
-    readyBySender.clear();
+    txsBySender.clear();
     spaceUsed = 0;
     nextLayer.reset();
   }
@@ -166,7 +166,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
 
   @Override
   public PendingTransaction promote(final Address sender, final long nonce) {
-    final var senderTxs = readyBySender.get(sender);
+    final var senderTxs = txsBySender.get(sender);
     if (senderTxs != null) {
       long expectedNonce = nonce + 1;
       if (senderTxs.firstKey() == expectedNonce) {
@@ -174,7 +174,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
         processRemove(senderTxs, promotedTx.getTransaction());
 
         if (senderTxs.isEmpty()) {
-          readyBySender.remove(sender);
+          txsBySender.remove(sender);
         }
         return promotedTx;
       }
@@ -185,7 +185,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   private TransactionAddedResult addToNextLayer(
       final PendingTransaction pendingTransaction, final int distance) {
     return addToNextLayer(
-        readyBySender.getOrDefault(pendingTransaction.getSender(), EMPTY_SENDER_TXS),
+        txsBySender.getOrDefault(pendingTransaction.getSender(), EMPTY_SENDER_TXS),
         pendingTransaction,
         distance);
   }
@@ -205,7 +205,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
 
   private void processAdded(final PendingTransaction addedTx) {
     pendingTransactions.put(addedTx.getHash(), addedTx);
-    final var senderTxs = readyBySender.computeIfAbsent(addedTx.getSender(), s -> new TreeMap<>());
+    final var senderTxs = txsBySender.computeIfAbsent(addedTx.getSender(), s -> new TreeMap<>());
     senderTxs.put(addedTx.getNonce(), addedTx);
     increaseSpaceUsed(addedTx);
     internalAdd(senderTxs, addedTx);
@@ -220,7 +220,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
     final var evictableTx = getEvictable();
     if (evictableTx != null) {
       final var lessReadySender = evictableTx.getSender();
-      final var lessReadySenderTxs = readyBySender.get(lessReadySender);
+      final var lessReadySenderTxs = txsBySender.get(lessReadySender);
 
       long evictedSize = 0;
       int evictedCount = 0;
@@ -238,7 +238,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       }
 
       if (lessReadySenderTxs.isEmpty()) {
-        readyBySender.remove(lessReadySender);
+        txsBySender.remove(lessReadySender);
       }
 
       metrics.incrementEvicted(name(), evictedCount);
@@ -246,7 +246,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       final long newSpaceToFree = spaceToFree - evictedSize;
       final int newTxsToEvict = txsToEvict - evictedCount;
 
-      if ((newSpaceToFree > 0 || newTxsToEvict > 0) && !readyBySender.isEmpty()) {
+      if ((newSpaceToFree > 0 || newTxsToEvict > 0) && !txsBySender.isEmpty()) {
         // try next less valuable sender
         evict(newSpaceToFree, newTxsToEvict);
       }
@@ -293,7 +293,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
 
   private TransactionAddedResult maybeReplaceTransaction(final PendingTransaction incomingTx) {
 
-    final var existingTxs = readyBySender.get(incomingTx.getSender());
+    final var existingTxs = txsBySender.get(incomingTx.getSender());
 
     if (existingTxs != null) {
       final var existingReadyTx = existingTxs.get(incomingTx.getNonce());
@@ -341,7 +341,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   public void remove(final PendingTransaction pendingTransaction) {
     nextLayer.remove(pendingTransaction);
 
-    final var senderTxs = readyBySender.get(pendingTransaction.getSender());
+    final var senderTxs = txsBySender.get(pendingTransaction.getSender());
     if (senderTxs != null) {
       if (gapsAllowed()) {
         // if gaps are allowed then just remove
@@ -364,7 +364,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       }
 
       if (senderTxs.isEmpty()) {
-        readyBySender.remove(pendingTransaction.getSender());
+        txsBySender.remove(pendingTransaction.getSender());
       }
     }
   }
@@ -402,7 +402,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   }
 
   private void confirmed(final Address sender, final long maxConfirmedNonce) {
-    final var senderTxs = readyBySender.get(sender);
+    final var senderTxs = txsBySender.get(sender);
 
     if (senderTxs != null) {
       final var confirmedTxs = senderTxs.headMap(maxConfirmedNonce, true);
@@ -423,7 +423,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       }
 
       if (senderTxs.isEmpty()) {
-        readyBySender.remove(sender);
+        txsBySender.remove(sender);
       } else {
         internalConfirmed(senderTxs, sender, maxConfirmedNonce, highestNonceRemovedTx);
       }
@@ -472,7 +472,7 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   }
 
   Stream<PendingTransaction> stream(final Address sender) {
-    return readyBySender.getOrDefault(sender, EMPTY_SENDER_TXS).values().stream();
+    return txsBySender.getOrDefault(sender, EMPTY_SENDER_TXS).values().stream();
   }
 
   abstract Stream<PendingTransaction> stream();

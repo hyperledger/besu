@@ -53,7 +53,7 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   @Override
   protected TransactionAddedResult canAdd(
       final PendingTransaction pendingTransaction, final int gap) {
-    final var senderTxs = readyBySender.get(pendingTransaction.getSender());
+    final var senderTxs = txsBySender.get(pendingTransaction.getSender());
 
     if (hasExpectedNonce(senderTxs, pendingTransaction, gap) && hasPriority(pendingTransaction)) {
 

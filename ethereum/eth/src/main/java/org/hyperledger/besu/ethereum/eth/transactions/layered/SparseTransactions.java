@@ -112,7 +112,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
     final PendingTransaction promotedTx =
         orderByGap.get(0).stream()
-            .map(readyBySender::get)
+            .map(txsBySender::get)
             .map(NavigableMap::values)
             .flatMap(Collection::stream)
             .filter(promotionFilter)
@@ -121,11 +121,11 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
     if (promotedTx != null) {
       final Address sender = promotedTx.getSender();
-      final var senderTxs = readyBySender.get(sender);
+      final var senderTxs = txsBySender.get(sender);
       senderTxs.pollFirstEntry();
       processRemove(senderTxs, promotedTx.getTransaction());
       if (senderTxs.isEmpty()) {
-        readyBySender.remove(sender);
+        txsBySender.remove(sender);
         orderByGap.get(0).remove(sender);
         gapBySender.remove(sender);
       } else {
@@ -214,7 +214,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   public OptionalLong getNextNonceFor(final Address sender) {
     final Integer gap = gapBySender.get(sender);
     if (gap != null && gap == 0) {
-      final var senderTxs = readyBySender.get(sender);
+      final var senderTxs = txsBySender.get(sender);
       var currNonce = senderTxs.firstKey();
       for (final var nextNonce : senderTxs.keySet()) {
         if (nextNonce > currNonce + 1) {
@@ -232,7 +232,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     final Address sender = pendingTransaction.getSender();
     final Integer currGap = gapBySender.get(sender);
     if (currGap != null) {
-      final var senderTxs = readyBySender.get(sender);
+      final var senderTxs = txsBySender.get(sender);
       final int newGap = (int) (senderTxs.firstKey() - (pendingTransaction.getNonce() + 1));
       if (newGap < currGap) {
         updateGap(sender, currGap, newGap);

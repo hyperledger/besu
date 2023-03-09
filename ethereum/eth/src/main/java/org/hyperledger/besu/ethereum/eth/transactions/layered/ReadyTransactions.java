@@ -68,7 +68,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   @Override
   protected TransactionAddedResult canAdd(
       final PendingTransaction pendingTransaction, final int gap) {
-    final var senderTxs = readyBySender.get(pendingTransaction.getSender());
+    final var senderTxs = txsBySender.get(pendingTransaction.getSender());
 
     if (hasExpectedNonce(senderTxs, pendingTransaction, gap)) {
       return TransactionAddedResult.ADDED;
@@ -144,7 +144,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   public Stream<PendingTransaction> stream() {
     return orderByMaxFee.descendingSet().stream()
         .map(PendingTransaction::getSender)
-        .flatMap(sender -> readyBySender.get(sender).values().stream());
+        .flatMap(sender -> txsBySender.get(sender).values().stream());
   }
 
   @Override
@@ -153,7 +153,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
     for (var tx : orderByMaxFee.descendingSet()) {
       PendingTransaction promotedTx = null;
-      senderTxs = readyBySender.get(tx.getSender());
+      senderTxs = txsBySender.get(tx.getSender());
 
       if (promotionFilter.test(senderTxs.firstEntry().getValue())) {
         promotedTx = senderTxs.pollFirstEntry().getValue();
@@ -165,7 +165,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
         promoteTransactions();
 
         if (senderTxs.isEmpty()) {
-          readyBySender.remove(promotedTx.getSender());
+          txsBySender.remove(promotedTx.getSender());
         }
 
         return promotedTx;
@@ -188,7 +188,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   //  }
 
   private synchronized int getReadyCount() {
-    return readyBySender.values().stream().mapToInt(Map::size).sum();
+    return txsBySender.values().stream().mapToInt(Map::size).sum();
   }
   /*
   private void readyCheck() {
