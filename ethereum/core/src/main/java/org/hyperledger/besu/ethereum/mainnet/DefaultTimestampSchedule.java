@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,6 +51,11 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
   @Override
   public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream().map(TimeScheduledProtocolSpec::timestamp).sorted();
+  }
+
+  @Override
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return this.protocolSpecs.stream().anyMatch(predicate);
   }
 
   @Override

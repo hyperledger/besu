@@ -24,10 +24,12 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
@@ -89,6 +91,11 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   @Override
   public Stream<Long> streamMilestoneBlocks() {
     return delegate.streamMilestoneBlocks();
+  }
+
+  @Override
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return delegate.anyMatch(predicate);
   }
 
   @Override

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public interface HeaderBasedProtocolSchedule {
@@ -34,4 +35,6 @@ public interface HeaderBasedProtocolSchedule {
   String listMilestones();
 
   Stream<Long> streamMilestoneBlocks();
+
+  boolean anyMatch(Predicate<ScheduledProtocolSpec> predicate);
 }

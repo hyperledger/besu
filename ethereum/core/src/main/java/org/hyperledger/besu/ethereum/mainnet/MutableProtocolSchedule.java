@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,6 +86,11 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
     return protocolSpecs.stream()
         .sorted(Comparator.comparing(NumberScheduledProtocolSpec::block))
         .map(NumberScheduledProtocolSpec::block);
+  }
+
+  @Override
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return this.protocolSpecs.stream().anyMatch(predicate);
   }
 
   @Override
