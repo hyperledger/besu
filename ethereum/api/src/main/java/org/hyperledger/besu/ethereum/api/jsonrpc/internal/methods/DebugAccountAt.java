@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -87,10 +88,9 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    return blockchainQueries
-        .get()
-        .getAndMapWorldState(
-            blockHash,
+    return Tracer.processTracing(
+            blockchainQueries.get(),
+            Optional.of(block.get().getHeader()),
             mutableWorldState -> {
               final Optional<TransactionTrace> transactionTrace =
                   blockTracerSupplier

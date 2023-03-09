@@ -18,6 +18,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,14 +27,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -42,6 +46,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -51,6 +56,9 @@ public class DebugTraceBlockTest {
 
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+
+  private final MutableWorldState worldState = mock(MutableWorldState.class);
+
   private final DebugTraceBlock debugTraceBlock =
       new DebugTraceBlock(() -> blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
 
@@ -117,7 +125,8 @@ public class DebugTraceBlockTest {
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
     when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(blockTracer.trace(Mockito.eq(block), any())).thenReturn(Optional.of(blockTrace));
+    when(blockTracer.trace(any(Tracer.TraceableState.class), Mockito.eq(block), any()))
+        .thenReturn(Optional.of(blockTrace));
 
     when(blockchainQueries.blockByHash(parentBlock.getHash()))
         .thenReturn(
@@ -128,7 +137,14 @@ public class DebugTraceBlockTest {
                     Collections.emptyList(),
                     parentBlock.getHeader().getDifficulty(),
                     parentBlock.calculateSize())));
-
+    doAnswer(
+            invocation ->
+                Optional.of(
+                    invocation
+                        .<Function<MutableWorldState, ? extends JsonRpcResponse>>getArgument(1)
+                        .apply(worldState)))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceBlock.response(request);
     final Collection<?> result = (Collection<?>) response.getResult();

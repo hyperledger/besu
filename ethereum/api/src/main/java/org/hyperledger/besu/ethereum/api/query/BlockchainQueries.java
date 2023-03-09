@@ -861,6 +861,7 @@ public class BlockchainQueries {
    */
   public <U> Optional<U> getAndMapWorldState(
       final Hash blockHash, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
+
     return blockchain
         .getBlockHeader(blockHash)
         .flatMap(

@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -34,7 +35,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Suppliers;
 
 public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
@@ -80,10 +80,9 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
 
   protected List<String> traceBlock(
       final Block block, final Optional<TransactionTraceParams> transactionTraceParams) {
-    return blockchainQueries
-        .get()
-        .getAndMapWorldState(
-            block.getHash(),
+    return Tracer.processTracing(
+            blockchainQueries.get(),
+            Optional.of(block.getHeader()),
             mutableWorldState ->
                 Optional.of(
                     transactionTracerSupplier
@@ -94,10 +93,5 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
                             transactionTraceParams,
                             dataDir.resolve(TRACE_PATH))))
         .orElse(new ArrayList<>());
-  }
-
-  protected Object emptyResult() {
-    final ObjectMapper mapper = new ObjectMapper();
-    return mapper.createArrayNode();
   }
 }

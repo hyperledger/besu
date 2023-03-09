@@ -26,8 +26,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
@@ -42,8 +44,11 @@ import org.junit.Test;
 public class DebugTraceBlockByHashTest {
 
   private final BlockTracer blockTracer = mock(BlockTracer.class);
+
+  protected final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+
   private final DebugTraceBlockByHash debugTraceBlockByHash =
-      new DebugTraceBlockByHash(() -> blockTracer);
+      new DebugTraceBlockByHash(() -> blockTracer, () -> blockchainQueries);
 
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -99,7 +104,8 @@ public class DebugTraceBlockByHashTest {
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
     when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(blockTracer.trace(eq(blockHash), any())).thenReturn(Optional.of(blockTrace));
+    when(blockTracer.trace(any(Tracer.TraceableState.class), eq(blockHash), any()))
+        .thenReturn(Optional.of(blockTrace));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceBlockByHash.response(request);
