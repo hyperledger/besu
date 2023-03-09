@@ -15,6 +15,7 @@
 package org.hyperledger.besu.util;
 
 import java.util.NoSuchElementException;
+
 /** The library independent logger configurator util. */
 @SuppressWarnings("CatchAndPrintStackTrace")
 public interface LogConfigurator {
