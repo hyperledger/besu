@@ -30,9 +30,10 @@ import java.util.stream.Stream;
 
 public class MutableProtocolSchedule implements ProtocolSchedule {
 
-  private final NavigableSet<ScheduledProtocolSpec> protocolSpecs =
+  private final NavigableSet<NumberScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(
-          Comparator.<ScheduledProtocolSpec, Long>comparing(ScheduledProtocolSpec::getBlock)
+          Comparator.<NumberScheduledProtocolSpec, Long>comparing(
+                  NumberScheduledProtocolSpec::block)
               .reversed());
   private final Optional<BigInteger> chainId;
 
@@ -47,8 +48,8 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public void putMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
-    final ScheduledProtocolSpec scheduledProtocolSpec =
-        new ScheduledProtocolSpec(blockNumber, protocolSpec);
+    final NumberScheduledProtocolSpec scheduledProtocolSpec =
+        new NumberScheduledProtocolSpec(blockNumber, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
@@ -60,12 +61,12 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
     checkArgument(
-        protocolSpecs.last().getBlock() == 0, "There must be a milestone starting from block 0");
+        protocolSpecs.last().block() == 0, "There must be a milestone starting from block 0");
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
-    for (final ScheduledProtocolSpec s : protocolSpecs) {
-      if (number >= s.getBlock()) {
-        return s.getSpec();
+    for (final NumberScheduledProtocolSpec s : protocolSpecs) {
+      if (number >= s.block()) {
+        return s.spec();
       }
     }
     return null;
@@ -74,22 +75,22 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
-        .map(spec -> spec.getSpec().getName() + ": " + spec.getBlock())
+        .sorted(Comparator.comparing(NumberScheduledProtocolSpec::block))
+        .map(spec -> spec.spec().getName() + ": " + spec.block())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
-        .map(ScheduledProtocolSpec::getBlock);
+        .sorted(Comparator.comparing(NumberScheduledProtocolSpec::block))
+        .map(NumberScheduledProtocolSpec::block);
   }
 
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     protocolSpecs.forEach(
-        spec -> spec.getSpec().getTransactionValidator().setTransactionFilter(transactionFilter));
+        spec -> spec.spec().getTransactionValidator().setTransactionFilter(transactionFilter));
   }
 
   @Override
@@ -97,14 +98,18 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
       final WorldStateArchive publicWorldStateArchive) {
     protocolSpecs.forEach(
         spec -> {
-          final BlockProcessor blockProcessor = spec.getSpec().getBlockProcessor();
+          final BlockProcessor blockProcessor = spec.spec().getBlockProcessor();
           if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
             ((PrivacyBlockProcessor) blockProcessor)
                 .setPublicWorldStateArchive(publicWorldStateArchive);
         });
   }
 
-  public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
-    return protocolSpecs.stream().collect(Collectors.toUnmodifiableList());
+  public List<NumberScheduledProtocolSpec> getScheduledProtocolSpecs() {
+    return protocolSpecs.stream().toList();
   }
+
+  /** Tuple that associates a {@link ProtocolSpec} with a given block number level starting point */
+  public record NumberScheduledProtocolSpec(long block, ProtocolSpec spec)
+      implements ScheduledProtocolSpec {}
 }
