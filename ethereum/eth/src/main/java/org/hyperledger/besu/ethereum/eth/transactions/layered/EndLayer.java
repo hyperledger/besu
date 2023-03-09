@@ -128,7 +128,7 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public long getUsedSpace() {
+  public long getCumulativeUsedSpace() {
     return 0;
   }
 }

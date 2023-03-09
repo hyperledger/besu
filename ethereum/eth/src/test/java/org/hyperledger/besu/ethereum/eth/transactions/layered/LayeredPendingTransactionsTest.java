@@ -62,9 +62,6 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   protected static final String ADDED_COUNTER = "transactions_added_total";
   protected static final String REMOVED_COUNTER = "transactions_removed_total";
   protected static final String EVICTED_COUNTER = "transactions_evicted_total";
-  protected static final String REPLACED_COUNTER = "transactions_replaced_total";
-  protected static final String PRIORITIZED_COUNTER = "transactions_prioritized_total";
-
   protected static final String REMOTE = "remote";
   protected static final String LOCAL = "local";
   protected static final String REPLACED = "replaced";
@@ -93,7 +90,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
           .maxFutureBySender(LIMITED_TRANSACTIONS_BY_SENDER)
           .pendingTransactionsMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
-  protected LayeredPendingTransactions senderLimitedTransactions;
+  private LayeredPendingTransactions senderLimitedTransactions;
   private LayeredPendingTransactions pendingTransactions;
   private TransactionPoolMetrics txPoolMetrics;
 
@@ -212,8 +209,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
         createTransaction(
             0,
             Wei.of(100_000L),
-            (int) poolConf.getPendingTransactionsMaxCapacityBytes(), // freeSpace -
-            // firstTxs.get(0).getSize() / 2,
+            (int) poolConf.getPendingTransactionsMaxCapacityBytes(),
             SIGNATURE_ALGORITHM.get().generateKeyPair());
     final Account lastSender = mock(Account.class);
     when(lastSender.getNonce()).thenReturn(0L);

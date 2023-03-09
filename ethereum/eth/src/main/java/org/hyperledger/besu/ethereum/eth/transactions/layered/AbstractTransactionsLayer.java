@@ -88,8 +88,12 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   }
 
   @Override
-  public long getUsedSpace() {
-    return spaceUsed + nextLayer.getUsedSpace();
+  public long getCumulativeUsedSpace() {
+    return getLayerSpaceUsed() + nextLayer.getCumulativeUsedSpace();
+  }
+
+  protected long getLayerSpaceUsed() {
+    return spaceUsed;
   }
 
   protected abstract TransactionAddedResult canAdd(

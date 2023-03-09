@@ -341,7 +341,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   public long getUsedSpace() {
-    return prioritizedTransactions.getUsedSpace();
+    return prioritizedTransactions.getCumulativeUsedSpace();
   }
   //
   //  private void readyCheck() {

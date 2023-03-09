@@ -45,7 +45,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
           transactionReplacementTester) {
     super(poolConfig, nextLayer, transactionReplacementTester, metrics);
     metrics.initPendingTransactionCount(pendingTransactions::size);
-    metrics.initPendingTransactionSpace(this::getUsedSpace);
+    metrics.initPendingTransactionSpace(this::getLayerSpaceUsed);
     metrics.initReadyTransactionCount(this::getReadyCount);
   }
 
@@ -62,7 +62,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   @Override
   protected long cacheFreeSpace() {
-    return poolConfig.getPendingTransactionsMaxCapacityBytes() - getUsedSpace();
+    return poolConfig.getPendingTransactionsMaxCapacityBytes() - getLayerSpaceUsed();
   }
 
   @Override

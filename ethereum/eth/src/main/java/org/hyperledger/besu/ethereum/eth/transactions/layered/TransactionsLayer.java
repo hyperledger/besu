@@ -59,5 +59,5 @@ public interface TransactionsLayer {
 
   void notifyAdded(PendingTransaction pendingTransaction);
 
-  long getUsedSpace();
+  long getCumulativeUsedSpace();
 }
