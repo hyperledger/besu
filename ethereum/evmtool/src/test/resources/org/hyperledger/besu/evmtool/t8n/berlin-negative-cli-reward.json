@@ -7,9 +7,9 @@
     "--output.result=stdout",
     "--output.alloc=stdout",
     "--output.body=stdout",
-    "--state.fork=London",
+    "--state.fork=Berlin",
     "--state.chainid=1",
-    "--state.reward=0"
+    "--state.reward=-1"
   ],
   "stdin": {
     "alloc": {
@@ -45,25 +45,17 @@
     ],
     "env": {
       "currentCoinbase": "0x0000000000000000000000000000000000000000",
-      "currentNumber": "0x1",
-      "currentTimestamp": "0x0",
-      "currentGasLimit": "0xff112233445566",
-      "previousHash": "0xb271e9e5796d0ff5a2fd519ba666393e42d4f38680854761121d84a7a96ff017",
-      "parentTimestamp": "0x00",
-      "parentDifficulty": "0x00",
-      "parentUncleHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-      "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000020000",
-      "parentBaseFee": "0x0b",
-      "parentGasUsed": "0x00",
-      "parentGasLimit": "0xff112233445566",
-      "blockHashes": {
-        "0": "0xb271e9e5796d0ff5a2fd519ba666393e42d4f38680854761121d84a7a96ff017"
-      },
-      "currentDifficulty": "0x0"
+      "currentDifficulty": "0x0",
+      "currentGasLimit": "0x0",
+      "currentNumber": "0",
+      "currentTimestamp": "0"
     }
   },
   "stdout": {
     "alloc": {
+      "0x0000000000000000000000000000000000000000": {
+        "balance": "0x696c2"
+      },
       "0x1000000000000000000000000000000000000000": {
         "code": "0x6010565b6000828201905092915050565b601a600260016003565b60005560206000f3",
         "storage": {
@@ -78,7 +70,7 @@
     },
     "body": "0xf862f860800a8307a12094100000000000000000000000000000000000000080801ca091df80a63242846dcf1cc16c35e6ba39212cde92aad946f9c286fa0029782b54a0446170c2fb714c717885485ea7d93bf9277f3fb3d89ffd73e9b7f5f8eda3997b",
     "result": {
-      "stateRoot": "0x5775e461ac316f8c02466d23e4492d24bbe546336f6fc632dd1311d6a5b67b22",
+      "stateRoot": "0xde762e485411037c02119ff1115b422945b37efe91f4135dd442c3346629d0ef",
       "txRoot": "0x8e987be72f36f97a98838e03d9e5d1b3d22795606240f16684532b1c994b4ee7",
       "receiptsRoot": "0x0812e2d0238699cad1dd4c1274804ed2dde9a35df8ee002d48bbf3ef87857a63",
       "logsHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -98,8 +90,7 @@
         }
       ],
       "currentDifficulty": null,
-      "gasUsed": "0xa8ad",
-      "currentBaseFee": "0xa"
+      "gasUsed": "0xa8ad"
     }
   }
 }
