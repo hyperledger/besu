@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.util;
 
+import java.util.NoSuchElementException;
 /** The library independent logger configurator util. */
 @SuppressWarnings("CatchAndPrintStackTrace")
 public interface LogConfigurator {
@@ -27,7 +28,7 @@ public interface LogConfigurator {
   static void setLevel(final String parentLogger, final String level) {
     try {
       Log4j2ConfiguratorUtil.setAllLevels(parentLogger, level);
-    } catch (NoClassDefFoundError | ClassCastException e) {
+    } catch (NoClassDefFoundError | ClassCastException | NoSuchElementException e) {
       // This is expected when Log4j support is not in the classpath, so ignore
     }
   }
@@ -36,7 +37,7 @@ public interface LogConfigurator {
   static void reconfigure() {
     try {
       Log4j2ConfiguratorUtil.reconfigure();
-    } catch (NoClassDefFoundError | ClassCastException e) {
+    } catch (NoClassDefFoundError | ClassCastException | NoSuchElementException e) {
       // This is expected when Log4j support is not in the classpath, so ignore
     }
   }
@@ -45,7 +46,7 @@ public interface LogConfigurator {
   static void shutdown() {
     try {
       Log4j2ConfiguratorUtil.shutdown();
-    } catch (NoClassDefFoundError ncdfe) {
+    } catch (NoClassDefFoundError | ClassCastException | NoSuchElementException e) {
       // This is expected when Log4j support is not in the classpath, so ignore
     }
   }
