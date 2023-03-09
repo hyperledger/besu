@@ -168,6 +168,14 @@ public class ECIESHandshaker implements Handshaker {
             ? ResponderHandshakeMessageV1.MESSAGE_LENGTH
             : InitiatorHandshakeMessageV1.MESSAGE_LENGTH;
 
+    buf.markReaderIndex();
+    LOG.debug(
+        "stefan: ECIESinstance {}, readableBytesLen {}, buf {}",
+        System.identityHashCode(this),
+        buf.readableBytes(),
+        buf.toString());
+    buf.resetReaderIndex();
+
     if (buf.readableBytes() < expectedLength) {
       buf.markReaderIndex();
       final int size = buf.readUnsignedShort();
