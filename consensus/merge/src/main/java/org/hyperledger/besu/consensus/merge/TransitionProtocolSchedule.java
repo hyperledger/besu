@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -218,6 +219,13 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     return timestampSchedule.anyMatch(predicate)
         || transitionUtils.dispatchFunctionAccordingToMergeState(
             schedule -> schedule.anyMatch(predicate));
+  }
+
+  @Override
+  public boolean isOnForkBoundary(final BlockHeader blockHeader) {
+    return timestampSchedule.isOnForkBoundary(blockHeader)
+        || transitionUtils.dispatchFunctionAccordingToMergeState(
+            schedule -> schedule.isOnForkBoundary(blockHeader));
   }
 
   /**

@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -74,7 +75,6 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -214,7 +214,7 @@ public final class RunnerBuilderTest {
             .build();
     runner.startEthereumMainLoop();
 
-    when(protocolSchedule.streamMilestoneBlocks()).thenAnswer(__ -> Stream.of(1L, 2L));
+    when(protocolSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(true);
 
     for (int i = 0; i < 2; ++i) {
       final Block block =

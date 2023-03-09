@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -91,6 +92,11 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   @Override
   public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
     return this.protocolSpecs.stream().anyMatch(predicate);
+  }
+
+  @Override
+  public boolean isOnForkBoundary(final BlockHeader blockHeader) {
+    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.block);
   }
 
   @Override

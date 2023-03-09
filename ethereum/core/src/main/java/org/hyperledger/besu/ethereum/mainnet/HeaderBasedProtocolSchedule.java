@@ -17,6 +17,7 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.math.BigInteger;
@@ -37,4 +38,6 @@ public interface HeaderBasedProtocolSchedule {
   Stream<Long> streamMilestoneBlocks();
 
   boolean anyMatch(Predicate<ScheduledProtocolSpec> predicate);
+
+  boolean isOnForkBoundary(final BlockHeader blockHeader);
 }

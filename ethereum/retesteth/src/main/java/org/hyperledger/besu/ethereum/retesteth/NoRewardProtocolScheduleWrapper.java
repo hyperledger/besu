@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.retesteth;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -96,6 +97,11 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   @Override
   public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
     return delegate.anyMatch(predicate);
+  }
+
+  @Override
+  public boolean isOnForkBoundary(final BlockHeader blockHeader) {
+    return delegate.isOnForkBoundary(blockHeader);
   }
 
   @Override

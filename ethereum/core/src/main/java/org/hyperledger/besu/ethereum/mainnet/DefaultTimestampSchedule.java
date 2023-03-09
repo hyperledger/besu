@@ -17,6 +17,7 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -56,6 +57,11 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
   @Override
   public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
     return this.protocolSpecs.stream().anyMatch(predicate);
+  }
+
+  @Override
+  public boolean isOnForkBoundary(final BlockHeader blockHeader) {
+    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.timestamp);
   }
 
   @Override
