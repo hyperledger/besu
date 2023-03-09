@@ -95,7 +95,10 @@ abstract class AbstractJsonRpcTest {
     final ObjectNode actualBody = JsonUtil.objectNodeFromString(response.body().string());
     final ObjectNode expectedBody =
         JsonUtil.objectNodeFromString(testCase.getResponse().toString());
-    assertThat(actualBody.toPrettyString()).isEqualTo(expectedBody.toPrettyString());
+    assertThat(actualBody)
+        .withFailMessage(
+            "%s\ndid not equal\n %s", actualBody.toPrettyString(), expectedBody.toPrettyString())
+        .isEqualTo(expectedBody);
   }
 
   private String getRpcUrl(final String rpcMethod) {
