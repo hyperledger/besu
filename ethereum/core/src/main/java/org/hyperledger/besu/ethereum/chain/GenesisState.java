@@ -98,7 +98,7 @@ public final class GenesisState {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
     final Optional<List<Deposit>> deposits =
-        isExperimentalEipsTime(config) ? Optional.of(emptyList()) : Optional.empty();
+        isExperimentalEipsTimeAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
 
     return new BlockBody(emptyList(), emptyList(), withdrawals, deposits);
   }
@@ -233,7 +233,7 @@ public final class GenesisState {
     return false;
   }
 
-  private static boolean isExperimentalEipsTime(final GenesisConfigFile genesis) {
+  private static boolean isExperimentalEipsTimeAtGenesis(final GenesisConfigFile genesis) {
     final OptionalLong experimentalEipsTime = genesis.getConfigOptions().getExperimentalEipsTime();
     if (experimentalEipsTime.isPresent()) {
       return experimentalEipsTime.getAsLong() == genesis.getTimestamp();

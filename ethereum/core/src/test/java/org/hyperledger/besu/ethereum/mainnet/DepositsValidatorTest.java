@@ -59,7 +59,7 @@ public class DepositsValidatorTest {
 
   @Test
   public void validateAllowedDeposits() {
-    // TODO: Validate deposits in AllowedDeposits to be included in next PR
+    // TODO 6110: Validate deposits in AllowedDeposits to be included in next PR
   }
 
   @Test
@@ -74,11 +74,11 @@ public class DepositsValidatorTest {
 
   @Test
   public void invalidateAllowedDeposits() {
-    // TODO: Validate deposits in AllowedDeposits to be included in next PR
+    // TODO 6110: Validate deposits in AllowedDeposits to be included in next PR
   }
 
   @Test
   public void invalidateAllowedDepositsRoot() {
-    // TODO: Validate deposits in AllowedDeposits to be included in next PR
+    // TODO 6110: Validate deposits in AllowedDeposits to be included in next PR
   }
 }

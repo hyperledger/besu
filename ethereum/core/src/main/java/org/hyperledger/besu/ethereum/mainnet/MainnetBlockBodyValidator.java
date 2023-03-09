@@ -310,6 +310,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   }
 
   private boolean validateDeposits(final Block unusedBlock) {
-    return true; // TODO: Implement deposit validation
+    return true; // TODO 6110: Implement deposit validation
   }
 }
