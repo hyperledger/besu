@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -60,7 +61,7 @@ public class BonsaiWorldState
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldState.class);
 
-  public final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  public BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   private final BonsaiWorldStateProvider archive;
   private final BonsaiWorldStateUpdateAccumulator accumulator;
@@ -113,6 +114,10 @@ public class BonsaiWorldState
 
   @Override
   public boolean isPersisted() {
+    return isPersisted(worldStateStorage);
+  }
+
+  private boolean isPersisted(final WorldStateStorage worldStateStorage) {
     return !(worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage);
   }
 
@@ -527,6 +532,7 @@ public class BonsaiWorldState
   @Override
   public MutableWorldState freeze() {
     this.isFrozen = true;
+    this.worldStateStorage = new BonsaiWorldStateLayerStorage(worldStateStorage);
     return this;
   }
 
@@ -541,6 +547,21 @@ public class BonsaiWorldState
     try {
       if (!isPersisted()) {
         this.worldStateStorage.close();
+        if (isFrozen) {
+          closeFrozenStorage();
+        }
+      }
+    } catch (Exception e) {
+      // no op
+    }
+  }
+
+  private void closeFrozenStorage() {
+    try {
+      final BonsaiWorldStateLayerStorage worldStateLayerStorage =
+          (BonsaiWorldStateLayerStorage) worldStateStorage;
+      if (!isPersisted(worldStateLayerStorage.getParentWorldStateStorage())) {
+        worldStateLayerStorage.getParentWorldStateStorage().close();
       }
     } catch (Exception e) {
       // no op

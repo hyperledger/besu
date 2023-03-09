@@ -96,9 +96,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
             blockHeader.getHash(),
             new CachedBonsaiWorldView(
                 blockHeader,
-                ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage())
-                    .clone()
-                    .freeze()));
+                ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage()).clone()));
       }
     }
     scrubCachedLayers(blockHeader.getNumber());

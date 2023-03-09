@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.LayeredKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 
 public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyValueStorage
     implements BonsaiStorageSubscriber {
@@ -52,13 +52,5 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         ((LayeredKeyValueStorage) trieBranchStorage).clone(),
         trieLogStorage,
         parentWorldStateStorage);
-  }
-
-  public BonsaiWorldStateLayerStorage freeze() {
-    ((LayeredKeyValueStorage) accountStorage).freeze();
-    ((LayeredKeyValueStorage) codeStorage).freeze();
-    ((LayeredKeyValueStorage) storageStorage).freeze();
-    ((LayeredKeyValueStorage) trieBranchStorage).freeze();
-    return this;
   }
 }

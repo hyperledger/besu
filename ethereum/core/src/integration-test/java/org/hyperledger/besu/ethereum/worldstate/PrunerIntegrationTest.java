@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.Pruner.PruningPhase;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.InMemoryKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.MockExecutorService;
 
 import java.util.ArrayList;
@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ public class PrunerIntegrationTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final Map<Bytes, byte[]> hashValueStore = new HashMap<>();
+  private final Map<Bytes, Optional<byte[]>> hashValueStore = new HashMap<>();
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
   private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
@@ -164,7 +165,7 @@ public class PrunerIntegrationTest {
 
       // Check that storage contains only the values we expect
       assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
-      assertThat(hashValueStore.values())
+      assertThat(hashValueStore.values().stream().map(Optional::get))
           .containsExactlyInAnyOrderElementsOf(
               expectedNodes.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toSet()));
     }
@@ -252,7 +253,7 @@ public class PrunerIntegrationTest {
   // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
-    public TestInMemoryStorage(final Map<Bytes, byte[]> hashValueStore) {
+    public TestInMemoryStorage(final Map<Bytes, Optional<byte[]>> hashValueStore) {
       super(hashValueStore);
     }
   }

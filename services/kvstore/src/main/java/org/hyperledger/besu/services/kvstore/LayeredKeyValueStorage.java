@@ -13,9 +13,12 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.plugin.services.storage;
+package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.Map;
 import java.util.Optional;
@@ -34,8 +37,6 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   private final KeyValueStorage parent;
 
-  private boolean isFrozen;
-
   /**
    * Instantiates a new Layered key value storage.
    *
@@ -51,10 +52,10 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
    * @param map the backing map
    * @param parent the parent key value storage for this layered storage.
    */
-  public LayeredKeyValueStorage(final Map<Bytes, byte[]> map, final KeyValueStorage parent) {
+  public LayeredKeyValueStorage(
+      final Map<Bytes, Optional<byte[]>> map, final KeyValueStorage parent) {
     super(map);
     this.parent = parent;
-    this.isFrozen = false;
   }
 
   @Override
@@ -64,32 +65,18 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
-    Bytes wrapKey = Bytes.wrap(key);
-    return Optional.of(wrapKey)
-        .flatMap(
-            keyWrapped ->
-                Optional.ofNullable(hashValueStore.get(keyWrapped))
-                    .or(
-                        () ->
-                            parent
-                                .get(key)
-                                .map(
-                                    value -> {
-                                      cacheFromParent(wrapKey, value);
-                                      return value;
-                                    })))
-        .filter(bytes -> bytes.length > 0);
-  }
-
-  private void cacheFromParent(final Bytes key, final byte[] value) {
-    if (!isFrozen) {
-      if (parent instanceof LayeredKeyValueStorage) {
-        if (((LayeredKeyValueStorage) parent).isFrozen) {
-          hashValueStore.put(key, value);
-        }
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      Bytes wrapKey = Bytes.wrap(key);
+      final Optional<byte[]> foundKey = hashValueStore.get(wrapKey);
+      if (foundKey == null) {
+        return parent.get(key);
       } else {
-        hashValueStore.put(key, value);
+        return foundKey;
       }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -99,13 +86,14 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     lock.lock();
     try {
       // immutable copy of our in memory store to use for streaming and filtering:
-      Map<Bytes, byte[]> ourLayerState = ImmutableMap.copyOf(hashValueStore);
+      Map<Bytes, Optional<byte[]>> ourLayerState = ImmutableMap.copyOf(hashValueStore);
 
       return Streams.concat(
           ourLayerState.entrySet().stream()
-              .filter(entry -> entry.getValue().length > 0)
+              .filter(entry -> entry.getValue().isPresent())
               .map(
-                  bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()))
+                  bytesEntry ->
+                      Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()))
           // since we are layered, concat a parent stream filtered by our map entries:
           ,
           parent.stream().filter(e -> !ourLayerState.containsKey(Bytes.of(e.getLeft()))));
@@ -120,11 +108,11 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     lock.lock();
     try {
       // immutable copy of our in memory store to use for streaming and filtering:
-      Map<Bytes, byte[]> ourLayerState = ImmutableMap.copyOf(hashValueStore);
+      Map<Bytes, Optional<byte[]>> ourLayerState = ImmutableMap.copyOf(hashValueStore);
 
       return Streams.concat(
           ourLayerState.entrySet().stream()
-              .filter(entry -> entry.getValue().length > 0)
+              .filter(entry -> entry.getValue().isPresent())
               .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe())
           // since we are layered, concat a parent stream filtered by our map entries:
           ,
@@ -137,16 +125,12 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public boolean tryDelete(final byte[] key) {
-    // TODO: can we rely on zero byte array to indicate deletion?
-    hashValueStore.put(Bytes.wrap(key), new byte[0]);
+    hashValueStore.put(Bytes.wrap(key), Optional.empty());
     return true;
   }
 
   @Override
   public KeyValueStorageTransaction startTransaction() {
-    if (isFrozen) {
-      throw new UnsupportedOperationException("cannot start a transaction in a frozen storage");
-    }
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
         new InMemoryTransaction() {
           @Override
@@ -156,7 +140,7 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
             lock.lock();
             try {
               hashValueStore.putAll(updatedValues);
-              removedKeys.forEach(key -> hashValueStore.put(key, new byte[] {}));
+              removedKeys.forEach(key -> hashValueStore.put(key, Optional.empty()));
               // put empty and not removed to not ask parent in case of deletion
               updatedValues = null;
               removedKeys = null;
@@ -170,15 +154,5 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   @Override
   public SnappedKeyValueStorage clone() {
     return new LayeredKeyValueStorage(hashValueStore, parent);
-  }
-
-  /**
-   * The call to this method freeze the storage and prevent any future modification
-   *
-   * @return current SnappedKeyValueStorage
-   */
-  public SnappedKeyValueStorage freeze() {
-    isFrozen = true;
-    return this;
   }
 }

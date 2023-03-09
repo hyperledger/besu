@@ -252,4 +252,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       isClosed.set(true);
     }
   }
+
+  public BonsaiWorldStateKeyValueStorage getParentWorldStateStorage() {
+    return parentWorldStateStorage;
+  }
 }

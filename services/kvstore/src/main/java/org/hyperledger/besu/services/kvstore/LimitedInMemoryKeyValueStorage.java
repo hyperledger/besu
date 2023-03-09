@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransactionTransitionValidatorDecorator;
 
 import java.util.HashMap;
 import java.util.HashSet;
