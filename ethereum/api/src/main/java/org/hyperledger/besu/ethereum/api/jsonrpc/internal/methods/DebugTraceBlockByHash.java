@@ -36,7 +36,9 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final Supplier<BlockchainQueries> blockchainQueries;
 
-  public DebugTraceBlockByHash(final Supplier<BlockTracer> blockTracerSupplier, final Supplier<BlockchainQueries> blockchainQueriesSupplier) {
+  public DebugTraceBlockByHash(
+      final Supplier<BlockTracer> blockTracerSupplier,
+      final Supplier<BlockchainQueries> blockchainQueriesSupplier) {
     this.blockTracerSupplier = blockTracerSupplier;
     this.blockchainQueries = blockchainQueriesSupplier;
   }

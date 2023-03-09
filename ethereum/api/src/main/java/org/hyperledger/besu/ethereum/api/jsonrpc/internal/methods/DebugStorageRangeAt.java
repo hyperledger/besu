@@ -68,11 +68,11 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final BlockParameterOrBlockHash blockParameterOrBlockHash =
-            requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+        requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
     final int transactionIndex = requestContext.getRequiredParameter(1, Integer.class);
     final Address accountAddress = requestContext.getRequiredParameter(2, Address.class);
     final Hash startKey =
-            Hash.fromHexStringLenient(requestContext.getRequiredParameter(3, String.class));
+        Hash.fromHexStringLenient(requestContext.getRequiredParameter(3, String.class));
     final int limit = requestContext.getRequiredParameter(4, Integer.class);
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
@@ -81,13 +81,13 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
     }
     final Hash blockHash = blockHashOptional.get();
     final Optional<BlockHeader> blockHeaderOptional =
-            blockchainQueries.get().blockByHash(blockHash).map(BlockWithMetadata::getHeader);
+        blockchainQueries.get().blockByHash(blockHash).map(BlockWithMetadata::getHeader);
     if (blockHeaderOptional.isEmpty()) {
       return emptyResponse(requestContext);
     }
 
     final Optional<TransactionWithMetadata> maybeTransactionIndex =
-            blockchainQueries.get().transactionByBlockHashAndIndex(blockHash, transactionIndex);
+        blockchainQueries.get().transactionByBlockHashAndIndex(blockHash, transactionIndex);
 
     return Tracer.processTracing(
             blockchainQueries.get(),
@@ -105,14 +105,19 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
                         blockHash,
                         maybeTransactionIndex.get().getTransaction().getHash(),
                         (transaction,
-                         blockHeader,
-                         blockchain,
-                         transactionProcessor,
-                         protocolSpec) ->
-                                extractStorageAt(
-                                        requestContext, accountAddress, startKey, limit, mutableWorldState));
-      }
-    }).orElse(emptyResponse(requestContext));
+                            blockHeader,
+                            blockchain,
+                            transactionProcessor,
+                            protocolSpec) ->
+                            extractStorageAt(
+                                requestContext,
+                                accountAddress,
+                                startKey,
+                                limit,
+                                mutableWorldState));
+              }
+            })
+        .orElse(emptyResponse(requestContext));
   }
 
   private Optional<Hash> hashFromParameter(final BlockParameterOrBlockHash blockParameter) {

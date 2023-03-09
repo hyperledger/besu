@@ -169,7 +169,6 @@ public class DebugStorageRangeAtTest {
     //noinspection rawtypes
     return Optional.of(
         ((BlockReplay.TransactionAction) invocation.getArgument(2))
-            .performAction(
-                transaction, blockHeader, blockchain, transactionProcessor, Wei.ZERO));
+            .performAction(transaction, blockHeader, blockchain, transactionProcessor, Wei.ZERO));
   }
 }

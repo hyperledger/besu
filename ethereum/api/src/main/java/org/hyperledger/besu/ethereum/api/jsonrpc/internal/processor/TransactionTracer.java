@@ -89,7 +89,7 @@ public class TransactionTracer {
   }
 
   public List<String> traceTransactionToFile(
-          final MutableWorldState mutableWorldState,
+      final MutableWorldState mutableWorldState,
       final Hash blockHash,
       final Optional<TransactionTraceParams> transactionTraceParams,
       final Path traceDir) {

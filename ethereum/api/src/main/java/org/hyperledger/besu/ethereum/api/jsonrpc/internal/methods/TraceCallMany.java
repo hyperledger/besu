@@ -130,18 +130,18 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
                         });
               } catch (final TransactionInvalidException e) {
                 LOG.error("Invalid transaction simulator result");
-                return Optional.of(new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR));
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               } catch (final EmptySimulatorResultException e) {
                 LOG.error(
                     "Empty simulator result, call params: {}, blockHeader: {} ",
                     JsonCallParameterUtil.validateAndGetCallParams(requestContext),
                     blockHeader);
-                return Optional.of(new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR));
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               } catch (final Exception e) {
-                return Optional.of(new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR)) ;
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               }
               return Optional.of(traceCallResults);
             });

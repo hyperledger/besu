@@ -100,8 +100,7 @@ public class TransactionTracerTest {
 
   @Before
   public void setUp() throws Exception {
-    transactionTracer =
-        new TransactionTracer(new BlockReplay(protocolSchedule, blockchain));
+    transactionTracer = new TransactionTracer(new BlockReplay(protocolSchedule, blockchain));
     when(transaction.getHash()).thenReturn(transactionHash);
     when(otherTransaction.getHash()).thenReturn(otherTransactionHash);
     when(blockHeader.getNumber()).thenReturn(12L);

@@ -303,7 +303,8 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final Hash blockHash) {
-    return getAndMapWorldState(blockHash, worldState -> Optional.ofNullable(worldState.get(address)))
+    return getAndMapWorldState(
+            blockHash, worldState -> Optional.ofNullable(worldState.get(address)))
         .map(Account::getNonce)
         .orElse(0L);
   }
@@ -862,18 +863,21 @@ public class BlockchainQueries {
       final Hash blockHash, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
 
     return blockchain
-            .getBlockHeader(blockHash)
-            .flatMap(
-                    blockHeader -> {
-                      try (var ws = worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getBlockHash(), false).orElse(null)) {
-                        if (ws != null) {
-                          return mapper.apply(ws);
-                        }
-                      } catch (Exception ex) {
-                        LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
-                      }
-                      return Optional.empty();
-                    });
+        .getBlockHeader(blockHash)
+        .flatMap(
+            blockHeader -> {
+              try (var ws =
+                  worldStateArchive
+                      .getMutable(blockHeader.getStateRoot(), blockHeader.getBlockHash(), false)
+                      .orElse(null)) {
+                if (ws != null) {
+                  return mapper.apply(ws);
+                }
+              } catch (Exception ex) {
+                LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
+              }
+              return Optional.empty();
+            });
   }
 
   /**
@@ -956,7 +960,9 @@ public class BlockchainQueries {
     return getAndMapWorldState(
         blockHash,
         worldState ->
-            Optional.ofNullable(worldState.get(address)).map(getter).or(()->Optional.ofNullable(noAccountValue)));
+            Optional.ofNullable(worldState.get(address))
+                .map(getter)
+                .or(() -> Optional.ofNullable(noAccountValue)));
   }
 
   private List<TransactionWithMetadata> formatTransactions(

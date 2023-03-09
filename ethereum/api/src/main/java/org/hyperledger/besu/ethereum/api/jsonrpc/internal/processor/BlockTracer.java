@@ -52,12 +52,9 @@ public class BlockTracer {
     return blockReplay.block(block, prepareReplayAction(mutableWorldState, tracer));
   }
 
-  private BlockReplay.TransactionAction<TransactionTrace> prepareReplayAction(final MutableWorldState mutableWorldState, final DebugOperationTracer tracer) {
-    return (transaction,
-        header,
-        blockchain,
-            transactionProcessor,
-        dataGasPrice) -> {
+  private BlockReplay.TransactionAction<TransactionTrace> prepareReplayAction(
+      final MutableWorldState mutableWorldState, final DebugOperationTracer tracer) {
+    return (transaction, header, blockchain, transactionProcessor, dataGasPrice) -> {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (chainedUpdater == null) {
         chainedUpdater = mutableWorldState.updater();

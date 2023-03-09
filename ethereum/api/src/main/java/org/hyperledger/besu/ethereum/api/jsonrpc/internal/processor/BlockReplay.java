@@ -38,9 +38,7 @@ public class BlockReplay {
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
 
-  public BlockReplay(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain) {
+  public BlockReplay(final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
     this.protocolSchedule = protocolSchedule;
     this.blockchain = blockchain;
   }
@@ -48,7 +46,7 @@ public class BlockReplay {
   public Optional<BlockTrace> block(
       final Block block, final TransactionAction<TransactionTrace> action) {
     return performActionWithBlock(
-            block.getHeader(),
+        block.getHeader(),
         block.getBody(),
         (body, header, blockchain, transactionProcessor, protocolSpec) -> {
           final Wei dataGasPrice =
@@ -65,11 +63,7 @@ public class BlockReplay {
                   .map(
                       transaction ->
                           action.performAction(
-                              transaction,
-                              header,
-                              blockchain,
-                                  transactionProcessor,
-                              dataGasPrice))
+                              transaction, header, blockchain, transactionProcessor, dataGasPrice))
                   .toList();
           return Optional.of(new BlockTrace(transactionTraces));
         });
@@ -102,11 +96,7 @@ public class BlockReplay {
             if (transaction.getHash().equals(transactionHash)) {
               return Optional.of(
                   action.performAction(
-                      transaction,
-                      header,
-                      blockchain,
-                          transactionProcessor,
-                      dataGasPrice));
+                      transaction, header, blockchain, transactionProcessor, dataGasPrice));
             } else {
               transactionProcessor.processTransaction(
                   blockchain,
@@ -130,7 +120,7 @@ public class BlockReplay {
       final Hash transactionHash,
       final TransactionAction<T> action) {
     return beforeTransactionInBlock(
-            mutableWorldState,
+        mutableWorldState,
         blockHash,
         transactionHash,
         (transaction, blockHeader, blockchain, transactionProcessor, dataGasPrice) -> {
