@@ -43,7 +43,7 @@ public class InMemoryKeyValueStorage
     implements SnappedKeyValueStorage, SnappableKeyValueStorage, KeyValueStorage {
 
   /** protected access for the backing hash map. */
-  protected final Map<Bytes, byte[]> hashValueStore;
+  protected final Map<Bytes, Optional<byte[]>> hashValueStore;
 
   /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
@@ -58,7 +58,7 @@ public class InMemoryKeyValueStorage
    *
    * @param hashValueStore the hash value store
    */
-  protected InMemoryKeyValueStorage(final Map<Bytes, byte[]> hashValueStore) {
+  protected InMemoryKeyValueStorage(final Map<Bytes, Optional<byte[]>> hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
 
@@ -83,7 +83,7 @@ public class InMemoryKeyValueStorage
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return Optional.ofNullable(hashValueStore.get(Bytes.wrap(key)));
+      return hashValueStore.getOrDefault(Bytes.wrap(key), Optional.empty());
     } finally {
       lock.unlock();
     }
@@ -111,7 +111,10 @@ public class InMemoryKeyValueStorage
     lock.lock();
     try {
       return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
-          .map(bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()));
+          .filter(bytesEntry -> bytesEntry.getValue().isPresent())
+          .map(
+              bytesEntry ->
+                  Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()));
     } finally {
       lock.unlock();
     }
@@ -174,13 +177,13 @@ public class InMemoryKeyValueStorage
   public class InMemoryTransaction implements KeyValueStorageTransaction {
 
     /** protected access to updatedValues map for the transaction. */
-    protected Map<Bytes, byte[]> updatedValues = new HashMap<>();
+    protected Map<Bytes, Optional<byte[]>> updatedValues = new HashMap<>();
     /** protected access to deletedValues set for the transaction. */
     protected Set<Bytes> removedKeys = new HashSet<>();
 
     @Override
     public void put(final byte[] key, final byte[] value) {
-      updatedValues.put(Bytes.wrap(key), value);
+      updatedValues.put(Bytes.wrap(key), Optional.of(value));
       removedKeys.remove(Bytes.wrap(key));
     }
 
@@ -220,19 +223,16 @@ public class InMemoryKeyValueStorage
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      hashValueStore.forEach(
-          (k, v) -> ps.printf("  %s : %s%n", k.toHexString(), Bytes.wrap(v).toHexString()));
+      ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+          .filter(bytesEntry -> bytesEntry.getValue().isPresent())
+          .forEach(
+              entry ->
+                  ps.printf(
+                      "  %s : %s%n",
+                      entry.getKey().toHexString(),
+                      Bytes.wrap(entry.getValue().get()).toHexString()));
     } finally {
       lock.unlock();
     }
-  }
-
-  /**
-   * Accessor for the backing hash map.
-   *
-   * @return the backing hash map
-   */
-  public Map<Bytes, byte[]> getHashValueStore() {
-    return hashValueStore;
   }
 }

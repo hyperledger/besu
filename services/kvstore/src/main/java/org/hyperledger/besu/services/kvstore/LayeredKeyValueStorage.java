@@ -52,7 +52,8 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
    * @param map the backing map
    * @param parent the parent key value storage for this layered storage.
    */
-  public LayeredKeyValueStorage(final Map<Bytes, byte[]> map, final KeyValueStorage parent) {
+  public LayeredKeyValueStorage(
+      final Map<Bytes, Optional<byte[]>> map, final KeyValueStorage parent) {
     super(map);
     this.parent = parent;
   }
@@ -64,26 +65,18 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
-    Bytes wrapKey = Bytes.wrap(key);
-    return Optional.of(wrapKey)
-        .flatMap(
-            keyWrapped ->
-                Optional.ofNullable(hashValueStore.get(keyWrapped))
-                    .or(
-                        () ->
-                            parent
-                                .get(key)
-                                .map(
-                                    value -> {
-                                      cacheFromParent(wrapKey, value);
-                                      return value;
-                                    })))
-        .filter(bytes -> bytes.length > 0);
-  }
-
-  private void cacheFromParent(final Bytes key, final byte[] value) {
-    if (!(parent instanceof LayeredKeyValueStorage)) {
-      hashValueStore.put(key, value);
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      Bytes wrapKey = Bytes.wrap(key);
+      final Optional<byte[]> foundKey = hashValueStore.get(wrapKey);
+      if (foundKey == null) {
+        return parent.get(key);
+      } else {
+        return foundKey;
+      }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -93,13 +86,14 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     lock.lock();
     try {
       // immutable copy of our in memory store to use for streaming and filtering:
-      Map<Bytes, byte[]> ourLayerState = ImmutableMap.copyOf(hashValueStore);
+      Map<Bytes, Optional<byte[]>> ourLayerState = ImmutableMap.copyOf(hashValueStore);
 
       return Streams.concat(
           ourLayerState.entrySet().stream()
-              .filter(entry -> entry.getValue().length > 0)
+              .filter(entry -> entry.getValue().isPresent())
               .map(
-                  bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()))
+                  bytesEntry ->
+                      Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()))
           // since we are layered, concat a parent stream filtered by our map entries:
           ,
           parent.stream().filter(e -> !ourLayerState.containsKey(Bytes.of(e.getLeft()))));
@@ -114,11 +108,11 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     lock.lock();
     try {
       // immutable copy of our in memory store to use for streaming and filtering:
-      Map<Bytes, byte[]> ourLayerState = ImmutableMap.copyOf(hashValueStore);
+      Map<Bytes, Optional<byte[]>> ourLayerState = ImmutableMap.copyOf(hashValueStore);
 
       return Streams.concat(
           ourLayerState.entrySet().stream()
-              .filter(entry -> entry.getValue().length > 0)
+              .filter(entry -> entry.getValue().isPresent())
               .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe())
           // since we are layered, concat a parent stream filtered by our map entries:
           ,
@@ -131,8 +125,7 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public boolean tryDelete(final byte[] key) {
-    // TODO: can we rely on zero byte array to indicate deletion?
-    hashValueStore.put(Bytes.wrap(key), new byte[0]);
+    hashValueStore.put(Bytes.wrap(key), Optional.empty());
     return true;
   }
 
@@ -147,7 +140,7 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
             lock.lock();
             try {
               hashValueStore.putAll(updatedValues);
-              removedKeys.forEach(key -> hashValueStore.put(key, new byte[] {}));
+              removedKeys.forEach(key -> hashValueStore.put(key, Optional.empty()));
               // put empty and not removed to not ask parent in case of deletion
               updatedValues = null;
               removedKeys = null;

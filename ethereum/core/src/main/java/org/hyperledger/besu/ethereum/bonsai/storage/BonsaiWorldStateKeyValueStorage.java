@@ -48,6 +48,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final KeyValueStorage storageStorage;
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
+
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
