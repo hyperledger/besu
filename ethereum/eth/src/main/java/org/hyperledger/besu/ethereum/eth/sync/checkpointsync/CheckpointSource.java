@@ -33,10 +33,10 @@ public class CheckpointSource implements Iterator<Hash> {
   private final AtomicBoolean isDownloading = new AtomicBoolean(false);
 
   public CheckpointSource(
-      final SyncState syncState, final BlockHeader blockHeader, final int checkpointWindowSize) {
+      final SyncState syncState, final BlockHeader blockHeader, final int nbBlocks) {
     this.syncState = syncState;
     this.checkpoint = blockHeader;
-    this.nbBlocks = checkpointWindowSize;
+    this.nbBlocks = nbBlocks;
     this.lastHeaderDownloaded = Optional.empty();
   }
 
