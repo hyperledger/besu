@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineG
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV6110;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
@@ -83,6 +84,12 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               blockResultFactory,
               engineQosTimer),
           new EngineGetPayloadV2(
+              consensusEngineServer,
+              protocolContext,
+              mergeCoordinator.get(),
+              blockResultFactory,
+              engineQosTimer),
+          new EngineGetPayloadV6110(
               consensusEngineServer,
               protocolContext,
               mergeCoordinator.get(),
