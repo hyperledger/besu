@@ -15,7 +15,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
@@ -31,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -40,37 +38,35 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class LayersTest extends BaseTransactionPoolTest {
-  protected static final int MAX_PRIO_TRANSACTIONS = 3;
-  protected static final int MAX_FUTURE_FOR_SENDER = 9;
+  private static final int MAX_PRIO_TRANSACTIONS = 3;
+  private static final int MAX_FUTURE_FOR_SENDER = 9;
 
-  final TransactionPoolConfiguration poolConfig =
+  private final TransactionPoolConfiguration poolConfig =
       ImmutableTransactionPoolConfiguration.builder()
           .maxPrioritizedTransactions(MAX_PRIO_TRANSACTIONS)
           .maxFutureBySender(MAX_FUTURE_FOR_SENDER)
           .pendingTransactionsMaxCapacityBytes(createEIP1559Transaction(0, KEYS1, 1).getSize() * 3)
           .build();
 
-  protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
-  final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
+  private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
+  private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
-  final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
-      (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2);
-  final EvictCollector evictCollector = new EvictCollector(txPoolMetrics);
-  final SparseTransactions sparseTransactions =
+  private final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
+  private final SparseTransactions sparseTransactions =
       new SparseTransactions(
-          poolConfig, evictCollector, txPoolMetrics, transactionReplacementTester);
+          poolConfig, evictCollector, txPoolMetrics, this::transactionReplacementTester);
 
-  final ReadyTransactions readyTransactions =
+  private final ReadyTransactions readyTransactions =
       new ReadyTransactions(
-          poolConfig, sparseTransactions, txPoolMetrics, transactionReplacementTester);
+          poolConfig, sparseTransactions, txPoolMetrics, this::transactionReplacementTester);
 
-  final BaseFeePrioritizedTransactions prioritizedTransactions =
+  private final BaseFeePrioritizedTransactions prioritizedTransactions =
       new BaseFeePrioritizedTransactions(
           poolConfig,
           LayersTest::mockBlockHeader,
           readyTransactions,
           txPoolMetrics,
-          transactionReplacementTester,
+          this::transactionReplacementTester,
           FeeMarket.london(0L));
 
   @AfterEach
@@ -938,6 +934,11 @@ public class LayersTest extends BaseTransactionPoolTest {
     return blockHeader;
   }
 
+  private boolean transactionReplacementTester(
+      final PendingTransaction pt1, final PendingTransaction pt2) {
+    return transactionReplacementTester(poolConfig, pt1, pt2);
+  }
+
   private static boolean transactionReplacementTester(
       final TransactionPoolConfiguration poolConfig,
       final PendingTransaction pt1,
@@ -953,7 +954,7 @@ public class LayersTest extends BaseTransactionPoolTest {
           AbstractPrioritizedTransactions prioritized,
           ReadyTransactions ready,
           SparseTransactions sparse,
-          EvictCollector dropped);
+          EvictCollectorLayer dropped);
     }
 
     final String description;
@@ -1022,7 +1023,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         final AbstractPrioritizedTransactions prioritized,
         final ReadyTransactions ready,
         final SparseTransactions sparse,
-        final EvictCollector dropped) {
+        final EvictCollectorLayer dropped) {
       actions.forEach(action -> action.accept(prioritized, ready, sparse, dropped));
       assertExpectedPrioritized(prioritized, lastExpectedPrioritized);
       assertExpectedReady(ready, lastExpectedReady);
@@ -1156,8 +1157,8 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     private void assertExpectedDropped(
-        final EvictCollector evictCollector, final List<PendingTransaction> expected) {
-      assertThat(evictCollector.evictedTxs)
+        final EvictCollectorLayer evictCollector, final List<PendingTransaction> expected) {
+      assertThat(evictCollector.getEvictedTrancations())
           .describedAs("Dropped")
           .containsExactlyInAnyOrderElementsOf(expected);
     }
@@ -1236,21 +1237,6 @@ public class LayersTest extends BaseTransactionPoolTest {
       this.key = SIGNATURE_ALGORITHM.get().generateKeyPair();
       this.address = Util.publicKeyToAddress(key.getPublicKey());
       this.gasFeeMultiplier = gasFeeMultiplier;
-    }
-  }
-
-  static class EvictCollector extends EndLayer {
-    final List<PendingTransaction> evictedTxs = new ArrayList<>();
-
-    public EvictCollector(final TransactionPoolMetrics metrics) {
-      super(metrics);
-    }
-
-    @Override
-    public TransactionAddedResult add(final PendingTransaction pendingTransaction, final int gap) {
-      final var res = super.add(pendingTransaction, gap);
-      evictedTxs.add(pendingTransaction);
-      return res;
     }
   }
 }

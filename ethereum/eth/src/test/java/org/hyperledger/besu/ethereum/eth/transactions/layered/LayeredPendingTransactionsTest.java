@@ -108,7 +108,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             new TransactionPoolReplacementHandler(poolConf.getPriceBump())
                 .shouldReplace(t1, t2, mockBlockHeader());
 
-    final LayersTest.EvictCollector evictCollector = new LayersTest.EvictCollector(txPoolMetrics);
+    final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
             poolConfig, evictCollector, txPoolMetrics, transactionReplacementTester);
