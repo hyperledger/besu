@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +28,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStorageRangeAtResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
@@ -48,6 +51,7 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -64,7 +68,7 @@ public class DebugStorageRangeAtTest {
   private final BlockReplay blockReplay = mock(BlockReplay.class);
   private final DebugStorageRangeAt debugStorageRangeAt =
       new DebugStorageRangeAt(blockchainQueries, blockReplay);
-  private final MutableWorldState worldState = mock(MutableWorldState.class);
+  private final Tracer.TraceableState worldState = mock(Tracer.TraceableState.class);
   private final Account account = mock(Account.class);
   private final MainnetTransactionProcessor transactionProcessor =
       mock(MainnetTransactionProcessor.class);
@@ -113,10 +117,19 @@ public class DebugStorageRangeAtTest {
                 }));
 
     when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(blockWithMetadata));
+    doAnswer(
+            invocation ->
+                Optional.of(
+                    invocation
+                        .<Function<MutableWorldState, ? extends JsonRpcResponse>>getArgument(1)
+                        .apply(worldState)))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
     when(blockchainQueries.transactionByBlockHashAndIndex(blockHash, TRANSACTION_INDEX))
         .thenReturn(Optional.of(transactionWithMetadata));
     when(worldState.get(accountAddress)).thenReturn(account);
-    when(blockReplay.afterTransactionInBlock(eq(blockHash), eq(transactionHash), any()))
+    when(blockReplay.afterTransactionInBlock(
+            eq(worldState), eq(blockHash), eq(transactionHash), any()))
         .thenAnswer(this::callAction);
 
     final List<AccountStorageEntry> entries = new ArrayList<>();

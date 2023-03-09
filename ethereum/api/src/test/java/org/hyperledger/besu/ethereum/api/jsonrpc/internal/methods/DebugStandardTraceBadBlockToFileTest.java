@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -49,6 +50,7 @@ public class DebugStandardTraceBadBlockToFileTest {
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final Blockchain blockchain = mock(Blockchain.class);
+
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -89,7 +91,8 @@ public class DebugStandardTraceBadBlockToFileTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getChainHeadHeader()).thenReturn(new BlockHeaderTestFixture().buildHeader());
     when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(protocolSpec);
-    when(transactionTracer.traceTransactionToFile(eq(block.getHash()), any(), any()))
+    when(transactionTracer.traceTransactionToFile(
+            any(MutableWorldState.class), eq(block.getHash()), any(), any()))
         .thenReturn(paths);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugStandardTraceBadBlockToFile.response(request);

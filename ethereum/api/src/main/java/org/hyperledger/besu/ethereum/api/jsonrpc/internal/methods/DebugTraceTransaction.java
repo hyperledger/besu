@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -74,8 +75,13 @@ public class DebugTraceTransaction implements JsonRpcMethod {
 
     final DebugOperationTracer execTracer = new DebugOperationTracer(traceOptions);
 
-    return blockchain.getAndMapWorldState(blockHash, mutableWorldState -> transactionTracer
-            .traceTransaction(mutableWorldState,blockHash, hash, execTracer)
-            .map(DebugTraceTransactionResult::new)) .orElse(null);
+    return Tracer.processTracing(
+            blockchain,
+            blockHash,
+            mutableWorldState ->
+                transactionTracer
+                    .traceTransaction(mutableWorldState, blockHash, hash, execTracer)
+                    .map(DebugTraceTransactionResult::new))
+        .orElse(null);
   }
 }

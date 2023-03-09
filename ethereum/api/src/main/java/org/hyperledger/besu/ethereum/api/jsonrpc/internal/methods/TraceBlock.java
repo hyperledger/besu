@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
@@ -89,19 +90,27 @@ public class TraceBlock extends AbstractBlockParameterMethod {
     }
     final ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
 
-    blockchainQueriesSupplier.get().getAndMapWorldState(block.getHash(), mutableWorldState -> {
-      blockTracerSupplier
+    Tracer.processTracing(
+        blockchainQueriesSupplier.get(),
+        Optional.of(block.getHeader()),
+        mutableWorldState -> {
+          blockTracerSupplier
               .get()
-              .trace(mutableWorldState, block, new DebugOperationTracer(new TraceOptions(false, false, true)))
+              .trace(
+                  mutableWorldState,
+                  block,
+                  new DebugOperationTracer(new TraceOptions(false, false, true)))
               .ifPresent(
-                      blockTrace ->
-                              generateTracesFromTransactionTraceAndBlock(
-                                      filterParameter, blockTrace.getTransactionTraces(), block, resultArrayNode));
-      return Optional.empty(); // return is useless
-    });
+                  blockTrace ->
+                      generateTracesFromTransactionTraceAndBlock(
+                          filterParameter,
+                          blockTrace.getTransactionTraces(),
+                          block,
+                          resultArrayNode));
 
-
-    generateRewardsFromBlock(filterParameter, block, resultArrayNode);
+          generateRewardsFromBlock(filterParameter, block, resultArrayNode);
+          return Optional.empty();
+        });
 
     return resultArrayNode;
   }

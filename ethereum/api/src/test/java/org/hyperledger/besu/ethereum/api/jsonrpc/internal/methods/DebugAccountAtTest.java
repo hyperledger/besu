@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -63,6 +64,7 @@ class DebugAccountAtTest {
   @Mock private TraceFrame traceFrame;
   @Mock private Transaction transaction;
   @Mock private WorldUpdater worldUpdater;
+
   @Mock private Account account;
 
   private static DebugAccountAt debugAccountAt;
@@ -214,7 +216,8 @@ class DebugAccountAtTest {
     Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
-    Mockito.when(blockTracer.trace(any(Hash.class), any())).thenReturn(Optional.of(blockTrace));
+    Mockito.when(blockTracer.trace(any(Tracer.TraceableState.class), any(Hash.class), any()))
+        .thenReturn(Optional.of(blockTrace));
     Mockito.when(blockTrace.getTransactionTraces())
         .thenReturn(Collections.singletonList(transactionTrace));
     Mockito.when(transactionTrace.getTransaction()).thenReturn(transaction);

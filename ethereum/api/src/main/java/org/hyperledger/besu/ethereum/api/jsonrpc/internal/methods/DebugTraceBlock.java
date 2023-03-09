@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -78,12 +80,18 @@ public class DebugTraceBlock implements JsonRpcMethod {
             .orElse(TraceOptions.DEFAULT);
 
     if (this.blockchain.blockByHash(block.getHeader().getParentHash()).isPresent()) {
-      final Collection<DebugTraceTransactionResult> results = blockchain
-              .getAndMapWorldState(block.getHash(), mutableWorldState -> blockTracerSupplier
-              .get()
-              .trace(mutableWorldState, block, new DebugOperationTracer(traceOptions))
-              .map(BlockTrace::getTransactionTraces)
-              .map(DebugTraceTransactionResult::of)).orElse(null);
+      final Collection<DebugTraceTransactionResult> results =
+          Tracer.processTracing(
+                  blockchain,
+                  Optional.of(block.getHeader()),
+                  mutableWorldState -> {
+                    return blockTracerSupplier
+                        .get()
+                        .trace(mutableWorldState, block, new DebugOperationTracer(traceOptions))
+                        .map(BlockTrace::getTransactionTraces)
+                        .map(DebugTraceTransactionResult::of);
+                  })
+              .orElse(null);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
     } else {
       return new JsonRpcErrorResponse(

@@ -859,12 +859,13 @@ public class BlockchainQueries {
    * @return the world state at the block number
    */
   public <U> Optional<U> getAndMapWorldState(
-          final Hash blockHash, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
+      final Hash blockHash, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
+
     return blockchain
             .getBlockHeader(blockHash)
             .flatMap(
                     blockHeader -> {
-                      try (var ws = worldStateArchive.getMutable(blockHeader, false).orElse(null)) {
+                      try (var ws = worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getBlockHash(), false).orElse(null)) {
                         if (ws != null) {
                           return mapper.apply(ws);
                         }

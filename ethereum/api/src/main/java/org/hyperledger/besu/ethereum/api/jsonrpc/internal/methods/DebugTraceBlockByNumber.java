@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -60,11 +61,18 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
             .orElse(TraceOptions.DEFAULT);
 
     return blockHash
-            .flatMap(hash -> blockchainQueriesSupplier.get()
-                    .getAndMapWorldState(hash, mutableWorldState -> blockTracerSupplier
-            .get()
-            .trace(mutableWorldState, hash, new DebugOperationTracer(traceOptions))
-            .map(BlockTrace::getTransactionTraces)
-            .map(DebugTraceTransactionResult::of))) .orElse(null);
+        .flatMap(
+            hash ->
+                Tracer.processTracing(
+                    blockchainQueriesSupplier.get(),
+                    hash,
+                    mutableWorldState -> {
+                      return blockTracerSupplier
+                          .get()
+                          .trace(mutableWorldState, hash, new DebugOperationTracer(traceOptions))
+                          .map(BlockTrace::getTransactionTraces)
+                          .map(DebugTraceTransactionResult::of);
+                    }))
+        .orElse(null);
   }
 }

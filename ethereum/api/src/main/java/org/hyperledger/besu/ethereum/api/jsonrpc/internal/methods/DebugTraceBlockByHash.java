@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
@@ -33,11 +34,11 @@ import java.util.function.Supplier;
 public class DebugTraceBlockByHash implements JsonRpcMethod {
 
   private final Supplier<BlockTracer> blockTracerSupplier;
-  private final Supplier<BlockchainQueries> blockchainQueriesSupplier;
+  private final Supplier<BlockchainQueries> blockchainQueries;
 
   public DebugTraceBlockByHash(final Supplier<BlockTracer> blockTracerSupplier, final Supplier<BlockchainQueries> blockchainQueriesSupplier) {
     this.blockTracerSupplier = blockTracerSupplier;
-    this.blockchainQueriesSupplier = blockchainQueriesSupplier;
+    this.blockchainQueries = blockchainQueriesSupplier;
   }
 
   @Override
@@ -54,13 +55,17 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
             .map(TransactionTraceParams::traceOptions)
             .orElse(TraceOptions.DEFAULT);
 
-    final Collection<DebugTraceTransactionResult> results = blockchainQueriesSupplier.get()
-            .getAndMapWorldState(blockHash, mutableWorldState -> blockTracerSupplier
-                    .get()
-                    .trace(mutableWorldState, blockHash, new DebugOperationTracer(traceOptions))
-                    .map(BlockTrace::getTransactionTraces)
-                    .map(DebugTraceTransactionResult::of)).orElse(null);
-
+    final Collection<DebugTraceTransactionResult> results =
+        Tracer.processTracing(
+                blockchainQueries.get(),
+                blockHash,
+                mutableWorldState ->
+                    blockTracerSupplier
+                        .get()
+                        .trace(mutableWorldState, blockHash, new DebugOperationTracer(traceOptions))
+                        .map(BlockTrace::getTransactionTraces)
+                        .map(DebugTraceTransactionResult::of))
+            .orElse(null);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }
 }

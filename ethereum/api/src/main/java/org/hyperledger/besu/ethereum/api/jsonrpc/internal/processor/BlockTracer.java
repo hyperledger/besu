@@ -38,11 +38,17 @@ public class BlockTracer {
     this.blockReplay = blockReplay;
   }
 
-  public Optional<BlockTrace> trace(final MutableWorldState mutableWorldState, final Hash blockHash, final DebugOperationTracer tracer) {
-    return blockReplay.block(mutableWorldState, blockHash, prepareReplayAction(mutableWorldState, tracer));
+  public Optional<BlockTrace> trace(
+      final Tracer.TraceableState mutableWorldState,
+      final Hash blockHash,
+      final DebugOperationTracer tracer) {
+    return blockReplay.block(blockHash, prepareReplayAction(mutableWorldState, tracer));
   }
 
-  public Optional<BlockTrace> trace(final MutableWorldState mutableWorldState, final Block block, final DebugOperationTracer tracer) {
+  public Optional<BlockTrace> trace(
+      final Tracer.TraceableState mutableWorldState,
+      final Block block,
+      final DebugOperationTracer tracer) {
     return blockReplay.block(block, prepareReplayAction(mutableWorldState, tracer));
   }
 

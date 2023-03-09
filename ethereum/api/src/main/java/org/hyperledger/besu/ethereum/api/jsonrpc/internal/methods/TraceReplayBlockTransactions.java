@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypePa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
@@ -113,11 +114,17 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     final TraceOptions traceOptions =
         new TraceOptions(false, false, traceTypes.contains(VM_TRACE) || traceTypes.contains(TRACE));
 
-    return blockchainQueriesSupplier.get().getAndMapWorldState(block.getHash(), mutableWorldState -> blockTracerSupplier
-            .get()
-            .trace(mutableWorldState, block, new DebugOperationTracer(traceOptions))
-            .map(BlockTrace::getTransactionTraces)
-            .map((traces) -> generateTracesFromTransactionTrace(traces, block, traceTypes))).orElse(null);
+    return Tracer.processTracing(
+            blockchainQueriesSupplier.get(),
+            Optional.of(block.getHeader()),
+            mutableWorldState -> {
+              return blockTracerSupplier
+                  .get()
+                  .trace(mutableWorldState, block, new DebugOperationTracer(traceOptions))
+                  .map(BlockTrace::getTransactionTraces)
+                  .map((traces) -> generateTracesFromTransactionTrace(traces, block, traceTypes));
+            })
+        .orElse(null);
   }
 
   private JsonNode generateTracesFromTransactionTrace(

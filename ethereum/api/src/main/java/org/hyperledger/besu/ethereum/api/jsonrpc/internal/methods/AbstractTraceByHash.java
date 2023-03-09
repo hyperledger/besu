@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -64,21 +64,33 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
     if (block == null || block.getBody().getTransactions().isEmpty()) {
       return Stream.empty();
     }
-    return blockchainQueries.getAndMapWorldState(block.getHash(), mutableWorldState -> {
-      final TransactionTrace transactionTrace = getTransactionTrace(mutableWorldState, block, transactionHash);
-      return Optional.ofNullable(getTraceStream(transactionTrace, block));
-    }).orElse(Stream.empty());
+    return Tracer.processTracing(
+            blockchainQueries,
+            Optional.of(block.getHeader()),
+            mutableWorldState -> {
+              final TransactionTrace transactionTrace = getTransactionTrace(block, transactionHash);
+              return Optional.ofNullable(getTraceStream(transactionTrace, block));
+            })
+        .orElse(Stream.empty());
   }
 
-  private TransactionTrace getTransactionTrace(final MutableWorldState mutableWorldState, final Block block, final Hash transactionHash) {
-    return blockTracerSupplier
-        .get()
-        .trace(mutableWorldState, block, new DebugOperationTracer(new TraceOptions(false, false, true)))
-        .map(BlockTrace::getTransactionTraces)
-        .orElse(Collections.emptyList())
-        .stream()
-        .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
-        .findFirst()
+  private TransactionTrace getTransactionTrace(final Block block, final Hash transactionHash) {
+    return Tracer.processTracing(
+            blockchainQueries,
+            Optional.of(block.getHeader()),
+            mutableWorldState -> {
+              return blockTracerSupplier
+                  .get()
+                  .trace(
+                      mutableWorldState,
+                      block,
+                      new DebugOperationTracer(new TraceOptions(false, false, true)))
+                  .map(BlockTrace::getTransactionTraces)
+                  .orElse(Collections.emptyList())
+                  .stream()
+                  .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
+                  .findFirst();
+            })
         .orElseThrow();
   }
 

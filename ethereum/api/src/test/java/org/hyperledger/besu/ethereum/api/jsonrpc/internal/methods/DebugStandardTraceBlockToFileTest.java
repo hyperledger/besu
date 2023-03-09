@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,7 +77,8 @@ public class DebugStandardTraceBlockToFileTest {
 
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
 
-    when(transactionTracer.traceTransactionToFile(eq(block.getHash()), any(), any()))
+    when(transactionTracer.traceTransactionToFile(
+            any(MutableWorldState.class), eq(block.getHash()), any(), any()))
         .thenReturn(paths);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugStandardTraceBlockToFile.response(request);
