@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -102,6 +103,11 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   @Override
   public boolean isOnForkBoundary(final BlockHeader blockHeader) {
     return delegate.isOnForkBoundary(blockHeader);
+  }
+
+  @Override
+  public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
+    return delegate.getScheduledProtocolSpecs();
   }
 
   @Override

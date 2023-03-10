@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.List;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -31,8 +32,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DefaultTimestampSchedule implements TimestampSchedule {
-  private final NavigableSet<TimeScheduledProtocolSpec> protocolSpecs =
-      new TreeSet<>(Comparator.comparing(TimeScheduledProtocolSpec::timestamp).reversed());
+  private final NavigableSet<ScheduledProtocolSpec> protocolSpecs =
+      new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::milestone).reversed());
   private final Optional<BigInteger> chainId;
 
   DefaultTimestampSchedule(final Optional<BigInteger> chainId) {
@@ -41,8 +42,8 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public Optional<ProtocolSpec> getByTimestamp(final long timestamp) {
-    for (final TimeScheduledProtocolSpec protocolSpec : protocolSpecs) {
-      if (protocolSpec.timestamp() <= timestamp) {
+    for (final ScheduledProtocolSpec protocolSpec : protocolSpecs) {
+      if (protocolSpec.milestone() <= timestamp) {
         return Optional.of(protocolSpec.spec());
       }
     }
@@ -51,7 +52,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
-    return protocolSpecs.stream().map(TimeScheduledProtocolSpec::timestamp).sorted();
+    return protocolSpecs.stream().map(ScheduledProtocolSpec::milestone).sorted();
   }
 
   @Override
@@ -61,7 +62,12 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public boolean isOnForkBoundary(final BlockHeader blockHeader) {
-    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.timestamp);
+    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.milestone());
+  }
+
+  @Override
+  public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
+    return protocolSpecs.stream().toList();
   }
 
   @Override
@@ -71,8 +77,8 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public void putMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
-    final TimeScheduledProtocolSpec scheduledProtocolSpec =
-        new TimeScheduledProtocolSpec(timestamp, protocolSpec);
+    final ScheduledProtocolSpec scheduledProtocolSpec =
+        new ScheduledProtocolSpec(timestamp, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
@@ -81,8 +87,8 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
   @Override
   public String listMilestones() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(TimeScheduledProtocolSpec::timestamp))
-        .map(spec -> spec.spec().getName() + ": " + spec.timestamp())
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(spec -> spec.spec().getName() + ": " + spec.milestone())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
@@ -103,8 +109,4 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
                 .setPublicWorldStateArchive(publicWorldStateArchive);
         });
   }
-
-  /** Tuple that associates a {@link ProtocolSpec} with a given timestamp level starting point */
-  record TimeScheduledProtocolSpec(long timestamp, ProtocolSpec spec)
-      implements ScheduledProtocolSpec {}
 }

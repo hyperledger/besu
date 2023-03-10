@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -226,6 +227,15 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     return timestampSchedule.isOnForkBoundary(blockHeader)
         || transitionUtils.dispatchFunctionAccordingToMergeState(
             schedule -> schedule.isOnForkBoundary(blockHeader));
+  }
+
+  @Override
+  public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
+    List<ScheduledProtocolSpec> milestones =
+        transitionUtils.dispatchFunctionAccordingToMergeState(
+            ProtocolSchedule::getScheduledProtocolSpecs);
+    milestones.addAll(timestampSchedule.getScheduledProtocolSpecs());
+    return milestones;
   }
 
   /**
