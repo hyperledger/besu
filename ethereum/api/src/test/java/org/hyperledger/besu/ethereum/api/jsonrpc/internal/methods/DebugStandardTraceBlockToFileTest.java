@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,13 +40,17 @@ import java.util.Optional;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Answers;
 
 public class DebugStandardTraceBlockToFileTest {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
-  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+  private final WorldStateArchive archive =
+      mock(WorldStateArchive.class, Answers.RETURNS_DEEP_STUBS);
   private final Blockchain blockchain = mock(Blockchain.class);
+  private final BlockchainQueries blockchainQueries =
+      spy(new BlockchainQueries(blockchain, archive));
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
   private final DebugStandardTraceBlockToFile debugStandardTraceBlockToFile =
       new DebugStandardTraceBlockToFile(
@@ -76,6 +82,10 @@ public class DebugStandardTraceBlockToFileTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
 
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
+    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis.getHeader()));
+
+    //    when(archive.getMutable(genesis.getHeader().getStateRoot(), genesis.getHash(), false))
+    //        .thenReturn(Optional.of(mock(MutableWorldState.class)));
 
     when(transactionTracer.traceTransactionToFile(
             any(MutableWorldState.class), eq(block.getHash()), any(), any()))
