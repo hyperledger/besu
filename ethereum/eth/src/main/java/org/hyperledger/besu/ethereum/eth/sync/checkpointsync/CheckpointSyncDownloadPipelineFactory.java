@@ -61,11 +61,15 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
 
     final Checkpoint checkpoint = syncState.getCheckpoint().orElseThrow();
 
+    final BlockHeader checkpointBlockHeader = target.peer().getCheckpointHeader().orElseThrow();
     final CheckpointSource checkPointSource =
         new CheckpointSource(
             syncState,
-            target.peer(),
-            protocolSchedule.getByBlockNumber(checkpoint.blockNumber()).getBlockHeaderFunctions());
+            checkpointBlockHeader,
+            protocolSchedule
+                .getByBlockHeader(checkpointBlockHeader)
+                .getBlockHeaderFunctions()
+                .getCheckPointWindowSize(checkpointBlockHeader));
 
     final CheckpointBlockImportStep checkPointBlockImportStep =
         new CheckpointBlockImportStep(
