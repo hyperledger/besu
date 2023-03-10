@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.HelloMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -89,6 +90,10 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   @Override
   protected final void channelRead0(final ChannelHandlerContext ctx, final ByteBuf msg) {
+    LOG.debug(
+        "stefan: ECIES instance {}, IP {}, msg {}",
+        System.identityHashCode(handshaker),
+        ((InetSocketAddress) ctx.channel().remoteAddress()));
     final Optional<ByteBuf> nextMsg = nextHandshakeMessage(msg);
     if (nextMsg.isPresent()) {
       ctx.writeAndFlush(nextMsg.get());

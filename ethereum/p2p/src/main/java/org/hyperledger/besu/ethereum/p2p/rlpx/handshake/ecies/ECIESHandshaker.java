@@ -103,8 +103,9 @@ public class ECIESHandshaker implements Handshaker {
     this.partyPubKey = theirPubKey;
     this.initiatorNonce = Bytes32.wrap(random(32), 0);
     LOG.trace(
-        "Prepared ECIES handshake with node {}... under INITIATOR role",
-        theirPubKey.getEncodedBytes().slice(0, 16));
+        "Prepared ECIES handshake with node {} under INITIATOR role, ECIES instance {}",
+        theirPubKey.getEncodedBytes(),
+        System.identityHashCode(this));
   }
 
   @Override
