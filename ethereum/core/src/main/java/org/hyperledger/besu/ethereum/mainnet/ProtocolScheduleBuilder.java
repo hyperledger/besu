@@ -192,7 +192,12 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         .ifPresent(
             daoBlockNumber -> {
               final ProtocolSpec originalProtocolSpec =
-                  protocolSchedule.getByBlockNumber(daoBlockNumber);
+                  protocolSchedule.getScheduledProtocolSpecs().stream()
+                      .filter(x -> x.getBlock() <= daoBlockNumber)
+                      .findFirst()
+                      .get()
+                      .getSpec();
+
               addProtocolSpec(
                   protocolSchedule,
                   daoBlockNumber,
@@ -213,7 +218,11 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         .ifPresent(
             classicBlockNumber -> {
               final ProtocolSpec originalProtocolSpec =
-                  protocolSchedule.getByBlockNumber(classicBlockNumber);
+                  protocolSchedule.getScheduledProtocolSpecs().stream()
+                      .filter(x -> x.getBlock() <= classicBlockNumber)
+                      .findFirst()
+                      .get()
+                      .getSpec();
               addProtocolSpec(
                   protocolSchedule,
                   classicBlockNumber,
