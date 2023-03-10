@@ -42,7 +42,6 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param prevRandao the prev randao
    * @param feeRecipient the fee recipient
    * @param withdrawals the optional list of withdrawals
-   * @param deposits the optional list of deposits
    * @return the payload identifier
    */
   PayloadIdentifier preparePayload(
@@ -50,8 +49,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Deposit>> deposits);
+      final Optional<List<Withdrawal>> withdrawals);
 
   @Override
   default boolean isCompatibleWithEngineApi() {

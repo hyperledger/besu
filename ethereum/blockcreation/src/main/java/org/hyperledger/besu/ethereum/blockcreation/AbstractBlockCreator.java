@@ -148,7 +148,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         maybeOmmers,
         Optional.empty(),
         Optional.empty(),
-        Optional.empty(),
         timestamp,
         true);
   }
@@ -157,7 +156,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits,
       final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
@@ -209,6 +207,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
+      final Optional<List<Deposit>> maybeDeposits = Optional.empty(); // TODO 6110: Extract deposits from transaction receipts
+
       if (rewardCoinbase
           && !rewardBeneficiary(
               disposableWorldState,
@@ -243,7 +243,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
-              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
+              .depositsRoot(null) // TODO 6110: Derive deposit roots from deposits
               .excessDataGas(newExcessDataGas)
               .buildSealableBlockHeader();
 

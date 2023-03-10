@@ -242,8 +242,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Deposit>> deposits) {
+      final Optional<List<Withdrawal>> withdrawals) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -269,7 +268,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final Block emptyBlock =
         mergeBlockCreator
             .createBlock(
-                Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals, deposits)
+                Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
             .getBlock();
 
     BlockProcessingResult result = validateProposedBlock(emptyBlock);
@@ -292,7 +291,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     }
 
     tryToBuildBetterBlock(
-        timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals, deposits);
+        timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals);
 
     return payloadIdentifier;
   }
@@ -313,13 +312,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 random,
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator,
-      final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Deposit>> deposits) {
+      final Optional<List<Withdrawal>> withdrawals) {
 
     final Supplier<BlockCreationResult> blockCreator =
         () ->
             mergeBlockCreator.createBlock(
-                Optional.empty(), random, timestamp, withdrawals, deposits);
+                Optional.empty(), random, timestamp, withdrawals);
 
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",
