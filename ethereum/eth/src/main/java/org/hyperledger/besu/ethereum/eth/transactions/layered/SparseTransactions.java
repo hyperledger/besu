@@ -2,6 +2,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -239,6 +240,37 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       }
     }
     nextLayer.notifyAdded(pendingTransaction);
+  }
+
+  @Override
+  public String internalLogStats() {
+    if (sparseEvictionOrder.isEmpty()) {
+      return "Sparse: Empty";
+    }
+
+    final Transaction newest = sparseEvictionOrder.last().getTransaction();
+    final Transaction oldest = sparseEvictionOrder.first().getTransaction();
+
+    return "Sparse: "
+        + "count="
+        + pendingTransactions.size()
+        + ", space used: "
+        + spaceUsed
+        + ", unique senders: "
+        + txsBySender.size()
+        + ", oldest [gap: "
+        + gapBySender.get(oldest.getSender())
+        + ", max fee:"
+        + oldest.getMaxGasPrice().toHumanReadableString()
+        + ", hash: "
+        + oldest.getHash()
+        + "], newest [gap: "
+        + gapBySender.get(newest.getSender())
+        + ", max fee: "
+        + newest.getMaxGasPrice().toHumanReadableString()
+        + ", hash: "
+        + newest.getHash()
+        + "]";
   }
 
   private void updateGap(final Address sender, final int currGap, final int newGap) {

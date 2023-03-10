@@ -29,6 +29,8 @@ public class EndLayer implements TransactionsLayer {
   private final Subscribers<PendingTransactionDroppedListener> onDroppedListeners =
       Subscribers.create();
 
+  private long droppedCount = 0;
+
   public EndLayer(final TransactionPoolMetrics metrics) {
     this.metrics = metrics;
   }
@@ -39,7 +41,9 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public void reset() {}
+  public void reset() {
+    droppedCount = 0;
+  }
 
   @Override
   public Optional<Transaction> getByHash(final Hash transactionHash) {
@@ -60,6 +64,7 @@ public class EndLayer implements TransactionsLayer {
   public TransactionAddedResult add(final PendingTransaction pendingTransaction, final int gap) {
     notifyTransactionDropped(pendingTransaction);
     metrics.incrementRemoved(pendingTransaction.isReceivedFromLocalSource(), "dropped", name());
+    ++droppedCount;
     return TransactionAddedResult.DROPPED;
   }
 
@@ -130,5 +135,10 @@ public class EndLayer implements TransactionsLayer {
   @Override
   public long getCumulativeUsedSpace() {
     return 0;
+  }
+
+  @Override
+  public String logStats() {
+    return "Dropped: " + droppedCount;
   }
 }

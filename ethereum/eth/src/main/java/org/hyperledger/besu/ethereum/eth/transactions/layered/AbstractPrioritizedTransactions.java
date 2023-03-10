@@ -125,6 +125,4 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   protected long cacheFreeSpace() {
     return Integer.MAX_VALUE;
   }
-
-  public abstract String logStats();
 }

@@ -307,20 +307,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   */
   @Override
   public synchronized String logStats() {
-    //
-    //    return "Pending: "
-    //        + pendingTransactions.size()
-    //        + ", Ready: "
-    //        + getReadyCount()
-    //        + ", Prioritized: "
-    //        + prioritizedTransactions.size()
-    //        + ", Sparse: "
-    //        + sparseTransactions.logStats()
-    //        + ", Space used: "
-    //        + spaceUsed
-    //        + ", Prioritized stats: "
-    //        + prioritizedTransactions.logStats();
-    return null;
+    return prioritizedTransactions.logStats();
   }
 
   private void consistencyCheck() {

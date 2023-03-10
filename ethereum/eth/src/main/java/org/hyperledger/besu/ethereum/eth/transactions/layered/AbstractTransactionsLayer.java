@@ -11,10 +11,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
@@ -31,16 +35,23 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
+public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionsLayer.class);
   private static final NavigableMap<Long, PendingTransaction> EMPTY_SENDER_TXS = new TreeMap<>();
   protected final TransactionPoolConfiguration poolConfig;
+  protected final TransactionsLayer nextLayer;
   protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
       transactionReplacementTester;
   protected final TransactionPoolMetrics metrics;
   protected final Map<Hash, PendingTransaction> pendingTransactions = new HashMap<>();
   protected final Map<Address, NavigableMap<Long, PendingTransaction>> txsBySender =
       new HashMap<>();
+  private final Subscribers<PendingTransactionAddedListener> onAddedListeners =
+      Subscribers.create();
+  private final Subscribers<PendingTransactionDroppedListener> onDroppedListeners =
+      Subscribers.create();
+  private OptionalLong nextLayerOnAddedListenerId = OptionalLong.empty();
+  private OptionalLong nextLayerOnDroppedListenerId = OptionalLong.empty();
   protected long spaceUsed = 0;
 
   public AbstractTransactionsLayer(
@@ -49,8 +60,8 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final TransactionPoolMetrics metrics) {
-    super(nextLayer);
     this.poolConfig = poolConfig;
+    this.nextLayer = nextLayer;
     this.transactionReplacementTester = transactionReplacementTester;
     this.metrics = metrics;
   }
@@ -481,4 +492,45 @@ public abstract class AbstractTransactionsLayer extends BaseTransactionsLayer {
   public int count() {
     return pendingTransactions.size() + nextLayer.count();
   }
+
+  protected void notifyTransactionAdded(final PendingTransaction pendingTransaction) {
+    onAddedListeners.forEach(
+        listener -> listener.onTransactionAdded(pendingTransaction.getTransaction()));
+  }
+
+  protected void notifyTransactionDropped(final PendingTransaction pendingTransaction) {
+    onDroppedListeners.forEach(
+        listener -> listener.onTransactionDropped(pendingTransaction.getTransaction()));
+  }
+
+  @Override
+  public long subscribeToAdded(final PendingTransactionAddedListener listener) {
+    nextLayerOnAddedListenerId = OptionalLong.of(nextLayer.subscribeToAdded(listener));
+    return onAddedListeners.subscribe(listener);
+  }
+
+  @Override
+  public void unsubscribeFromAdded(final long id) {
+    nextLayerOnAddedListenerId.ifPresent(nextLayer::unsubscribeFromAdded);
+    onAddedListeners.unsubscribe(id);
+  }
+
+  @Override
+  public long subscribeToDropped(final PendingTransactionDroppedListener listener) {
+    nextLayerOnDroppedListenerId = OptionalLong.of(nextLayer.subscribeToDropped(listener));
+    return onDroppedListeners.subscribe(listener);
+  }
+
+  @Override
+  public void unsubscribeFromDropped(final long id) {
+    nextLayerOnDroppedListenerId.ifPresent(nextLayer::unsubscribeFromDropped);
+    onDroppedListeners.unsubscribe(id);
+  }
+
+  @Override
+  public String logStats() {
+    return internalLogStats() + " | " + nextLayer.logStats();
+  }
+
+  protected abstract String internalLogStats();
 }

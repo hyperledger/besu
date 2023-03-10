@@ -60,10 +60,21 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   }
 
   @Override
-  public String logStats() {
-    return "Highest fee tx: "
+  public String internalLogStats() {
+    if (orderByFee.isEmpty()) {
+      return "GasPrice Prioritized: Empty";
+    }
+
+    return "GasPrice Prioritized: "
+        + "count: "
+        + pendingTransactions.size()
+        + " space used: "
+        + spaceUsed
+        + " unique senders: "
+        + txsBySender.size()
+        + ", highest fee tx: "
         + orderByFee.last().getTransaction().getGasPrice().get().toHumanReadableString()
-        + ", Lowest fee tx: "
+        + ", lowest fee tx: "
         + orderByFee.first().getTransaction().getGasPrice().get().toHumanReadableString();
   }
 }

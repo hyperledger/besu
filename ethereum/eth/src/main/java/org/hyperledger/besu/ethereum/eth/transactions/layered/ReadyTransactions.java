@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -172,6 +173,33 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
       }
     }
     return null;
+  }
+
+  @Override
+  public String internalLogStats() {
+    if (orderByMaxFee.isEmpty()) {
+      return "Ready: Empty";
+    }
+
+    final Transaction top = orderByMaxFee.last().getTransaction();
+    final Transaction last = orderByMaxFee.first().getTransaction();
+
+    return "Ready: "
+        + "count="
+        + pendingTransactions.size()
+        + ", space used: "
+        + spaceUsed
+        + ", unique senders: "
+        + txsBySender.size()
+        + ", top by max fee[max fee:"
+        + top.getMaxGasPrice().toHumanReadableString()
+        + ", hash: "
+        + top.getHash()
+        + "], last by max fee [max fee: "
+        + last.getMaxGasPrice().toHumanReadableString()
+        + ", hash: "
+        + last.getHash()
+        + "]";
   }
   //
   //  private String toTraceLog(final Map<Address, NavigableMap<Long, PendingTransaction>>

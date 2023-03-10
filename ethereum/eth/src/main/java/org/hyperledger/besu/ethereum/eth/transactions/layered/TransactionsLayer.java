@@ -60,4 +60,6 @@ public interface TransactionsLayer {
   void notifyAdded(PendingTransaction pendingTransaction);
 
   long getCumulativeUsedSpace();
+
+  String logStats();
 }
