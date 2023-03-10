@@ -130,7 +130,7 @@ public class BackwardChain {
     }
 
     if (firstStoredAncestor.isEmpty()) {
-      updateLastStorePivot(Optional.of(blockHeader));
+      updateLastStoredPivot(Optional.of(blockHeader));
     } else {
       final BlockHeader firstHeader = firstStoredAncestor.get();
       chainStorage.put(blockHeader.getHash(), firstHeader.getHash());
@@ -152,7 +152,7 @@ public class BackwardChain {
     firstStoredAncestor = maybeHeader;
   }
 
-  private void updateLastStorePivot(final Optional<BlockHeader> maybeHeader) {
+  private void updateLastStoredPivot(final Optional<BlockHeader> maybeHeader) {
     maybeHeader.ifPresentOrElse(
         header -> variablesStorage.put(LAST_STORED_PIVOT_KEY, header),
         () -> variablesStorage.drop(LAST_STORED_PIVOT_KEY));
@@ -175,7 +175,7 @@ public class BackwardChain {
     chainStorage.drop(firstStoredAncestor.get().getHash());
     updateFirstStoredAncestor(hash.flatMap(headers::get));
     if (firstStoredAncestor.isEmpty()) {
-      updateLastStorePivot(Optional.empty());
+      updateLastStoredPivot(Optional.empty());
     }
   }
 
@@ -202,7 +202,7 @@ public class BackwardChain {
             .log();
       }
     }
-    updateLastStorePivot(Optional.of(newPivot.getHeader()));
+    updateLastStoredPivot(Optional.of(newPivot.getHeader()));
   }
 
   public synchronized boolean isTrusted(final Hash hash) {
