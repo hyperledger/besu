@@ -66,11 +66,6 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final BonsaiWorldState forWorldState) {
-    LOG.atWarn()
-        .setMessage("adding layered world state for block {}, state root hash {}")
-        .addArgument(blockHeader::toLogString)
-        .addArgument(worldStateRootHash::toShortHexString)
-        .log();
     final Optional<CachedBonsaiWorldView> cachedBonsaiWorldView =
         Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHeader.getBlockHash()));
     if (cachedBonsaiWorldView.isPresent()) {
@@ -78,12 +73,22 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       if (forWorldState.isPersisted()
           && cachedBonsaiWorldView.get().getWorldStateStorage()
               instanceof BonsaiWorldStateLayerStorage) {
+        LOG.atWarn()
+            .setMessage("updating layered world state for block {}, state root hash {}")
+            .addArgument(blockHeader::toLogString)
+            .addArgument(worldStateRootHash::toShortHexString)
+            .log();
         cachedBonsaiWorldView
             .get()
             .updateWorldStateStorage(
                 new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage));
       }
     } else {
+      LOG.atWarn()
+          .setMessage("adding layered world state for block {}, state root hash {}")
+          .addArgument(blockHeader::toLogString)
+          .addArgument(worldStateRootHash::toShortHexString)
+          .log();
       if (forWorldState.isPersisted()) {
         cachedWorldStatesByHash.put(
             blockHeader.getHash(),

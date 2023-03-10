@@ -22,13 +22,14 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public interface WorldStateArchive {
+public interface WorldStateArchive extends Closeable {
   Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
   Optional<WorldState> get(Hash rootHash, Hash blockHash);
@@ -47,6 +48,4 @@ public interface WorldStateArchive {
 
   Optional<WorldStateProof> getAccountProof(
       Hash worldStateRoot, Address accountAddress, List<UInt256> accountStorageKeys);
-
-  void close();
 }

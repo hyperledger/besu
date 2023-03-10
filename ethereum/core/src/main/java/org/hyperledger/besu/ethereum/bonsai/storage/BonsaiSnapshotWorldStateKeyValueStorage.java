@@ -34,11 +34,6 @@ import org.slf4j.LoggerFactory;
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
     implements BonsaiStorageSubscriber {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
-  private final AtomicBoolean shouldClose = new AtomicBoolean(false);
-  private final AtomicBoolean isClosed = new AtomicBoolean(false);
-
   protected final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
 
   private final long subscribeParentId;
@@ -138,7 +133,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
-    return isClosed.get() ? false : super.isWorldStateAvailable(rootHash, blockHash);
+    return !isClosed.get() && super.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override
@@ -157,27 +152,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   public void clearTrieLog() {
     // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
-  }
-
-  @Override
-  public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
-    if (isClosed.get()) {
-      throw new RuntimeException("Storage is marked to close or has already closed");
-    }
-    return super.subscribe(sub);
-  }
-
-  @Override
-  public synchronized void unSubscribe(final long id) {
-    super.unSubscribe(id);
-    try {
-      tryClose();
-    } catch (Exception e) {
-      LOG.atWarn()
-          .setMessage("exception while trying to close : {}")
-          .addArgument(e::getMessage)
-          .log();
-    }
   }
 
   @Override
@@ -221,20 +195,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public synchronized void close() throws Exception {
-    // when the parent storage clears, close
-    shouldClose.set(true);
-    tryClose();
-  }
-
-  protected synchronized void tryClose() throws Exception {
-    if (shouldClose.get() && subscribers.getSubscriberCount() < 1) {
-      // attempting to close already closed snapshots will segfault
-      doClose();
-    }
-  }
-
-  private synchronized void doClose() throws Exception {
+  protected synchronized void doClose() throws Exception {
     if (!isClosed.get()) {
       // alert any subscribers we are closing:
       subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);

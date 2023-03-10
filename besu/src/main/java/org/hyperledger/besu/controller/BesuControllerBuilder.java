@@ -658,6 +658,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createAdditionalJsonRpcMethodFactory(protocolContext);
 
     final List<Closeable> closeables = new ArrayList<>();
+    closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
     if (privacyParameters.getPrivateStorageProvider() != null) {
       closeables.add(privacyParameters.getPrivateStorageProvider());
