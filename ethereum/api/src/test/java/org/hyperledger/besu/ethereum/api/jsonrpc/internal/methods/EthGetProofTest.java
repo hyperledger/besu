@@ -231,7 +231,8 @@ class EthGetProofTest {
     doAnswer(
             invocation ->
                 invocation
-                    .<Function<MutableWorldState, ? extends JsonRpcResponse>>getArgument(1)
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
                     .apply(mutableWorldState))
         .when(blockchainQueries)
         .getAndMapWorldState(any(), any());

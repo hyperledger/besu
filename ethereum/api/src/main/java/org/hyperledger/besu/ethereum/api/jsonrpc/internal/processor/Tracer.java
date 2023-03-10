@@ -41,9 +41,9 @@ public class Tracer {
 
   public static <TRACE> Optional<TRACE> processTracing(
       final BlockchainQueries blockchainQueries,
-      final Optional<BlockHeader> block,
+      final Optional<BlockHeader> blockHeader,
       final Function<TraceableState, ? extends Optional<TRACE>> mapper) {
-    return block
+    return blockHeader
         .map(BlockHeader::getParentHash)
         .flatMap(
             parentHash ->

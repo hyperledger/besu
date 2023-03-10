@@ -862,24 +862,22 @@ public class BlockchainQueries {
   public <U> Optional<U> getAndMapWorldState(
       final Hash blockHash, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
 
-    var temp =
-        blockchain
-            .getBlockHeader(blockHash)
-            .flatMap(
-                blockHeader -> {
-                  try (var ws =
-                      worldStateArchive
-                          .getMutable(blockHeader.getStateRoot(), blockHeader.getBlockHash(), false)
-                          .orElse(null)) {
-                    if (ws != null) {
-                      return mapper.apply(ws);
-                    }
-                  } catch (Exception ex) {
-                    LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
-                  }
-                  return Optional.empty();
-                });
-    return temp;
+    return blockchain
+        .getBlockHeader(blockHash)
+        .flatMap(
+            blockHeader -> {
+              try (var ws =
+                  worldStateArchive
+                      .getMutable(blockHeader.getStateRoot(), blockHeader.getBlockHash(), false)
+                      .orElse(null)) {
+                if (ws != null) {
+                  return mapper.apply(ws);
+                }
+              } catch (Exception ex) {
+                LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
+              }
+              return Optional.empty();
+            });
   }
 
   /**
