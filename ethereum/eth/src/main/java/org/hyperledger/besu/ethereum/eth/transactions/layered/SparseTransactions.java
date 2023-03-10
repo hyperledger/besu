@@ -43,7 +43,6 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     orderByGap = new ArrayList<>(poolConfig.getMaxFutureBySender());
     IntStream.range(0, poolConfig.getMaxFutureBySender())
         .forEach(i -> orderByGap.add(new HashSet<>()));
-    metrics.initSparseTransactionCount(sparseEvictionOrder::size);
   }
 
   @Override

@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionsLayer.class);
+  private static final Logger LOG_TX_CSV = LoggerFactory.getLogger("LOG_TX_CSV");
   private static final NavigableMap<Long, PendingTransaction> EMPTY_SENDER_TXS = new TreeMap<>();
   protected final TransactionPoolConfiguration poolConfig;
   protected final TransactionsLayer nextLayer;
@@ -64,6 +65,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     this.nextLayer = nextLayer;
     this.transactionReplacementTester = transactionReplacementTester;
     this.metrics = metrics;
+    metrics.initSpaceUsed(this::getLayerSpaceUsed, name());
+    metrics.initTransactionCount(pendingTransactions::size, name());
   }
 
   protected abstract boolean gapsAllowed();
@@ -388,6 +391,19 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     LOG.atDebug()
         .setMessage("Managing new added block {}")
         .addArgument(blockHeader::toLogString)
+        .log();
+
+    // block number, block hash, sender, max nonce ...
+    LOG_TX_CSV
+        .atTrace()
+        .setMessage("{},{},{}")
+        .addArgument(blockHeader.getNumber())
+        .addArgument(blockHeader.getBlockHash())
+        .addArgument(
+            () ->
+                maxConfirmedNonceBySender.entrySet().stream()
+                    .map(e -> e.getKey().toHexString() + "," + e.getValue())
+                    .collect(Collectors.joining(",")))
         .log();
 
     nextLayer.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);

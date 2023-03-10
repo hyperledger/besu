@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 
@@ -50,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 public class LayeredPendingTransactions implements PendingTransactions {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredPendingTransactions.class);
+  private static final Logger LOG_TX_CSV = LoggerFactory.getLogger("LOG_TX_CSV");
   private final TransactionPoolConfiguration poolConfig;
   private final Set<Address> localSenders = new HashSet<>();
   private final AbstractPrioritizedTransactions prioritizedTransactions;
@@ -96,6 +98,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final long senderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
 
+    logTxToCSV(pendingTransaction, senderNonce);
+
     final long nonceDistance = pendingTransaction.getNonce() - senderNonce;
 
     final TransactionAddedResult nonceChecksResult =
@@ -115,6 +119,27 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     return result;
+  }
+
+  private void logTxToCSV(final PendingTransaction pendingTransaction, final long senderNonce) {
+    // csv fields: sequence, addedAt, sender, sender_nonce, nonce, type, hash, rlp
+    LOG_TX_CSV
+        .atTrace()
+        .setMessage("{},{},{},{},{},{},{},{}")
+        .addArgument(pendingTransaction.getSequence())
+        .addArgument(pendingTransaction.getAddedToPoolAt())
+        .addArgument(pendingTransaction.getSender())
+        .addArgument(senderNonce)
+        .addArgument(pendingTransaction.getNonce())
+        .addArgument(pendingTransaction.getTransaction().getType())
+        .addArgument(pendingTransaction::getHash)
+        .addArgument(
+            () -> {
+              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+              pendingTransaction.getTransaction().writeTo(rlp);
+              return rlp.encoded().toHexString();
+            })
+        .log();
   }
 
   @Nullable
@@ -205,22 +230,22 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  public int size() {
+  public synchronized int size() {
     return prioritizedTransactions.count();
   }
 
   @Override
-  public boolean containsTransaction(final Transaction transaction) {
+  public synchronized boolean containsTransaction(final Transaction transaction) {
     return prioritizedTransactions.contains(transaction);
   }
 
   @Override
-  public Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
+  public synchronized Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
     return prioritizedTransactions.getByHash(transactionHash);
   }
 
   @Override
-  public Set<PendingTransaction> getPendingTransactions() {
+  public synchronized Set<PendingTransaction> getPendingTransactions() {
     return prioritizedTransactions.getAll();
   }
 

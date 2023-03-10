@@ -36,7 +36,6 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
           transactionReplacementTester) {
     super(poolConfig, prioritizedTransactions, transactionReplacementTester, metrics);
     this.orderByFee = new TreeSet<>(this::compareByFee);
-    metrics.initPrioritizedTransactionSize(pendingTransactions::size);
   }
 
   @Override
@@ -107,8 +106,8 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   @Override
   protected void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs,
-      final PendingTransaction confirmedPendingTx) {
-    orderByFee.remove(confirmedPendingTx);
+      final PendingTransaction removedTx) {
+    orderByFee.remove(removedTx);
   }
 
   @Override

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.TreeSet;
@@ -45,9 +44,6 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
     super(poolConfig, nextLayer, transactionReplacementTester, metrics);
-    metrics.initPendingTransactionCount(pendingTransactions::size);
-    metrics.initPendingTransactionSpace(this::getLayerSpaceUsed);
-    metrics.initReadyTransactionCount(this::getReadyCount);
   }
 
   @Override
@@ -150,29 +146,25 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   @Override
   public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
-    NavigableMap<Long, PendingTransaction> senderTxs;
 
-    for (var tx : orderByMaxFee.descendingSet()) {
-      PendingTransaction promotedTx = null;
-      senderTxs = txsBySender.get(tx.getSender());
+    final var maybePromotedTx = orderByMaxFee.descendingSet().stream()
+            .filter(candidateTx -> promotionFilter.test(candidateTx))
+            .findFirst();
 
-      if (promotionFilter.test(senderTxs.firstEntry().getValue())) {
-        promotedTx = senderTxs.pollFirstEntry().getValue();
+    return maybePromotedTx.map(promotedTx -> {
+      final var senderTxs = txsBySender.get(promotedTx.getSender());
+      // we always promote the first tx of a sender, so remove the first entry
+      senderTxs.pollFirstEntry();
+      processRemove(senderTxs, promotedTx.getTransaction());
+
+      //now that we have space, promote from the next layer
+      promoteTransactions();
+
+      if (senderTxs.isEmpty()) {
+        txsBySender.remove(promotedTx.getSender());
       }
-
-      if (promotedTx != null) {
-        processRemove(senderTxs, promotedTx.getTransaction());
-
-        promoteTransactions();
-
-        if (senderTxs.isEmpty()) {
-          txsBySender.remove(promotedTx.getSender());
-        }
-
-        return promotedTx;
-      }
-    }
-    return null;
+      return promotedTx;
+    }).orElse(null);
   }
 
   @Override
@@ -215,9 +207,6 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   //        .collect(Collectors.joining(";"));
   //  }
 
-  private synchronized int getReadyCount() {
-    return txsBySender.values().stream().mapToInt(Map::size).sum();
-  }
   /*
   private void readyCheck() {
     if (orderByMaxFee.size() != readyBySender.size()) {

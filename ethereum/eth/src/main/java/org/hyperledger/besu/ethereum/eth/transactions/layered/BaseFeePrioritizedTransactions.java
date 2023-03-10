@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransactions {
 
   private static final Logger LOG = LoggerFactory.getLogger(BaseFeePrioritizedTransactions.class);
-
+  private static final Logger LOG_TX_CSV = LoggerFactory.getLogger("LOG_TX_CSV");
   private Optional<Wei> nextBlockBaseFee;
 
   public BaseFeePrioritizedTransactions(
@@ -81,6 +81,16 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     nextBlockBaseFee = Optional.of(newNextBlockBaseFee);
     orderByFee.clear();
     orderByFee.addAll(pendingTransactions.values());
+
+    // block number, block hash, block base fee, next block base fee
+    LOG_TX_CSV
+        .atTrace()
+        .setMessage("{},{},{},{}")
+        .addArgument(blockHeader.getNumber())
+        .addArgument(blockHeader.getBlockHash())
+        .addArgument(blockHeader.getBaseFee().get().getAsBigInteger())
+        .addArgument(newNextBlockBaseFee.getAsBigInteger())
+        .log();
   }
 
   private Wei calculateNextBlockBaseFee(

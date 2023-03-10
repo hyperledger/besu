@@ -10,8 +10,6 @@ import java.util.OptionalLong;
 import java.util.function.BiFunction;
 
 public abstract class AbstractSequentialTransactionsLayer extends AbstractTransactionsLayer {
-  //  private static final Logger LOG =
-  //      LoggerFactory.getLogger(AbstractSequentialTransactionsLayer.class);
 
   public AbstractSequentialTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,

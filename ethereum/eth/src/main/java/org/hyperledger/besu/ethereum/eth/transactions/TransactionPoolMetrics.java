@@ -19,10 +19,10 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
-import java.util.function.IntSupplier;
-import java.util.function.LongSupplier;
+import java.util.function.DoubleSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +37,8 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> invalidCounter;
   private final LabelledMetric<Counter> rejectedCounter;
   private final LabelledMetric<Counter> evictedCounter;
-  //  private final LabelledMetric<Counter> prioritizedCounter;
-
+  private final LabelledGauge spaceUsed;
+  private final LabelledGauge transactionCount;
   private final Counter expiredTransactionsMessageCounter;
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
 
@@ -96,13 +96,19 @@ public class TransactionPoolMetrics {
             "Count of transactions evicted from the transaction pool when it is full",
             "layer");
 
-    //    prioritizedCounter =
-    //        metricsSystem.createLabelledCounter(
-    //            BesuMetricCategory.TRANSACTION_POOL,
-    //            "transactions_prioritized_total",
-    //            "Count of transactions prioritized in the pool by result",
-    //            "source",
-    //            "result");
+    spaceUsed =
+        metricsSystem.createLabelledGauge(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "layer_space_used",
+            "The amount of space used by the transactions in the layer",
+            "layer");
+
+    transactionCount =
+        metricsSystem.createLabelledGauge(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "number_of_transactions",
+            "The number of transactions currently present in the layer",
+            "layer");
 
     expiredTransactionsMessageCounter =
         new RunnableCounter(
@@ -140,44 +146,12 @@ public class TransactionPoolMetrics {
     return metricsSystem;
   }
 
-  public void initPendingTransactionCount(final IntSupplier supplier) {
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.TRANSACTION_POOL,
-        "pending_transactions_count",
-        "Current count of the pending transactions in the pool",
-        supplier);
+  public void initSpaceUsed(final DoubleSupplier spaceUsedSupplier, final String layer) {
+    spaceUsed.labels(spaceUsedSupplier, layer);
   }
 
-  public void initPendingTransactionSpace(final LongSupplier supplier) {
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.TRANSACTION_POOL,
-        "pending_transactions_size",
-        "Current size of the pending transactions in the pool",
-        supplier);
-  }
-
-  public void initReadyTransactionCount(final IntSupplier supplier) {
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.TRANSACTION_POOL,
-        "ready_transactions_count",
-        "Current count of the ready pending transactions in the pool",
-        supplier);
-  }
-
-  public void initSparseTransactionCount(final IntSupplier supplier) {
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.TRANSACTION_POOL,
-        "sparse_transactions_count",
-        "Current count of the sparse pending transactions in the pool",
-        supplier);
-  }
-
-  public void initPrioritizedTransactionSize(final IntSupplier supplier) {
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.TRANSACTION_POOL,
-        "prioritized_transactions_count",
-        "Current count of prioritized transactions in the pool",
-        supplier);
+  public void initTransactionCount(final DoubleSupplier spaceUsedSupplier, final String layer) {
+    transactionCount.labels(spaceUsedSupplier, layer);
   }
 
   public void incrementAdded(final boolean receivedFromLocalSource, final String layer) {
@@ -220,14 +194,6 @@ public class TransactionPoolMetrics {
   public void incrementEvicted(final String layer, final int count) {
     evictedCounter.labels(layer).inc(count);
   }
-
-  //  public void incrementPrioritized(
-  //      final boolean receivedFromLocalSource,
-  //      final AbstractPrioritizedTransactions.PrioritizeResult prioritizeResult) {
-  //    prioritizedCounter
-  //        .labels(location(receivedFromLocalSource), prioritizeResult.toMetricLabel())
-  //        .inc();
-  //  }
 
   private String location(final boolean receivedFromLocalSource) {
     return receivedFromLocalSource ? "local" : "remote";
