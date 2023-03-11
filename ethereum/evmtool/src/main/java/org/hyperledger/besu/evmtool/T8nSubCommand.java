@@ -583,7 +583,7 @@ public class T8nSubCommand implements Runnable {
           }
         }
       } else {
-        parentCommand.out.printf("TX json node unparsable: %s%n", txNode);
+        parentCommand.out.printf("TX json node unparseable: %s%n", txNode);
       }
     }
     return transactions;
