@@ -41,7 +41,7 @@ public class DepositParameter {
   @JsonCreator
   public DepositParameter(
       @JsonProperty("pubKey") final String pubKey,
-      @JsonProperty("withdrawalCredentials") final String withdrawalCredentials,
+      @JsonProperty("withdrawal_credentials") final String withdrawalCredentials,
       @JsonProperty("amount") final String amount,
       @JsonProperty("signature") final String signature,
       @JsonProperty("index") final String index) {

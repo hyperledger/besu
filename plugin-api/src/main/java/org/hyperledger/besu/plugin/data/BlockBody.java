@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -52,5 +54,6 @@ public interface BlockBody {
    *
    * @return The list of deposits of the block.
    */
+  @Unstable
   Optional<? extends List<? extends Deposit>> getDeposits();
 }
