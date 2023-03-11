@@ -83,8 +83,8 @@ public class ChainForTestCreator {
         blockHeader.getMixHash(),
         blockHeader.getNonce(),
         blockHeader.getWithdrawalsRoot().orElse(null),
-        blockHeader.getDepositsRoot().orElse(null),
         blockHeader.getExcessDataGas().orElse(null),
+        blockHeader.getDepositsRoot().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
 
