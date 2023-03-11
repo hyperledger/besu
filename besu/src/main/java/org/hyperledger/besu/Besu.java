@@ -68,7 +68,7 @@ public final class Besu {
       InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
     } catch (Throwable t) {
       System.out.printf(
-          "Could not set netty log4j logger factory: %s - %s",
+          "Could not set netty log4j logger factory: %s - %s%n",
           t.getClass().getSimpleName(), t.getMessage());
     }
     try {
@@ -80,7 +80,7 @@ public final class Besu {
       System.setProperty("log4j.skipJansi", String.valueOf(false));
     } catch (Throwable t) {
       System.out.printf(
-          "Could not set logging system property: %s - %s",
+          "Could not set logging system property: %s - %s%n",
           t.getClass().getSimpleName(), t.getMessage());
     }
     final Logger logger = LoggerFactory.getLogger(Besu.class);
