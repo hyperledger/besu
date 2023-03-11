@@ -79,14 +79,6 @@ class DebugAccountAtTest {
 
   @BeforeEach
   void init() {
-    doAnswer(
-            invocation ->
-                invocation
-                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
-                        1)
-                    .apply(worldState))
-        .when(blockchainQueries)
-        .getAndMapWorldState(any(), any());
     debugAccountAt = new DebugAccountAt(blockchainQueries, () -> blockTracer);
   }
 
@@ -158,6 +150,15 @@ class DebugAccountAtTest {
 
   @Test
   void testTransactionNotFoundResponse() {
+    doAnswer(
+        invocation ->
+            invocation
+                .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                    1)
+                .apply(worldState))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
+
     setupMockBlock();
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
@@ -174,6 +175,15 @@ class DebugAccountAtTest {
 
   @Test
   void testNoAccountFoundResponse() {
+    doAnswer(
+        invocation ->
+            invocation
+                .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                    1)
+                .apply(worldState))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
+
     setupMockTransaction();
     setupMockBlock();
 
@@ -190,6 +200,15 @@ class DebugAccountAtTest {
 
   @Test
   void shouldBeSuccessfulWhenTransactionsAndAccountArePresent() {
+    doAnswer(
+        invocation ->
+            invocation
+                .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                    1)
+                .apply(worldState))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
+
     final String codeString =
         "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b";
     final Bytes code = Bytes.fromHexString(codeString);
