@@ -151,11 +151,11 @@ class DebugAccountAtTest {
   @Test
   void testTransactionNotFoundResponse() {
     doAnswer(
-        invocation ->
-            invocation
-                .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
-                    1)
-                .apply(worldState))
+            invocation ->
+                invocation
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
+                    .apply(worldState))
         .when(blockchainQueries)
         .getAndMapWorldState(any(), any());
 
@@ -176,11 +176,11 @@ class DebugAccountAtTest {
   @Test
   void testNoAccountFoundResponse() {
     doAnswer(
-        invocation ->
-            invocation
-                .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
-                    1)
-                .apply(worldState))
+            invocation ->
+                invocation
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
+                    .apply(worldState))
         .when(blockchainQueries)
         .getAndMapWorldState(any(), any());
 
@@ -201,11 +201,11 @@ class DebugAccountAtTest {
   @Test
   void shouldBeSuccessfulWhenTransactionsAndAccountArePresent() {
     doAnswer(
-        invocation ->
-            invocation
-                .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
-                    1)
-                .apply(worldState))
+            invocation ->
+                invocation
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
+                    .apply(worldState))
         .when(blockchainQueries)
         .getAndMapWorldState(any(), any());
 
