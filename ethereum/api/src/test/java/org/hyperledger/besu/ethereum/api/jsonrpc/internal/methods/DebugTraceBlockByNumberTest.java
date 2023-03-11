@@ -18,7 +18,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -46,15 +46,17 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
+import org.mockito.Answers;
 
 public class DebugTraceBlockByNumberTest {
 
-  private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
+  private final BlockchainQueries blockchainQueries =
+      mock(BlockchainQueries.class, Answers.RETURNS_DEEP_STUBS);
 
   private final Tracer.TraceableState worldState = mock(Tracer.TraceableState.class);
-  private final BlockTracer blockTracer = mock(BlockTracer.class);
+  private final BlockTracer blockTracer = mock(BlockTracer.class, Answers.RETURNS_DEEP_STUBS);
   private final DebugTraceBlockByNumber debugTraceBlockByNumber =
-      new DebugTraceBlockByNumber(() -> blockTracer, blockchain);
+      new DebugTraceBlockByNumber(() -> blockTracer, blockchainQueries);
 
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -111,16 +113,19 @@ public class DebugTraceBlockByNumberTest {
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
     when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(blockchain.getBlockHashByNumber(blockNumber)).thenReturn(Optional.of(blockHash));
+    when(blockchainQueries.getBlockHashByNumber(blockNumber)).thenReturn(Optional.of(blockHash));
+    when(blockchainQueries.getBlockHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mock(BlockHeader.class, Answers.RETURNS_DEEP_STUBS)));
+
     doAnswer(
             invocation ->
-                Optional.of(
-                    invocation
-                        .<Function<MutableWorldState, ? extends JsonRpcResponse>>getArgument(1)
-                        .apply(worldState)))
-        .when(blockchain)
+                invocation
+                    .<Function<MutableWorldState, ? extends Optional<? extends JsonRpcResponse>>>
+                        getArgument(1)
+                    .apply(worldState))
+        .when(blockchainQueries)
         .getAndMapWorldState(any(), any());
-    when(blockTracer.trace(eq(worldState), eq(blockHash), any()))
+    when(blockTracer.trace(any(Tracer.TraceableState.class), any(Hash.class), any()))
         .thenReturn(Optional.of(blockTrace));
 
     final JsonRpcSuccessResponse response =

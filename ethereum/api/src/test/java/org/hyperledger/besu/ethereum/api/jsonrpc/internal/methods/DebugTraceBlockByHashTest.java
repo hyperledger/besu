@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -28,8 +29,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
@@ -37,21 +41,40 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
 
 public class DebugTraceBlockByHashTest {
 
   private final BlockTracer blockTracer = mock(BlockTracer.class);
 
-  protected final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-
+  private final BlockchainQueries blockchainQueries =
+      mock(BlockchainQueries.class, Answers.RETURNS_DEEP_STUBS);
+  private final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+  private final BlockHeader blockHeader = mock(BlockHeader.class, Answers.RETURNS_DEEP_STUBS);
   private final DebugTraceBlockByHash debugTraceBlockByHash =
       new DebugTraceBlockByHash(() -> blockTracer, () -> blockchainQueries);
 
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+  @Before
+  public void setUp() {
+    doAnswer(
+            invocation ->
+                invocation
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
+                    .apply(mutableWorldState))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
+    when(blockchainQueries.getBlockHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(blockHeader));
+  }
 
   @Test
   public void nameShouldBeDebugTraceBlockByHash() {

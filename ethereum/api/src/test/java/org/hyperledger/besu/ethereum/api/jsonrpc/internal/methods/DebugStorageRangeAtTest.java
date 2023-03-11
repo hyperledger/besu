@@ -57,6 +57,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
 import org.mockito.invocation.InvocationOnMock;
 
 public class DebugStorageRangeAtTest {
@@ -65,7 +66,7 @@ public class DebugStorageRangeAtTest {
   private static final Bytes32 START_KEY_HASH = Bytes32.fromHexString("0x22");
   private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private final BlockReplay blockReplay = mock(BlockReplay.class);
+  private final BlockReplay blockReplay = mock(BlockReplay.class, Answers.RETURNS_DEEP_STUBS);
   private final DebugStorageRangeAt debugStorageRangeAt =
       new DebugStorageRangeAt(blockchainQueries, blockReplay);
   private final Tracer.TraceableState worldState = mock(Tracer.TraceableState.class);
@@ -74,7 +75,7 @@ public class DebugStorageRangeAtTest {
       mock(MainnetTransactionProcessor.class);
   private final Transaction transaction = mock(Transaction.class);
 
-  private final BlockHeader blockHeader = mock(BlockHeader.class);
+  private final BlockHeader blockHeader = mock(BlockHeader.class, Answers.RETURNS_DEEP_STUBS);
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   private final Hash transactionHash =
@@ -119,17 +120,17 @@ public class DebugStorageRangeAtTest {
     when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(blockWithMetadata));
     doAnswer(
             invocation ->
-                Optional.of(
-                    invocation
-                        .<Function<MutableWorldState, ? extends JsonRpcResponse>>getArgument(1)
-                        .apply(worldState)))
+                invocation
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
+                    .apply(worldState))
         .when(blockchainQueries)
         .getAndMapWorldState(any(), any());
     when(blockchainQueries.transactionByBlockHashAndIndex(blockHash, TRANSACTION_INDEX))
         .thenReturn(Optional.of(transactionWithMetadata));
     when(worldState.get(accountAddress)).thenReturn(account);
     when(blockReplay.afterTransactionInBlock(
-            eq(worldState), eq(blockHash), eq(transactionHash), any()))
+            any(Tracer.TraceableState.class), any(Hash.class), eq(transactionHash), any()))
         .thenAnswer(this::callAction);
 
     final List<AccountStorageEntry> entries = new ArrayList<>();
@@ -168,7 +169,7 @@ public class DebugStorageRangeAtTest {
   private Object callAction(final InvocationOnMock invocation) {
     //noinspection rawtypes
     return Optional.of(
-        ((BlockReplay.TransactionAction) invocation.getArgument(2))
+        ((BlockReplay.TransactionAction) invocation.getArgument(3))
             .performAction(transaction, blockHeader, blockchain, transactionProcessor, Wei.ZERO));
   }
 }

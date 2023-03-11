@@ -106,14 +106,12 @@ public class TransactionTracerTest {
     when(blockHeader.getNumber()).thenReturn(12L);
     when(blockHeader.getHash()).thenReturn(blockHash);
     when(blockHeader.getParentHash()).thenReturn(previousBlockHash);
-    when(previousBlockHeader.getBlockHash()).thenReturn(Hash.ZERO);
     when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     when(protocolSpec.getBadBlocksManager()).thenReturn(new BadBlockManager());
-    when(mutableWorldState.copy()).thenReturn(mutableWorldState);
   }
 
   @Test
