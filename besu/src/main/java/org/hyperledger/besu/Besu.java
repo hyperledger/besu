@@ -62,7 +62,15 @@ public final class Besu {
   }
 
   private static Logger setupLogging() {
-    InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+    try {
+      // This call is to test if log4j classes are available
+      ((Log4J2LoggerFactory) Log4J2LoggerFactory.INSTANCE).newInstance("");
+      InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+    } catch (Throwable t) {
+      System.out.printf(
+          "Could not set netty log4j logger factory: %s - %s%n",
+          t.getClass().getSimpleName(), t.getMessage());
+    }
     try {
       System.setProperty(
           "vertx.logger-delegate-factory-class-name",
@@ -70,10 +78,10 @@ public final class Besu {
       System.setProperty(
           "log4j.configurationFactory", BesuLoggingConfigurationFactory.class.getName());
       System.setProperty("log4j.skipJansi", String.valueOf(false));
-    } catch (SecurityException e) {
-      System.out.println(
-          "Could not set logging system property as the security manager prevented it:"
-              + e.getMessage());
+    } catch (Throwable t) {
+      System.out.printf(
+          "Could not set logging system property: %s - %s%n",
+          t.getClass().getSimpleName(), t.getMessage());
     }
     final Logger logger = LoggerFactory.getLogger(Besu.class);
     Thread.setDefaultUncaughtExceptionHandler(slf4jExceptionHandler(logger));

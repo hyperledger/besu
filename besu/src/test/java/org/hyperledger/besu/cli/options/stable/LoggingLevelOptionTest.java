@@ -39,7 +39,7 @@ public class LoggingLevelOptionTest {
   @Test
   public void fatalLevelEqualsToError() {
     levelOption.setLogLevel("fatal");
-    assertThat(levelOption.getLogLevel()).isEqualTo(Level.ERROR);
+    assertThat(levelOption.getLogLevel()).isEqualTo("ERROR");
   }
 
   @Test
@@ -49,7 +49,7 @@ public class LoggingLevelOptionTest {
         .forEach(
             level -> {
               levelOption.setLogLevel(level.name());
-              assertThat(levelOption.getLogLevel()).isEqualTo(level);
+              assertThat(levelOption.getLogLevel()).isEqualTo(level.name());
             });
   }
 
