@@ -74,7 +74,6 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-            Optional.empty(),
             1L,
             false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
@@ -87,7 +86,6 @@ abstract class AbstractBlockCreatorTest {
     final AbstractBlockCreator blockCreator = blockCreatorWithoutWithdrawalsProcessor();
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
-            Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
@@ -110,7 +108,6 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(withdrawals),
             Optional.empty(),
-            Optional.empty(),
             1L,
             false);
 
@@ -131,7 +128,6 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             Optional.of(withdrawals),
-            Optional.empty(),
             Optional.empty(),
             1L,
             false);
