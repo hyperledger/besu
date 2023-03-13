@@ -14,19 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TransactionSource implements Iterator<Transaction> {
+public class TransactionSource implements Iterator<TransactionTrace> {
 
   private final List<Transaction> transactions;
   private final AtomicInteger currentIndex = new AtomicInteger(0);
+  private final Block block;
 
   public TransactionSource(final Block block) {
+    this.block = block;
     this.transactions = block.getBody().getTransactions();
   }
 
@@ -36,7 +40,8 @@ public class TransactionSource implements Iterator<Transaction> {
   }
 
   @Override
-  public Transaction next() {
-    return transactions.get(currentIndex.getAndIncrement());
+  public TransactionTrace next() {
+    return new TransactionTrace(
+        transactions.get(currentIndex.getAndIncrement()), Optional.of(block));
   }
 }

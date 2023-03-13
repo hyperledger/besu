@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -33,55 +32,73 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class ExecuteTransactionStep implements Function<Transaction, TransactionTrace> {
+public class ExecuteTransactionStep implements Function<TransactionTrace, TransactionTrace> {
 
   private final TraceBlock.ChainUpdater chainUpdater;
-  private final Block block;
   private final DebugOperationTracer tracer;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
   private final ProtocolSpec protocolSpec;
+  private final Block block;
 
   public ExecuteTransactionStep(
       final TraceBlock.ChainUpdater chainUpdater,
-      final Block block,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final DebugOperationTracer tracer,
-      final ProtocolSpec protocolSpec) {
+      final ProtocolSpec protocolSpec,
+      final Block block) {
     this.chainUpdater = chainUpdater;
-    this.block = block;
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.tracer = tracer;
     this.protocolSpec = protocolSpec;
+    this.block = block;
+  }
+
+  public ExecuteTransactionStep(
+      final TraceBlock.ChainUpdater chainUpdater,
+      final MainnetTransactionProcessor transactionProcessor,
+      final Blockchain blockchain,
+      final DebugOperationTracer tracer,
+      final ProtocolSpec protocolSpec) {
+    this(chainUpdater, transactionProcessor, blockchain, tracer, protocolSpec, null);
   }
 
   @Override
-  public TransactionTrace apply(final Transaction transaction) {
-    BlockHeader header = block.getHeader();
-    final Optional<BlockHeader> maybeParentHeader =
-        blockchain.getBlockHeader(header.getParentHash());
-    final Wei dataGasPrice =
-        protocolSpec
-            .getFeeMarket()
-            .dataPrice(
-                maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
-    final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
-    final TransactionProcessingResult result =
-        transactionProcessor.processTransaction(
-            blockchain,
-            chainUpdater.getNextUpdater(),
-            header,
-            transaction,
-            header.getCoinbase(),
-            tracer,
-            blockHashLookup,
-            false,
-            dataGasPrice);
+  public TransactionTrace apply(final TransactionTrace transactionTrace) {
+    Block block = this.block;
+    if (block == null) block = transactionTrace.getBlock().get();
 
-    final List<TraceFrame> traceFrames = tracer.copyTraceFrames();
-    tracer.reset();
-    return new TransactionTrace(transaction, result, traceFrames);
+    List<TraceFrame> traceFrames = null;
+    TransactionProcessingResult result = null;
+    // If it is not a reward Block trace
+    if (transactionTrace.getTransaction() != null) {
+      BlockHeader header = block.getHeader();
+      final Optional<BlockHeader> maybeParentHeader =
+          blockchain.getBlockHeader(header.getParentHash());
+      final Wei dataGasPrice =
+          protocolSpec
+              .getFeeMarket()
+              .dataPrice(
+                  maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
+      final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
+      result =
+          transactionProcessor.processTransaction(
+              blockchain,
+              chainUpdater.getNextUpdater(),
+              header,
+              transactionTrace.getTransaction(),
+              header.getCoinbase(),
+              tracer,
+              blockHashLookup,
+              false,
+              dataGasPrice);
+
+      traceFrames = tracer.copyTraceFrames();
+      tracer.reset();
+    }
+    return new TransactionTrace(
+        transactionTrace.getTransaction(), result, traceFrames, transactionTrace.getBlock());
   }
 }

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -154,11 +153,11 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
       final ExecuteTransactionStep executeTransactionStep =
           new ExecuteTransactionStep(
               chainUpdater,
-              block,
               transactionProcessor,
               getBlockchainQueries().getBlockchain(),
               debugOperationTracer,
-              protocolSpec);
+              protocolSpec,
+              block);
 
       final Function<TransactionTrace, CompletableFuture<TraceReplayResult>>
           traceReplayTransactionStep =
@@ -167,7 +166,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
       final BuildArrayNodeCompleterStep buildArrayNodeStep =
           new BuildArrayNodeCompleterStep(resultArrayNode);
 
-      final Pipeline<Transaction> traceBlockPipeline =
+      final Pipeline<TransactionTrace> traceBlockPipeline =
           createPipelineFrom(
                   "getTransactions",
                   transactionSource,

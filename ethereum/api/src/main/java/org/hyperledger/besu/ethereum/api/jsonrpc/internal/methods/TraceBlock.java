@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -29,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -47,10 +45,7 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -150,16 +145,16 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       ExecuteTransactionStep executeTransactionStep =
           new ExecuteTransactionStep(
               chainUpdater,
-              block,
               transactionProcessor,
               getBlockchainQueries().getBlockchain(),
               debugOperationTracer,
-              protocolSpec);
-      Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> traceFlatTransactionStep =
+              protocolSpec,
+              block);
+      TraceFlatTransactionStep traceFlatTransactionStep =
           new TraceFlatTransactionStep(protocolSchedule, block, filterParameter);
       BuildArrayNodeCompleterStep buildArrayNodeStep =
           new BuildArrayNodeCompleterStep(resultArrayNode);
-      Pipeline<Transaction> traceBlockPipeline =
+      Pipeline<TransactionTrace> traceBlockPipeline =
           createPipelineFrom(
                   "getTransactions",
                   transactionSource,

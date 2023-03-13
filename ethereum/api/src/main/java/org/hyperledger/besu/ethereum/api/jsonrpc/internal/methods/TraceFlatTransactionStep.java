@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -46,14 +48,21 @@ public class TraceFlatTransactionStep
 
   @Override
   public CompletableFuture<Stream<FlatTrace>> apply(final TransactionTrace transactionTrace) {
-
+    Stream<Trace> traceStream = null;
+    Block block = this.block;
+    if (block == null) block = transactionTrace.getBlock().get();
+    if (transactionTrace.getTransaction() == null) {
+      traceStream = RewardTraceGenerator.generateFromBlock(protocolSchedule, block);
+    } else {
+      traceStream =
+          FlatTraceGenerator.generateFromTransactionTraceAndBlock(
+              protocolSchedule, transactionTrace, block);
+    }
     if (filterParameter.isPresent()) {
       final List<Address> fromAddress = filterParameter.get().getFromAddress();
       final List<Address> toAddress = filterParameter.get().getToAddress();
-
       return CompletableFuture.completedFuture(
-          FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-                  protocolSchedule, transactionTrace, block)
+          traceStream
               .map(FlatTrace.class::cast)
               .filter(
                   trace ->
@@ -71,10 +80,7 @@ public class TraceFlatTransactionStep
                               .orElse(false)));
 
     } else {
-      return CompletableFuture.completedFuture(
-          FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-                  protocolSchedule, transactionTrace, block)
-              .map(FlatTrace.class::cast));
+      return CompletableFuture.completedFuture(traceStream.map(FlatTrace.class::cast));
     }
   }
 }
