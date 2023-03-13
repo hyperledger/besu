@@ -16,24 +16,21 @@ package org.hyperledger.besu.tests.acceptance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
-import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
-import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-
 import java.io.IOException;
-
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.junit.Test;
 
 public class LoggingTest extends AcceptanceTestBase {
 
   @Test
   public void testDefaultLoggingIsAtLeastInfo() throws IOException {
-    final BesuNode node = besu.runCommand("");
+    final BesuNode node = besu.createArchiveNode("logger");
     cluster.startConsoleCapture();
     cluster.runNodeStart(node);
 
-    // Wait for log to contain an info level
-    WaitUtils.waitFor(
-        10, () -> assertThat(cluster.getConsoleContents()).doesNotContain("| INFO |"));
+    node.verify(net.awaitPeerCount(0));
+
+    assertThat(cluster.getConsoleContents()).contains("| INFO  |");
   }
 }
