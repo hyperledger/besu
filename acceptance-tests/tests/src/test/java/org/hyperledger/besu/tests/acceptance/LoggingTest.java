@@ -16,9 +16,11 @@ package org.hyperledger.besu.tests.acceptance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+
+import java.io.IOException;
+
 import org.junit.Test;
 
 public class LoggingTest extends AcceptanceTestBase {
