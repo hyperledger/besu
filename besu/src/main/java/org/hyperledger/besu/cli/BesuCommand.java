@@ -1312,7 +1312,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--rpc-max-logs-range"},
       description =
           "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
-  private final Long rpcMaxLogsRange = 1000L;
+  private final Long rpcMaxLogsRange = 5000L;
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
