@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -100,12 +99,13 @@ public class NewPooledTransactionHashesMessageProcessor {
     try {
       final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactionHashes();
 
-      traceLambda(
-          LOG,
-          "Received pooled transaction hashes message from {}, incoming hashes {}, incoming list {}",
-          peer::toString,
-          incomingTransactionHashes::size,
-          incomingTransactionHashes::toString);
+      LOG.atTrace()
+          .setMessage(
+              "Received pooled transaction hashes message from {}, incoming hashes {}, incoming list {}")
+          .addArgument(peer)
+          .addArgument(incomingTransactionHashes::size)
+          .addArgument(incomingTransactionHashes)
+          .log();
 
       final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
           scheduledTasks.computeIfAbsent(
@@ -138,6 +138,7 @@ public class NewPooledTransactionHashesMessageProcessor {
             "Malformed pooled transaction hashes message received (BREACH_OF_PROTOCOL), disconnecting: {}",
             peer,
             ex);
+        LOG.trace("Message data: {}", transactionsMessage.getData());
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }
     }

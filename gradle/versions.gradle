@@ -125,10 +125,10 @@ dependencyManagement {
     dependency 'org.apache.commons:commons-lang3:3.12.0'
     dependency 'org.apache.commons:commons-text:1.10.0'
 
-    dependency 'org.apache.logging.log4j:log4j-api:2.17.2'
-    dependency 'org.apache.logging.log4j:log4j-core:2.17.2'
-    dependency 'org.apache.logging.log4j:log4j-jul:2.17.2'
-    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
+    dependency 'org.apache.logging.log4j:log4j-api:2.20.0'
+    dependency 'org.apache.logging.log4j:log4j-core:2.20.0'
+    dependency 'org.apache.logging.log4j:log4j-jul:2.20.0'
+    dependency 'org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0'
 
     dependency 'org.apache.tuweni:tuweni-bytes:2.3.1'
     dependency 'org.apache.tuweni:tuweni-config:2.3.1'
@@ -192,7 +192,8 @@ dependencyManagement {
 
     dependency 'org.rocksdb:rocksdbjni:7.7.3'
 
-    dependency 'org.slf4j:slf4j-api:1.7.36'
+    dependency 'org.slf4j:slf4j-api:2.0.6'
+    dependency 'org.slf4j:slf4j-nop:2.0.6'
 
     dependency 'org.springframework.security:spring-security-crypto:5.7.2'
 
