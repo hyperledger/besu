@@ -70,10 +70,10 @@ public final class Besu {
       System.setProperty(
           "log4j.configurationFactory", BesuLoggingConfigurationFactory.class.getName());
       System.setProperty("log4j.skipJansi", String.valueOf(false));
-    } catch (SecurityException e) {
-      System.out.println(
-          "Could not set logging system property as the security manager prevented it:"
-              + e.getMessage());
+    } catch (Throwable t) {
+      System.out.printf(
+          "Could not set logging system property: %s - %s%n",
+          t.getClass().getSimpleName(), t.getMessage());
     }
     final Logger logger = LoggerFactory.getLogger(Besu.class);
     Thread.setDefaultUncaughtExceptionHandler(slf4jExceptionHandler(logger));

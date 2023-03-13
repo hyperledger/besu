@@ -59,9 +59,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
 
@@ -125,7 +125,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode metricsNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     System.setProperty("root.log.level", "DEBUG");
     Server server =
@@ -163,7 +163,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
     cluster.start(metricsNode);
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     closer.close();
   }
