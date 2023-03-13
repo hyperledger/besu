@@ -2,6 +2,7 @@ name: dco
 on:
   pull_request:
   workflow_dispatch:
+  merge_group:
 
 jobs:
   dco:
