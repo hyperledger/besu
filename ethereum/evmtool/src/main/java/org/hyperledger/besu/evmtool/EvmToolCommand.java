@@ -41,7 +41,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -60,7 +60,6 @@ import java.util.Optional;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -251,6 +250,7 @@ public class EvmToolCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
     try {
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
@@ -285,14 +285,9 @@ public class EvmToolCommand implements Runnable {
               .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
               .buildBlockHeader();
 
-      Log4j2ConfiguratorUtil.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int remainingIters = this.repeat;
-      Log4j2ConfiguratorUtil.setLevel(
-          "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
       final ProtocolSpec protocolSpec =
           component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
-      Log4j2ConfiguratorUtil.setLevel(
-          "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
       final Transaction tx =
           new Transaction(
               0,
