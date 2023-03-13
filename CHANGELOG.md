@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Increase default from 1000 to 5000 for `--rpc-max-logs-range` #5209
 
 ### Bug Fixes
 
