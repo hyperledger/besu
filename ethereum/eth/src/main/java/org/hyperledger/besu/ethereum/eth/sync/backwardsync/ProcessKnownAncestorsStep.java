@@ -17,7 +17,6 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Block;
@@ -54,10 +53,10 @@ public class ProcessKnownAncestorsStep {
       boolean isFirstUnProcessedHeader = true;
       if (context.getProtocolContext().getBlockchain().contains(header.getHash())
           && header.getNumber() <= chainHeadBlockNumber) {
-        debugLambda(
-            LOG,
-            "Block {} is already imported, we can ignore it for the sync process",
-            header::toLogString);
+        LOG.atDebug()
+            .setMessage("Block {} is already imported, we can ignore it for the sync process")
+            .addArgument(header::toLogString)
+            .log();
         backwardChain.dropFirstHeader();
         isFirstUnProcessedHeader = false;
       } else if (context.getProtocolContext().getBlockchain().contains(header.getParentHash())) {
@@ -67,7 +66,7 @@ public class ProcessKnownAncestorsStep {
                 ? Optional.of(backwardChain.getTrustedBlock(header.getHash()))
                 : context.getProtocolContext().getBlockchain().getBlockByHash(header.getHash());
         if (block.isPresent()) {
-          debugLambda(LOG, "Importing block {}", header::toLogString);
+          LOG.atDebug().setMessage("Importing block {}").addArgument(header::toLogString).log();
           context.saveBlock(block.get());
           if (isTrustedBlock) {
             backwardChain.dropFirstHeader();
@@ -76,7 +75,10 @@ public class ProcessKnownAncestorsStep {
         }
       }
       if (isFirstUnProcessedHeader) {
-        debugLambda(LOG, "First unprocessed header is {}", header::toLogString);
+        LOG.atDebug()
+            .setMessage("First unprocessed header is {}")
+            .addArgument(header::toLogString)
+            .log();
         return;
       }
     }

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -64,12 +62,12 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
     final long count = request.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
     final Object reqId = request.getRequest().getId();
 
-    traceLambda(
-        LOG,
-        "{} parameters: start block number {} count {}",
-        () -> getName(),
-        () -> startBlockNumber,
-        () -> count);
+    LOG.atTrace()
+        .setMessage("{} parameters: start block number {} count {}")
+        .addArgument(this::getName)
+        .addArgument(startBlockNumber)
+        .addArgument(count)
+        .log();
 
     if (startBlockNumber < 1 || count < 1) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_PARAMS);

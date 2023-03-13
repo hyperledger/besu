@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -35,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -42,14 +41,13 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -116,8 +114,9 @@ public class BlockTransactionSelector {
   }
 
   public static class TransactionSelectionResults {
-
-    private final Map<TransactionType, List<Transaction>> transactionsByType = new HashMap<>();
+    private final List<Transaction> transactions = Lists.newArrayList();
+    private final Map<TransactionType, List<Transaction>> transactionsByType =
+        new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
     private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
@@ -128,19 +127,21 @@ public class BlockTransactionSelector {
         final TransactionReceipt receipt,
         final long gasUsed,
         final long dataGasUsed) {
+      transactions.add(transaction);
       transactionsByType
           .computeIfAbsent(transaction.getType(), type -> new ArrayList<>())
           .add(transaction);
       receipts.add(receipt);
       cumulativeGasUsed += gasUsed;
       cumulativeDataGasUsed += dataGasUsed;
-      traceLambda(
-          LOG,
-          "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative data gas used {}",
-          transaction::toTraceLog,
-          () -> transactionsByType.values().stream().mapToInt(List::size).sum(),
-          () -> cumulativeGasUsed,
-          () -> cumulativeDataGasUsed);
+      LOG.atTrace()
+          .setMessage(
+              "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative data gas used {}")
+          .addArgument(transaction::toTraceLog)
+          .addArgument(transactions::size)
+          .addArgument(cumulativeGasUsed)
+          .addArgument(cumulativeDataGasUsed)
+          .log();
     }
 
     private void updateWithInvalidTransaction(
@@ -150,7 +151,7 @@ public class BlockTransactionSelector {
     }
 
     public List<Transaction> getTransactions() {
-      return streamAllTransactions().collect(Collectors.toList());
+      return transactions;
     }
 
     public List<Transaction> getTransactionsByType(final TransactionType type) {
@@ -173,10 +174,6 @@ public class BlockTransactionSelector {
       return invalidTransactions;
     }
 
-    private Stream<Transaction> streamAllTransactions() {
-      return transactionsByType.values().stream().flatMap(List::stream);
-    }
-
     @Override
     public boolean equals(final Object o) {
       if (this == o) {
@@ -188,7 +185,7 @@ public class BlockTransactionSelector {
       TransactionSelectionResults that = (TransactionSelectionResults) o;
       return cumulativeGasUsed == that.cumulativeGasUsed
           && cumulativeDataGasUsed == that.cumulativeDataGasUsed
-          && transactionsByType.equals(that.transactionsByType)
+          && transactions.equals(that.transactions)
           && receipts.equals(that.receipts)
           && invalidTransactions.equals(that.invalidTransactions);
     }
@@ -196,11 +193,7 @@ public class BlockTransactionSelector {
     @Override
     public int hashCode() {
       return Objects.hash(
-          transactionsByType,
-          receipts,
-          invalidTransactions,
-          cumulativeGasUsed,
-          cumulativeDataGasUsed);
+          transactions, receipts, invalidTransactions, cumulativeGasUsed, cumulativeDataGasUsed);
     }
 
     public String toTraceLog() {
@@ -209,7 +202,7 @@ public class BlockTransactionSelector {
           + ", cumulativeDataGasUsed="
           + cumulativeDataGasUsed
           + ", transactions="
-          + streamAllTransactions().map(Transaction::toTraceLog).collect(Collectors.joining("; "));
+          + transactions.stream().map(Transaction::toTraceLog).collect(Collectors.joining("; "));
     }
   }
 
@@ -272,12 +265,16 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
     LOG.debug("Transaction pool size {}", pendingTransactions.size());
-    traceLambda(
-        LOG, "Transaction pool content {}", () -> pendingTransactions.toTraceLog(false, false));
+    LOG.atTrace()
+        .setMessage("Transaction pool content {}")
+        .addArgument(() -> pendingTransactions.toTraceLog(false, false))
+        .log();
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction, false));
-    traceLambda(
-        LOG, "Transaction selection result result {}", transactionSelectionResult::toTraceLog);
+    LOG.atTrace()
+        .setMessage("Transaction selection result result {}")
+        .addArgument(transactionSelectionResult::toTraceLog)
+        .log();
     return transactionSelectionResult;
   }
 
@@ -308,10 +305,12 @@ public class BlockTransactionSelector {
     }
 
     if (transactionTooLargeForBlock(transaction)) {
-      traceLambda(
-          LOG, "Transaction {} too large to select for block creation", transaction::toTraceLog);
+      LOG.atTrace()
+          .setMessage("Transaction {} too large to select for block creation")
+          .addArgument(transaction::toTraceLog)
+          .log();
       if (blockOccupancyAboveThreshold()) {
-        traceLambda(LOG, "Block occupancy above threshold, completing operation");
+        LOG.trace("Block occupancy above threshold, completing operation");
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;
@@ -326,7 +325,8 @@ public class BlockTransactionSelector {
     }
 
     final WorldUpdater worldStateUpdater = worldState.updater();
-    final BlockHashLookup blockHashLookup = new BlockHashLookup(processableBlockHeader, blockchain);
+    final BlockHashLookup blockHashLookup =
+        new CachingBlockHashLookup(processableBlockHeader, blockchain);
     final boolean isGoQuorumPrivateTransaction =
         transaction.isGoQuorumPrivateTransaction(
             transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
@@ -364,10 +364,13 @@ public class BlockTransactionSelector {
 
     if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
-      traceLambda(LOG, "Selected {} for block creation", transaction::toTraceLog);
+      LOG.atTrace()
+          .setMessage("Selected {} for block creation")
+          .addArgument(transaction::toTraceLog)
+          .log();
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
-      final var isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
+      final boolean isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
       if (!isIncorrectNonce || reportFutureNonceTransactionsAsInvalid) {
         transactionSelectionResult.updateWithInvalidTransaction(
             transaction, effectiveResult.getValidationResult());
@@ -418,22 +421,22 @@ public class BlockTransactionSelector {
       final Transaction transaction,
       final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
 
-    final var invalidReason = invalidReasonValidationResult.getInvalidReason();
+    final TransactionInvalidReason invalidReason = invalidReasonValidationResult.getInvalidReason();
     // If the invalid reason is transient, then leave the transaction in the pool and continue
     if (isTransientValidationError(invalidReason)) {
-      traceLambda(
-          LOG,
-          "Transient validation error {} for transaction {} keeping it in the pool",
-          invalidReason::toString,
-          transaction::toTraceLog);
+      LOG.atTrace()
+          .setMessage("Transient validation error {} for transaction {} keeping it in the pool")
+          .addArgument(invalidReason)
+          .addArgument(transaction::toTraceLog)
+          .log();
       return TransactionSelectionResult.CONTINUE;
     }
     // If the transaction was invalid for any other reason, delete it, and continue.
-    traceLambda(
-        LOG,
-        "Delete invalid transaction {}, reason {}",
-        transaction::toTraceLog,
-        invalidReason::toString);
+    LOG.atTrace()
+        .setMessage("Delete invalid transaction {}, reason {}")
+        .addArgument(transaction::toTraceLog)
+        .addArgument(invalidReason)
+        .log();
     return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
   }
 

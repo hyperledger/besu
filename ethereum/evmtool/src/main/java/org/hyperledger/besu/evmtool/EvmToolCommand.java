@@ -28,9 +28,10 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -39,7 +40,8 @@ import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -52,12 +54,12 @@ import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.NavigableMap;
 import java.util.Optional;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -248,6 +250,7 @@ public class EvmToolCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
     try {
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
@@ -282,14 +285,9 @@ public class EvmToolCommand implements Runnable {
               .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
               .buildBlockHeader();
 
-      Log4j2ConfiguratorUtil.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int remainingIters = this.repeat;
-      Log4j2ConfiguratorUtil.setLevel(
-          "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
       final ProtocolSpec protocolSpec =
           component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
-      Log4j2ConfiguratorUtil.setLevel(
-          "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
       final Transaction tx =
           new Transaction(
               0,
@@ -331,7 +329,7 @@ public class EvmToolCommand implements Runnable {
                 ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData)
                 : OperationTracer.NO_TRACING;
 
-        var updater = component.getWorldUpdater();
+        WorldUpdater updater = component.getWorldUpdater();
         updater.getOrCreate(sender);
         updater.getOrCreate(receiver);
 
@@ -355,7 +353,7 @@ public class EvmToolCommand implements Runnable {
                 .depth(0)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
-                .blockHashLookup(new BlockHashLookup(blockHeader, component.getBlockchain()))
+                .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
                 .build());
 
         final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
@@ -380,7 +378,7 @@ public class EvmToolCommand implements Runnable {
 
           if (lastLoop && messageFrameStack.isEmpty()) {
             final long evmGas = txGas - messageFrame.getRemainingGas();
-            final var resultLine = new JsonObject();
+            final JsonObject resultLine = new JsonObject();
             resultLine.put("gasUser", "0x" + Long.toHexString(evmGas));
             if (!noTime) {
               resultLine.put("timens", lastTime).put("time", lastTime / 1000);
@@ -418,7 +416,8 @@ public class EvmToolCommand implements Runnable {
               if (account.getCode() != null && account.getCode().size() > 0) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }
-              var storageEntries = account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
+                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
               if (!storageEntries.isEmpty()) {
                 out.println("  \"storage\": {");
                 out.println(
