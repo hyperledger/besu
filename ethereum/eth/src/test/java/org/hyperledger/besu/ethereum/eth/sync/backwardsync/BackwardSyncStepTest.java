@@ -74,7 +74,7 @@ public class BackwardSyncStepTest {
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
   GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
-  GenericKeyValueStorageFacade<String, BlockHeader> variablesStorage;
+  GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage;
 
   @Before
   public void setup() {
@@ -91,7 +91,7 @@ public class BackwardSyncStepTest {
     chainStorage =
         new GenericKeyValueStorageFacade<>(
             Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
-    variablesStorage =
+    sessionDataStorage =
         new GenericKeyValueStorageFacade<>(
             key -> key.getBytes(StandardCharsets.UTF_8),
             new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
@@ -240,7 +240,7 @@ public class BackwardSyncStepTest {
   @Nonnull
   private BackwardChain createBackwardChain(final int number) {
     final BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, chainStorage, variablesStorage);
+        new BackwardChain(headersStorage, blocksStorage, chainStorage, sessionDataStorage);
     backwardChain.appendTrustedBlock(remoteBlockchain.getBlockByNumber(number).orElseThrow());
     return backwardChain;
   }

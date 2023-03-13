@@ -42,7 +42,7 @@ public class BackwardChain {
   private final GenericKeyValueStorageFacade<Hash, BlockHeader> headers;
   private final GenericKeyValueStorageFacade<Hash, Block> blocks;
   private final GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
-  private final GenericKeyValueStorageFacade<String, BlockHeader> variablesStorage;
+  private final GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage;
   private Optional<BlockHeader> firstStoredAncestor;
   private Optional<BlockHeader> lastStoredPivot;
   private final Queue<Hash> hashesToAppend = new ArrayDeque<>();
@@ -51,13 +51,13 @@ public class BackwardChain {
       final GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage,
       final GenericKeyValueStorageFacade<Hash, Block> blocksStorage,
       final GenericKeyValueStorageFacade<Hash, Hash> chainStorage,
-      final GenericKeyValueStorageFacade<String, BlockHeader> variablesStorage) {
+      final GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage) {
     this.headers = headersStorage;
     this.blocks = blocksStorage;
     this.chainStorage = chainStorage;
-    this.variablesStorage = variablesStorage;
+    this.sessionDataStorage = sessionDataStorage;
     firstStoredAncestor =
-        variablesStorage
+        sessionDataStorage
             .get(FIRST_STORED_ANCESTOR_KEY)
             .map(
                 header -> {
@@ -68,7 +68,7 @@ public class BackwardChain {
                   return header;
                 });
     lastStoredPivot =
-        variablesStorage
+        sessionDataStorage
             .get(LAST_STORED_PIVOT_KEY)
             .map(
                 header -> {
@@ -98,6 +98,9 @@ public class BackwardChain {
             new HashConvertor(),
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN)),
+        // using BACKWARD_SYNC_CHAIN that contains the sequence of the work to do,
+        // to also store the session data that will be used to resume
+        // the backward sync from where it was left before the restart
         new GenericKeyValueStorageFacade<>(
             key -> key.getBytes(StandardCharsets.UTF_8),
             BlocksHeadersConvertor.of(blockHeaderFunctions),
@@ -147,15 +150,15 @@ public class BackwardChain {
 
   private void updateFirstStoredAncestor(final Optional<BlockHeader> maybeHeader) {
     maybeHeader.ifPresentOrElse(
-        header -> variablesStorage.put(FIRST_STORED_ANCESTOR_KEY, header),
-        () -> variablesStorage.drop(FIRST_STORED_ANCESTOR_KEY));
+        header -> sessionDataStorage.put(FIRST_STORED_ANCESTOR_KEY, header),
+        () -> sessionDataStorage.drop(FIRST_STORED_ANCESTOR_KEY));
     firstStoredAncestor = maybeHeader;
   }
 
   private void updateLastStoredPivot(final Optional<BlockHeader> maybeHeader) {
     maybeHeader.ifPresentOrElse(
-        header -> variablesStorage.put(LAST_STORED_PIVOT_KEY, header),
-        () -> variablesStorage.drop(LAST_STORED_PIVOT_KEY));
+        header -> sessionDataStorage.put(LAST_STORED_PIVOT_KEY, header),
+        () -> sessionDataStorage.drop(LAST_STORED_PIVOT_KEY));
     lastStoredPivot = maybeHeader;
   }
 
@@ -217,7 +220,7 @@ public class BackwardChain {
     blocks.clear();
     headers.clear();
     chainStorage.clear();
-    variablesStorage.clear();
+    sessionDataStorage.clear();
     firstStoredAncestor = Optional.empty();
     lastStoredPivot = Optional.empty();
     hashesToAppend.clear();

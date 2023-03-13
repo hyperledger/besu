@@ -194,12 +194,12 @@ public class BackwardSyncContextTest {
     final GenericKeyValueStorageFacade<Hash, Hash> chainStorage =
         new GenericKeyValueStorageFacade<>(
             Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
-    final GenericKeyValueStorageFacade<String, BlockHeader> variablesStorage =
+    final GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage =
         new GenericKeyValueStorageFacade<>(
             key -> key.getBytes(StandardCharsets.UTF_8),
             BlocksHeadersConvertor.of(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
-    return new BackwardChain(headersStorage, blocksStorage, chainStorage, variablesStorage);
+    return new BackwardChain(headersStorage, blocksStorage, chainStorage, sessionDataStorage);
   }
 
   @Test
