@@ -25,14 +25,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class BesuEventsPluginTest extends AcceptanceTestBase {
   private BesuNode pluginNode;
   private BesuNode minerNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("minerNode");
     pluginNode =
@@ -42,7 +42,7 @@ public class BesuEventsPluginTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void blockIsAnnounded() {
+  public void blockIsAnnounced() {
     waitForFile(pluginNode.homeDirectory().resolve("plugins/newBlock.2"));
   }
 
