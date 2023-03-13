@@ -65,7 +65,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     super.reset();
     sparseEvictionOrder.clear();
     gapBySender.clear();
-    orderByGap.forEach(senders -> senders.clear());
+    orderByGap.forEach(Set::clear);
   }
 
   @Override
@@ -169,7 +169,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     sparseEvictionOrder.remove(evictedTx);
 
     if (lessReadySenderTxs.isEmpty()) {
-      orderByGap.get(gapBySender.remove(evictedTx.getSender())).remove(evictedTx.getSender());
+      deleteGap(evictedTx.getSender());
     }
   }
 
@@ -190,9 +190,12 @@ public class SparseTransactions extends AbstractTransactionsLayer {
         }
       }
     } else {
-      final int gap = gapBySender.remove(sender);
-      orderByGap.get(gap).remove(sender);
+      deleteGap(sender);
     }
+  }
+
+  private void deleteGap(final Address sender) {
+    orderByGap.get(gapBySender.remove(sender)).remove(sender);
   }
 
   @Override
@@ -228,17 +231,17 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
-  public void notifyAdded(final PendingTransaction pendingTransaction) {
+  protected void internalNotifyAdded(
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final PendingTransaction pendingTransaction) {
     final Address sender = pendingTransaction.getSender();
     final Integer currGap = gapBySender.get(sender);
     if (currGap != null) {
-      final var senderTxs = txsBySender.get(sender);
       final int newGap = (int) (senderTxs.firstKey() - (pendingTransaction.getNonce() + 1));
       if (newGap < currGap) {
         updateGap(sender, currGap, newGap);
       }
     }
-    nextLayer.notifyAdded(pendingTransaction);
   }
 
   @Override

@@ -53,7 +53,9 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   }
 
   @Override
-  public void notifyAdded(final PendingTransaction pendingTransaction) {
-    nextLayer.notifyAdded(pendingTransaction);
+  protected void internalNotifyAdded(
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final PendingTransaction pendingTransaction) {
+    // no-op
   }
 }

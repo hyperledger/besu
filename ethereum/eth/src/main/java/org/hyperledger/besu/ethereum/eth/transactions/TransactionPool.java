@@ -42,6 +42,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -62,8 +63,8 @@ import org.slf4j.LoggerFactory;
  * <p>This class is safe for use across multiple threads.
  */
 public class TransactionPool implements BlockAddedObserver {
-
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
+  private static final Logger LOG_TX_CSV = LoggerFactory.getLogger("LOG_TX_CSV");
   private final PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -90,6 +91,19 @@ public class TransactionPool implements BlockAddedObserver {
     this.metrics = metrics;
     this.configuration = configuration;
     ethContext.getEthPeers().subscribeConnect(this::handleConnect);
+    LOG_TX_CSV
+        .atTrace()
+        .setMessage("{},{},{},{}")
+        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getNumber).orElse(0L))
+        .addArgument(
+            () ->
+                getChainHeadBlockHeader()
+                    .flatMap(BlockHeader::getBaseFee)
+                    .map(Wei::getAsBigInteger)
+                    .orElse(BigInteger.ZERO))
+        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getGasUsed).orElse(0L))
+        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getGasLimit).orElse(0L))
+        .log();
   }
 
   void handleConnect(final EthPeer peer) {

@@ -44,8 +44,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,7 +125,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     // csv fields: sequence, addedAt, sender, sender_nonce, nonce, type, hash, rlp
     LOG_TX_CSV
         .atTrace()
-        .setMessage("{},{},{},{},{},{},{},{}")
+        .setMessage("T,{},{},{},{},{},{},{},{}")
         .addArgument(pendingTransaction.getSequence())
         .addArgument(pendingTransaction.getAddedToPoolAt())
         .addArgument(pendingTransaction.getSender())
@@ -142,7 +142,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
   }
 
-  @Nullable
   private TransactionAddedResult nonceChecks(
       final PendingTransaction pendingTransaction,
       final long senderNonce,
@@ -284,8 +283,28 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .addArgument(blockHeader::toLogString)
         .log();
 
-    prioritizedTransactions.blockAdded(
-        feeMarket, blockHeader, maxConfirmedNonceBySender(confirmedTransactions));
+    final var maxConfirmedNonceBySender = maxConfirmedNonceBySender(confirmedTransactions);
+
+    prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
+
+    // block number, block hash, parent base fee, sender, max nonce ..., rlp
+    LOG_TX_CSV
+        .atTrace()
+        .setMessage("B,{},{},{},{},{}")
+        .addArgument(blockHeader.getNumber())
+        .addArgument(blockHeader.getBlockHash())
+        .addArgument(
+            () ->
+                maxConfirmedNonceBySender.entrySet().stream()
+                    .map(e -> e.getKey().toHexString() + "," + e.getValue())
+                    .collect(Collectors.joining(",")))
+        .addArgument(
+            () -> {
+              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+              blockHeader.writeTo(rlp);
+              return rlp.encoded().toHexString();
+            })
+        .log();
   }
 
   private Map<Address, Long> maxConfirmedNonceBySender(
@@ -332,7 +351,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
   */
   @Override
   public synchronized String logStats() {
-    return prioritizedTransactions.logStats();
+    final String statsString = prioritizedTransactions.logStats();
+    LOG_TX_CSV.atTrace().setMessage("S,{}").addArgument(statsString).log();
+    return statsString;
   }
 
   private void consistencyCheck() {

@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionsLayer.class);
-  private static final Logger LOG_TX_CSV = LoggerFactory.getLogger("LOG_TX_CSV");
   private static final NavigableMap<Long, PendingTransaction> EMPTY_SENDER_TXS = new TreeMap<>();
   protected final TransactionPoolConfiguration poolConfig;
   protected final TransactionsLayer nextLayer;
@@ -179,6 +178,31 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   @Override
+  public void notifyAdded(final PendingTransaction pendingTransaction) {
+    final Address sender = pendingTransaction.getSender();
+    final var senderTxs = txsBySender.get(sender);
+    if (senderTxs != null) {
+      // check if it is a cross layer replacement, namely added to a previous layer
+
+      if (senderTxs.firstKey() == pendingTransaction.getNonce()) {
+        final PendingTransaction replacedTx = senderTxs.pollFirstEntry().getValue();
+        processRemove(senderTxs, replacedTx.getTransaction());
+
+        if (senderTxs.isEmpty()) {
+          txsBySender.remove(sender);
+        }
+      } else {
+        internalNotifyAdded(senderTxs, pendingTransaction);
+      }
+    }
+    nextLayer.notifyAdded(pendingTransaction);
+  }
+
+  protected abstract void internalNotifyAdded(
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final PendingTransaction pendingTransaction);
+
+  @Override
   public PendingTransaction promote(final Address sender, final long nonce) {
     final var senderTxs = txsBySender.get(sender);
     if (senderTxs != null) {
@@ -297,7 +321,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     }
   }
 
-  private void replaced(final PendingTransaction replacedTx) {
+  protected void replaced(final PendingTransaction replacedTx) {
     pendingTransactions.remove(replacedTx.getHash());
     decreaseSpaceUsed(replacedTx);
     internalReplaced(replacedTx);
@@ -350,7 +374,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final NavigableMap<Long, PendingTransaction> lessReadySenderTxs,
       final PendingTransaction evictedTx);
 
-  // ToDo: find a more efficient way to handle remove and gaps
   @Override
   public void remove(final PendingTransaction pendingTransaction) {
     nextLayer.remove(pendingTransaction);
@@ -391,19 +414,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     LOG.atDebug()
         .setMessage("Managing new added block {}")
         .addArgument(blockHeader::toLogString)
-        .log();
-
-    // block number, block hash, sender, max nonce ...
-    LOG_TX_CSV
-        .atTrace()
-        .setMessage("{},{},{}")
-        .addArgument(blockHeader.getNumber())
-        .addArgument(blockHeader.getBlockHash())
-        .addArgument(
-            () ->
-                maxConfirmedNonceBySender.entrySet().stream()
-                    .map(e -> e.getKey().toHexString() + "," + e.getValue())
-                    .collect(Collectors.joining(",")))
         .log();
 
     nextLayer.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);

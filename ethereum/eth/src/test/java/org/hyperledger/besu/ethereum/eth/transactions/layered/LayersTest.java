@@ -360,7 +360,18 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedReadyForSenders(S3, 1, S2, 0, S2, 1)
                 .expectedSparseForSenders(S3, 2, S1, 1, S1, 0)
                 // ToDo: non optimal discard, worth to improve?
-                .expectedDroppedForSender(S3, 3)));
+                .expectedDroppedForSender(S3, 3)),
+        Arguments.of(
+            new Scenario("replacement cross layer")
+                .addForSenders(S2, 0, S3, 2, S1, 1, S2, 1, S3, 0, S1, 0, S3, 1)
+                // ToDo: only S3[1] is prioritized because there is no space to try to fill gaps
+                .expectedPrioritizedForSenders(S3, 0, S3, 1, S2, 0)
+                .expectedReadyForSenders(S2, 1, S1, 0, S1, 1)
+                .expectedSparseForSender(S3, 2)
+                .addForSenders(S3, 2) // added in prioritized, but replacement in sparse
+                .expectedPrioritizedForSenders(S3, 0, S3, 1, S3, 2)
+                .expectedReadyForSenders(S2, 0, S2, 1, S1, 0)
+                .expectedSparseForSender(S1, 1)));
   }
 
   static Stream<Arguments> providerRemoveTransactions() {
