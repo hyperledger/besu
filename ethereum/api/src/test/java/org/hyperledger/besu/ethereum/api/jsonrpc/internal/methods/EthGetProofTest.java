@@ -151,8 +151,7 @@ class EthGetProofTest {
 
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
-    when(archive.getMutable(any(Hash.class), any(Hash.class), anyBoolean()))
-        .thenReturn(Optional.empty());
+    when(archive.getMutable(any(BlockHeader.class), anyBoolean())).thenReturn(Optional.empty());
 
     final JsonRpcRequestContext request =
         requestWithParams(
