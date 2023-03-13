@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -41,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -108,6 +110,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
+
+    // TODO 6110: How do I verify validity of the deposits before I have transaction receipts?
+    final Optional<List<Deposit>> maybeDeposits = Optional.ofNullable(blockParam.getDeposits())
+            .map(ds -> ds.stream().map(DepositParameter::toDeposit).collect(toList()));
+
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");
@@ -337,6 +344,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (block.getBody().getWithdrawals().isPresent()) {
       message.append(" / %d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
+    }
+    if (block.getBody().getDeposits().isPresent()) {
+      message.append(" / %d ds");
+      messageArgs.add(block.getBody().getDeposits().get().size());
     }
     message.append(" / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d");
     messageArgs.addAll(

@@ -45,6 +45,6 @@ public class EngineGetPayloadV6110 extends AbstractEngineGetPayload {
       final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts) {
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(),
-        blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
+        blockResultFactory.payloadTransactionCompleteV6110(blockWithReceipts));
   }
 }

@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
@@ -408,7 +409,8 @@ public abstract class AbstractEngineNewPayloadTest {
             mockPayload(
                 createBlockHeader(Optional.of(Collections.emptyList())),
                 Collections.emptyList(),
-                withdrawals));
+                withdrawals,
+                    null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -425,7 +427,7 @@ public abstract class AbstractEngineNewPayloadTest {
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty());
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals));
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -438,7 +440,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
     var resp =
         resp(
-            mockPayload(createBlockHeader(Optional.empty()), Collections.emptyList(), withdrawals));
+            mockPayload(createBlockHeader(Optional.empty()), Collections.emptyList(), withdrawals, null));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -455,10 +457,12 @@ public abstract class AbstractEngineNewPayloadTest {
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.of(withdrawals));
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawalsParam));
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawalsParam, null));
 
     assertValidResponse(mockHeader, resp);
   }
+
+  //TODO 6110: Add deposit related tests
 
   @Test
   public void shouldReturnValidIfTimestampScheduleIsEmpty() {
@@ -496,13 +500,15 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getLogsBloom(),
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
-        null);
+        null,
+            null);
   }
 
   private EnginePayloadParameter mockPayload(
       final BlockHeader header,
       final List<String> txs,
-      final List<WithdrawalParameter> withdrawals) {
+      final List<WithdrawalParameter> withdrawals,
+      final List<DepositParameter> deposits) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -518,7 +524,8 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getLogsBloom(),
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
-        withdrawals);
+        withdrawals,
+        deposits);
   }
 
   @NotNull
@@ -584,4 +591,5 @@ public abstract class AbstractEngineNewPayloadTest {
     assertThat(res.getError()).isNull();
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
+
 }
