@@ -287,10 +287,14 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
 
-    // block number, block hash, parent base fee, sender, max nonce ..., rlp
+    logBlockHeaderToCSV(blockHeader, maxConfirmedNonceBySender);
+  }
+
+  private static void logBlockHeaderToCSV(final BlockHeader blockHeader, final Map<Address, Long> maxConfirmedNonceBySender) {
+    // block number, block hash, sender, max nonce ..., rlp
     LOG_TX_CSV
         .atTrace()
-        .setMessage("B,{},{},{},{},{}")
+        .setMessage("B,{},{},{},{}")
         .addArgument(blockHeader.getNumber())
         .addArgument(blockHeader.getBlockHash())
         .addArgument(
