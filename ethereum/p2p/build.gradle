@@ -40,6 +40,7 @@ dependencies {
   implementation project(':util')
 
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
   implementation 'dnsjava:dnsjava'
   implementation 'io.netty:netty-transport-native-unix-common'
   implementation 'io.prometheus:simpleclient'
@@ -60,6 +61,7 @@ dependencies {
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor "org.immutables:value"
+  annotationProcessor 'com.google.dagger:dagger-compiler'
   implementation "org.immutables:value-annotations"
   implementation 'tech.pegasys.discovery:discovery'
 

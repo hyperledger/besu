@@ -14,7 +14,7 @@
  *
  */
 
-package org.hyperledger.besu.util;
+package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -25,7 +25,6 @@ import dagger.Component;
 
 @Singleton
 @Component(modules = {MetricsSystemModule.class})
-public interface BesuComponent {
-
-  MetricsSystem buildMetricsSystem();
+public interface PeerDiscoveryComponent {
+  MetricsSystem getMetricsSystem();
 }

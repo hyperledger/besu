@@ -23,6 +23,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.p2p.discovery.DaggerPeerDiscoveryComponent;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -159,7 +160,6 @@ public class PeerDiscoveryController {
       final long cleanPeerTableIntervalMs,
       final PeerRequirement peerRequirement,
       final PeerPermissions peerPermissions,
-      final MetricsSystem metricsSystem,
       final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
       final ForkIdManager forkIdManager,
       final boolean filterOnEnrForkId,
@@ -174,9 +174,12 @@ public class PeerDiscoveryController {
     this.cleanPeerTableIntervalMs = cleanPeerTableIntervalMs;
     this.peerRequirement = peerRequirement;
     this.outboundMessageHandler = outboundMessageHandler;
-    this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
+
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
     this.rlpxAgent = rlpxAgent;
+
+    MetricsSystem metricsSystem = DaggerPeerDiscoveryComponent.create().getMetricsSystem();
+    this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -860,7 +863,6 @@ public class PeerDiscoveryController {
           cleanPeerTableIntervalMs,
           peerRequirement,
           peerPermissions,
-          metricsSystem,
           Optional.of(cachedEnrRequests),
           forkIdManager,
           filterOnEnrForkId,
