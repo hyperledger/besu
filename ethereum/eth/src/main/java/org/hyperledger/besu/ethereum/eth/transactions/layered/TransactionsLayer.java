@@ -46,7 +46,7 @@ public interface TransactionsLayer {
   TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
 
   // ToDo: find a more efficient way to handle remove and gaps
-  void remove(PendingTransaction pendingTransaction);
+  void invalidate(PendingTransaction pendingTransaction);
 
   void blockAdded(
       FeeMarket feeMarket,
@@ -76,4 +76,25 @@ public interface TransactionsLayer {
   long getCumulativeUsedSpace();
 
   String logStats();
+
+  enum RemovalReason {
+    CONFIRMED,
+    CROSS_LAYER_REPLACED,
+    EVICTED,
+    DROPPED,
+    FOLLOW_INVALIDATED,
+    INVALIDATED,
+    PROMOTED,
+    REPLACED;
+
+    private final String label;
+
+    RemovalReason() {
+      this.label = name().toLowerCase();
+    }
+
+    public String label() {
+      return label;
+    }
+  }
 }

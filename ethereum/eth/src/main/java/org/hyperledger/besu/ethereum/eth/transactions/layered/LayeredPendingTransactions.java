@@ -106,9 +106,10 @@ public class LayeredPendingTransactions implements PendingTransactions {
     final TransactionAddedResult nonceChecksResult =
         nonceChecks(pendingTransaction, senderNonce, nonceDistance);
     if (nonceChecksResult != null) {
-      metrics.incrementInvalid(
+      metrics.incrementRejected(
           pendingTransaction.isReceivedFromLocalSource(),
-          nonceChecksResult.maybeInvalidReason().get());
+          nonceChecksResult.maybeInvalidReason().get(),
+          "layertxpool");
       return nonceChecksResult;
     }
 
@@ -187,7 +188,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   // right now.
   public synchronized void selectTransactions(
       final PendingTransactions.TransactionSelector selector) {
-    final List<PendingTransaction> transactionsToRemove = new ArrayList<>();
+    final List<PendingTransaction> invalidTransactions = new ArrayList<>();
     final Set<Hash> alreadyChecked = new HashSet<>();
     final AtomicBoolean completed = new AtomicBoolean(false);
 
@@ -211,7 +212,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
                             case CONTINUE:
                               break;
                             case DELETE_TRANSACTION_AND_CONTINUE:
-                              transactionsToRemove.add(candidatePendingTx);
+                              invalidTransactions.add(candidatePendingTx);
                               break;
                             case COMPLETE_OPERATION:
                               completed.set(true);
@@ -219,7 +220,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
                           }
                         }));
 
-    transactionsToRemove.forEach(prioritizedTransactions::remove);
+    invalidTransactions.forEach(prioritizedTransactions::invalidate);
   }
 
   @Override
@@ -287,9 +288,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
     prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
 
     logBlockHeaderToCSV(blockHeader, maxConfirmedNonceBySender);
+
+    assert prioritizedTransactions.consistencyCheck(new HashMap<>());
   }
 
-  private static void logBlockHeaderToCSV(
+  private void logBlockHeaderToCSV(
       final BlockHeader blockHeader, final Map<Address, Long> maxConfirmedNonceBySender) {
     // block number, block hash, sender, max nonce ..., rlp
     LOG_TX_CSV

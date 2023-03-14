@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.PROMOTED;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -138,7 +140,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final Address sender = promotedTx.getSender();
       final var senderTxs = txsBySender.get(sender);
       senderTxs.pollFirstEntry();
-      processRemove(senderTxs, promotedTx.getTransaction());
+      processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
       if (senderTxs.isEmpty()) {
         txsBySender.remove(sender);
         orderByGap.get(0).remove(sender);

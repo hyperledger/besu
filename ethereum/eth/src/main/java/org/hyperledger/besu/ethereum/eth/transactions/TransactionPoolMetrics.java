@@ -33,10 +33,8 @@ public class TransactionPoolMetrics {
   private final MetricsSystem metricsSystem;
   private final LabelledMetric<Counter> addedCounter;
   private final LabelledMetric<Counter> removedCounter;
-  private final LabelledMetric<Counter> replacedCount;
-  private final LabelledMetric<Counter> invalidCounter;
   private final LabelledMetric<Counter> rejectedCounter;
-  private final LabelledMetric<Counter> evictedCounter;
+  private final LabelledMetric<Counter> promotedCounter;
   private final LabelledGauge spaceUsed;
   private final LabelledGauge transactionCount;
   private final Counter expiredTransactionsMessageCounter;
@@ -55,14 +53,6 @@ public class TransactionPoolMetrics {
             "source",
             "layer");
 
-    invalidCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_invalid_total",
-            "Count of transactions added to the transaction pool",
-            "source",
-            "reason");
-
     removedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
@@ -70,14 +60,6 @@ public class TransactionPoolMetrics {
             "Count of transactions removed from the transaction pool",
             "source",
             "operation",
-            "layer");
-
-    replacedCount =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_replaced_total",
-            "Count of transactions replaced in the transaction pool",
-            "source",
             "layer");
 
     rejectedCounter =
@@ -89,11 +71,12 @@ public class TransactionPoolMetrics {
             "operation",
             "layer");
 
-    evictedCounter =
+    promotedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_evicted_total",
-            "Count of transactions evicted from the transaction pool when it is full",
+            "transactions_promoted_total",
+            "Count of transactions promoted from the next layer",
+            "source",
             "layer");
 
     spaceUsed =
@@ -163,15 +146,6 @@ public class TransactionPoolMetrics {
     removedCounter.labels(location(receivedFromLocalSource), operation, layer).inc();
   }
 
-  public void incrementReplaced(final boolean receivedFromLocalSource, final String layer) {
-    replacedCount.labels(location(receivedFromLocalSource), layer).inc();
-  }
-
-  public void incrementInvalid(
-      final boolean receivedFromLocalSource, final TransactionInvalidReason invalidReason) {
-    invalidCounter.labels(location(receivedFromLocalSource), invalidReason.name()).inc();
-  }
-
   public void incrementRejected(
       final boolean receivedFromLocalSource,
       final TransactionInvalidReason rejectReason,
@@ -179,20 +153,20 @@ public class TransactionPoolMetrics {
     rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), layer).inc();
   }
 
-  public void incrementExpiredTransactionsMessage() {
-    expiredTransactionsMessageCounter.inc();
+  public void incrementPromoted(final boolean receivedFromLocalSource, final String layer) {
+    promotedCounter.labels(location(receivedFromLocalSource), layer).inc();
   }
 
-  public void incrementAlreadySeenTransactions(final String message, final long count) {
-    alreadySeenTransactionsCounter.labels(message).inc(count);
+  public void incrementExpiredTransactionsMessage() {
+    expiredTransactionsMessageCounter.inc();
   }
 
   public void incrementExpiredNewPooledTransactionHashesMessage() {
     expiredNewPooledTransactionHashesMessageCounter.inc();
   }
 
-  public void incrementEvicted(final String layer, final int count) {
-    evictedCounter.labels(layer).inc(count);
+  public void incrementAlreadySeenTransactions(final String message, final long count) {
+    alreadySeenTransactionsCounter.labels(message).inc(count);
   }
 
   private String location(final boolean receivedFromLocalSource) {

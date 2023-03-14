@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.PROMOTED;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -114,10 +116,8 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   @Override
   protected void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction removedTx) {
-    if (senderTxs.isEmpty()) {
-      orderByMaxFee.remove(removedTx);
-    } else if (senderTxs.firstKey() == removedTx.getNonce() + 1) {
-      orderByMaxFee.remove(removedTx);
+    orderByMaxFee.remove(removedTx);
+    if (!senderTxs.isEmpty()) {
       orderByMaxFee.add(senderTxs.firstEntry().getValue());
     }
   }
@@ -163,7 +163,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
               final var senderTxs = txsBySender.get(promotedTx.getSender());
               // we always promote the first tx of a sender, so remove the first entry
               senderTxs.pollFirstEntry();
-              processRemove(senderTxs, promotedTx.getTransaction());
+              processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
 
               // now that we have space, promote from the next layer
               promoteTransactions();

@@ -18,7 +18,13 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CONFIRMED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CROSS_LAYER_REPLACED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.EVICTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.FOLLOW_INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.PROMOTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -153,8 +159,16 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       }
 
       notifyTransactionAdded(pendingTransaction);
+    } else {
+      final var rejectReason = addStatus.maybeInvalidReason().orElseThrow();
+      metrics.incrementRejected(false, rejectReason, name());
+      LOG.atTrace()
+          .setMessage("Transaction {} rejected reason {}")
+          .addArgument(pendingTransaction::toTraceLog)
+          .addArgument(rejectReason)
+          .log();
     }
-    updateMetrics(pendingTransaction, addStatus);
+
     return addStatus;
   }
 
@@ -202,7 +216,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
       if (senderTxs.firstKey() == pendingTransaction.getNonce()) {
         final PendingTransaction replacedTx = senderTxs.pollFirstEntry().getValue();
-        processRemove(senderTxs, replacedTx.getTransaction());
+        processRemove(senderTxs, replacedTx.getTransaction(), CROSS_LAYER_REPLACED);
 
         if (senderTxs.isEmpty()) {
           txsBySender.remove(sender);
@@ -225,7 +239,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       long expectedNonce = nonce + 1;
       if (senderTxs.firstKey() == expectedNonce) {
         final PendingTransaction promotedTx = senderTxs.pollFirstEntry().getValue();
-        processRemove(senderTxs, promotedTx.getTransaction());
+        processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
+        metrics.incrementRemoved(promotedTx.isReceivedFromLocalSource(), "promoted", name());
 
         if (senderTxs.isEmpty()) {
           txsBySender.remove(sender);
@@ -262,6 +277,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     final var senderTxs = txsBySender.computeIfAbsent(addedTx.getSender(), s -> new TreeMap<>());
     senderTxs.put(addedTx.getNonce(), addedTx);
     increaseSpaceUsed(addedTx);
+    metrics.incrementAdded(addedTx.isReceivedFromLocalSource(), name());
     internalAdd(senderTxs, addedTx);
   }
 
@@ -295,8 +311,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         txsBySender.remove(lessReadySender);
       }
 
-      metrics.incrementEvicted(name(), evictedCount);
-
       final long newSpaceToFree = spaceToFree - evictedSize;
       final int newTxsToEvict = txsToEvict - evictedCount;
 
@@ -307,39 +321,10 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     }
   }
 
-  private void updateMetrics(
-      final PendingTransaction pendingTransaction, final TransactionAddedResult result) {
-    if (result.isSuccess()) {
-      result
-          .maybeReplacedTransaction()
-          .ifPresent(
-              replacedTx -> {
-                metrics.incrementReplaced(replacedTx.isReceivedFromLocalSource(), name());
-                metrics.incrementRemoved(
-                    replacedTx.isReceivedFromLocalSource(), "replaced", name());
-              });
-      metrics.incrementAdded(pendingTransaction.isReceivedFromLocalSource(), name());
-    } else {
-      final var rejectReason =
-          result
-              .maybeInvalidReason()
-              .orElseGet(
-                  () -> {
-                    LOG.warn("Missing invalid reason for status {}", result);
-                    return INTERNAL_ERROR;
-                  });
-      metrics.incrementRejected(false, rejectReason, name());
-      LOG.atTrace()
-          .setMessage("Transaction {} rejected reason {}")
-          .addArgument(pendingTransaction::toTraceLog)
-          .addArgument(rejectReason)
-          .log();
-    }
-  }
-
   protected void replaced(final PendingTransaction replacedTx) {
     pendingTransactions.remove(replacedTx.getHash());
     decreaseSpaceUsed(replacedTx);
+    metrics.incrementRemoved(replacedTx.isReceivedFromLocalSource(), REPLACED.label(), name());
     internalReplaced(replacedTx);
   }
 
@@ -367,10 +352,14 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   protected PendingTransaction processRemove(
-      final NavigableMap<Long, PendingTransaction> senderTxs, final Transaction transaction) {
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final Transaction transaction,
+      final RemovalReason removalReason) {
     final PendingTransaction removedTx = pendingTransactions.remove(transaction.getHash());
     if (removedTx != null) {
       decreaseSpaceUsed(transaction);
+      metrics.incrementRemoved(
+          removedTx.isReceivedFromLocalSource(), removalReason.label(), name());
       internalRemove(senderTxs, removedTx);
     }
     return removedTx;
@@ -381,6 +370,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     final PendingTransaction removedTx = pendingTransactions.remove(evictedTx.getHash());
     if (removedTx != null) {
       decreaseSpaceUsed(evictedTx);
+      metrics.incrementRemoved(evictedTx.isReceivedFromLocalSource(), EVICTED.label(), name());
       internalEvict(senderTxs, removedTx);
     }
     return removedTx;
@@ -391,33 +381,39 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final PendingTransaction evictedTx);
 
   @Override
-  public void remove(final PendingTransaction pendingTransaction) {
-    nextLayer.remove(pendingTransaction);
+  public void invalidate(final PendingTransaction invalidatedTx) {
+    nextLayer.invalidate(invalidatedTx);
 
-    final var senderTxs = txsBySender.get(pendingTransaction.getSender());
+    final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     if (senderTxs != null) {
       if (gapsAllowed()) {
         // if gaps are allowed then just remove
-        senderTxs.remove(pendingTransaction.getNonce());
-        processRemove(senderTxs, pendingTransaction.getTransaction());
+        senderTxs.remove(invalidatedTx.getNonce());
+        processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
       } else {
         // on sequential layer we need to remove and push to next layer all the following txs
         final List<PendingTransaction> txsToRemove =
-            new ArrayList<>(senderTxs.tailMap(pendingTransaction.getNonce(), true).values());
+            new ArrayList<>(senderTxs.tailMap(invalidatedTx.getNonce(), true).values());
         final boolean skipFirst =
-            !txsToRemove.isEmpty() && txsToRemove.get(0).equals(pendingTransaction);
+            !txsToRemove.isEmpty() && txsToRemove.get(0).equals(invalidatedTx);
+
+        if (skipFirst) {
+          senderTxs.remove(invalidatedTx.getNonce());
+          processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
+        }
+
         txsToRemove.stream()
+            .skip(skipFirst ? 1 : 0)
             .peek(
                 txToRemove -> {
                   senderTxs.remove(txToRemove.getNonce());
-                  processRemove(senderTxs, txToRemove.getTransaction());
+                  processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
                 })
-            .skip(skipFirst ? 1 : 0)
             .forEach(followingTx -> nextLayer.add(followingTx, 1));
       }
 
       if (senderTxs.isEmpty()) {
-        txsBySender.remove(pendingTransaction.getSender());
+        txsBySender.remove(invalidatedTx.getSender());
       }
     }
   }
@@ -466,7 +462,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       while (itConfirmedTxs.hasNext()) {
         final var confirmedTx = itConfirmedTxs.next();
         itConfirmedTxs.remove();
-        processRemove(senderTxs, confirmedTx.getTransaction());
+        processRemove(senderTxs, confirmedTx.getTransaction(), CONFIRMED);
 
         metrics.incrementRemoved(confirmedTx.isReceivedFromLocalSource(), "confirmed", name());
         LOG.atTrace()

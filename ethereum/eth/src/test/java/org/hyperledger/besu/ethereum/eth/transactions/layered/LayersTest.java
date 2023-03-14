@@ -1224,7 +1224,7 @@ public class LayersTest extends BaseTransactionPoolTest {
           .forEach(
               n -> {
                 final var pendingTx = getOrCreate(sender, n);
-                actions.add((prio, ready, sparse, dropped) -> prio.remove(pendingTx));
+                actions.add((prio, ready, sparse, dropped) -> prio.invalidate(pendingTx));
               });
       return this;
     }

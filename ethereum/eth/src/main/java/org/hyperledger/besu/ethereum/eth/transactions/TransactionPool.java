@@ -137,7 +137,7 @@ public class TransactionPool implements BlockAddedObserver {
 
       transactionBroadcaster.onTransactionsAdded(List.of(transaction));
     } else {
-      metrics.incrementInvalid(true, validationResult.result.getInvalidReason());
+      metrics.incrementRejected(true, validationResult.result.getInvalidReason(), "txpool");
     }
 
     return validationResult.result;
@@ -171,7 +171,7 @@ public class TransactionPool implements BlockAddedObserver {
                     .addArgument(transaction::toTraceLog)
                     .log();
                 // We already have this transaction, don't even validate it.
-                metrics.incrementRejected(false, TRANSACTION_ALREADY_KNOWN, "before");
+                metrics.incrementRejected(false, TRANSACTION_ALREADY_KNOWN, "txpool");
 
               } else {
                 final ValidationResultAndAccount validationResult =
@@ -208,7 +208,8 @@ public class TransactionPool implements BlockAddedObserver {
                       .addArgument(transaction::toTraceLog)
                       .addArgument(validationResult.result::getInvalidReason)
                       .log();
-                  metrics.incrementInvalid(false, validationResult.result.getInvalidReason());
+                  metrics.incrementRejected(
+                      false, validationResult.result.getInvalidReason(), "txpool");
                   pendingTransactions.signalInvalidTransaction(transaction);
                 }
               }

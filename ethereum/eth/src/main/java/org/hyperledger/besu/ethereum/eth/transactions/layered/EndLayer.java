@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.DROPPED;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -77,13 +79,14 @@ public class EndLayer implements TransactionsLayer {
   @Override
   public TransactionAddedResult add(final PendingTransaction pendingTransaction, final int gap) {
     notifyTransactionDropped(pendingTransaction);
-    metrics.incrementRemoved(pendingTransaction.isReceivedFromLocalSource(), "dropped", name());
+    metrics.incrementRemoved(
+        pendingTransaction.isReceivedFromLocalSource(), DROPPED.label(), name());
     ++droppedCount;
     return TransactionAddedResult.DROPPED;
   }
 
   @Override
-  public void remove(final PendingTransaction pendingTransaction) {}
+  public void invalidate(final PendingTransaction pendingTransaction) {}
 
   @Override
   public void blockAdded(
