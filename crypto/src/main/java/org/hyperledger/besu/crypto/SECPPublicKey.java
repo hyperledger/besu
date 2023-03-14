@@ -127,6 +127,7 @@ public class SECPPublicKey implements java.security.PublicKey {
       ecPoint = curve.getCurve().decodePoint(val.toArrayUnsafe());
     } catch (final Exception e) {
       LOG.debug("stefan: Msg: {}, encoded: {}", e.getMessage(), encoded);
+      throw e;
     }
     return ecPoint;
   }

@@ -213,6 +213,9 @@ public class ECIESHandshaker implements Handshaker {
           bytes = EncryptedMessage.decryptMsgEIP8(encryptedMsg, nodeKey);
           version4 = true;
         } else {
+          LOG.debug(
+              "stefan: HandshakeException: Failed to decrypt handshake message, ECIES instance {}",
+              System.identityHashCode(this));
           throw new HandshakeException("Failed to decrypt handshake message");
         }
       } catch (final Exception ex) {
@@ -223,13 +226,17 @@ public class ECIESHandshaker implements Handshaker {
       }
     } catch (final InvalidCipherTextException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
+      LOG.debug(
+          "stefan: InvalidCipherTextException: Decrypting an incoming handshake message failed, ECIES instance {}",
+          System.identityHashCode(this));
       throw new HandshakeException("Decrypting an incoming handshake message failed", e);
     } catch (final SecurityModuleException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
       LOG.debug(
-          "stefan: Buffer in handleMessage(ECIESHandshaker): expectedLength: {}, encryptedMessage: {}",
+          "stefan: Buffer in handleMessage(ECIESHandshaker): expectedLength: {}, encryptedMessage: {}, ECIES instance: {}",
           expectedLength,
-          encryptedMsg);
+          encryptedMsg,
+          System.identityHashCode(this));
       throw new HandshakeException(
           "Unable to create ECDH Key agreement due to Crypto engine failure", e);
     }

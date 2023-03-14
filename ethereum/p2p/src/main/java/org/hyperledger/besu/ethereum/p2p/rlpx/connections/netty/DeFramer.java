@@ -109,6 +109,10 @@ final class DeFramer extends ByteToMessageDecoder {
         final PeerInfo peerInfo;
         try {
           peerInfo = HelloMessage.readFrom(message).getPeerInfo();
+          LOG.debug(
+              "stefan: PeerInfo for IP {}   : {}",
+              peerInfo,
+              ((InetSocketAddress) ctx.channel().remoteAddress()).toString());
         } catch (final RLPException e) {
           LOG.debug("Received invalid HELLO message, set log level to TRACE for message body", e);
           connectFuture.completeExceptionally(e);
@@ -175,19 +179,21 @@ final class DeFramer extends ByteToMessageDecoder {
       } else if (message.getCode() == WireMessageCodes.DISCONNECT) {
         final DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(message);
         LOG.debug(
-            "Peer {} disconnected before sending HELLO.  Reason: {}",
+            "Peer {} disconnected before sending HELLO.  Reason: {}, IP: {}",
             expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),
-            disconnectMessage.getReason());
+            disconnectMessage.getReason(),
+            ((InetSocketAddress) ctx.channel().remoteAddress()).toString());
         ctx.close();
         connectFuture.completeExceptionally(
             new PeerDisconnectedException(disconnectMessage.getReason()));
       } else {
         // Unexpected message - disconnect
         LOG.debug(
-            "Message received before HELLO's exchanged (BREACH_OF_PROTOCOL), disconnecting.  Peer: {}, Code: {}, Data: {}",
+            "Message received before HELLO's exchanged (BREACH_OF_PROTOCOL), disconnecting.  Peer: {}, Code: {}, Data: {}, IP: {}",
             expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),
             message.getCode(),
-            message.getData().toString());
+            message.getData().toString(),
+            ((InetSocketAddress) ctx.channel().remoteAddress()).toString());
         ctx.writeAndFlush(
                 new OutboundMessage(
                     null,
