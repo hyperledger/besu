@@ -63,6 +63,7 @@ dependencies {
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'com.github.oshi:oshi-core'
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
   implementation 'com.graphql-java:graphql-java'
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
@@ -103,4 +104,5 @@ dependencies {
   testImplementation 'tech.pegasys.discovery:discovery'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 }
