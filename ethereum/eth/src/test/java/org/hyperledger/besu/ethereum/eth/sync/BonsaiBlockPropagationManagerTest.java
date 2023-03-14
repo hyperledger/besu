@@ -18,19 +18,19 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 public class BonsaiBlockPropagationManagerTest extends AbstractBlockPropagationManagerTest {
 
   private static Blockchain fullBlockchain;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupSuite() {
     fullBlockchain = BlockchainSetupUtil.forTesting(DataStorageFormat.BONSAI).importAllBlocks();
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     setup(DataStorageFormat.BONSAI);
   }

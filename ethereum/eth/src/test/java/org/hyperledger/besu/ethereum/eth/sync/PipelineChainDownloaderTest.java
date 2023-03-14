@@ -42,14 +42,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PipelineChainDownloaderTest {
 
   @Mock private SyncTargetManager syncTargetManager;
@@ -65,7 +65,7 @@ public class PipelineChainDownloaderTest {
   private SyncTarget syncTarget2;
   private PipelineChainDownloader chainDownloader;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     syncTarget = new SyncTarget(peer1, commonAncestor);
     syncTarget2 = new SyncTarget(peer2, commonAncestor);
