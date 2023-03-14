@@ -14,9 +14,8 @@
  *
  */
 
-package org.hyperledger.besu.evmtool;
+package org.hyperledger.besu.metrics;
 
-import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
