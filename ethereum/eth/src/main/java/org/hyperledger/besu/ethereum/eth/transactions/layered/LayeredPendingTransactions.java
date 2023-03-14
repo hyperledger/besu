@@ -37,6 +37,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -114,9 +115,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     final TransactionAddedResult result =
         prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
 
-    if (LOG.isDebugEnabled()) {
-      consistencyCheck();
-    }
+    assert prioritizedTransactions.consistencyCheck(new HashMap<>());
 
     return result;
   }
@@ -290,7 +289,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
     logBlockHeaderToCSV(blockHeader, maxConfirmedNonceBySender);
   }
 
-  private static void logBlockHeaderToCSV(final BlockHeader blockHeader, final Map<Address, Long> maxConfirmedNonceBySender) {
+  private static void logBlockHeaderToCSV(
+      final BlockHeader blockHeader, final Map<Address, Long> maxConfirmedNonceBySender) {
     // block number, block hash, sender, max nonce ..., rlp
     LOG_TX_CSV
         .atTrace()
@@ -321,147 +321,13 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public synchronized String toTraceLog() {
-    //
-    //    return "Ready by sender ("
-    //        + toTraceLog(readyBySender)
-    //        + "), Sparse by sender ("
-    //        + sparseTransactions.toTraceLog()
-    //        + "); "
-    //        + prioritizedTransactions.toTraceLog();
-    return null;
+    return "";
   }
 
-  //  private String toTraceLog(final Map<Address, NavigableMap<Long, PendingTransaction>>
-  // senderTxs) {
-  //    return senderTxs.entrySet().stream()
-  //        .map(
-  //            e ->
-  //                e.getKey()
-  //                    + "="
-  //                    + e.getValue().entrySet().stream()
-  //                        .map(etx -> etx.getKey() + ":" + etx.getValue().toTraceLog())
-  //                        .collect(Collectors.joining(",", "[", "]")))
-  //        .collect(Collectors.joining(";"));
-  //  }
-
-  //  private synchronized int getReadyCount() {
-  //    return readyBySender.values().stream().mapToInt(Map::size).sum();
-  //  }
-
-  /*
-    private synchronized int getSparseCount() {
-      return sparseBySender.values().stream().mapToInt(Map::size).sum();
-    }
-  */
   @Override
   public synchronized String logStats() {
     final String statsString = prioritizedTransactions.logStats();
     LOG_TX_CSV.atTrace().setMessage("S,{}").addArgument(statsString).log();
     return statsString;
   }
-
-  private void consistencyCheck() {
-    //    // check numbers
-    //    final int pendingTotal = pendingTransactions.size();
-    //    final int readyTotal = getReadyCount();
-    //    final int sparseTotal = sparseTransactions.getSparseCount();
-    //    if (pendingTotal != readyTotal + sparseTotal) {
-    //      LOG.error("Pending != Ready + Sparse ({} != {} + {})", pendingTotal, readyTotal,
-    // sparseTotal);
-    //    }
-    //
-    //    readyCheck();
-    //
-    //    sparseTransactions.consistencyCheck();
-    //
-    //    prioritizedCheck();
-  }
-
-  public long getUsedSpace() {
-    return prioritizedTransactions.getCumulativeUsedSpace();
-  }
-  //
-  //  private void readyCheck() {
-  //    if (orderByMaxFee.size() != readyBySender.size()) {
-  //      LOG.error(
-  //          "OrderByMaxFee != ReadyBySender ({} != {})", orderByMaxFee.size(),
-  // readyBySender.size());
-  //    }
-  //
-  //    orderByMaxFee.stream()
-  //        .filter(
-  //            tx -> {
-  //              if (readyBySender.containsKey(tx.getSender())) {
-  //                if (readyBySender.get(tx.getSender()).firstEntry().getValue().equals(tx)) {
-  //                  return false;
-  //                }
-  //              }
-  //              return true;
-  //            })
-  //        .forEach(tx -> LOG.error("OrderByMaxFee tx {} the first ReadyBySender", tx));
-  //
-  //    orderByMaxFee.stream()
-  //        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-  //        .forEach(tx -> LOG.error("OrderByMaxFee tx {} not found in PendingTransactions", tx));
-  //
-  //    readyBySender.values().stream()
-  //        .flatMap(senderTxs -> senderTxs.values().stream())
-  //        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-  //        .forEach(tx -> LOG.error("ReadyBySender tx {} not found in PendingTransactions", tx));
-  //  }
-  /*
-    private void sparseCheck(final int sparseTotal) {
-      if (sparseTotal != sparseEvictionOrder.size()) {
-        LOG.error("Sparse != Eviction order ({} != {})", sparseTotal, sparseEvictionOrder.size());
-      }
-
-      sparseEvictionOrder.stream()
-          .filter(
-              tx -> {
-                if (sparseBySender.containsKey(tx.getSender())) {
-                  if (sparseBySender.get(tx.getSender()).containsKey(tx.getNonce())) {
-                    if (sparseBySender.get(tx.getSender()).get(tx.getNonce()).equals(tx)) {
-                      return false;
-                    }
-                  }
-                }
-                return true;
-              })
-          .forEach(tx -> LOG.error("SparseEvictionOrder tx {} not found in SparseBySender", tx));
-
-      sparseEvictionOrder.stream()
-          .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-          .forEach(tx -> LOG.error("SparseEvictionOrder tx {} not found in PendingTransactions", tx));
-
-      sparseBySender.values().stream()
-          .flatMap(senderTxs -> senderTxs.values().stream())
-          .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-          .forEach(tx -> LOG.error("SparseBySender tx {} not found in PendingTransactions", tx));
-    }
-  */
-  //
-  //  private void prioritizedCheck() {
-  //    prioritizedTransactions
-  //        .prioritizedTransactions()
-  //        .forEachRemaining(
-  //            ptx -> {
-  //              if (!pendingTransactions.containsKey(ptx.getHash())) {
-  //                LOG.error("PrioritizedTransaction {} not found in PendingTransactions", ptx);
-  //              }
-  //
-  //              if (!readyBySender.containsKey(ptx.getSender())
-  //                  || !readyBySender.get(ptx.getSender()).containsKey(ptx.getNonce())
-  //                  || !readyBySender.get(ptx.getSender()).get(ptx.getNonce()).equals(ptx)) {
-  //                LOG.error("PrioritizedTransaction {} not found in ReadyBySender", ptx);
-  //              }
-  //
-  //              if (sparseBySender.containsKey(ptx.getSender())
-  //                  && sparseBySender.get(ptx.getSender()).containsKey(ptx.getNonce())
-  //                  && sparseBySender.get(ptx.getSender()).get(ptx.getNonce()).equals(ptx)) {
-  //                LOG.error("PrioritizedTransaction {} found in SparseBySender", ptx);
-  //              }
-  //            });
-  //
-  //    prioritizedTransactions.consistencyCheck();
-  //  }
 }

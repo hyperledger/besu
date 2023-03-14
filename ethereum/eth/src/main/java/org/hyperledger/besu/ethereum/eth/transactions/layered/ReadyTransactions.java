@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -23,11 +24,15 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Comparator;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
@@ -197,102 +202,31 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
         + last.getHash()
         + "]";
   }
-  //
-  //  private String toTraceLog(final Map<Address, NavigableMap<Long, PendingTransaction>>
-  // senderTxs) {
-  //    return senderTxs.entrySet().stream()
-  //        .map(
-  //            e ->
-  //                e.getKey()
-  //                    + "="
-  //                    + e.getValue().entrySet().stream()
-  //                        .map(etx -> etx.getKey() + ":" + etx.getValue().toTraceLog())
-  //                        .collect(Collectors.joining(",", "[", "]")))
-  //        .collect(Collectors.joining(";"));
-  //  }
 
-  /*
-  private void readyCheck() {
-    if (orderByMaxFee.size() != readyBySender.size()) {
-      LOG.error(
-          "OrderByMaxFee != ReadyBySender ({} != {})", orderByMaxFee.size(), readyBySender.size());
+  @Override
+  protected void internalConsistencyCheck(
+      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+    super.internalConsistencyCheck(prevLayerTxsBySender);
+
+    final var minNonceBySender =
+        pendingTransactions.values().stream()
+            .collect(
+                Collectors.groupingBy(
+                    PendingTransaction::getSender,
+                    Collectors.minBy(Comparator.comparingLong(PendingTransaction::getNonce))));
+
+    final var controlOrderByMaxFee = new TreeSet<>(orderByMaxFee.comparator());
+    controlOrderByMaxFee.addAll(minNonceBySender.values().stream().map(Optional::get).toList());
+
+    final var itControl = controlOrderByMaxFee.iterator();
+    final var itCurrent = orderByMaxFee.iterator();
+
+    while (itControl.hasNext()) {
+      assert itControl.next().equals(itCurrent.next())
+          : "orderByMaxFee does not match pendingTransactions";
     }
 
-    orderByMaxFee.stream()
-        .filter(
-            tx -> {
-              if (readyBySender.containsKey(tx.getSender())) {
-                if (readyBySender.get(tx.getSender()).firstEntry().getValue().equals(tx)) {
-                  return false;
-                }
-              }
-              return true;
-            })
-        .forEach(tx -> LOG.error("OrderByMaxFee tx {} the first ReadyBySender", tx));
-
-    orderByMaxFee.stream()
-        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-        .forEach(tx -> LOG.error("OrderByMaxFee tx {} not found in PendingTransactions", tx));
-
-    readyBySender.values().stream()
-        .flatMap(senderTxs -> senderTxs.values().stream())
-        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-        .forEach(tx -> LOG.error("ReadyBySender tx {} not found in PendingTransactions", tx));
+    assert itCurrent.hasNext() == false
+        : "orderByMaxFee has more elements that pendingTransactions";
   }
-
-    private void sparseCheck(final int sparseTotal) {
-      if (sparseTotal != sparseEvictionOrder.size()) {
-        LOG.error("Sparse != Eviction order ({} != {})", sparseTotal, sparseEvictionOrder.size());
-      }
-
-      sparseEvictionOrder.stream()
-          .filter(
-              tx -> {
-                if (sparseBySender.containsKey(tx.getSender())) {
-                  if (sparseBySender.get(tx.getSender()).containsKey(tx.getNonce())) {
-                    if (sparseBySender.get(tx.getSender()).get(tx.getNonce()).equals(tx)) {
-                      return false;
-                    }
-                  }
-                }
-                return true;
-              })
-          .forEach(tx -> LOG.error("SparseEvictionOrder tx {} not found in SparseBySender", tx));
-
-      sparseEvictionOrder.stream()
-          .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-          .forEach(tx -> LOG.error("SparseEvictionOrder tx {} not found in PendingTransactions", tx));
-
-      sparseBySender.values().stream()
-          .flatMap(senderTxs -> senderTxs.values().stream())
-          .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-          .forEach(tx -> LOG.error("SparseBySender tx {} not found in PendingTransactions", tx));
-    }
-  //*/
-  //  private void prioritizedCheck() {
-  //    prioritizedTransactions
-  //        .prioritizedTransactions()
-  //        .forEachRemaining(
-  //            ptx -> {
-  //              if (!pendingTransactions.containsKey(ptx.getHash())) {
-  //                LOG.error("PrioritizedTransaction {} not found in PendingTransactions", ptx);
-  //              }
-  //
-  //              if (!readyBySender.containsKey(ptx.getSender())
-  //                  || !readyBySender.get(ptx.getSender()).containsKey(ptx.getNonce())
-  //                  || !readyBySender.get(ptx.getSender()).get(ptx.getNonce()).equals(ptx)) {
-  //                LOG.error("PrioritizedTransaction {} not found in ReadyBySender", ptx);
-  //              }
-  /// *
-  //              if (sparseBySender.containsKey(ptx.getSender())
-  //                  && sparseBySender.get(ptx.getSender()).containsKey(ptx.getNonce())
-  //                  && sparseBySender.get(ptx.getSender()).get(ptx.getNonce()).equals(ptx)) {
-  //                LOG.error("PrioritizedTransaction {} found in SparseBySender", ptx);
-  //              }
-  //
-  // */
-  //            });
-  //
-  //    prioritizedTransactions.consistencyCheck();
-  //  }
 }

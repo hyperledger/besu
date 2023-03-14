@@ -19,8 +19,11 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.OptionalLong;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 
 public abstract class AbstractSequentialTransactionsLayer extends AbstractTransactionsLayer {
@@ -71,5 +74,34 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction pendingTransaction) {
     // no-op
+  }
+
+  @Override
+  protected void internalConsistencyCheck(
+      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+    txsBySender.values().stream()
+        .filter(senderTxs -> senderTxs.size() > 1)
+        .map(NavigableMap::entrySet)
+        .map(Set::iterator)
+        .forEach(
+            itNonce -> {
+              PendingTransaction firstTx = itNonce.next().getValue();
+
+              prevLayerTxsBySender.computeIfPresent(
+                  firstTx.getSender(),
+                  (sender, txsByNonce) -> {
+                    assert txsByNonce.lastKey() + 1 == firstTx.getNonce()
+                        : "first nonce is not sequential with previous layer last nonce";
+                    return txsByNonce;
+                  });
+
+              long prevNonce = firstTx.getNonce();
+
+              while (itNonce.hasNext()) {
+                final long currNonce = itNonce.next().getKey();
+                assert prevNonce + 1 == currNonce : "non sequential nonce";
+                prevNonce = currNonce;
+              }
+            });
   }
 }

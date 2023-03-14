@@ -34,6 +34,7 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -295,59 +296,39 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     gapBySender.put(sender, newGap);
   }
 
-  //  synchronized int getSparseCount() {
-  //    return readyBySender.values().stream().mapToInt(Map::size).sum();
-  //  }
-  //
-  //  void consistencyCheck() {
-  //    final int sparseTotal = getSparseCount();
-  //    if (sparseTotal != sparseEvictionOrder.size()) {
-  //      LOG.error("Sparse != Eviction order ({} != {})", sparseTotal, sparseEvictionOrder.size());
-  //    }
-  //
-  //    sparseEvictionOrder.stream()
-  //        .filter(
-  //            tx -> {
-  //              if (readyBySender.containsKey(tx.getSender())) {
-  //                if (readyBySender.get(tx.getSender()).containsKey(tx.getNonce())) {
-  //                  if (readyBySender.get(tx.getSender()).get(tx.getNonce()).equals(tx)) {
-  //                    return false;
-  //                  }
-  //                }
-  //              }
-  //              return true;
-  //            })
-  //        .forEach(tx -> LOG.error("SparseEvictionOrder tx {} not found in SparseBySender", tx));
-  //
-  //    sparseEvictionOrder.stream()
-  //        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-  //        .forEach(tx -> LOG.error("SparseEvictionOrder tx {} not found in PendingTransactions",
-  // tx));
-  //
-  //    readyBySender.values().stream()
-  //        .flatMap(senderTxs -> senderTxs.values().stream())
-  //        .filter(tx -> !pendingTransactions.containsKey(tx.getHash()))
-  //        .forEach(tx -> LOG.error("SparseBySender tx {} not found in PendingTransactions", tx));
-  //  }
-  //
-  //  String logStats() {
-  //    return "Space used:  " + spaceUsed + ", Sparse transactions: " + sparseEvictionOrder.size();
-  //  }
-  //
-  //  String toTraceLog() {
-  //    return toTraceLog(readyBySender);
-  //  }
-  //
-  //  private String toTraceLog(final Map<Address, NavigableMap<Long, PendingTransaction>>
-  // senderTxs) {
-  //    return senderTxs.entrySet().stream()
-  //        .map(
-  //            e ->
-  //                e.getKey()
-  //                    + "="
-  //                    + e.getValue().entrySet().stream()
-  //                        .map(etx -> etx.getKey() + ":" + etx.getValue().toTraceLog())
-  //                        .collect(Collectors.joining(",", "[", "]")))
-  //        .collect(Collectors.joining(";"));
-  //  }
+  @Override
+  protected void internalConsistencyCheck(
+      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+    txsBySender.values().stream()
+        .filter(senderTxs -> senderTxs.size() > 1)
+        .map(NavigableMap::entrySet)
+        .map(Set::iterator)
+        .forEach(
+            itNonce -> {
+              PendingTransaction firstTx = itNonce.next().getValue();
+
+              prevLayerTxsBySender.computeIfPresent(
+                  firstTx.getSender(),
+                  (sender, txsByNonce) -> {
+                    final long prevLayerMaxNonce = txsByNonce.lastKey();
+                    assert prevLayerMaxNonce < firstTx.getNonce()
+                        : "first nonce is not greater that previous layer last nonce";
+
+                    final int gap = (int) (firstTx.getNonce() - (prevLayerMaxNonce + 1));
+                    assert gapBySender.get(firstTx.getSender()).equals(gap) : "gap mismatch";
+                    assert orderByGap.get(gap).contains(firstTx.getSender())
+                        : "orderByGap sender not found";
+
+                    return txsByNonce;
+                  });
+
+              long prevNonce = firstTx.getNonce();
+
+              while (itNonce.hasNext()) {
+                final long currNonce = itNonce.next().getKey();
+                assert prevNonce < currNonce : "non incremental nonce";
+                prevNonce = currNonce;
+              }
+            });
+  }
 }

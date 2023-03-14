@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
+import java.util.Map;
 import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -122,5 +125,24 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   @Override
   protected long cacheFreeSpace() {
     return Integer.MAX_VALUE;
+  }
+
+  @Override
+  protected void internalConsistencyCheck(
+      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+    super.internalConsistencyCheck(prevLayerTxsBySender);
+
+    final var controlOrderByFee = new TreeSet<>(this::compareByFee);
+    controlOrderByFee.addAll(pendingTransactions.values());
+
+    final var itControl = controlOrderByFee.iterator();
+    final var itCurrent = orderByFee.iterator();
+
+    while (itControl.hasNext()) {
+      assert itControl.next().equals(itCurrent.next())
+          : "orderByFee does not match pendingTransactions";
+    }
+
+    assert itCurrent.hasNext() == false : "orderByFee has more elements that pendingTransactions";
   }
 }

@@ -80,12 +80,15 @@ public class ReplayTest {
                   final String type = commaSplit[0];
                   switch (type) {
                     case "T":
+                      System.out.println("T:" + commaSplit[1]);
                       processTransaction(commaSplit, pendingTransactions);
                       break;
                     case "B":
+                      System.out.println("B:" + commaSplit[1]);
                       processBlock(commaSplit, prioritizedTransactions, baseFeeMarket);
                       break;
                     case "S":
+                      System.out.println("S");
                       assertStats(line, pendingTransactions);
                       break;
                     default:

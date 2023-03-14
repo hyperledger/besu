@@ -43,6 +43,8 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -573,4 +575,47 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   protected abstract String internalLogStats();
+
+  boolean consistencyCheck(
+      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+    final BinaryOperator<PendingTransaction> noMergeExpected =
+        (a, b) -> {
+          throw new IllegalArgumentException();
+        };
+    final var controlTxsBySender =
+        pendingTransactions.values().stream()
+            .collect(
+                Collectors.groupingBy(
+                    PendingTransaction::getSender,
+                    Collectors.toMap(
+                        PendingTransaction::getNonce,
+                        Function.identity(),
+                        noMergeExpected,
+                        TreeMap::new)));
+
+    assert txsBySender.equals(controlTxsBySender)
+        : "pendingTransactions and txsBySender do not contain the same txs";
+
+    assert pendingTransactions.values().stream()
+                .map(PendingTransaction::getTransaction)
+                .mapToInt(Transaction::getSize)
+                .sum()
+            == spaceUsed
+        : "space used does not match";
+
+    internalConsistencyCheck(prevLayerTxsBySender);
+
+    if (nextLayer instanceof AbstractTransactionsLayer) {
+      txsBySender.forEach(
+          (sender, txsByNonce) ->
+              prevLayerTxsBySender
+                  .computeIfAbsent(sender, s -> new TreeMap<>())
+                  .putAll(txsByNonce));
+      return ((AbstractTransactionsLayer) nextLayer).consistencyCheck(prevLayerTxsBySender);
+    }
+    return true;
+  }
+
+  protected abstract void internalConsistencyCheck(
+      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender);
 }
