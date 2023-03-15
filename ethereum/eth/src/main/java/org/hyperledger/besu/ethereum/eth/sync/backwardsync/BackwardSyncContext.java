@@ -153,7 +153,7 @@ public class BackwardSyncContext {
     if (backwardChain.isTrusted(hash)) {
       LOG.atDebug()
           .setMessage(
-              "Not fetching or appending hash {} to backwards sync since it is present in successors")
+              "Not fetching or appending hash {} to backward sync since it is present in successors")
           .addArgument(hash::toHexString)
           .log();
       return true;
