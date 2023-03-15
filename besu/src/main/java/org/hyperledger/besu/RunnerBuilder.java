@@ -796,7 +796,7 @@ public class RunnerBuilder {
             .build();
     vertx.deployVerticle(filterManager);
 
-    createPrivateTransactionObserver(filterManager, privacyParameters);
+    createPrivateTransactionObserver(filterManager, privacyParameters, context.getBlockchain());
 
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
 
@@ -1032,7 +1032,8 @@ public class RunnerBuilder {
                   DefaultAuthenticationService.create(vertx, webSocketConfiguration),
                   metricsSystem));
 
-      createPrivateTransactionObserver(subscriptionManager, privacyParameters);
+      createPrivateTransactionObserver(
+          subscriptionManager, privacyParameters, context.getBlockchain());
     }
 
     final Optional<MetricsService> metricsService =
@@ -1344,7 +1345,8 @@ public class RunnerBuilder {
 
   private void createPrivateTransactionObserver(
       final PrivateTransactionObserver privateTransactionObserver,
-      final PrivacyParameters privacyParameters) {
+      final PrivacyParameters privacyParameters,
+      final Blockchain blockchain) {
     // register privateTransactionObserver as observer of events fired by the flexible precompile.
     if (privacyParameters.isFlexiblePrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
@@ -1352,9 +1354,10 @@ public class RunnerBuilder {
           (FlexiblePrivacyPrecompiledContract)
               besuController
                   .getProtocolSchedule()
-                  .getByBlockNumber(1)
+                  .getByBlockHeader(blockchain.getGenesisBlockHeader())
                   .getPrecompileContractRegistry()
                   .get(FLEXIBLE_PRIVACY);
+
       flexiblePrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }
