@@ -84,9 +84,6 @@ public class DebugStandardTraceBlockToFileTest {
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
     when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis.getHeader()));
 
-    //    when(archive.getMutable(genesis.getHeader().getStateRoot(), genesis.getHash(), false))
-    //        .thenReturn(Optional.of(mock(MutableWorldState.class)));
-
     when(transactionTracer.traceTransactionToFile(
             any(MutableWorldState.class), eq(block.getHash()), any(), any()))
         .thenReturn(paths);
