@@ -18,7 +18,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
@@ -26,17 +28,20 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,12 +50,17 @@ import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
+import org.mockito.Answers;
 import org.mockito.Mockito;
 
 public class DebugTraceBlockTest {
 
   private final BlockTracer blockTracer = mock(BlockTracer.class);
-  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+  private final WorldStateArchive archive =
+      mock(WorldStateArchive.class, Answers.RETURNS_DEEP_STUBS);
+  private final Blockchain blockchain = mock(Blockchain.class);
+  private final BlockchainQueries blockchainQueries =
+      spy(new BlockchainQueries(blockchain, archive));
   private final DebugTraceBlock debugTraceBlock =
       new DebugTraceBlock(() -> blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
 
@@ -117,17 +127,22 @@ public class DebugTraceBlockTest {
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
     when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(blockTracer.trace(Mockito.eq(block), any())).thenReturn(Optional.of(blockTrace));
+    when(blockTracer.trace(any(Tracer.TraceableState.class), Mockito.eq(block), any()))
+        .thenReturn(Optional.of(blockTrace));
 
-    when(blockchainQueries.blockByHash(parentBlock.getHash()))
-        .thenReturn(
-            Optional.of(
-                new BlockWithMetadata<>(
-                    parentBlock.getHeader(),
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    parentBlock.getHeader().getDifficulty(),
-                    parentBlock.calculateSize())));
+    when(blockchain.getBlockHeader(parentBlock.getHash()))
+        .thenReturn(Optional.of(parentBlock.getHeader()));
+    doAnswer(
+            invocation ->
+                Optional.of(
+                    new BlockWithMetadata<>(
+                        parentBlock.getHeader(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        parentBlock.getHeader().getDifficulty(),
+                        parentBlock.calculateSize())))
+        .when(blockchainQueries)
+        .blockByHash(parentBlock.getHash());
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceBlock.response(request);

@@ -88,15 +88,17 @@ public class DebugAccountRange implements JsonRpcMethod {
                 accounts.remove(maxResults);
               }
 
-              return new JsonRpcSuccessResponse(
-                  requestContext.getRequest().getId(),
-                  new DebugAccountRangeAtResult(
-                      accounts.stream()
-                          .collect(
-                              Collectors.toMap(
-                                  account -> account.getAddressHash().toString(),
-                                  account -> account.getAddress().orElse(Address.ZERO).toString())),
-                      nextKey.toString()));
+              return Optional.of(
+                  new JsonRpcSuccessResponse(
+                      requestContext.getRequest().getId(),
+                      new DebugAccountRangeAtResult(
+                          accounts.stream()
+                              .collect(
+                                  Collectors.toMap(
+                                      account -> account.getAddressHash().toString(),
+                                      account ->
+                                          account.getAddress().orElse(Address.ZERO).toString())),
+                          nextKey.toString())));
             })
         .orElse(emptyResponse(requestContext));
   }
