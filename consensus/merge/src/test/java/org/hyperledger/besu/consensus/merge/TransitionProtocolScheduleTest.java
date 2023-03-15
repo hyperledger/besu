@@ -224,6 +224,37 @@ public class TransitionProtocolScheduleTest {
     verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
+  @Test
+  public void anyMatch_usesTimestampSchedule() {
+    when(timestampSchedule.anyMatch(any())).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.anyMatch(__ -> true)).isTrue();
+    verifyNoInteractions(preMergeProtocolSchedule);
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  @Test
+  public void anyMatch_delegatesToPreMergeSchedule() {
+    when(mergeContext.isPostMerge()).thenReturn(false);
+
+    when(timestampSchedule.anyMatch(any())).thenReturn(false);
+    when(preMergeProtocolSchedule.anyMatch(any())).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.anyMatch(__ -> true)).isTrue();
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  @Test
+  public void anyMatch_delegatesToPostMergeSchedule() {
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    when(timestampSchedule.anyMatch(any())).thenReturn(false);
+    when(postMergeProtocolSchedule.anyMatch(any())).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.anyMatch(__ -> true)).isTrue();
+    verifyNoInteractions(preMergeProtocolSchedule);
+  }
+
   private void verifyPreMergeProtocolScheduleReturnedUsingBlockNumber() {
     verify(preMergeProtocolSchedule).getByBlockNumber(anyLong());
     verifyNoInteractions(postMergeProtocolSchedule);

@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.common;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule.NumberScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.math.BigInteger;
 import java.util.NavigableSet;
@@ -49,7 +49,7 @@ public class CombinedProtocolScheduleFactory {
           Optional.ofNullable(forkSpecs.higher(spec)).map(ForkSpec::getBlock);
       protocolSchedule.getScheduledProtocolSpecs().stream()
           .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
-          .forEach(s -> combinedProtocolSchedule.putMilestone(s.getBlock(), s.getSpec()));
+          .forEach(s -> combinedProtocolSchedule.putMilestone(s.block(), s.spec()));
 
       // When moving to a new consensus mechanism we want to use the last milestone but created by
       // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
@@ -61,10 +61,10 @@ public class CombinedProtocolScheduleFactory {
     return combinedProtocolSchedule;
   }
 
-  private Predicate<ScheduledProtocolSpec> protocolSpecMatchesConsensusBlockRange(
+  private Predicate<NumberScheduledProtocolSpec> protocolSpecMatchesConsensusBlockRange(
       final long startBlock, final Optional<Long> endBlock) {
     return scheduledProtocolSpec ->
-        scheduledProtocolSpec.getBlock() >= startBlock
-            && endBlock.map(b -> scheduledProtocolSpec.getBlock() < b).orElse(true);
+        scheduledProtocolSpec.block() >= startBlock
+            && endBlock.map(b -> scheduledProtocolSpec.block() < b).orElse(true);
   }
 }
