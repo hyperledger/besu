@@ -96,7 +96,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public boolean isOnForkBoundary(final BlockHeader blockHeader) {
-    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.block);
+    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getNumber() == s.block);
   }
 
   @Override

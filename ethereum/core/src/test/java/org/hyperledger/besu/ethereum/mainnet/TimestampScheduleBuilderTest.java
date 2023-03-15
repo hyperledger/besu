@@ -149,4 +149,22 @@ public class TimestampScheduleBuilderTest {
 
     assertThat(schedule.streamMilestoneBlocks()).containsExactly(FIRST_TIMESTAMP_FORK, 2L, 3L, 5L);
   }
+
+  @Test
+  public void isOnForkBoundary() {
+    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
+    config.cancunTime(2L);
+    config.experimentalEipsTime(4L);
+    final HeaderBasedProtocolSchedule protocolSchedule = builder.createTimestampSchedule();
+
+    assertThat(protocolSchedule.isOnForkBoundary(header(0))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnForkBoundary(header(FIRST_TIMESTAMP_FORK))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnForkBoundary(header(2))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnForkBoundary(header(3))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnForkBoundary(header(4))).isEqualTo(true);
+  }
+
+  private BlockHeader header(final long timestamp) {
+    return new BlockHeaderTestFixture().timestamp(timestamp).buildHeader();
+  }
 }

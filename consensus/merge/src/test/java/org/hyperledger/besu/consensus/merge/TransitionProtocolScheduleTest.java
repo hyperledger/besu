@@ -255,6 +255,37 @@ public class TransitionProtocolScheduleTest {
     verifyNoInteractions(preMergeProtocolSchedule);
   }
 
+  @Test
+  public void isOnForkBoundary_usesTimestampSchedule() {
+    when(timestampSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.isOnForkBoundary(blockHeader)).isTrue();
+    verifyNoInteractions(preMergeProtocolSchedule);
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  @Test
+  public void isOnForkBoundary_delegatesToPreMergeSchedule() {
+    when(mergeContext.isPostMerge()).thenReturn(false);
+
+    when(timestampSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(false);
+    when(preMergeProtocolSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.isOnForkBoundary(blockHeader)).isTrue();
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  @Test
+  public void isOnForkBoundary_delegatesToPostMergeSchedule() {
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    when(timestampSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(false);
+    when(postMergeProtocolSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.isOnForkBoundary(blockHeader)).isTrue();
+    verifyNoInteractions(preMergeProtocolSchedule);
+  }
+
   private void verifyPreMergeProtocolScheduleReturnedUsingBlockNumber() {
     verify(preMergeProtocolSchedule).getByBlockNumber(anyLong());
     verifyNoInteractions(postMergeProtocolSchedule);
