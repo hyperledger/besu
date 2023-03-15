@@ -28,13 +28,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TransactionPoolMetrics {
+  public static final String ADDED_COUNTER_NAME = "transactions_added_total";
+  public static final String REMOVED_COUNTER_NAME = "transactions_removed_total";
+  public static final String REJECTED_COUNTER_NAME = "transactions_rejected_total";
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolMetrics.class);
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private final MetricsSystem metricsSystem;
   private final LabelledMetric<Counter> addedCounter;
   private final LabelledMetric<Counter> removedCounter;
   private final LabelledMetric<Counter> rejectedCounter;
-  private final LabelledMetric<Counter> promotedCounter;
   private final LabelledGauge spaceUsed;
   private final LabelledGauge transactionCount;
   private final Counter expiredTransactionsMessageCounter;
@@ -48,7 +50,7 @@ public class TransactionPoolMetrics {
     addedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_added_total",
+            ADDED_COUNTER_NAME,
             "Count of transactions added to the transaction pool",
             "source",
             "layer");
@@ -56,7 +58,7 @@ public class TransactionPoolMetrics {
     removedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_removed_total",
+            REMOVED_COUNTER_NAME,
             "Count of transactions removed from the transaction pool",
             "source",
             "operation",
@@ -65,18 +67,10 @@ public class TransactionPoolMetrics {
     rejectedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_rejected_total",
+            REJECTED_COUNTER_NAME,
             "Count of transactions not accepted to the transaction pool",
             "source",
             "operation",
-            "layer");
-
-    promotedCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "transactions_promoted_total",
-            "Count of transactions promoted from the next layer",
-            "source",
             "layer");
 
     spaceUsed =
@@ -151,10 +145,6 @@ public class TransactionPoolMetrics {
       final TransactionInvalidReason rejectReason,
       final String layer) {
     rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), layer).inc();
-  }
-
-  public void incrementPromoted(final boolean receivedFromLocalSource, final String layer) {
-    promotedCounter.labels(location(receivedFromLocalSource), layer).inc();
   }
 
   public void incrementExpiredTransactionsMessage() {

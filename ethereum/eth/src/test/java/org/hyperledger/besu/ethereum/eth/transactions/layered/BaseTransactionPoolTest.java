@@ -26,16 +26,20 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class BaseTransactionPoolTest {
 
@@ -51,6 +55,8 @@ public class BaseTransactionPoolTest {
   protected final Transaction transaction0 = createTransaction(0);
   protected final Transaction transaction1 = createTransaction(1);
   protected final Transaction transaction2 = createTransaction(2);
+
+  protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
 
   protected Transaction createTransaction(final long nonce) {
     return createTransaction(nonce, Wei.of(5000L), KEYS1);
@@ -82,12 +88,10 @@ public class BaseTransactionPoolTest {
   protected Transaction createTransaction(
       final long nonce, final Wei maxGasPrice, final int payloadSize, final KeyPair keys) {
 
-    return createTransaction(
-        randomizeTxType.nextBoolean() ? TransactionType.EIP1559 : TransactionType.FRONTIER,
-        nonce,
-        maxGasPrice,
-        payloadSize,
-        keys);
+    // ToDo 4844: include BLOB tx here
+    final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(3)];
+
+    return createTransaction(txType, nonce, maxGasPrice, payloadSize, keys);
   }
 
   protected Transaction createTransaction(
@@ -111,6 +115,13 @@ public class BaseTransactionPoolTest {
     } else {
       tx.gasPrice(maxGasPrice);
     }
+    if (type.supportsAccessList()) {
+      tx.accessList(
+          List.of(
+              new AccessListEntry(
+                  Address.fromHexString("0x634316eA0EE79c701c6F67C53A4C54cBAfd2316d"),
+                  List.of(Bytes32.ZERO))));
+    }
     return tx.createTransaction(keys);
   }
 
@@ -130,23 +141,6 @@ public class BaseTransactionPoolTest {
 
   protected PendingTransaction createLocalPendingTransaction(final Transaction transaction) {
     return new PendingTransaction.Local(transaction, System.currentTimeMillis());
-  }
-
-  protected void assertTransactionPendingAndReady(
-      final Transaction transaction, final TransactionsLayer... layers) {
-    assertThat(Arrays.stream(layers).filter(layer -> layer.contains(transaction)).findAny())
-        .isPresent();
-    //    assertTransactionPending(pendingTransactions, transaction);
-    //    assertThat(pendingTransactions.getReady(transaction.getSender(), transaction.getNonce()))
-    //        .isPresent()
-    //        .map(PendingTransaction::getHash)
-    //        .hasValue(transaction.getHash());
-  }
-
-  protected void assertTransactionPendingAndNotReady(
-      final Transaction transaction, final TransactionsLayer... layers) {
-    assertThat(Arrays.stream(layers).filter(layer -> layer.contains(transaction)).findAny())
-        .isEmpty();
   }
 
   protected void assertTransactionPending(
@@ -174,5 +168,14 @@ public class BaseTransactionPoolTest {
     for (final long nonce : nonces) {
       sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
     }
+  }
+
+  protected long getAddedCount(final String source, final String layer) {
+    return metricsSystem.getCounterValue(TransactionPoolMetrics.ADDED_COUNTER_NAME, source, layer);
+  }
+
+  protected long getRemovedCount(final String source, final String operation, final String layer) {
+    return metricsSystem.getCounterValue(
+        TransactionPoolMetrics.REMOVED_COUNTER_NAME, source, operation, layer);
   }
 }

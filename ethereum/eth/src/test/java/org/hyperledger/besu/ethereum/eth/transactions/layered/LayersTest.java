@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.metrics.StubMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,7 +61,6 @@ public class LayersTest extends BaseTransactionPoolTest {
           .pendingTransactionsMaxCapacityBytes(createEIP1559Transaction(0, KEYS1, 1).getSize() * 3)
           .build();
 
-  private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
   private final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
@@ -1183,7 +1181,7 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     private void assertExpectedDropped(
         final EvictCollectorLayer evictCollector, final List<PendingTransaction> expected) {
-      assertThat(evictCollector.getEvictedTrancations())
+      assertThat(evictCollector.getEvictedTransactions())
           .describedAs("Dropped")
           .containsExactlyInAnyOrderElementsOf(expected);
     }

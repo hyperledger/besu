@@ -22,6 +22,8 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.DROPPED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -42,8 +44,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,23 +59,12 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final int MAX_CAPACITY_BYTES = 1024;
   protected static final int LIMITED_TRANSACTIONS_BY_SENDER = 4;
-  protected static final String ADDED_COUNTER = "transactions_added_total";
-  protected static final String REMOVED_COUNTER = "transactions_removed_total";
-  protected static final String EVICTED_COUNTER = "transactions_evicted_total";
   protected static final String REMOTE = "remote";
   protected static final String LOCAL = "local";
-  protected static final String REPLACED = "replaced";
-  protected static final String READY = "ready";
-
-  protected static final String LAYER_PRIORITIZED = "prioritized";
-
   protected final PendingTransactionAddedListener listener =
       mock(PendingTransactionAddedListener.class);
   protected final PendingTransactionDroppedListener droppedListener =
       mock(PendingTransactionDroppedListener.class);
-
-  protected final TestClock clock = new TestClock();
-  protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
 
   private final TransactionPoolConfiguration poolConf =
       ImmutableTransactionPoolConfiguration.builder()
@@ -92,6 +81,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
           .build();
   private LayeredPendingTransactions senderLimitedTransactions;
   private LayeredPendingTransactions pendingTransactions;
+  private CreatedLayers senderLimitedLayers;
+  private CreatedLayers layers;
   private TransactionPoolMetrics txPoolMetrics;
 
   private static BlockHeader mockBlockHeader() {
@@ -100,8 +91,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     return blockHeader;
   }
 
-  private AbstractPrioritizedTransactions createLayers(
-      final TransactionPoolConfiguration poolConfig) {
+  private CreatedLayers createLayers(final TransactionPoolConfiguration poolConfig) {
 
     final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
         (t1, t2) ->
@@ -109,6 +99,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
                 .shouldReplace(t1, t2, mockBlockHeader());
 
     final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
+
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
             poolConfig, evictCollector, txPoolMetrics, transactionReplacementTester);
@@ -125,7 +116,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             txPoolMetrics,
             transactionReplacementTester,
             FeeMarket.london(0L));
-    return prioritizedTransactions;
+    return new CreatedLayers(
+        prioritizedTransactions, readyTransactions, sparseTransactions, evictCollector);
   }
 
   @BeforeEach
@@ -133,12 +125,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
+    layers = createLayers(poolConf);
+    senderLimitedLayers = createLayers(senderLimitedConfig);
+
     pendingTransactions =
-        new LayeredPendingTransactions(poolConf, createLayers(poolConf), txPoolMetrics);
+        new LayeredPendingTransactions(poolConf, layers.prioritizedTransactions, txPoolMetrics);
 
     senderLimitedTransactions =
         new LayeredPendingTransactions(
-            senderLimitedConfig, createLayers(senderLimitedConfig), txPoolMetrics);
+            senderLimitedConfig, senderLimitedLayers.prioritizedTransactions, txPoolMetrics);
   }
 
   @Test
@@ -162,13 +157,12 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
 
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
-        .isEqualTo(1);
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(1);
 
     pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
-        .isEqualTo(2);
+
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(2);
   }
 
   @Test
@@ -203,7 +197,6 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     }
 
     assertThat(pendingTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertThat(metricsSystem.getCounterValue(EVICTED_COUNTER, READY)).isZero();
 
     final Transaction lastBigTx =
         createTransaction(
@@ -217,7 +210,11 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertTransactionPending(pendingTransactions, lastBigTx);
 
     assertTransactionNotPending(pendingTransactions, firstTxs.get(0));
-    assertThat(metricsSystem.getCounterValue(EVICTED_COUNTER, READY)).isEqualTo(1);
+    assertThat(getRemovedCount(REMOTE, DROPPED.label(), layers.evictedCollector.name()))
+        .isEqualTo(1);
+    assertThat(layers.evictedCollector.getEvictedTransactions())
+        .map(PendingTransaction::getTransaction)
+        .contains(firstTxs.get(0));
     verify(droppedListener).onTransactionDropped(firstTxs.get(0));
   }
 
@@ -423,9 +420,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertTransactionPending(pendingTransactions, transaction1b);
     assertTransactionPending(pendingTransactions, transaction2);
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
-        .isEqualTo(3);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, REPLACED, LAYER_PRIORITIZED))
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(3);
+    assertThat(getRemovedCount(REMOTE, REPLACED.label(), layers.prioritizedTransactions.name()))
         .isEqualTo(1);
   }
 
@@ -454,9 +450,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertTransactionPending(pendingTransactions, independentTx);
 
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name()))
         .isEqualTo(replacedTxCount + 2);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, REPLACED, LAYER_PRIORITIZED))
+    assertThat(getRemovedCount(REMOTE, REPLACED.label(), layers.prioritizedTransactions.name()))
         .isEqualTo(replacedTxCount);
   }
 
@@ -494,13 +490,13 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final int localDuplicateCount = replacedTxCount - remoteDuplicateCount;
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name()))
         .isEqualTo(remoteDuplicateCount + 1);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL, LAYER_PRIORITIZED))
+    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name()))
         .isEqualTo(localDuplicateCount + 1);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, REPLACED, LAYER_PRIORITIZED))
+    assertThat(getRemovedCount(REMOTE, REPLACED.label(), layers.prioritizedTransactions.name()))
         .isEqualTo(remoteDuplicateCount);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, LOCAL, REPLACED, LAYER_PRIORITIZED))
+    assertThat(getRemovedCount(LOCAL, REPLACED.label(), layers.prioritizedTransactions.name()))
         .isEqualTo(localDuplicateCount);
   }
 
@@ -636,32 +632,28 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void shouldNotIncrementAddedCounterWhenRemoteTransactionAlreadyPresent() {
     pendingTransactions.addLocalTransaction(transaction0, Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL, LAYER_PRIORITIZED)).isEqualTo(1);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
-        .isEqualTo(0);
+    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name())).isEqualTo(1);
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isZero();
 
     assertThat(pendingTransactions.addRemoteTransaction(transaction0, Optional.empty()))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL, LAYER_PRIORITIZED)).isEqualTo(1);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
-        .isEqualTo(0);
+    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name())).isEqualTo(1);
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isZero();
   }
 
   @Test
   public void shouldNotIncrementAddedCounterWhenLocalTransactionAlreadyPresent() {
     pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL, LAYER_PRIORITIZED)).isEqualTo(0);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
-        .isEqualTo(1);
+    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name())).isZero();
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(1);
 
     assertThat(pendingTransactions.addLocalTransaction(transaction0, Optional.empty()))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL, LAYER_PRIORITIZED)).isEqualTo(0);
-    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE, LAYER_PRIORITIZED))
-        .isEqualTo(1);
+    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name())).isZero();
+    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(1);
   }
 
   @Test
@@ -713,4 +705,10 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   }
 
   record TransactionAndAccount(Transaction transaction, Account account) {}
+
+  record CreatedLayers(
+      AbstractPrioritizedTransactions prioritizedTransactions,
+      ReadyTransactions readyTransactions,
+      SparseTransactions sparseTransactions,
+      EvictCollectorLayer evictedCollector) {}
 }

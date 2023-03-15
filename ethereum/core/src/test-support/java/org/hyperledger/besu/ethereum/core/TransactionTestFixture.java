@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -46,6 +48,8 @@ public class TransactionTestFixture {
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
 
+  private List<AccessListEntry> accessListEntries = null;
+
   private Optional<BigInteger> v = Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
@@ -57,6 +61,7 @@ public class TransactionTestFixture {
         .nonce(nonce)
         .payload(payload)
         .value(value)
+        .accessList(accessListEntries)
         .sender(sender);
 
     to.ifPresent(builder::to);
@@ -122,6 +127,11 @@ public class TransactionTestFixture {
 
   public TransactionTestFixture maxFeePerGas(final Optional<Wei> maxFeePerGas) {
     this.maxFeePerGas = maxFeePerGas;
+    return this;
+  }
+
+  public TransactionTestFixture accessList(final List<AccessListEntry> accessListEntries) {
+    this.accessListEntries = accessListEntries;
     return this;
   }
 

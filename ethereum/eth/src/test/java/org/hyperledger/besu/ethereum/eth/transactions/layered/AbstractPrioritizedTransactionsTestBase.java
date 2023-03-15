@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
-import org.hyperledger.besu.metrics.StubMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -39,11 +38,8 @@ import org.junit.jupiter.api.Test;
 
 public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
-  protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   protected final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
-
   protected final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
-
   protected AbstractPrioritizedTransactions transactions =
       getSorter(
           ImmutableTransactionPoolConfiguration.builder()
@@ -97,9 +93,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
       assertThat(prioritizeResult).isEqualTo(ADDED);
     }
 
-    assertThat(evictCollector.getEvictedTrancations()).contains(remoteTxs.get(0));
-    //
-    // assertThat(prioritizeResult.maybeDemotedTransaction()).isPresent().contains(remoteTxs.get(0));
+    assertThat(evictCollector.getEvictedTransactions()).contains(remoteTxs.get(0));
     assertTransactionPrioritized(localTransaction);
     remoteTxs.stream().skip(1).forEach(remoteTx -> assertTransactionPrioritized(remoteTx));
   }
@@ -121,7 +115,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     final var lastLocalTransaction =
         createLocalPendingTransaction(createTransaction(MAX_TRANSACTIONS));
     prioritizeTransaction(lastLocalTransaction);
-    assertThat(evictCollector.getEvictedTrancations()).contains(lastLocalTransaction);
+    assertThat(evictCollector.getEvictedTransactions()).contains(lastLocalTransaction);
 
     assertThat(transactions.count()).isEqualTo(MAX_TRANSACTIONS);
 
@@ -143,7 +137,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
                   final var prioritizeResult = transactions.add(lowPriceTx, 0);
 
                   assertThat(prioritizeResult).isEqualTo(ADDED);
-                  assertThat(evictCollector.getEvictedTrancations()).isEmpty();
+                  assertThat(evictCollector.getEvictedTransactions()).isEmpty();
                   return lowPriceTx;
                 })
             .toList();
@@ -153,7 +147,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     // This should kick the oldest tx with the low gas price out, namely the first one we added
     final var highValuePrioRes = transactions.add(highValueTx, 0);
     assertThat(highValuePrioRes).isEqualTo(ADDED);
-    assertThat(evictCollector.getEvictedTrancations()).contains(expectedDroppedTx);
+    assertThat(evictCollector.getEvictedTransactions()).contains(expectedDroppedTx);
 
     assertThat(transactions.getByHash(highValueTx.getHash())).isPresent();
     lowGasPriceTransactions.stream()

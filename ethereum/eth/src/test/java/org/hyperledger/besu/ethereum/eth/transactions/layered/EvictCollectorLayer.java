@@ -22,10 +22,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EvictCollectorLayer extends EndLayer {
+  static final String LAYER_NAME = "evict-collector";
   final List<PendingTransaction> evictedTxs = new ArrayList<>();
 
   public EvictCollectorLayer(final TransactionPoolMetrics metrics) {
     super(metrics);
+  }
+
+  @Override
+  public String name() {
+    return LAYER_NAME;
   }
 
   @Override
@@ -35,7 +41,7 @@ public class EvictCollectorLayer extends EndLayer {
     return res;
   }
 
-  public List<PendingTransaction> getEvictedTrancations() {
+  public List<PendingTransaction> getEvictedTransactions() {
     return evictedTxs;
   }
 }
