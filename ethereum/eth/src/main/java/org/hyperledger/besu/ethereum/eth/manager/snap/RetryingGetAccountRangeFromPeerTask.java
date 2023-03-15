@@ -26,7 +26,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class RetryingGetAccountRangeFromPeerTask
