@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
@@ -84,5 +85,7 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
   }
 
   @Override
-  protected void postBuildStep(final MainnetProtocolSpecFactory specFactory) {}
+  protected void postBuildStep(
+      final MainnetProtocolSpecFactory specFactory,
+      final TreeMap<Long, BuilderMapEntry> builders) {}
 }

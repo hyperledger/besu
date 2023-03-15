@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -37,7 +36,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -68,8 +66,6 @@ public class TransactionTracerTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;
 
-  @Mock private WorldStateArchive worldStateArchive;
-
   @Mock private BlockHeader blockHeader;
 
   @Mock private BlockBody blockBody;
@@ -84,7 +80,7 @@ public class TransactionTracerTest {
 
   @Mock private ProtocolSpec protocolSpec;
 
-  @Mock private MutableWorldState mutableWorldState;
+  @Mock private Tracer.TraceableState mutableWorldState;
 
   @Mock private MainnetTransactionProcessor transactionProcessor;
 
@@ -105,16 +101,12 @@ public class TransactionTracerTest {
 
   @Before
   public void setUp() throws Exception {
-    transactionTracer =
-        new TransactionTracer(new BlockReplay(protocolSchedule, blockchain, worldStateArchive));
+    transactionTracer = new TransactionTracer(new BlockReplay(protocolSchedule, blockchain));
     when(transaction.getHash()).thenReturn(transactionHash);
     when(otherTransaction.getHash()).thenReturn(otherTransactionHash);
     when(blockHeader.getNumber()).thenReturn(12L);
     when(blockHeader.getHash()).thenReturn(blockHash);
     when(blockHeader.getParentHash()).thenReturn(previousBlockHash);
-    when(previousBlockHeader.getBlockHash()).thenReturn(Hash.ZERO);
-    when(worldStateArchive.getMutable(argThat(h -> h.getBlockHash().equals(Hash.ZERO)), eq(false)))
-        .thenReturn(Optional.of(mutableWorldState));
     when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
@@ -126,7 +118,8 @@ public class TransactionTracerTest {
   @Test
   public void traceTransactionShouldReturnNoneWhenBlockHeaderNotFound() {
     final Optional<TransactionTrace> transactionTrace =
-        transactionTracer.traceTransaction(invalidBlockHash, transactionHash, tracer);
+        transactionTracer.traceTransaction(
+            mutableWorldState, invalidBlockHash, transactionHash, tracer);
     assertThat(transactionTrace).isEmpty();
   }
 
@@ -140,7 +133,7 @@ public class TransactionTracerTest {
     when(tracer.getTraceFrames()).thenReturn(traceFrames);
 
     final Optional<TransactionTrace> transactionTrace =
-        transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
+        transactionTracer.traceTransaction(mutableWorldState, blockHash, transactionHash, tracer);
 
     assertThat(transactionTrace.map(TransactionTrace::getTraceFrames)).contains(traceFrames);
   }
@@ -157,7 +150,7 @@ public class TransactionTracerTest {
     when(tracer.getTraceFrames()).thenReturn(traceFrames);
 
     final Optional<TransactionTrace> transactionTrace =
-        transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
+        transactionTracer.traceTransaction(mutableWorldState, blockHash, transactionHash, tracer);
 
     assertThat(transactionTrace.map(TransactionTrace::getTraceFrames)).contains(traceFrames);
   }
@@ -188,7 +181,7 @@ public class TransactionTracerTest {
         .thenReturn(result);
 
     final Optional<TransactionTrace> transactionTrace =
-        transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
+        transactionTracer.traceTransaction(mutableWorldState, blockHash, transactionHash, tracer);
 
     assertThat(transactionTrace.map(TransactionTrace::getResult)).contains(result);
   }
@@ -203,7 +196,7 @@ public class TransactionTracerTest {
     when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
 
     final Optional<TransactionTrace> transactionTrace =
-        transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
+        transactionTracer.traceTransaction(mutableWorldState, blockHash, transactionHash, tracer);
 
     assertThat(transactionTrace).isEmpty();
   }
@@ -215,7 +208,7 @@ public class TransactionTracerTest {
     when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.empty());
 
     final Optional<TransactionTrace> transactionTrace =
-        transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
+        transactionTracer.traceTransaction(mutableWorldState, blockHash, transactionHash, tracer);
 
     assertThat(transactionTrace).isEmpty();
   }
@@ -235,6 +228,7 @@ public class TransactionTracerTest {
     when(mutableWorldState.updater()).thenReturn(updater);
     final List<String> transactionTraces =
         transactionTracer.traceTransactionToFile(
+            mutableWorldState,
             blockHash,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
             traceDir.getRoot().toPath());
@@ -277,6 +271,7 @@ public class TransactionTracerTest {
 
     final List<String> transactionTraces =
         transactionTracer.traceTransactionToFile(
+            mutableWorldState,
             blockHash,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
             traceDir.getRoot().toPath());

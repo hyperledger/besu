@@ -48,7 +48,7 @@ public class BackwardSyncStep {
     Hash lastHash = firstAncestor.getParentHash();
     Optional<BlockHeader> iterator = backwardChain.getHeader(lastHash);
     while (iterator.isPresent()) {
-      backwardChain.prependAncestorsHeader(iterator.get());
+      backwardChain.prependAncestorsHeader(iterator.get(), true);
       lastHash = iterator.get().getParentHash();
       iterator = backwardChain.getHeader(lastHash);
     }
