@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class RetryingGetAccountRangeFromPeerTask
@@ -71,6 +73,12 @@ public class RetryingGetAccountRangeFromPeerTask
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
+              if (isEmptyResponse(peerResult.getResult())) {
+                final EthPeer peer = peerResult.getPeer();
+                peer.recordUselessResponse("GetAccountRangeFromPeerTask");
+                throw new IncompleteResultsException(
+                    "No account and proof returned by peer " + peer.nodeId());
+              }
               result.complete(peerResult.getResult());
               return peerResult.getResult();
             });

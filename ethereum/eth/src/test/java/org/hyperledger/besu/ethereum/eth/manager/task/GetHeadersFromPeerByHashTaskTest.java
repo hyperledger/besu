@@ -17,9 +17,13 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain.generateTestBlockHash;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
@@ -30,15 +34,18 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -199,5 +206,83 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     assertThat(peer.isDisconnected()).isTrue();
     assertThat(((MockPeerConnection) peer.getConnection()).getDisconnectReason().get())
         .isEqualTo(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+  }
+
+  @Test
+  public void checkThatStreamClosedResponseCallsPeerRecordUselessResponse() {
+    final EthPeer peer = mock(EthPeer.class);
+    final AbstractGetHeadersFromPeerTask task =
+        new GetHeadersFromPeerByHashTask(
+            protocolSchedule, ethContext, Hash.ZERO, 0, 2, 0, false, metricsSystem);
+    task.processResponse(true, BlockHeadersMessage.create(Collections.emptyList()), peer);
+    Mockito.verify(peer, Mockito.times(1)).recordUselessResponse("headers");
+  }
+
+  @Test
+  public void checkThatEmptyResponseCallsPeerRecordUselessResponse() {
+    final EthPeer peer = mock(EthPeer.class);
+    when(peer.nodeId()).thenReturn(Bytes.EMPTY);
+    final AbstractGetHeadersFromPeerTask task =
+        new GetHeadersFromPeerByHashTask(
+            protocolSchedule, ethContext, Hash.ZERO, 0, 2, 0, false, metricsSystem);
+    task.processResponse(false, BlockHeadersMessage.create(Collections.emptyList()), peer);
+    Mockito.verify(peer, Mockito.times(1)).recordUselessResponse("No headers returned by peer 0x");
+  }
+
+  @Test
+  public void checkThatTooManyHeadersInResponseCallsPeerRecordUselessResponse() {
+    final EthPeer peer = mock(EthPeer.class);
+    when(peer.nodeId()).thenReturn(Bytes.EMPTY);
+    final AbstractGetHeadersFromPeerTask task =
+        new GetHeadersFromPeerByHashTask(
+            protocolSchedule, ethContext, Hash.ZERO, 0, 1, 0, false, metricsSystem);
+    final BlockHeader block1 =
+        new BlockHeaderTestFixture().number(1).parentHash(generateTestBlockHash(1)).buildHeader();
+    final BlockHeader block2 =
+        new BlockHeaderTestFixture().number(2).parentHash(generateTestBlockHash(2)).buildHeader();
+    final List<BlockHeader> headers = Arrays.asList(block1, block2);
+    task.processResponse(false, BlockHeadersMessage.create(headers), peer);
+    Mockito.verify(peer, Mockito.times(1))
+        .recordUselessResponse("Too many headers returned by peer 0x");
+  }
+
+  @Test
+  public void checkThatFirstHeaderNotMatchingResponseCallsPeerRecordUselessResponse() {
+    final EthPeer peer = mock(EthPeer.class);
+    when(peer.nodeId()).thenReturn(Bytes.EMPTY);
+    final AbstractGetHeadersFromPeerTask task =
+        new GetHeadersFromPeerByHashTask(
+            protocolSchedule, ethContext, Hash.ZERO, 0, 2, 0, false, metricsSystem);
+    final BlockHeader block1 =
+        new BlockHeaderTestFixture()
+            .number(1)
+            .parentHash(
+                Hash.fromHexString(
+                    "0x0102030405060708091011121314151617181920212223242526272829303132"))
+            .buildHeader();
+    final BlockHeader block2 =
+        new BlockHeaderTestFixture().number(2).parentHash(generateTestBlockHash(2)).buildHeader();
+    final List<BlockHeader> headers = Arrays.asList(block1, block2);
+    task.processResponse(false, BlockHeadersMessage.create(headers), peer);
+    Mockito.verify(peer, Mockito.times(1))
+        .recordUselessResponse("First header returned by peer not matching 0x");
+  }
+
+  @Test
+  public void checkThatWrongNumberResponseCallsPeerRecordUselessResponse() {
+    final EthPeer peer = mock(EthPeer.class);
+    final ChainState chainState = mock(ChainState.class);
+    when(peer.nodeId()).thenReturn(Bytes.EMPTY);
+    when(peer.chainState()).thenReturn(chainState);
+    final BlockHeader block1 = new BlockHeaderTestFixture().number(0).buildHeader();
+    final AbstractGetHeadersFromPeerTask task =
+        new GetHeadersFromPeerByHashTask(
+            protocolSchedule, ethContext, block1.getHash(), 0, 2, 0, false, metricsSystem);
+    final BlockHeader block2 =
+        new BlockHeaderTestFixture().number(2).parentHash(generateTestBlockHash(3)).buildHeader();
+    final List<BlockHeader> headers = Arrays.asList(block1, block2);
+    task.processResponse(false, BlockHeadersMessage.create(headers), peer);
+    Mockito.verify(peer, Mockito.times(1))
+        .recordUselessResponse("Header returned by peer does not have expected number 0x");
   }
 }
