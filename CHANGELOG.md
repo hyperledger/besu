@@ -5,7 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
-- Increase default from 1000 to 5000 for `--rpc-max-logs-range` #5209
+- Increase default from 1000 to 5000 for `--rpc-max-logs-range` [#5209](https://github.com/hyperledger/besu/pull/5209)
 
 ### Bug Fixes
 
@@ -53,7 +53,7 @@ This release has everything from [23.1.0](https://github.com/hyperledger/besu/re
 - Add implementation for engine_getPayloadBodiesByRangeV1 and engine_getPayloadBodiesByHashV1 https://github.com/hyperledger/besu/pull/4980
 - If a PoS block creation repetition takes less than a configurable duration, then waits before next repetition https://github.com/hyperledger/besu/pull/5048
 - Allow other users to read the /opt/besu dir when using docker https://github.com/hyperledger/besu/pull/5092
-- Invalid params - add some error detail #5066
+- Invalid params - add some error detail [#5066](https://github.com/hyperledger/besu/pull/5066)
 
 ### Bug fixes
 - Fix engine_getPayloadV2 block value calculation https://github.com/hyperledger/besu/issues/5040
