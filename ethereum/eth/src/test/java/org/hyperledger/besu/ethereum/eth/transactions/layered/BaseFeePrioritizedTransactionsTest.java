@@ -122,8 +122,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
                 i ->
                     new PendingTransaction.Remote(
                         createTransaction(
-                            0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair()),
-                        System.currentTimeMillis()))
+                            0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair())))
             .collect(Collectors.toUnmodifiableList());
 
     final var lowestPriorityFee =

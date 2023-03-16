@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -32,7 +33,7 @@ public class TransactionTestFixture {
 
   private long nonce = 0;
 
-  private Wei gasPrice = Wei.of(5000);
+  private Optional<Wei> gasPrice = Optional.empty();
 
   private long gasLimit = 5000;
 
@@ -48,7 +49,7 @@ public class TransactionTestFixture {
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
 
-  private List<AccessListEntry> accessListEntries = null;
+  private Optional<List<AccessListEntry>> accessListEntries = Optional.empty();
 
   private Optional<BigInteger> v = Optional.empty();
 
@@ -57,19 +58,29 @@ public class TransactionTestFixture {
     builder
         .type(transactionType)
         .gasLimit(gasLimit)
-        .gasPrice(gasPrice)
         .nonce(nonce)
         .payload(payload)
         .value(value)
-        .accessList(accessListEntries)
         .sender(sender);
+
+    switch (transactionType) {
+      case FRONTIER:
+        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
+        break;
+      case ACCESS_LIST:
+        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
+        builder.accessList(List.of());
+        break;
+      case EIP1559:
+        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
+        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+      break;
+      default:
+    }
 
     to.ifPresent(builder::to);
     chainId.ifPresent(builder::chainId);
-
-    maxPriorityFeePerGas.ifPresent(builder::maxPriorityFeePerGas);
-    maxFeePerGas.ifPresent(builder::maxFeePerGas);
-
     v.ifPresent(builder::v);
 
     return builder.signAndBuild(keys);
@@ -86,7 +97,7 @@ public class TransactionTestFixture {
   }
 
   public TransactionTestFixture gasPrice(final Wei gasPrice) {
-    this.gasPrice = gasPrice;
+    this.gasPrice = Optional.ofNullable(gasPrice);
     return this;
   }
 
@@ -131,7 +142,7 @@ public class TransactionTestFixture {
   }
 
   public TransactionTestFixture accessList(final List<AccessListEntry> accessListEntries) {
-    this.accessListEntries = accessListEntries;
+    this.accessListEntries = Optional.ofNullable(accessListEntries);
     return this;
   }
 

@@ -142,6 +142,7 @@ dependencyManagement {
     dependency 'org.apache.tuweni:tuweni-toml:2.3.1'
     dependency 'org.apache.tuweni:tuweni-units:2.3.1'
 
+    dependency 'org.atp-fivt:ljv:1.04'
     dependency 'org.assertj:assertj-core:3.23.1'
 
     dependency 'org.awaitility:awaitility:4.2.0'
@@ -152,6 +153,7 @@ dependencyManagement {
     }
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
+    dependency 'org.openjdk.jol:jol-core:0.17'
     dependency 'tech.pegasys:jc-kzg-4844:0.4.0'
     dependencySet(group: 'org.hyperledger.besu', version: '0.7.1') {
       entry 'arithmetic'

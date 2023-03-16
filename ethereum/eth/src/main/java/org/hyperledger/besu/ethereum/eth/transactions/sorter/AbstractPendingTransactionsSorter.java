@@ -182,7 +182,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     }
 
     final PendingTransaction pendingTransaction =
-        new PendingTransaction.Remote(transaction, clock.millis());
+        new PendingTransaction.Remote(transaction);
     final TransactionAddedResult transactionAddedStatus =
         addTransaction(pendingTransaction, maybeSenderAccount);
     if (transactionAddedStatus.equals(ADDED)) {
@@ -197,7 +197,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
     final TransactionAddedResult transactionAdded =
         addTransaction(
-            new PendingTransaction.Local(transaction, clock.millis()), maybeSenderAccount);
+            new PendingTransaction.Local(transaction), maybeSenderAccount);
     if (transactionAdded.equals(ADDED)) {
       localSenders.add(transaction.getSender());
       localTransactionAddedCounter.inc();

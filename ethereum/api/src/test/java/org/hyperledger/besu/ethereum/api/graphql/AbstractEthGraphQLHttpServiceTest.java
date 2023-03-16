@@ -150,8 +150,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                         .nonce(42)
                         .gasLimit(654321)
                         .gasPrice(Wei.ONE)
-                        .build(),
-                    Long.MAX_VALUE)));
+                        .build())));
 
     final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());

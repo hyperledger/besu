@@ -194,7 +194,7 @@ public class EthGetTransactionByHashTest {
     Transaction pendingTransaction = gen.transaction();
     System.out.println(pendingTransaction.getHash());
     return gen.transactionsWithAllTypes(4).stream()
-        .map(transaction -> new PendingTransaction.Local(transaction, Long.MAX_VALUE))
+        .map(transaction -> new PendingTransaction.Local(transaction))
         .collect(Collectors.toUnmodifiableSet());
   }
 }

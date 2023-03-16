@@ -330,8 +330,8 @@ public class TransactionBroadcasterTest {
         .map(
             tx ->
                 local
-                    ? new PendingTransaction.Local(tx, System.currentTimeMillis())
-                    : new PendingTransaction.Remote(tx, System.currentTimeMillis()))
+                    ? new PendingTransaction.Local(tx)
+                    : new PendingTransaction.Remote(tx))
         .collect(Collectors.toSet());
   }
 
@@ -342,8 +342,8 @@ public class TransactionBroadcasterTest {
         .map(
             tx ->
                 local
-                    ? new PendingTransaction.Local(tx, System.currentTimeMillis())
-                    : new PendingTransaction.Remote(tx, System.currentTimeMillis()))
+                    ? new PendingTransaction.Local(tx)
+                    : new PendingTransaction.Remote(tx))
         .collect(Collectors.toSet());
   }
 

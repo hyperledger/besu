@@ -101,26 +101,21 @@ public class BaseTransactionPoolTest {
       final int payloadSize,
       final KeyPair keys) {
 
-    var payloadBytes = Bytes.repeat((byte) 1, payloadSize);
     var tx =
         new TransactionTestFixture()
             .to(Optional.of(Address.fromHexString("0x634316eA0EE79c701c6F67C53A4C54cBAfd2316d")))
             .value(Wei.of(nonce))
             .nonce(nonce)
-            .type(type)
-            .payload(payloadBytes);
+            .type(type);
+    if(payloadSize > 0) {
+      var payloadBytes = Bytes.repeat((byte) 1, payloadSize);
+      tx.payload(payloadBytes);
+    }
     if (type.supports1559FeeMarket()) {
       tx.maxFeePerGas(Optional.of(maxGasPrice))
           .maxPriorityFeePerGas(Optional.of(maxGasPrice.divide(10)));
     } else {
       tx.gasPrice(maxGasPrice);
-    }
-    if (type.supportsAccessList()) {
-      tx.accessList(
-          List.of(
-              new AccessListEntry(
-                  Address.fromHexString("0x634316eA0EE79c701c6F67C53A4C54cBAfd2316d"),
-                  List.of(Bytes32.ZERO))));
     }
     return tx.createTransaction(keys);
   }
@@ -136,11 +131,11 @@ public class BaseTransactionPoolTest {
   }
 
   protected PendingTransaction createRemotePendingTransaction(final Transaction transaction) {
-    return new PendingTransaction.Remote(transaction, System.currentTimeMillis());
+    return new PendingTransaction.Remote(transaction);
   }
 
   protected PendingTransaction createLocalPendingTransaction(final Transaction transaction) {
-    return new PendingTransaction.Local(transaction, System.currentTimeMillis());
+    return new PendingTransaction.Local(transaction);
   }
 
   protected void assertTransactionPending(

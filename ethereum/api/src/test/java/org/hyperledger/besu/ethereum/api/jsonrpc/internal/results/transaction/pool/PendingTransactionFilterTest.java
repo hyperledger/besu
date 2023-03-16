@@ -138,7 +138,7 @@ public class PendingTransactionFilterTest {
       if (i == numberTrx - 1) {
         when(transaction.isContractCreation()).thenReturn(true);
       }
-      pendingTransactionList.add(new PendingTransaction.Local(transaction, Long.MAX_VALUE));
+      pendingTransactionList.add(new PendingTransaction.Local(transaction));
     }
     return new LinkedHashSet<>(pendingTransactionList);
   }

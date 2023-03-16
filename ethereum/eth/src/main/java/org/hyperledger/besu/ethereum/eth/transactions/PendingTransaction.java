@@ -35,9 +35,9 @@ public abstract class PendingTransaction {
   private final long addedToPoolAt;
   private final long sequence; // Allows prioritization based on order transactions are added
 
-  protected PendingTransaction(final Transaction transaction, final long addedToPoolAt) {
+  protected PendingTransaction(final Transaction transaction) {
     this.transaction = transaction;
-    this.addedToPoolAt = addedToPoolAt;
+    this.addedToPoolAt = System.currentTimeMillis();
     this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
   }
 
@@ -124,8 +124,8 @@ public abstract class PendingTransaction {
 
   public static class Local extends PendingTransaction {
 
-    public Local(final Transaction transaction, final long addedToPoolAt) {
-      super(transaction, addedToPoolAt);
+    public Local(final Transaction transaction) {
+      super(transaction);
     }
 
     @Override
@@ -136,8 +136,8 @@ public abstract class PendingTransaction {
 
   public static class Remote extends PendingTransaction {
 
-    public Remote(final Transaction transaction, final long addedToPoolAt) {
-      super(transaction, addedToPoolAt);
+    public Remote(final Transaction transaction) {
+      super(transaction);
     }
 
     @Override

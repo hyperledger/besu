@@ -75,11 +75,13 @@ dependencies {
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
+  testImplementation 'org.atp-fivt:ljv'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'org.openjdk.jol:jol-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 

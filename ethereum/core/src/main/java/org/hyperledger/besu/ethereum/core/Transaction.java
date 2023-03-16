@@ -1137,6 +1137,7 @@ public class Transaction
   }
 
   public static class Builder {
+    private static final Optional<List<AccessListEntry>> EMPTY_ACCESS_LIST = Optional.of(List.of());
 
     protected TransactionType transactionType;
 
@@ -1229,7 +1230,7 @@ public class Transaction
     }
 
     public Builder accessList(final List<AccessListEntry> accessList) {
-      this.accessList = Optional.ofNullable(accessList);
+      this.accessList = accessList.isEmpty() ? EMPTY_ACCESS_LIST : Optional.of(accessList);
       return this;
     }
 

@@ -257,7 +257,7 @@ public class TxPoolBesuPendingTransactionsTest {
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     return gen.transactionsWithAllTypes(4).stream()
-        .map(transaction -> new PendingTransaction.Local(transaction, Long.MAX_VALUE))
+        .map(transaction -> new PendingTransaction.Local(transaction))
         .collect(Collectors.toUnmodifiableSet());
   }
 }
