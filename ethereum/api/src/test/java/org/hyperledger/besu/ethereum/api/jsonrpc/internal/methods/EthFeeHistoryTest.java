@@ -86,8 +86,12 @@ public class EthFeeHistoryTest {
   public void allFieldsPresentForLatestBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(eq(blockchain.getChainHeadHeader()), eq(blockchain.getChainHeadHeader().getTimestamp()))).thenReturn(londonSpec);
-    final Object latest = ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", new double[]{100.0}))
+    when(protocolSchedule.getForNextBlockHeader(
+            eq(blockchain.getChainHeadHeader()),
+            eq(blockchain.getChainHeadHeader().getTimestamp())))
+        .thenReturn(londonSpec);
+    final Object latest =
+        ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", new double[] {100.0}))
             .getResult();
     assertThat(latest)
         .isEqualTo(

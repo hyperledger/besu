@@ -107,7 +107,11 @@ public class EthFeeHistory implements JsonRpcMethod {
             .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
             .orElseGet(
                 () ->
-                    Optional.of(protocolSchedule.getForNextBlockHeader(chainHeadHeader, chainHeadHeader.getTimestamp()).getFeeMarket())
+                    Optional.of(
+                            protocolSchedule
+                                .getForNextBlockHeader(
+                                    chainHeadHeader, chainHeadHeader.getTimestamp())
+                                .getFeeMarket())
                         .filter(FeeMarket::implementsBaseFee)
                         .map(BaseFeeMarket.class::cast)
                         .map(
