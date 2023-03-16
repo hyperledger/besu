@@ -67,6 +67,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -796,7 +797,8 @@ public class RunnerBuilder {
             .build();
     vertx.deployVerticle(filterManager);
 
-    createPrivateTransactionObserver(filterManager, privacyParameters);
+    createPrivateTransactionObserver(
+        filterManager, privacyParameters, context.getBlockchain().getGenesisBlockHeader());
 
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
 
@@ -1032,7 +1034,8 @@ public class RunnerBuilder {
                   DefaultAuthenticationService.create(vertx, webSocketConfiguration),
                   metricsSystem));
 
-      createPrivateTransactionObserver(subscriptionManager, privacyParameters);
+      createPrivateTransactionObserver(
+          subscriptionManager, privacyParameters, context.getBlockchain().getGenesisBlockHeader());
     }
 
     final Optional<MetricsService> metricsService =
@@ -1344,7 +1347,8 @@ public class RunnerBuilder {
 
   private void createPrivateTransactionObserver(
       final PrivateTransactionObserver privateTransactionObserver,
-      final PrivacyParameters privacyParameters) {
+      final PrivacyParameters privacyParameters,
+      final BlockHeader genesisBlockHeader) {
     // register privateTransactionObserver as observer of events fired by the flexible precompile.
     if (privacyParameters.isFlexiblePrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
@@ -1352,9 +1356,10 @@ public class RunnerBuilder {
           (FlexiblePrivacyPrecompiledContract)
               besuController
                   .getProtocolSchedule()
-                  .getByBlockNumber(1)
+                  .getByBlockHeader(genesisBlockHeader)
                   .getPrecompileContractRegistry()
                   .get(FLEXIBLE_PRIVACY);
+
       flexiblePrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }
