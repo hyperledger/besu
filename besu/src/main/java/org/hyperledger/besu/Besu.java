@@ -62,7 +62,13 @@ public final class Besu {
   }
 
   private static Logger setupLogging() {
-    InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+    try {
+      InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+    } catch (Throwable t) {
+      System.out.printf(
+          "Could not set netty log4j logger factory: %s - %s%n",
+          t.getClass().getSimpleName(), t.getMessage());
+    }
     try {
       System.setProperty(
           "vertx.logger-delegate-factory-class-name",
