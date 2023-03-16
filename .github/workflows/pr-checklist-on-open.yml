@@ -6,7 +6,6 @@ on:
       - opened
     branches:
       - main
-      - 'release*'
 
 jobs:
   checklist:
