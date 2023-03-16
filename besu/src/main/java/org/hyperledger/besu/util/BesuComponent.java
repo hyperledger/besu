@@ -16,7 +16,10 @@
 
 package org.hyperledger.besu.util;
 
+import dagger.Provides;
+import io.vertx.core.metrics.MetricsOptions;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import javax.inject.Singleton;
@@ -27,5 +30,5 @@ import dagger.Component;
 @Component(modules = {MetricsSystemModule.class})
 public interface BesuComponent {
 
-  MetricsSystem buildMetricsSystem();
+  MetricsConfiguration getMetricsConfiguration();
 }

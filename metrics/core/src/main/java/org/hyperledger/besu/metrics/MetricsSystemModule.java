@@ -30,7 +30,13 @@ public class MetricsSystemModule {
 
   @Provides
   @Singleton
-  MetricsSystem getMetricsSystem() {
-    return MetricsSystemFactory.create(MetricsConfiguration.builder().build());
+  MetricsSystem provideMetricsSystem(final MetricsConfiguration metricsConfig) {
+    return MetricsSystemFactory.create(metricsConfig);
+  }
+
+  @Provides
+  @Singleton
+  MetricsConfiguration provideMetricsConfiguration() {
+    return MetricsConfiguration.builder().build();
   }
 }
