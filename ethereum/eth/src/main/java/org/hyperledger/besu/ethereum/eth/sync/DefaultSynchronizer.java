@@ -43,6 +43,8 @@ import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
@@ -313,7 +315,15 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       fastSyncDownloader.get().deleteFastSyncState();
     }
 
-    new Exception().printStackTrace(System.out);
+    LOG.atDebug()
+        .setMessage("heal stacktrace: \n{}")
+        .addArgument(
+            () -> {
+              var sw = new StringWriter();
+              new Exception().printStackTrace(new PrintWriter(sw, true));
+              return sw.toString();
+            })
+        .log();
 
     final List<String> lines = new ArrayList<>();
     lines.add("Besu has identified a problem with its worldstate database.");

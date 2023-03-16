@@ -73,7 +73,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       if (forWorldState.isPersisted()
           && cachedBonsaiWorldView.get().getWorldStateStorage()
               instanceof BonsaiWorldStateLayerStorage) {
-        LOG.atWarn()
+        LOG.atDebug()
             .setMessage("updating layered world state for block {}, state root hash {}")
             .addArgument(blockHeader::toLogString)
             .addArgument(worldStateRootHash::toShortHexString)
@@ -84,7 +84,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
                 new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage));
       }
     } else {
-      LOG.atWarn()
+      LOG.atDebug()
           .setMessage("adding layered world state for block {}, state root hash {}")
           .addArgument(blockHeader::toLogString)
           .addArgument(worldStateRootHash::toShortHexString)

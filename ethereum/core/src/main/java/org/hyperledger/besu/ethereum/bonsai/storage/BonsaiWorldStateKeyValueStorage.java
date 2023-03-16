@@ -454,6 +454,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       codeStorage.close();
       storageStorage.close();
       trieBranchStorage.close();
+      trieLogStorage.close();
 
       // set storage closed
       isClosed.set(true);
