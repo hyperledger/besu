@@ -219,7 +219,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    executor: xl_machine_executor
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
