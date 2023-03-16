@@ -1,14 +1,13 @@
 name: comment on pr with checklist
-
 on:
   pull_request_target:
     types:
       - opened
     branches:
       - main
-
 jobs:
   checklist:
+    name: "add checklist as a comment on newly opened PRs"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v5
