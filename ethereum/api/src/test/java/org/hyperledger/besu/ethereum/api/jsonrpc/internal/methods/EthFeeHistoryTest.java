@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -65,7 +66,7 @@ public class EthFeeHistoryTest {
   public void params() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
     // should fail because no required params given
     assertThatThrownBy(this::feeHistoryRequest).isInstanceOf(InvalidJsonRpcParameters.class);
     // should fail because newestBlock not given
@@ -85,10 +86,10 @@ public class EthFeeHistoryTest {
   public void allFieldsPresentForLatestBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getByBlockNumber(eq(11L))).thenReturn(londonSpec);
-    assertThat(
-            ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", new double[] {100.0}))
-                .getResult())
+    when(protocolSchedule.getForNextBlockHeader(eq(blockchain.getChainHeadHeader()), eq(blockchain.getChainHeadHeader().getTimestamp()))).thenReturn(londonSpec);
+    final Object latest = ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", new double[]{100.0}))
+            .getResult();
+    assertThat(latest)
         .isEqualTo(
             FeeHistory.FeeHistoryResult.from(
                 ImmutableFeeHistory.builder()
@@ -103,7 +104,7 @@ public class EthFeeHistoryTest {
   public void cantGetBlockHigherThanChainHead() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x2", "11", new double[] {100.0}))
                 .getError())
@@ -129,7 +130,7 @@ public class EthFeeHistoryTest {
   public void doesntGoPastChainHeadWithHighBlockCount() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (ImmutableFeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest("0x14", "latest")).getResult();
@@ -143,7 +144,7 @@ public class EthFeeHistoryTest {
   public void correctlyHandlesForkBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(11));
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (FeeHistory.FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest")).getResult();
@@ -155,7 +156,7 @@ public class EthFeeHistoryTest {
   public void allZeroPercentilesForZeroBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
     final BlockDataGenerator.BlockOptions blockOptions = BlockDataGenerator.BlockOptions.create();
     blockOptions.hasTransactions(false);
     blockOptions.setParentHash(blockchain.getChainHeadHash());
