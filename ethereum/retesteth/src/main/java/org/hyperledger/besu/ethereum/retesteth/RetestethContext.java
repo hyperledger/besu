@@ -196,11 +196,7 @@ public class RetestethContext {
                 1000,
                 8);
 
-    blockReplay =
-        new BlockReplay(
-            protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            blockchainQueries.getWorldStateArchive());
+    blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
 
     // mining support
 
