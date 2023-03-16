@@ -36,6 +36,7 @@ public interface HeaderBasedProtocolSchedule {
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(timestamp)
             .parentHash(parentBlockHeader.getHash())
+            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .buildBlockHeader();
     return getByBlockHeader(nextBlockHeader);
   }
