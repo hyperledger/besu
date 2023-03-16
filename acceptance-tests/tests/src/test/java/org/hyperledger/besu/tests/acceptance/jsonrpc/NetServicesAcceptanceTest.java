@@ -20,9 +20,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
@@ -31,7 +31,7 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
   private Node nodeA;
   private Node nodeB;
 
-  @Before
+  @BeforeEach
   public void setup() {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
@@ -58,7 +58,7 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
     nodeB.verify(net.netServicesOnlyJsonRpcEnabled());
   }
 
-  @After
+  @AfterEach
   public void closeDown() throws Exception {
     noDiscoveryCluster.close();
   }
