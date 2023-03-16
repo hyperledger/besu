@@ -1,11 +1,10 @@
-name: comment on pr with checklist
+name: "comment on pr with checklist"
 on:
   pull_request_target:
-    types:
-      - opened
+    types: [ opened ]
     branches: [ main ]
 jobs:
-  ckl:
+  checklist:
     name: "add checklist as a comment on newly opened PRs"
     runs-on: ubuntu-latest
     steps:
