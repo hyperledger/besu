@@ -25,8 +25,8 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase {
   private Cluster authenticatedCluster;
@@ -52,7 +52,7 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
 
   private static final List<String> NO_AUTH_API_METHODS = Arrays.asList("net_services");
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException, URISyntaxException {
 
     final ClusterConfiguration clusterConfiguration =
