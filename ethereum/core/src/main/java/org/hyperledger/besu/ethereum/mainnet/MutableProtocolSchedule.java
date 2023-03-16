@@ -35,7 +35,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   private final NavigableSet<NumberScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(
           Comparator.<NumberScheduledProtocolSpec, Long>comparing(
-                  NumberScheduledProtocolSpec::block)
+                  NumberScheduledProtocolSpec::blockNumber)
               .reversed());
   private final Optional<BigInteger> chainId;
 
@@ -63,11 +63,11 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
     checkArgument(
-        protocolSpecs.last().block() == 0, "There must be a milestone starting from block 0");
+        protocolSpecs.last().blockNumber() == 0, "There must be a milestone starting from block 0");
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
     for (final NumberScheduledProtocolSpec s : protocolSpecs) {
-      if (number >= s.block()) {
+      if (number >= s.blockNumber()) {
         return s.spec();
       }
     }
@@ -77,16 +77,16 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(NumberScheduledProtocolSpec::block))
-        .map(spec -> spec.spec().getName() + ": " + spec.block())
+        .sorted(Comparator.comparing(NumberScheduledProtocolSpec::blockNumber))
+        .map(spec -> spec.spec().getName() + ": " + spec.blockNumber())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(NumberScheduledProtocolSpec::block))
-        .map(NumberScheduledProtocolSpec::block);
+        .sorted(Comparator.comparing(NumberScheduledProtocolSpec::blockNumber))
+        .map(NumberScheduledProtocolSpec::blockNumber);
   }
 
   @Override
@@ -96,7 +96,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public boolean isOnForkBoundary(final BlockHeader blockHeader) {
-    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getNumber() == s.block);
+    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getNumber() == s.blockNumber);
   }
 
   @Override
@@ -122,6 +122,6 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   }
 
   /** Tuple that associates a {@link ProtocolSpec} with a given block number level starting point */
-  public record NumberScheduledProtocolSpec(long block, ProtocolSpec spec)
+  public record NumberScheduledProtocolSpec(long blockNumber, ProtocolSpec spec)
       implements ScheduledProtocolSpec {}
 }

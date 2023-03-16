@@ -49,7 +49,7 @@ public class CombinedProtocolScheduleFactory {
           Optional.ofNullable(forkSpecs.higher(spec)).map(ForkSpec::getBlock);
       protocolSchedule.getScheduledProtocolSpecs().stream()
           .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
-          .forEach(s -> combinedProtocolSchedule.putMilestone(s.block(), s.spec()));
+          .forEach(s -> combinedProtocolSchedule.putMilestone(s.blockNumber(), s.spec()));
 
       // When moving to a new consensus mechanism we want to use the last milestone but created by
       // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
@@ -64,7 +64,7 @@ public class CombinedProtocolScheduleFactory {
   private Predicate<NumberScheduledProtocolSpec> protocolSpecMatchesConsensusBlockRange(
       final long startBlock, final Optional<Long> endBlock) {
     return scheduledProtocolSpec ->
-        scheduledProtocolSpec.block() >= startBlock
-            && endBlock.map(b -> scheduledProtocolSpec.block() < b).orElse(true);
+        scheduledProtocolSpec.blockNumber() >= startBlock
+            && endBlock.map(b -> scheduledProtocolSpec.blockNumber() < b).orElse(true);
   }
 }
