@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -28,6 +28,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -35,8 +36,13 @@ import java.util.function.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
+
   // 0x776f726c64526f6f74
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
   // 0x776f726c64426c6f636b48617368
@@ -48,6 +54,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final KeyValueStorage storageStorage;
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
+
+  private final AtomicBoolean shouldClose = new AtomicBoolean(false);
+
+  protected final AtomicBoolean isClosed = new AtomicBoolean(false);
+
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
@@ -144,8 +155,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return trieBranchStorage.get(WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
   }
 
-  public Optional<Bytes> getWorldStateBlockHash() {
-    return trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes::wrap);
+  public Optional<Hash> getWorldStateBlockHash() {
+    return trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes32::wrap).map(Hash::wrap);
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
@@ -249,19 +260,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     throw new RuntimeException("removeNodeAddedListener not available");
   }
 
-  public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
-    return subscribers.subscribe(sub);
-  }
-
-  public synchronized void unSubscribe(final long id) {
-    subscribers.unsubscribe(id);
-  }
-
-  @Override
-  public void close() throws Exception {
-    // No need to close or notify because BonsaiWorldStateKeyValueStorage is persistent
-  }
-
   public interface BonsaiUpdater extends WorldStateStorage.Updater {
     BonsaiUpdater removeCode(final Hash accountHash);
 
@@ -360,7 +358,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
 
     @Override
-    public BonsaiUpdater putAccountStorageTrieNode(
+    public synchronized BonsaiUpdater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
@@ -414,7 +412,56 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
   }
 
-  interface BonsaiStorageSubscriber {
+  @Override
+  public synchronized void close() throws Exception {
+    // when the storage clears, close
+    shouldClose.set(true);
+    tryClose();
+  }
+
+  public synchronized long subscribe(final BonsaiStorageSubscriber sub) {
+    if (isClosed.get()) {
+      throw new RuntimeException("Storage is marked to close or has already closed");
+    }
+    return subscribers.subscribe(sub);
+  }
+
+  public synchronized void unSubscribe(final long id) {
+    subscribers.unsubscribe(id);
+    try {
+      tryClose();
+    } catch (Exception e) {
+      LOG.atWarn()
+          .setMessage("exception while trying to close : {}")
+          .addArgument(e::getMessage)
+          .log();
+    }
+  }
+
+  protected synchronized void tryClose() throws Exception {
+    if (shouldClose.get() && subscribers.getSubscriberCount() < 1) {
+      doClose();
+    }
+  }
+
+  protected synchronized void doClose() throws Exception {
+    if (!isClosed.get()) {
+      // alert any subscribers we are closing:
+      subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);
+
+      // close all of the KeyValueStorages:
+      accountStorage.close();
+      codeStorage.close();
+      storageStorage.close();
+      trieBranchStorage.close();
+      trieLogStorage.close();
+
+      // set storage closed
+      isClosed.set(true);
+    }
+  }
+
+  public interface BonsaiStorageSubscriber {
     default void onClearStorage() {}
 
     default void onClearFlatDatabaseStorage() {}

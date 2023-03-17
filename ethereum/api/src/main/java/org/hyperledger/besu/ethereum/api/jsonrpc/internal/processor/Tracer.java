@@ -64,12 +64,6 @@ public class Tracer {
     }
 
     @Override
-    public MutableWorldState copy() {
-      throw new UnsupportedOperationException(
-          "This method is not supported and will not exist in the future version of MutableWorldState interface");
-    }
-
-    @Override
     public void persist(final BlockHeader blockHeader) {
       mutableWorldState.persist(blockHeader);
     }
