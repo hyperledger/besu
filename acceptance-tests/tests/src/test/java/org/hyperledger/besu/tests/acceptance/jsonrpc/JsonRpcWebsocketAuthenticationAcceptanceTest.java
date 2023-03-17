@@ -25,8 +25,8 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class JsonRpcWebsocketAuthenticationAcceptanceTest extends AcceptanceTestBase {
   private BesuNode nodeUsingAuthFile;
@@ -52,7 +52,7 @@ public class JsonRpcWebsocketAuthenticationAcceptanceTest extends AcceptanceTest
           + "c2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiC"
           + "JjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException, URISyntaxException {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();

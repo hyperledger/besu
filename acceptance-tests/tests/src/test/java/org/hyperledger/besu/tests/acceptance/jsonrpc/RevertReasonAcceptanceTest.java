@@ -21,15 +21,15 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.web3j.generated.RevertReason;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
 public class RevertReasonAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode minerNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     minerNode = besu.createMinerNodeWithRevertReasonEnabled("miner-node-withRevertReason");
     cluster.start(minerNode);

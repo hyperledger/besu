@@ -5,9 +5,11 @@
 ### Breaking Changes
 
 ### Additions and Improvements
-- Increase default from 1000 to 5000 for `--rpc-max-logs-range` #5209
+- Schedule Shanghai (Shapella) fork for Mainnet [#5230](https://github.com/hyperledger/besu/pull/5230)
+- Increase default from 1000 to 5000 for `--rpc-max-logs-range` [#5209](https://github.com/hyperledger/besu/pull/5209)
 
 ### Bug Fixes
+- Persist backward sync status to support resuming across restarts [#5182](https://github.com/hyperledger/besu/pull/5182)
 
 ### Download Links
 
