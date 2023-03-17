@@ -15,14 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
@@ -33,15 +30,11 @@ import org.junit.Test;
 public class CheckPointSourceTest {
 
   private final SyncState syncState = mock(SyncState.class);
-  private final EthPeer peer = mock(EthPeer.class);
-  private final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
   private CheckpointSource checkPointSource;
 
   @Before
   public void setup() {
-    when(peer.getCheckpointHeader()).thenReturn(Optional.of(header(12)));
-    when(blockHeaderFunctions.getCheckPointWindowSize(any(BlockHeader.class))).thenReturn(1);
-    checkPointSource = new CheckpointSource(syncState, peer, blockHeaderFunctions);
+    checkPointSource = new CheckpointSource(syncState, header(12), 1);
   }
 
   @Test

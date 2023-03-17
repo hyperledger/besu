@@ -28,15 +28,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
   private BesuNode node;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     System.setProperty("TEST_BAD_CLI", "true");
 
@@ -46,7 +46,7 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
     cluster.start(node);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     System.setProperty("TEST_BAD_CLI", "false");
   }
@@ -68,7 +68,7 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
   }
 
   @Test
-  @Ignore("No way to do a graceful shutdown of Besu at the moment.")
+  @Disabled("No way to do a graceful shutdown of Besu at the moment.")
   public void shouldNotStop() {
     cluster.stopNode(node);
     waitForFile(node.homeDirectory().resolve("plugins/pluginLifecycle.stopped"));

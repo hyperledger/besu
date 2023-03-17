@@ -19,15 +19,15 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DeployTransactionAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode minerNode;
   private Account recipient;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     recipient = accounts.createAccount("recipient");
     minerNode = besu.createMinerNode("node");

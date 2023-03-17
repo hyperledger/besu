@@ -16,11 +16,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock.ChainUpdater;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceReplayResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -40,6 +42,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -72,7 +75,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected Object resultByBlockNumber(
+  protected ArrayNode resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
     final TraceTypeParameter traceTypeParameter =
         request.getRequiredParameter(1, TraceTypeParameter.class);
@@ -92,52 +95,26 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
         .getBlockchain()
         .getBlockByNumber(blockNumber)
         .map((block) -> traceBlock(block, traceTypeParameter))
-        .map(ArrayNodeWrapper::getArrayNode)
         .orElse(null);
   }
 
-  private ArrayNodeWrapper traceBlock(
+  private ArrayNode traceBlock(
       final Block block, final TraceTypeParameter traceTypeParameter) {
 
-    ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
     if (block == null) {
-      return resultArrayNode;
+      return emptyResult();
     }
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
 
     final BlockHeader header = block.getHeader();
-    final BlockHeader previous =
-        getBlockchainQueries()
-            .getBlockchain()
-            .getBlockHeader(block.getHeader().getParentHash())
-            .orElse(null);
-
-    if (previous == null) {
-      return resultArrayNode;
-    }
-
-    try (final var worldState =
-        getBlockchainQueries()
-            .getWorldStateArchive()
-            .getMutable(previous.getStateRoot(), previous.getBlockHash(), false)
-            .map(
-                ws -> {
-                  if (!ws.isPersistable()) {
-                    return ws.copy();
-                  }
-                  return ws;
-                })
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Missing worldstate for stateroot "
-                            + previous.getStateRoot().toShortHexString()))) {
+    return Tracer.processTracing(getBlockchainQueries(), Optional.of(header), traceableState -> {
+      ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
 
       final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
       final MainnetTransactionProcessor transactionProcessor =
           protocolSpec.getTransactionProcessor();
-      final ChainUpdater chainUpdater = new ChainUpdater(worldState);
+      final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
 
       final TransactionSource transactionSource = new TransactionSource(block);
       final LabelledMetric<Counter> outputCounter =
@@ -183,14 +160,11 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
         throw new RuntimeException(e);
       }
       resultArrayNode = buildArrayNodeStep.getResultArrayNode();
-    } catch (final Exception e) {
-      throw new RuntimeException(e);
-    }
-    return resultArrayNode;
+      return Optional.of(resultArrayNode.getArrayNode());
+    }).orElse(emptyResult());
   }
 
-  private Object emptyResult() {
-    final ObjectMapper mapper = new ObjectMapper();
-    return mapper.createArrayNode();
+  private ArrayNode emptyResult() {
+    return MAPPER.createArrayNode();
   }
 }
