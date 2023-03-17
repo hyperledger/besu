@@ -66,7 +66,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   @Override
   protected long cacheFreeSpace() {
-    return poolConfig.getPendingTransactionsMaxCapacityBytes() - getLayerSpaceUsed();
+    return poolConfig.getPendingTransactionsLayerMaxCapacityBytes() - getLayerSpaceUsed();
   }
 
   @Override

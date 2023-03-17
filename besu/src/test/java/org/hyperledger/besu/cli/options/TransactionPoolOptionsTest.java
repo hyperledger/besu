@@ -162,7 +162,8 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
         .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
         .layeredTxPoolEnabled(defaultValue.getLayeredTxPoolEnabled())
-        .pendingTransactionsMaxCapacityBytes(defaultValue.getPendingTransactionsMaxCapacityBytes())
+        .pendingTransactionsMaxCapacityBytes(
+            defaultValue.getPendingTransactionsLayerMaxCapacityBytes())
         .maxPrioritizedTransactions(defaultValue.getMaxPrioritizedTransactions())
         .maxFutureBySender(defaultValue.getMaxFutureBySender());
   }

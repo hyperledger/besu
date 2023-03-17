@@ -32,7 +32,7 @@ public interface TransactionPoolConfiguration {
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
-  long DEFAULT_PENDING_TRANSACTIONS_MAX_CAPACITY_BYTES = 100_000_000L;
+  long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 100_000_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
   int DEFAULT_MAX_FUTURE_BY_SENDER = 100;
   boolean DEFAULT_LAYERED_TX_POOL_ENABLED = false;
@@ -90,8 +90,8 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default long getPendingTransactionsMaxCapacityBytes() {
-    return DEFAULT_PENDING_TRANSACTIONS_MAX_CAPACITY_BYTES;
+  default long getPendingTransactionsLayerMaxCapacityBytes() {
+    return DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES;
   }
 
   @Value.Default

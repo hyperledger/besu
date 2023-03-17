@@ -69,7 +69,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
   @Override
   protected long cacheFreeSpace() {
-    return poolConfig.getPendingTransactionsMaxCapacityBytes() - getLayerSpaceUsed();
+    return poolConfig.getPendingTransactionsLayerMaxCapacityBytes() - getLayerSpaceUsed();
   }
 
   @Override

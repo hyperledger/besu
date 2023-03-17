@@ -49,7 +49,8 @@ public class TransactionPoolOptions
       "--tx-pool-limit-by-account-percentage";
 
   private static final String LAYERED_TX_POOL_ENABLED_FLAG = "--Xlayered-tx-pool";
-  private static final String LAYERED_TX_POOL_MAX_CAPACITY = "--Xlayered-tx-pool-max-capacity";
+  private static final String LAYERED_TX_POOL_LAYER_MAX_CAPACITY =
+      "--Xlayered-tx-pool-layer-max-capacity";
   private static final String LAYERED_TX_POOL_MAX_PRIORITIZED =
       "--Xlayered-tx-pool-max-prioritized";
   private static final String LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER =
@@ -104,14 +105,14 @@ public class TransactionPoolOptions
       TransactionPoolConfiguration.DEFAULT_LAYERED_TX_POOL_ENABLED;
 
   @CommandLine.Option(
-      names = {LAYERED_TX_POOL_MAX_CAPACITY},
+      names = {LAYERED_TX_POOL_LAYER_MAX_CAPACITY},
       paramLabel = "<Long>",
       hidden = true,
       description =
-          "Max amount of memory space, in bytes, that pending transactions could occupy (default: ${DEFAULT-VALUE})",
+          "Max amount of memory space, in bytes, that pending transactions layer could occupy (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private long layeredTxPoolMaxCapacity =
-      TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_MAX_CAPACITY_BYTES;
+  private long layeredTxPoolLayerMaxCapacity =
+      TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES;
 
   @CommandLine.Option(
       names = {LAYERED_TX_POOL_MAX_PRIORITIZED},
@@ -165,7 +166,7 @@ public class TransactionPoolOptions
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
     options.layeredTxPoolEnabled = config.getLayeredTxPoolEnabled();
-    options.layeredTxPoolMaxCapacity = config.getPendingTransactionsMaxCapacityBytes();
+    options.layeredTxPoolLayerMaxCapacity = config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredTxPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
     options.layeredTxPoolMaxFutureBySender = config.getMaxFutureBySender();
     return options;
@@ -192,7 +193,7 @@ public class TransactionPoolOptions
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
         .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
         .layeredTxPoolEnabled(layeredTxPoolEnabled)
-        .pendingTransactionsMaxCapacityBytes(layeredTxPoolMaxCapacity)
+        .pendingTransactionsLayerMaxCapacityBytes(layeredTxPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredTxPoolMaxPrioritized)
         .maxFutureBySender(layeredTxPoolMaxFutureBySender);
   }
@@ -208,8 +209,8 @@ public class TransactionPoolOptions
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
         OptionParser.format(eth65TrxAnnouncedBufferingPeriod),
         LAYERED_TX_POOL_ENABLED_FLAG + "=" + layeredTxPoolEnabled,
-        LAYERED_TX_POOL_MAX_CAPACITY,
-        OptionParser.format(layeredTxPoolMaxCapacity),
+        LAYERED_TX_POOL_LAYER_MAX_CAPACITY,
+        OptionParser.format(layeredTxPoolLayerMaxCapacity),
         LAYERED_TX_POOL_MAX_PRIORITIZED,
         OptionParser.format(layeredTxPoolMaxPrioritized),
         LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER,

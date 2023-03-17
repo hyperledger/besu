@@ -70,14 +70,14 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
       ImmutableTransactionPoolConfiguration.builder()
           .maxPrioritizedTransactions(MAX_TRANSACTIONS)
           .maxFutureBySender(MAX_TRANSACTIONS)
-          .pendingTransactionsMaxCapacityBytes(MAX_CAPACITY_BYTES)
+          .pendingTransactionsLayerMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
 
   private final TransactionPoolConfiguration senderLimitedConfig =
       ImmutableTransactionPoolConfiguration.builder()
           .maxPrioritizedTransactions(MAX_TRANSACTIONS)
           .maxFutureBySender(LIMITED_TRANSACTIONS_BY_SENDER)
-          .pendingTransactionsMaxCapacityBytes(MAX_CAPACITY_BYTES)
+          .pendingTransactionsLayerMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
   private LayeredPendingTransactions senderLimitedTransactions;
   private LayeredPendingTransactions pendingTransactions;
@@ -189,7 +189,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
           createTransaction(
               i,
               Wei.of((i + 1) * 100L),
-              (int) poolConf.getPendingTransactionsMaxCapacityBytes() + 1,
+              (int) poolConf.getPendingTransactionsLayerMaxCapacityBytes() + 1,
               SIGNATURE_ALGORITHM.get().generateKeyPair());
       pendingTransactions.addRemoteTransaction(tx, Optional.of(sender));
       firstTxs.add(tx);
@@ -202,7 +202,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
         createTransaction(
             0,
             Wei.of(100_000L),
-            (int) poolConf.getPendingTransactionsMaxCapacityBytes(),
+            (int) poolConf.getPendingTransactionsLayerMaxCapacityBytes(),
             SIGNATURE_ALGORITHM.get().generateKeyPair());
     final Account lastSender = mock(Account.class);
     when(lastSender.getNonce()).thenReturn(0L);
