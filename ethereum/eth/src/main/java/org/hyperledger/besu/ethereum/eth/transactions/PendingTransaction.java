@@ -41,14 +41,14 @@ public abstract class PendingTransaction {
   static final int PENDING_TRANSACTION_MEMORY_SIZE = 40;
   private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
   private final Transaction transaction;
-  private final long addedToPoolAt;
+  private final long addedAt;
   private final long sequence; // Allows prioritization based on order transactions are added
 
   private int memorySize = -1;
 
-  protected PendingTransaction(final Transaction transaction) {
+  protected PendingTransaction(final Transaction transaction, final long addedAt) {
     this.transaction = transaction;
-    this.addedToPoolAt = System.currentTimeMillis();
+    this.addedAt = addedAt;
     this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
   }
 
@@ -78,8 +78,8 @@ public abstract class PendingTransaction {
     return transaction.getHash();
   }
 
-  public long getAddedToPoolAt() {
-    return addedToPoolAt;
+  public long getAddedAt() {
+    return addedAt;
   }
 
   public int memorySize() {
@@ -182,8 +182,8 @@ public abstract class PendingTransaction {
         + transaction.getNonce()
         + ", sender="
         + transaction.getSender().toShortHexString()
-        + ", addedToPoolAt="
-        + addedToPoolAt
+        + ", addedAt="
+        + addedAt
         + ", sequence="
         + sequence
         + '}';
@@ -193,7 +193,7 @@ public abstract class PendingTransaction {
     return "{sequence: "
         + sequence
         + ", addedAt: "
-        + addedToPoolAt
+        + addedAt
         + ", "
         + transaction.toTraceLog()
         + "}";
@@ -201,8 +201,12 @@ public abstract class PendingTransaction {
 
   public static class Local extends PendingTransaction {
 
+    public Local(final Transaction transaction, final long addedAt) {
+      super(transaction, addedAt);
+    }
+
     public Local(final Transaction transaction) {
-      super(transaction);
+      this(transaction, System.currentTimeMillis());
     }
 
     @Override
@@ -213,8 +217,12 @@ public abstract class PendingTransaction {
 
   public static class Remote extends PendingTransaction {
 
+    public Remote(final Transaction transaction, final long addedAt) {
+      super(transaction, addedAt);
+    }
+
     public Remote(final Transaction transaction) {
-      super(transaction);
+      this(transaction, System.currentTimeMillis());
     }
 
     @Override

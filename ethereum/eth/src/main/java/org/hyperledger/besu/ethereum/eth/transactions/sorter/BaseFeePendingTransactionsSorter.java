@@ -74,7 +74,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .orElse(Wei.ZERO)
                           .getAsBigInteger()
                           .longValue())
-              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getAddedAt)
               .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
@@ -88,7 +88,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
                           .orElse(pendingTx.getGasPrice().toLong()))
-              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getAddedAt)
               .thenComparing(PendingTransaction::getSequence)
               .reversed());
 

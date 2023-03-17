@@ -67,7 +67,7 @@ public class TxPoolBesuTransactionsTest {
     PendingTransaction pendingTransaction = mock(PendingTransaction.class);
     when(pendingTransaction.getHash()).thenReturn(Hash.fromHexString(TRANSACTION_HASH));
     when(pendingTransaction.isReceivedFromLocalSource()).thenReturn(true);
-    when(pendingTransaction.getAddedToPoolAt()).thenReturn(addedAt);
+    when(pendingTransaction.getAddedAt()).thenReturn(addedAt);
     when(pendingTransactions.getPendingTransactions())
         .thenReturn(Sets.newHashSet(pendingTransaction));
 

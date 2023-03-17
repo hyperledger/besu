@@ -124,7 +124,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .atTrace()
         .setMessage("T,{},{},{},{},{},{},{},{}")
         .addArgument(pendingTransaction.getSequence())
-        .addArgument(pendingTransaction.getAddedToPoolAt())
+        .addArgument(pendingTransaction.getAddedAt())
         .addArgument(pendingTransaction.getSender())
         .addArgument(senderNonce)
         .addArgument(pendingTransaction.getNonce())

@@ -40,7 +40,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       new TreeSet<>(
           comparing(PendingTransaction::isReceivedFromLocalSource)
               .thenComparing(PendingTransaction::getGasPrice)
-              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getAddedAt)
               .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
