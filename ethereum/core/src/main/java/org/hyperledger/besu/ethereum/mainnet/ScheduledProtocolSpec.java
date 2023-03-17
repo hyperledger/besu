@@ -15,12 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 /**
- * Tuple that associates a {@link ProtocolSpec} with a given block number or milestone level
+ * Tuple that associates a {@link ProtocolSpec} with a given block number or timestamp level
  * starting point
  */
-public interface ScheduledProtocolSpec {
-
-  long milestone();
-
-  ProtocolSpec spec();
-}
+public record ScheduledProtocolSpec(long milestone, ProtocolSpec spec) {}

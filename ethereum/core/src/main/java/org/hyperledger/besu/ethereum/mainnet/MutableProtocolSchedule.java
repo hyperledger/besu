@@ -32,8 +32,8 @@ import java.util.stream.Stream;
 
 public class MutableProtocolSchedule implements ProtocolSchedule {
 
-  private final NavigableSet<NumberScheduledProtocolSpec> protocolSpecs =
-      new TreeSet<>(Comparator.comparing(NumberScheduledProtocolSpec::milestone).reversed());
+  private final NavigableSet<ScheduledProtocolSpec> protocolSpecs =
+      new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::milestone).reversed());
   private final Optional<BigInteger> chainId;
 
   public MutableProtocolSchedule(final Optional<BigInteger> chainId) {
@@ -47,8 +47,8 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public void putMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
-    final NumberScheduledProtocolSpec scheduledProtocolSpec =
-        new NumberScheduledProtocolSpec(blockNumber, protocolSpec);
+    final ScheduledProtocolSpec scheduledProtocolSpec =
+        new ScheduledProtocolSpec(blockNumber, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
@@ -63,7 +63,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
         protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block 0");
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
-    for (final NumberScheduledProtocolSpec s : protocolSpecs) {
+    for (final ScheduledProtocolSpec s : protocolSpecs) {
       if (number >= s.milestone()) {
         return s.spec();
       }
@@ -74,16 +74,16 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(NumberScheduledProtocolSpec::milestone))
-        .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone)
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(NumberScheduledProtocolSpec::milestone))
-        .map(NumberScheduledProtocolSpec::milestone);
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(ScheduledProtocolSpec::milestone);
   }
 
   @Override
@@ -114,11 +114,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
         });
   }
 
-  public List<NumberScheduledProtocolSpec> getScheduledProtocolSpecs() {
+  public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
     return protocolSpecs.stream().toList();
   }
-
-  /** Tuple that associates a {@link ProtocolSpec} with a given block number level starting point */
-  public record NumberScheduledProtocolSpec(long milestone, ProtocolSpec spec)
-      implements ScheduledProtocolSpec {}
 }

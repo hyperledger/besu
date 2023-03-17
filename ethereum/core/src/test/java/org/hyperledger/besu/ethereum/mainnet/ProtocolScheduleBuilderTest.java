@@ -99,7 +99,7 @@ public class ProtocolScheduleBuilderTest {
     assertThatThrownBy(() -> builder.createProtocolSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'GrayGlacier' is scheduled for block 11 but it must be on or after block 12.");
+            "Genesis Config Error: 'GrayGlacier' is scheduled for milestone 11 but it must be on or after milestone 12.");
   }
 
   @Test
