@@ -224,9 +224,9 @@ public class GraphQLDataFetchers {
                 ws -> {
                   final Account account = ws.get(addr);
                   if (account == null) {
-                    return new EmptyAccountAdapter(addr);
+                    return Optional.of(new EmptyAccountAdapter(addr));
                   }
-                  return new AccountAdapter(account);
+                  return Optional.of(new AccountAdapter(account));
                 })
             .or(
                 () -> {
@@ -246,9 +246,9 @@ public class GraphQLDataFetchers {
             ws -> {
               final Account account = ws.get(addr);
               if (account == null) {
-                return new EmptyAccountAdapter(addr);
+                return Optional.of(new EmptyAccountAdapter(addr));
               }
-              return new AccountAdapter(account);
+              return Optional.of(new AccountAdapter(account));
             });
       }
     };

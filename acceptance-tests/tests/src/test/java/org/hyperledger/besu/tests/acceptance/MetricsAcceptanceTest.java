@@ -26,15 +26,15 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode metricsNode;
   private OkHttpClient client;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     metricsNode =
         besu.create(

@@ -99,7 +99,7 @@ public abstract class AbstractProtocolScheduleBuilder {
                 addProtocolSpec(
                     protocolSchedule, e.getBlockIdentifier(), e.getBuilder(), e.modifier));
 
-    postBuildStep(specFactory);
+    postBuildStep(specFactory, builders);
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
   }
@@ -149,9 +149,8 @@ public abstract class AbstractProtocolScheduleBuilder {
         new BuilderMapEntry(blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
   }
 
-  protected void addProtocolSpec(
+  protected ProtocolSpec getProtocolSpec(
       final HeaderBasedProtocolSchedule protocolSchedule,
-      final long blockNumberOrTimestamp,
       final ProtocolSpecBuilder definition,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
     definition
@@ -160,11 +159,21 @@ public abstract class AbstractProtocolScheduleBuilder {
         .privateTransactionValidatorBuilder(
             () -> new PrivateTransactionValidator(protocolSchedule.getChainId()));
 
-    protocolSchedule.putMilestone(
-        blockNumberOrTimestamp, modifier.apply(definition).build(protocolSchedule));
+    return modifier.apply(definition).build(protocolSchedule);
   }
 
-  abstract void postBuildStep(final MainnetProtocolSpecFactory specFactory);
+  protected void addProtocolSpec(
+      final HeaderBasedProtocolSchedule protocolSchedule,
+      final long blockNumberOrTimestamp,
+      final ProtocolSpecBuilder definition,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+
+    protocolSchedule.putMilestone(
+        blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+  }
+
+  abstract void postBuildStep(
+      final MainnetProtocolSpecFactory specFactory, final TreeMap<Long, BuilderMapEntry> builders);
 
   protected static class BuilderMapEntry {
 
@@ -187,6 +196,10 @@ public abstract class AbstractProtocolScheduleBuilder {
 
     public ProtocolSpecBuilder getBuilder() {
       return builder;
+    }
+
+    public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifier() {
+      return modifier;
     }
   }
 }

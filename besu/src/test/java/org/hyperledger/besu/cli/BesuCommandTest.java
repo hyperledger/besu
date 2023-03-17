@@ -257,7 +257,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
     verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
-    verify(mockRunnerBuilder).rpcMaxLogsRange(eq(1000L));
+    verify(mockRunnerBuilder).rpcMaxLogsRange(eq(5000L));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory)

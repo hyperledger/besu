@@ -34,11 +34,11 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class LocalPermissioningConfigurationValidatorTest {
 
   static final String PERMISSIONING_CONFIG_SEPOLIA_BOOTNODES =
@@ -50,7 +50,7 @@ public class LocalPermissioningConfigurationValidatorTest {
       "/permissioning_config_unknown_hostname.toml";
 
   @Test
-  public void spoliaWithNodesAllowlistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
+  public void sepoliaWithNodesAllowlistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
       throws Exception {
 
     EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.SEPOLIA);
