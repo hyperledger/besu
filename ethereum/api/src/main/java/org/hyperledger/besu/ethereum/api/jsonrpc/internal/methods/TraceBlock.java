@@ -54,7 +54,6 @@ import org.slf4j.LoggerFactory;
 
 public class TraceBlock extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceBlock.class);
-  private final EthScheduler ethScheduler = new EthScheduler(4, 4, 4, 4, new NoOpMetricsSystem());
   private static final ObjectMapper MAPPER = new ObjectMapper();
   // private final Supplier<BlockTracer> blockTracerSupplier;
   protected final ProtocolSchedule protocolSchedule;
@@ -149,7 +148,16 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                           traceStream -> traceStream.forEachOrdered(buildArrayNodeStep));
 
               try {
-                ethScheduler.startPipeline(traceBlockPipeline).get();
+                if (getBlockchainQueries().getEthScheduler().isPresent()) {
+                  getBlockchainQueries()
+                      .getEthScheduler()
+                      .get()
+                      .startPipeline(traceBlockPipeline)
+                      .get();
+                } else {
+                  EthScheduler ethScheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
+                  ethScheduler.startPipeline(traceBlockPipeline).get();
+                }
               } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
               }

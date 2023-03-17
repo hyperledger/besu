@@ -54,7 +54,6 @@ import org.slf4j.LoggerFactory;
 
 public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceReplayBlockTransactions.class);
-  private final EthScheduler ethScheduler = new EthScheduler(4, 4, 4, 4, new NoOpMetricsSystem());
   private final ProtocolSchedule protocolSchedule;
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -158,7 +157,16 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
                           "traceReplayTransaction", traceReplayTransactionStep, 4)
                       .andFinishWith("buildArrayNode", buildArrayNodeStep::accept);
               try {
-                ethScheduler.startPipeline(traceBlockPipeline).get();
+                if (getBlockchainQueries().getEthScheduler().isPresent()) {
+                  getBlockchainQueries()
+                      .getEthScheduler()
+                      .get()
+                      .startPipeline(traceBlockPipeline)
+                      .get();
+                } else {
+                  EthScheduler ethScheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
+                  ethScheduler.startPipeline(traceBlockPipeline).get();
+                }
               } catch (final InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
               }

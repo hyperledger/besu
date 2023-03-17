@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -65,7 +66,6 @@ import org.slf4j.LoggerFactory;
 public class TraceFilter extends TraceBlock {
 
   private static final Logger LOG = LoggerFactory.getLogger(TraceFilter.class);
-  private final EthScheduler ethScheduler = new EthScheduler(4, 4, 4, 4, new NoOpMetricsSystem());
 
   public TraceFilter(
       final Supplier<BlockTracer> blockTracerSupplier,
@@ -120,95 +120,83 @@ public class TraceFilter extends TraceBlock {
           requestContext.getRequest().getId(), resultArrayNode.getArrayNode());
     }
     final BlockHeader header = block.get().getHeader();
-    final BlockHeader previous =
-        getBlockchainQueries()
-            .getBlockchain()
-            .getBlockHeader(block.get().getHeader().getParentHash())
-            .orElse(null);
 
-    if (previous == null) {
-      System.out.println(block.get().getHeader().getParentHash());
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(), resultArrayNode.getArrayNode());
-    }
-    try (final var worldState =
-        getBlockchainQueries()
-            .getWorldStateArchive()
-            .getMutable(previous.getStateRoot(), previous.getBlockHash(), false)
-            .map(
-                ws -> {
-                  if (!ws.isPersistable()) {
-                    return ws.copy();
+    List<Block> blockList = getBlockList(currentBlockNumber, toBlock, block);
+
+    ArrayNodeWrapper result =
+        Tracer.processTracing(
+                getBlockchainQueries(),
+                Optional.of(header),
+                traceableState -> {
+                  TraceFilterSource traceFilterSource =
+                      new TraceFilterSource(blockList, resultArrayNode);
+                  final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+                  final MainnetTransactionProcessor transactionProcessor =
+                      protocolSpec.getTransactionProcessor();
+                  final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
+                  final LabelledMetric<Counter> outputCounter =
+                      new PrometheusMetricsSystem(
+                              BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
+                          .createLabelledCounter(
+                              BesuMetricCategory.BLOCKCHAIN,
+                              "transactions_tracefilter_pipeline_processed_total",
+                              "Number of transactions processed for trace_filter",
+                              "step",
+                              "action");
+
+                  DebugOperationTracer debugOperationTracer =
+                      new DebugOperationTracer(new TraceOptions(false, false, true));
+                  ExecuteTransactionStep executeTransactionStep =
+                      new ExecuteTransactionStep(
+                          chainUpdater,
+                          transactionProcessor,
+                          getBlockchainQueries().getBlockchain(),
+                          debugOperationTracer,
+                          protocolSpec);
+
+                  // Flat traces step
+                  Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>>
+                      traceFlatTransactionStep =
+                          new TraceFlatTransactionStep(
+                              protocolSchedule, null, Optional.of(filterParameter));
+
+                  BuildArrayNodeCompleterStep buildArrayNodeStep =
+                      new BuildArrayNodeCompleterStep(resultArrayNode);
+                  Pipeline<TransactionTrace> traceBlockPipeline =
+                      createPipelineFrom(
+                              "getTransactions",
+                              traceFilterSource,
+                              4,
+                              outputCounter,
+                              false,
+                              "trace_block_transactions")
+                          .thenProcess("executeTransaction", executeTransactionStep)
+                          .thenProcessAsyncOrdered(
+                              "traceFlatTransaction", traceFlatTransactionStep, 4)
+                          .andFinishWith(
+                              "buildArrayNode",
+                              traceStream -> traceStream.forEachOrdered(buildArrayNodeStep));
+
+                  try {
+                    if (getBlockchainQueries().getEthScheduler().isPresent()) {
+                      getBlockchainQueries()
+                          .getEthScheduler()
+                          .get()
+                          .startPipeline(traceBlockPipeline)
+                          .get();
+                    } else {
+                      EthScheduler ethScheduler =
+                          new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
+                      ethScheduler.startPipeline(traceBlockPipeline).get();
+                    }
+                  } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
                   }
-                  return ws;
+                  return Optional.of(resultArrayNode);
                 })
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Missing worldstate for stateroot "
-                            + previous.getStateRoot().toShortHexString()))) {
+            .orElse(emptyResult());
 
-      // Source step
-
-      List<Block> blockList = getBlockList(currentBlockNumber, toBlock, block);
-      TraceFilterSource traceFilterSource = new TraceFilterSource(blockList, resultArrayNode);
-
-      // Execution step
-
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
-      final MainnetTransactionProcessor transactionProcessor =
-          protocolSpec.getTransactionProcessor();
-      final ChainUpdater chainUpdater = new ChainUpdater(worldState);
-      final LabelledMetric<Counter> outputCounter =
-          new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
-              .createLabelledCounter(
-                  BesuMetricCategory.BLOCKCHAIN,
-                  "transactions_tracefilter_pipeline_processed_total",
-                  "Number of transactions processed for trace_filter",
-                  "step",
-                  "action");
-
-      DebugOperationTracer debugOperationTracer =
-          new DebugOperationTracer(new TraceOptions(false, false, true));
-      ExecuteTransactionStep executeTransactionStep =
-          new ExecuteTransactionStep(
-              chainUpdater,
-              transactionProcessor,
-              getBlockchainQueries().getBlockchain(),
-              debugOperationTracer,
-              protocolSpec);
-
-      // Flat traces step
-      Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> traceFlatTransactionStep =
-          new TraceFlatTransactionStep(protocolSchedule, null, Optional.of(filterParameter));
-
-      BuildArrayNodeCompleterStep buildArrayNodeStep =
-          new BuildArrayNodeCompleterStep(resultArrayNode);
-      Pipeline<TransactionTrace> traceBlockPipeline =
-          createPipelineFrom(
-                  "getTransactions",
-                  traceFilterSource,
-                  4,
-                  outputCounter,
-                  false,
-                  "trace_block_transactions")
-              .thenProcess("executeTransaction", executeTransactionStep)
-              .thenProcessAsyncOrdered("traceFlatTransaction", traceFlatTransactionStep, 4)
-              .andFinishWith(
-                  "buildArrayNode", traceStream -> traceStream.forEachOrdered(buildArrayNodeStep));
-
-      try {
-        ethScheduler.startPipeline(traceBlockPipeline).get();
-      } catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), resultArrayNode.getArrayNode());
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result.getArrayNode());
   }
 
   @NotNull
