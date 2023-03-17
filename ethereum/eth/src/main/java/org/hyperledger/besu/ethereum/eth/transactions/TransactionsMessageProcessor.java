@@ -34,8 +34,7 @@ import org.slf4j.LoggerFactory;
 
 class TransactionsMessageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionsMessageProcessor.class);
-
-  private static final String METRIC_LABEL = "transactions";
+  static final String METRIC_LABEL = "transactions";
   private final PeerTransactionTracker transactionTracker;
   private final TransactionPool transactionPool;
 

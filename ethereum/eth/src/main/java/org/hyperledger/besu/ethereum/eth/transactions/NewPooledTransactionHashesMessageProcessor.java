@@ -39,7 +39,7 @@ public class NewPooledTransactionHashesMessageProcessor {
   private static final Logger LOG =
       LoggerFactory.getLogger(NewPooledTransactionHashesMessageProcessor.class);
 
-  private static final String METRIC_LABEL = "new_pooled_transaction_hashes";
+  static final String METRIC_LABEL = "new_pooled_transaction_hashes";
 
   private final ConcurrentHashMap<EthPeer, BufferedGetPooledTransactionsFromPeerFetcher>
       scheduledTasks;

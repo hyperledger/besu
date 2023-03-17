@@ -34,6 +34,7 @@ public class TransactionPoolMetrics {
   public static final String ADDED_COUNTER_NAME = "transactions_added_total";
   public static final String REMOVED_COUNTER_NAME = "transactions_removed_total";
   public static final String REJECTED_COUNTER_NAME = "transactions_rejected_total";
+  public static final String EXPIRED_MESSAGES_COUNTER_NAME = "messages_expired_total";
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private final MetricsSystem metricsSystem;
   private final LabelledMetric<Counter> addedCounter;
@@ -91,7 +92,7 @@ public class TransactionPoolMetrics {
     expiredMessagesCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
-            "messages_expired_total",
+            EXPIRED_MESSAGES_COUNTER_NAME,
             "Total number of received transaction pool messages expired and not processed.",
             "message");
 
