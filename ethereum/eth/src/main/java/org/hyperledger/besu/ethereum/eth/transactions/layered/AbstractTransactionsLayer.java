@@ -301,8 +301,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         lastTx = lessReadySenderTxs.pollLastEntry().getValue();
         processEvict(lessReadySenderTxs, lastTx);
         ++evictedCount;
-        evictedSize += lastTx.getTransaction().getSize();
-
+        evictedSize += lastTx.memorySize();
         // evicted can always be added to the next layer
         addToNextLayer(lessReadySenderTxs, lastTx, 0);
       }
@@ -357,7 +356,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final RemovalReason removalReason) {
     final PendingTransaction removedTx = pendingTransactions.remove(transaction.getHash());
     if (removedTx != null) {
-      decreaseSpaceUsed(transaction);
+      decreaseSpaceUsed(removedTx);
       metrics.incrementRemoved(
           removedTx.isReceivedFromLocalSource(), removalReason.label(), name());
       internalRemove(senderTxs, removedTx);
@@ -494,15 +493,11 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected abstract PendingTransaction getEvictable();
 
   protected void increaseSpaceUsed(final PendingTransaction pendingTransaction) {
-    spaceUsed += pendingTransaction.getTransaction().getSize();
+    spaceUsed += pendingTransaction.memorySize();
   }
 
   protected void decreaseSpaceUsed(final PendingTransaction pendingTransaction) {
-    decreaseSpaceUsed(pendingTransaction.getTransaction());
-  }
-
-  protected void decreaseSpaceUsed(final Transaction transaction) {
-    spaceUsed -= transaction.getSize();
+    spaceUsed -= pendingTransaction.memorySize();
   }
 
   protected abstract long cacheFreeSpace();
@@ -592,10 +587,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     assert txsBySender.equals(controlTxsBySender)
         : "pendingTransactions and txsBySender do not contain the same txs";
 
-    assert pendingTransactions.values().stream()
-                .map(PendingTransaction::getTransaction)
-                .mapToInt(Transaction::getSize)
-                .sum()
+    assert pendingTransactions.values().stream().mapToInt(PendingTransaction::memorySize).sum()
             == spaceUsed
         : "space used does not match";
 

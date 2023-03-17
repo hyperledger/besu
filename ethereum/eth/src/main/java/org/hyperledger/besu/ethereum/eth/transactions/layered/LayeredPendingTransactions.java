@@ -76,8 +76,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   public synchronized TransactionAddedResult addRemoteTransaction(
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
-    return addTransaction(
-        new PendingTransaction.Remote(transaction), maybeSenderAccount);
+    return addTransaction(new PendingTransaction.Remote(transaction), maybeSenderAccount);
   }
 
   @Override
@@ -85,9 +84,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
     final TransactionAddedResult addedResult =
-        addTransaction(
-            new PendingTransaction.Local(transaction),
-            maybeSenderAccount);
+        addTransaction(new PendingTransaction.Local(transaction), maybeSenderAccount);
     if (addedResult.isSuccess()) {
       localSenders.add(transaction.getSender());
     }

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -69,13 +68,13 @@ public class TransactionTestFixture {
         break;
       case ACCESS_LIST:
         builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
-        builder.accessList(List.of());
+        builder.accessList(accessListEntries.orElse(List.of()));
         break;
       case EIP1559:
         builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
         builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
         builder.accessList(accessListEntries.orElse(List.of()));
-      break;
+        break;
       default:
     }
 

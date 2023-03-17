@@ -181,8 +181,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       return LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
     }
 
-    final PendingTransaction pendingTransaction =
-        new PendingTransaction.Remote(transaction);
+    final PendingTransaction pendingTransaction = new PendingTransaction.Remote(transaction);
     final TransactionAddedResult transactionAddedStatus =
         addTransaction(pendingTransaction, maybeSenderAccount);
     if (transactionAddedStatus.equals(ADDED)) {
@@ -196,8 +195,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   public TransactionAddedResult addLocalTransaction(
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
     final TransactionAddedResult transactionAdded =
-        addTransaction(
-            new PendingTransaction.Local(transaction), maybeSenderAccount);
+        addTransaction(new PendingTransaction.Local(transaction), maybeSenderAccount);
     if (transactionAdded.equals(ADDED)) {
       localSenders.add(transaction.getSender());
       localTransactionAddedCounter.inc();

@@ -27,19 +27,16 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class BaseTransactionPoolTest {
 
@@ -100,6 +97,11 @@ public class BaseTransactionPoolTest {
       final Wei maxGasPrice,
       final int payloadSize,
       final KeyPair keys) {
+    return prepareTransaction(type, nonce, maxGasPrice, payloadSize).createTransaction(keys);
+  }
+
+  protected TransactionTestFixture prepareTransaction(
+      final TransactionType type, final long nonce, final Wei maxGasPrice, final int payloadSize) {
 
     var tx =
         new TransactionTestFixture()
@@ -107,7 +109,7 @@ public class BaseTransactionPoolTest {
             .value(Wei.of(nonce))
             .nonce(nonce)
             .type(type);
-    if(payloadSize > 0) {
+    if (payloadSize > 0) {
       var payloadBytes = Bytes.repeat((byte) 1, payloadSize);
       tx.payload(payloadBytes);
     }
@@ -117,7 +119,7 @@ public class BaseTransactionPoolTest {
     } else {
       tx.gasPrice(maxGasPrice);
     }
-    return tx.createTransaction(keys);
+    return tx;
   }
 
   protected Transaction createTransactionReplacement(

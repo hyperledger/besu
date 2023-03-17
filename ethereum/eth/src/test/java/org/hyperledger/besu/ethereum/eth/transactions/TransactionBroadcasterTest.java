@@ -327,11 +327,7 @@ public class TransactionBroadcasterTest {
   private Set<PendingTransaction> createPendingTransactionList(final int num, final boolean local) {
     return IntStream.range(0, num)
         .mapToObj(unused -> generator.transaction())
-        .map(
-            tx ->
-                local
-                    ? new PendingTransaction.Local(tx)
-                    : new PendingTransaction.Remote(tx))
+        .map(tx -> local ? new PendingTransaction.Local(tx) : new PendingTransaction.Remote(tx))
         .collect(Collectors.toSet());
   }
 
@@ -339,11 +335,7 @@ public class TransactionBroadcasterTest {
       final TransactionType type, final int num, final boolean local) {
     return IntStream.range(0, num)
         .mapToObj(unused -> generator.transaction(type))
-        .map(
-            tx ->
-                local
-                    ? new PendingTransaction.Local(tx)
-                    : new PendingTransaction.Remote(tx))
+        .map(tx -> local ? new PendingTransaction.Local(tx) : new PendingTransaction.Remote(tx))
         .collect(Collectors.toSet());
   }
 
