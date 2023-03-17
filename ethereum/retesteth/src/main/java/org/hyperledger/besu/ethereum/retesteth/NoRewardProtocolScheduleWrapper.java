@@ -100,8 +100,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public boolean isOnForkBoundary(final BlockHeader blockHeader) {
-    return delegate.isOnForkBoundary(blockHeader);
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
+    return delegate.isOnMilestoneBoundary(blockHeader);
   }
 
   @Override

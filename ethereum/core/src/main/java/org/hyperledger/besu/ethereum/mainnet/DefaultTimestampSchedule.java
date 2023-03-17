@@ -60,7 +60,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
   }
 
   @Override
-  public boolean isOnForkBoundary(final BlockHeader blockHeader) {
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
     return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.milestone());
   }
 

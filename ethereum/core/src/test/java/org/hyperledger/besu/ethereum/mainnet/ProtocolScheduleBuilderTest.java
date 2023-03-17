@@ -197,11 +197,11 @@ public class ProtocolScheduleBuilderTest {
     when(configOptions.getMergeNetSplitBlockNumber()).thenReturn(OptionalLong.of(4L));
     final HeaderBasedProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
-    assertThat(protocolSchedule.isOnForkBoundary(header(0))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnForkBoundary(header(1))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnForkBoundary(header(2))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnForkBoundary(header(3))).isEqualTo(false);
-    assertThat(protocolSchedule.isOnForkBoundary(header(4))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(1))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(2))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(3))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(4))).isEqualTo(true);
   }
 
   private BlockHeader header(final long blockNumber) {

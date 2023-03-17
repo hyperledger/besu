@@ -222,10 +222,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public boolean isOnForkBoundary(final BlockHeader blockHeader) {
-    return timestampSchedule.isOnForkBoundary(blockHeader)
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
+    return timestampSchedule.isOnMilestoneBoundary(blockHeader)
         || transitionUtils.dispatchFunctionAccordingToMergeState(
-            schedule -> schedule.isOnForkBoundary(blockHeader));
+            schedule -> schedule.isOnMilestoneBoundary(blockHeader));
   }
 
   /**

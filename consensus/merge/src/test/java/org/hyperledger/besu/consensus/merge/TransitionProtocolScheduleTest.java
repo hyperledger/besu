@@ -257,9 +257,9 @@ public class TransitionProtocolScheduleTest {
 
   @Test
   public void isOnForkBoundary_usesTimestampSchedule() {
-    when(timestampSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(true);
+    when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
 
-    assertThat(transitionProtocolSchedule.isOnForkBoundary(blockHeader)).isTrue();
+    assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
     verifyNoInteractions(preMergeProtocolSchedule);
     verifyNoInteractions(postMergeProtocolSchedule);
   }
@@ -268,10 +268,10 @@ public class TransitionProtocolScheduleTest {
   public void isOnForkBoundary_delegatesToPreMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(false);
 
-    when(timestampSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(false);
-    when(preMergeProtocolSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(true);
+    when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(false);
+    when(preMergeProtocolSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
 
-    assertThat(transitionProtocolSchedule.isOnForkBoundary(blockHeader)).isTrue();
+    assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
     verifyNoInteractions(postMergeProtocolSchedule);
   }
 
@@ -279,10 +279,10 @@ public class TransitionProtocolScheduleTest {
   public void isOnForkBoundary_delegatesToPostMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(true);
 
-    when(timestampSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(false);
-    when(postMergeProtocolSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(true);
+    when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(false);
+    when(postMergeProtocolSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
 
-    assertThat(transitionProtocolSchedule.isOnForkBoundary(blockHeader)).isTrue();
+    assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
     verifyNoInteractions(preMergeProtocolSchedule);
   }
 

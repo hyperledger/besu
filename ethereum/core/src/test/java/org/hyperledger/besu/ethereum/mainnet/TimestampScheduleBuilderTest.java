@@ -157,11 +157,12 @@ public class TimestampScheduleBuilderTest {
     config.experimentalEipsTime(4L);
     final HeaderBasedProtocolSchedule protocolSchedule = builder.createTimestampSchedule();
 
-    assertThat(protocolSchedule.isOnForkBoundary(header(0))).isEqualTo(false);
-    assertThat(protocolSchedule.isOnForkBoundary(header(FIRST_TIMESTAMP_FORK))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnForkBoundary(header(2))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnForkBoundary(header(3))).isEqualTo(false);
-    assertThat(protocolSchedule.isOnForkBoundary(header(4))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(FIRST_TIMESTAMP_FORK)))
+        .isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(2))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(3))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(4))).isEqualTo(true);
   }
 
   private BlockHeader header(final long timestamp) {

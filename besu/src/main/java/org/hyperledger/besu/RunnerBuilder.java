@@ -762,7 +762,7 @@ public class RunnerBuilder {
         .getBlockchain()
         .observeBlockAdded(
             blockAddedEvent -> {
-              if (protocolSchedule.isOnForkBoundary(blockAddedEvent.getBlock().getHeader())) {
+              if (protocolSchedule.isOnMilestoneBoundary(blockAddedEvent.getBlock().getHeader())) {
                 network.updateNodeRecord();
               }
             });

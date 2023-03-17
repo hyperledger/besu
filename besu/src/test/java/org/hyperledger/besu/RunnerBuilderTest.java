@@ -214,7 +214,7 @@ public final class RunnerBuilderTest {
             .build();
     runner.startEthereumMainLoop();
 
-    when(protocolSchedule.isOnForkBoundary(any(BlockHeader.class))).thenReturn(true);
+    when(protocolSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
 
     for (int i = 0; i < 2; ++i) {
       final Block block =

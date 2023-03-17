@@ -39,5 +39,5 @@ public interface HeaderBasedProtocolSchedule {
 
   boolean anyMatch(Predicate<ScheduledProtocolSpec> predicate);
 
-  boolean isOnForkBoundary(final BlockHeader blockHeader);
+  boolean isOnMilestoneBoundary(final BlockHeader blockHeader);
 }

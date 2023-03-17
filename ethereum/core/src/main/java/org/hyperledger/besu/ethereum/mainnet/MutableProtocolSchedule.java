@@ -92,7 +92,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public boolean isOnForkBoundary(final BlockHeader blockHeader) {
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
     return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getNumber() == s.milestone());
   }
 
