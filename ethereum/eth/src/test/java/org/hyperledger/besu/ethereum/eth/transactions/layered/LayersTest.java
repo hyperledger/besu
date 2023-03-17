@@ -59,7 +59,7 @@ public class LayersTest extends BaseTransactionPoolTest {
           .maxPrioritizedTransactions(MAX_PRIO_TRANSACTIONS)
           .maxFutureBySender(MAX_FUTURE_FOR_SENDER)
           .pendingTransactionsLayerMaxCapacityBytes(
-              createEIP1559Transaction(0, KEYS1, 1).getSize() * 3)
+              new PendingTransaction.Remote(createEIP1559Transaction(0, KEYS1, 1)).memorySize() * 3)
           .build();
 
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);

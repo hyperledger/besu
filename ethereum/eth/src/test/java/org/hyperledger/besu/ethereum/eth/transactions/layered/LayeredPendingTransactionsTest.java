@@ -57,7 +57,7 @@ import org.junit.jupiter.api.Test;
 public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   protected static final int MAX_TRANSACTIONS = 5;
-  protected static final int MAX_CAPACITY_BYTES = 1024;
+  protected static final int MAX_CAPACITY_BYTES = 10_000;
   protected static final int LIMITED_TRANSACTIONS_BY_SENDER = 4;
   protected static final String REMOTE = "remote";
   protected static final String LOCAL = "local";
