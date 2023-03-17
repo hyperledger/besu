@@ -151,7 +151,7 @@ public class TimestampScheduleBuilderTest {
   }
 
   @Test
-  public void isOnForkBoundary() {
+  public void isOnMilestoneBoundary() {
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
     config.cancunTime(2L);
     config.experimentalEipsTime(4L);

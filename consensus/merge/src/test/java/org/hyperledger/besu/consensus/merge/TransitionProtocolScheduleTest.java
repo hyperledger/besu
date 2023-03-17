@@ -256,7 +256,7 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void isOnForkBoundary_usesTimestampSchedule() {
+  public void isOnMilestoneBoundary_usesTimestampSchedule() {
     when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
 
     assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
@@ -265,7 +265,7 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void isOnForkBoundary_delegatesToPreMergeSchedule() {
+  public void isOnMilestoneBoundary_delegatesToPreMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(false);
 
     when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(false);
@@ -276,7 +276,7 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void isOnForkBoundary_delegatesToPostMergeSchedule() {
+  public void isOnMilestoneBoundary_delegatesToPostMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(true);
 
     when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(false);

@@ -191,7 +191,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void isOnForkBoundary() {
+  public void isOnMilestoneBoundary() {
     when(configOptions.getBerlinBlockNumber()).thenReturn(OptionalLong.of(1L));
     when(configOptions.getLondonBlockNumber()).thenReturn(OptionalLong.of(2L));
     when(configOptions.getMergeNetSplitBlockNumber()).thenReturn(OptionalLong.of(4L));
