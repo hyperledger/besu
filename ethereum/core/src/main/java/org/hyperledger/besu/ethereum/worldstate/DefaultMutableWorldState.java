@@ -112,11 +112,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public MutableWorldState copy() {
-    return new DefaultMutableWorldState(rootHash(), worldStateStorage, preimageStorage);
-  }
-
-  @Override
   public Account get(final Address address) {
     final Hash addressHash = Hash.hash(address);
     return accountStateTrie

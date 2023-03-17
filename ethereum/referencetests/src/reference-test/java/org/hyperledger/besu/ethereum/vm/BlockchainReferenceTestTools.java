@@ -80,7 +80,7 @@ public class BlockchainReferenceTestTools {
     // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
     // chain head.
     // Perfectly valid test pre-merge.
-    params.ignore("UncleFromSideChain_Merge");
+    params.ignore("UncleFromSideChain_(Merge|Shanghai|Cancun|Prague|Osaka|Bogota)");
 
     // EIP tests are explicitly meant to be works-in-progress with known failing tests
     // We want to however include withdrawals even though they are EIP tests
