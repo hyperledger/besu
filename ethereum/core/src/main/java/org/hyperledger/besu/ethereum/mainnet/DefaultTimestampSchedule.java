@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 
 public class DefaultTimestampSchedule implements TimestampSchedule {
   private final NavigableSet<TimeScheduledProtocolSpec> protocolSpecs =
-      new TreeSet<>(Comparator.comparing(TimeScheduledProtocolSpec::timestamp).reversed());
+      new TreeSet<>(Comparator.comparing(TimeScheduledProtocolSpec::milestone).reversed());
   private final Optional<BigInteger> chainId;
 
   DefaultTimestampSchedule(final Optional<BigInteger> chainId) {
@@ -42,7 +42,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
   @Override
   public Optional<ProtocolSpec> getByTimestamp(final long timestamp) {
     for (final TimeScheduledProtocolSpec protocolSpec : protocolSpecs) {
-      if (protocolSpec.timestamp() <= timestamp) {
+      if (protocolSpec.milestone() <= timestamp) {
         return Optional.of(protocolSpec.spec());
       }
     }
@@ -51,7 +51,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
-    return protocolSpecs.stream().map(TimeScheduledProtocolSpec::timestamp).sorted();
+    return protocolSpecs.stream().map(TimeScheduledProtocolSpec::milestone).sorted();
   }
 
   @Override
@@ -61,7 +61,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public boolean isOnForkBoundary(final BlockHeader blockHeader) {
-    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.timestamp);
+    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.milestone);
   }
 
   @Override
@@ -81,8 +81,8 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
   @Override
   public String listMilestones() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(TimeScheduledProtocolSpec::timestamp))
-        .map(spec -> spec.spec().getName() + ": " + spec.timestamp())
+        .sorted(Comparator.comparing(TimeScheduledProtocolSpec::milestone))
+        .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
@@ -104,7 +104,7 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
         });
   }
 
-  /** Tuple that associates a {@link ProtocolSpec} with a given timestamp level starting point */
-  record TimeScheduledProtocolSpec(long timestamp, ProtocolSpec spec)
+  /** Tuple that associates a {@link ProtocolSpec} with a given milestone level starting point */
+  record TimeScheduledProtocolSpec(long milestone, ProtocolSpec spec)
       implements ScheduledProtocolSpec {}
 }

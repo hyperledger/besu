@@ -111,7 +111,7 @@ public class TimestampScheduleBuilderTest {
     assertThatThrownBy(() -> builder.createTimestampSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'Cancun' is scheduled for timestamp 2 but it must be on or after timestamp 3.");
+            "Genesis Config Error: 'Cancun' is scheduled for milestone 2 but it must be on or after milestone 3.");
   }
 
   @Test
