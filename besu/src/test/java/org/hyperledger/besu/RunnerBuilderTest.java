@@ -64,6 +64,7 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
@@ -97,6 +98,7 @@ public final class RunnerBuilderTest {
   @Mock BesuController besuController;
   @Mock ProtocolSchedule protocolSchedule;
   @Mock ProtocolContext protocolContext;
+  @Mock WorldStateArchive worldstateArchive;
   @Mock Vertx vertx;
   private NodeKey nodeKey;
 
@@ -124,7 +126,7 @@ public final class RunnerBuilderTest {
     final Block block = mock(Block.class);
     when(blockchain.getGenesisBlock()).thenReturn(block);
     when(block.getHash()).thenReturn(Hash.ZERO);
-
+    when(protocolContext.getWorldStateArchive()).thenReturn(worldstateArchive);
     when(besuController.getProtocolManager()).thenReturn(ethProtocolManager);
     when(besuController.getSubProtocolConfiguration()).thenReturn(subProtocolConfiguration);
     when(besuController.getProtocolContext()).thenReturn(protocolContext);
