@@ -45,6 +45,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private final PeerTransactionTracker transactionTracker;
   private final EthContext ethContext;
   private final TransactionPoolMetrics metrics;
+  private final String metricLabel;
   private final ScheduledFuture<?> scheduledFuture;
   private final EthPeer peer;
   private final Queue<Hash> txAnnounces;
@@ -55,13 +56,15 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
       final EthPeer peer,
       final TransactionPool transactionPool,
       final PeerTransactionTracker transactionTracker,
-      final TransactionPoolMetrics metrics) {
+      final TransactionPoolMetrics metrics,
+      final String metricLabel) {
     this.ethContext = ethContext;
     this.scheduledFuture = scheduledFuture;
     this.peer = peer;
     this.transactionPool = transactionPool;
     this.transactionTracker = transactionTracker;
     this.metrics = metrics;
+    this.metricLabel = metricLabel;
     this.txAnnounces =
         Queues.synchronizedQueue(EvictingQueue.create(DEFAULT_MAX_PENDING_TRANSACTIONS));
   }
@@ -114,7 +117,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     }
 
     final int alreadySeenCount = discarded;
-    metrics.incrementAlreadySeenTransactions("new_pooled_transaction_hashes", alreadySeenCount);
+    metrics.incrementAlreadySeenTransactions(metricLabel, alreadySeenCount);
     LOG.atTrace()
         .setMessage(
             "Transaction hashes to request from peer {}, fresh count {}, already seen count {}")

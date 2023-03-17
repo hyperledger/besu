@@ -39,6 +39,8 @@ public class NewPooledTransactionHashesMessageProcessor {
   private static final Logger LOG =
       LoggerFactory.getLogger(NewPooledTransactionHashesMessageProcessor.class);
 
+  private static final String METRIC_LABEL = "new_pooled_transaction_hashes";
+
   private final ConcurrentHashMap<EthPeer, BufferedGetPooledTransactionsFromPeerFetcher>
       scheduledTasks;
 
@@ -59,6 +61,7 @@ public class NewPooledTransactionHashesMessageProcessor {
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.ethContext = ethContext;
     this.metrics = metrics;
+    metrics.initExpiredMessagesCounter(METRIC_LABEL);
     this.scheduledTasks = new ConcurrentHashMap<>();
   }
 
@@ -71,7 +74,7 @@ public class NewPooledTransactionHashesMessageProcessor {
     if (startedAt.plus(keepAlive).isAfter(now())) {
       this.processNewPooledTransactionHashesMessage(peer, transactionsMessage);
     } else {
-      metrics.incrementExpiredNewPooledTransactionHashesMessage();
+      metrics.incrementExpiredMessages(METRIC_LABEL);
     }
   }
 
@@ -107,7 +110,8 @@ public class NewPooledTransactionHashesMessageProcessor {
                     peer,
                     transactionPool,
                     transactionTracker,
-                    metrics);
+                    metrics,
+                    METRIC_LABEL);
               });
 
       bufferedTask.addHashes(

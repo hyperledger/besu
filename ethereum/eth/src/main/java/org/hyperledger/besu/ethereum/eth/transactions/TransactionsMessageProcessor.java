@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 class TransactionsMessageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionsMessageProcessor.class);
 
+  private static final String METRIC_LABEL = "transactions";
   private final PeerTransactionTracker transactionTracker;
   private final TransactionPool transactionPool;
 
@@ -47,6 +48,7 @@ class TransactionsMessageProcessor {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.metrics = metrics;
+    metrics.initExpiredMessagesCounter(METRIC_LABEL);
   }
 
   void processTransactionsMessage(
@@ -58,7 +60,7 @@ class TransactionsMessageProcessor {
     if (startedAt.plus(keepAlive).isAfter(now())) {
       this.processTransactionsMessage(peer, transactionsMessage);
     } else {
-      metrics.incrementExpiredTransactionsMessage();
+      metrics.incrementExpiredMessages(METRIC_LABEL);
     }
   }
 
@@ -71,7 +73,7 @@ class TransactionsMessageProcessor {
       transactionTracker.markTransactionsAsSeen(peer, incomingTransactions);
 
       metrics.incrementAlreadySeenTransactions(
-          "transactions", (long) incomingTransactions.size() - freshTransactions.size());
+          METRIC_LABEL, incomingTransactions.size() - freshTransactions.size());
       LOG.atTrace()
           .setMessage(
               "Received transactions message from {}, incoming transactions {}, incoming list {}"

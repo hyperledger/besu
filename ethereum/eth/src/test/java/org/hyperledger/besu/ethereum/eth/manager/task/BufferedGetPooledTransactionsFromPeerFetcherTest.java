@@ -74,7 +74,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
             ethPeer,
             transactionPool,
             transactionTracker,
-            new TransactionPoolMetrics(metricsSystem));
+            new TransactionPoolMetrics(metricsSystem),
+            "new_pooled_transaction_hashes");
   }
 
   @Test

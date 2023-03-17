@@ -22,16 +22,18 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.DoubleSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TransactionPoolMetrics {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolMetrics.class);
   public static final String ADDED_COUNTER_NAME = "transactions_added_total";
   public static final String REMOVED_COUNTER_NAME = "transactions_removed_total";
   public static final String REJECTED_COUNTER_NAME = "transactions_rejected_total";
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolMetrics.class);
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private final MetricsSystem metricsSystem;
   private final LabelledMetric<Counter> addedCounter;
@@ -39,10 +41,9 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> rejectedCounter;
   private final LabelledGauge spaceUsed;
   private final LabelledGauge transactionCount;
-  private final Counter expiredTransactionsMessageCounter;
+  private final LabelledMetric<Counter> expiredMessagesCounter;
+  private final Map<String, RunnableCounter> expiredMessagesRunnableCounters = new HashMap<>();
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
-
-  private final Counter expiredNewPooledTransactionHashesMessageCounter;
 
   public TransactionPoolMetrics(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
@@ -70,7 +71,7 @@ public class TransactionPoolMetrics {
             REJECTED_COUNTER_NAME,
             "Count of transactions not accepted to the transaction pool",
             "source",
-            "operation",
+            "reason",
             "layer");
 
     spaceUsed =
@@ -87,17 +88,12 @@ public class TransactionPoolMetrics {
             "The number of transactions currently present in the layer",
             "layer");
 
-    expiredTransactionsMessageCounter =
-        new RunnableCounter(
-            metricsSystem.createCounter(
-                BesuMetricCategory.TRANSACTION_POOL,
-                "transactions_messages_expired_total",
-                "Total number of transactions messages expired and not processed."),
-            () ->
-                LOG.warn(
-                    "{} expired transaction messages have been skipped.",
-                    SKIPPED_MESSAGES_LOGGING_THRESHOLD),
-            SKIPPED_MESSAGES_LOGGING_THRESHOLD);
+    expiredMessagesCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "messages_expired_total",
+            "Total number of received transaction pool messages expired and not processed.",
+            "message");
 
     alreadySeenTransactionsCounter =
         metricsSystem.createLabelledCounter(
@@ -105,18 +101,6 @@ public class TransactionPoolMetrics {
             "remote_transactions_already_seen_total",
             "Total number of received transactions already seen",
             "message");
-
-    expiredNewPooledTransactionHashesMessageCounter =
-        new RunnableCounter(
-            metricsSystem.createCounter(
-                BesuMetricCategory.TRANSACTION_POOL,
-                "new_pooled_transaction_hashes_messages_expired_total",
-                "Total number of new pooled transaction hashes messages expired and not processed."),
-            () ->
-                LOG.warn(
-                    "{} expired new pooled transaction hashes messages have been skipped.",
-                    SKIPPED_MESSAGES_LOGGING_THRESHOLD),
-            SKIPPED_MESSAGES_LOGGING_THRESHOLD);
   }
 
   public MetricsSystem getMetricsSystem() {
@@ -129,6 +113,19 @@ public class TransactionPoolMetrics {
 
   public void initTransactionCount(final DoubleSupplier spaceUsedSupplier, final String layer) {
     transactionCount.labels(spaceUsedSupplier, layer);
+  }
+
+  public void initExpiredMessagesCounter(final String message) {
+    expiredMessagesRunnableCounters.put(
+        message,
+        new RunnableCounter(
+            expiredMessagesCounter.labels(message),
+            () ->
+                LOG.warn(
+                    "{} expired {} messages have been skipped.",
+                    SKIPPED_MESSAGES_LOGGING_THRESHOLD,
+                    message),
+            SKIPPED_MESSAGES_LOGGING_THRESHOLD));
   }
 
   public void incrementAdded(final boolean receivedFromLocalSource, final String layer) {
@@ -147,12 +144,8 @@ public class TransactionPoolMetrics {
     rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), layer).inc();
   }
 
-  public void incrementExpiredTransactionsMessage() {
-    expiredTransactionsMessageCounter.inc();
-  }
-
-  public void incrementExpiredNewPooledTransactionHashesMessage() {
-    expiredNewPooledTransactionHashesMessageCounter.inc();
+  public void incrementExpiredMessages(final String message) {
+    expiredMessagesCounter.labels(message).inc();
   }
 
   public void incrementAlreadySeenTransactions(final String message, final long count) {
