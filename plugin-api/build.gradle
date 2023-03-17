@@ -31,6 +31,7 @@ dependencies {
   api 'org.apache.commons:commons-lang3'
   api 'org.apache.tuweni:tuweni-bytes'
   api 'org.apache.tuweni:tuweni-units'
+  implementation 'com.google.guava:guava'
 }
 
 configurations { testArtifacts }
@@ -66,7 +67,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = 'sh5/mQlcilXjb/z51QbcvJTlqpI2uBe2EMli1WBV2tw='
+  knownHash = 'LhQ25UazqtTJuZJN1bj76imJ7QdkFRR6dUyxt7Ig5cs='
 }
 check.dependsOn('checkAPIChanges')
 
