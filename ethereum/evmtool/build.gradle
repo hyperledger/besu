@@ -159,7 +159,7 @@ graalvmNative {
         )
 
 
-      // Excludes configuration that matches one of given regexes from JAR of dependency with said coordinates.
+      // Netty drags in older versions of bouncy castle, exclude it so there are no conflicts
       excludeConfig.put("io.netty:netty-buffer:4.1.74.Final", [".*"])
     }
   }
