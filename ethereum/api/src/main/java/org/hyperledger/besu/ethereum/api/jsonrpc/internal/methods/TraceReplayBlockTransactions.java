@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock.ChainUpdater;
@@ -49,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,8 +98,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
         .orElse(null);
   }
 
-  private ArrayNode traceBlock(
-      final Block block, final TraceTypeParameter traceTypeParameter) {
+  private ArrayNode traceBlock(final Block block, final TraceTypeParameter traceTypeParameter) {
 
     if (block == null) {
       return emptyResult();
@@ -108,60 +107,65 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
 
     final BlockHeader header = block.getHeader();
-    return Tracer.processTracing(getBlockchainQueries(), Optional.of(header), traceableState -> {
-      ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
+    return Tracer.processTracing(
+            getBlockchainQueries(),
+            Optional.of(header),
+            traceableState -> {
+              ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
 
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
-      final MainnetTransactionProcessor transactionProcessor =
-          protocolSpec.getTransactionProcessor();
-      final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
+              final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+              final MainnetTransactionProcessor transactionProcessor =
+                  protocolSpec.getTransactionProcessor();
+              final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
 
-      final TransactionSource transactionSource = new TransactionSource(block);
-      final LabelledMetric<Counter> outputCounter =
-          new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
-              .createLabelledCounter(
-                  BesuMetricCategory.BLOCKCHAIN,
-                  "transactions_traceblock_pipeline_processed_total",
-                  "Number of transactions processed for each block",
-                  "step",
-                  "action");
-      final DebugOperationTracer debugOperationTracer =
-          new DebugOperationTracer(new TraceOptions(false, false, true));
-      final ExecuteTransactionStep executeTransactionStep =
-          new ExecuteTransactionStep(
-              chainUpdater,
-              transactionProcessor,
-              getBlockchainQueries().getBlockchain(),
-              debugOperationTracer,
-              protocolSpec,
-              block);
+              final TransactionSource transactionSource = new TransactionSource(block);
+              final LabelledMetric<Counter> outputCounter =
+                  new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
+                      .createLabelledCounter(
+                          BesuMetricCategory.BLOCKCHAIN,
+                          "transactions_traceblock_pipeline_processed_total",
+                          "Number of transactions processed for each block",
+                          "step",
+                          "action");
+              final DebugOperationTracer debugOperationTracer =
+                  new DebugOperationTracer(new TraceOptions(false, false, true));
+              final ExecuteTransactionStep executeTransactionStep =
+                  new ExecuteTransactionStep(
+                      chainUpdater,
+                      transactionProcessor,
+                      getBlockchainQueries().getBlockchain(),
+                      debugOperationTracer,
+                      protocolSpec,
+                      block);
 
-      final Function<TransactionTrace, CompletableFuture<TraceReplayResult>>
-          traceReplayTransactionStep =
-              new TraceReplayTransactionStep(protocolSchedule, block, traceTypes);
+              final Function<TransactionTrace, CompletableFuture<TraceReplayResult>>
+                  traceReplayTransactionStep =
+                      new TraceReplayTransactionStep(protocolSchedule, block, traceTypes);
 
-      final BuildArrayNodeCompleterStep buildArrayNodeStep =
-          new BuildArrayNodeCompleterStep(resultArrayNode);
+              final BuildArrayNodeCompleterStep buildArrayNodeStep =
+                  new BuildArrayNodeCompleterStep(resultArrayNode);
 
-      final Pipeline<TransactionTrace> traceBlockPipeline =
-          createPipelineFrom(
-                  "getTransactions",
-                  transactionSource,
-                  4,
-                  outputCounter,
-                  false,
-                  "trace_replay_block_transactions")
-              .thenProcess("executeTransaction", executeTransactionStep)
-              .thenProcessAsyncOrdered("traceReplayTransaction", traceReplayTransactionStep, 4)
-              .andFinishWith("buildArrayNode", buildArrayNodeStep::accept);
-      try {
-        ethScheduler.startPipeline(traceBlockPipeline).get();
-      } catch (final InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
-      resultArrayNode = buildArrayNodeStep.getResultArrayNode();
-      return Optional.of(resultArrayNode.getArrayNode());
-    }).orElse(emptyResult());
+              final Pipeline<TransactionTrace> traceBlockPipeline =
+                  createPipelineFrom(
+                          "getTransactions",
+                          transactionSource,
+                          4,
+                          outputCounter,
+                          false,
+                          "trace_replay_block_transactions")
+                      .thenProcess("executeTransaction", executeTransactionStep)
+                      .thenProcessAsyncOrdered(
+                          "traceReplayTransaction", traceReplayTransactionStep, 4)
+                      .andFinishWith("buildArrayNode", buildArrayNodeStep::accept);
+              try {
+                ethScheduler.startPipeline(traceBlockPipeline).get();
+              } catch (final InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+              }
+              resultArrayNode = buildArrayNodeStep.getResultArrayNode();
+              return Optional.of(resultArrayNode.getArrayNode());
+            })
+        .orElse(emptyResult());
   }
 
   private ArrayNode emptyResult() {
