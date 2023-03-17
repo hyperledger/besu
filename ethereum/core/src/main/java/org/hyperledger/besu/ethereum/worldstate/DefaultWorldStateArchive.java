@@ -56,8 +56,8 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(
-      final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
-    return getMutable(rootHash, blockHash);
+      final BlockHeader blockHeader, final boolean isPersistingState) {
+    return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
   }
 
   @Override
@@ -94,5 +94,10 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
     return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
+  }
+
+  @Override
+  public void close() {
+    // no op
   }
 }
