@@ -8,7 +8,7 @@ on:
 
 jobs:
   spotless:
-    runs-on: [besu, ubuntu-latest, ARM64]
+    runs-on: [besu,Linux,self-hosted]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo

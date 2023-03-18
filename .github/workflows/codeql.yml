@@ -25,7 +25,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: [besu, ubuntu-latest, ARM64]
+    runs-on: [besu,Linux,self-hosted]
     permissions:
       actions: read
       contents: read
