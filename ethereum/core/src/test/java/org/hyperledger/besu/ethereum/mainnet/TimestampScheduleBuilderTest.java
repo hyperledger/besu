@@ -111,7 +111,7 @@ public class TimestampScheduleBuilderTest {
     assertThatThrownBy(() -> builder.createTimestampSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'Cancun' is scheduled for timestamp 2 but it must be on or after timestamp 3.");
+            "Genesis Config Error: 'Cancun' is scheduled for milestone 2 but it must be on or after milestone 3.");
   }
 
   @Test
@@ -148,5 +148,24 @@ public class TimestampScheduleBuilderTest {
     final TimestampSchedule schedule = builder.createTimestampSchedule();
 
     assertThat(schedule.streamMilestoneBlocks()).containsExactly(FIRST_TIMESTAMP_FORK, 2L, 3L, 5L);
+  }
+
+  @Test
+  public void isOnMilestoneBoundary() {
+    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
+    config.cancunTime(2L);
+    config.experimentalEipsTime(4L);
+    final HeaderBasedProtocolSchedule protocolSchedule = builder.createTimestampSchedule();
+
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(FIRST_TIMESTAMP_FORK)))
+        .isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(2))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(3))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(4))).isEqualTo(true);
+  }
+
+  private BlockHeader header(final long timestamp) {
+    return new BlockHeaderTestFixture().timestamp(timestamp).buildHeader();
   }
 }
