@@ -14,21 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-/** Tuple that associates a {@link ProtocolSpec} with a given block level starting point */
-public class ScheduledProtocolSpec {
-  private final long block;
-  private final ProtocolSpec spec;
-
-  public ScheduledProtocolSpec(final long block, final ProtocolSpec spec) {
-    this.block = block;
-    this.spec = spec;
-  }
-
-  public long getBlock() {
-    return block;
-  }
-
-  public ProtocolSpec getSpec() {
-    return spec;
-  }
-}
+/**
+ * Tuple that associates a {@link ProtocolSpec} with a given block number or timestamp level
+ * starting point
+ */
+public record ScheduledProtocolSpec(long milestone, ProtocolSpec spec) {}
