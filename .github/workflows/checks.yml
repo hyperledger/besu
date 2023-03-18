@@ -22,7 +22,7 @@ jobs:
       - name: spotless
         run: ./gradlew --no-daemon --parallel clean spotlessCheck
   javadoc_17:
-    runs-on: ubuntu-latest
+    runs-on: [besu,Linux,self-hosted,X64]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
