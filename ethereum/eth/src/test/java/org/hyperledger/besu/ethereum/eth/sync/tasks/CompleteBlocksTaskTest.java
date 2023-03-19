@@ -116,7 +116,11 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final Block block1 =
         new Block(
             header1,
-            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty(), Optional.empty()));
+            new BlockBody(
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Optional.empty(),
+                Optional.empty()));
     final Block block2 =
         new Block(
             header2,
@@ -160,7 +164,10 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
         new Block(
             header2,
             new BlockBody(
-                Collections.emptyList(), Collections.emptyList(), Optional.of(withdrawals), Optional.empty()));
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Optional.of(withdrawals),
+                Optional.empty()));
     final Block block3 =
         new Block(
             header3,

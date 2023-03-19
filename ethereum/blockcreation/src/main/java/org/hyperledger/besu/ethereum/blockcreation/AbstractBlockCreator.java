@@ -144,12 +144,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
     return createBlock(
-        maybeTransactions,
-        maybeOmmers,
-        Optional.empty(),
-        Optional.empty(),
-        timestamp,
-        true);
+        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), timestamp, true);
   }
 
   protected BlockCreationResult createBlock(
@@ -207,7 +202,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final Optional<List<Deposit>> maybeDeposits = Optional.empty(); // TODO 6110: Extract deposits from transaction receipts
+      final Optional<List<Deposit>> maybeDeposits =
+          Optional.empty(); // TODO 6110: Extract deposits from transaction receipts
 
       if (rewardCoinbase
           && !rewardBeneficiary(

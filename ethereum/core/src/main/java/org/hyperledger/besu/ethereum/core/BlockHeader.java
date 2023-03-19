@@ -274,7 +274,7 @@ public class BlockHeader extends SealableBlockHeader
     final DataGas excessDataGas =
         !input.isEndOfCurrentList() ? DataGas.of(input.readUInt256Scalar()) : null;
     final Hash depositHashRoot =
-            !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -375,9 +375,9 @@ public class BlockHeader extends SealableBlockHeader
             .orElse(null),
         pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
         pluginBlockHeader
-                .getDepositsRoot()
-                .map(h -> Hash.fromHexString(h.toHexString()))
-                .orElse(null),
+            .getDepositsRoot()
+            .map(h -> Hash.fromHexString(h.toHexString()))
+            .orElse(null),
         blockHeaderFunctions);
   }
 

@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.hyperledger.besu.plugin.Unstable;
 
 /**
  * A deposit is a system-level operation to support validator deposits that are pushed from the EVM

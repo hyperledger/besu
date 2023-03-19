@@ -138,7 +138,10 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     private final Bytes32 depositsRoot;
 
     public BodyIdentifier(
-        final Bytes32 transactionsRoot, final Bytes32 ommersHash, final Bytes32 withdrawalsRoot, final Bytes32 depositsRoot) {
+        final Bytes32 transactionsRoot,
+        final Bytes32 ommersHash,
+        final Bytes32 withdrawalsRoot,
+        final Bytes32 depositsRoot) {
       this.transactionsRoot = transactionsRoot;
       this.ommersHash = ommersHash;
       this.withdrawalsRoot = withdrawalsRoot;

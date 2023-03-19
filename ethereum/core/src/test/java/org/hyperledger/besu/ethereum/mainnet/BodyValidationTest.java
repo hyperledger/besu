@@ -58,5 +58,5 @@ public final class BodyValidationTest {
     }
   }
 
-  //TODO 6110: Add deposits root test
+  // TODO 6110: Add deposits root test
 }
