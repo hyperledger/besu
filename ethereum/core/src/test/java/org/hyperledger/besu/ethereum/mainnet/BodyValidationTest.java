@@ -57,4 +57,6 @@ public final class BodyValidationTest {
       Assertions.assertThat(header.getWithdrawalsRoot()).hasValue(Hash.wrap(withdrawalsRoot));
     }
   }
+
+  //TODO 6110: Add deposits root test
 }

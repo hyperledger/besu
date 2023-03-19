@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
-import org.hyperledger.besu.datatypes.DepositWithdrawalCredential;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Deposit;
 
@@ -64,7 +64,7 @@ public class DepositParameter {
   public Deposit toDeposit() {
     return new Deposit(
         BLSPublicKey.fromHexString(publicKey),
-        DepositWithdrawalCredential.fromHexString(withdrawalCredentials),
+        Bytes32.fromHexString(withdrawalCredentials),
         GWei.fromHexString(amount),
         BLSSignature.fromHexString(signature),
         UInt64.fromHexString(index));

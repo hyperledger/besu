@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.plugin.Unstable;
 
@@ -37,7 +38,7 @@ public interface Deposit {
    *
    * @return withdrawal credential
    */
-  DepositWithdrawalCredential getWithdrawalCredentials();
+  Bytes32 getWithdrawalCredentials();
 
   /**
    * Amount of ether to be sent to the deposit contract
