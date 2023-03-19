@@ -1,17 +1,32 @@
 # Changelog
 
-## 23.1.2-SNAPSHOT
+## 23.1.3 
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
+## 23.1.2
+This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended for all Mainnet users.
 
 ### Breaking Changes
 
 ### Additions and Improvements
 - Schedule Shanghai (Shapella) fork for Mainnet [#5230](https://github.com/hyperledger/besu/pull/5230)
 - Increase default from 1000 to 5000 for `--rpc-max-logs-range` [#5209](https://github.com/hyperledger/besu/pull/5209)
+- Bonsai-safe refactor [#5123](https://github.com/hyperledger/besu/pull/5123)
+- Safe tracing [#5197](https://github.com/hyperledger/besu/pull/5197)
 
 ### Bug Fixes
 - Persist backward sync status to support resuming across restarts [#5182](https://github.com/hyperledger/besu/pull/5182)
 
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.tar.gz / sha256: 3d3a709a3aab993a0801b412a4719d74e319f942ddc13fb0f30b3c4a54d12538
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.zip / sha256: 2a9ff091cb4349fc23625a52089400bb6529a831eb22d15d0221cb27039ab203
 
 ## 23.1.1
 This update is required for the Goerli Shanghai/Capella upgrade and recommended for all Mainnet users. If you use Besu on Goerli, update to 23.1.1. If you previously used 23.1.1-RC1, update to test 23.1.1 on Goerli. 
