@@ -159,6 +159,7 @@ public class BlockReplay {
     }
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
+
     return action.perform(body, header, blockchain, transactionProcessor, protocolSpec);
   }
 

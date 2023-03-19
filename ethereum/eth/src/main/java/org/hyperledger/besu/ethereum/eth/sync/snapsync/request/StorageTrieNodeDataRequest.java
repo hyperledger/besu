@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
