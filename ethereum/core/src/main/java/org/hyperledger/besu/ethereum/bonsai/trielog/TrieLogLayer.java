@@ -14,12 +14,13 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -53,7 +54,7 @@ public class TrieLogLayer {
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;
   private boolean frozen = false;
 
-  TrieLogLayer() {
+  public TrieLogLayer() {
     // TODO when tuweni fixes zero length byte comparison consider TreeMap
     this.accounts = new HashMap<>();
     this.code = new HashMap<>();
@@ -74,7 +75,7 @@ public class TrieLogLayer {
     this.blockHash = blockHash;
   }
 
-  void addAccountChange(
+  public void addAccountChange(
       final Address address,
       final StateTrieAccountValue oldValue,
       final StateTrieAccountValue newValue) {
@@ -82,7 +83,7 @@ public class TrieLogLayer {
     accounts.put(address, new BonsaiValue<>(oldValue, newValue));
   }
 
-  void addCodeChange(
+  public void addCodeChange(
       final Address address, final Bytes oldValue, final Bytes newValue, final Hash blockHash) {
     checkState(!frozen, "Layer is Frozen");
     code.put(
@@ -91,7 +92,7 @@ public class TrieLogLayer {
             oldValue == null ? Bytes.EMPTY : oldValue, newValue == null ? Bytes.EMPTY : newValue));
   }
 
-  void addStorageChange(
+  public void addStorageChange(
       final Address address, final Hash slotHash, final UInt256 oldValue, final UInt256 newValue) {
     checkState(!frozen, "Layer is Frozen");
     storage
