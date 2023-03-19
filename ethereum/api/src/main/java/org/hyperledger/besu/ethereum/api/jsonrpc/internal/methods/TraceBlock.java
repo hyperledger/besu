@@ -55,13 +55,10 @@ import org.slf4j.LoggerFactory;
 public class TraceBlock extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceBlock.class);
   private static final ObjectMapper MAPPER = new ObjectMapper();
-  // private final Supplier<BlockTracer> blockTracerSupplier;
   protected final ProtocolSchedule protocolSchedule;
-  // Either the initial block state or the state of the prior TX, including miner rewards.
 
   public TraceBlock(final ProtocolSchedule protocolSchedule, final BlockchainQueries queries) {
     super(queries);
-    //    this.blockTracerSupplier = blockTracerSupplier;
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -203,6 +200,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
     }
 
     public WorldUpdater getNextUpdater() {
+      // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (updater == null) {
         updater = worldState.updater();
       } else if (updater instanceof StackedUpdater) {

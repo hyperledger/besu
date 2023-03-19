@@ -154,7 +154,6 @@ public class TraceFilter extends TraceBlock {
                           debugOperationTracer,
                           protocolSpec);
 
-                  // Flat traces step
                   Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>>
                       traceFlatTransactionStep =
                           new TraceFlatTransactionStep(
@@ -178,17 +177,14 @@ public class TraceFilter extends TraceBlock {
                               traceStream -> traceStream.forEachOrdered(buildArrayNodeStep));
 
                   try {
-                    if (getBlockchainQueries().getEthScheduler().isPresent()) {
-                      getBlockchainQueries()
-                          .getEthScheduler()
-                          .get()
-                          .startPipeline(traceBlockPipeline)
-                          .get();
-                    } else {
-                      EthScheduler ethScheduler =
-                          new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
-                      ethScheduler.startPipeline(traceBlockPipeline).get();
-                    }
+                    Optional<EthScheduler> ethSchedulerOpt =
+                        getBlockchainQueries().getEthScheduler();
+
+                    ethSchedulerOpt
+                        .orElse(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+                        .startPipeline(traceBlockPipeline)
+                        .get();
+
                   } catch (InterruptedException | ExecutionException e) {
                     throw new RuntimeException(e);
                   }

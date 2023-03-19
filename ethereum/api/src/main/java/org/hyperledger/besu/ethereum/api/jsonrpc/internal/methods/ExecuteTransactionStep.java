@@ -68,7 +68,13 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
   @Override
   public TransactionTrace apply(final TransactionTrace transactionTrace) {
     Block block = this.block;
-    if (block == null) block = transactionTrace.getBlock().get();
+    // case where transactionTrace is created only to trace a block reward
+    if (block == null) {
+      block =
+          transactionTrace
+              .getBlock()
+              .orElseThrow(() -> new RuntimeException("Block should not be empty in this case"));
+    }
 
     List<TraceFrame> traceFrames = null;
     TransactionProcessingResult result = null;

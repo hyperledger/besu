@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -40,29 +39,20 @@ public class TraceFilterSource implements Iterator<TransactionTrace> {
   }
 
   private Iterator<TransactionTrace> getNextTransactionIterator() {
-    if (blockIterator.hasNext()) {
-      currentBlock = blockIterator.next();
-      if (currentBlock.getBody().getTransactions().size() == 0) {
-        TransactionTrace rewardTrace = new TransactionTrace(Optional.of(currentBlock));
-        return Collections.singleton(rewardTrace).iterator();
-      } else {
-        List<TransactionTrace> transactionTraces = new ArrayList<>();
-        List<Transaction> transactions = currentBlock.getBody().getTransactions();
-        int size = transactions.size();
-        int index = 0;
-        while (index <= size) {
-          if (index == size) {
-            transactionTraces.add(new TransactionTrace(Optional.of(currentBlock)));
-          } else {
-            transactionTraces.add(
-                new TransactionTrace(transactions.get(index), Optional.of(currentBlock)));
-          }
-          index++;
-        }
-        return transactionTraces.iterator();
-      }
+    if (!blockIterator.hasNext()) {
+      return null;
     }
-    return null;
+
+    currentBlock = blockIterator.next();
+    List<Transaction> transactions = currentBlock.getBody().getTransactions();
+    List<TransactionTrace> transactionTraces = new ArrayList<>(transactions.size() + 1);
+
+    for (Transaction transaction : transactions) {
+      transactionTraces.add(new TransactionTrace(transaction, Optional.of(currentBlock)));
+    }
+
+    transactionTraces.add(new TransactionTrace(Optional.of(currentBlock)));
+    return transactionTraces.iterator();
   }
 
   @Override
