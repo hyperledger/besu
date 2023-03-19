@@ -128,7 +128,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Optional.of(Collections.emptyList()),
-                Optional.of(Collections.emptyList())));
+                Optional.empty()));
 
     final List<Block> expectedBlocks = asList(block1, block2);
     final EthTask<List<Block>> task =
