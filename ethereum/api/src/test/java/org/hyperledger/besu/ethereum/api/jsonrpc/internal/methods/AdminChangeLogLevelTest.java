@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import org.apache.logging.log4j.Level;
 import org.junit.Before;
@@ -40,7 +40,7 @@ public class AdminChangeLogLevelTest {
   @Before
   public void before() {
     adminChangeLogLevel = new AdminChangeLogLevel();
-    Log4j2ConfiguratorUtil.setAllLevels("", Level.INFO);
+    LogConfigurator.setLevel("", "INFO");
   }
 
   @Test

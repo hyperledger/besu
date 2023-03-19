@@ -14,11 +14,15 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.worldview;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -48,13 +52,14 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
-    implements BonsaiWorldView {
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateUpdater.class);
-
-  private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
+public class BonsaiWorldStateUpdateAccumulator
+    extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount> implements BonsaiWorldView {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
   private final Consumer<Hash> storagePreloader;
+
+  private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
   private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
@@ -65,11 +70,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   private final Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> storageToUpdate =
       new ConcurrentHashMap<>();
 
-  BonsaiWorldStateUpdater(final BonsaiWorldView world) {
-    this(world, (__, ___) -> {}, (__, ___) -> {});
-  }
+  private boolean isAccumulatorStateChanged;
 
-  BonsaiWorldStateUpdater(
+  public BonsaiWorldStateUpdateAccumulator(
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
       final Consumer<Hash> storagePreloader) {
@@ -77,16 +80,18 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
+    this.isAccumulatorStateChanged = false;
   }
 
-  public BonsaiWorldStateUpdater copy() {
-    final BonsaiWorldStateUpdater copy =
-        new BonsaiWorldStateUpdater(wrappedWorldView(), accountPreloader, storagePreloader);
+  public BonsaiWorldStateUpdateAccumulator copy() {
+    final BonsaiWorldStateUpdateAccumulator copy =
+        new BonsaiWorldStateUpdateAccumulator(
+            wrappedWorldView(), accountPreloader, storagePreloader);
     copy.cloneFromUpdater(this);
     return copy;
   }
 
-  void cloneFromUpdater(final BonsaiWorldStateUpdater source) {
+  void cloneFromUpdater(final BonsaiWorldStateUpdateAccumulator source) {
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
     storageToClear.addAll(source.storageToClear);
@@ -94,6 +99,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
     emptySlot.addAll(source.emptySlot);
+    this.isAccumulatorStateChanged = true;
   }
 
   @Override
@@ -115,12 +121,14 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
+
     if (bonsaiValue == null) {
       bonsaiValue = new BonsaiValue<>(null, null);
       accountsToUpdate.put(address, bonsaiValue);
     } else if (bonsaiValue.getUpdated() != null) {
       throw new IllegalStateException("Cannot create an account when one already exists");
     }
+
     final BonsaiAccount newAccount =
         new BonsaiAccount(
             this,
@@ -135,11 +143,11 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
   }
 
-  Map<Address, BonsaiValue<BonsaiAccount>> getAccountsToUpdate() {
+  public Map<Address, BonsaiValue<BonsaiAccount>> getAccountsToUpdate() {
     return accountsToUpdate;
   }
 
-  Map<Address, BonsaiValue<Bytes>> getCodeToUpdate() {
+  public Map<Address, BonsaiValue<Bytes>> getCodeToUpdate() {
     return codeToUpdate;
   }
 
@@ -147,7 +155,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return storageToClear;
   }
 
-  Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> getStorageToUpdate() {
+  public Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> getStorageToUpdate() {
     return storageToUpdate;
   }
 
@@ -162,7 +170,14 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     try {
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
       if (bonsaiValue == null) {
-        final Account account = wrappedWorldView().get(address);
+        final Account account;
+        if (wrappedWorldView() instanceof BonsaiWorldStateUpdateAccumulator) {
+          account =
+              ((BonsaiWorldStateUpdateAccumulator) wrappedWorldView())
+                  .loadAccount(address, bonsaiAccountFunction);
+        } else {
+          account = wrappedWorldView().get(address);
+        }
         if (account instanceof BonsaiAccount) {
           final BonsaiAccount mutableAccount =
               new BonsaiAccount((BonsaiAccount) account, this, true);
@@ -198,6 +213,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   public void commit() {
+    this.isAccumulatorStateChanged = true;
     for (final Address deletedAddress : getDeletedAccounts()) {
       final BonsaiValue<BonsaiAccount> accountValue =
           accountsToUpdate.computeIfAbsent(
@@ -368,12 +384,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   }
 
   @Override
-  public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    // updater doesn't track trie nodes.  Always a miss.
-    return Optional.empty();
-  }
-
-  @Override
   public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     final Hash slotHashBytes = Hash.hash(storageKey);
@@ -395,8 +405,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     } else {
       try {
         final Optional<UInt256> valueUInt =
-            (wrappedWorldView() instanceof BonsaiPersistedWorldState)
-                ? ((BonsaiPersistedWorldState) wrappedWorldView())
+            (wrappedWorldView() instanceof BonsaiWorldState)
+                ? ((BonsaiWorldState) wrappedWorldView())
                     .getStorageValueBySlotHash(
                         () ->
                             Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
@@ -455,8 +465,22 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final Map<Bytes32, Bytes> results = wrappedWorldView().getAllAccountStorage(address, rootHash);
-    storageToUpdate.get(address).forEach((key, value) -> results.put(key, value.getUpdated()));
+    final StorageConsumingMap<BonsaiValue<UInt256>> bonsaiValueStorage =
+        storageToUpdate.get(address);
+    if (bonsaiValueStorage != null) {
+      bonsaiValueStorage.forEach((key, value) -> results.put(key, value.getUpdated()));
+    }
     return results;
+  }
+
+  @Override
+  public boolean isPersisted() {
+    return true;
+  }
+
+  @Override
+  public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
+    return wrappedWorldView().getWorldStateStorage();
   }
 
   public TrieLogLayer generateTrieLog(final Hash blockHash) {
@@ -600,6 +624,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
       if (replacementValue == null) {
         if (accountValue.getPrior() == null) {
+          // TODO: should we remove from the parent accumulated change also?  only if it is a
+          // private copy
           accountsToUpdate.remove(address);
         } else {
           accountValue.setUpdated(null);
@@ -769,6 +795,22 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return Objects.equals(sanitizedExpectedValue, sanitizedExistingSlotValue);
   }
 
+  public boolean isAccumulatorStateChanged() {
+    return isAccumulatorStateChanged;
+  }
+
+  public void resetAccumulatorStateChanged() {
+    isAccumulatorStateChanged = false;
+  }
+
+  public Consumer<BonsaiValue<BonsaiAccount>> getAccountPreloader() {
+    return accountPreloader;
+  }
+
+  public Consumer<Hash> getStoragePreloader() {
+    return storagePreloader;
+  }
+
   @Override
   public void reset() {
     storageToClear.clear();
@@ -776,16 +818,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     codeToUpdate.clear();
     accountsToUpdate.clear();
     emptySlot.clear();
+    resetAccumulatorStateChanged();
     super.reset();
-  }
-
-  public boolean isDirty() {
-    return !(accountsToUpdate.isEmpty()
-        && updatedAccounts.isEmpty()
-        && deletedAccounts.isEmpty()
-        && storageToUpdate.isEmpty()
-        && storageToClear.isEmpty()
-        && codeToUpdate.isEmpty());
   }
 
   public static class AccountConsumingMap<T> extends ForwardingMap<Address, T> {

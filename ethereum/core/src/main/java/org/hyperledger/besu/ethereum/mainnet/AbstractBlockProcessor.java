@@ -19,8 +19,8 @@ import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdater;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Deposit;
@@ -142,8 +142,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 blockHeader.getHash().toHexString(),
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
-        if (worldState instanceof BonsaiPersistedWorldState) {
-          ((BonsaiWorldStateUpdater) worldStateUpdater).reset();
+        if (worldState instanceof BonsaiWorldState) {
+          ((BonsaiWorldStateUpdateAccumulator) worldStateUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
@@ -171,8 +171,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
-      if (worldState instanceof BonsaiPersistedWorldState) {
-        ((BonsaiWorldStateUpdater) worldState.updater()).reset();
+      if (worldState instanceof BonsaiWorldState) {
+        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
@@ -181,8 +181,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {
       LOG.trace("Merkle trie exception during Transaction processing ", e);
-      if (worldState instanceof BonsaiPersistedWorldState) {
-        ((BonsaiWorldStateUpdater) worldState.updater()).reset();
+      if (worldState instanceof BonsaiWorldState) {
+        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
       throw e;
     } catch (Exception e) {

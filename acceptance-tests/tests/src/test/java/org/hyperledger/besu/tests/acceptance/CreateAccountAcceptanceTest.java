@@ -19,14 +19,14 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CreateAccountAcceptanceTest extends AcceptanceTestBase {
 
   private Node minerNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("minerNode");
     cluster.start(minerNode, besu.createArchiveNode("archiveNode"));
