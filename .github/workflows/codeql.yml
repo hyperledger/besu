@@ -21,7 +21,6 @@ on:
       - '**/*.md'
       - '**/*.properties'
       - '**/*.txt'
-  merge_group:
 jobs:
   analyze:
     name: Analyze

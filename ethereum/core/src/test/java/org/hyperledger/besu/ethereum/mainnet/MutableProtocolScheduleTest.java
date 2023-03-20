@@ -18,20 +18,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ProtocolScheduleTest {
+public class MutableProtocolScheduleTest {
 
   private static final Optional<BigInteger> CHAIN_ID = Optional.of(BigInteger.ONE);
+  private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
+
+  private ProtocolScheduleBuilder builder;
+  private StubGenesisConfigOptions config;
+
+  private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier = Function.identity();
+
+  private final long FIRST_TIMESTAMP_FORK = 1L;
+
+  @Before
+  public void setup() {
+    config = new StubGenesisConfigOptions();
+    config.chainId(DEFAULT_CHAIN_ID);
+    boolean isRevertReasonEnabled = false;
+    boolean quorumCompatibilityMode = false;
+    builder =
+        new ProtocolScheduleBuilder(
+            config,
+            DEFAULT_CHAIN_ID,
+            ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
+            new PrivacyParameters(),
+            isRevertReasonEnabled,
+            quorumCompatibilityMode,
+            EvmConfiguration.DEFAULT);
+  }
 
   @SuppressWarnings("unchecked")
   @Test
@@ -86,5 +117,23 @@ public class ProtocolScheduleTest {
     final ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
 
     assertThat(spec).isEqualTo(spec2);
+  }
+
+  @Test
+  public void isOnMilestoneBoundary() {
+    config.berlinBlock(1L);
+    config.londonBlock(2L);
+    config.mergeNetSplitBlock(4L);
+    final HeaderBasedProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(1))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(2))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(3))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(4))).isEqualTo(true);
+  }
+
+  private BlockHeader header(final long blockNumber) {
+    return new BlockHeaderTestFixture().number(blockNumber).buildHeader();
   }
 }

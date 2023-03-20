@@ -652,6 +652,7 @@ def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
   "openjdk-17",
   "openjdk-17-debug",
+  "openj9-jdk-17",
   "graalvm",
   "openjdk-latest"
 ]
