@@ -41,8 +41,10 @@ public class BaseJsonRpcProcessor implements JsonRpcProcessor {
     try {
       return method.response(request);
     } catch (final InvalidJsonRpcParameters e) {
+      JsonRpcError invalidParamsError = JsonRpcError.INVALID_PARAMS;
+      invalidParamsError.setData(e.getMessage());
       LOG.debug("Invalid Params for method: {}", method.getName(), e);
-      return new JsonRpcErrorResponse(id, JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(id, invalidParamsError);
     } catch (final MultiTenancyValidationException e) {
       return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     } catch (final RuntimeException e) {

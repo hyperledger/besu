@@ -44,6 +44,7 @@ import com.google.common.io.Resources;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -261,9 +262,13 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
     // Check error
     if (expectedResponse.has("error")) {
       assertThat(responseBody.has("error")).isTrue();
-      final String expectedError = expectedResponse.get("error").toString();
-      final String actualError = responseBody.get("error").toString();
-      assertThat(actualError).isEqualToIgnoringWhitespace(expectedError);
+
+      final JsonNode expectedErrorJson = expectedResponse.get("error");
+      final JsonNode actualErrorJson = responseBody.get("error");
+
+      // ignore data field, it's only used to provide extra error info for INVALID_PARAMS
+      assertThat(actualErrorJson.get("code")).isEqualTo(expectedErrorJson.get("code"));
+      assertThat(actualErrorJson.get("message")).isEqualTo(expectedErrorJson.get("message"));
     }
   }
 
