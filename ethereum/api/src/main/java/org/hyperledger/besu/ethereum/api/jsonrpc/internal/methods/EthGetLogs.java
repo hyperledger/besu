@@ -104,7 +104,7 @@ public class EthGetLogs implements JsonRpcMethod {
 
     if (ex.get() != null) {
       LOG.atDebug()
-          .setMessage("eth_getLogs request {} failed: {}")
+          .setMessage("eth_getLogs request {} failed:")
           .addArgument(requestContext.getRequest())
           .setCause(ex.get())
           .log();
