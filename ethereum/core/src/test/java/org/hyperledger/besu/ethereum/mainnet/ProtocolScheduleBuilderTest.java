@@ -22,8 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -188,23 +186,5 @@ public class ProtocolScheduleBuilderTest {
     assertThat(schedule.getByBlockNumber(5).getName()).isEqualTo("Homestead");
 
     verify(modifier, times(1)).apply(any());
-  }
-
-  @Test
-  public void isOnMilestoneBoundary() {
-    when(configOptions.getBerlinBlockNumber()).thenReturn(OptionalLong.of(1L));
-    when(configOptions.getLondonBlockNumber()).thenReturn(OptionalLong.of(2L));
-    when(configOptions.getMergeNetSplitBlockNumber()).thenReturn(OptionalLong.of(4L));
-    final HeaderBasedProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
-
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(1))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(2))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(3))).isEqualTo(false);
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(4))).isEqualTo(true);
-  }
-
-  private BlockHeader header(final long blockNumber) {
-    return new BlockHeaderTestFixture().number(blockNumber).buildHeader();
   }
 }
