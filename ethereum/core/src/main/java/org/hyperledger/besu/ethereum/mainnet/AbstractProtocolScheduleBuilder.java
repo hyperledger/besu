@@ -112,17 +112,11 @@ public abstract class AbstractProtocolScheduleBuilder {
     if (lastForkBlock > referenceForkBlock) {
       throw new RuntimeException(
           String.format(
-              "Genesis Config Error: '%s' is scheduled for %s %d but it must be on or after %s %d.",
-              forkName,
-              getBlockIdentifierName(),
-              thisForkBlock.getAsLong(),
-              getBlockIdentifierName(),
-              lastForkBlock));
+              "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
+              forkName, thisForkBlock.getAsLong(), lastForkBlock));
     }
     return referenceForkBlock;
   }
-
-  abstract String getBlockIdentifierName();
 
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
       final MainnetProtocolSpecFactory specFactory) {
