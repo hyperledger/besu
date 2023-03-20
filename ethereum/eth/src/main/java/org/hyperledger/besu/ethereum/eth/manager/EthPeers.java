@@ -128,7 +128,7 @@ public class EthPeers {
         BesuMetricCategory.ETHEREUM,
         "peer_count",
         "The current number of peers connected",
-        () -> (int) streamAvailablePeers().count());
+        () -> (int) streamAvailablePeers().filter(p -> p.readyForRequests()).count());
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -376,7 +376,14 @@ public class EthPeers {
     final List<PeerConnection> incompleteConnections = getIncompleteConnections(id);
     if (!incompleteConnections.isEmpty()) {
       if (incompleteConnections.stream()
-          .anyMatch(c -> (c.inboundInitiated() == inbound) && !c.isDisconnected())) {
+          .anyMatch(c -> !c.isDisconnected() && (!inbound || inbound && c.inboundInitiated()))) {
+        // TODO: At the moment for outbound connections this is asked before we initialize the
+        // PeerConnection (before the handshake). For inbound connections this question is asked
+        // when the handshake has already happened.
+        // TODO: There is an issue in github to ask this question for inbound connections before the
+        // handshake. Once this has been closed we only have to check
+        // incompleteConnections.isEmpty() and whether there is a cocnnection that is not
+        // disconnected to return false
         return false;
       }
     }
