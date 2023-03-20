@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -63,6 +64,7 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
@@ -74,7 +76,6 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -97,6 +98,7 @@ public final class RunnerBuilderTest {
   @Mock BesuController besuController;
   @Mock ProtocolSchedule protocolSchedule;
   @Mock ProtocolContext protocolContext;
+  @Mock WorldStateArchive worldstateArchive;
   @Mock Vertx vertx;
   private NodeKey nodeKey;
 
@@ -124,7 +126,7 @@ public final class RunnerBuilderTest {
     final Block block = mock(Block.class);
     when(blockchain.getGenesisBlock()).thenReturn(block);
     when(block.getHash()).thenReturn(Hash.ZERO);
-
+    when(protocolContext.getWorldStateArchive()).thenReturn(worldstateArchive);
     when(besuController.getProtocolManager()).thenReturn(ethProtocolManager);
     when(besuController.getSubProtocolConfiguration()).thenReturn(subProtocolConfiguration);
     when(besuController.getProtocolContext()).thenReturn(protocolContext);
@@ -214,7 +216,7 @@ public final class RunnerBuilderTest {
             .build();
     runner.startEthereumMainLoop();
 
-    when(protocolSchedule.streamMilestoneBlocks()).thenAnswer(__ -> Stream.of(1L, 2L));
+    when(protocolSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
 
     for (int i = 0; i < 2; ++i) {
       final Block block =

@@ -311,16 +311,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Hash parentStateRoot = parentHeader.getStateRoot();
     return protocolContext
         .getWorldStateArchive()
-        .getMutable(parentStateRoot, parentHeader.getHash(), false)
-        .map(
-            ws -> {
-              if (ws.isPersistable()) {
-                return ws;
-              } else {
-                // non-persistable worldstates should return a copy which is persistable:
-                return ws.copy();
-              }
-            })
+        .getMutable(parentHeader, false)
         .orElseThrow(
             () -> {
               LOG.info("Unable to create block because world state is not available");
