@@ -41,10 +41,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.zip.GZIPInputStream;
 
 import com.google.common.base.Splitter;
 import org.apache.tuweni.bytes.Bytes;
@@ -64,7 +66,8 @@ public class ReplayTest {
     try (BufferedReader br =
         new BufferedReader(
             new InputStreamReader(
-                getClass().getResourceAsStream("/txpool/tx.csv"), StandardCharsets.UTF_8))) {
+                new GZIPInputStream(getClass().getResourceAsStream("/txpool/tx.csv.gz")),
+                StandardCharsets.UTF_8))) {
       currBlockHeader = mockBlockHeader(br.readLine());
       final BaseFeeMarket baseFeeMarket = FeeMarket.london(0L);
 
@@ -80,7 +83,11 @@ public class ReplayTest {
                   final String type = commaSplit[0];
                   switch (type) {
                     case "T":
-                      System.out.println("T:" + commaSplit[1]);
+                      System.out.println(
+                          "T:"
+                              + commaSplit[1]
+                              + " @ "
+                              + Instant.ofEpochMilli(Long.parseLong(commaSplit[2])));
                       processTransaction(commaSplit, pendingTransactions);
                       break;
                     case "B":
@@ -95,8 +102,7 @@ public class ReplayTest {
                       throw new IllegalArgumentException("Unexpected first field value " + type);
                   }
                 } catch (Throwable throwable) {
-                  fail(line);
-                  throw throwable;
+                  fail(line, throwable);
                 }
               });
     }

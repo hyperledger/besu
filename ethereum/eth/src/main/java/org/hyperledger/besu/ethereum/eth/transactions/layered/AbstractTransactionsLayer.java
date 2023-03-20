@@ -212,9 +212,12 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     final Address sender = pendingTransaction.getSender();
     final var senderTxs = txsBySender.get(sender);
     if (senderTxs != null) {
-      // check if it is a cross layer replacement, namely added to a previous layer
-
-      if (senderTxs.firstKey() == pendingTransaction.getNonce()) {
+      if (senderTxs.firstKey() < pendingTransaction.getNonce()) {
+        // in the case the world state has been updated but the confirmed txs have not yet been
+        // processed
+        confirmed(sender, pendingTransaction.getNonce());
+      } else if (senderTxs.firstKey() == pendingTransaction.getNonce()) {
+        // it is a cross layer replacement, namely added to a previous layer
         final PendingTransaction replacedTx = senderTxs.pollFirstEntry().getValue();
         processRemove(senderTxs, replacedTx.getTransaction(), CROSS_LAYER_REPLACED);
 
