@@ -62,10 +62,36 @@ public class ReplayTest {
 
   private BlockHeader currBlockHeader;
 
+  /**
+   * Ignored by default since this is useful to debug issues having a dump of txs that could be
+   * quite big and so could take many minutes to execute. To generate the input file for the test
+   * enable the LOG_FOR_REPLAY logger by adding these parts to the log4j2 configuration: in the
+   * Appenders section add
+   *
+   * <pre>{@code
+   * <RollingFile name="txCSV" fileName="/data/besu/tx.csv" filePattern="/data/besu/tx-%d{MM-dd-yyyy}-%i.csv.gz">
+   *    <PatternLayout>
+   *        <Pattern>%m%n</Pattern>
+   *    </PatternLayout>
+   *    <Policies>
+   *        <OnStartupTriggeringPolicy />
+   *    </Policies>
+   * </RollingFile>
+   * }</pre>
+   *
+   * in the Loggers section add
+   *
+   * <pre>{@code
+   * <Logger name="LOG_FOR_REPLAY" level="TRACE" additivity="false">
+   *    <AppenderRef ref="txCSV" />
+   * </Logger>
+   * }</pre>
+   *
+   * restart and let it run until you need it, then copy the CSV in the test resource folder.
+   *
+   * @throws IOException
+   */
   @Ignore
-  // ignored by default since this is useful to debug issues having a dump of txs that could be
-  // quite big
-  // and could take many minutes to execute
   @Test
   public void replay() throws IOException {
     try (BufferedReader br =
