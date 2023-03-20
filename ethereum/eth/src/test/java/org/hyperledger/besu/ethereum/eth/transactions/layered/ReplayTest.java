@@ -50,6 +50,7 @@ import java.util.zip.GZIPInputStream;
 
 import com.google.common.base.Splitter;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 
 public class ReplayTest {
@@ -61,12 +62,16 @@ public class ReplayTest {
 
   private BlockHeader currBlockHeader;
 
+  @Ignore
+  // ignored by default since this is useful to debug issues having a dump of txs that could be
+  // quite big
+  // and could take many minutes to execute
   @Test
   public void replay() throws IOException {
     try (BufferedReader br =
         new BufferedReader(
             new InputStreamReader(
-                new GZIPInputStream(getClass().getResourceAsStream("/txpool/tx.csv.gz")),
+                new GZIPInputStream(getClass().getResourceAsStream("/tx.csv.gz")),
                 StandardCharsets.UTF_8))) {
       currBlockHeader = mockBlockHeader(br.readLine());
       final BaseFeeMarket baseFeeMarket = FeeMarket.london(0L);

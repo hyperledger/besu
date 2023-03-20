@@ -217,6 +217,7 @@ public class TransactionPool implements BlockAddedObserver {
 
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
+      LOG_TX_CSV.atTrace().setMessage("S,{}").addArgument(() -> pendingTransactions.logStats()).log();
       LOG.atDebug()
           .setMessage("Added {} transactions to the pool, current pool stats {}")
           .addArgument(addedTransactions::size)

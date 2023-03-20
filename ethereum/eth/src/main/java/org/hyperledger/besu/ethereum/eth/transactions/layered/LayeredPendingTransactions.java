@@ -326,8 +326,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public synchronized String logStats() {
-    final String statsString = prioritizedTransactions.logStats();
-    LOG_TX_CSV.atTrace().setMessage("S,{}").addArgument(statsString).log();
-    return statsString;
+    return prioritizedTransactions.logStats();
   }
 }
