@@ -140,17 +140,6 @@ public class TimestampScheduleBuilderTest {
   }
 
   @Test
-  public void streamMilestoneBlocksReturnTimestampsInOrder() {
-    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
-    config.cancunTime(2L);
-    config.experimentalEipsTime(5L);
-    config.futureEipsTime(3L);
-    final TimestampSchedule schedule = builder.createTimestampSchedule();
-
-    assertThat(schedule.streamMilestoneBlocks()).containsExactly(FIRST_TIMESTAMP_FORK, 2L, 3L, 5L);
-  }
-
-  @Test
   public void isOnMilestoneBoundary() {
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
     config.cancunTime(2L);

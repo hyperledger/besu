@@ -28,16 +28,25 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class MutableProtocolSchedule implements ProtocolSchedule {
 
-  private final NavigableSet<ScheduledProtocolSpec> protocolSpecs =
+  @VisibleForTesting
+  protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::milestone).reversed());
+
   private final Optional<BigInteger> chainId;
 
   public MutableProtocolSchedule(final Optional<BigInteger> chainId) {
     this.chainId = chainId;
+  }
+
+  @VisibleForTesting
+  protected MutableProtocolSchedule(final MutableProtocolSchedule protocolSchedule) {
+    this.chainId = protocolSchedule.chainId;
+    this.protocolSpecs = protocolSchedule.protocolSpecs;
   }
 
   @Override
@@ -77,13 +86,6 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
         .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
         .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone())
         .collect(Collectors.joining(", ", "[", "]"));
-  }
-
-  @Override
-  public Stream<Long> streamMilestoneBlocks() {
-    return protocolSpecs.stream()
-        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
-        .map(ScheduledProtocolSpec::milestone);
   }
 
   @Override
