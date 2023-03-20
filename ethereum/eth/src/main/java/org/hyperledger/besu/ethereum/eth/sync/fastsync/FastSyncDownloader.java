@@ -121,7 +121,7 @@ public class FastSyncDownloader<REQUEST> {
     } else {
       LOG.error(
           "Encountered an unexpected error during fast sync. Restarting sync in "
-              + FAST_SYNC_RETRY_DELAY
+              + FAST_SYNC_RETRY_DELAY.getSeconds()
               + " seconds.",
           error);
       return fastSyncActions.scheduleFutureTask(
