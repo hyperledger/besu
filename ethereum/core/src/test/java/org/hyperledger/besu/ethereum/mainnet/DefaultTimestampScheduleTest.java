@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -27,12 +29,14 @@ import java.util.function.Function;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TimestampScheduleBuilderTest {
+public class DefaultTimestampScheduleTest {
 
   private static final BigInteger chainId = BigInteger.ONE;
   private static final BigInteger defaultChainId = BigInteger.ONE;
   private static final PrivacyParameters privacyParameters = new PrivacyParameters();
   private static final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
+  private static final BlockHeader BLOCK_HEADER =
+      new BlockHeaderTestFixture().timestamp(1L).buildHeader();
   private TimestampScheduleBuilder builder;
   private StubGenesisConfigOptions config;
 
@@ -58,55 +62,46 @@ public class TimestampScheduleBuilderTest {
   }
 
   @Test
-  public void createTimestampScheduleInOrder() {
+  public void getByBlockHeader_whenSpecFound() {
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
-    config.cancunTime(3);
-    final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
+    final TimestampSchedule schedule = builder.createTimestampSchedule();
 
-    assertThat(timestampSchedule.getChainId()).contains(chainId);
-    assertThat(timestampSchedule.getByTimestamp(0)).isEmpty();
-    assertThat(timestampSchedule.getByTimestamp(1))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Shanghai");
-    assertThat(timestampSchedule.getByTimestamp(2))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Shanghai");
-    assertThat(timestampSchedule.getByTimestamp(3))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Cancun");
-    assertThat(timestampSchedule.getByTimestamp(4))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Cancun");
+    assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNotNull();
   }
 
   @Test
-  public void createTimestampScheduleOverlappingUsesLatestFork() {
-    config.shanghaiTime(0);
-    config.cancunTime(0);
-    final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
+  public void getByBlockHeader_whenSpecNotFoundReturnsNull() {
+    config.shanghaiTime(2L);
+    builder =
+        new TimestampScheduleBuilder(
+            config,
+            defaultChainId,
+            ProtocolSpecAdapters.create(2L, modifier),
+            privacyParameters,
+            false,
+            false,
+            evmConfiguration);
+    final TimestampSchedule schedule = builder.createTimestampSchedule();
 
-    assertThat(timestampSchedule.getChainId()).contains(chainId);
-    assertThat(timestampSchedule.getByTimestamp(0))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Cancun");
-    assertThat(timestampSchedule.getByTimestamp(1))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Cancun");
+    assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNull();
   }
 
   @Test
-  public void createTimestampScheduleOutOfOrderThrows() {
-    config.shanghaiTime(3);
-    config.cancunTime(2);
-    assertThatThrownBy(() -> builder.createTimestampSchedule())
-        .isInstanceOf(RuntimeException.class)
-        .hasMessage(
-            "Genesis Config Error: 'Cancun' is scheduled for milestone 2 but it must be on or after milestone 3.");
+  public void isOnMilestoneBoundary() {
+    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
+    config.cancunTime(2L);
+    config.experimentalEipsTime(4L);
+    final HeaderBasedProtocolSchedule protocolSchedule = builder.createTimestampSchedule();
+
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(FIRST_TIMESTAMP_FORK)))
+        .isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(2))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(3))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(4))).isEqualTo(true);
+  }
+
+  private BlockHeader header(final long timestamp) {
+    return new BlockHeaderTestFixture().timestamp(timestamp).buildHeader();
   }
 }

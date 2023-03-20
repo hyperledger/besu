@@ -12,7 +12,6 @@ on:
     branches:
       - master
       - main
-  merge_group:
 
 jobs:
   build:
