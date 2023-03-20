@@ -764,7 +764,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Invalid json rpc parameter at index 0. Supplied value was: 'true' of type: 'java.lang.Boolean' - expected type: 'org.hyperledger.besu.datatypes.Hash'");
     }
   }
 
@@ -788,7 +792,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Missing required json rpc parameter at index 1");
     }
   }
 
@@ -811,7 +819,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Invalid json rpc parameter at index 0. Supplied value was: '0xe' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.datatypes.Hash'");
     }
   }
 
@@ -834,7 +846,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Invalid json rpc parameter at index 0. Supplied value was: '0xe670' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.datatypes.Hash'");
     }
   }
 
@@ -858,7 +874,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Invalid json rpc parameter at index 1. Supplied value was: '{}' of type: 'java.util.LinkedHashMap' - expected type: 'java.lang.Boolean'");
     }
   }
 
@@ -878,7 +898,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Missing required json rpc parameter at index 0");
     }
   }
 
@@ -898,7 +922,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Missing required json rpc parameter at index 0");
     }
   }
 
@@ -984,7 +1012,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(respBody);
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Invalid json rpc parameter at index 0. Supplied value was: 'bla' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter'");
     }
   }
 
@@ -2040,7 +2072,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+          json,
+          id,
+          expectedError.getCode(),
+          expectedError.getMessage(),
+          "Invalid json rpc parameter at index 1. Supplied value was: 'blah' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UInt256Parameter'");
     }
   }
 

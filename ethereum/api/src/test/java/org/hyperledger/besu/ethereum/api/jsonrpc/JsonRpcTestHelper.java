@@ -37,6 +37,17 @@ public class JsonRpcTestHelper {
   }
 
   protected void assertValidJsonRpcError(
+      final JsonObject json,
+      final Object id,
+      final int errorCode,
+      final String errorMessage,
+      final String data)
+      throws Exception {
+
+    assertThat(data).isEqualTo(assertValidJsonRpcError(json, id, errorCode, errorMessage));
+  }
+
+  protected String assertValidJsonRpcError(
       final JsonObject json, final Object id, final int errorCode, final String errorMessage)
       throws Exception {
     // Check all expected fieldnames are set
@@ -53,13 +64,20 @@ public class JsonRpcTestHelper {
     // Check error format
     final JsonObject error = json.getJsonObject("error");
     final Set<String> errorFieldNames = error.fieldNames();
-    assertThat(errorFieldNames.size()).isEqualTo(2);
+    assertThat(errorFieldNames.size()).isGreaterThanOrEqualTo(2);
+    // 3 if data field is present ie INVALID_PARAMS
+    assertThat(errorFieldNames.size()).isLessThanOrEqualTo(3);
+
     assertThat(errorFieldNames.contains("code")).isTrue();
     assertThat(errorFieldNames.contains("message")).isTrue();
 
     // Check error field values
     assertThat(error.getInteger("code")).isEqualTo(errorCode);
     assertThat(error.getString("message")).isEqualTo(errorMessage);
+    if (errorFieldNames.contains("data")) {
+      return error.getString("data");
+    }
+    return null;
   }
 
   protected void assertIdMatches(final JsonObject json, final Object expectedId) {

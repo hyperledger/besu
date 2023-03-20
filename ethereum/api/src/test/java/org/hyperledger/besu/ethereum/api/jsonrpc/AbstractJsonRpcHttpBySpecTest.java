@@ -261,11 +261,13 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
     // Check error
     if (expectedResponse.has("error")) {
       assertThat(responseBody.has("error")).isTrue();
-
       final JsonNode expectedErrorJson = expectedResponse.get("error");
       final JsonNode actualErrorJson = responseBody.get("error");
 
-      // ignore data field, it's only used to provide extra error info for INVALID_PARAMS
+      // compare data field if explicitly included in expected response
+      if (expectedErrorJson.has("data")) {
+        assertThat(actualErrorJson.get("data")).isEqualTo(expectedErrorJson.get("data"));
+      }
       assertThat(actualErrorJson.get("code")).isEqualTo(expectedErrorJson.get("code"));
       assertThat(actualErrorJson.get("message")).isEqualTo(expectedErrorJson.get("message"));
     }
