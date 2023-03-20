@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Add data field to JsonRpcError in case of `INVALID_PARAMS` error [#5241](https://github.com/hyperledger/besu/pull/5241)
 
 ### Bug Fixes
 
@@ -351,7 +352,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.
 
 ### Bug Fixes
 - Corrects treating a block as bad on internal error [#4512](https://github.com/hyperledger/besu/issues/4512)
-- update appache-commons-text to 1.10.0 to address CVE-2022-42889 [#4542](https://github.com/hyperledger/besu/pull/4542)
+- update apache-commons-text to 1.10.0 to address CVE-2022-42889 [#4542](https://github.com/hyperledger/besu/pull/4542)
 - In GraphQL update scalar parsing to be variable friendly [#4522](https://github.com/hyperledger/besu/pull/4522)
 
 ### Download Links
