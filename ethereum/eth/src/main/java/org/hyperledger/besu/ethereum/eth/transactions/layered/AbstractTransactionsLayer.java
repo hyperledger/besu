@@ -88,6 +88,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     this.metrics = metrics;
     metrics.initSpaceUsed(this::getLayerSpaceUsed, name());
     metrics.initTransactionCount(pendingTransactions::size, name());
+    metrics.initUniqueSenderCount(txsBySender::size, name());
   }
 
   protected abstract boolean gapsAllowed();

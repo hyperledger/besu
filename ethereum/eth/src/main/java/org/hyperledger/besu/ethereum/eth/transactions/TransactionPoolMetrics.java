@@ -42,6 +42,7 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> rejectedCounter;
   private final LabelledGauge spaceUsed;
   private final LabelledGauge transactionCount;
+  private final LabelledGauge uniqueSenderCount;
   private final LabelledMetric<Counter> expiredMessagesCounter;
   private final Map<String, RunnableCounter> expiredMessagesRunnableCounters = new HashMap<>();
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
@@ -89,6 +90,13 @@ public class TransactionPoolMetrics {
             "The number of transactions currently present in the layer",
             "layer");
 
+    uniqueSenderCount =
+        metricsSystem.createLabelledGauge(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "unique_senders",
+            "The number of sender with at least one transaction currently present in the layer",
+            "layer");
+
     expiredMessagesCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
@@ -112,8 +120,14 @@ public class TransactionPoolMetrics {
     spaceUsed.labels(spaceUsedSupplier, layer);
   }
 
-  public void initTransactionCount(final DoubleSupplier spaceUsedSupplier, final String layer) {
-    transactionCount.labels(spaceUsedSupplier, layer);
+  public void initTransactionCount(
+      final DoubleSupplier transactionCountSupplier, final String layer) {
+    transactionCount.labels(transactionCountSupplier, layer);
+  }
+
+  public void initUniqueSenderCount(
+      final DoubleSupplier uniqueSenderCountSupplier, final String layer) {
+    uniqueSenderCount.labels(uniqueSenderCountSupplier, layer);
   }
 
   public void initExpiredMessagesCounter(final String message) {
