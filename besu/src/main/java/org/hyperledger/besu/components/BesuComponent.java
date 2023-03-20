@@ -17,8 +17,8 @@
 package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.cli.BesuCommand;
-import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoaderModule;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
