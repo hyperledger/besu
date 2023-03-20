@@ -198,11 +198,7 @@ public class RetestethContext {
                 1000,
                 8);
 
-    blockReplay =
-        new BlockReplay(
-            protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            blockchainQueries.getWorldStateArchive());
+    blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
 
     final Bytes localNodeKey = Bytes.wrap(new byte[64]);
 

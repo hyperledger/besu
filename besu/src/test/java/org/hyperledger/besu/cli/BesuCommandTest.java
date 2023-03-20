@@ -123,7 +123,6 @@ import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
@@ -256,7 +255,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
     verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
-    verify(mockRunnerBuilder).rpcMaxLogsRange(eq(1000L));
+    verify(mockRunnerBuilder).rpcMaxLogsRange(eq(5000L));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory)
@@ -4959,7 +4958,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void logLevelIsSetByLoggingOption() {
     final TestBesuCommand command = parseCommand("--logging", "WARN");
 
-    assertThat(command.getLogLevel()).isEqualTo(Level.WARN);
+    assertThat(command.getLogLevel()).isEqualTo("WARN");
   }
 
   @Test

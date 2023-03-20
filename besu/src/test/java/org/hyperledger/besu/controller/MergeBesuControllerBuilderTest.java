@@ -123,6 +123,8 @@ public class MergeBesuControllerBuilderTest {
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()));
+    when(storageProvider.getStorageBySegmentIdentifier(any()))
+        .thenReturn(new InMemoryKeyValueStorage());
     when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);

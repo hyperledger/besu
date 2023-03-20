@@ -17,6 +17,7 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -25,12 +26,13 @@ import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DefaultTimestampSchedule implements TimestampSchedule {
-  private final NavigableSet<TimedProtocolSpec> protocolSpecs =
-      new TreeSet<>(Comparator.comparing(TimedProtocolSpec::getTimestamp).reversed());
+  private final NavigableSet<ScheduledProtocolSpec> protocolSpecs =
+      new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::milestone).reversed());
   private final Optional<BigInteger> chainId;
 
   DefaultTimestampSchedule(final Optional<BigInteger> chainId) {
@@ -39,9 +41,9 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public Optional<ProtocolSpec> getByTimestamp(final long timestamp) {
-    for (final TimedProtocolSpec protocolSpec : protocolSpecs) {
-      if (protocolSpec.getTimestamp() <= timestamp) {
-        return Optional.of(protocolSpec.getSpec());
+    for (final ScheduledProtocolSpec protocolSpec : protocolSpecs) {
+      if (protocolSpec.milestone() <= timestamp) {
+        return Optional.of(protocolSpec.spec());
       }
     }
     return Optional.empty();
@@ -49,7 +51,17 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
-    return protocolSpecs.stream().map(TimedProtocolSpec::getTimestamp).sorted();
+    return protocolSpecs.stream().map(ScheduledProtocolSpec::milestone).sorted();
+  }
+
+  @Override
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return this.protocolSpecs.stream().anyMatch(predicate);
+  }
+
+  @Override
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
+    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.milestone());
   }
 
   @Override
@@ -59,7 +71,8 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   @Override
   public void putMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
-    final TimedProtocolSpec scheduledProtocolSpec = new TimedProtocolSpec(timestamp, protocolSpec);
+    final ScheduledProtocolSpec scheduledProtocolSpec =
+        new ScheduledProtocolSpec(timestamp, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
@@ -68,15 +81,15 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
   @Override
   public String listMilestones() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(TimedProtocolSpec::getTimestamp))
-        .map(spec -> spec.getSpec().getName() + ": " + spec.getTimestamp())
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     protocolSpecs.forEach(
-        spec -> spec.getSpec().getTransactionValidator().setTransactionFilter(transactionFilter));
+        spec -> spec.spec().getTransactionValidator().setTransactionFilter(transactionFilter));
   }
 
   @Override
@@ -84,28 +97,10 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
       final WorldStateArchive publicWorldStateArchive) {
     protocolSpecs.forEach(
         spec -> {
-          final BlockProcessor blockProcessor = spec.getSpec().getBlockProcessor();
+          final BlockProcessor blockProcessor = spec.spec().getBlockProcessor();
           if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
             ((PrivacyBlockProcessor) blockProcessor)
                 .setPublicWorldStateArchive(publicWorldStateArchive);
         });
-  }
-
-  private static class TimedProtocolSpec {
-    private final long timestamp;
-    private final ProtocolSpec spec;
-
-    public TimedProtocolSpec(final long timestamp, final ProtocolSpec spec) {
-      this.timestamp = timestamp;
-      this.spec = spec;
-    }
-
-    public long getTimestamp() {
-      return timestamp;
-    }
-
-    public ProtocolSpec getSpec() {
-      return spec;
-    }
   }
 }

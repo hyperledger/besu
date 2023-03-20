@@ -17,14 +17,14 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class Web3Sha3AcceptanceTest extends AcceptanceTestBase {
 
   private Node node;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     node = besu.createArchiveNode("node1");
     cluster.start(node);
