@@ -11,24 +11,21 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 
-package org.hyperledger.besu.util;
+package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+
+import dagger.Module;
 import dagger.Provides;
-import io.vertx.core.metrics.MetricsOptions;
-import org.hyperledger.besu.metrics.MetricsSystemModule;
-import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import javax.inject.Singleton;
+@Module
+public class CachedMerkleTrieLoaderModule {
 
-import dagger.Component;
-
-@Singleton
-@Component(modules = {MetricsSystemModule.class})
-public interface BesuComponent {
-
-  MetricsConfiguration getMetricsConfiguration();
+  @Provides
+  CachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule(
+      final ObservableMetricsSystem metricsSystem) {
+    return new CachedMerkleTrieLoader(metricsSystem);
+  }
 }

@@ -23,7 +23,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.p2p.discovery.DaggerPeerDiscoveryComponent;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -161,6 +160,7 @@ public class PeerDiscoveryController {
       final PeerRequirement peerRequirement,
       final PeerPermissions peerPermissions,
       final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
+      final MetricsSystem metricsSystem,
       final ForkIdManager forkIdManager,
       final boolean filterOnEnrForkId,
       final RlpxAgent rlpxAgent) {
@@ -178,7 +178,6 @@ public class PeerDiscoveryController {
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
     this.rlpxAgent = rlpxAgent;
 
-    MetricsSystem metricsSystem = DaggerPeerDiscoveryComponent.create().getMetricsSystem();
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
 
     metricsSystem.createIntegerGauge(
@@ -864,6 +863,7 @@ public class PeerDiscoveryController {
           peerRequirement,
           peerPermissions,
           Optional.of(cachedEnrRequests),
+          metricsSystem,
           forkIdManager,
           filterOnEnrForkId,
           rlpxAgent);

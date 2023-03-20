@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,9 @@
  */
 package org.hyperledger.besu;
 
-import org.hyperledger.besu.chainexport.RlpBlockExporter;
-import org.hyperledger.besu.chainimport.JsonBlockImporter;
-import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
-import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.components.DaggerBesuComponent;
 
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
@@ -37,19 +33,21 @@ public final class Besu {
    * @param args command line arguments.
    */
   public static void main(final String... args) {
-    final Logger logger = setupLogging();
 
-    final BesuCommand besuCommand =
-        new BesuCommand(
-            logger,
-            RlpBlockImporter::new,
-            JsonBlockImporter::new,
-            RlpBlockExporter::new,
-            new RunnerBuilder(),
-            new BesuController.Builder(),
-            new BesuPluginContextImpl(),
-            System.getenv());
-
+    /*
+        final Logger logger = setupLogging();
+        final BesuCommand besuCommand =
+            new BesuCommand(
+                logger,
+                RlpBlockImporter::new,
+                JsonBlockImporter::new,
+                RlpBlockExporter::new,
+                new RunnerBuilder(),
+                new BesuController.Builder(),
+                new BesuPluginContextImpl(),
+                System.getenv());
+    */
+    final BesuCommand besuCommand = DaggerBesuComponent.create().getBesuCommand();
     int exitCode =
         besuCommand.parse(
             new RunLast(),

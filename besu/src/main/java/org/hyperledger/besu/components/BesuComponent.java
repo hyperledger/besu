@@ -14,17 +14,30 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.p2p.discovery;
+package org.hyperledger.besu.components;
 
+import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import javax.inject.Singleton;
 
 import dagger.Component;
 
 @Singleton
-@Component(modules = {MetricsSystemModule.class})
-public interface PeerDiscoveryComponent {
-  MetricsSystem getMetricsSystem();
+@Component(
+    modules = {
+      BesuCommandModule.class,
+      MetricsSystemModule.class,
+      CachedMerkleTrieLoaderModule.class
+    })
+public interface BesuComponent {
+
+  ObservableMetricsSystem getMetricsSystem();
+
+  BesuCommand getBesuCommand();
+
+  CachedMerkleTrieLoader getCachedMerkleTrieLoader();
 }
