@@ -146,11 +146,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
   }
 
   @Override
-  protected String getBlockIdentifierName() {
-    return "block";
-  }
-
-  @Override
   protected Stream<Optional<BuilderMapEntry>> createMilestones(
       final MainnetProtocolSpecFactory specFactory) {
     return Stream.of(

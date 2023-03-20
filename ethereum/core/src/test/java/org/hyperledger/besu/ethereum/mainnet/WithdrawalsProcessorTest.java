@@ -38,7 +38,8 @@ class WithdrawalsProcessorTest {
   void shouldProcessEmptyWithdrawalsWithoutChangingWorldState() {
     final MutableWorldState worldState =
         createWorldStateWithAccounts(List.of(entry("0x1", 1), entry("0x2", 2), entry("0x3", 3)));
-    final MutableWorldState originalState = worldState.copy();
+    final MutableWorldState originalWorldState =
+        createWorldStateWithAccounts(List.of(entry("0x1", 1), entry("0x2", 2), entry("0x3", 3)));
     final WorldUpdater updater = worldState.updater();
 
     final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
@@ -47,7 +48,7 @@ class WithdrawalsProcessorTest {
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance()).isEqualTo(Wei.of(1));
     assertThat(worldState.get(Address.fromHexString("0x2")).getBalance()).isEqualTo(Wei.of(2));
     assertThat(worldState.get(Address.fromHexString("0x3")).getBalance()).isEqualTo(Wei.of(3));
-    assertThat(originalState).isEqualTo(worldState);
+    assertThat(originalWorldState).isEqualTo(worldState);
   }
 
   @Test
