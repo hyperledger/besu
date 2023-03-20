@@ -376,7 +376,7 @@ public class EthPeers {
     final List<PeerConnection> incompleteConnections = getIncompleteConnections(id);
     if (!incompleteConnections.isEmpty()) {
       if (incompleteConnections.stream()
-          .anyMatch(c -> !c.isDisconnected() && (!inbound || inbound && c.inboundInitiated()))) {
+          .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())))) {
         // TODO: At the moment for outbound connections this is asked before we initialize the
         // PeerConnection (before the handshake). For inbound connections this question is asked
         // when the handshake has already happened.
