@@ -35,7 +35,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ProtocolScheduleTest {
+public class MutableProtocolScheduleTest {
 
   private static final Optional<BigInteger> CHAIN_ID = Optional.of(BigInteger.ONE);
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
