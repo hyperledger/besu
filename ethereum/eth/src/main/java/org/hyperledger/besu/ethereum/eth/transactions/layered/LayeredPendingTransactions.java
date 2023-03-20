@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 
 public class LayeredPendingTransactions implements PendingTransactions {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredPendingTransactions.class);
-  private static final Logger LOG_TX_CSV = LoggerFactory.getLogger("LOG_TX_CSV");
+  private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final TransactionPoolConfiguration poolConfig;
   private final Set<Address> localSenders = new HashSet<>();
   private final AbstractPrioritizedTransactions prioritizedTransactions;
@@ -96,7 +96,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final long senderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
 
-    logTxToCSV(pendingTransaction, senderNonce);
+    logTransactionForReplay(pendingTransaction, senderNonce);
 
     final long nonceDistance = pendingTransaction.getNonce() - senderNonce;
 
@@ -118,9 +118,10 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return result;
   }
 
-  private void logTxToCSV(final PendingTransaction pendingTransaction, final long senderNonce) {
+  private void logTransactionForReplay(
+      final PendingTransaction pendingTransaction, final long senderNonce) {
     // csv fields: sequence, addedAt, sender, sender_nonce, nonce, type, hash, rlp
-    LOG_TX_CSV
+    LOG_FOR_REPLAY
         .atTrace()
         .setMessage("T,{},{},{},{},{},{},{},{}")
         .addArgument(pendingTransaction.getSequence())
@@ -284,15 +285,15 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
 
-    logBlockHeaderToCSV(blockHeader, maxConfirmedNonceBySender);
+    logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender);
 
     assert prioritizedTransactions.consistencyCheck(new HashMap<>());
   }
 
-  private void logBlockHeaderToCSV(
+  private void logBlockHeaderForReplay(
       final BlockHeader blockHeader, final Map<Address, Long> maxConfirmedNonceBySender) {
     // block number, block hash, sender, max nonce ..., rlp
-    LOG_TX_CSV
+    LOG_FOR_REPLAY
         .atTrace()
         .setMessage("B,{},{},{},{}")
         .addArgument(blockHeader.getNumber())

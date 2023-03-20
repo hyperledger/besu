@@ -64,7 +64,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
-  private static final Logger LOG_TX_CSV = LoggerFactory.getLogger("LOG_TX_CSV");
+  private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -91,7 +91,11 @@ public class TransactionPool implements BlockAddedObserver {
     this.metrics = metrics;
     this.configuration = configuration;
     ethContext.getEthPeers().subscribeConnect(this::handleConnect);
-    LOG_TX_CSV
+    initLogForReplay();
+  }
+
+  private void initLogForReplay() {
+    LOG_FOR_REPLAY
         .atTrace()
         .setMessage("{},{},{},{}")
         .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getNumber).orElse(0L))
@@ -217,7 +221,11 @@ public class TransactionPool implements BlockAddedObserver {
 
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
-      LOG_TX_CSV.atTrace().setMessage("S,{}").addArgument(() -> pendingTransactions.logStats()).log();
+      LOG_FOR_REPLAY
+          .atTrace()
+          .setMessage("S,{}")
+          .addArgument(() -> pendingTransactions.logStats())
+          .log();
       LOG.atDebug()
           .setMessage("Added {} transactions to the pool, current pool stats {}")
           .addArgument(addedTransactions::size)
