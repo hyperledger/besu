@@ -34,19 +34,6 @@ public final class Besu {
    */
   public static void main(final String... args) {
 
-    /*
-        final Logger logger = setupLogging();
-        final BesuCommand besuCommand =
-            new BesuCommand(
-                logger,
-                RlpBlockImporter::new,
-                JsonBlockImporter::new,
-                RlpBlockExporter::new,
-                new RunnerBuilder(),
-                new BesuController.Builder(),
-                new BesuPluginContextImpl(),
-                System.getenv());
-    */
     final BesuCommand besuCommand = DaggerBesuComponent.create().getBesuCommand();
     int exitCode =
         besuCommand.parse(
@@ -59,7 +46,7 @@ public final class Besu {
     System.exit(exitCode);
   }
 
-  private static Logger setupLogging() {
+  public static Logger setupLogging() {
     try {
       InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
     } catch (Throwable t) {
