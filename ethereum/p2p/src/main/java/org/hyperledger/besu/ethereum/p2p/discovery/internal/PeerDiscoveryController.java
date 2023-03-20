@@ -159,8 +159,8 @@ public class PeerDiscoveryController {
       final long cleanPeerTableIntervalMs,
       final PeerRequirement peerRequirement,
       final PeerPermissions peerPermissions,
-      final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
       final MetricsSystem metricsSystem,
+      final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
       final ForkIdManager forkIdManager,
       final boolean filterOnEnrForkId,
       final RlpxAgent rlpxAgent) {
@@ -174,11 +174,9 @@ public class PeerDiscoveryController {
     this.cleanPeerTableIntervalMs = cleanPeerTableIntervalMs;
     this.peerRequirement = peerRequirement;
     this.outboundMessageHandler = outboundMessageHandler;
-
+    this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
     this.rlpxAgent = rlpxAgent;
-
-    this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -862,8 +860,8 @@ public class PeerDiscoveryController {
           cleanPeerTableIntervalMs,
           peerRequirement,
           peerPermissions,
-          Optional.of(cachedEnrRequests),
           metricsSystem,
+          Optional.of(cachedEnrRequests),
           forkIdManager,
           filterOnEnrForkId,
           rlpxAgent);
