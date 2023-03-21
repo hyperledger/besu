@@ -111,7 +111,8 @@ public class RangeHeadersValidationStepTest {
   }
 
   @Test
-  public void acceptResponseWithNoHeaders() {
+  public void acceptResponseWithNoHeadersAndNoSetUp() {
+    // don't run the setUp
     validationStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy);
     var emptyRangeHeaders =
