@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,14 +14,20 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.apache.tuweni.units.bigints.UInt256;
+/** The minimum set of data for a BlockContext. */
+public interface BlockContext {
 
-/** The minimum set of data for a PropagatedBlockContext. */
-public interface PropagatedBlockContext extends BlockContext {
   /**
-   * A scalar value corresponding to the total difficulty.
+   * A {@link BlockHeader} object.
    *
-   * @return A UInt256 value corresponding to the total difficulty.
+   * @return A {@link BlockHeader}
    */
-  UInt256 getTotalDifficulty();
+  BlockHeader getBlockHeader();
+
+  /**
+   * A {@link BlockBody} object.
+   *
+   * @return A {@link BlockBody}
+   */
+  BlockBody getBlockBody();
 }
