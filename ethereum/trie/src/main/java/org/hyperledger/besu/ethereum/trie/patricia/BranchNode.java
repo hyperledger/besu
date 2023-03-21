@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -59,6 +59,7 @@ public class BranchNode<V> implements Node<V> {
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
+    assert (children.size() == maxChild());
     this.location = Optional.ofNullable(location);
     this.children = children;
     this.value = value;
@@ -71,6 +72,7 @@ public class BranchNode<V> implements Node<V> {
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
+    assert (children.size() == maxChild());
     this.location = Optional.empty();
     this.children = children;
     this.value = value;
