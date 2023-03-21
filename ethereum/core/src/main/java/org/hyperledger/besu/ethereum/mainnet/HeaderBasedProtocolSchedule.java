@@ -31,7 +31,7 @@ public interface HeaderBasedProtocolSchedule {
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
 
   default ProtocolSpec getForNextBlockHeader(
-      final BlockHeader parentBlockHeader, final long timestamp) {
+      final BlockHeader parentBlockHeader, final long timestampForNextBlock) {
     final BlockHeader nextBlockHeader =
         BlockHeaderBuilder.fromHeader(parentBlockHeader)
             .number(parentBlockHeader.getNumber() + 1)
