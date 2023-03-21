@@ -15,7 +15,6 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,20 +36,48 @@ import org.slf4j.Logger;
 public class BackwardChain {
   private static final Logger LOG = getLogger(BackwardChain.class);
 
+  private static final String FIRST_STORED_ANCESTOR_KEY = "firstStoredAncestor";
+  private static final String LAST_STORED_PIVOT_KEY = "lastStoredPivot";
+
   private final GenericKeyValueStorageFacade<Hash, BlockHeader> headers;
   private final GenericKeyValueStorageFacade<Hash, Block> blocks;
   private final GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
-  private Optional<BlockHeader> firstStoredAncestor = Optional.empty();
-  private Optional<BlockHeader> lastStoredPivot = Optional.empty();
+  private final GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage;
+  private Optional<BlockHeader> firstStoredAncestor;
+  private Optional<BlockHeader> lastStoredPivot;
   private final Queue<Hash> hashesToAppend = new ArrayDeque<>();
 
   public BackwardChain(
       final GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage,
       final GenericKeyValueStorageFacade<Hash, Block> blocksStorage,
-      final GenericKeyValueStorageFacade<Hash, Hash> chainStorage) {
+      final GenericKeyValueStorageFacade<Hash, Hash> chainStorage,
+      final GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage) {
     this.headers = headersStorage;
     this.blocks = blocksStorage;
     this.chainStorage = chainStorage;
+    this.sessionDataStorage = sessionDataStorage;
+    firstStoredAncestor =
+        sessionDataStorage
+            .get(FIRST_STORED_ANCESTOR_KEY)
+            .map(
+                header -> {
+                  LOG.atDebug()
+                      .setMessage(FIRST_STORED_ANCESTOR_KEY + " loaded from storage with value {}")
+                      .addArgument(header::toLogString)
+                      .log();
+                  return header;
+                });
+    lastStoredPivot =
+        sessionDataStorage
+            .get(LAST_STORED_PIVOT_KEY)
+            .map(
+                header -> {
+                  LOG.atDebug()
+                      .setMessage(LAST_STORED_PIVOT_KEY + " loaded from storage with value {}")
+                      .addArgument(header::toLogString)
+                      .log();
+                  return header;
+                });
   }
 
   public static BackwardChain from(
@@ -69,6 +97,14 @@ public class BackwardChain {
             Hash::toArrayUnsafe,
             new HashConvertor(),
             storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN)),
+        // using BACKWARD_SYNC_CHAIN that contains the sequence of the work to do,
+        // to also store the session data that will be used to resume
+        // the backward sync from where it was left before the restart
+        new GenericKeyValueStorageFacade<>(
+            key -> key.getBytes(StandardCharsets.UTF_8),
+            BlocksHeadersConvertor.of(blockHeaderFunctions),
+            storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN)));
   }
 
@@ -87,22 +123,43 @@ public class BackwardChain {
   }
 
   public synchronized void prependAncestorsHeader(final BlockHeader blockHeader) {
-    if (firstStoredAncestor.isEmpty()) {
-      firstStoredAncestor = Optional.of(blockHeader);
-      lastStoredPivot = Optional.of(blockHeader);
+    prependAncestorsHeader(blockHeader, false);
+  }
+
+  public synchronized void prependAncestorsHeader(
+      final BlockHeader blockHeader, final boolean alreadyStored) {
+    if (!alreadyStored) {
       headers.put(blockHeader.getHash(), blockHeader);
-      return;
     }
-    final BlockHeader firstHeader = firstStoredAncestor.get();
-    headers.put(blockHeader.getHash(), blockHeader);
-    chainStorage.put(blockHeader.getHash(), firstHeader.getHash());
-    firstStoredAncestor = Optional.of(blockHeader);
-    debugLambda(
-        LOG,
-        "Added header {} to backward chain led by pivot {} on height {}",
-        blockHeader::toLogString,
-        () -> lastStoredPivot.orElseThrow().toLogString(),
-        firstHeader::getNumber);
+
+    if (firstStoredAncestor.isEmpty()) {
+      updateLastStoredPivot(Optional.of(blockHeader));
+    } else {
+      final BlockHeader firstHeader = firstStoredAncestor.get();
+      chainStorage.put(blockHeader.getHash(), firstHeader.getHash());
+      LOG.atDebug()
+          .setMessage("Added header {} to backward chain led by pivot {} on height {}")
+          .addArgument(blockHeader::toLogString)
+          .addArgument(() -> lastStoredPivot.orElseThrow().toLogString())
+          .addArgument(firstHeader::getNumber)
+          .log();
+    }
+
+    updateFirstStoredAncestor(Optional.of(blockHeader));
+  }
+
+  private void updateFirstStoredAncestor(final Optional<BlockHeader> maybeHeader) {
+    maybeHeader.ifPresentOrElse(
+        header -> sessionDataStorage.put(FIRST_STORED_ANCESTOR_KEY, header),
+        () -> sessionDataStorage.drop(FIRST_STORED_ANCESTOR_KEY));
+    firstStoredAncestor = maybeHeader;
+  }
+
+  private void updateLastStoredPivot(final Optional<BlockHeader> maybeHeader) {
+    maybeHeader.ifPresentOrElse(
+        header -> sessionDataStorage.put(LAST_STORED_PIVOT_KEY, header),
+        () -> sessionDataStorage.drop(LAST_STORED_PIVOT_KEY));
+    lastStoredPivot = maybeHeader;
   }
 
   public synchronized Optional<Block> getPivot() {
@@ -119,33 +176,36 @@ public class BackwardChain {
     headers.drop(firstStoredAncestor.get().getHash());
     final Optional<Hash> hash = chainStorage.get(firstStoredAncestor.get().getHash());
     chainStorage.drop(firstStoredAncestor.get().getHash());
-    firstStoredAncestor = hash.flatMap(headers::get);
+    updateFirstStoredAncestor(hash.flatMap(headers::get));
     if (firstStoredAncestor.isEmpty()) {
-      lastStoredPivot = Optional.empty();
+      updateLastStoredPivot(Optional.empty());
     }
   }
 
   public synchronized void appendTrustedBlock(final Block newPivot) {
-    debugLambda(LOG, "Appending trusted block {}", newPivot::toLogString);
+    LOG.atDebug().setMessage("Appending trusted block {}").addArgument(newPivot::toLogString).log();
     headers.put(newPivot.getHash(), newPivot.getHeader());
     blocks.put(newPivot.getHash(), newPivot);
     if (lastStoredPivot.isEmpty()) {
-      firstStoredAncestor = Optional.of(newPivot.getHeader());
+      updateFirstStoredAncestor(Optional.of(newPivot.getHeader()));
     } else {
       if (newPivot.getHeader().getParentHash().equals(lastStoredPivot.get().getHash())) {
-        debugLambda(
-            LOG,
-            "Added block {} to backward chain led by pivot {} on height {}",
-            newPivot::toLogString,
-            lastStoredPivot.get()::toLogString,
-            firstStoredAncestor.get()::getNumber);
+        LOG.atDebug()
+            .setMessage("Added block {} to backward chain led by pivot {} on height {}")
+            .addArgument(newPivot::toLogString)
+            .addArgument(lastStoredPivot.get()::toLogString)
+            .addArgument(firstStoredAncestor.get()::getNumber)
+            .log();
         chainStorage.put(lastStoredPivot.get().getHash(), newPivot.getHash());
       } else {
-        firstStoredAncestor = Optional.of(newPivot.getHeader());
-        debugLambda(LOG, "Re-pivoting to new target block {}", newPivot::toLogString);
+        updateFirstStoredAncestor(Optional.of(newPivot.getHeader()));
+        LOG.atDebug()
+            .setMessage("Re-pivoting to new target block {}")
+            .addArgument(newPivot::toLogString)
+            .log();
       }
     }
-    lastStoredPivot = Optional.of(newPivot.getHeader());
+    updateLastStoredPivot(Optional.of(newPivot.getHeader()));
   }
 
   public synchronized boolean isTrusted(final Hash hash) {
@@ -160,6 +220,7 @@ public class BackwardChain {
     blocks.clear();
     headers.clear();
     chainStorage.clear();
+    sessionDataStorage.clear();
     firstStoredAncestor = Optional.empty();
     lastStoredPivot = Optional.empty();
     hashesToAppend.clear();

@@ -22,20 +22,21 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public interface WorldStateArchive {
+public interface WorldStateArchive extends Closeable {
   Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   Optional<WorldState> get(Hash rootHash, Hash blockHash);
 
   boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
-  Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash, boolean isPersistingState);
+  Optional<MutableWorldState> getMutable(BlockHeader blockHeader, boolean isPersistingState);
 
   Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);
 

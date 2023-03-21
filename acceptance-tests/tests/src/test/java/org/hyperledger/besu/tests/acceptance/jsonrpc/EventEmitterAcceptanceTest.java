@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
@@ -38,7 +38,7 @@ public class EventEmitterAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode node;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     node = besu.createMinerNode("node1");
     cluster.start(node);

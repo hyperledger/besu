@@ -32,6 +32,7 @@ As an [Actor], I want [feature] so that [why].
 * Virtual Machine software & version: [`vmware -v`]
 * Docker Version: [`docker version`]
 * Cloud VM, type, size: [Amazon Web Services I3-large]
+* Consensus Client & Version if using Proof of Stake: [e.g. Teku, Lighthouse, Prysm, Nimbus, Lodestar]
 
 ### Smart contract information (If you're reporting an issue arising from deploying or calling a smart contract, please supply related information)
 * Solidity version [`solc --version`]

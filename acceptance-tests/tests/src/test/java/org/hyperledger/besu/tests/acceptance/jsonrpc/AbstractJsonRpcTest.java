@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -90,7 +92,13 @@ abstract class AbstractJsonRpcTest {
     final Response response = testRequest.execute();
 
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
-    assertThat(response.body().string()).isEqualTo(testCase.getResponse().toPrettyString());
+    final ObjectNode actualBody = JsonUtil.objectNodeFromString(response.body().string());
+    final ObjectNode expectedBody =
+        JsonUtil.objectNodeFromString(testCase.getResponse().toString());
+    assertThat(actualBody)
+        .withFailMessage(
+            "%s\ndid not equal\n %s", actualBody.toPrettyString(), expectedBody.toPrettyString())
+        .isEqualTo(expectedBody);
   }
 
   private String getRpcUrl(final String rpcMethod) {

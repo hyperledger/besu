@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec.ReferenceTestBlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -129,6 +130,7 @@ public class B11rSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
     objectMapper.setDefaultPrettyPrinter(
         (new DefaultPrettyPrinter())
             .withSpacesInObjectEntries()
@@ -238,9 +240,11 @@ public class B11rSubCommand implements Runnable {
 
   private ReferenceTestBlockHeader readHeader(final JsonNode jsonObject) {
     ObjectNode objectNode = (ObjectNode) jsonObject;
-    maybeMoveField(objectNode, "logsBloom", "bloom");
     maybeMoveField(objectNode, "sha3Uncles", "uncleHash");
     maybeMoveField(objectNode, "miner", "coinbase");
+    maybeMoveField(objectNode, "transactionsRoot", "transactionsTrie");
+    maybeMoveField(objectNode, "receiptsRoot", "receiptTrie");
+    maybeMoveField(objectNode, "logsBloom", "bloom");
     return objectMapper.convertValue(jsonObject, ReferenceTestBlockHeader.class);
   }
 }

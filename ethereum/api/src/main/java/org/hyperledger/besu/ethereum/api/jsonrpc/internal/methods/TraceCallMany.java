@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -88,12 +87,12 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       transactionsAndTraceTypeParameters =
           requestContext.getRequiredParameter(0, TraceCallManyParameter[].class);
       final String blockNumberString = String.valueOf(blockNumber);
-      traceLambda(
-          LOG,
-          "Received RPC rpcName={} trace_callManyParams={} block={}",
-          this::getName,
-          transactionsAndTraceTypeParameters::toString,
-          blockNumberString::toString);
+      LOG.atTrace()
+          .setMessage("Received RPC rpcName={} trace_callManyParams={} block={}")
+          .addArgument(this::getName)
+          .addArgument(transactionsAndTraceTypeParameters)
+          .addArgument(blockNumberString)
+          .log();
     } catch (final Exception e) {
       LOG.error("Error parsing trace_callMany parameters: {}", e.getLocalizedMessage());
       return new JsonRpcErrorResponse(
@@ -131,20 +130,20 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
                         });
               } catch (final TransactionInvalidException e) {
                 LOG.error("Invalid transaction simulator result");
-                return new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               } catch (final EmptySimulatorResultException e) {
                 LOG.error(
                     "Empty simulator result, call params: {}, blockHeader: {} ",
                     JsonCallParameterUtil.validateAndGetCallParams(requestContext),
                     blockHeader);
-                return new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               } catch (final Exception e) {
-                return new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               }
-              return traceCallResults;
+              return Optional.of(traceCallResults);
             });
   }
 

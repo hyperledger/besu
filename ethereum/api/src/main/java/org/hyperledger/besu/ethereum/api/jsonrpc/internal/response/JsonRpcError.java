@@ -77,6 +77,7 @@ public enum JsonRpcError {
       -32000, "Transaction nonce is too distant from current sender nonce"),
   LOWER_NONCE_INVALID_TRANSACTION_EXISTS(
       -32000, "An invalid transaction with a lower nonce exists"),
+  TOTAL_DATA_GAS_TOO_HIGH(-32000, "Total data gas too high"),
 
   // Execution engine failures
   UNKNOWN_PAYLOAD(-32001, "Payload does not exist / is not available"),
@@ -212,6 +213,7 @@ public enum JsonRpcError {
 
   /** Plugins error */
   PLUGIN_NOT_FOUND(-60000, "Plugin not found"),
+  PLUGIN_INTERNAL_ERROR(-32603, "Plugin internal error"),
 
   // Retesteth Errors
 

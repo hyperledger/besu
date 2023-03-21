@@ -97,8 +97,9 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
                 new ForkId(Bytes.ofUnsignedInt(0xc25efa5cL), 4460644L),
                 new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 5062605L),
-                new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 1678832736L),
+                new ForkId(Bytes.ofUnsignedInt(0xf9843abfL), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0xf9843abfL), 0L))
           },
           new Object[] {
             NetworkName.MAINNET,
@@ -117,8 +118,9 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 12965000L),
                 new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
                 new ForkId(Bytes.ofUnsignedInt(0x20c327fcL), 15050000L),
-                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 1681338455L),
+                new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L))
           },
           new Object[] {
             NetworkName.MORDOR,

@@ -119,7 +119,8 @@ public class MainnetTransactionProcessorTest {
         coinbaseAddress,
         blockHashLookup,
         false,
-        ImmutableTransactionValidationParams.builder().build());
+        ImmutableTransactionValidationParams.builder().build(),
+        Wei.ZERO);
 
     assertThat(coinbaseWarmed).isTrue();
 
@@ -132,7 +133,8 @@ public class MainnetTransactionProcessorTest {
         coinbaseAddress,
         blockHashLookup,
         false,
-        ImmutableTransactionValidationParams.builder().build());
+        ImmutableTransactionValidationParams.builder().build(),
+        Wei.ZERO);
 
     assertThat(coinbaseWarmed).isFalse();
   }
@@ -155,7 +157,8 @@ public class MainnetTransactionProcessorTest {
         Address.fromHexString("1"),
         blockHashLookup,
         false,
-        ImmutableTransactionValidationParams.builder().build());
+        ImmutableTransactionValidationParams.builder().build(),
+        Wei.ZERO);
 
     assertThat(txValidationParamCaptor.getValue())
         .usingRecursiveComparison()

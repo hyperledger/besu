@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -58,7 +59,7 @@ public class MarkSweepPrunerTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final Map<Bytes, byte[]> hashValueStore = spy(new HashMap<>());
+  private final Map<Bytes, Optional<byte[]>> hashValueStore = spy(new HashMap<>());
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
   private final WorldStateStorage worldStateStorage =
       spy(new WorldStateKeyValueStorage(stateStorage));
@@ -113,7 +114,7 @@ public class MarkSweepPrunerTest {
 
     // Check that storage contains only the values we expect
     assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
-    assertThat(hashValueStore.values())
+    assertThat(hashValueStore.values().stream().map(Optional::get))
         .containsExactlyInAnyOrderElementsOf(
             expectedNodes.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toSet()));
   }
@@ -274,7 +275,7 @@ public class MarkSweepPrunerTest {
   // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
-    public TestInMemoryStorage(final Map<Bytes, byte[]> hashValueStore) {
+    public TestInMemoryStorage(final Map<Bytes, Optional<byte[]>> hashValueStore) {
       super(hashValueStore);
     }
   }

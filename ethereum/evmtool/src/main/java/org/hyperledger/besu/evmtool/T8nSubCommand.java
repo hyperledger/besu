@@ -25,6 +25,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -42,9 +43,9 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
@@ -54,7 +55,7 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -65,6 +66,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -83,7 +85,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -152,7 +153,6 @@ public class T8nSubCommand implements Runnable {
       description = "The summary of the transition")
   private final Path outResult = Path.of("result.json");
 
-  @SuppressWarnings("UnusedVariable")
   @Option(
       names = {"--output.body"},
       paramLabel = "file name",
@@ -165,12 +165,12 @@ public class T8nSubCommand implements Runnable {
       description = "The chain Id to use")
   private final Long chainId = 1L;
 
-  @SuppressWarnings("UnusedVariable")
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--state.reward"},
       paramLabel = "block mining reward",
       description = "The block reward to use in block tess")
-  private final Wei reward = null;
+  private String rewardString = null;
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
@@ -188,6 +188,7 @@ public class T8nSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
     final ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setDefaultPrettyPrinter(
         (new DefaultPrettyPrinter())
@@ -231,7 +232,15 @@ public class T8nSubCommand implements Runnable {
       initialWorldState =
           objectMapper.convertValue(config.get("alloc"), ReferenceTestWorldState.class);
       initialWorldState.persist(null);
-      Iterator<JsonNode> it = config.get("txs").elements();
+      var node = config.get("txs");
+      Iterator<JsonNode> it;
+      if (node.isArray()) {
+        it = config.get("txs").elements();
+      } else if (node == null || node.isNull()) {
+        it = Collections.emptyIterator();
+      } else {
+        it = List.of(node).iterator();
+      }
 
       transactions = extractTransactions(it);
       if (!outDir.toString().isBlank()) {
@@ -246,13 +255,9 @@ public class T8nSubCommand implements Runnable {
       return;
     }
 
-    Log4j2ConfiguratorUtil.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", Level.OFF);
     final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
         ReferenceTestProtocolSchedules.create(
             new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
-    Log4j2ConfiguratorUtil.setLevel(
-        "org.hyperledger.besu.ethereum.mainnet.AbstractProtocolScheduleBuilder", null);
 
     final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
 
@@ -274,6 +279,9 @@ public class T8nSubCommand implements Runnable {
     List<Transaction> validTransactions = new ArrayList<>();
     ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
+    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
+    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
+
     for (int i = 0; i < transactions.size(); i++) {
       Transaction transaction = transactions.get(i);
 
@@ -300,6 +308,7 @@ public class T8nSubCommand implements Runnable {
         } else {
           tracer = OperationTracer.NO_TRACING;
         }
+
         result =
             processor.processTransaction(
                 blockchain,
@@ -307,10 +316,11 @@ public class T8nSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                new BlockHashLookup(referenceTestEnv, blockchain),
+                blockNumber -> referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO),
                 false,
                 TransactionValidationParams.processingBlock(),
-                tracer);
+                tracer,
+                dataGasPrice);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -374,11 +384,16 @@ public class T8nSubCommand implements Runnable {
     final ObjectNode resultObject = objectMapper.createObjectNode();
 
     // block reward
-    if (!validTransactions.isEmpty()) {
+    // The max production reward was 5 Eth, longs can hold over 18 Eth.
+    if (!validTransactions.isEmpty() && (rewardString == null || Long.decode(rewardString) > 0)) {
+      Wei reward =
+          (rewardString == null)
+              ? protocolSpec.getBlockReward()
+              : Wei.of(Long.decode(rewardString));
       worldStateUpdater
           .getOrCreateSenderAccount(blockHeader.getCoinbase())
           .getMutable()
-          .incrementBalance((reward == null) ? protocolSpec.getBlockReward() : reward);
+          .incrementBalance(reward);
     }
 
     // Invoke the withdrawal processor to handle CL withdrawals.
@@ -473,14 +488,14 @@ public class T8nSubCommand implements Runnable {
 
       BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
       rlpOut.writeList(transactions, Transaction::writeTo);
-      Bytes bodyBytes = rlpOut.encoded();
+      TextNode bodyBytes = TextNode.valueOf(rlpOut.encoded().toHexString());
 
       if (outBody.equals((stdoutPath))) {
-        outputObject.set("body", TextNode.valueOf(bodyBytes.toHexString()));
+        outputObject.set("body", bodyBytes);
       } else {
         try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
-          fileOut.print(bodyBytes.toHexString());
+          fileOut.println(bodyBytes);
         }
       }
 
@@ -501,57 +516,70 @@ public class T8nSubCommand implements Runnable {
     }
   }
 
-  private static List<Transaction> extractTransactions(final Iterator<JsonNode> it) {
+  private List<Transaction> extractTransactions(final Iterator<JsonNode> it) {
     List<Transaction> transactions = new ArrayList<>();
     while (it.hasNext()) {
       JsonNode txNode = it.next();
-      if (txNode.has("txBytes")) {
-        Transaction tx = Transaction.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
-        transactions.add(tx);
-      } else {
-        Transaction.Builder builder = Transaction.builder();
-        int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
-        TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
-        builder.type(transactionType);
-        builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
-        builder.gasPrice(Wei.fromHexString(txNode.get("gasPrice").textValue()));
-        builder.gasLimit(Bytes.fromHexStringLenient(txNode.get("gas").textValue()).toLong());
-        builder.value(Wei.fromHexString(txNode.get("value").textValue()));
-        builder.payload(Bytes.fromHexString(txNode.get("input").textValue()));
-        if (txNode.has("to")) {
-          builder.to(Address.fromHexString(txNode.get("to").textValue()));
+      if (txNode.isTextual()) {
+        BytesValueRLPInput rlpInput =
+            new BytesValueRLPInput(Bytes.fromHexString(txNode.asText()), false);
+        rlpInput.enterList();
+        while (!rlpInput.isEndOfCurrentList()) {
+          Transaction tx = Transaction.readFrom(rlpInput);
+          transactions.add(tx);
         }
-
-        if (transactionType.requiresChainId()
-            || !txNode.has("protected")
-            || txNode.get("protected").booleanValue()) {
-          // chainid if protected
-          builder.chainId(
-              new BigInteger(
-                  1,
-                  Bytes.fromHexStringLenient(txNode.get("chainId").textValue()).toArrayUnsafe()));
-        }
-
-        if (txNode.has("secretKey")) {
-          SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-          KeyPair keys =
-              signatureAlgorithm.createKeyPair(
-                  signatureAlgorithm.createPrivateKey(
-                      Bytes32.fromHexString(txNode.get("secretKey").textValue())));
-
-          transactions.add(builder.signAndBuild(keys));
+      } else if (txNode.isObject()) {
+        if (txNode.has("txBytes")) {
+          Transaction tx =
+              Transaction.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
+          transactions.add(tx);
         } else {
-          builder.signature(
-              SignatureAlgorithmFactory.getInstance()
-                  .createSignature(
-                      Bytes.fromHexString(txNode.get("r").textValue()).toUnsignedBigInteger(),
-                      Bytes.fromHexString(txNode.get("s").textValue()).toUnsignedBigInteger(),
-                      Bytes.fromHexString(txNode.get("v").textValue())
-                          .toUnsignedBigInteger()
-                          .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
-                          .byteValueExact()));
-          transactions.add(builder.build());
+          Transaction.Builder builder = Transaction.builder();
+          int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
+          TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
+          builder.type(transactionType);
+          builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
+          builder.gasPrice(Wei.fromHexString(txNode.get("gasPrice").textValue()));
+          builder.gasLimit(Bytes.fromHexStringLenient(txNode.get("gas").textValue()).toLong());
+          builder.value(Wei.fromHexString(txNode.get("value").textValue()));
+          builder.payload(Bytes.fromHexString(txNode.get("input").textValue()));
+          if (txNode.has("to")) {
+            builder.to(Address.fromHexString(txNode.get("to").textValue()));
+          }
+
+          if (transactionType.requiresChainId()
+              || !txNode.has("protected")
+              || txNode.get("protected").booleanValue()) {
+            // chainid if protected
+            builder.chainId(
+                new BigInteger(
+                    1,
+                    Bytes.fromHexStringLenient(txNode.get("chainId").textValue()).toArrayUnsafe()));
+          }
+
+          if (txNode.has("secretKey")) {
+            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+            KeyPair keys =
+                signatureAlgorithm.createKeyPair(
+                    signatureAlgorithm.createPrivateKey(
+                        Bytes32.fromHexString(txNode.get("secretKey").textValue())));
+
+            transactions.add(builder.signAndBuild(keys));
+          } else {
+            builder.signature(
+                SignatureAlgorithmFactory.getInstance()
+                    .createSignature(
+                        Bytes.fromHexString(txNode.get("r").textValue()).toUnsignedBigInteger(),
+                        Bytes.fromHexString(txNode.get("s").textValue()).toUnsignedBigInteger(),
+                        Bytes.fromHexString(txNode.get("v").textValue())
+                            .toUnsignedBigInteger()
+                            .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
+                            .byteValueExact()));
+            transactions.add(builder.build());
+          }
         }
+      } else {
+        parentCommand.out.printf("TX json node unparseable: %s%n", txNode);
       }
     }
     return transactions;

@@ -66,7 +66,7 @@ public class BackwardSyncAlgSpec {
   @Captor ArgumentCaptor<BesuEvents.TTDReachedListener> ttdCaptor;
   @Captor ArgumentCaptor<BesuEvents.InitialSyncCompletionListener> completionCaptor;
 
-  @InjectMocks BackwardsSyncAlgorithm algorithm;
+  @InjectMocks BackwardSyncAlgorithm algorithm;
   @Mock private Hash hash;
 
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
@@ -95,7 +95,7 @@ public class BackwardSyncAlgSpec {
 
     algorithm =
         Mockito.spy(
-            new BackwardsSyncAlgorithm(
+            new BackwardSyncAlgorithm(
                 context,
                 FinalBlockConfirmation.confirmationChain(
                     FinalBlockConfirmation.genesisConfirmation(localBlockchain),
@@ -292,7 +292,7 @@ public class BackwardSyncAlgSpec {
     doReturn(backwardChain).when(context).getBackwardChain();
     algorithm =
         Mockito.spy(
-            new BackwardsSyncAlgorithm(
+            new BackwardSyncAlgorithm(
                 context, FinalBlockConfirmation.genesisConfirmation(otherLocalBlockchain)));
     assertThatThrownBy(() -> algorithm.pickNextStep())
         .isInstanceOf(BackwardSyncException.class)

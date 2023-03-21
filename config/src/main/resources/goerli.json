@@ -6,6 +6,7 @@
     "berlinBlock":4460644,
     "londonBlock":5062605,
     "terminalTotalDifficulty": 10790000,
+    "shanghaiTime": 1678832736,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000
@@ -26,7 +27,7 @@
       "hash": "0x50e55c39a725f062af438c5332a5c5bec9a36d02c829ee6ac2cc27d1db719446",
       "number": 4350000,
       "totalDifficulty": "0x61DBBF",
-      "_comment": "must be the beginning of an epoch"
+      "_comment": "must be the beginning of a clique epoch"
     }
   },
   "coinbase":"0x0000000000000000000000000000000000000000",

@@ -196,11 +196,7 @@ public class RetestethContext {
                 1000,
                 8);
 
-    blockReplay =
-        new BlockReplay(
-            protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            blockchainQueries.getWorldStateArchive());
+    blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
 
     // mining support
 
@@ -272,8 +268,8 @@ public class RetestethContext {
     return blockchain.getChainHeadBlockNumber();
   }
 
-  public ProtocolSpec getProtocolSpec(final long blockNumber) {
-    return getProtocolSchedule().getByBlockNumber(blockNumber);
+  public ProtocolSpec getProtocolSpec(final BlockHeader blockHeader) {
+    return getProtocolSchedule().getByBlockHeader(blockHeader);
   }
 
   public BlockHeader getBlockHeader(final long blockNumber) {

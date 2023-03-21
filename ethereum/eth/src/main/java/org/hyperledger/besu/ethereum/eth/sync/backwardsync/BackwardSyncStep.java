@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetHeadersEndingAtFromPeerByHashTask;
@@ -50,7 +48,7 @@ public class BackwardSyncStep {
     Hash lastHash = firstAncestor.getParentHash();
     Optional<BlockHeader> iterator = backwardChain.getHeader(lastHash);
     while (iterator.isPresent()) {
-      backwardChain.prependAncestorsHeader(iterator.get());
+      backwardChain.prependAncestorsHeader(iterator.get(), true);
       lastHash = iterator.get().getParentHash();
       iterator = backwardChain.getHeader(lastHash);
     }
@@ -86,11 +84,11 @@ public class BackwardSyncStep {
         .scheduleSyncWorkerTask(retryingGetHeadersEndingAtFromPeerByHashTask::run)
         .thenApply(
             blockHeaders -> {
-              debugLambda(
-                  LOG,
-                  "Got headers {} -> {}",
-                  blockHeaders.get(0)::getNumber,
-                  blockHeaders.get(blockHeaders.size() - 1)::getNumber);
+              LOG.atDebug()
+                  .setMessage("Got headers {} -> {}")
+                  .addArgument(blockHeaders.get(0)::getNumber)
+                  .addArgument(blockHeaders.get(blockHeaders.size() - 1)::getNumber)
+                  .log();
               return blockHeaders;
             });
   }
