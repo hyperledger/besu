@@ -240,9 +240,11 @@ public class B11rSubCommand implements Runnable {
 
   private ReferenceTestBlockHeader readHeader(final JsonNode jsonObject) {
     ObjectNode objectNode = (ObjectNode) jsonObject;
-    maybeMoveField(objectNode, "logsBloom", "bloom");
     maybeMoveField(objectNode, "sha3Uncles", "uncleHash");
     maybeMoveField(objectNode, "miner", "coinbase");
+    maybeMoveField(objectNode, "transactionsRoot", "transactionsTrie");
+    maybeMoveField(objectNode, "receiptsRoot", "receiptTrie");
+    maybeMoveField(objectNode, "logsBloom", "bloom");
     return objectMapper.convertValue(jsonObject, ReferenceTestBlockHeader.class);
   }
 }

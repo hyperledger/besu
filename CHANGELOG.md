@@ -4,7 +4,12 @@
 
 ### Breaking Changes
 
+- In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
+
 ### Additions and Improvements
+
+- An alternate build target for the EVM using GraalVM AOT compilaiton was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
+  - To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew naticeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
 
 ### Bug Fixes
 
