@@ -22,9 +22,11 @@ import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Component;
+import org.slf4j.Logger;
 
 @Singleton
 @Component(
@@ -35,9 +37,12 @@ import dagger.Component;
     })
 public interface BesuComponent {
 
-  ObservableMetricsSystem getMetricsSystem();
-
   BesuCommand getBesuCommand();
 
   CachedMerkleTrieLoader getCachedMerkleTrieLoader();
+
+  ObservableMetricsSystem getObservableMetricsSystem();
+
+  @Named("besuCommandLogger")
+  Logger getBesuCommandLogger();
 }

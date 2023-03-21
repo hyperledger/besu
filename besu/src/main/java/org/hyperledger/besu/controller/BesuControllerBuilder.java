@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.components.DaggerBesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -177,8 +178,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
-  private NetworkingConfiguration networkingConfiguration;
-  private Boolean randomPeerPriority;
+  protected BesuComponent besuComponent;
+
+  public BesuControllerBuilder besuComponent(final BesuComponent besuComponent) {
+    this.besuComponent = besuComponent;
+    return this;
+  }
 
   /**
    * Storage provider besu controller builder.
@@ -515,6 +520,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller
    */
   public BesuController build() {
+    checkNotNull(besuComponent, "Dagger should have provided a BesuComponent");
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
@@ -549,7 +555,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory.toString());
 
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        DaggerBesuComponent.create().getCachedMerkleTrieLoader();
+        besuComponent.getCachedMerkleTrieLoader();
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.metrics.MetricsConfigurationModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 
 import java.util.function.Function;
@@ -36,6 +37,7 @@ import dagger.Component;
       BlockchainModule.class,
       EvmToolCommandOptionsModule.class,
       MetricsSystemModule.class,
+      MetricsConfigurationModule.class
     })
 public interface EvmToolComponent {
 

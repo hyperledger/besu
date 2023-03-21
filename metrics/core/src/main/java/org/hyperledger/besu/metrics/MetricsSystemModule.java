@@ -19,6 +19,7 @@ package org.hyperledger.besu.metrics;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -29,19 +30,13 @@ public class MetricsSystemModule {
 
   @Provides
   @Singleton
-  ObservableMetricsSystem provideObservableMetricsSystem(final MetricsConfiguration metricsConfig) {
-    return MetricsSystemFactory.create(metricsConfig);
-  }
-
-  @Provides
-  @Singleton
   MetricsSystem provideMetricsSystem(final MetricsConfiguration metricsConfig) {
     return MetricsSystemFactory.create(metricsConfig);
   }
 
   @Provides
   @Singleton
-  MetricsConfiguration provideMetricsConfiguration() {
-    return MetricsConfiguration.builder().build();
+  ObservableMetricsSystem provideObservableMetricsSystem(final MetricsConfiguration metricsConfig) {
+    return MetricsSystemFactory.create(metricsConfig);
   }
 }

@@ -37,10 +37,10 @@ public class BesuCommandModule {
 
   @Provides
   @Singleton
-  BesuCommand provideBesuCommand(@Named("besuCommandLogger") final Logger logger) {
+  BesuCommand provideBesuCommand(final BesuComponent bc) {
     final BesuCommand besuCommand =
         new BesuCommand(
-            logger,
+            bc,
             RlpBlockImporter::new,
             JsonBlockImporter::new,
             RlpBlockExporter::new,
@@ -48,12 +48,12 @@ public class BesuCommandModule {
             new BesuController.Builder(),
             new BesuPluginContextImpl(),
             System.getenv());
+    besuCommand.toCommandLine();
     return besuCommand;
   }
 
   @Provides
   @Singleton
-  @Named("cliMetricsConfig")
   MetricsConfiguration provideMetricsConfiguration(final BesuCommand provideFrom) {
     return provideFrom.metricsConfiguration();
   }
