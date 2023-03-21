@@ -213,6 +213,7 @@ public enum JsonRpcError {
 
   /** Plugins error */
   PLUGIN_NOT_FOUND(-60000, "Plugin not found"),
+  PLUGIN_INTERNAL_ERROR(-32603, "Plugin internal error"),
 
   // Retesteth Errors
 
