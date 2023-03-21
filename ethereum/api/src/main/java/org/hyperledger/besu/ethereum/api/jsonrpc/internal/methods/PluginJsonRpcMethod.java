@@ -15,11 +15,14 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PLUGIN_INTERNAL_ERROR;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.plugin.services.exception.PluginRpcEndpointException;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
 import java.util.function.Function;
@@ -47,9 +50,14 @@ public class PluginJsonRpcMethod implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     try {
-      Object result = function.apply(() -> request.getRequest().getParams());
+      final Object result = function.apply(() -> request.getRequest().getParams());
       return new JsonRpcSuccessResponse(request.getRequest().getId(), result);
-    } catch (Exception ex) {
+    } catch (final PluginRpcEndpointException ex) {
+      final JsonRpcError error = PLUGIN_INTERNAL_ERROR;
+      error.setData(ex.getMessage());
+      LOG.error("Error calling plugin JSON-RPC endpoint", ex);
+      return new JsonRpcErrorResponse(request.getRequest().getId(), error);
+    } catch (final Exception ex) {
       LOG.error("Error calling plugin JSON-RPC endpoint", ex);
       return new JsonRpcErrorResponse(request.getRequest().getId(), INTERNAL_ERROR);
     }
