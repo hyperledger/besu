@@ -11,12 +11,20 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.data.BlockContext;
 
-public interface SnapshotMutableWorldState extends MutableWorldState, AutoCloseable {
-  BonsaiWorldStateKeyValueStorage getWorldStateStorage();
+import java.util.Optional;
+
+/** A service that plugins can use to query blocks by number */
+public interface BlockchainService extends BesuService {
+  /**
+   * Gets block by number
+   *
+   * @param number the block number
+   * @return the BlockContext
+   */
+  Optional<BlockContext> getBlockByNumber(final long number);
 }

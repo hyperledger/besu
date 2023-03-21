@@ -89,7 +89,7 @@ public class ReplayTest {
    *
    * restart and let it run until you need it, then copy the CSV in the test resource folder.
    *
-   * @throws IOException
+   * @throws IOException when fails to read the resource
    */
   @Ignore
   @Test

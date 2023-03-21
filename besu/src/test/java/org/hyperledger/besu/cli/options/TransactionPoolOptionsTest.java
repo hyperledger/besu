@@ -162,7 +162,7 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
         .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
         .layeredTxPoolEnabled(defaultValue.getLayeredTxPoolEnabled())
-        .pendingTransactionsMaxCapacityBytes(
+        .pendingTransactionsLayerMaxCapacityBytes(
             defaultValue.getPendingTransactionsLayerMaxCapacityBytes())
         .maxPrioritizedTransactions(defaultValue.getMaxPrioritizedTransactions())
         .maxFutureBySender(defaultValue.getMaxFutureBySender());
@@ -178,7 +178,7 @@ public class TransactionPoolOptionsTest
                 Duration.ofMillis(100)))
         .txPoolLimitByAccountPercentage(0.5f)
         .layeredTxPoolEnabled(true)
-        .pendingTransactionsMaxCapacityBytes(1_000_000L)
+        .pendingTransactionsLayerMaxCapacityBytes(1_000_000L)
         .maxPrioritizedTransactions(1000)
         .maxFutureBySender(10);
   }

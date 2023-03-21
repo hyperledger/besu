@@ -13,38 +13,37 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 public interface TrieLogManager {
 
   void saveTrieLog(
-      final BonsaiWorldStateArchive worldStateArchive,
-      final BonsaiWorldStateUpdater localUpdater,
+      final BonsaiWorldStateUpdateAccumulator localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
-      final BonsaiPersistedWorldState forWorldState);
+      final BonsaiWorldState forWorldState);
 
-  Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash);
+  void addCachedLayer(
+      BlockHeader blockHeader, Hash worldStateRootHash, BonsaiWorldState forWorldState);
+
+  boolean containWorldStateStorage(final Hash blockHash);
+
+  Optional<BonsaiWorldState> getWorldState(final Hash blockHash);
+
+  Optional<BonsaiWorldState> getNearestWorldState(final BlockHeader blockHeader);
+
+  Optional<BonsaiWorldState> getHeadWorldState(
+      final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction);
 
   long getMaxLayersToLoad();
 
-  void updateCachedLayers(final Hash blockParentHash, final Hash blockHash);
-
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
-
-  interface CachedWorldState<Z extends MutableWorldState> {
-    void dispose();
-
-    long getHeight();
-
-    TrieLogLayer getTrieLog();
-
-    Z getMutableWorldState();
-  }
 }

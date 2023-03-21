@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -66,7 +66,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final PendingTransactions pendingTransactions;
-  private final ProtocolSchedule protocolSchedule;
+  private final HeaderBasedProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBroadcaster transactionBroadcaster;
   private final MiningParameters miningParameters;
@@ -76,7 +76,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
-      final ProtocolSchedule protocolSchedule,
+      final HeaderBasedProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
@@ -266,7 +266,7 @@ public class TransactionPool implements BlockAddedObserver {
             event.getBlock().getHeader(),
             event.getAddedTransactions(),
             protocolSchedule
-                .getByBlockNumber(event.getBlock().getHeader().getNumber() + 1)
+                .getByBlockHeader(event.getBlock().getHeader())
                 .getFeeMarket());
         reAddTransactions(event.getRemovedTransactions());
       }
@@ -365,15 +365,7 @@ public class TransactionPool implements BlockAddedObserver {
     try (final var worldState =
         protocolContext
             .getWorldStateArchive()
-            .getMutable(
-                chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getBlockHash(), false)
-            .map(
-                ws -> {
-                  if (!ws.isPersistable()) {
-                    return ws.copy();
-                  }
-                  return ws;
-                })
+            .getMutable(chainHeadBlockHeader, false)
             .orElseThrow()) {
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(

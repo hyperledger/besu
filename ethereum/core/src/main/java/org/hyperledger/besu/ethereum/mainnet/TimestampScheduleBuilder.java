@@ -66,17 +66,12 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
   }
 
   @Override
-  protected String getBlockIdentifierName() {
-    return "timestamp";
-  }
-
-  @Override
   protected Stream<Optional<BuilderMapEntry>> createMilestones(
       final MainnetProtocolSpecFactory specFactory) {
     return Stream.of(
         // generally this TimestampSchedule will not have an entry for 0 instead it is relying
         // on defaulting to a MergeProtocolSchedule in
-        // TransitionProtocolSchedule.getByBlockHeader if the given timestamp is before the
+        // TransitionProtocolSchedule.getByBlockHeader if the given milestone is before the
         // first entry in TimestampSchedule
         create(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
         create(config.getCancunTime(), specFactory.cancunDefinition(config)),
