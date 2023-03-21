@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-/** The minimum set of data for a PropagatedBlockContext. */
+/** The minimum set of data for a BlockContext. */
 public interface BlockContext {
 
   /**
