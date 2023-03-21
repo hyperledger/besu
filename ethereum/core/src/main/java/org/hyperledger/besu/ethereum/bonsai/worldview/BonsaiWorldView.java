@@ -14,11 +14,13 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.worldview;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
 import java.util.Map;
@@ -32,8 +34,6 @@ public interface BonsaiWorldView extends WorldView {
 
   Optional<Bytes> getCode(Address address, final Hash codeHash);
 
-  Optional<Bytes> getStateTrieNode(Bytes location);
-
   UInt256 getStorageValue(Address address, UInt256 key);
 
   Optional<UInt256> getStorageValueBySlotHash(Address address, Hash slotHash);
@@ -41,18 +41,24 @@ public interface BonsaiWorldView extends WorldView {
   UInt256 getPriorStorageValue(Address address, UInt256 key);
 
   /**
-   * Retrieve all the storage values of a account.
+   * Retrieve all the storage values of an account.
    *
    * @param address the account to stream
    * @param rootHash the root hash of the account storage trie
    * @return A map that is a copy of the entries. The key is the hashed slot number, and the value
    *     is the Bytes representation of the storage value.
    */
-  Map<Bytes32, Bytes> getAllAccountStorage(Address address, Hash rootHash);
+  Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash);
 
   static Bytes encodeTrieValue(final Bytes bytes) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeBytes(bytes.trimLeadingZeros());
     return out.encoded();
   }
+
+  boolean isPersisted();
+
+  BonsaiWorldStateKeyValueStorage getWorldStateStorage();
+
+  WorldUpdater updater();
 }

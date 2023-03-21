@@ -18,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -35,8 +33,6 @@ public class TimestampScheduleBuilderTest {
   private static final BigInteger defaultChainId = BigInteger.ONE;
   private static final PrivacyParameters privacyParameters = new PrivacyParameters();
   private static final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
-  private static final BlockHeader BLOCK_HEADER =
-      new BlockHeaderTestFixture().timestamp(1L).buildHeader();
   private TimestampScheduleBuilder builder;
   private StubGenesisConfigOptions config;
 
@@ -111,42 +107,6 @@ public class TimestampScheduleBuilderTest {
     assertThatThrownBy(() -> builder.createTimestampSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'Cancun' is scheduled for timestamp 2 but it must be on or after timestamp 3.");
-  }
-
-  @Test
-  public void getByBlockHeader_whenSpecFound() {
-    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
-    final TimestampSchedule schedule = builder.createTimestampSchedule();
-
-    assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNotNull();
-  }
-
-  @Test
-  public void getByBlockHeader_whenSpecNotFoundReturnsNull() {
-    config.shanghaiTime(2L);
-    builder =
-        new TimestampScheduleBuilder(
-            config,
-            defaultChainId,
-            ProtocolSpecAdapters.create(2L, modifier),
-            privacyParameters,
-            false,
-            false,
-            evmConfiguration);
-    final TimestampSchedule schedule = builder.createTimestampSchedule();
-
-    assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNull();
-  }
-
-  @Test
-  public void streamMilestoneBlocksReturnTimestampsInOrder() {
-    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
-    config.cancunTime(2L);
-    config.experimentalEipsTime(5L);
-    config.futureEipsTime(3L);
-    final TimestampSchedule schedule = builder.createTimestampSchedule();
-
-    assertThat(schedule.streamMilestoneBlocks()).containsExactly(FIRST_TIMESTAMP_FORK, 2L, 3L, 5L);
+            "Genesis Config Error: 'Cancun' is scheduled for milestone 2 but it must be on or after milestone 3.");
   }
 }
