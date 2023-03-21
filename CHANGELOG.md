@@ -28,6 +28,7 @@ This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended 
 
 ### Bug Fixes
 - Persist backward sync status to support resuming across restarts [#5182](https://github.com/hyperledger/besu/pull/5182)
+- Re-implement trace_block, trace_filter and trace_replayBlockTransactions RPC endpoints to fix memory issues and improve performance [#5131](https://github.com/hyperledger/besu/pull/5131) 
 
 ### Download Links
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.tar.gz / sha256: 3d3a709a3aab993a0801b412a4719d74e319f942ddc13fb0f30b3c4a54d12538
