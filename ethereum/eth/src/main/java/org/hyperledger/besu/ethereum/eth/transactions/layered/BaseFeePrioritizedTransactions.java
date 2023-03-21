@@ -61,6 +61,9 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     return Comparator.comparing(
             (PendingTransaction pendingTransaction) ->
                 pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee))
+        .thenComparing(
+            (PendingTransaction pendingTransaction) ->
+                pendingTransaction.getTransaction().getMaxGasPrice())
         .thenComparing(Comparator.comparing(PendingTransaction::getNonce).reversed())
         .thenComparing(PendingTransaction::getSequence)
         .compare(pt1, pt2);
