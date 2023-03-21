@@ -18,6 +18,13 @@ import org.hyperledger.besu.plugin.data.BlockContext;
 
 import java.util.Optional;
 
+/** A service that plugins can use to query blocks by number */
 public interface BlockchainService extends BesuService {
+  /**
+   * Gets block by number
+   *
+   * @param number the block number
+   * @return the BlockContext
+   */
   Optional<BlockContext> getBlockByNumber(final long number);
 }

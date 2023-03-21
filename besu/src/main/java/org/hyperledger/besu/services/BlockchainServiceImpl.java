@@ -24,14 +24,26 @@ import org.hyperledger.besu.plugin.services.BlockchainService;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/** The Blockchain service implementation. */
 public class BlockchainServiceImpl implements BlockchainService {
 
   private final Blockchain blockchain;
 
+  /**
+   * Instantiates a new Blockchain service.
+   *
+   * @param blockchain the blockchain
+   */
   public BlockchainServiceImpl(final Blockchain blockchain) {
     this.blockchain = blockchain;
   }
 
+  /**
+   * Gets block by number
+   *
+   * @param number the block number
+   * @return the BlockContext if block exists otherwise empty
+   */
   @Override
   public Optional<BlockContext> getBlockByNumber(final long number) {
     return blockchain
