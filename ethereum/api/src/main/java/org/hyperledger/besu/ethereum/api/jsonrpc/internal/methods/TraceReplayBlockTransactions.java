@@ -122,7 +122,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
                   new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
                       .createLabelledCounter(
                           BesuMetricCategory.BLOCKCHAIN,
-                          "transactions_traceReplayblock_pipeline_processed_total",
+                          "transactions_tracereplayblock_pipeline_processed_total",
                           "Number of transactions processed for each block",
                           "step",
                           "action");
