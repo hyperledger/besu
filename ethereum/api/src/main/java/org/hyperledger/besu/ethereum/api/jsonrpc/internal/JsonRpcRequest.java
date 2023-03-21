@@ -136,4 +136,22 @@ public class JsonRpcRequest {
   public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass) {
     return parameterAccessor.optional(params, index, paramClass);
   }
+
+  @Override
+  public String toString() {
+    return "JsonRpcRequest{"
+        + "id="
+        + id
+        + ", method='"
+        + method
+        + '\''
+        + ", params="
+        + Arrays.toString(params)
+        + ", version='"
+        + version
+        + '\''
+        + ", isNotification="
+        + isNotification
+        + '}';
+  }
 }

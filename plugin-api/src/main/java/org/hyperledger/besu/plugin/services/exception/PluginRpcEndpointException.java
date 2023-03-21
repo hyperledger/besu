@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,16 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.data;
+package org.hyperledger.besu.plugin.services.exception;
 
-import org.apache.tuweni.units.bigints.UInt256;
+public class PluginRpcEndpointException extends RuntimeException {
+  public PluginRpcEndpointException(final String message) {
+    super(message);
+  }
 
-/** The minimum set of data for a PropagatedBlockContext. */
-public interface PropagatedBlockContext extends BlockContext {
-  /**
-   * A scalar value corresponding to the total difficulty.
-   *
-   * @return A UInt256 value corresponding to the total difficulty.
-   */
-  UInt256 getTotalDifficulty();
+  public PluginRpcEndpointException(final String message, final Throwable throwable) {
+    super(message, throwable);
+  }
 }
