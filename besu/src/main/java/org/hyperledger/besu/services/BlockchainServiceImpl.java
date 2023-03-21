@@ -29,7 +29,11 @@ public class BlockchainServiceImpl implements BlockchainService {
 
   private final Blockchain blockchain;
 
-  /** Instantiates a new Blockchain service. */
+  /**
+   * Instantiates a new Blockchain service.
+   *
+   * @param blockchain the blockchain
+   */
   public BlockchainServiceImpl(final Blockchain blockchain) {
     this.blockchain = blockchain;
   }
