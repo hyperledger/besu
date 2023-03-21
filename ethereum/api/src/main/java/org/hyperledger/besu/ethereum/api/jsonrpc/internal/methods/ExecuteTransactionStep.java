@@ -73,7 +73,10 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
       block =
           transactionTrace
               .getBlock()
-              .orElseThrow(() -> new RuntimeException("Expecting reward block to be in transactionTrace but was empty"));
+              .orElseThrow(
+                  () ->
+                      new RuntimeException(
+                          "Expecting reward block to be in transactionTrace but was empty"));
     }
 
     List<TraceFrame> traceFrames = null;
