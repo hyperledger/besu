@@ -1339,8 +1339,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   protected Boolean isGoQuorumCompatibilityMode = false;
 
   private final BesuComponent besuComponent;
-  //private final Supplier<ObservableMetricsSystem> metricsSystem =
-    //      Suppliers.memoize(() -> besuComponent.getObservableMetricsSystem());
   /**
    * Besu command constructor.
    *
