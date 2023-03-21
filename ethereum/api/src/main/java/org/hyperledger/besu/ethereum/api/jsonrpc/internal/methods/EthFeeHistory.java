@@ -108,6 +108,9 @@ public class EthFeeHistory implements JsonRpcMethod {
             .orElseGet(
                 () ->
                     Optional.of(
+                            // We are able to use the chain head timestamp for next block header as
+                            // the base fee market can only be pre or post London. If another fee
+                            // market is added will need to reconsider this.
                             protocolSchedule
                                 .getForNextBlockHeader(
                                     chainHeadHeader, chainHeadHeader.getTimestamp())
