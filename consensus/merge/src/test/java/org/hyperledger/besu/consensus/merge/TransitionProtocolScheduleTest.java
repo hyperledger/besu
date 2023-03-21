@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -50,7 +51,7 @@ public class TransitionProtocolScheduleTest {
 
   @Mock TimestampSchedule timestampSchedule;
   @Mock BlockHeader blockHeader;
-
+  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private static final Difficulty TTD = Difficulty.of(100L);
   private static final long BLOCK_NUMBER = 29L;
   private static final long TIMESTAMP = 1L;

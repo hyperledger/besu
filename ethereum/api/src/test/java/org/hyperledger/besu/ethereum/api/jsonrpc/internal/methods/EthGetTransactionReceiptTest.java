@@ -50,7 +50,7 @@ import org.apache.tuweni.units.bigints.UInt256s;
 import org.junit.Test;
 
 public class EthGetTransactionReceiptTest {
-
+  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final TransactionReceipt statusReceipt =
       new TransactionReceipt(1, 12, Collections.emptyList(), Optional.empty());
   private final Hash stateRoot =
@@ -163,7 +163,8 @@ public class EthGetTransactionReceiptTest {
     when(blockchain.headBlockNumber()).thenReturn(1L);
     when(blockchain.transactionReceiptByTransactionHash(receiptHash))
         .thenReturn(Optional.of(statusReceiptWithMetadata));
-    when(protocolSchedule.getByBlockNumber(1)).thenReturn(statusTransactionTypeSpec);
+    when(protocolSchedule.getByBlockHeader(blockDataGenerator.header(1)))
+        .thenReturn(statusTransactionTypeSpec);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionReceipt.response(request);
@@ -179,7 +180,8 @@ public class EthGetTransactionReceiptTest {
     when(blockchain.headBlockNumber()).thenReturn(1L);
     when(blockchain.transactionReceiptByTransactionHash(receiptHash))
         .thenReturn(Optional.of(rootReceiptWithMetaData));
-    when(protocolSchedule.getByBlockNumber(1)).thenReturn(rootTransactionTypeSpec);
+    when(protocolSchedule.getByBlockHeader(blockDataGenerator.header(1)))
+        .thenReturn(rootTransactionTypeSpec);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionReceipt.response(request);
@@ -200,7 +202,8 @@ public class EthGetTransactionReceiptTest {
             statusReceipt, transaction1559, hash, 1, 2, Optional.of(baseFee), blockHash, 4);
     when(blockchain.transactionReceiptByTransactionHash(receiptHash))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
-    when(protocolSchedule.getByBlockNumber(1)).thenReturn(rootTransactionTypeSpec);
+    when(protocolSchedule.getByBlockHeader(blockDataGenerator.header(1)))
+        .thenReturn(rootTransactionTypeSpec);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionReceipt.response(request);

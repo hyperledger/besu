@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -39,7 +40,7 @@ import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProtocolScheduleBuilderTest {
-
+  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   @Mock GenesisConfigOptions configOptions;
   @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
@@ -67,15 +68,24 @@ public class ProtocolScheduleBuilderTest {
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
-    assertThat(protocolSchedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
-    assertThat(protocolSchedule.getByBlockNumber(1).getName()).isEqualTo("Homestead");
-    assertThat(protocolSchedule.getByBlockNumber(2).getName()).isEqualTo("DaoRecoveryInit");
-    assertThat(protocolSchedule.getByBlockNumber(3).getName()).isEqualTo("DaoRecoveryTransition");
-    assertThat(protocolSchedule.getByBlockNumber(12).getName()).isEqualTo("Homestead");
-    assertThat(protocolSchedule.getByBlockNumber(13).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockNumber(14).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockNumber(15).getName()).isEqualTo("ParisFork");
-    assertThat(protocolSchedule.getByBlockNumber(50).getName()).isEqualTo("ParisFork");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(0)).getName())
+        .isEqualTo("Frontier");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(1)).getName())
+        .isEqualTo("Homestead");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(2)).getName())
+        .isEqualTo("DaoRecoveryInit");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(3)).getName())
+        .isEqualTo("DaoRecoveryTransition");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(12)).getName())
+        .isEqualTo("Homestead");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(13)).getName())
+        .isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(14)).getName())
+        .isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(15)).getName())
+        .isEqualTo("ParisFork");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(50)).getName())
+        .isEqualTo("ParisFork");
   }
 
   @Test
@@ -85,8 +95,10 @@ public class ProtocolScheduleBuilderTest {
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
-    assertThat(protocolSchedule.getByBlockNumber(0).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockNumber(1).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(0)).getName())
+        .isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(1)).getName())
+        .isEqualTo("Byzantium");
   }
 
   @Test
@@ -124,9 +136,12 @@ public class ProtocolScheduleBuilderTest {
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 2L, 5L);
-    assertThat(schedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockNumber(2).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockNumber(5).getName()).isEqualTo("Homestead");
+    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(0)).getName())
+        .isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(2)).getName())
+        .isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(5)).getName())
+        .isEqualTo("Homestead");
 
     verify(modifier, times(2)).apply(any());
   }
@@ -153,8 +168,10 @@ public class ProtocolScheduleBuilderTest {
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 2L);
-    assertThat(schedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockNumber(2).getName()).isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(0)).getName())
+        .isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(2)).getName())
+        .isEqualTo("Frontier");
 
     verify(modifier, times(1)).apply(any());
   }
@@ -182,8 +199,10 @@ public class ProtocolScheduleBuilderTest {
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 5L);
-    assertThat(schedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockNumber(5).getName()).isEqualTo("Homestead");
+    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(0)).getName())
+        .isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(5)).getName())
+        .isEqualTo("Homestead");
 
     verify(modifier, times(1)).apply(any());
   }

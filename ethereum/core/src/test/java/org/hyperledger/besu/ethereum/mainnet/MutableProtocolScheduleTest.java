@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -46,6 +47,8 @@ public class MutableProtocolScheduleTest {
   private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier = Function.identity();
 
   private final long FIRST_TIMESTAMP_FORK = 1L;
+
+  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Before
   public void setup() {
@@ -99,7 +102,7 @@ public class MutableProtocolScheduleTest {
     final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(0, spec1);
     protocolSchedule.putMilestone(0, spec2);
-    assertThat(protocolSchedule.getByBlockNumber(0)).isSameAs(spec2);
+    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(0))).isSameAs(spec2);
   }
 
   @Test

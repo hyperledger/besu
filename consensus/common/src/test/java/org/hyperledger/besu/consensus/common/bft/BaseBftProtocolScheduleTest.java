@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -45,6 +46,7 @@ public class BaseBftProtocolScheduleTest {
 
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
+  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Test
   public void ensureBlockRewardAndMiningBeneficiaryInProtocolSpecMatchConfig() {
@@ -58,7 +60,7 @@ public class BaseBftProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions)));
-    final ProtocolSpec spec = schedule.getByBlockNumber(1);
+    final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(1));
 
     assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
     assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(mock(BlockHeader.class)))
@@ -74,7 +76,7 @@ public class BaseBftProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions)));
-    final ProtocolSpec spec = schedule.getByBlockNumber(1);
+    final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(1));
 
     final Address headerCoinbase = Address.fromHexString("0x123");
     final BlockHeader header = mock(BlockHeader.class);
@@ -129,7 +131,7 @@ public class BaseBftProtocolScheduleTest {
 
     // Check initial config
     for (int i = 0; i < 2; i++) {
-      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? headerCoinbase : beneficiary1;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(3)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -138,7 +140,7 @@ public class BaseBftProtocolScheduleTest {
 
     // Check fork1
     for (int i = 2; i < 5; i++) {
-      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? beneficiary2 : headerCoinbase;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(2)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -147,7 +149,7 @@ public class BaseBftProtocolScheduleTest {
 
     // Check fork2
     for (int i = 5; i < 8; i++) {
-      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? headerCoinbase : beneficiary3;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(1)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -215,9 +217,10 @@ public class BaseBftProtocolScheduleTest {
                 new ForkSpec<>(transitionBlock, blockRewardTransition)));
 
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(2);
-    assertThat(schedule.getByBlockNumber(0).getBlockReward())
+    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(0)).getBlockReward())
         .isEqualTo(Wei.of(arbitraryBlockReward));
-    assertThat(schedule.getByBlockNumber(transitionBlock).getBlockReward())
+    assertThat(
+            schedule.getByBlockHeader(blockDataGenerator.header(transitionBlock)).getBlockReward())
         .isEqualTo(Wei.of(forkBlockReward));
   }
 

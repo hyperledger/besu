@@ -26,6 +26,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -42,6 +43,8 @@ public class CliqueProtocolScheduleTest {
   private static final NodeKey NODE_KEY = NodeKeyUtils.generate();
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
 
+  final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+
   @Test
   public void protocolSpecsAreCreatedAtBlockDefinedInJson() {
     final String jsonInput =
@@ -57,10 +60,14 @@ public class CliqueProtocolScheduleTest {
     final ProtocolSchedule protocolSchedule =
         CliqueProtocolSchedule.create(config, NODE_KEY, false, EvmConfiguration.DEFAULT);
 
-    final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
-    final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
-    final ProtocolSpec spuriousDragonSpec = protocolSchedule.getByBlockNumber(3);
-    final ProtocolSpec byzantiumSpec = protocolSchedule.getByBlockNumber(1035301);
+    final ProtocolSpec homesteadSpec =
+        protocolSchedule.getByBlockHeader(blockDataGenerator.header(1));
+    final ProtocolSpec tangerineWhistleSpec =
+        protocolSchedule.getByBlockHeader(blockDataGenerator.header(2));
+    final ProtocolSpec spuriousDragonSpec =
+        protocolSchedule.getByBlockHeader(blockDataGenerator.header(3));
+    final ProtocolSpec byzantiumSpec =
+        protocolSchedule.getByBlockHeader(blockDataGenerator.header(1035301));
 
     assertThat(homesteadSpec.equals(tangerineWhistleSpec)).isFalse();
     assertThat(tangerineWhistleSpec.equals(spuriousDragonSpec)).isFalse();
@@ -75,7 +82,7 @@ public class CliqueProtocolScheduleTest {
                 NODE_KEY,
                 false,
                 EvmConfiguration.DEFAULT)
-            .getByBlockNumber(0);
+            .getByBlockHeader(blockDataGenerator.header(0));
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
     assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
