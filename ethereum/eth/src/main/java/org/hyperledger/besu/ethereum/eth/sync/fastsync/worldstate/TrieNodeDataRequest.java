@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
+import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.List;

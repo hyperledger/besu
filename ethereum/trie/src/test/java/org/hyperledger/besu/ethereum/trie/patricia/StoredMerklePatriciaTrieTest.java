@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,10 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.trie.KeyValueMerkleStorage;
+import org.hyperledger.besu.ethereum.trie.MerkleStorage;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -34,7 +37,7 @@ public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest
   private Function<Bytes, String> valueDeserializer;
 
   @Override
-  protected MerklePatriciaTrie<Bytes, String> createTrie() {
+  protected MerkleTrie<Bytes, String> createTrie() {
     keyValueStore = new InMemoryKeyValueStorage();
     merkleStorage = new KeyValueMerkleStorage(keyValueStore);
     valueSerializer =

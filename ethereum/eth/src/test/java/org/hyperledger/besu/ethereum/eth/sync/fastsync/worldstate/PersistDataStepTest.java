@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,8 +24,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
@@ -97,7 +97,7 @@ public class PersistDataStepTest {
 
   private Task<NodeDataRequest> createTaskWithData(final Bytes data) {
     final StubTask task = createTaskWithoutData(data);
-    MerklePatriciaTrie<Bytes, String> trie =
+    MerkleTrie<Bytes, String> trie =
         new SimpleMerklePatriciaTrie<>(
             value -> (value != null) ? Bytes.wrap(value.getBytes(StandardCharsets.UTF_8)) : null);
     trie.put(data, "01");
