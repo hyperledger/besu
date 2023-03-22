@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
@@ -180,11 +181,12 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         BftExecutors.create(metricsSystem, BftExecutors.ConsensusType.QBFT);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
+    final BftProtocolSchedule bftProtocolSchedule = (BftProtocolSchedule) protocolSchedule;
     final BftBlockCreatorFactory<?> blockCreatorFactory =
         new QbftBlockCreatorFactory(
             transactionPool.getPendingTransactions(),
             protocolContext,
-            protocolSchedule,
+            bftProtocolSchedule,
             qbftForksSchedule,
             miningParameters,
             localAddress,
@@ -219,7 +221,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(
-            proposerSelector, protocolSchedule, protocolContext, bftExtraDataCodec().get());
+            proposerSelector, bftProtocolSchedule, protocolContext, bftExtraDataCodec().get());
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
@@ -244,7 +246,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
                 new QbftRoundFactory(
                     finalState,
                     protocolContext,
-                    protocolSchedule,
+                    bftProtocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
                     messageFactory,

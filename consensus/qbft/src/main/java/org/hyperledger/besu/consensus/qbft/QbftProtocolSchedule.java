@@ -22,6 +22,7 @@ import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -45,7 +46,7 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
-  public static ProtocolSchedule create(
+  public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final PrivacyParameters privacyParameters,
@@ -71,7 +72,7 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
-  public static ProtocolSchedule create(
+  public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
