@@ -177,8 +177,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
+  /** the Dagger configured context that can provide dependencies */
   protected BesuComponent besuComponent = null;
 
+  /**
+   *
+   * @param besuComponent application context that can be used to get other dependencies
+   * @return the besu controller builder
+   */
   public BesuControllerBuilder besuComponent(final BesuComponent besuComponent) {
     this.besuComponent = besuComponent;
     return this;

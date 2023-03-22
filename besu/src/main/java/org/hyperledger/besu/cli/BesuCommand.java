@@ -1466,6 +1466,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return exitCode;
   }
 
+  /**
+   * Used by Dagger to parse all options into a commandline instance.
+   */
   public void toCommandLine() {
     commandLine =
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
@@ -3523,6 +3526,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  /**
+   * Used by Dagger to provide the BesuComponent this is a module in.
+   * @param besuComponent a BesuComponent that has a BesuCommand module of this
+   */
   public void setBesuComponent(final BesuComponent besuComponent) {
     this.besuComponent = besuComponent;
   }

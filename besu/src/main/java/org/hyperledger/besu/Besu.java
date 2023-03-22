@@ -46,6 +46,10 @@ public final class Besu {
     System.exit(exitCode);
   }
 
+  /**
+   *
+   * @return a Logger setup for handling any exceptions during the bootstrap process, to indicate to users their CLI configuration had problems.
+   */
   public static Logger setupLogging() {
     try {
       InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);

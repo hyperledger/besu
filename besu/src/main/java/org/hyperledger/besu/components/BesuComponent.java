@@ -28,6 +28,9 @@ import javax.inject.Singleton;
 import dagger.Component;
 import org.slf4j.Logger;
 
+/**
+ * An application context that knows how to provide dependencies based on Dagger setup.
+ */
 @Singleton
 @Component(
     modules = {
@@ -37,12 +40,28 @@ import org.slf4j.Logger;
     })
 public interface BesuComponent {
 
+  /**
+   *
+   * @return the configured and parsed representation of the user issued command to run Besu
+   */
   BesuCommand getBesuCommand();
 
+  /**
+   *
+   * @return a cached trie node loader
+   */
   CachedMerkleTrieLoader getCachedMerkleTrieLoader();
 
+  /**
+   *
+   * @return a metrics system that is observable by a Prometheus or OTEL metrics collection subsystem
+   */
   ObservableMetricsSystem getObservableMetricsSystem();
 
+  /**
+   *
+   * @return a Logger specifically configured to provide configuration feedback to users.
+   */
   @Named("besuCommandLogger")
   Logger getBesuCommandLogger();
 }
