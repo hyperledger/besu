@@ -20,8 +20,9 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -32,7 +33,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using a QBFT consensus mechanism. */
-public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
+public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder {
 
   /**
    * Create protocol schedule.
@@ -45,14 +46,14 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
-  public static ProtocolSchedule create(
+  public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
-    return new QbftProtocolSchedule()
+    return new QbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
             qbftForksSchedule,
@@ -71,7 +72,7 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
-  public static ProtocolSchedule create(
+  public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
@@ -112,7 +113,8 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
   protected BlockHeaderValidator.Builder createBlockHeaderRuleset(
       final BftConfigOptions config, final FeeMarket feeMarket) {
     checkArgument(
-        config instanceof QbftConfigOptions, "QbftProtocolSchedule must use QbftConfigOptions");
+        config instanceof QbftConfigOptions,
+        "QbftProtocolScheduleBuilder must use QbftConfigOptions");
     final QbftConfigOptions qbftConfigOptions = (QbftConfigOptions) config;
     final Optional<BaseFeeMarket> baseFeeMarket =
         Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
