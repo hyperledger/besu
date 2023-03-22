@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,16 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.data;
+package org.hyperledger.besu.plugin.services;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockContext;
 
-/** The minimum set of data for a PropagatedBlockContext. */
-public interface PropagatedBlockContext extends BlockContext {
+import java.util.Optional;
+
+/** A service that plugins can use to query blocks by number */
+@Unstable
+public interface BlockchainService extends BesuService {
   /**
-   * A scalar value corresponding to the total difficulty.
+   * Gets block by number
    *
-   * @return A UInt256 value corresponding to the total difficulty.
+   * @param number the block number
+   * @return the BlockContext
    */
-  UInt256 getTotalDifficulty();
+  Optional<BlockContext> getBlockByNumber(final long number);
 }

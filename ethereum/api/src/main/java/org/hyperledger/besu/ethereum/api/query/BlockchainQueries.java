@@ -67,6 +67,7 @@ public class BlockchainQueries {
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
+  private final Optional<EthScheduler> ethScheduler;
   private final ApiConfiguration apiConfig;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
@@ -102,6 +103,7 @@ public class BlockchainQueries {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
+    this.ethScheduler = scheduler;
     this.transactionLogBloomCacher =
         (cachePath.isPresent() && scheduler.isPresent())
             ? Optional.of(
@@ -1023,5 +1025,9 @@ public class BlockchainQueries {
     }
 
     return logIndexOffset;
+  }
+
+  public Optional<EthScheduler> getEthScheduler() {
+    return ethScheduler;
   }
 }
