@@ -61,6 +61,11 @@ public class BftProtocolSchedule extends MutableProtocolSchedule {
     return null;
   }
 
+  /**
+   * return the ordered list of scheduled protocol specs
+   *
+   * @return the scheduled protocol specs
+   */
   public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
     return protocolSpecs.stream().toList();
   }
