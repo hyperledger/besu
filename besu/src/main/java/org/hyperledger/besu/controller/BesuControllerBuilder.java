@@ -181,7 +181,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected BesuComponent besuComponent = null;
 
   /**
-   *
    * @param besuComponent application context that can be used to get other dependencies
    * @return the besu controller builder
    */

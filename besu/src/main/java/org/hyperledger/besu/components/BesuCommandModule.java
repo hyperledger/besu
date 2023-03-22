@@ -33,7 +33,8 @@ import dagger.Provides;
 import org.slf4j.Logger;
 
 /**
- * A dagger module that know how to create the BesuCommand, which collects all configuration settings.
+ * A dagger module that know how to create the BesuCommand, which collects all configuration
+ * settings.
  */
 @Module
 public class BesuCommandModule {
