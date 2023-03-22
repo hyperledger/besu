@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,7 +22,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 public abstract class CompactEncoding {
   private CompactEncoding() {}
 
-  static final byte LEAF_TERMINATOR = 0x10;
+  public static final byte LEAF_TERMINATOR = 0x10;
 
   public static Bytes bytesToPath(final Bytes bytes) {
     final MutableBytes path = MutableBytes.create(bytes.size() * 2 + 1);
