@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockContext;
 
 import java.util.Optional;
 
 /** A service that plugins can use to query blocks by number */
+@Unstable
 public interface BlockchainService extends BesuService {
   /**
    * Gets block by number

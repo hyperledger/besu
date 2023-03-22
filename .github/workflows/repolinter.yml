@@ -22,3 +22,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Lint Repo
         run: bundle exec /app/bin/repolinter.js --rulesetUrl https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/main/repo_structure/repolint.json --format markdown
+      - name: Cleanup file permissions created by docker user
+        run: |
+          USER_ID=$(id -u)
+          GROUP_ID=$(id -g)
+          chown -R "$USER_ID:$GROUP_ID" .
