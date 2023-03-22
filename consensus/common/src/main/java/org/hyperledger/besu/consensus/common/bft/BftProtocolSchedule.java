@@ -21,12 +21,27 @@ import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
+/**
+ * A Bft-specific wrapper around a ProtocolSchedule that is allowed to look up ProtocolSpecs by
+ * block number Extending MutableProtocolSchedule gives this class access to the protocolSpecs
+ */
 public class BftProtocolSchedule extends MutableProtocolSchedule {
 
+  /**
+   * Construct from an existing MutableProtocolSchedule
+   *
+   * @param mutableProtocolSchedule a blockNumber-based ProtocolSchedule
+   */
   public BftProtocolSchedule(final MutableProtocolSchedule mutableProtocolSchedule) {
     super(mutableProtocolSchedule);
   }
 
+  /**
+   * Look up ProtocolSpec by block number
+   *
+   * @param number block number
+   * @return the protocol spec for that block number
+   */
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
     checkArgument(number >= 0, "number must be non-negative");
