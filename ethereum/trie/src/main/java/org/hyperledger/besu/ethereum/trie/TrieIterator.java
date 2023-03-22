@@ -66,7 +66,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
       remainingPath = searchPath.slice(1);
     }
     paths.push(node.getPath());
-    for (byte i = iterateFrom; i < node.maxChild() && state.continueIterating(); i++) {
+    for (byte i = iterateFrom; (int) i < node.maxChild() && state.continueIterating(); i++) {
       paths.push(Bytes.of(i));
       final Node<V> child = node.child(i);
       child.accept(this, remainingPath);
