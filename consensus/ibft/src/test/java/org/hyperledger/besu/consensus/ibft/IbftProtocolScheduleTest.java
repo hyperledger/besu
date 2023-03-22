@@ -95,7 +95,7 @@ public class IbftProtocolScheduleTest {
       final GenesisConfigOptions genesisConfig, final List<ForkSpec<BftConfigOptions>> forks) {
     return new BlockNumberStreamingProtocolSchedule(
         (MutableProtocolSchedule)
-            IbftProtocolSchedule.create(
+            IbftProtocolScheduleBuilder.create(
                 genesisConfig,
                 new ForksSchedule<>(forks),
                 PrivacyParameters.DEFAULT,
