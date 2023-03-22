@@ -39,23 +39,27 @@ import org.slf4j.Logger;
 public interface BesuComponent {
 
   /**
-   * @return the configured and parsed representation of the user issued command to run Besu
+   * the configured and parsed representation of the user issued command to run Besu
+   * @return BesuCommand
    */
   BesuCommand getBesuCommand();
 
   /**
-   * @return a cached trie node loader
+   * a cached trie node loader
+   * @return CachedMerkleTrieLoader
    */
   CachedMerkleTrieLoader getCachedMerkleTrieLoader();
 
   /**
-   * @return a metrics system that is observable by a Prometheus or OTEL metrics collection
-   *     subsystem
+   * a metrics system that is observable by a Prometheus or OTEL metrics collection
+   * subsystem
+   * @return ObservableMetricsSystem
    */
   ObservableMetricsSystem getObservableMetricsSystem();
 
   /**
-   * @return a Logger specifically configured to provide configuration feedback to users.
+   * a Logger specifically configured to provide configuration feedback to users.
+   * @return Logger
    */
   @Named("besuCommandLogger")
   Logger getBesuCommandLogger();
