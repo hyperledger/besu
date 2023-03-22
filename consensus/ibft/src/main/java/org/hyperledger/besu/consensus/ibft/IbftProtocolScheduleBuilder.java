@@ -12,34 +12,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft;
-
-import static com.google.common.base.Preconditions.checkArgument;
+package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.Optional;
 
-/** Defines the protocol behaviours for a blockchain using a QBFT consensus mechanism. */
-public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
+/** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
+public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder {
 
   /**
    * Create protocol schedule.
    *
    * @param config the config
-   * @param qbftForksSchedule the qbft forks schedule
+   * @param forksSchedule the forks schedule
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
@@ -48,15 +44,15 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
    */
   public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
-      final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
+      final ForksSchedule<BftConfigOptions> forksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
-    return new QbftProtocolSchedule()
+    return new IbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
-            qbftForksSchedule,
+            forksSchedule,
             privacyParameters,
             isRevertReasonEnabled,
             bftExtraDataCodec,
@@ -67,60 +63,32 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
    * Create protocol schedule.
    *
    * @param config the config
-   * @param qbftForksSchedule the qbft forks schedule
+   * @param forksSchedule the forks schedule
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
-      final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
+      final ForksSchedule<BftConfigOptions> forksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
     return create(
         config,
-        qbftForksSchedule,
+        forksSchedule,
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
         evmConfiguration);
   }
 
-  /**
-   * Create protocol schedule.
-   *
-   * @param config the config
-   * @param qbftForksSchedule the qbft forks schedule
-   * @param isRevertReasonEnabled the is revert reason enabled
-   * @param bftExtraDataCodec the bft extra data codec
-   * @return the protocol schedule
-   */
-  public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
-      final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
-      final boolean isRevertReasonEnabled,
-      final BftExtraDataCodec bftExtraDataCodec) {
-    return create(
-        config,
-        qbftForksSchedule,
-        PrivacyParameters.DEFAULT,
-        isRevertReasonEnabled,
-        bftExtraDataCodec,
-        EvmConfiguration.DEFAULT);
-  }
-
   @Override
   protected BlockHeaderValidator.Builder createBlockHeaderRuleset(
       final BftConfigOptions config, final FeeMarket feeMarket) {
-    checkArgument(
-        config instanceof QbftConfigOptions, "QbftProtocolSchedule must use QbftConfigOptions");
-    final QbftConfigOptions qbftConfigOptions = (QbftConfigOptions) config;
     final Optional<BaseFeeMarket> baseFeeMarket =
         Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
 
-    return QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-        qbftConfigOptions.getBlockPeriodSeconds(),
-        qbftConfigOptions.isValidatorContractMode(),
-        baseFeeMarket);
+    return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+        config.getBlockPeriodSeconds(), baseFeeMarket);
   }
 }

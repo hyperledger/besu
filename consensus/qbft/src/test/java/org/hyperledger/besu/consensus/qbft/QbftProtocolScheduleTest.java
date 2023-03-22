@@ -128,7 +128,7 @@ public class QbftProtocolScheduleTest {
       final GenesisConfigOptions genesisConfig, final List<ForkSpec<QbftConfigOptions>> forks) {
     return new BlockNumberStreamingProtocolSchedule(
         (MutableProtocolSchedule)
-            QbftProtocolSchedule.create(
+            QbftProtocolScheduleBuilder.create(
                 genesisConfig,
                 new ForksSchedule<>(forks),
                 PrivacyParameters.DEFAULT,

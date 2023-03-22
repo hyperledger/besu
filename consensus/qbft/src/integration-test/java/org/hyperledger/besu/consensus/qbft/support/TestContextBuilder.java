@@ -62,7 +62,7 @@ import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
-import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
@@ -412,7 +412,7 @@ public class TestContextBuilder {
         QbftForksSchedulesFactory.create(genesisConfigOptions);
 
     final BftProtocolSchedule protocolSchedule =
-        QbftProtocolSchedule.create(
+        QbftProtocolScheduleBuilder.create(
             genesisConfigOptions, forksSchedule, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
