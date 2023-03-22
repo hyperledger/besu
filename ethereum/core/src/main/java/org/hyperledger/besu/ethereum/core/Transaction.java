@@ -1117,14 +1117,14 @@ public class Transaction
     sb.append(getNonce()).append(", ");
     sb.append(getSender()).append(", ");
     sb.append(getType()).append(", ");
-    getGasPrice().ifPresent(gasPrice -> sb.append(gasPrice.toBigInteger()).append(", "));
+    getGasPrice().ifPresent(gasPrice -> sb.append(gasPrice.toHumanReadableString()).append(", "));
     if (getMaxPriorityFeePerGas().isPresent() && getMaxFeePerGas().isPresent()) {
-      sb.append(getMaxPriorityFeePerGas().map(Wei::toBigInteger).get()).append(", ");
-      sb.append(getMaxFeePerGas().map(Wei::toBigInteger).get()).append(", ");
-      getMaxFeePerDataGas().ifPresent(wei -> sb.append(wei.toShortHexString()).append(", "));
+      sb.append(getMaxPriorityFeePerGas().map(Wei::toHumanReadableString).get()).append(", ");
+      sb.append(getMaxFeePerGas().map(Wei::toHumanReadableString).get()).append(", ");
+      getMaxFeePerDataGas().ifPresent(wei -> sb.append(wei.toHumanReadableString()).append(", "));
     }
     sb.append(getGasLimit()).append(", ");
-    sb.append(getValue().toBigInteger()).append(", ");
+    sb.append(getValue().toHumanReadableString()).append(", ");
     getTo().ifPresent(to -> sb.append(to));
     return sb.append("}").toString();
   }

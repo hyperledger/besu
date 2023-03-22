@@ -96,7 +96,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final long senderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
 
-    logTransactionForReplay(pendingTransaction, senderNonce);
+    logTransactionForReplayAdd(pendingTransaction, senderNonce);
 
     final long nonceDistance = pendingTransaction.getNonce() - senderNonce;
 
@@ -118,7 +118,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return result;
   }
 
-  private void logTransactionForReplay(
+  private void logTransactionForReplayAdd(
       final PendingTransaction pendingTransaction, final long senderNonce) {
     // csv fields: sequence, addedAt, sender, sender_nonce, nonce, type, hash, rlp
     LOG_FOR_REPLAY
@@ -128,6 +128,26 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .addArgument(pendingTransaction.getAddedAt())
         .addArgument(pendingTransaction.getSender())
         .addArgument(senderNonce)
+        .addArgument(pendingTransaction.getNonce())
+        .addArgument(pendingTransaction.getTransaction().getType())
+        .addArgument(pendingTransaction::getHash)
+        .addArgument(
+            () -> {
+              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+              pendingTransaction.getTransaction().writeTo(rlp);
+              return rlp.encoded().toHexString();
+            })
+        .log();
+  }
+
+  private void logTransactionForReplayDelete(final PendingTransaction pendingTransaction) {
+    // csv fields: sequence, addedAt, sender, nonce, type, hash, rlp
+    LOG_FOR_REPLAY
+        .atTrace()
+        .setMessage("D,{},{},{},{},{},{},{}")
+        .addArgument(pendingTransaction.getSequence())
+        .addArgument(pendingTransaction.getAddedAt())
+        .addArgument(pendingTransaction.getSender())
         .addArgument(pendingTransaction.getNonce())
         .addArgument(pendingTransaction.getTransaction().getType())
         .addArgument(pendingTransaction::getHash)
@@ -192,6 +212,17 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     prioritizedTransactions.stream()
         .takeWhile(unused -> !completed.get())
+        .peek(
+            highPrioPendingTx ->
+                LOG.atDebug()
+                    .setMessage("highPrioPendingTx {}, senderTxs {}")
+                    .addArgument(highPrioPendingTx::toTraceLog)
+                    .addArgument(
+                        () ->
+                            prioritizedTransactions.stream(highPrioPendingTx.getSender())
+                                .map(PendingTransaction::toTraceLog)
+                                .collect(Collectors.joining(", ")))
+                    .log())
         .forEach(
             highPrioPendingTx ->
                 prioritizedTransactions.stream(highPrioPendingTx.getSender())
@@ -208,17 +239,31 @@ public class LayeredPendingTransactions implements PendingTransactions {
                           switch (selector.evaluateTransaction(
                               candidatePendingTx.getTransaction())) {
                             case CONTINUE:
+                              LOG.atDebug()
+                                  .setMessage("CONTINUE: Transaction {}")
+                                  .addArgument(candidatePendingTx::toTraceLog)
+                                  .log();
                               break;
                             case DELETE_TRANSACTION_AND_CONTINUE:
                               invalidTransactions.add(candidatePendingTx);
+                              LOG.atDebug()
+                                  .setMessage("DELETE_TRANSACTION_AND_CONTINUE: Transaction {}")
+                                  .addArgument(candidatePendingTx::toTraceLog)
+                                  .log();
+                              logTransactionForReplayDelete(candidatePendingTx);
                               break;
                             case COMPLETE_OPERATION:
                               completed.set(true);
+                              LOG.atDebug()
+                                  .setMessage("COMPLETE_OPERATION: Transaction {}")
+                                  .addArgument(candidatePendingTx::toTraceLog)
+                                  .log();
                               break;
                           }
                         }));
 
     invalidTransactions.forEach(prioritizedTransactions::invalidate);
+    assert prioritizedTransactions.consistencyCheck(new HashMap<>());
   }
 
   @Override

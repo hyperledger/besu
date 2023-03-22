@@ -129,6 +129,9 @@ public class ReplayTest {
                       System.out.println("S");
                       assertStats(line, pendingTransactions);
                       break;
+                    case "D":
+                      System.out.println("D:" + commaSplit[1]);
+                      processInvalid(commaSplit, prioritizedTransactions);
                     default:
                       throw new IllegalArgumentException("Unexpected first field value " + type);
                   }
@@ -209,6 +212,13 @@ public class ReplayTest {
     final Account mockAccount = mock(Account.class);
     when(mockAccount.getNonce()).thenReturn(Long.parseLong(commaSplit[4]));
     pendingTransactions.addRemoteTransaction(tx, Optional.of(mockAccount));
+  }
+
+  private void processInvalid(
+      final String[] commaSplit, final AbstractPrioritizedTransactions prioritizedTransactions) {
+    final Bytes rlp = Bytes.fromHexString(commaSplit[commaSplit.length - 1]);
+    final Transaction tx = Transaction.readFrom(rlp);
+    prioritizedTransactions.invalidate(new PendingTransaction.Remote(tx));
   }
 
   private boolean transactionReplacementTester(
