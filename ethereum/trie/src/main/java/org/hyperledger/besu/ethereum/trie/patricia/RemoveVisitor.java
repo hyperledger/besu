@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
+
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.LeafNode;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NullNode;
+import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class GetVisitor<V> implements PathNodeVisitor<V> {
+public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   private final Node<V> NULL_NODE_RESULT = NullNode.instance();
+
+  private final boolean allowFlatten;
+
+  public RemoveVisitor() {
+    allowFlatten = true;
+  }
+
+  public RemoveVisitor(final boolean allowFlatten) {
+    this.allowFlatten = allowFlatten;
+  }
 
   @Override
   public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
@@ -26,12 +42,14 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
     assert commonPathLength < path.size()
         : "Visiting path doesn't end with a non-matching terminator";
 
-    if (commonPathLength < extensionPath.size()) {
-      // path diverges before the end of the extension, so it cannot match
-      return NULL_NODE_RESULT;
+    if (commonPathLength == extensionPath.size()) {
+      final Node<V> newChild = extensionNode.getChild().accept(this, path.slice(commonPathLength));
+      return extensionNode.replaceChild(newChild);
     }
 
-    return extensionNode.getChild().accept(this, path.slice(commonPathLength));
+    // path diverges before the end of the extension, so it cannot match
+
+    return extensionNode;
   }
 
   @Override
@@ -40,19 +58,18 @@ class GetVisitor<V> implements PathNodeVisitor<V> {
 
     final byte childIndex = path.get(0);
     if (childIndex == CompactEncoding.LEAF_TERMINATOR) {
-      return branchNode;
+      return branchNode.removeValue();
     }
 
-    return branchNode.child(childIndex).accept(this, path.slice(1));
+    final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
+    return branchNode.replaceChild(childIndex, updatedChild, allowFlatten);
   }
 
   @Override
   public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
     final Bytes leafPath = leafNode.getPath();
-    if (leafPath.commonPrefixLength(path) != leafPath.size()) {
-      return NULL_NODE_RESULT;
-    }
-    return leafNode;
+    final int commonPathLength = leafPath.commonPrefixLength(path);
+    return (commonPathLength == leafPath.size()) ? NULL_NODE_RESULT : leafNode;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,8 +18,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -33,7 +33,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class TrieGenerator {
 
-  public static MerklePatriciaTrie<Bytes, Bytes> generateTrie(
+  public static MerkleTrie<Bytes, Bytes> generateTrie(
       final WorldStateStorage worldStateStorage, final int nbAccounts) {
     return generateTrie(
         worldStateStorage,
@@ -42,14 +42,13 @@ public class TrieGenerator {
             .collect(Collectors.toList()));
   }
 
-  public static MerklePatriciaTrie<Bytes, Bytes> generateTrie(
+  public static MerkleTrie<Bytes, Bytes> generateTrie(
       final WorldStateStorage worldStateStorage, final List<Hash> accounts) {
-    final MerklePatriciaTrie<Bytes, Bytes> accountStateTrie =
-        emptyAccountStateTrie(worldStateStorage);
+    final MerkleTrie<Bytes, Bytes> accountStateTrie = emptyAccountStateTrie(worldStateStorage);
     // Add some storage values
     for (int i = 0; i < accounts.size(); i++) {
       final WorldStateStorage.Updater updater = worldStateStorage.updater();
-      final MerklePatriciaTrie<Bytes, Bytes> storageTrie =
+      final MerkleTrie<Bytes, Bytes> storageTrie =
           emptyStorageTrie(worldStateStorage, accounts.get(i));
       writeStorageValue(updater, storageTrie, accounts.get(i), UInt256.ONE, UInt256.valueOf(2L));
       writeStorageValue(
@@ -80,7 +79,7 @@ public class TrieGenerator {
 
   private static void writeStorageValue(
       final WorldStateStorage.Updater updater,
-      final MerklePatriciaTrie<Bytes, Bytes> storageTrie,
+      final MerkleTrie<Bytes, Bytes> storageTrie,
       final Hash hash,
       final UInt256 key,
       final UInt256 value) {
@@ -101,7 +100,7 @@ public class TrieGenerator {
     return RLP.encode(out -> out.writeBytes(storageValue.toMinimalBytes()));
   }
 
-  public static MerklePatriciaTrie<Bytes, Bytes> emptyStorageTrie(
+  public static MerkleTrie<Bytes, Bytes> emptyStorageTrie(
       final WorldStateStorage worldStateStorage, final Hash accountHash) {
     return new StoredMerklePatriciaTrie<>(
         (location, hash) ->
@@ -110,7 +109,7 @@ public class TrieGenerator {
         b -> b);
   }
 
-  public static MerklePatriciaTrie<Bytes, Bytes> emptyAccountStateTrie(
+  public static MerkleTrie<Bytes, Bytes> emptyAccountStateTrie(
       final WorldStateStorage worldStateStorage) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, b -> b, b -> b);

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,13 +22,13 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class StoredNode<V> implements Node<V> {
-  private final StoredNodeFactory<V> nodeFactory;
+public class StoredNode<V> implements Node<V> {
+  private final NodeFactory<V> nodeFactory;
   private final Bytes location;
   private final Bytes32 hash;
   private Node<V> loaded;
 
-  StoredNode(final StoredNodeFactory<V> nodeFactory, final Bytes location, final Bytes32 hash) {
+  public StoredNode(final NodeFactory<V> nodeFactory, final Bytes location, final Bytes32 hash) {
     this.nodeFactory = nodeFactory;
     this.location = location;
     this.hash = hash;

@@ -37,9 +37,11 @@ import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -76,7 +78,7 @@ public class IbftProtocolScheduleTest {
         IbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
             .buildHeader();
 
-    final ProtocolSchedule schedule =
+    final BlockNumberStreamingProtocolSchedule schedule =
         createProtocolSchedule(
             JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
             List.of(
@@ -89,15 +91,17 @@ public class IbftProtocolScheduleTest {
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 2)).isTrue();
   }
 
-  private ProtocolSchedule createProtocolSchedule(
+  private BlockNumberStreamingProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions genesisConfig, final List<ForkSpec<BftConfigOptions>> forks) {
-    return IbftProtocolSchedule.create(
-        genesisConfig,
-        new ForksSchedule<>(forks),
-        PrivacyParameters.DEFAULT,
-        false,
-        bftExtraDataCodec,
-        EvmConfiguration.DEFAULT);
+    return new BlockNumberStreamingProtocolSchedule(
+        (MutableProtocolSchedule)
+            IbftProtocolScheduleBuilder.create(
+                genesisConfig,
+                new ForksSchedule<>(forks),
+                PrivacyParameters.DEFAULT,
+                false,
+                bftExtraDataCodec,
+                EvmConfiguration.DEFAULT));
   }
 
   private boolean validateHeader(

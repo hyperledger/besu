@@ -28,15 +28,25 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class DefaultTimestampSchedule implements TimestampSchedule {
-  private final NavigableSet<ScheduledProtocolSpec> protocolSpecs =
+
+  @VisibleForTesting
+  protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::milestone).reversed());
+
   private final Optional<BigInteger> chainId;
 
   DefaultTimestampSchedule(final Optional<BigInteger> chainId) {
     this.chainId = chainId;
+  }
+
+  @VisibleForTesting
+  protected DefaultTimestampSchedule(final DefaultTimestampSchedule timestampSchedule) {
+    this.chainId = timestampSchedule.chainId;
+    this.protocolSpecs = timestampSchedule.protocolSpecs;
   }
 
   @Override
@@ -47,11 +57,6 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
       }
     }
     return Optional.empty();
-  }
-
-  @Override
-  public Stream<Long> streamMilestoneBlocks() {
-    return protocolSpecs.stream().map(ScheduledProtocolSpec::milestone).sorted();
   }
 
   @Override

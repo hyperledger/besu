@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -64,17 +64,17 @@ public class NullNode<V> implements Node<V> {
 
   @Override
   public Bytes getRlp() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE;
+    return MerkleTrie.EMPTY_TRIE_NODE;
   }
 
   @Override
   public Bytes getRlpRef() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE;
+    return MerkleTrie.EMPTY_TRIE_NODE;
   }
 
   @Override
   public Bytes32 getHash() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH;
+    return MerkleTrie.EMPTY_TRIE_NODE_HASH;
   }
 
   @Override
