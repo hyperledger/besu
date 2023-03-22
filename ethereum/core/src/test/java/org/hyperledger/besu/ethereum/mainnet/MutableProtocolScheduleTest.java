@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -118,6 +119,22 @@ public class MutableProtocolScheduleTest {
     when(blockHeader.getNumber()).thenReturn(1L);
 
     final ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
+
+    assertThat(spec).isEqualTo(spec2);
+  }
+
+  @Test
+  public void getForNextBlockHeader_shouldGetHeaderForNextBlockNumber() {
+    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+
+    final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(CHAIN_ID);
+    protocolSchedule.putMilestone(0, spec1);
+    protocolSchedule.putMilestone(1, spec2);
+
+    final BlockHeader blockHeader =
+        BlockHeaderBuilder.createDefault().number(0L).buildBlockHeader();
+    final ProtocolSpec spec = protocolSchedule.getForNextBlockHeader(blockHeader, 0);
 
     assertThat(spec).isEqualTo(spec2);
   }
