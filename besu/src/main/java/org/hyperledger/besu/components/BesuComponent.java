@@ -40,25 +40,28 @@ public interface BesuComponent {
 
   /**
    * the configured and parsed representation of the user issued command to run Besu
+   *
    * @return BesuCommand
    */
   BesuCommand getBesuCommand();
 
   /**
    * a cached trie node loader
+   *
    * @return CachedMerkleTrieLoader
    */
   CachedMerkleTrieLoader getCachedMerkleTrieLoader();
 
   /**
-   * a metrics system that is observable by a Prometheus or OTEL metrics collection
-   * subsystem
+   * a metrics system that is observable by a Prometheus or OTEL metrics collection subsystem
+   *
    * @return ObservableMetricsSystem
    */
   ObservableMetricsSystem getObservableMetricsSystem();
 
   /**
    * a Logger specifically configured to provide configuration feedback to users.
+   *
    * @return Logger
    */
   @Named("besuCommandLogger")
