@@ -88,7 +88,6 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.components.DaggerBesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -1332,17 +1331,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
 
+  private BesuComponent besuComponent;
+  private final Supplier<ObservableMetricsSystem> metricsSystem =
+      Suppliers.memoize(
+          () -> {
+            return besuComponent == null
+                ? MetricsSystemFactory.create(metricsConfiguration())
+                : besuComponent.getObservableMetricsSystem();
+          });
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
   /** Sets GoQuorum compatibility mode. */
   protected Boolean isGoQuorumCompatibilityMode = false;
 
-  private final BesuComponent besuComponent;
   /**
    * Besu command constructor.
    *
-   * @param besuComponent BesuComponent instance to provide dependencies
+   * @param logger Logger instance
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -1352,7 +1358,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param environment Environment variables map
    */
   public BesuCommand(
-      final BesuComponent besuComponent,
+      final Logger logger,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -1361,7 +1367,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment) {
     this(
-        besuComponent,
+        logger,
         rlpBlockImporter,
         jsonBlockImporterFactory,
         rlpBlockExporterFactory,
@@ -1380,7 +1386,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /**
    * Overloaded Besu command constructor visible for testing.
    *
-   * @param besuComponent BesuComponent instance for providing dependencies
+   * @param logger Logger instance
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -1397,7 +1403,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   @VisibleForTesting
   protected BesuCommand(
-      final BesuComponent besuComponent,
+      final Logger logger,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -1411,8 +1417,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PrivacyPluginServiceImpl privacyPluginService,
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
-    this.besuComponent = besuComponent;
-    this.logger = besuComponent.getBesuCommandLogger();
+    this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
@@ -1446,7 +1451,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuExecutionExceptionHandler executionExceptionHandler,
       final InputStream in,
       final String... args) {
-
 
     toCommandLine();
 
@@ -1495,7 +1499,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Starting Besu");
 
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-      vertx = createVertx(createVertxOptions(besuComponent.getObservableMetricsSystem()));
+      vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
       validateOptions();
       configure();
@@ -1782,7 +1786,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void setReleaseMetrics() {
-    besuComponent.getObservableMetricsSystem()
+    metricsSystem
+        .get()
         .createLabelledGauge(
             StandardMetricCategory.PROCESS, "release", "Release information", "version")
         .labels(() -> 1, BesuInfo.version());
@@ -2244,7 +2249,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuController buildController() {
     try {
-      return getControllerBuilder().besuComponent(this.besuComponent).build();
+      return this.besuComponent == null
+          ? getControllerBuilder().build()
+          : getControllerBuilder().besuComponent(this.besuComponent).build();
     } catch (final Exception e) {
       throw new ExecutionException(this.commandLine, e.getMessage(), e);
     }
@@ -2286,7 +2293,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .build())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
-        .metricsSystem(besuComponent.getObservableMetricsSystem())
+        .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters())
         .pkiBlockCreationConfiguration(maybePkiBlockCreationConfiguration())
@@ -2987,7 +2994,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     p2pTLSConfiguration.ifPresent(runnerBuilder::p2pTLSConfiguration);
 
-    final ObservableMetricsSystem metricsSystem = this.besuComponent.getObservableMetricsSystem();
+    final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
     final Runner runner =
         runnerBuilder
             .vertx(vertx)
@@ -3224,7 +3231,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return Instance of MetricsSystem
    */
   public MetricsSystem getMetricsSystem() {
-    return besuComponent.getObservableMetricsSystem();
+    return metricsSystem.get();
   }
 
   private Set<EnodeURL> loadStaticNodes() throws IOException {
@@ -3514,6 +3521,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 "PoS checkpoint sync requires TTD in the genesis file");
           });
     }
+  }
+
+  public void setBesuComponent(final BesuComponent besuComponent) {
+    this.besuComponent = besuComponent;
   }
 
   private boolean isMergeEnabled() {

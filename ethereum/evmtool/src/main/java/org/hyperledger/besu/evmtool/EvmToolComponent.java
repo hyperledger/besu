@@ -36,8 +36,8 @@ import dagger.Component;
       DataStoreModule.class,
       BlockchainModule.class,
       EvmToolCommandOptionsModule.class,
+      MetricsConfigurationModule.class,
       MetricsSystemModule.class,
-      MetricsConfigurationModule.class
     })
 public interface EvmToolComponent {
 

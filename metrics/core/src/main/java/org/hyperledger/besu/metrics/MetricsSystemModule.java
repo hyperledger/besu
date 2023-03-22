@@ -19,7 +19,6 @@ package org.hyperledger.besu.metrics;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Module;

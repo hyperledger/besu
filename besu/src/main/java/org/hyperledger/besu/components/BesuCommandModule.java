@@ -37,10 +37,11 @@ public class BesuCommandModule {
 
   @Provides
   @Singleton
-  BesuCommand provideBesuCommand(final BesuComponent bc) {
+  BesuCommand provideBesuCommand(
+      @Named("besuCommandLogger") final Logger logger, final BesuComponent besuComponent) {
     final BesuCommand besuCommand =
         new BesuCommand(
-            bc,
+            logger,
             RlpBlockImporter::new,
             JsonBlockImporter::new,
             RlpBlockExporter::new,
@@ -48,6 +49,7 @@ public class BesuCommandModule {
             new BesuController.Builder(),
             new BesuPluginContextImpl(),
             System.getenv());
+    besuCommand.setBesuComponent(besuComponent);
     besuCommand.toCommandLine();
     return besuCommand;
   }
