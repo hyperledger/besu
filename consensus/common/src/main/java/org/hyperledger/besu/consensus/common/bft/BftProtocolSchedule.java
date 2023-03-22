@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
+import java.util.List;
+
 /**
  * A Bft-specific wrapper around a ProtocolSchedule that is allowed to look up ProtocolSpecs by
  * block number Extending MutableProtocolSchedule gives this class access to the protocolSpecs
@@ -57,5 +59,9 @@ public class BftProtocolSchedule extends MutableProtocolSchedule {
       }
     }
     return null;
+  }
+
+  public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
+    return protocolSpecs.stream().toList();
   }
 }
