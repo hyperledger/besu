@@ -19,6 +19,7 @@ import static junit.framework.TestCase.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.KeyValueMerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -71,6 +72,18 @@ public abstract class AbstractMerklePatriciaTrieTest {
 
     final String value2 = "value2";
     trie.put(key, value2);
+    assertThat(trie.get(key)).isEqualTo(Optional.of(value2));
+  }
+
+  @Test
+  public void replaceSingleValueWithPath() {
+    final Bytes key = Bytes.of(1);
+    final String value1 = "value1";
+    trie.putPath(CompactEncoding.bytesToPath(key), value1);
+    assertThat(trie.get(key)).isEqualTo(Optional.of(value1));
+
+    final String value2 = "value2";
+    trie.putPath(CompactEncoding.bytesToPath(key), value2);
     assertThat(trie.get(key)).isEqualTo(Optional.of(value2));
   }
 

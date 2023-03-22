@@ -47,10 +47,11 @@ public class CommitVisitor<V> implements LocationNodeVisitor<V> {
       return;
     }
 
-    for (byte i = 0; (int) i < branchNode.maxChild(); ++i) {
-      final Node<V> child = branchNode.child(i);
+    for (int i = 0; i < branchNode.maxChild(); ++i) {
+      Bytes index = Bytes.of(i);
+      final Node<V> child = branchNode.child((byte) i);
       if (child.isDirty()) {
-        child.accept(Bytes.concatenate(location, Bytes.of(i)), this);
+        child.accept(Bytes.concatenate(location, index), this);
       }
     }
 
