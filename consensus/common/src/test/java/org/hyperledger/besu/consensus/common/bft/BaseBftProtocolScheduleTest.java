@@ -28,8 +28,10 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -208,11 +210,13 @@ public class BaseBftProtocolScheduleTest {
         new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
     blockRewardTransition.setBlockRewardWei(forkBlockReward);
 
-    final ProtocolSchedule schedule =
-        createProtocolSchedule(
-            List.of(
-                new ForkSpec<>(0, configOptions),
-                new ForkSpec<>(transitionBlock, blockRewardTransition)));
+    final BlockNumberStreamingProtocolSchedule schedule =
+        new BlockNumberStreamingProtocolSchedule(
+            (MutableProtocolSchedule)
+                createProtocolSchedule(
+                    List.of(
+                        new ForkSpec<>(0, configOptions),
+                        new ForkSpec<>(transitionBlock, blockRewardTransition))));
 
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(2);
     assertThat(schedule.getByBlockNumber(0).getBlockReward())

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,21 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.data.BlockContext;
+package org.hyperledger.besu.ethereum.core;
 
-import java.util.Optional;
+import java.util.stream.Stream;
 
-/** A service that plugins can use to query blocks by number */
-@Unstable
-public interface BlockchainService extends BesuService {
-  /**
-   * Gets block by number
-   *
-   * @param number the block number
-   * @return the BlockContext
-   */
-  Optional<BlockContext> getBlockByNumber(final long number);
+public interface MilestoneStreamingProtocolSchedule {
+
+  Stream<Long> streamMilestoneBlocks();
 }
