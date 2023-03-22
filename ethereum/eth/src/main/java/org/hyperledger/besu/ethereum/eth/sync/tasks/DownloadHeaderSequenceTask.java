@@ -166,7 +166,12 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
           // Ask for count + 1 because we'll retrieve the previous header as well
           final AbstractGetHeadersFromPeerTask headersTask =
               GetHeadersFromPeerByHashTask.endingAtHash(
-                  protocolSchedule, ethContext, referenceHash, count + 1, metricsSystem);
+                  protocolSchedule,
+                  ethContext,
+                  referenceHash,
+                  referenceHeaderForNextRequest.getNumber(),
+                  count + 1,
+                  metricsSystem);
           assignedPeer.ifPresent(headersTask::assignPeer);
           return headersTask.run();
         });
@@ -194,7 +199,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
               child =
                   (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
             }
-            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(child);
             final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
 
             if (!validateHeader(child, header)) {
@@ -253,7 +258,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       return false;
     }
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(child);
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     return blockHeaderValidator.validateHeader(
         child, header, protocolContext, validationPolicy.getValidationModeForNextBlock());

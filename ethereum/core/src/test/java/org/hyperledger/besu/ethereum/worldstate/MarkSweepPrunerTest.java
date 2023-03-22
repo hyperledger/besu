@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -58,7 +59,7 @@ public class MarkSweepPrunerTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final Map<Bytes, byte[]> hashValueStore = spy(new HashMap<>());
+  private final Map<Bytes, Optional<byte[]>> hashValueStore = spy(new HashMap<>());
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
   private final WorldStateStorage worldStateStorage =
       spy(new WorldStateKeyValueStorage(stateStorage));
@@ -113,7 +114,7 @@ public class MarkSweepPrunerTest {
 
     // Check that storage contains only the values we expect
     assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
-    assertThat(hashValueStore.values())
+    assertThat(hashValueStore.values().stream().map(Optional::get))
         .containsExactlyInAnyOrderElementsOf(
             expectedNodes.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toSet()));
   }
@@ -219,7 +220,7 @@ public class MarkSweepPrunerTest {
 
   private Set<Bytes> collectWorldStateNodes(final Hash stateRootHash, final Set<Bytes> collector) {
     final List<Hash> storageRoots = new ArrayList<>();
-    final MerklePatriciaTrie<Bytes32, Bytes> stateTrie = createStateTrie(stateRootHash);
+    final MerkleTrie<Bytes32, Bytes> stateTrie = createStateTrie(stateRootHash);
 
     // Collect storage roots and code
     stateTrie
@@ -238,15 +239,14 @@ public class MarkSweepPrunerTest {
     collectTrieNodes(stateTrie, collector);
     // Collect storage nodes
     for (Hash storageRoot : storageRoots) {
-      final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = createStorageTrie(storageRoot);
+      final MerkleTrie<Bytes32, Bytes> storageTrie = createStorageTrie(storageRoot);
       collectTrieNodes(storageTrie, collector);
     }
 
     return collector;
   }
 
-  private void collectTrieNodes(
-      final MerklePatriciaTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
+  private void collectTrieNodes(final MerkleTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
     final Bytes32 rootHash = trie.getRootHash();
     trie.visitAll(
         (node) -> {
@@ -256,7 +256,7 @@ public class MarkSweepPrunerTest {
         });
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
+  private MerkleTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode,
         rootHash,
@@ -264,7 +264,7 @@ public class MarkSweepPrunerTest {
         Function.identity());
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
+  private MerkleTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
         rootHash,
@@ -275,7 +275,7 @@ public class MarkSweepPrunerTest {
   // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
-    public TestInMemoryStorage(final Map<Bytes, byte[]> hashValueStore) {
+    public TestInMemoryStorage(final Map<Bytes, Optional<byte[]>> hashValueStore) {
       super(hashValueStore);
     }
   }

@@ -28,7 +28,20 @@ plugins {
   id 'me.champeau.jmh' version '0.6.6' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
+  id 'org.sonarqube' version '3.4.0.2513'
 }
+
+sonarqube {
+  properties {
+    property "sonar.projectKey", "hyperledger_besu"
+    property "sonar.organization", "hyperledger"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+    property "sonar.coverage.exclusions", "acceptance-tests/**/*"
+  }
+}
+
+project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
   throw new GradleException("Java 17 or later is required to build Besu.\n" +
@@ -120,6 +133,21 @@ allprojects {
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
     mavenCentral()
+
+    // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
+    def ethExecSpecTestsRepo = ivy {
+      url 'https://github.com'
+      patternLayout {
+        artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
+      }
+      metadataSources {
+        artifact()
+      }
+    }
+    exclusiveContent {
+      forRepositories(ethExecSpecTestsRepo)
+      filter { includeModule('ethereum', 'execution-spec-tests')}
+    }
   }
 
   dependencies { errorprone 'com.google.errorprone:error_prone_core' }
@@ -624,6 +652,7 @@ def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
   "openjdk-17",
   "openjdk-17-debug",
+  "openj9-jdk-17",
   "graalvm",
   "openjdk-latest"
 ]
@@ -715,10 +744,7 @@ task dockerUpload {
     additionalTags.add('develop')
   }
 
-  def isInterimBuild = (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
-  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
-
-  if (!isInterimBuild) {
+  if (!isInterimBuild(dockerBuildVersion)) {
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -778,7 +804,7 @@ task manifestDocker {
     tags.add("${dockerImageName}:develop")
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  if (!isInterimBuild(dockerBuildVersion)) {
     tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
@@ -850,7 +876,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*/.idea/.*)",
     "(.*/out/.*)",
     "(.*/build/.*)",
-    "(.*/src/[^/]+/generated/.*)",
+    "(.*/src/[^/]+/generated/.*)"
   ].join("|")
 
 }
@@ -927,6 +953,12 @@ def getCheckedOutGitCommitHash(length = 8) {
     logger.info('Error retrieving git commit', e)
     return "xxxxxxxx"
   }
+}
+
+// Takes the version and if it contains SNAPSHOT, alpha, beta or RC in version then return true indicating an interim build
+def isInterimBuild(dockerBuildVersion) {
+  return (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
 }
 
 tasks.register("verifyDistributions") {

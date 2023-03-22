@@ -156,7 +156,7 @@ public class ConfigurationOverviewBuilder {
    */
   public String build() {
     final List<String> lines = new ArrayList<>();
-    lines.add("Besu " + BesuInfo.class.getPackage().getImplementationVersion());
+    lines.add("Besu version " + BesuInfo.class.getPackage().getImplementationVersion());
     lines.add("");
     lines.add("Configuration:");
 

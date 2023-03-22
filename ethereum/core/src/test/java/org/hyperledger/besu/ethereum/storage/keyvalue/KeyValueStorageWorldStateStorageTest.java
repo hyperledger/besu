@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage.Updater;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -36,18 +36,16 @@ public class KeyValueStorageWorldStateStorageTest {
   @Test
   public void getAccountStateTrieNode_returnsEmptyNode() {
     final WorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(
-            storage.getAccountStateTrieNode(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
   public void getAccountStorageTrieNode_returnsEmptyNode() {
     final WorldStateKeyValueStorage storage = emptyStorage();
     assertThat(
-            storage.getAccountStorageTrieNode(
-                null, Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+            storage.getAccountStorageTrieNode(null, Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
@@ -59,21 +57,17 @@ public class KeyValueStorageWorldStateStorageTest {
   @Test
   public void getNodeData_returnsEmptyNode() {
     final WorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(storage.getNodeData(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
   public void getCode_saveAndGetSpecialValues() {
     final WorldStateKeyValueStorage storage = emptyStorage();
-    storage
-        .updater()
-        .putCode(null, MerklePatriciaTrie.EMPTY_TRIE_NODE)
-        .putCode(null, Bytes.EMPTY)
-        .commit();
+    storage.updater().putCode(null, MerkleTrie.EMPTY_TRIE_NODE).putCode(null, Bytes.EMPTY).commit();
 
-    assertThat(storage.getCode(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, null))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getCode(MerkleTrie.EMPTY_TRIE_NODE_HASH, null))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
     assertThat(storage.getCode(Hash.EMPTY, null)).contains(Bytes.EMPTY);
   }
 
@@ -92,13 +86,12 @@ public class KeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStateTrieNode(
-            null, Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE), MerklePatriciaTrie.EMPTY_TRIE_NODE)
+            null, Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
         .putAccountStateTrieNode(null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
-    assertThat(
-            storage.getAccountStateTrieNode(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
   }
 
@@ -117,17 +110,13 @@ public class KeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStorageTrieNode(
-            null,
-            null,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
+            null, null, Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
         .putAccountStorageTrieNode(null, null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
     assertThat(
-            storage.getAccountStorageTrieNode(
-                null, Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+            storage.getAccountStorageTrieNode(null, Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
     assertThat(storage.getAccountStorageTrieNode(null, Bytes.EMPTY, Hash.EMPTY))
         .contains(Bytes.EMPTY);
   }
@@ -147,15 +136,12 @@ public class KeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStorageTrieNode(
-            null,
-            null,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
+            null, null, Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
         .putAccountStorageTrieNode(null, null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
-    assertThat(storage.getNodeData(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
     assertThat(storage.getNodeData(Bytes.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
   }
 

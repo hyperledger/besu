@@ -313,11 +313,20 @@ public class ForkIdTest {
             empty()
           },
           {
-            "Sepolia // Future",
+            "Sepolia // Shanghai",
             Network.SEPOLIA,
             1735371L,
             0L,
-            ForkIdTestUtil.wantForkId("0xb96cbd13", 0L),
+            ForkIdTestUtil.wantForkId("0xb96cbd13", 1677557088L),
+            Optional.of(ForkIds.SEPOLIA),
+            empty()
+          },
+          {
+            "Sepolia // Future",
+            Network.SEPOLIA,
+            1735372L,
+            1677557088L,
+            ForkIdTestUtil.wantForkId("0xf7f9bc08", 0L),
             Optional.of(ForkIds.SEPOLIA),
             empty()
           },

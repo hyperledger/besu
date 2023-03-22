@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -70,6 +68,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
   private boolean isCheckpointPostMergeSync;
+  private boolean isPostMergeAtGenesis;
 
   // TODO: cleanup - isChainPruningEnabled will not be required after
   // https://github.com/hyperledger/besu/pull/4703 is merged.
@@ -238,12 +237,12 @@ public class PostMergeContext implements MergeContext {
       maybeCurrBestBlock.ifPresentOrElse(
           currBestBlock -> {
             if (compareByGasUsedDesc.compare(newBlockWithReceipts, currBestBlock) < 0) {
-              debugLambda(
-                  LOG,
-                  "New proposal for payloadId {} {} is better than the previous one {}",
-                  payloadId::toString,
-                  () -> logBlockProposal(newBlockWithReceipts.getBlock()),
-                  () -> logBlockProposal(currBestBlock.getBlock()));
+              LOG.atDebug()
+                  .setMessage("New proposal for payloadId {} {} is better than the previous one {}")
+                  .addArgument(payloadId)
+                  .addArgument(() -> logBlockProposal(newBlockWithReceipts.getBlock()))
+                  .addArgument(() -> logBlockProposal(currBestBlock.getBlock()))
+                  .log();
               blocksInProgress.removeAll(
                   retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
               blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts));
@@ -251,14 +250,15 @@ public class PostMergeContext implements MergeContext {
           },
           () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts)));
 
-      debugLambda(
-          LOG,
-          "Current best proposal for payloadId {} {}",
-          payloadId::toString,
-          () ->
-              retrieveBlockById(payloadId)
-                  .map(bb -> logBlockProposal(bb.getBlock()))
-                  .orElse("N/A"));
+      LOG.atDebug()
+          .setMessage("Current best proposal for payloadId {} {}")
+          .addArgument(payloadId)
+          .addArgument(
+              () ->
+                  retrieveBlockById(payloadId)
+                      .map(bb -> logBlockProposal(bb.getBlock()))
+                      .orElse("N/A"))
+          .log();
     }
   }
 
@@ -328,5 +328,21 @@ public class PostMergeContext implements MergeContext {
   @Override
   public boolean isCheckpointPostMergeSync() {
     return this.isCheckpointPostMergeSync;
+  }
+
+  @Override
+  public boolean isPostMergeAtGenesis() {
+    return this.isPostMergeAtGenesis;
+  }
+
+  /**
+   * Sets whether it is post merge at genesis
+   *
+   * @param isPostMergeAtGenesis the is post merge at genesis state
+   * @return the post merge context
+   */
+  public PostMergeContext setPostMergeAtGenesis(final boolean isPostMergeAtGenesis) {
+    this.isPostMergeAtGenesis = isPostMergeAtGenesis;
+    return this;
   }
 }

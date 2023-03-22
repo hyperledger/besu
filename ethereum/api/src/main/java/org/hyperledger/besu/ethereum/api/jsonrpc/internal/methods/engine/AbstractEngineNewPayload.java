@@ -22,8 +22,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
@@ -98,7 +96,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     Object reqId = requestContext.getRequest().getId();
 
-    traceLambda(LOG, "blockparam: {}", () -> Json.encodePrettily(blockParam));
+    LOG.atTrace()
+        .setMessage("blockparam: {}")
+        .addArgument(() -> Json.encodePrettily(blockParam))
+        .log();
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
@@ -203,8 +204,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             newBlockHeader, new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
 
     if (parentHeader.isEmpty()) {
-      debugLambda(
-          LOG, "Parent of block {} is not present, append it to backward sync", block::toLogString);
+      LOG.atDebug()
+          .setMessage("Parent of block {} is not present, append it to backward sync")
+          .addArgument(block::toLogString)
+          .log();
       mergeCoordinator.appendNewPayloadToSync(block);
 
       return respondWith(reqId, blockParam, null, SYNCING);
@@ -213,6 +216,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     // TODO: post-merge cleanup
     if (requireTerminalPoWBlockValidation()
         && !mergeContext.get().isCheckpointPostMergeSync()
+        && !mergeContext.get().isPostMergeAtGenesis()
         && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)
         && !mergeContext.get().isChainPruningEnabled()) {
       mergeCoordinator.addBadBlock(block, Optional.empty());
@@ -265,14 +269,15 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       throw new IllegalArgumentException(
           "Don't call respondWith() with invalid status of " + status.toString());
     }
-    debugLambda(
-        LOG,
-        "New payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}",
-        () -> param.getBlockNumber(),
-        () -> param.getBlockHash(),
-        () -> param.getParentHash(),
-        () -> latestValidHash == null ? null : latestValidHash.toHexString(),
-        status::name);
+    LOG.atDebug()
+        .setMessage(
+            "New payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}")
+        .addArgument(param::getBlockNumber)
+        .addArgument(param::getBlockHash)
+        .addArgument(param::getParentHash)
+        .addArgument(() -> latestValidHash == null ? null : latestValidHash.toHexString())
+        .addArgument(status::name)
+        .log();
     return new JsonRpcSuccessResponse(
         requestId, new EnginePayloadStatusResult(status, latestValidHash, Optional.empty()));
   }

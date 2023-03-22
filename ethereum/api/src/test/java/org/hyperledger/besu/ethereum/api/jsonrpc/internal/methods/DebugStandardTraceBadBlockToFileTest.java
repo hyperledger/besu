@@ -17,12 +17,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -31,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -38,7 +41,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -49,6 +54,8 @@ public class DebugStandardTraceBadBlockToFileTest {
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final Blockchain blockchain = mock(Blockchain.class);
+  private final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -56,6 +63,18 @@ public class DebugStandardTraceBadBlockToFileTest {
   private final DebugStandardTraceBadBlockToFile debugStandardTraceBadBlockToFile =
       new DebugStandardTraceBadBlockToFile(
           () -> transactionTracer, blockchainQueries, protocolSchedule, folder.getRoot().toPath());
+
+  @Before
+  public void setup() {
+    doAnswer(
+            invocation ->
+                invocation
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
+                    .apply(mutableWorldState))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
+  }
 
   @Test
   public void nameShouldBeDebugTraceTransaction() {
@@ -88,8 +107,9 @@ public class DebugStandardTraceBadBlockToFileTest {
     when(protocolSpec.getBadBlocksManager()).thenReturn(badBlockManager);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getChainHeadHeader()).thenReturn(new BlockHeaderTestFixture().buildHeader());
-    when(protocolSchedule.getByBlockNumber(blockHeader.getNumber())).thenReturn(protocolSpec);
-    when(transactionTracer.traceTransactionToFile(eq(block.getHash()), any(), any()))
+    when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(protocolSpec);
+    when(transactionTracer.traceTransactionToFile(
+            any(MutableWorldState.class), eq(block.getHash()), any(), any()))
         .thenReturn(paths);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugStandardTraceBadBlockToFile.response(request);

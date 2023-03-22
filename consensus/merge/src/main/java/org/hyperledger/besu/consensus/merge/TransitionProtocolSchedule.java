@@ -14,21 +14,24 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +64,29 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   /**
+   * Create a Proof-of-Stake protocol schedule from a config object
+   *
+   * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the
+   *     milestone starting points
+   * @return an initialised TransitionProtocolSchedule using post-merge defaults
+   */
+  public static TransitionProtocolSchedule fromConfig(
+      final GenesisConfigOptions genesisConfigOptions) {
+    ProtocolSchedule preMergeProtocolSchedule =
+        MainnetProtocolSchedule.fromConfig(genesisConfigOptions);
+    ProtocolSchedule postMergeProtocolSchedule =
+        MergeProtocolSchedule.create(genesisConfigOptions, false);
+    TimestampSchedule timestampSchedule =
+        MergeProtocolSchedule.createTimestamp(
+            genesisConfigOptions, PrivacyParameters.DEFAULT, false);
+    return new TransitionProtocolSchedule(
+        preMergeProtocolSchedule,
+        postMergeProtocolSchedule,
+        PostMergeContext.get(),
+        timestampSchedule);
+  }
+
+  /**
    * Gets pre merge schedule.
    *
    * @return the pre merge schedule
@@ -79,13 +105,29 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   /**
-   * Gets by block header.
+   * Gets protocol spec by block header.
    *
    * @param blockHeader the block header
-   * @return the by block header
+   * @return the ProtocolSpec to be used by the provided block
    */
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    return this.timestampSchedule
+        .getByTimestamp(blockHeader.getTimestamp())
+        .orElseGet(
+            () ->
+                transitionUtils.dispatchFunctionAccordingToMergeState(
+                    protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader)));
+  }
+
+  /**
+   * Gets the protocol spec by block header, with some additional logic used by backwards sync (BWS)
+   *
+   * @param blockHeader the block header
+   * @return the ProtocolSpec to be used by the provided block
+   */
+  public ProtocolSpec getByBlockHeaderWithTransitionReorgHandling(
+      final ProcessableBlockHeader blockHeader) {
     return this.timestampSchedule
         .getByTimestamp(blockHeader.getTimestamp())
         .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
@@ -98,11 +140,11 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
       // if head is not post-merge, return pre-merge schedule:
       if (!mergeContext.isPostMerge()) {
-        debugLambda(
-            LOG,
-            "for {} returning a pre-merge schedule because we are not post-merge",
-            blockHeader::toLogString);
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+        LOG.atDebug()
+            .setMessage("for {} returning a pre-merge schedule because we are not post-merge")
+            .addArgument(blockHeader::toLogString)
+            .log();
+        return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
 
       // otherwise check to see if this block represents a re-org TTD block:
@@ -113,27 +155,30 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
               .orElse(Difficulty.ZERO);
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
       Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
-      debugLambda(
-          LOG,
-          " block {} ttd is: {}, parent total diff is: {}, this total diff is: {}",
-          blockHeader::toLogString,
-          () -> terminalDifficulty,
-          () -> parentDifficulty,
-          () -> thisDifficulty);
+      LOG.atDebug()
+          .setMessage(" block {} ttd is: {}, parent total diff is: {}, this total diff is: {}")
+          .addArgument(blockHeader::toLogString)
+          .addArgument(terminalDifficulty)
+          .addArgument(parentDifficulty)
+          .addArgument(thisDifficulty)
+          .log();
 
       // if this block is pre-merge or a TTD block
       if (thisDifficulty.lessThan(terminalDifficulty)
           || TransitionUtils.isTerminalProofOfWorkBlock(blockHeader, protocolContext)) {
-        debugLambda(
-            LOG,
-            "returning a pre-merge schedule because block {} is pre-merge or TTD",
-            blockHeader::toLogString);
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+        LOG.atDebug()
+            .setMessage("returning a pre-merge schedule because block {} is pre-merge or TTD")
+            .addArgument(blockHeader::toLogString)
+            .log();
+        return getPreMergeSchedule().getByBlockHeader(blockHeader);
       }
     }
     // else return post-merge schedule
-    debugLambda(LOG, " for {} returning a post-merge schedule", blockHeader::toLogString);
-    return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+    LOG.atDebug()
+        .setMessage(" for {} returning a post-merge schedule")
+        .addArgument(blockHeader::toLogString)
+        .log();
+    return getPostMergeSchedule().getByBlockHeader(blockHeader);
   }
 
   /**
@@ -155,15 +200,18 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
                     protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
   }
 
-  /**
-   * Stream milestone blocks stream.
-   *
-   * @return the stream
-   */
   @Override
-  public Stream<Long> streamMilestoneBlocks() {
-    return transitionUtils.dispatchFunctionAccordingToMergeState(
-        ProtocolSchedule::streamMilestoneBlocks);
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return timestampSchedule.anyMatch(predicate)
+        || transitionUtils.dispatchFunctionAccordingToMergeState(
+            schedule -> schedule.anyMatch(predicate));
+  }
+
+  @Override
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
+    return timestampSchedule.isOnMilestoneBoundary(blockHeader)
+        || transitionUtils.dispatchFunctionAccordingToMergeState(
+            schedule -> schedule.isOnMilestoneBoundary(blockHeader));
   }
 
   /**

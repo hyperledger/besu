@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.evm.code;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -35,62 +34,57 @@ public final class CodeFactory {
    * Create Code.
    *
    * @param bytes the bytes
-   * @param codeHash the code hash
    * @param maxEofVersion the max eof version
    * @param inCreateOperation the in create operation
    * @return the code
    */
   public static Code createCode(
-      final Bytes bytes,
-      final Hash codeHash,
-      final int maxEofVersion,
-      final boolean inCreateOperation) {
+      final Bytes bytes, final int maxEofVersion, final boolean inCreateOperation) {
     if (maxEofVersion == 0) {
-      return new CodeV0(bytes, codeHash);
+      return new CodeV0(bytes);
     } else if (maxEofVersion == 1) {
       int codeSize = bytes.size();
       if (codeSize > 0 && bytes.get(0) == EOF_LEAD_BYTE) {
         if (codeSize == 1 && !inCreateOperation) {
-          return new CodeV0(bytes, codeHash);
+          return new CodeV0(bytes);
         }
         if (codeSize < 3) {
-          return new CodeInvalid(codeHash, bytes, "EOF Container too short");
+          return new CodeInvalid(bytes, "EOF Container too short");
         }
         if (bytes.get(1) != 0) {
           if (inCreateOperation) {
             // because some 0xef code made it to mainnet, this is only an error at contract create
-            return new CodeInvalid(codeHash, bytes, "Incorrect second byte");
+            return new CodeInvalid(bytes, "Incorrect second byte");
           } else {
-            return new CodeV0(bytes, codeHash);
+            return new CodeV0(bytes);
           }
         }
         int version = bytes.get(2);
         if (version != 1) {
-          return new CodeInvalid(codeHash, bytes, "Unsupported EOF Version: " + version);
+          return new CodeInvalid(bytes, "Unsupported EOF Version: " + version);
         }
 
         final EOFLayout layout = EOFLayout.parseEOF(bytes);
         if (!layout.isValid()) {
-          return new CodeInvalid(
-              codeHash, bytes, "Invalid EOF Layout: " + layout.getInvalidReason());
+          return new CodeInvalid(bytes, "Invalid EOF Layout: " + layout.getInvalidReason());
         }
 
         final String codeValidationError = CodeV1Validation.validateCode(layout);
         if (codeValidationError != null) {
-          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + codeValidationError);
+          return new CodeInvalid(bytes, "EOF Code Invalid : " + codeValidationError);
         }
 
         final String stackValidationError = CodeV1Validation.validateStack(layout);
         if (stackValidationError != null) {
-          return new CodeInvalid(codeHash, bytes, "EOF Code Invalid : " + stackValidationError);
+          return new CodeInvalid(bytes, "EOF Code Invalid : " + stackValidationError);
         }
 
-        return new CodeV1(codeHash, layout);
+        return new CodeV1(layout);
       } else {
-        return new CodeV0(bytes, codeHash);
+        return new CodeV0(bytes);
       }
     } else {
-      return new CodeInvalid(codeHash, bytes, "Unsupported max code version " + maxEofVersion);
+      return new CodeInvalid(bytes, "Unsupported max code version " + maxEofVersion);
     }
   }
 }

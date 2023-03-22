@@ -15,11 +15,12 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdater;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -28,7 +29,9 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -95,15 +98,26 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
+
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
+
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
-      final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
+      final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
+      final Wei dataGasPrice =
+          protocolSpec
+              .getFeeMarket()
+              .dataPrice(
+                  blockchain
+                      .getBlockHeader(blockHeader.getParentHash())
+                      .flatMap(BlockHeader::getExcessDataGas)
+                      .orElse(DataGas.ZERO));
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
@@ -116,7 +130,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               true,
               TransactionValidationParams.processingBlock(),
-              privateMetadataUpdater);
+              privateMetadataUpdater,
+              dataGasPrice);
       if (result.isInvalid()) {
         String errorMessage =
             MessageFormat.format(
@@ -125,8 +140,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 blockHeader.getHash().toHexString(),
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
-        if (worldState instanceof BonsaiPersistedWorldState) {
-          ((BonsaiWorldStateUpdater) worldStateUpdater).reset();
+        if (worldState instanceof BonsaiWorldState) {
+          ((BonsaiWorldStateUpdateAccumulator) worldStateUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
@@ -140,7 +155,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
-        protocolSchedule.getByBlockHeader(blockHeader).getWithdrawalsProcessor();
+        protocolSpec.getWithdrawalsProcessor();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
       try {
         maybeWithdrawalsProcessor
@@ -154,14 +169,20 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
-      if (worldState instanceof BonsaiPersistedWorldState) {
-        ((BonsaiWorldStateUpdater) worldState.updater()).reset();
+      if (worldState instanceof BonsaiWorldState) {
+        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
     try {
       worldState.persist(blockHeader);
+    } catch (MerkleTrieException e) {
+      LOG.trace("Merkle trie exception during Transaction processing ", e);
+      if (worldState instanceof BonsaiWorldState) {
+        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+      }
+      throw e;
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
       return new BlockProcessingResult(Optional.empty(), e);

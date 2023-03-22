@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -97,7 +98,7 @@ public class ProtocolScheduleBuilderTest {
     assertThatThrownBy(() -> builder.createProtocolSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'GrayGlacier' is scheduled for block 11 but it must be on or after block 12.");
+            "Genesis Config Error: 'GrayGlacier' is scheduled for milestone 11 but it must be on or after milestone 12.");
   }
 
   @Test
@@ -107,18 +108,7 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final ProtocolScheduleBuilder builder =
-        new ProtocolScheduleBuilder(
-            configOptions,
-            CHAIN_ID,
-            ProtocolSpecAdapters.create(2, modifier),
-            new PrivacyParameters(),
-            false,
-            false,
-            EvmConfiguration.DEFAULT);
-
-    final MutableProtocolSchedule schedule =
-        (MutableProtocolSchedule) builder.createProtocolSchedule();
+    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(2);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
@@ -136,18 +126,7 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final ProtocolScheduleBuilder builder =
-        new ProtocolScheduleBuilder(
-            configOptions,
-            CHAIN_ID,
-            ProtocolSpecAdapters.create(2, modifier),
-            new PrivacyParameters(),
-            false,
-            false,
-            EvmConfiguration.DEFAULT);
-
-    final MutableProtocolSchedule schedule =
-        (MutableProtocolSchedule) builder.createProtocolSchedule();
+    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(2);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
@@ -165,18 +144,7 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final ProtocolScheduleBuilder builder =
-        new ProtocolScheduleBuilder(
-            configOptions,
-            CHAIN_ID,
-            ProtocolSpecAdapters.create(5, modifier),
-            new PrivacyParameters(),
-            false,
-            false,
-            EvmConfiguration.DEFAULT);
-
-    final MutableProtocolSchedule schedule =
-        (MutableProtocolSchedule) builder.createProtocolSchedule();
+    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(5);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
@@ -186,5 +154,20 @@ public class ProtocolScheduleBuilderTest {
     assertThat(schedule.getByBlockNumber(5).getName()).isEqualTo("Homestead");
 
     verify(modifier, times(1)).apply(any());
+  }
+
+  private BlockNumberStreamingProtocolSchedule createScheduleModifiedAt(final int blockNumber) {
+    final ProtocolScheduleBuilder builder =
+        new ProtocolScheduleBuilder(
+            configOptions,
+            CHAIN_ID,
+            ProtocolSpecAdapters.create(blockNumber, modifier),
+            new PrivacyParameters(),
+            false,
+            false,
+            EvmConfiguration.DEFAULT);
+
+    return new BlockNumberStreamingProtocolSchedule(
+        (MutableProtocolSchedule) builder.createProtocolSchedule());
   }
 }

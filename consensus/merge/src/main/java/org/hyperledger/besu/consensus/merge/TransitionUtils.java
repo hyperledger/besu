@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -62,7 +60,7 @@ public class TransitionUtils<SwitchingObject> {
    *
    * @param consumer the consumer
    */
-  protected void dispatchConsumerAccordingToMergeState(final Consumer<SwitchingObject> consumer) {
+  void dispatchConsumerAccordingToMergeState(final Consumer<SwitchingObject> consumer) {
     consumer.accept(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 
@@ -73,8 +71,7 @@ public class TransitionUtils<SwitchingObject> {
    * @param function the function
    * @return the t
    */
-  protected <T> T dispatchFunctionAccordingToMergeState(
-      final Function<SwitchingObject, T> function) {
+  public <T> T dispatchFunctionAccordingToMergeState(final Function<SwitchingObject, T> function) {
     return function.apply(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 
@@ -116,15 +113,21 @@ public class TransitionUtils<SwitchingObject> {
             // if we cannot find difficulty or are merge-at-genesis
             .orElse(Difficulty.ZERO);
 
-    if (currentChainTotalDifficulty.isZero()) {
-      warnLambda(
-          LOG,
-          "unable to get total difficulty for {}, parent hash {} difficulty not found",
-          header::toLogString,
-          header::getParentHash);
+    final MergeContext consensusContext = context.getConsensusContext(MergeContext.class);
+
+    // Genesis is configured for post-merge we will never have a terminal pow block
+    if (consensusContext.isPostMergeAtGenesis()) {
+      return false;
     }
-    Difficulty configuredTotalTerminalDifficulty =
-        context.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty();
+
+    if (currentChainTotalDifficulty.isZero()) {
+      LOG.atWarn()
+          .setMessage("unable to get total difficulty for {}, parent hash {} difficulty not found")
+          .addArgument(header::toLogString)
+          .addArgument(header::getParentHash)
+          .log();
+    }
+    Difficulty configuredTotalTerminalDifficulty = consensusContext.getTerminalTotalDifficulty();
 
     if (currentChainTotalDifficulty
             .add(headerDifficulty)

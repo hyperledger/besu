@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedSta
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -34,8 +33,8 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -73,7 +72,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
   private final PendingTransactions pendingTransactions;
-  private final ProtocolSchedule protocolSchedule;
+  private final HeaderBasedProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBroadcaster transactionBroadcaster;
   private final MiningParameters miningParameters;
@@ -83,7 +82,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
-      final ProtocolSchedule protocolSchedule,
+      final HeaderBasedProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
@@ -162,7 +161,10 @@ public class TransactionPool implements BlockAddedObserver {
     for (final Transaction transaction : transactions) {
 
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
-        traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
+        LOG.atTrace()
+            .setMessage("Discard already present transaction {}")
+            .addArgument(transaction::toTraceLog)
+            .log();
         // We already have this transaction, don't even validate it.
         duplicateTransactionCounter.labels(REMOTE).inc();
         continue;
@@ -175,22 +177,28 @@ public class TransactionPool implements BlockAddedObserver {
             pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
         switch (status) {
           case ADDED:
-            traceLambda(LOG, "Added remote transaction {}", transaction::toTraceLog);
+            LOG.atTrace()
+                .setMessage("Added remote transaction {}")
+                .addArgument(transaction::toTraceLog)
+                .log();
             addedTransactions.add(transaction);
             break;
           case ALREADY_KNOWN:
-            traceLambda(LOG, "Duplicate remote transaction {}", transaction::toTraceLog);
+            LOG.atTrace()
+                .setMessage("Duplicate remote transaction {}")
+                .addArgument(transaction::toTraceLog)
+                .log();
             duplicateTransactionCounter.labels(REMOTE).inc();
             break;
           default:
-            traceLambda(LOG, "Transaction added status {}", status::name);
+            LOG.atTrace().setMessage("Transaction added status {}").addArgument(status::name).log();
         }
       } else {
-        traceLambda(
-            LOG,
-            "Discard invalid transaction {}, reason {}",
-            transaction::toTraceLog,
-            validationResult.result::getInvalidReason);
+        LOG.atTrace()
+            .setMessage("Discard invalid transaction {}, reason {}")
+            .addArgument(transaction::toTraceLog)
+            .addArgument(validationResult.result::getInvalidReason)
+            .log();
         pendingTransactions
             .signalInvalidAndGetDependentTransactions(transaction)
             .forEach(pendingTransactions::removeTransaction);
@@ -199,12 +207,12 @@ public class TransactionPool implements BlockAddedObserver {
 
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
-      traceLambda(
-          LOG,
-          "Added {} transactions to the pool, current pool size {}, content {}",
-          addedTransactions::size,
-          pendingTransactions::size,
-          () -> pendingTransactions.toTraceLog(true, true));
+      LOG.atTrace()
+          .setMessage("Added {} transactions to the pool, current pool size {}, content {}")
+          .addArgument(addedTransactions::size)
+          .addArgument(pendingTransactions::size)
+          .addArgument(() -> pendingTransactions.toTraceLog(true, true))
+          .log();
     }
   }
 
@@ -256,7 +264,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private MainnetTransactionValidator getTransactionValidator() {
     return protocolSchedule
-        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
         .getTransactionValidator();
   }
 
@@ -277,15 +285,15 @@ public class TransactionPool implements BlockAddedObserver {
 
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
     if (chainHeadBlockHeader == null) {
-      traceLambda(
-          LOG,
-          "rejecting transaction {} due to chain head not available yet",
-          transaction::getHash);
+      LOG.atTrace()
+          .setMessage("rejecting transaction {} due to chain head not available yet")
+          .addArgument(transaction::getHash)
+          .log();
       return ValidationResultAndAccount.invalid(CHAIN_HEAD_NOT_AVAILABLE);
     }
 
     final FeeMarket feeMarket =
-        protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber()).getFeeMarket();
+        protocolSchedule.getByBlockHeader(chainHeadBlockHeader).getFeeMarket();
 
     final TransactionInvalidReason priceInvalidReason =
         validatePrice(transaction, isLocal, feeMarket);
@@ -326,15 +334,7 @@ public class TransactionPool implements BlockAddedObserver {
     try (final var worldState =
         protocolContext
             .getWorldStateArchive()
-            .getMutable(
-                chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getBlockHash(), false)
-            .map(
-                ws -> {
-                  if (!ws.isPersistable()) {
-                    return ws.copy();
-                  }
-                  return ws;
-                })
+            .getMutable(chainHeadBlockHeader, false)
             .orElseThrow()) {
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(
@@ -378,11 +378,11 @@ public class TransactionPool implements BlockAddedObserver {
       }
     } else {
       if (isMaxGasPriceBelowConfiguredMinGasPrice(transaction)) {
-        traceLambda(
-            LOG,
-            "Discard transaction {} below min gas price {}",
-            transaction::toTraceLog,
-            miningParameters::getMinTransactionGasPrice);
+        LOG.atTrace()
+            .setMessage("Discard transaction {} below min gas price {}")
+            .addArgument(transaction::toTraceLog)
+            .addArgument(miningParameters::getMinTransactionGasPrice)
+            .log();
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }
     }
@@ -396,8 +396,8 @@ public class TransactionPool implements BlockAddedObserver {
         && transactionReplaySupportedAtBlock(chainHeadBlockHeader);
   }
 
-  private boolean transactionReplaySupportedAtBlock(final BlockHeader block) {
-    return protocolSchedule.getByBlockNumber(block.getNumber()).isReplayProtectionSupported();
+  private boolean transactionReplaySupportedAtBlock(final BlockHeader blockHeader) {
+    return protocolSchedule.getByBlockHeader(blockHeader).isReplayProtectionSupported();
   }
 
   public Optional<Transaction> getTransactionByHash(final Hash hash) {

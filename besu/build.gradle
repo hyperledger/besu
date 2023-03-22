@@ -77,6 +77,7 @@ dependencies {
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'net.consensys.services:quorum-mainnet-launcher'
+  implementation 'tech.pegasys:jc-kzg-4844'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
@@ -98,6 +99,7 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'tech.pegasys.discovery:discovery'
 

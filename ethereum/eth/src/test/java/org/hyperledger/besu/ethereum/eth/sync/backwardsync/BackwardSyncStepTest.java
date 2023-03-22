@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
@@ -66,11 +68,13 @@ public class BackwardSyncStepTest {
 
   private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();
 
+  private MutableBlockchain localBlockchain;
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
   GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
+  GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage;
 
   @Before
   public void setup() {
@@ -84,14 +88,18 @@ public class BackwardSyncStepTest {
             Hash::toArrayUnsafe,
             new BlocksConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
-
     chainStorage =
         new GenericKeyValueStorageFacade<>(
             Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
+    sessionDataStorage =
+        new GenericKeyValueStorageFacade<>(
+            key -> key.getBytes(StandardCharsets.UTF_8),
+            new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
 
     Block genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
-    MutableBlockchain localBlockchain = createInMemoryBlockchain(genesisBlock);
+    localBlockchain = spy(createInMemoryBlockchain(genesisBlock));
 
     for (int i = 1; i <= REMOTE_HEIGHT; i++) {
       final BlockDataGenerator.BlockOptions options =
@@ -171,7 +179,10 @@ public class BackwardSyncStepTest {
     final CompletableFuture<List<BlockHeader>> future =
         step.requestHeaders(lookingForBlock.getHeader().getHash());
 
-    assertThat(future.get().isEmpty()).isTrue();
+    verify(localBlockchain).getBlockHeader(lookingForBlock.getHash());
+    verify(context, never()).getEthContext();
+    final BlockHeader blockHeader = future.get().get(0);
+    assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
   }
 
   @Test
@@ -229,7 +240,7 @@ public class BackwardSyncStepTest {
   @Nonnull
   private BackwardChain createBackwardChain(final int number) {
     final BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, chainStorage);
+        new BackwardChain(headersStorage, blocksStorage, chainStorage, sessionDataStorage);
     backwardChain.appendTrustedBlock(remoteBlockchain.getBlockByNumber(number).orElseThrow());
     return backwardChain;
   }

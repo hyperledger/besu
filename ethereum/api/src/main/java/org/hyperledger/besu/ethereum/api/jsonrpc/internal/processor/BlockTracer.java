@@ -16,9 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -37,22 +38,28 @@ public class BlockTracer {
     this.blockReplay = blockReplay;
   }
 
-  public Optional<BlockTrace> trace(final Hash blockHash, final DebugOperationTracer tracer) {
-    return blockReplay.block(blockHash, prepareReplayAction(tracer));
+  public Optional<BlockTrace> trace(
+      final Tracer.TraceableState mutableWorldState,
+      final Hash blockHash,
+      final DebugOperationTracer tracer) {
+    return blockReplay.block(blockHash, prepareReplayAction(mutableWorldState, tracer));
   }
 
-  public Optional<BlockTrace> trace(final Block block, final DebugOperationTracer tracer) {
-    return blockReplay.block(block, prepareReplayAction(tracer));
+  public Optional<BlockTrace> trace(
+      final Tracer.TraceableState mutableWorldState,
+      final Block block,
+      final DebugOperationTracer tracer) {
+    return blockReplay.block(block, prepareReplayAction(mutableWorldState, tracer));
   }
 
   private BlockReplay.TransactionAction<TransactionTrace> prepareReplayAction(
-      final DebugOperationTracer tracer) {
-    return (transaction, header, blockchain, mutableWorldState, transactionProcessor) -> {
+      final MutableWorldState mutableWorldState, final DebugOperationTracer tracer) {
+    return (transaction, header, blockchain, transactionProcessor, dataGasPrice) -> {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (chainedUpdater == null) {
         chainedUpdater = mutableWorldState.updater();
-      } else if (chainedUpdater instanceof StackedUpdater) {
-        ((StackedUpdater) chainedUpdater).markTransactionBoundary();
+      } else if (chainedUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+        stackedUpdater.markTransactionBoundary();
       }
       // create an updater for just this tx
       chainedUpdater = chainedUpdater.updater();
@@ -64,8 +71,9 @@ public class BlockTracer {
               transaction,
               header.getCoinbase(),
               tracer,
-              new BlockHashLookup(header, blockchain),
-              false);
+              new CachingBlockHashLookup(header, blockchain),
+              false,
+              dataGasPrice);
       final List<TraceFrame> traceFrames = tracer.copyTraceFrames();
       tracer.reset();
       return new TransactionTrace(transaction, result, traceFrames);

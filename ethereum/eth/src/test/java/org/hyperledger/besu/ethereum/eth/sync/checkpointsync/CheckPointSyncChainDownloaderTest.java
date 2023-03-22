@@ -90,7 +90,9 @@ public class CheckPointSyncChainDownloaderTest {
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            localBlockchain, new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+            protocolSchedule,
+            localBlockchain,
+            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
     ethContext = ethProtocolManager.ethContext();
 
     final int blockNumber = 10;

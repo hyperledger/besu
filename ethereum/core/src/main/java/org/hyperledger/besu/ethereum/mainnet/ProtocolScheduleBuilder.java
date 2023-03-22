@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -145,11 +146,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
   }
 
   @Override
-  protected String getBlockIdentifierName() {
-    return "block";
-  }
-
-  @Override
   protected Stream<Optional<BuilderMapEntry>> createMilestones(
       final MainnetProtocolSpecFactory specFactory) {
     return Stream.of(
@@ -184,15 +180,21 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
   }
 
   @Override
-  protected void postBuildStep(final MainnetProtocolSpecFactory specFactory) {
+  protected void postBuildStep(
+      final MainnetProtocolSpecFactory specFactory, final TreeMap<Long, BuilderMapEntry> builders) {
     // NOTE: It is assumed that Daofork blocks will not be used for private networks
     // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
     config
         .getDaoForkBlock()
         .ifPresent(
             daoBlockNumber -> {
+              final BuilderMapEntry previousSpecBuilder =
+                  builders.floorEntry(daoBlockNumber).getValue();
               final ProtocolSpec originalProtocolSpec =
-                  protocolSchedule.getByBlockNumber(daoBlockNumber);
+                  getProtocolSpec(
+                      protocolSchedule,
+                      previousSpecBuilder.getBuilder(),
+                      previousSpecBuilder.getModifier());
               addProtocolSpec(
                   protocolSchedule,
                   daoBlockNumber,
@@ -212,8 +214,13 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         .getClassicForkBlock()
         .ifPresent(
             classicBlockNumber -> {
+              final BuilderMapEntry previousSpecBuilder =
+                  builders.floorEntry(classicBlockNumber).getValue();
               final ProtocolSpec originalProtocolSpec =
-                  protocolSchedule.getByBlockNumber(classicBlockNumber);
+                  getProtocolSpec(
+                      protocolSchedule,
+                      previousSpecBuilder.getBuilder(),
+                      previousSpecBuilder.getModifier());
               addProtocolSpec(
                   protocolSchedule,
                   classicBlockNumber,

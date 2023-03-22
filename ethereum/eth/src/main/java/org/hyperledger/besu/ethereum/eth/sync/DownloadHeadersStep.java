@@ -96,6 +96,7 @@ public class DownloadHeadersStep
               protocolSchedule,
               ethContext,
               range.getStart().getHash(),
+              range.getStart().getNumber(),
               headerRequestSize,
               metricsSystem)
           .assignPeer(range.getSyncTarget())

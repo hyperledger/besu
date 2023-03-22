@@ -17,10 +17,12 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public interface HeaderBasedProtocolSchedule {
 
@@ -31,4 +33,8 @@ public interface HeaderBasedProtocolSchedule {
   void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec);
 
   String listMilestones();
+
+  boolean anyMatch(Predicate<ScheduledProtocolSpec> predicate);
+
+  boolean isOnMilestoneBoundary(final BlockHeader blockHeader);
 }

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetHeadersEndingAtFromPeerByHashTask;
@@ -50,7 +48,7 @@ public class BackwardSyncStep {
     Hash lastHash = firstAncestor.getParentHash();
     Optional<BlockHeader> iterator = backwardChain.getHeader(lastHash);
     while (iterator.isPresent()) {
-      backwardChain.prependAncestorsHeader(iterator.get());
+      backwardChain.prependAncestorsHeader(iterator.get(), true);
       lastHash = iterator.get().getParentHash();
       iterator = backwardChain.getHeader(lastHash);
     }
@@ -59,10 +57,12 @@ public class BackwardSyncStep {
 
   @VisibleForTesting
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
-    if (context.getProtocolContext().getBlockchain().contains(hash)) {
+    final Optional<BlockHeader> blockHeader =
+        context.getProtocolContext().getBlockchain().getBlockHeader(hash);
+    if (blockHeader.isPresent()) {
       LOG.debug(
           "Hash {} already present in local blockchain no need to request headers to peers", hash);
-      return CompletableFuture.completedFuture(List.of());
+      return CompletableFuture.completedFuture(List.of(blockHeader.get()));
     }
 
     final int batchSize = context.getBatchSize();
@@ -74,6 +74,7 @@ public class BackwardSyncStep {
                 context.getProtocolSchedule(),
                 context.getEthContext(),
                 hash,
+                0,
                 batchSize,
                 context.getMetricsSystem(),
                 context.getEthContext().getEthPeers().peerCount());
@@ -83,11 +84,11 @@ public class BackwardSyncStep {
         .scheduleSyncWorkerTask(retryingGetHeadersEndingAtFromPeerByHashTask::run)
         .thenApply(
             blockHeaders -> {
-              debugLambda(
-                  LOG,
-                  "Got headers {} -> {}",
-                  blockHeaders.get(0)::getNumber,
-                  blockHeaders.get(blockHeaders.size() - 1)::getNumber);
+              LOG.atDebug()
+                  .setMessage("Got headers {} -> {}")
+                  .addArgument(blockHeaders.get(0)::getNumber)
+                  .addArgument(blockHeaders.get(blockHeaders.size() - 1)::getNumber)
+                  .log();
               return blockHeaders;
             });
   }
@@ -104,8 +105,9 @@ public class BackwardSyncStep {
       saveHeader(blockHeader);
     }
 
-    logProgress(blockHeaders.get(blockHeaders.size() - 1).getNumber());
-
+    if (!blockHeaders.isEmpty()) {
+      logProgress(blockHeaders.get(blockHeaders.size() - 1).getNumber());
+    }
     return null;
   }
 
