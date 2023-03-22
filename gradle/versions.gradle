@@ -63,6 +63,7 @@ dependencyManagement {
     dependency 'dnsjava:dnsjava:3.5.1'
 
     dependency 'info.picocli:picocli:4.6.3'
+    dependency 'info.picocli:picocli-codegen:4.6.3'
 
     dependencySet(group: 'io.grpc', version: '1.47.0') {
       entry 'grpc-all'

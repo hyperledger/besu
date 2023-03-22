@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,17 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.GetVisitor;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
+public class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
 
   private final Node<V> rootNode;
   private final List<Node<V>> proof = new ArrayList<>();
 
-  ProofVisitor(final Node<V> rootNode) {
+  public ProofVisitor(final Node<V> rootNode) {
     this.rootNode = rootNode;
   }
 

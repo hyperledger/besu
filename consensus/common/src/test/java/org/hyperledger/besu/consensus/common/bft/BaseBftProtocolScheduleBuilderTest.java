@@ -29,8 +29,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -42,7 +44,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-public class BaseBftProtocolScheduleTest {
+public class BaseBftProtocolScheduleBuilderTest {
 
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
@@ -210,11 +212,13 @@ public class BaseBftProtocolScheduleTest {
         new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
     blockRewardTransition.setBlockRewardWei(forkBlockReward);
 
-    final ProtocolSchedule schedule =
-        createProtocolSchedule(
-            List.of(
-                new ForkSpec<>(0, configOptions),
-                new ForkSpec<>(transitionBlock, blockRewardTransition)));
+    final BlockNumberStreamingProtocolSchedule schedule =
+        new BlockNumberStreamingProtocolSchedule(
+            (MutableProtocolSchedule)
+                createProtocolSchedule(
+                    List.of(
+                        new ForkSpec<>(0, configOptions),
+                        new ForkSpec<>(transitionBlock, blockRewardTransition))));
 
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(2);
     assertThat(schedule.getByBlockHeader(blockDataGenerator.header(0)).getBlockReward())
@@ -225,8 +229,8 @@ public class BaseBftProtocolScheduleTest {
   }
 
   private ProtocolSchedule createProtocolSchedule(final List<ForkSpec<BftConfigOptions>> forks) {
-    final BaseBftProtocolSchedule bftProtocolSchedule =
-        new BaseBftProtocolSchedule() {
+    final BaseBftProtocolScheduleBuilder bftProtocolSchedule =
+        new BaseBftProtocolScheduleBuilder() {
           @Override
           protected BlockHeaderValidator.Builder createBlockHeaderRuleset(
               final BftConfigOptions config, final FeeMarket feeMarket) {

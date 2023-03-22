@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
-public abstract class BaseBftProtocolSchedule {
+public abstract class BaseBftProtocolScheduleBuilder {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
@@ -51,7 +51,7 @@ public abstract class BaseBftProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
-  public ProtocolSchedule createProtocolSchedule(
+  public BftProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions config,
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final PrivacyParameters privacyParameters,
@@ -72,15 +72,18 @@ public abstract class BaseBftProtocolSchedule {
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
-    return new ProtocolScheduleBuilder(
-            config,
-            DEFAULT_CHAIN_ID,
-            specAdapters,
-            privacyParameters,
-            isRevertReasonEnabled,
-            config.isQuorum(),
-            evmConfiguration)
-        .createProtocolSchedule();
+    final MutableProtocolSchedule mutableProtocolSchedule =
+        (MutableProtocolSchedule)
+            new ProtocolScheduleBuilder(
+                    config,
+                    DEFAULT_CHAIN_ID,
+                    specAdapters,
+                    privacyParameters,
+                    isRevertReasonEnabled,
+                    config.isQuorum(),
+                    evmConfiguration)
+                .createProtocolSchedule();
+    return new BftProtocolSchedule(mutableProtocolSchedule);
   }
 
   /**

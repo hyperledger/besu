@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
+
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 
 import java.nio.charset.Charset;
 
@@ -20,7 +22,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class SimpleMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest {
   @Override
-  protected MerklePatriciaTrie<Bytes, String> createTrie() {
+  protected MerkleTrie<Bytes, String> createTrie() {
     return new SimpleMerklePatriciaTrie<>(
         value -> (value != null) ? Bytes.wrap(value.getBytes(Charset.forName("UTF-8"))) : null);
   }

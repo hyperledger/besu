@@ -47,6 +47,7 @@ public class TraceFrame {
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
+
   private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
@@ -151,7 +152,7 @@ public class TraceFrame {
   }
 
   public Bytes getInputData() {
-    return inputData;
+    return this.inputData;
   }
 
   public Bytes getOutputData() {

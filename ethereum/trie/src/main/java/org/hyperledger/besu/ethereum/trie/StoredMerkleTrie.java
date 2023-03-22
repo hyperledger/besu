@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,6 +18,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
+import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,37 +35,67 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * An in-memory {@link MerklePatriciaTrie}.
+ * A {@link MerkleTrie} that persists trie nodes to a {@link MerkleStorage} key/value store.
  *
  * @param <V> The type of values stored by this trie.
  */
-public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
-  private final PathNodeVisitor<V> getVisitor = new GetVisitor<>();
-  private final PathNodeVisitor<V> removeVisitor = new RemoveVisitor<>();
-  private final DefaultNodeFactory<V> nodeFactory;
+public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie<K, V> {
+
+  protected final NodeFactory<V> nodeFactory;
 
   private Node<V> root;
 
   /**
    * Create a trie.
    *
-   * @param valueSerializer A function for serializing values to bytes.
+   * @param nodeFactory The {@link StoredNodeFactory} to retrieve node.
    */
-  public SimpleMerklePatriciaTrie(final Function<V, Bytes> valueSerializer) {
-    this.nodeFactory = new DefaultNodeFactory<>(valueSerializer);
-    this.root = NullNode.instance();
+  public StoredMerkleTrie(final NodeFactory<V> nodeFactory) {
+    this(nodeFactory, EMPTY_TRIE_NODE_HASH);
+  }
+
+  /**
+   * Create a trie.
+   *
+   * @param nodeFactory The {@link StoredNodeFactory} to retrieve node.
+   * @param rootHash The initial root has for the trie, which should be already present in {@code
+   *     storage}.
+   * @param rootLocation The initial root location for the trie
+   */
+  public StoredMerkleTrie(
+      final NodeFactory<V> nodeFactory, final Bytes32 rootHash, final Bytes rootLocation) {
+    this.nodeFactory = nodeFactory;
+    this.root =
+        rootHash.equals(EMPTY_TRIE_NODE_HASH)
+            ? NullNode.instance()
+            : new StoredNode<>(nodeFactory, rootLocation, rootHash);
+  }
+
+  /**
+   * Create a trie.
+   *
+   * @param nodeFactory The {@link StoredNodeFactory} to retrieve node.
+   * @param rootHash The initial root hash for the trie, which should be already present in {@code
+   *     storage}.
+   */
+  public StoredMerkleTrie(final NodeFactory<V> nodeFactory, final Bytes32 rootHash) {
+    this.nodeFactory = nodeFactory;
+    this.root =
+        rootHash.equals(EMPTY_TRIE_NODE_HASH)
+            ? NullNode.instance()
+            : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
   }
 
   @Override
   public Optional<V> get(final K key) {
     checkNotNull(key);
-    return root.accept(getVisitor, bytesToPath(key)).getValue();
+    return root.accept(getGetVisitor(), bytesToPath(key)).getValue();
   }
 
   @Override
   public Optional<V> getPath(final K path) {
     checkNotNull(path);
-    return root.accept(getVisitor, path).getValue();
+    return root.accept(getGetVisitor(), path).getValue();
   }
 
   @Override
@@ -79,11 +112,18 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   public void put(final K key, final V value) {
     checkNotNull(key);
     checkNotNull(value);
-    this.root = root.accept(new PutVisitor<>(nodeFactory, value), bytesToPath(key));
+    this.root = root.accept(getPutVisitor(value), bytesToPath(key));
   }
 
   @Override
-  public void put(final K key, final PutVisitor<V> putVisitor) {
+  public void putPath(final K path, final V value) {
+    checkNotNull(path);
+    checkNotNull(value);
+    this.root = root.accept(getPutVisitor(value), path);
+  }
+
+  @Override
+  public void put(final K key, final PathNodeVisitor<V> putVisitor) {
     checkNotNull(key);
     this.root = root.accept(putVisitor, bytesToPath(key));
   }
@@ -91,7 +131,7 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public void remove(final K key) {
     checkNotNull(key);
-    this.root = root.accept(removeVisitor, bytesToPath(key));
+    this.root = root.accept(getRemoveVisitor(), bytesToPath(key));
   }
 
   @Override
@@ -101,23 +141,31 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
-  public Bytes32 getRootHash() {
-    return root.getHash();
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "[" + getRootHash() + "]";
-  }
-
-  @Override
   public void commit(final NodeUpdater nodeUpdater) {
-    // Nothing to do here
+    commit(nodeUpdater, new CommitVisitor<>(nodeUpdater));
   }
 
   @Override
   public void commit(final NodeUpdater nodeUpdater, final CommitVisitor<V> commitVisitor) {
-    // Nothing to do here
+    root.accept(Bytes.EMPTY, commitVisitor);
+    // Make sure root node was stored
+    if (root.isDirty() && root.getRlpRef().size() < 32) {
+      nodeUpdater.store(Bytes.EMPTY, root.getHash(), root.getRlpRef());
+    }
+    // Reset root so dirty nodes can be garbage collected
+    final Bytes32 rootHash = root.getHash();
+    this.root =
+        rootHash.equals(EMPTY_TRIE_NODE_HASH)
+            ? NullNode.instance()
+            : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
+  }
+
+  public void acceptAtRoot(final NodeVisitor<V> visitor) {
+    root.accept(visitor);
+  }
+
+  public void acceptAtRoot(final PathNodeVisitor<V> visitor, final Bytes path) {
+    root.accept(visitor, path);
   }
 
   @Override
@@ -157,4 +205,20 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     final TrieIterator<V> visitor = new TrieIterator<>(handler, true);
     root.accept(visitor, CompactEncoding.bytesToPath(Bytes32.ZERO));
   }
+
+  @Override
+  public Bytes32 getRootHash() {
+    return root.getHash();
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "[" + getRootHash() + "]";
+  }
+
+  public abstract PathNodeVisitor<V> getGetVisitor();
+
+  public abstract PathNodeVisitor<V> getRemoveVisitor();
+
+  public abstract PathNodeVisitor<V> getPutVisitor(final V value);
 }

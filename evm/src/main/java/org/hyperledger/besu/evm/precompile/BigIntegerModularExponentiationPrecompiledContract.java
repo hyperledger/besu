@@ -47,7 +47,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   static {
     try {
       useNative = LibArithmetic.ENABLED;
-    } catch (UnsatisfiedLinkError ule) {
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError ule) {
       LOG.info("modexp native precompile not available: {}", ule.getMessage());
       useNative = false;
     }
