@@ -523,7 +523,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .thenReturn(TransactionProcessingResult.invalid(ValidationResult.invalid(invalidReason)));
   }
 
-  private BlockHeader blockHeader(long number) {
+  private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

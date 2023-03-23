@@ -249,7 +249,7 @@ public abstract class AbstractIsolationTests {
     return res;
   }
 
-  private BlockHeader blockHeader(long number) {
+  private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

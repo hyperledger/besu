@@ -66,7 +66,7 @@ public class MergeProtocolScheduleTest {
     assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
   }
 
-  private BlockHeader blockHeader(long number) {
+  private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

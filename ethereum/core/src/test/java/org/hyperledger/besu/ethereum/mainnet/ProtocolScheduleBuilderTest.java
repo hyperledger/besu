@@ -173,7 +173,7 @@ public class ProtocolScheduleBuilderTest {
         (MutableProtocolSchedule) builder.createProtocolSchedule());
   }
 
-  private BlockHeader blockHeader(long number) {
+  private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

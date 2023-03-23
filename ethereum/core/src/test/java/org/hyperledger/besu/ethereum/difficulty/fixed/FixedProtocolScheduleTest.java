@@ -92,7 +92,7 @@ public class FixedProtocolScheduleTest {
         .isEqualTo(10000);
   }
 
-  private BlockHeader blockHeader(long number) {
+  private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }
