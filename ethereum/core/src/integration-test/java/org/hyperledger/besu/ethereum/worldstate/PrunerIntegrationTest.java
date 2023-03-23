@@ -228,7 +228,7 @@ public class PrunerIntegrationTest {
     trie.visitAll(
         (node) -> {
           if (node.isReferencedByHash() || node.getHash().equals(rootHash)) {
-            collector.add(node.getRlp());
+            collector.add(node.getEncodedBytes());
           }
         });
   }

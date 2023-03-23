@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
 
 import java.util.function.BiConsumer;
 
@@ -54,21 +55,21 @@ public class PersistVisitor<V> implements NodeVisitor<V> {
 
   @Override
   public void visit(final BranchNode<V> branchNode) {
-    writer.accept(branchNode.getHash(), branchNode.getRlp());
+    writer.accept(branchNode.getHash(), branchNode.getEncodedBytes());
     branchNodeCount++;
     branchNode.getChildren().forEach(node -> node.accept(this));
   }
 
   @Override
   public void visit(final ExtensionNode<V> extensionNode) {
-    writer.accept(extensionNode.getHash(), extensionNode.getRlp());
+    writer.accept(extensionNode.getHash(), extensionNode.getEncodedBytes());
     extensionNodeCount++;
     extensionNode.getChild().accept(this);
   }
 
   @Override
   public void visit(final LeafNode<V> leafNode) {
-    writer.accept(leafNode.getHash(), leafNode.getRlp());
+    writer.accept(leafNode.getHash(), leafNode.getEncodedBytes());
     leafNodeCount++;
   }
 

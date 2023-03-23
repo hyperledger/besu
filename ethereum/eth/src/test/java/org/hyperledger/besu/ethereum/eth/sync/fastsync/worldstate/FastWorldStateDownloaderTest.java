@@ -782,7 +782,7 @@ public class FastWorldStateDownloaderTest {
         .filter(n -> !Objects.equals(n.getHash(), rootHash))
         .filter(Node::isReferencedByHash)
         .limit(maxNodes)
-        .forEach((n) -> trieNodes.put(n.getHash(), n.getRlp()));
+        .forEach((n) -> trieNodes.put(n.getHash(), n.getEncodedBytes()));
 
     return trieNodes;
   }

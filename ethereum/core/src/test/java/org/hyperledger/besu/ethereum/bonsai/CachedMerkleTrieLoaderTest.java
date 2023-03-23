@@ -97,7 +97,7 @@ public class CachedMerkleTrieLoaderTest {
         (keyHash, node) -> {
           merkleTrieLoader.cacheStorageNodes(
               inMemoryWorldState, accounts.get(0), Hash.wrap(keyHash));
-          originalSlots.add(node.getRlp());
+          originalSlots.add(node.getEncodedBytes());
           return TrieIterator.State.CONTINUE;
         });
 
@@ -114,7 +114,7 @@ public class CachedMerkleTrieLoaderTest {
             Function.identity());
     cachedTrie.visitLeafs(
         (keyHash, node) -> {
-          cachedSlots.add(node.getRlp());
+          cachedSlots.add(node.getEncodedBytes());
           return TrieIterator.State.CONTINUE;
         });
     assertThat(originalSlots).isNotEmpty();
@@ -149,7 +149,7 @@ public class CachedMerkleTrieLoaderTest {
     final List<Bytes> originalSlots = new ArrayList<>();
     storageTrie.visitLeafs(
         (keyHash, node) -> {
-          originalSlots.add(node.getRlp());
+          originalSlots.add(node.getEncodedBytes());
           return TrieIterator.State.CONTINUE;
         });
 
@@ -164,7 +164,7 @@ public class CachedMerkleTrieLoaderTest {
             Function.identity());
     cachedTrie.visitLeafs(
         (keyHash, node) -> {
-          cachedSlots.add(node.getRlp());
+          cachedSlots.add(node.getEncodedBytes());
           return TrieIterator.State.CONTINUE;
         });
     assertThat(originalSlots).isNotEmpty();
