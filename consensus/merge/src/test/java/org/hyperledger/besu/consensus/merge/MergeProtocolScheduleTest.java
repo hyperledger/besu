@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -29,8 +28,6 @@ import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.junit.Test;
 
 public class MergeProtocolScheduleTest {
-
-  final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Test
   public void protocolSpecsAreCreatedAtBlockDefinedInJson() {
