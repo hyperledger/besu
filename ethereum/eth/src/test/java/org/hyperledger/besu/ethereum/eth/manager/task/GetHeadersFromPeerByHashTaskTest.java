@@ -163,7 +163,7 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
   }
 
   @Test
-  public void completesWhenPeersSendsTooManyHeadersAndReducesReputation() {
+  public void completesWhenPeerSendsTooManyHeadersAndReducesReputation() {
     // Setup a peer returning too many headers
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
