@@ -302,8 +302,25 @@ public class EOFLayoutTest {
         });
   }
 
+  public static Collection<Object[]> subContainers() {
+    return Arrays.asList(
+        new Object[][] {
+          {
+            "EF0001 010004 0200010001 030000 0400010014 00 00000000 FE EF000101000402000100010300000000000000FE",
+            "no data section, one code section, one subcontainer",
+            null,
+            1
+          },
+        });
+  }
+
   @ParameterizedTest(name = "{1}")
-  @MethodSource({"correctContainers", "containersWithFormatErrors", "typeSectionTests"})
+  @MethodSource({
+    "correctContainers",
+    "containersWithFormatErrors",
+    "typeSectionTests",
+    "subContainers"
+  })
   void test(
       final String containerString,
       final String description,

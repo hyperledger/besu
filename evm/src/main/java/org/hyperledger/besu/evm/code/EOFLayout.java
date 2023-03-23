@@ -23,14 +23,16 @@ import org.apache.tuweni.bytes.Bytes;
 /** The EOF layout. */
 public class EOFLayout {
 
-  /** The Section Terminator. */
+  /** header terminator */
   static final int SECTION_TERMINATOR = 0x00;
-  /** The Section types. */
+  /** type data (stack heights, inputs/outputs) */
   static final int SECTION_TYPES = 0x01;
-  /** The Section code. */
+  /** code */
   static final int SECTION_CODE = 0x02;
-  /** The Section data. */
+  /** data */
   static final int SECTION_DATA = 0x03;
+  /** sub-EOF containers for create */
+  static final int SECTION_CONTAINER = 0x04;
 
   /** The Max supported section. */
   static final int MAX_SUPPORTED_VERSION = 1;
@@ -38,12 +40,18 @@ public class EOFLayout {
   private final Bytes container;
   private final int version;
   private final CodeSection[] codeSections;
+  private final EOFLayout[] containers;
   private final String invalidReason;
 
-  private EOFLayout(final Bytes container, final int version, final CodeSection[] codeSections) {
+  private EOFLayout(
+      final Bytes container,
+      final int version,
+      final CodeSection[] codeSections,
+      final EOFLayout[] containers) {
     this.container = container;
     this.version = version;
     this.codeSections = codeSections;
+    this.containers = containers;
     this.invalidReason = null;
   }
 
@@ -51,6 +59,7 @@ public class EOFLayout {
     this.container = container;
     this.version = version;
     this.codeSections = null;
+    this.containers = null;
     this.invalidReason = invalidReason;
   }
 
@@ -68,6 +77,13 @@ public class EOFLayout {
       return "Expected kind " + expectedKind + " but read kind " + kind;
     }
     return null;
+  }
+
+  private static boolean checkKind(final ByteArrayInputStream inputStream, final int expectedKind) {
+    inputStream.mark(1);
+    int kind = inputStream.read();
+    inputStream.reset();
+    return kind == expectedKind;
   }
 
   /**
@@ -144,6 +160,46 @@ public class EOFLayout {
       return invalidLayout(container, version, "Invalid Data section size");
     }
 
+    int containerSectionCount;
+    int[] containerSectionSizes;
+    if (checkKind(inputStream, SECTION_CONTAINER)) {
+      error = readKind(inputStream, SECTION_CONTAINER);
+      if (error != null) {
+        return invalidLayout(container, version, error);
+      }
+      containerSectionCount = readUnsignedShort(inputStream);
+      if (containerSectionCount <= 0) {
+        return invalidLayout(container, version, "Invalid container section count");
+      }
+      if (containerSectionCount * 4 != typesLength) {
+        return invalidLayout(
+            container,
+            version,
+            "Type section length incompatible with container section count - 0x"
+                + Integer.toHexString(containerSectionCount)
+                + " * 4 != 0x"
+                + Integer.toHexString(typesLength));
+      }
+      if (containerSectionCount > 1024) {
+        return invalidLayout(
+            container,
+            version,
+            "Too many container sections - 0x" + Integer.toHexString(containerSectionCount));
+      }
+      containerSectionSizes = new int[containerSectionCount];
+      for (int i = 0; i < containerSectionCount; i++) {
+        int size = readUnsignedShort(inputStream);
+        if (size <= 0) {
+          return invalidLayout(
+              container, version, "Invalid container section size for section " + i);
+        }
+        containerSectionSizes[i] = size;
+      }
+    } else {
+      containerSectionCount = 0;
+      containerSectionSizes = new int[0];
+    }
+
     error = readKind(inputStream, SECTION_TERMINATOR);
     if (error != null) {
       return invalidLayout(container, version, error);
@@ -171,6 +227,11 @@ public class EOFLayout {
             + 3 // data section header
             + 1 // padding
             + (codeSectionCount * 4); // type data
+    if (containerSectionCount > 0) {
+      pos += 3 // subcontainer header
+            + (containerSectionCount * 2); // subcontainer sizes
+    }
+
     for (int i = 0; i < codeSectionCount; i++) {
       int codeSectionSize = codeSectionSizes[i];
       if (inputStream.skip(codeSectionSize) != codeSectionSize) {
@@ -202,11 +263,29 @@ public class EOFLayout {
     if (inputStream.skip(dataSize) != dataSize) {
       return invalidLayout(container, version, "Incomplete data section");
     }
+    pos += dataSize;
+
+    EOFLayout[] subContainers = new EOFLayout[containerSectionCount];
+    for (int i = 0; i < containerSectionCount; i++) {
+      int subcontianerSize = containerSectionSizes[i];
+      Bytes subcontainer = container.slice(pos, subcontianerSize);
+      pos += subcontianerSize;
+      if (subcontianerSize != inputStream.skip(subcontianerSize)) {
+        return invalidLayout(container, version, "incomplete subcontainer");
+      }
+      EOFLayout subLayout = EOFLayout.parseEOF(subcontainer);
+      if (!subLayout.isValid()) {
+        System.out.println(subLayout.getInvalidReason());
+        return invalidLayout(container, version, "invalid subcontainer");
+      }
+      subContainers[i] = subLayout;
+    }
+
     if (inputStream.read() != -1) {
       return invalidLayout(container, version, "Dangling data after end of all sections");
     }
 
-    return new EOFLayout(container, version, codeSections);
+    return new EOFLayout(container, version, codeSections, subContainers);
   }
 
   /**
@@ -258,6 +337,25 @@ public class EOFLayout {
    */
   public CodeSection getCodeSection(final int i) {
     return codeSections[i];
+  }
+
+  /**
+   * Get sub container section count.
+   *
+   * @return the sub container count
+   */
+  public int getSubcontainerCount() {
+    return containers == null ? 0 : containers.length;
+  }
+
+  /**
+   * Get code sections.
+   *
+   * @param i the index
+   * @return the Code section
+   */
+  public EOFLayout getSubcontainer(final int i) {
+    return containers[i];
   }
 
   /**
