@@ -30,6 +30,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -77,7 +78,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractBlockTransactionSelectorTest {
-
+  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   protected static final KeyPair keyPair =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -124,7 +125,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         FixedDifficultyProtocolSchedule.create(
             GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT);
     final MainnetTransactionProcessor mainnetTransactionProcessor =
-        protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
+        protocolSchedule.getByBlockHeader(blockDataGenerator.header(0)).getTransactionProcessor();
 
     // The block should fit 5 transactions only
     final ProcessableBlockHeader blockHeader = createBlock(5000);

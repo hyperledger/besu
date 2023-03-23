@@ -175,6 +175,8 @@ public class MainnetProtocolScheduleTest {
         .isEqualTo("Berlin");
     Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(8_897_988L)).getName())
         .isEqualTo("London");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("London");
+    Assertions.assertThat(
+            sched.getByBlockHeader(blockDataGenerator.header(Long.MAX_VALUE)).getName())
+        .isEqualTo("London");
   }
 }
