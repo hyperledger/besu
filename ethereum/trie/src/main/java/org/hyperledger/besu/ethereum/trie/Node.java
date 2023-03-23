@@ -38,9 +38,9 @@ public interface Node<V> {
 
   List<Node<V>> getChildren();
 
-  Bytes getRlp();
+  Bytes getEncodedBytes();
 
-  Bytes getRlpRef();
+  Bytes getEncodedBytesRef();
 
   /**
    * Whether a reference to this node should be represented as a hash of the rlp, or the node rlp
@@ -50,7 +50,7 @@ public interface Node<V> {
    * @return true if this node should be referenced by hash
    */
   default boolean isReferencedByHash() {
-    return getRlp().size() >= 32;
+    return getEncodedBytes().size() >= 32;
   }
 
   Bytes32 getHash();

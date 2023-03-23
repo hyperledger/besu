@@ -63,12 +63,12 @@ public class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlp() {
+  public Bytes getEncodedBytes() {
     return MerkleTrie.EMPTY_TRIE_NODE;
   }
 
   @Override
-  public Bytes getRlpRef() {
+  public Bytes getEncodedBytesRef() {
     return MerkleTrie.EMPTY_TRIE_NODE;
   }
 

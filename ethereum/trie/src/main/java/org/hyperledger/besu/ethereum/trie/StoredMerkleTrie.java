@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
-import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 
 import java.util.List;
@@ -43,7 +42,7 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
 
   protected final NodeFactory<V> nodeFactory;
 
-  private Node<V> root;
+  protected Node<V> root;
 
   /**
    * Create a trie.
@@ -104,7 +103,7 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
     final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
     final List<Bytes> proof =
-        proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
+        proofVisitor.getProof().stream().map(Node::getEncodedBytes).collect(Collectors.toList());
     return new Proof<>(value, proof);
   }
 
@@ -135,7 +134,7 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
   }
 
   @Override
-  public void removePath(final K path, final RemoveVisitor<V> removeVisitor) {
+  public void removePath(final K path, final PathNodeVisitor<V> removeVisitor) {
     checkNotNull(path);
     this.root = root.accept(removeVisitor, path);
   }
@@ -149,8 +148,8 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
   public void commit(final NodeUpdater nodeUpdater, final CommitVisitor<V> commitVisitor) {
     root.accept(Bytes.EMPTY, commitVisitor);
     // Make sure root node was stored
-    if (root.isDirty() && root.getRlpRef().size() < 32) {
-      nodeUpdater.store(Bytes.EMPTY, root.getHash(), root.getRlpRef());
+    if (root.isDirty() && root.getEncodedBytesRef().size() < 32) {
+      nodeUpdater.store(Bytes.EMPTY, root.getHash(), root.getEncodedBytesRef());
     }
     // Reset root so dirty nodes can be garbage collected
     final Bytes32 rootHash = root.getHash();
@@ -158,14 +157,6 @@ public abstract class StoredMerkleTrie<K extends Bytes, V> implements MerkleTrie
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
             ? NullNode.instance()
             : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
-  }
-
-  public void acceptAtRoot(final NodeVisitor<V> visitor) {
-    root.accept(visitor);
-  }
-
-  public void acceptAtRoot(final PathNodeVisitor<V> visitor, final Bytes path) {
-    root.accept(visitor, path);
   }
 
   @Override
