@@ -180,7 +180,7 @@ public class EOFLayout {
                 + " * 4 != 0x"
                 + Integer.toHexString(typesLength));
       }
-      if (containerSectionCount > 1024) {
+      if (containerSectionCount > 256) {
         return invalidLayout(
             container,
             version,
