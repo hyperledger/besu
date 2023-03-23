@@ -62,7 +62,7 @@ public class BaseBftProtocolScheduleBuilderTest {
 
     final ProtocolSchedule schedule =
         createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions)));
-    final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(1));
+    final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(1));
 
     assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
     assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(mock(BlockHeader.class)))
@@ -78,7 +78,7 @@ public class BaseBftProtocolScheduleBuilderTest {
 
     final ProtocolSchedule schedule =
         createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions)));
-    final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(1));
+    final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(1));
 
     final Address headerCoinbase = Address.fromHexString("0x123");
     final BlockHeader header = mock(BlockHeader.class);
@@ -133,7 +133,7 @@ public class BaseBftProtocolScheduleBuilderTest {
 
     // Check initial config
     for (int i = 0; i < 2; i++) {
-      final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(i));
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? headerCoinbase : beneficiary1;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(3)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -142,7 +142,7 @@ public class BaseBftProtocolScheduleBuilderTest {
 
     // Check fork1
     for (int i = 2; i < 5; i++) {
-      final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(i));
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? beneficiary2 : headerCoinbase;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(2)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -151,7 +151,7 @@ public class BaseBftProtocolScheduleBuilderTest {
 
     // Check fork2
     for (int i = 5; i < 8; i++) {
-      final ProtocolSpec spec = schedule.getByBlockHeader(blockDataGenerator.header(i));
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? headerCoinbase : beneficiary3;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(1)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -221,10 +221,9 @@ public class BaseBftProtocolScheduleBuilderTest {
                         new ForkSpec<>(transitionBlock, blockRewardTransition))));
 
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(2);
-    assertThat(schedule.getByBlockHeader(blockDataGenerator.header(0)).getBlockReward())
+    assertThat(schedule.getByBlockHeader(blockHeader(0)).getBlockReward())
         .isEqualTo(Wei.of(arbitraryBlockReward));
-    assertThat(
-            schedule.getByBlockHeader(blockDataGenerator.header(transitionBlock)).getBlockReward())
+    assertThat(schedule.getByBlockHeader(blockHeader(transitionBlock)).getBlockReward())
         .isEqualTo(Wei.of(forkBlockReward));
   }
 

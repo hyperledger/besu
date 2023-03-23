@@ -103,7 +103,7 @@ public class MutableProtocolScheduleTest {
     final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(0, spec1);
     protocolSchedule.putMilestone(0, spec2);
-    assertThat(protocolSchedule.getByBlockHeader(blockDataGenerator.header(0))).isSameAs(spec2);
+    assertThat(protocolSchedule.getByBlockHeader(header(0))).isSameAs(spec2);
   }
 
   @Test

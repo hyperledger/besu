@@ -147,7 +147,7 @@ public class PrivacyTest {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     return besuController
         .getProtocolSchedule()
-        .getByBlockHeader(blockDataGenerator.header(0))
+        .getByBlockHeader(blockHeader(0))
         .getPrecompileContractRegistry()
         .get(defaultPrivacy);
   }

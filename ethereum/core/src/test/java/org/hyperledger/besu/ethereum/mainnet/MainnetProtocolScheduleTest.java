@@ -15,7 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -26,46 +27,43 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class MainnetProtocolScheduleTest {
-  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Test
   public void shouldReturnDefaultProtocolSpecsWhenCustomNumbersAreNotUsed() {
     final ProtocolSchedule sched = ProtocolScheduleFixture.MAINNET;
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1L)).getName())
-        .isEqualTo("Frontier");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1_150_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getName()).isEqualTo("Frontier");
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_150_000L)).getName())
         .isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1_920_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_920_000L)).getName())
         .isEqualTo("DaoRecoveryInit");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1_920_001L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_920_001L)).getName())
         .isEqualTo("DaoRecoveryTransition");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1_920_010L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_920_010L)).getName())
         .isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(2_463_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(2_463_000L)).getName())
         .isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(2_675_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(2_675_000L)).getName())
         .isEqualTo("SpuriousDragon");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(4_730_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(4_730_000L)).getName())
         .isEqualTo("Byzantium");
     // Constantinople was originally scheduled for 7_080_000, but postponed
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(7_080_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(7_080_000L)).getName())
         .isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(7_280_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(7_280_000L)).getName())
         .isEqualTo("Petersburg");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(9_069_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(9_069_000L)).getName())
         .isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(9_200_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(9_200_000L)).getName())
         .isEqualTo("MuirGlacier");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(12_244_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(12_244_000L)).getName())
         .isEqualTo("Berlin");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(12_965_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(12_965_000L)).getName())
         .isEqualTo("London");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(13_773_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(13_773_000L)).getName())
         .isEqualTo("ArrowGlacier");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(15_050_000L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(15_050_000L)).getName())
         .isEqualTo("GrayGlacier");
-    Assertions.assertThat(
-            sched.getByBlockHeader(blockDataGenerator.header(Long.MAX_VALUE)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
         .isEqualTo("GrayGlacier");
   }
 
@@ -74,10 +72,8 @@ public class MainnetProtocolScheduleTest {
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig("{}").getConfigOptions(), EvmConfiguration.DEFAULT);
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1L)).getName())
-        .isEqualTo("Frontier");
-    Assertions.assertThat(
-            sched.getByBlockHeader(blockDataGenerator.header(Long.MAX_VALUE)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getName()).isEqualTo("Frontier");
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
         .isEqualTo("Frontier");
   }
 
@@ -88,25 +84,21 @@ public class MainnetProtocolScheduleTest {
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(json).getConfigOptions(), EvmConfiguration.DEFAULT);
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1)).getName())
-        .isEqualTo("Frontier");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(2)).getName())
-        .isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(3)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Frontier");
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Homestead");
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(3)).getName())
         .isEqualTo("DaoRecoveryInit");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(4)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(4)).getName())
         .isEqualTo("DaoRecoveryTransition");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(13)).getName())
-        .isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(14)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(13)).getName()).isEqualTo("Homestead");
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(14)).getName())
         .isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(15)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(15)).getName())
         .isEqualTo("SpuriousDragon");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(16)).getName())
-        .isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(18)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(16)).getName()).isEqualTo("Byzantium");
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(18)).getName())
         .isEqualTo("Constantinople");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(19)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(19)).getName())
         .isEqualTo("Petersburg");
   }
 
@@ -133,16 +125,15 @@ public class MainnetProtocolScheduleTest {
                         this.getClass().getResource("/goerli.json"), StandardCharsets.UTF_8))
                 .getConfigOptions(),
             EvmConfiguration.DEFAULT);
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(0L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(0L)).getName())
         .isEqualTo("Petersburg");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1_561_651L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_561_651L)).getName())
         .isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(4_460_644L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(4_460_644L)).getName())
         .isEqualTo("Berlin");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(5_062_605L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(5_062_605L)).getName())
         .isEqualTo("London");
-    Assertions.assertThat(
-            sched.getByBlockHeader(blockDataGenerator.header(Long.MAX_VALUE)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
         .isEqualTo("London");
   }
 
@@ -155,28 +146,29 @@ public class MainnetProtocolScheduleTest {
                         this.getClass().getResource("/rinkeby.json"), StandardCharsets.UTF_8))
                 .getConfigOptions(),
             EvmConfiguration.DEFAULT);
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(0L)).getName())
-        .isEqualTo("Frontier");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1L)).getName())
-        .isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(2L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(0L)).getName()).isEqualTo("Frontier");
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getName()).isEqualTo("Homestead");
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(2L)).getName())
         .isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(3L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(3L)).getName())
         .isEqualTo("SpuriousDragon");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(1_035_301L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_035_301L)).getName())
         .isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(3_660_663L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(3_660_663L)).getName())
         .isEqualTo("Constantinople");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(4_321_234L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(4_321_234L)).getName())
         .isEqualTo("Petersburg");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(5_435_345L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(5_435_345L)).getName())
         .isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(8_290_928L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(8_290_928L)).getName())
         .isEqualTo("Berlin");
-    Assertions.assertThat(sched.getByBlockHeader(blockDataGenerator.header(8_897_988L)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(8_897_988L)).getName())
         .isEqualTo("London");
-    Assertions.assertThat(
-            sched.getByBlockHeader(blockDataGenerator.header(Long.MAX_VALUE)).getName())
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
         .isEqualTo("London");
+  }
+
+  private BlockHeader blockHeader(long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

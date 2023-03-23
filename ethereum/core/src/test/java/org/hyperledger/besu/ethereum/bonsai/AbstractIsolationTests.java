@@ -33,9 +33,9 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -75,7 +75,6 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
 public abstract class AbstractIsolationTests {
-  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   protected BonsaiWorldStateProvider archive;
   protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
@@ -243,10 +242,14 @@ public abstract class AbstractIsolationTests {
   protected BlockProcessingResult executeBlock(final MutableWorldState ws, final Block block) {
     var res =
         protocolSchedule
-            .getByBlockHeader(blockDataGenerator.header(0))
+            .getByBlockHeader(blockHeader(0))
             .getBlockProcessor()
             .processBlock(blockchain, ws, block);
     blockchain.appendBlock(block, res.getReceipts());
     return res;
+  }
+
+  private BlockHeader blockHeader(long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

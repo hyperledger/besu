@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.difficulty.fixed;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -26,7 +25,6 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.junit.Test;
 
 public class FixedProtocolScheduleTest {
-  private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Test
   public void reportedDifficultyForAllBlocksIsAFixedValue() {
@@ -41,21 +39,21 @@ public class FixedProtocolScheduleTest {
 
     assertThat(
             schedule
-                .getByBlockHeader(blockDataGenerator.header(0))
+                .getByBlockHeader(blockHeader(0))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
-                .getByBlockHeader(blockDataGenerator.header(500))
+                .getByBlockHeader(blockHeader(500))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
-                .getByBlockHeader(blockDataGenerator.header(500_000))
+                .getByBlockHeader(blockHeader(500_000))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
@@ -74,23 +72,27 @@ public class FixedProtocolScheduleTest {
 
     assertThat(
             schedule
-                .getByBlockHeader(blockDataGenerator.header(0))
+                .getByBlockHeader(blockHeader(0))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(10000);
 
     assertThat(
             schedule
-                .getByBlockHeader(blockDataGenerator.header(500))
+                .getByBlockHeader(blockHeader(500))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(10000);
 
     assertThat(
             schedule
-                .getByBlockHeader(blockDataGenerator.header(500_000))
+                .getByBlockHeader(blockHeader(500_000))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(10000);
+  }
+
+  private BlockHeader blockHeader(long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }
