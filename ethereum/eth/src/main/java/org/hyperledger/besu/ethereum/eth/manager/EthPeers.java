@@ -179,7 +179,7 @@ public class EthPeers {
 
   public void dispatchMessage(
       final EthPeer peer, final EthMessage ethMessage, final String protocolName) {
-    Optional<RequestManager> maybeRequestManager = peer.dispatch(ethMessage, protocolName);
+    final Optional<RequestManager> maybeRequestManager = peer.dispatch(ethMessage, protocolName);
     if (maybeRequestManager.isPresent() && peer.hasAvailableRequestCapacity()) {
       reattemptPendingPeerRequests();
     }
@@ -229,7 +229,7 @@ public class EthPeers {
 
   private void removeDisconnectedPeers() {
     final Collection<EthPeer> peerStream = connections.values();
-    for (EthPeer p : peerStream) {
+    for (final EthPeer p : peerStream) {
       if (p.isDisconnected()) {
         connections.remove(p.getConnection());
       }

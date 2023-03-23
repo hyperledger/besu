@@ -29,7 +29,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,9 +147,10 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     return error instanceof PeerBreachedProtocolException
         || error instanceof PeerDisconnectedException
         || error instanceof NoAvailablePeersException;
+    // should we add this here?:
+    //        || error instanceof IncompleteResultsException;
   }
 
-  @VisibleForTesting
   public boolean isEmptyResponse(final T peerResult) {
     return isEmptyResponse.test(peerResult);
   }

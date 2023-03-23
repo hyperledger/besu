@@ -72,6 +72,7 @@ public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Ma
                 throw new IncompleteResultsException("No code returned by peer " + peer.nodeId());
               }
               result.complete(peerResult.getResult());
+              // TODO: update peer height?
               return peerResult.getResult();
             });
   }

@@ -79,6 +79,7 @@ public class RetryingGetAccountRangeFromPeerTask
                     "No account and proof returned by peer " + peer.nodeId());
               }
               result.complete(peerResult.getResult());
+              // TODO: update block height of peer?
               return peerResult.getResult();
             });
   }

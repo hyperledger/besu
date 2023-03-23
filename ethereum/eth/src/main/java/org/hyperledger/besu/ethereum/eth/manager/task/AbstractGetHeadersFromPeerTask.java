@@ -76,13 +76,13 @@ public abstract class AbstractGetHeadersFromPeerTask
       // Message contains no data - nothing to do
       LOG.debug("headers.isEmpty. Peer: {}", peer);
       peer.recordUselessResponse("No headers returned by peer " + peer.nodeId());
-      return Optional.empty();
+      return Optional.of(Collections.emptyList());
     }
     if (headers.size() > count) {
       // Too many headers - this isn't our response
       LOG.debug("headers.size()>count. Peer: {}", peer);
       peer.recordUselessResponse("Too many headers returned by peer " + peer.nodeId());
-      return Optional.empty();
+      return Optional.of(Collections.emptyList());
     }
 
     final BlockHeader firstHeader = headers.get(0);
@@ -90,7 +90,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       // This isn't our message - nothing to do
       LOG.debug("!matchesFirstHeader. Peer: {}", peer);
       peer.recordUselessResponse("First header returned by peer not matching " + peer.nodeId());
-      return Optional.empty();
+      return Optional.of(Collections.emptyList());
     }
 
     final List<BlockHeader> headersList = new ArrayList<>(headers.size());
@@ -105,7 +105,7 @@ public abstract class AbstractGetHeadersFromPeerTask
         LOG.debug("header not matching the expected number. Peer: {}", peer);
         peer.recordUselessResponse(
             "Header returned by peer does not have expected number " + peer.nodeId());
-        return Optional.empty();
+        return Optional.of(Collections.emptyList());
       }
       // if headers are supposed to be sequential check if a chain is formed
       if (Math.abs(expectedDelta) == 1) {
@@ -116,7 +116,7 @@ public abstract class AbstractGetHeadersFromPeerTask
               "Sequential headers must form a chain through hashes (BREACH_OF_PROTOCOL), disconnecting peer: {}",
               peer);
           peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
-          return Optional.empty();
+          return Optional.of(Collections.emptyList());
         }
       }
       prevBlockHeader = header;
