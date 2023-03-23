@@ -133,35 +133,6 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     assertThat(respondingEthPeer.getEthPeer().getReputation().getScore()).isEqualTo(99);
   }
 
-  private List<BlockHeader> dummyBHList(final int count) {
-    final ArrayList<BlockHeader> blockHeaders = new ArrayList<>(count);
-    for (int i = 0; i < count; i++) {
-      blockHeaders.add(
-          new BlockHeader(
-              Hash.ZERO,
-              Hash.ZERO,
-              Address.ZERO,
-              Hash.ZERO,
-              Hash.ZERO,
-              Hash.ZERO,
-              new LogsBloomFilter(),
-              Difficulty.ZERO,
-              133,
-              0,
-              0,
-              0,
-              Bytes.fromHexString("abcd"),
-              Wei.ZERO,
-              Bytes32.ZERO,
-              0,
-              Hash.ZERO,
-              DataGas.fromHexString("0x1234"),
-              new MainnetBlockHeaderFunctions(),
-              Optional.empty()));
-    }
-    return blockHeaders;
-  }
-
   @Test
   public void completesWhenPeersSendsTooManyHeadersAndReducesReputation() {
     // Setup a peer returning too many headers
@@ -384,5 +355,34 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     task.processResponse(false, BlockHeadersMessage.create(headers), peer);
     Mockito.verify(peer, Mockito.times(1))
         .recordUselessResponse("Header returned by peer does not have expected number 0x");
+  }
+
+  private List<BlockHeader> dummyBHList(final int count) {
+    final ArrayList<BlockHeader> blockHeaders = new ArrayList<>(count);
+    for (int i = 0; i < count; i++) {
+      blockHeaders.add(
+          new BlockHeader(
+              Hash.ZERO,
+              Hash.ZERO,
+              Address.ZERO,
+              Hash.ZERO,
+              Hash.ZERO,
+              Hash.ZERO,
+              new LogsBloomFilter(),
+              Difficulty.ZERO,
+              133,
+              0,
+              0,
+              0,
+              Bytes.fromHexString("abcd"),
+              Wei.ZERO,
+              Bytes32.ZERO,
+              0,
+              Hash.ZERO,
+              DataGas.fromHexString("0x1234"),
+              new MainnetBlockHeaderFunctions(),
+              Optional.empty()));
+    }
+    return blockHeaders;
   }
 }
