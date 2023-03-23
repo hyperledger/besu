@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateKeyValueStorage;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;

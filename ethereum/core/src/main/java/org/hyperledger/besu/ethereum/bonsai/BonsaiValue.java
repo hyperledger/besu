@@ -26,13 +26,13 @@ public class BonsaiValue<T> {
   private T updated;
   private boolean cleared;
 
-  BonsaiValue(final T prior, final T updated) {
+  public BonsaiValue(final T prior, final T updated) {
     this.prior = prior;
     this.updated = updated;
     this.cleared = false;
   }
 
-  BonsaiValue(final T prior, final T updated, final boolean cleared) {
+  public BonsaiValue(final T prior, final T updated, final boolean cleared) {
     this.prior = prior;
     this.updated = updated;
     this.cleared = cleared;
@@ -57,13 +57,13 @@ public class BonsaiValue<T> {
     return this;
   }
 
-  void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
+  public void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
     output.startList();
     writeInnerRlp(output, writer);
     output.endList();
   }
 
-  void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
+  public void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
     if (prior == null) {
       output.writeNull();
     } else {
@@ -76,7 +76,7 @@ public class BonsaiValue<T> {
     }
   }
 
-  boolean isUnchanged() {
+  public boolean isUnchanged() {
     return Objects.equals(updated, prior);
   }
 

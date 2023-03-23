@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,7 +23,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -66,10 +66,10 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void rootHash_Empty() {
     final MutableWorldState worldState = createEmpty();
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -97,10 +97,10 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -110,10 +110,10 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -124,7 +124,7 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.commit();
     assertThat(worldState.get(ADDRESS)).isNotNull();
-    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isNotEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     // Delete account
     updater = worldState.updater();
@@ -134,7 +134,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     assertThat(updater.get(ADDRESS)).isNull();
 
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -146,7 +146,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     worldState.persist(null);
     assertThat(worldState.get(ADDRESS)).isNotNull();
-    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isNotEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     // Delete account
     updater = worldState.updater();
@@ -160,7 +160,7 @@ public class DefaultMutableWorldStateTest {
     worldState.persist(null);
     assertThat(updater.get(ADDRESS)).isNull();
 
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -475,7 +475,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     worldState.persist(null);
     assertThat(worldState.get(ADDRESS)).isNotNull();
-    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isNotEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     // Clear storage
     account = updater.getAccount(ADDRESS).getMutable();

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,23 +19,24 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public interface WorldStateArchive {
-  Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+public interface WorldStateArchive extends Closeable {
+  Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   Optional<WorldState> get(Hash rootHash, Hash blockHash);
 
   boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
-  Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash, boolean isPersistingState);
+  Optional<MutableWorldState> getMutable(BlockHeader blockHeader, boolean isPersistingState);
 
   Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);
 

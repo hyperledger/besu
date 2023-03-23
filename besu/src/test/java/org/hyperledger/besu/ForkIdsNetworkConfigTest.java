@@ -24,13 +24,22 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
+import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.TimestampStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.DefaultTimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 
 import java.util.Collection;
 import java.util.List;
@@ -118,8 +127,9 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 12965000L),
                 new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
                 new ForkId(Bytes.ofUnsignedInt(0x20c327fcL), 15050000L),
-                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 1681338455L),
+                new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L))
           },
           new Object[] {
             NetworkName.MORDOR,
@@ -168,8 +178,8 @@ public class ForkIdsNetworkConfigTest {
     public void testForkId() {
       final GenesisConfigFile genesisConfigFile =
           GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
-      final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
-      final ProtocolSchedule schedule = TransitionProtocolSchedule.fromConfig(configOptions);
+      final MilestoneStreamingTransitionProtocolSchedule schedule =
+          createSchedule(genesisConfigFile);
       final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
       final Blockchain mockBlockchain = mock(Blockchain.class);
       final BlockHeader mockBlockHeader = mock(BlockHeader.class);
@@ -198,6 +208,55 @@ public class ForkIdsNetworkConfigTest {
               .collect(Collectors.toList());
 
       assertThat(actualForkIds).containsExactlyElementsOf(expectedForkIds);
+    }
+
+    private static MilestoneStreamingTransitionProtocolSchedule createSchedule(
+        final GenesisConfigFile genesisConfigFile) {
+      final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
+      BlockNumberStreamingProtocolSchedule preMergeProtocolSchedule =
+          new BlockNumberStreamingProtocolSchedule(
+              (MutableProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
+      BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule =
+          new BlockNumberStreamingProtocolSchedule(
+              (MutableProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
+      TimestampStreamingProtocolSchedule timestampSchedule =
+          new TimestampStreamingProtocolSchedule(
+              (DefaultTimestampSchedule)
+                  MergeProtocolSchedule.createTimestamp(
+                      configOptions, PrivacyParameters.DEFAULT, false));
+      final MilestoneStreamingTransitionProtocolSchedule schedule =
+          new MilestoneStreamingTransitionProtocolSchedule(
+              preMergeProtocolSchedule, postMergeProtocolSchedule, timestampSchedule);
+      return schedule;
+    }
+
+    public static class MilestoneStreamingTransitionProtocolSchedule
+        extends TransitionProtocolSchedule {
+
+      private final TimestampStreamingProtocolSchedule timestampSchedule;
+      private final TransitionUtils<MilestoneStreamingProtocolSchedule> transitionUtils;
+
+      public MilestoneStreamingTransitionProtocolSchedule(
+          final BlockNumberStreamingProtocolSchedule preMergeProtocolSchedule,
+          final BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule,
+          final TimestampStreamingProtocolSchedule timestampSchedule) {
+        super(
+            preMergeProtocolSchedule,
+            postMergeProtocolSchedule,
+            PostMergeContext.get(),
+            timestampSchedule);
+        this.timestampSchedule = timestampSchedule;
+        transitionUtils =
+            new TransitionUtils<>(
+                preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+      }
+
+      public Stream<Long> streamMilestoneBlocks() {
+        final Stream<Long> milestoneBlockNumbers =
+            transitionUtils.dispatchFunctionAccordingToMergeState(
+                MilestoneStreamingProtocolSchedule::streamMilestoneBlocks);
+        return Stream.concat(milestoneBlockNumbers, timestampSchedule.streamMilestoneBlocks());
+      }
     }
   }
 }

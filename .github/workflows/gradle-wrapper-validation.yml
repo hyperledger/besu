@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 name: "Validate Gradle Wrapper"
-on: [push, pull_request, merge_group]
+on: [push, pull_request]
 
 jobs:
   validation:
     name: "Gradle Wrapper Validation"
-    runs-on: ubuntu-latest
+    runs-on: [besu,Linux,self-hosted,nodocker]
     steps:
       - uses: actions/checkout@v2
       - uses: gradle/wrapper-validation-action@v1

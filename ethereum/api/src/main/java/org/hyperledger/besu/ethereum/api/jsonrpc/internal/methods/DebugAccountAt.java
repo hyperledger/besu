@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -87,42 +88,56 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final Optional<TransactionTrace> transactionTrace =
-        blockTracerSupplier
-            .get()
-            .trace(blockHash, new DebugOperationTracer(new TraceOptions(false, true, true)))
-            .map(BlockTrace::getTransactionTraces)
-            .orElse(Collections.emptyList())
-            .stream()
-            .filter(
-                trxTrace ->
-                    trxTrace
-                        .getTransaction()
-                        .getHash()
-                        .equals(transactions.get(txIndex).getTransaction().getHash()))
-            .findFirst();
+    return Tracer.processTracing(
+            blockchainQueries.get(),
+            Optional.of(block.get().getHeader()),
+            mutableWorldState -> {
+              final Optional<TransactionTrace> transactionTrace =
+                  blockTracerSupplier
+                      .get()
+                      .trace(
+                          mutableWorldState,
+                          blockHash,
+                          new DebugOperationTracer(new TraceOptions(false, true, true)))
+                      .map(BlockTrace::getTransactionTraces)
+                      .orElse(Collections.emptyList())
+                      .stream()
+                      .filter(
+                          trxTrace ->
+                              trxTrace
+                                  .getTransaction()
+                                  .getHash()
+                                  .equals(transactions.get(txIndex).getTransaction().getHash()))
+                      .findFirst();
 
-    if (transactionTrace.isEmpty()) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.TRANSACTION_NOT_FOUND);
-    }
+              if (transactionTrace.isEmpty()) {
+                return Optional.of(
+                    new JsonRpcErrorResponse(
+                        requestContext.getRequest().getId(), JsonRpcError.TRANSACTION_NOT_FOUND));
+              }
 
-    Optional<Account> account =
-        transactionTrace.get().getTraceFrames().stream()
-            .map(traceFrame -> traceFrame.getWorldUpdater().get(address))
-            .filter(Objects::nonNull)
-            .filter(a -> a.getAddress().equals(address))
-            .findFirst();
-    if (account.isEmpty()) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND);
-    }
+              Optional<Account> account =
+                  transactionTrace.get().getTraceFrames().stream()
+                      .map(traceFrame -> traceFrame.getWorldUpdater().get(address))
+                      .filter(Objects::nonNull)
+                      .filter(a -> a.getAddress().equals(address))
+                      .findFirst();
+              if (account.isEmpty()) {
+                return Optional.of(
+                    new JsonRpcErrorResponse(
+                        requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND));
+              }
 
-    return debugAccountAtResult(
-        account.get().getCode(),
-        Quantity.create(account.get().getNonce()),
-        Quantity.create(account.get().getBalance()),
-        Quantity.create(account.get().getCodeHash()));
+              return Optional.of(
+                  debugAccountAtResult(
+                      account.get().getCode(),
+                      Quantity.create(account.get().getNonce()),
+                      Quantity.create(account.get().getBalance()),
+                      Quantity.create(account.get().getCodeHash())));
+            })
+        .orElse(
+            new JsonRpcErrorResponse(
+                requestContext.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE));
   }
 
   protected ImmutableDebugAccountAtResult debugAccountAtResult(

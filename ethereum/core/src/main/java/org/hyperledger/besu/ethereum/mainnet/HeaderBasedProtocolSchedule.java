@@ -17,15 +17,29 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 public interface HeaderBasedProtocolSchedule {
 
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
+
+  default ProtocolSpec getForNextBlockHeader(
+      final BlockHeader parentBlockHeader, final long timestampForNextBlock) {
+    final BlockHeader nextBlockHeader =
+        BlockHeaderBuilder.fromHeader(parentBlockHeader)
+            .number(parentBlockHeader.getNumber() + 1)
+            .timestamp(timestampForNextBlock)
+            .parentHash(parentBlockHeader.getHash())
+            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+            .buildBlockHeader();
+    return getByBlockHeader(nextBlockHeader);
+  }
 
   Optional<BigInteger> getChainId();
 
@@ -33,5 +47,7 @@ public interface HeaderBasedProtocolSchedule {
 
   String listMilestones();
 
-  Stream<Long> streamMilestoneBlocks();
+  boolean anyMatch(Predicate<ScheduledProtocolSpec> predicate);
+
+  boolean isOnMilestoneBoundary(final BlockHeader blockHeader);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.List;
@@ -35,7 +35,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   private final WorldStatePreimageStorage preimageStorage;
   private final WorldStateProofProvider worldStateProof;
 
-  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   public DefaultWorldStateArchive(
       final WorldStateStorage worldStateStorage, final WorldStatePreimageStorage preimageStorage) {
@@ -56,8 +56,8 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(
-      final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
-    return getMutable(rootHash, blockHash);
+      final BlockHeader blockHeader, final boolean isPersistingState) {
+    return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
   }
 
   @Override
@@ -94,5 +94,10 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
     return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
+  }
+
+  @Override
+  public void close() {
+    // no op
   }
 }
