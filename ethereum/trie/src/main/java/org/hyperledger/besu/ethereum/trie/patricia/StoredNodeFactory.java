@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,16 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static java.lang.String.format;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.LeafNode;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeFactory;
+import org.hyperledger.besu.ethereum.trie.NodeLoader;
+import org.hyperledger.besu.ethereum.trie.NullNode;
+import org.hyperledger.besu.ethereum.trie.StoredNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -32,6 +41,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class StoredNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final NullNode NULL_NODE = NullNode.instance();
+
+  private static final int RADIX = 16;
 
   private final NodeLoader nodeLoader;
   private final Function<V, Bytes> valueSerializer;
@@ -55,17 +66,17 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   @Override
   public Node<V> createBranch(
       final byte leftIndex, final Node<V> left, final byte rightIndex, final Node<V> right) {
-    assert (leftIndex <= BranchNode.RADIX);
-    assert (rightIndex <= BranchNode.RADIX);
+    assert (leftIndex <= RADIX);
+    assert (rightIndex <= RADIX);
     assert (leftIndex != rightIndex);
 
     final ArrayList<Node<V>> children =
-        new ArrayList<>(Collections.nCopies(BranchNode.RADIX, (Node<V>) NULL_NODE));
+        new ArrayList<>(Collections.nCopies(RADIX, (Node<V>) NULL_NODE));
 
-    if (leftIndex == BranchNode.RADIX) {
+    if (leftIndex == RADIX) {
       children.set(rightIndex, right);
       return createBranch(children, left.getValue());
-    } else if (rightIndex == BranchNode.RADIX) {
+    } else if (rightIndex == RADIX) {
       children.set(leftIndex, left);
       return createBranch(children, right.getValue());
     } else {
@@ -76,7 +87,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   @Override
-  public Node<V> createBranch(final ArrayList<Node<V>> children, final Optional<V> value) {
+  public Node<V> createBranch(final List<Node<V>> children, final Optional<V> value) {
     return handleNewNode(new BranchNode<>(children, value, this, valueSerializer));
   }
 
@@ -90,6 +101,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     return node;
   }
 
+  @Override
   public Optional<Node<V>> retrieve(final Bytes location, final Bytes32 hash)
       throws MerkleTrieException {
     return nodeLoader
@@ -147,7 +159,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
           return extensionNode;
         }
 
-      case (BranchNode.RADIX + 1):
+      case (RADIX + 1):
         final BranchNode<V> branchNode = decodeBranch(location, nodeRLPs, errMessage);
         nodeRLPs.leaveList();
         return branchNode;
@@ -180,8 +192,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("unchecked")
   protected BranchNode<V> decodeBranch(
       final Bytes location, final RLPInput nodeRLPs, final Supplier<String> errMessage) {
-    final ArrayList<Node<V>> children = new ArrayList<>(BranchNode.RADIX);
-    for (int i = 0; i < BranchNode.RADIX; ++i) {
+    final ArrayList<Node<V>> children = new ArrayList<>(RADIX);
+    for (int i = 0; i < RADIX; ++i) {
       if (nodeRLPs.nextIsNull()) {
         nodeRLPs.skipNext();
         children.add(NULL_NODE);

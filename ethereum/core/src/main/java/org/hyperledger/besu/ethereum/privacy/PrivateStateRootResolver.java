@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,14 +19,14 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivateStateRootResolver {
-  public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+  public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   private final PrivateStateStorage privateStateStorage;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,9 +19,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
@@ -135,8 +135,8 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Bytes location,
       final Bytes32 nodeHash) {
-    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return Optional.ofNullable(accountNodes.getIfPresent(nodeHash))
           .or(() -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));
@@ -148,8 +148,8 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
       final Hash accountHash,
       final Bytes location,
       final Bytes32 nodeHash) {
-    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return Optional.ofNullable(storageNodes.getIfPresent(nodeHash))
           .or(

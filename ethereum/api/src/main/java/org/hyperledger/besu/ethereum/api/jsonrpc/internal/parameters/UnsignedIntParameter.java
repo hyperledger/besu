@@ -28,6 +28,12 @@ public class UnsignedIntParameter {
     checkArgument(this.value >= 0);
   }
 
+  @JsonCreator
+  public UnsignedIntParameter(final int value) {
+    this.value = value;
+    checkArgument(this.value >= 0);
+  }
+
   public int getValue() {
     return value;
   }

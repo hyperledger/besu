@@ -50,6 +50,8 @@ dependencies {
   implementation project(':nat')
   implementation project(':plugin-api')
   implementation project(':util')
+  implementation project(':services:pipeline')
+  implementation project(':services:tasks')
 
   implementation 'com.google.guava:guava'
   implementation 'com.graphql-java:graphql-java'

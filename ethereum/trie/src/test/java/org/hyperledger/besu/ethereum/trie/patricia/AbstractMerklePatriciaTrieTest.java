@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,13 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.KeyValueMerkleStorage;
+import org.hyperledger.besu.ethereum.trie.MerkleStorage;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.Proof;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -31,14 +37,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 public abstract class AbstractMerklePatriciaTrieTest {
-  protected MerklePatriciaTrie<Bytes, String> trie;
+  protected MerkleTrie<Bytes, String> trie;
 
   @Before
   public void setup() {
     trie = createTrie();
   }
 
-  protected abstract MerklePatriciaTrie<Bytes, String> createTrie();
+  protected abstract MerkleTrie<Bytes, String> createTrie();
 
   @Test
   public void emptyTreeReturnsEmpty() {
@@ -66,6 +72,18 @@ public abstract class AbstractMerklePatriciaTrieTest {
 
     final String value2 = "value2";
     trie.put(key, value2);
+    assertThat(trie.get(key)).isEqualTo(Optional.of(value2));
+  }
+
+  @Test
+  public void replaceSingleValueWithPath() {
+    final Bytes key = Bytes.of(1);
+    final String value1 = "value1";
+    trie.putPath(CompactEncoding.bytesToPath(key), value1);
+    assertThat(trie.get(key)).isEqualTo(Optional.of(value1));
+
+    final String value2 = "value2";
+    trie.putPath(CompactEncoding.bytesToPath(key), value2);
     assertThat(trie.get(key)).isEqualTo(Optional.of(value2));
   }
 

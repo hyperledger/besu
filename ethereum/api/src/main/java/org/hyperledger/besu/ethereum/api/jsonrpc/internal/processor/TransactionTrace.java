@@ -14,17 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
 import java.util.List;
+import java.util.Optional;
 
 public class TransactionTrace {
 
   private final Transaction transaction;
   private final TransactionProcessingResult result;
   private final List<TraceFrame> traceFrames;
+  private final Optional<Block> block;
+
+  public TransactionTrace(final Optional<Block> block) {
+    this.transaction = null;
+    this.result = null;
+    this.traceFrames = null;
+    this.block = block;
+  }
 
   public TransactionTrace(
       final Transaction transaction,
@@ -33,6 +43,25 @@ public class TransactionTrace {
     this.transaction = transaction;
     this.result = result;
     this.traceFrames = traceFrames;
+    this.block = Optional.empty();
+  }
+
+  public TransactionTrace(
+      final Transaction transaction,
+      final TransactionProcessingResult result,
+      final List<TraceFrame> traceFrames,
+      final Optional<Block> block) {
+    this.transaction = transaction;
+    this.result = result;
+    this.traceFrames = traceFrames;
+    this.block = block;
+  }
+
+  public TransactionTrace(final Transaction transaction, final Optional<Block> block) {
+    this.transaction = transaction;
+    this.result = null;
+    this.traceFrames = null;
+    this.block = block;
   }
 
   public Transaction getTransaction() {
@@ -53,5 +82,9 @@ public class TransactionTrace {
 
   public List<TraceFrame> getTraceFrames() {
     return traceFrames;
+  }
+
+  public Optional<Block> getBlock() {
+    return block;
   }
 }
