@@ -78,7 +78,7 @@ public class RetryingGetStorageRangeFromPeerTask
             peerResult -> {
               if (isEmptyResponse(peerResult.getResult())) {
                 final EthPeer peer = peerResult.getPeer();
-                peer.recordUselessResponse("GetAccountRangeFromPeerTask");
+                peer.recordUselessResponse("RetryingGetStorageRangeFromPeerTask");
                 throw new IncompleteResultsException(
                     "No storage returned by peer " + peer.nodeId());
               }
