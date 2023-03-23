@@ -184,7 +184,7 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
   }
 
   @Test
-  public void completesWhenPeersSendsWrongFirstHeaderAndReducesReputation() {
+  public void completesWhenPeerSendsWrongFirstHeaderAndReducesReputation() {
     // Setup a peer returning result where the first header has the wrong number
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
