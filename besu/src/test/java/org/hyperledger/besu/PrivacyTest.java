@@ -29,7 +29,8 @@ import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -144,11 +145,14 @@ public class PrivacyTest {
 
   private PrecompiledContract getPrecompile(
       final BesuController besuController, final Address defaultPrivacy) {
-    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     return besuController
         .getProtocolSchedule()
         .getByBlockHeader(blockHeader(0))
         .getPrecompileContractRegistry()
         .get(defaultPrivacy);
+  }
+
+  private BlockHeader blockHeader(long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }
