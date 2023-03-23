@@ -204,6 +204,46 @@ public record EOFLayout(
       return invalidLayout(container, version, "Invalid Data section size");
     }
 
+    int containerSectionCount;
+    int[] containerSectionSizes;
+    if (checkKind(inputStream, SECTION_CONTAINER)) {
+      error = readKind(inputStream, SECTION_CONTAINER);
+      if (error != null) {
+        return invalidLayout(container, version, error);
+      }
+      containerSectionCount = readUnsignedShort(inputStream);
+      if (containerSectionCount <= 0) {
+        return invalidLayout(container, version, "Invalid container section count");
+      }
+      if (containerSectionCount * 4 != typesLength) {
+        return invalidLayout(
+            container,
+            version,
+            "Type section length incompatible with container section count - 0x"
+                + Integer.toHexString(containerSectionCount)
+                + " * 4 != 0x"
+                + Integer.toHexString(typesLength));
+      }
+      if (containerSectionCount > 1024) {
+        return invalidLayout(
+            container,
+            version,
+            "Too many container sections - 0x" + Integer.toHexString(containerSectionCount));
+      }
+      containerSectionSizes = new int[containerSectionCount];
+      for (int i = 0; i < containerSectionCount; i++) {
+        int size = readUnsignedShort(inputStream);
+        if (size <= 0) {
+          return invalidLayout(
+              container, version, "Invalid container section size for section " + i);
+        }
+        containerSectionSizes[i] = size;
+      }
+    } else {
+      containerSectionCount = 0;
+      containerSectionSizes = new int[0];
+    }
+
     error = readKind(inputStream, SECTION_TERMINATOR);
     if (error != null) {
       return invalidLayout(container, version, error);
@@ -343,6 +383,25 @@ public record EOFLayout(
    */
   public CodeSection getCodeSection(final int i) {
     return codeSections[i];
+  }
+
+  /**
+   * Get sub container section count.
+   *
+   * @return the sub container count
+   */
+  public int getSubcontainerCount() {
+    return containers == null ? 0 : containers.length;
+  }
+
+  /**
+   * Get code sections.
+   *
+   * @param i the index
+   * @return the Code section
+   */
+  public EOFLayout getSubcontainer(final int i) {
+    return containers[i];
   }
 
   /**
