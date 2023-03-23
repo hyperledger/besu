@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMP
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_0;
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -103,7 +102,7 @@ public class PrivateStorageMigrationTest {
     privateStateStorage = new PrivateStateKeyValueStorage(kvStorage);
     privateStateRootResolver = new PrivateStateRootResolver(privateStateStorage);
 
-    lenient().when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+    lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     lenient().when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     lenient()
         .when(protocolSpec.getTransactionReceiptFactory())
