@@ -821,7 +821,7 @@ class CodeV1Test {
 
   static Stream<Arguments> invalidInstructions() {
     return IntStream.range(0, 256)
-        .filter(opcode -> CodeV1Validation.OPCODE_ATTRIBUTES[opcode] == CodeV1Validation.INVALID)
+        .filter(opcode -> !CodeV1Validation.OPCODE_INFO[opcode].valid())
         .mapToObj(
             opcode ->
                 Arguments.of(
