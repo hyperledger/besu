@@ -107,7 +107,7 @@ public class EthPeers {
         BesuMetricCategory.ETHEREUM,
         "peer_count",
         "The current number of peers connected",
-        () -> (int) streamAvailablePeers().count());
+        () -> (int) streamAvailablePeers().filter(p -> p.readyForRequests()).count());
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
