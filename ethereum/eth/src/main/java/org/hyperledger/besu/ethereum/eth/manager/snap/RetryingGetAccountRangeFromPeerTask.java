@@ -76,7 +76,7 @@ public class RetryingGetAccountRangeFromPeerTask
                 final EthPeer peer = peerResult.getPeer();
                 peer.recordUselessResponse("GetAccountRangeFromPeerTask");
                 throw new IncompleteResultsException(
-                    "No account and proof returned by peer " + peer.nodeId());
+                    "No account range returned by peer " + peer.nodeId());
               }
               result.complete(peerResult.getResult());
               // TODO: update block height of peer?
