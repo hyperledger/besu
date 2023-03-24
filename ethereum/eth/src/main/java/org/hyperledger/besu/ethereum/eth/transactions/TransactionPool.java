@@ -68,6 +68,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final PendingTransactions pendingTransactions;
   private final HeaderBasedProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
+  private final EthContext ethContext;
   private final TransactionBroadcaster transactionBroadcaster;
   private final MiningParameters miningParameters;
   private final TransactionPoolMetrics metrics;
@@ -90,6 +91,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.miningParameters = miningParameters;
     this.metrics = metrics;
     this.configuration = configuration;
+    this.ethContext = ethContext;
     ethContext.getEthPeers().subscribeConnect(this::handleConnect);
     initLogForReplay();
   }
@@ -222,21 +224,26 @@ public class TransactionPool implements BlockAddedObserver {
             });
 
     if (!addedTransactions.isEmpty()) {
-      transactionBroadcaster.onTransactionsAdded(addedTransactions);
-      LOG_FOR_REPLAY
-          .atTrace()
-          .setMessage("S,{}")
-          .addArgument(() -> pendingTransactions.logStats())
-          .log();
-      LOG.atDebug()
-          .setMessage(
-              "Added {} transactions to the pool in {}ms, not added {}, current pool stats {}")
-          .addArgument(addedTransactions::size)
-          .addArgument(() -> System.currentTimeMillis() - started)
-          .addArgument(() -> initialCount - addedTransactions.size())
-          .addArgument(pendingTransactions::logStats)
-          .log();
+      ethContext
+          .getScheduler()
+          .scheduleSyncWorkerTask(
+              () -> transactionBroadcaster.onTransactionsAdded(addedTransactions));
     }
+
+    LOG_FOR_REPLAY
+        .atTrace()
+        .setMessage("S,{}")
+        .addArgument(() -> pendingTransactions.logStats())
+        .log();
+
+    LOG.atDebug()
+        .setMessage(
+            "Added {} transactions to the pool in {}ms, not added {}, current pool stats {}")
+        .addArgument(addedTransactions::size)
+        .addArgument(() -> System.currentTimeMillis() - started)
+        .addArgument(() -> initialCount - addedTransactions.size())
+        .addArgument(pendingTransactions::logStats)
+        .log();
   }
 
   public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
