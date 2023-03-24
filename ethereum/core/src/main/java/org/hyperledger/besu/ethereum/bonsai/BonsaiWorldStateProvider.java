@@ -338,6 +338,9 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   @Override
   public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
     persistedState.setArchiveStateUnSafe(blockHeader);
+    this.trieLogManager.reset();
+    this.trieLogManager.addCachedLayer(
+        blockHeader, persistedState.worldStateRootHash, persistedState);
   }
 
   @Override

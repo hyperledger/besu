@@ -162,6 +162,11 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   }
 
   @Override
+  public void reset() {
+    this.cachedWorldStatesByHash.clear();
+  }
+
+  @Override
   public void onClearStorage() {
     this.cachedWorldStatesByHash.clear();
   }
