@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -127,14 +126,13 @@ public class QbftProtocolScheduleTest {
   private BlockNumberStreamingProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions genesisConfig, final List<ForkSpec<QbftConfigOptions>> forks) {
     return new BlockNumberStreamingProtocolSchedule(
-        (MutableProtocolSchedule)
-            QbftProtocolScheduleBuilder.create(
-                genesisConfig,
-                new ForksSchedule<>(forks),
-                PrivacyParameters.DEFAULT,
-                false,
-                bftExtraDataCodec,
-                EvmConfiguration.DEFAULT));
+        QbftProtocolScheduleBuilder.create(
+            genesisConfig,
+            new ForksSchedule<>(forks),
+            PrivacyParameters.DEFAULT,
+            false,
+            bftExtraDataCodec,
+            EvmConfiguration.DEFAULT));
   }
 
   private boolean validateHeader(

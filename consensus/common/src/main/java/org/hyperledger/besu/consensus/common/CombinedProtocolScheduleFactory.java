@@ -36,10 +36,11 @@ public class CombinedProtocolScheduleFactory {
    * @param chainId the chain id
    * @return the protocol schedule
    */
-  public ProtocolSchedule create(
+  public BftProtocolSchedule create(
       final NavigableSet<ForkSpec<ProtocolSchedule>> forkSpecs,
       final Optional<BigInteger> chainId) {
-    final MutableProtocolSchedule combinedProtocolSchedule = new MutableProtocolSchedule(chainId);
+    final BftProtocolSchedule combinedProtocolSchedule =
+        new BftProtocolSchedule(new MutableProtocolSchedule(chainId));
     for (ForkSpec<ProtocolSchedule> spec : forkSpecs) {
       checkState(
           spec.getValue() instanceof MutableProtocolSchedule,

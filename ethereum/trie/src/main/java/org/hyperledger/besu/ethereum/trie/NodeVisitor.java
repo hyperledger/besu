@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
 
 public interface NodeVisitor<V> {
 

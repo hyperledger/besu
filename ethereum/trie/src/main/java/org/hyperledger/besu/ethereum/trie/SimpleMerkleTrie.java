@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
-import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 
 import java.util.List;
 import java.util.Map;
@@ -73,7 +72,7 @@ public abstract class SimpleMerkleTrie<K extends Bytes, V> implements MerkleTrie
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
     final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
     final List<Bytes> proof =
-        proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
+        proofVisitor.getProof().stream().map(Node::getEncodedBytes).collect(Collectors.toList());
     return new Proof<>(value, proof);
   }
 
@@ -104,7 +103,7 @@ public abstract class SimpleMerkleTrie<K extends Bytes, V> implements MerkleTrie
   }
 
   @Override
-  public void removePath(final K path, final RemoveVisitor<V> removeVisitor) {
+  public void removePath(final K path, final PathNodeVisitor<V> removeVisitor) {
     checkNotNull(path);
     this.root = root.accept(removeVisitor, path);
   }

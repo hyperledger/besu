@@ -109,7 +109,7 @@ public class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlp() {
+  public Bytes getEncodedBytes() {
     if (rlp != null) {
       final Bytes encoded = rlp.get();
       if (encoded != null) {
@@ -119,7 +119,7 @@ public class ExtensionNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeBytes(CompactEncoding.encode(path));
-    out.writeRaw(child.getRlpRef());
+    out.writeRaw(child.getEncodedBytesRef());
     out.endList();
     final Bytes encoded = out.encoded();
     rlp = new WeakReference<>(encoded);
@@ -127,11 +127,11 @@ public class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlpRef() {
+  public Bytes getEncodedBytesRef() {
     if (isReferencedByHash()) {
       return RLP.encodeOne(getHash());
     } else {
-      return getRlp();
+      return getEncodedBytes();
     }
   }
 
@@ -143,7 +143,7 @@ public class ExtensionNode<V> implements Node<V> {
         return hashed;
       }
     }
-    final Bytes rlp = getRlp();
+    final Bytes rlp = getEncodedBytes();
     final Bytes32 hashed = keccak256(rlp);
     hash = new SoftReference<>(hashed);
     return hashed;
@@ -169,7 +169,7 @@ public class ExtensionNode<V> implements Node<V> {
     builder
         .append("Extension:")
         .append("\n\tRef: ")
-        .append(getRlpRef())
+        .append(getEncodedBytesRef())
         .append("\n\tPath: ")
         .append(CompactEncoding.encode(path))
         .append("\n\t")

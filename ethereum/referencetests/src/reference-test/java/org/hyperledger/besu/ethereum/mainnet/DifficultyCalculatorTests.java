@@ -171,7 +171,7 @@ public class DifficultyCalculatorTests {
       final long currentTime = extractLong(value, "currentTimestamp");
       final UInt256 currentDifficulty =
           UInt256.fromHexString(value.get("currentDifficulty").asText());
-      final var spec = protocolSchedule.getByBlockNumber(currentBlockNumber);
+      final var spec = protocolSchedule.getByBlockHeader(testHeader);
       final var calculator = spec.getDifficultyCalculator();
       assertThat(UInt256.valueOf(calculator.nextDifficulty(currentTime, testHeader, null)))
           .describedAs("File %s Test %s", testFile, entry.getKey())
