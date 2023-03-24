@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.patricia;
 
-import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeFactory;
 import org.hyperledger.besu.ethereum.trie.NullNode;

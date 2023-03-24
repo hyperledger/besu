@@ -106,9 +106,6 @@ public class EthFeeHistoryTest {
 
   @Test
   public void cantGetBlockHigherThanChainHead() {
-    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x2", "11", new double[] {100.0}))
                 .getError())
@@ -117,9 +114,6 @@ public class EthFeeHistoryTest {
 
   @Test
   public void blockCountBounds() {
-    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x0", "latest", new double[] {100.0}))
                 .getError())
@@ -134,7 +128,10 @@ public class EthFeeHistoryTest {
   public void doesntGoPastChainHeadWithHighBlockCount() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(
+            eq(blockchain.getChainHeadHeader()),
+            eq(blockchain.getChainHeadHeader().getTimestamp())))
+        .thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (ImmutableFeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest("0x14", "latest")).getResult();
@@ -148,7 +145,10 @@ public class EthFeeHistoryTest {
   public void correctlyHandlesForkBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(11));
-    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(
+            eq(blockchain.getChainHeadHeader()),
+            eq(blockchain.getChainHeadHeader().getTimestamp())))
+        .thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (FeeHistory.FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest")).getResult();
@@ -160,13 +160,16 @@ public class EthFeeHistoryTest {
   public void allZeroPercentilesForZeroBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
     final BlockDataGenerator.BlockOptions blockOptions = BlockDataGenerator.BlockOptions.create();
     blockOptions.hasTransactions(false);
     blockOptions.setParentHash(blockchain.getChainHeadHash());
     blockOptions.setBlockNumber(11);
     final Block emptyBlock = gen.block(blockOptions);
     blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
+    when(protocolSchedule.getForNextBlockHeader(
+            eq(blockchain.getChainHeadHeader()),
+            eq(blockchain.getChainHeadHeader().getTimestamp())))
+        .thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (FeeHistory.FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", new double[] {100.0}))
