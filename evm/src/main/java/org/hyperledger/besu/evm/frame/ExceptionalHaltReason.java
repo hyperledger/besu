@@ -59,6 +59,10 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason EOF_CREATE_VERSION_INCOMPATIBLE =
       DefaultExceptionalHaltReason.EOF_CREATE_VERSION_INCOMPATIBLE;
 
+  /** The constant EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE. */
+  ExceptionalHaltReason EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE =
+      DefaultExceptionalHaltReason.EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE;
+
   /**
    * Name string.
    *
@@ -113,7 +117,10 @@ public interface ExceptionalHaltReason {
         "The stack height for a JUMPF does not match the requirements of the target section"),
     /** The Eof version incompatible. */
     EOF_CREATE_VERSION_INCOMPATIBLE(
-        "EOF Code is attempting to create EOF code of an earlier version");
+        "EOF Code is attempting to create EOF code of an earlier version"),
+    /** The Delegate call version incompatible. */
+    EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE(
+        "EOF Code is attempting to delegate call code of an earlier version");
 
     /** The Description. */
     final String description;

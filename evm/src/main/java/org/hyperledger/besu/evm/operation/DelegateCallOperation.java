@@ -91,6 +91,11 @@ public class DelegateCallOperation extends AbstractCallOperation {
   }
 
   @Override
+  protected boolean isDelegate() {
+    return true;
+  }
+
+  @Override
   public long cost(final MessageFrame frame) {
     final long stipend = gas(frame);
     final long inputDataOffset = inputDataOffset(frame);

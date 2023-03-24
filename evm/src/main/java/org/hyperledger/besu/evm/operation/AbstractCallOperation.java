@@ -156,6 +156,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    */
   protected abstract boolean isStatic(MessageFrame frame);
 
+  /**
+   * Returns whether the child message call is a delegate call.
+   *
+   * @return {@code true} if the child message call is a delegate call; otherwise {@code false}
+   */
+  protected abstract boolean isDelegate();
+
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     // manual check because some reads won't come until the "complete" step.
@@ -194,38 +201,45 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             ? CodeV0.EMPTY_CODE
             : evm.getCode(contract.getCodeHash(), contract.getCode());
 
-    if (code.isValid()) {
-      final MessageFrame childFrame =
-          MessageFrame.builder()
-              .type(MessageFrame.Type.MESSAGE_CALL)
-              .messageFrameStack(frame.getMessageFrameStack())
-              .worldUpdater(frame.getWorldUpdater().updater())
-              .initialGas(gasAvailableForChildCall(frame))
-              .address(address(frame))
-              .originator(frame.getOriginatorAddress())
-              .contract(to)
-              .gasPrice(frame.getGasPrice())
-              .inputData(inputData)
-              .sender(sender(frame))
-              .value(value(frame))
-              .apparentValue(apparentValue(frame))
-              .code(code)
-              .blockValues(frame.getBlockValues())
-              .depth(frame.getMessageStackDepth() + 1)
-              .isStatic(isStatic(frame))
-              .completer(child -> complete(frame, child))
-              .miningBeneficiary(frame.getMiningBeneficiary())
-              .blockHashLookup(frame.getBlockHashLookup())
-              .maxStackSize(frame.getMaxStackSize())
-              .build();
-      frame.incrementRemainingGas(cost);
-
-      frame.getMessageFrameStack().addFirst(childFrame);
-      frame.setState(MessageFrame.State.CODE_SUSPENDED);
-      return new OperationResult(cost, null, 0);
-    } else {
+    // invalid code results in a quick exit
+    if (!code.isValid()) {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
+
+    // delegate calls to prior EOF versions are prohibited
+    if (isDelegate() && frame.getCode().getEofVersion() > code.getEofVersion()) {
+      return new OperationResult(
+          cost, ExceptionalHaltReason.EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE, 0);
+    }
+
+    final MessageFrame childFrame =
+        MessageFrame.builder()
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .messageFrameStack(frame.getMessageFrameStack())
+            .worldUpdater(frame.getWorldUpdater().updater())
+            .initialGas(gasAvailableForChildCall(frame))
+            .address(address(frame))
+            .originator(frame.getOriginatorAddress())
+            .contract(to)
+            .gasPrice(frame.getGasPrice())
+            .inputData(inputData)
+            .sender(sender(frame))
+            .value(value(frame))
+            .apparentValue(apparentValue(frame))
+            .code(code)
+            .blockValues(frame.getBlockValues())
+            .depth(frame.getMessageStackDepth() + 1)
+            .isStatic(isStatic(frame))
+            .completer(child -> complete(frame, child))
+            .miningBeneficiary(frame.getMiningBeneficiary())
+            .blockHashLookup(frame.getBlockHashLookup())
+            .maxStackSize(frame.getMaxStackSize())
+            .build();
+    frame.incrementRemainingGas(cost);
+
+    frame.getMessageFrameStack().addFirst(childFrame);
+    frame.setState(MessageFrame.State.CODE_SUSPENDED);
+    return new OperationResult(cost, null, 0);
   }
 
   /**
