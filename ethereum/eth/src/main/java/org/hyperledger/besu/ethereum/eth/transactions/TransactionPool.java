@@ -164,7 +164,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
     final List<Transaction> addedTransactions = new ArrayList<>(transactions.size());
-    LOG.trace("Adding {} remote transactions", transactions.size());
+    LOG.debug("Adding {} remote transactions", transactions.size());
 
     sortedBySenderAndNonce(transactions)
         .forEach(
@@ -230,12 +230,6 @@ public class TransactionPool implements BlockAddedObserver {
           .setMessage("Added {} transactions to the pool, current pool stats {}")
           .addArgument(addedTransactions::size)
           .addArgument(pendingTransactions::logStats)
-          .log();
-      LOG.atTrace()
-          .setMessage("Added {} transactions to the pool, current pool size {}, content {}")
-          .addArgument(addedTransactions::size)
-          .addArgument(pendingTransactions::size)
-          .addArgument(() -> pendingTransactions.toTraceLog())
           .log();
     }
   }

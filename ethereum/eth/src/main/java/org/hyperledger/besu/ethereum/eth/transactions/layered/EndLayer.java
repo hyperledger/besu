@@ -28,12 +28,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public class EndLayer implements TransactionsLayer {
@@ -72,8 +70,8 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public Set<PendingTransaction> getAll() {
-    return new HashSet<>();
+  public List<PendingTransaction> getAll() {
+    return List.of();
   }
 
   @Override

@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public interface TransactionsLayer {
@@ -41,7 +40,7 @@ public interface TransactionsLayer {
 
   boolean contains(Transaction transaction);
 
-  Set<PendingTransaction> getAll();
+  List<PendingTransaction> getAll();
 
   TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
 

@@ -287,7 +287,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  public synchronized Set<PendingTransaction> getPendingTransactions() {
+  public synchronized List<PendingTransaction> getPendingTransactions() {
     return prioritizedTransactions.getAll();
   }
 

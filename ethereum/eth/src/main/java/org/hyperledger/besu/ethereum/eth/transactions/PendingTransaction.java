@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.AccessListEntry;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /**
  * Tracks the additional metadata associated with transactions to enable prioritization for mining
@@ -150,9 +149,7 @@ public abstract class PendingTransaction {
 
   public static List<Transaction> toTransactionList(
       final Collection<PendingTransaction> transactionsInfo) {
-    return transactionsInfo.stream()
-        .map(PendingTransaction::getTransaction)
-        .collect(Collectors.toUnmodifiableList());
+    return transactionsInfo.stream().map(PendingTransaction::getTransaction).toList();
   }
 
   @Override

@@ -21,10 +21,10 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 
 public interface PendingTransactions {
 
@@ -50,7 +50,7 @@ public interface PendingTransactions {
 
   Optional<Transaction> getTransactionByHash(Hash transactionHash);
 
-  Set<PendingTransaction> getPendingTransactions();
+  Collection<PendingTransaction> getPendingTransactions();
 
   long subscribePendingTransactions(PendingTransactionAddedListener listener);
 

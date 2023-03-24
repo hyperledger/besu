@@ -113,7 +113,7 @@ public class PendingTransactionFilterTest {
   @Test
   public void localAndRemoteAddressShouldNotStartWithForwardSlash() {
 
-    final Set<Transaction> filteredList =
+    final Collection<Transaction> filteredList =
         pendingTransactionFilter.reduce(getPendingTransactions(), filters, limit);
 
     assertThat(filteredList.size()).isEqualTo(expectedListOfTransactionHash.size());

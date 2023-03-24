@@ -46,7 +46,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -117,9 +116,12 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   @Override
-  public Set<PendingTransaction> getAll() {
-    final var allTxs = nextLayer.getAll();
+  public List<PendingTransaction> getAll() {
+    final List<PendingTransaction> allNextLayers = nextLayer.getAll();
+    final List<PendingTransaction> allTxs =
+        new ArrayList<>(pendingTransactions.size() + allNextLayers.size());
     allTxs.addAll(pendingTransactions.values());
+    allTxs.addAll(allNextLayers);
     return allTxs;
   }
 

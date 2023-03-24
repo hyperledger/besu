@@ -43,6 +43,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -380,8 +381,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   }
 
   @Override
-  public Set<PendingTransaction> getPendingTransactions() {
-    return new HashSet<>(pendingTransactions.values());
+  public List<PendingTransaction> getPendingTransactions() {
+    return new ArrayList<>(pendingTransactions.values());
   }
 
   @Override
