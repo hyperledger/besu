@@ -256,7 +256,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     if (outputSize > outputData.size()) {
       frame.expandMemory(outputOffset, outputSize);
       frame.writeMemory(outputOffset, outputData.size(), outputData, true);
-    } else {
+    } else if (outputSize > 0) {
       frame.writeMemory(outputOffset, outputSize, outputData, true);
     }
 
