@@ -72,7 +72,7 @@ dependencyManagement {
       entry 'grpc-stub'
     }
 
-    dependency 'io.kubernetes:client-java:17.0.0'
+    dependency 'io.kubernetes:client-java:18.0.0'
 
     dependency 'io.netty:netty-all:4.1.78.Final'
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.50.Final'
@@ -210,7 +210,7 @@ dependencyManagement {
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.4'
 
-    dependency 'org.yaml:snakeyaml:1.32'
+    dependency 'org.yaml:snakeyaml:2.0'
 
     dependency 'tech.pegasys.discovery:discovery:22.2.0'
 
