@@ -124,7 +124,12 @@ public abstract class AbstractEngineNewPayloadTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.of(protocolSpec));
+    when(timestampSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
+    // always return parent block to be used in getForNextBlockHeader,
+    // unless overridden in an individual test
+    when(blockchain.getBlockHeader(
+            new BlockHeaderTestFixture().parentHash(Hash.EMPTY).buildHeader().getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(ethPeers.peerCount()).thenReturn(1);
     this.method =
         methodFactory.create(
@@ -347,8 +352,13 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldRespondWithSyncingDuringBackwardsSync() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+  public void shouldRespondWithSyncingDuringBackwardsSyncWhenNoParentHeader() {
+    final Hash uniqueParentHash = Hash.ZERO; // should miss the mock
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .parentHash(uniqueParentHash)
+            .baseFeePerGas(Wei.ONE)
+            .buildHeader();
     when(mergeCoordinator.appendNewPayloadToSync(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -462,7 +472,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnValidIfTimestampScheduleIsEmpty() {
-    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.empty());
+    when(timestampSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(null);
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
