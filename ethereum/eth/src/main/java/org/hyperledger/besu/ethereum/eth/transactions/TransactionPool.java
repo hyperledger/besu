@@ -163,8 +163,10 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
-    final List<Transaction> addedTransactions = new ArrayList<>(transactions.size());
-    LOG.debug("Adding {} remote transactions", transactions.size());
+    final long started = System.currentTimeMillis();
+    final int initialCount = transactions.size();
+    final List<Transaction> addedTransactions = new ArrayList<>(initialCount);
+    LOG.debug("Adding {} remote transactions", initialCount);
 
     sortedBySenderAndNonce(transactions)
         .forEach(
@@ -227,8 +229,11 @@ public class TransactionPool implements BlockAddedObserver {
           .addArgument(() -> pendingTransactions.logStats())
           .log();
       LOG.atDebug()
-          .setMessage("Added {} transactions to the pool, current pool stats {}")
+          .setMessage(
+              "Added {} transactions to the pool in {}ms, not added {}, current pool stats {}")
           .addArgument(addedTransactions::size)
+          .addArgument(() -> System.currentTimeMillis() - started)
+          .addArgument(() -> initialCount - addedTransactions.size())
           .addArgument(pendingTransactions::logStats)
           .log();
     }
