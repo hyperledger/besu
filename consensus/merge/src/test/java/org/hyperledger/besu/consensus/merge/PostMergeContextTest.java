@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
@@ -33,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -131,7 +134,7 @@ public class PostMergeContextTest {
 
   @Test
   public void putAndRetrieveFirstPayload() {
-    BlockWithReceipts mockBlockWithReceipts = mock(BlockWithReceipts.class);
+    BlockWithReceipts mockBlockWithReceipts = createBlockWithReceipts(1, 21000, 1);
 
     PayloadIdentifier firstPayloadId = new PayloadIdentifier(1L);
     postMergeContext.putPayloadById(firstPayloadId, mockBlockWithReceipts);
@@ -141,19 +144,8 @@ public class PostMergeContextTest {
 
   @Test
   public void puttingTwoBlocksWithTheSamePayloadIdWeRetrieveTheBest() {
-    BlockHeader zeroTxBlockHeader = mock(BlockHeader.class);
-    when(zeroTxBlockHeader.getGasUsed()).thenReturn(0L);
-    Block zeroTxBlock = mock(Block.class);
-    when(zeroTxBlock.getHeader()).thenReturn(zeroTxBlockHeader);
-    BlockWithReceipts zeroTxBlockWithReceipts = mock(BlockWithReceipts.class);
-    when(zeroTxBlockWithReceipts.getBlock()).thenReturn(zeroTxBlock);
-
-    BlockHeader betterBlockHeader = mock(BlockHeader.class);
-    when(betterBlockHeader.getGasUsed()).thenReturn(11L);
-    Block betterBlock = mock(Block.class);
-    when(betterBlock.getHeader()).thenReturn(betterBlockHeader);
-    BlockWithReceipts betterBlockWithReceipts = mock(BlockWithReceipts.class);
-    when(betterBlockWithReceipts.getBlock()).thenReturn(betterBlock);
+    BlockWithReceipts zeroTxBlockWithReceipts = createBlockWithReceipts(1, 0, 0);
+    BlockWithReceipts betterBlockWithReceipts = createBlockWithReceipts(2, 11, 1);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
     postMergeContext.putPayloadById(payloadId, zeroTxBlockWithReceipts);
@@ -164,26 +156,9 @@ public class PostMergeContextTest {
 
   @Test
   public void puttingABlockWithTheSamePayloadIdSmallerThanAnExistingOneWeRetrieveTheBest() {
-    BlockHeader zeroTxBlockHeader = mock(BlockHeader.class);
-    when(zeroTxBlockHeader.getGasUsed()).thenReturn(0L);
-    Block zeroTxBlock = mock(Block.class);
-    when(zeroTxBlock.getHeader()).thenReturn(zeroTxBlockHeader);
-    BlockWithReceipts zeroTxBlockWithReceipts = mock(BlockWithReceipts.class);
-    when(zeroTxBlockWithReceipts.getBlock()).thenReturn(zeroTxBlock);
-
-    BlockHeader betterBlockHeader = mock(BlockHeader.class);
-    when(betterBlockHeader.getGasUsed()).thenReturn(11L);
-    Block betterBlock = mock(Block.class);
-    when(betterBlock.getHeader()).thenReturn(betterBlockHeader);
-    BlockWithReceipts betterBlockWithReceipts = mock(BlockWithReceipts.class);
-    when(betterBlockWithReceipts.getBlock()).thenReturn(betterBlock);
-
-    BlockHeader smallBlockHeader = mock(BlockHeader.class);
-    when(smallBlockHeader.getGasUsed()).thenReturn(5L);
-    Block smallBlock = mock(Block.class);
-    when(smallBlock.getHeader()).thenReturn(smallBlockHeader);
-    BlockWithReceipts smallBlockWithReceipts = mock(BlockWithReceipts.class);
-    when(smallBlockWithReceipts.getBlock()).thenReturn(smallBlock);
+    BlockWithReceipts zeroTxBlockWithReceipts = createBlockWithReceipts(1, 0, 0);
+    BlockWithReceipts betterBlockWithReceipts = createBlockWithReceipts(2, 11, 1);
+    BlockWithReceipts smallBlockWithReceipts = createBlockWithReceipts(3, 5, 1);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
     postMergeContext.putPayloadById(payloadId, zeroTxBlockWithReceipts);
@@ -204,7 +179,7 @@ public class PostMergeContextTest {
   public void tryingToRetrieveABlockPutButEvictedReturnsEmpty() {
     for (long i = 0; i < PostMergeContext.MAX_BLOCKS_IN_PROGRESS + 1; i++) {
       PayloadIdentifier payloadId = new PayloadIdentifier(i);
-      BlockWithReceipts mockBlockWithReceipts = mock(BlockWithReceipts.class);
+      BlockWithReceipts mockBlockWithReceipts = createBlockWithReceipts((int) i + 1, 11, 1);
       postMergeContext.putPayloadById(payloadId, mockBlockWithReceipts);
     }
 
@@ -237,6 +212,17 @@ public class PostMergeContextTest {
     // if we're in sync reached ttd does not matter anymore
     when(mockSyncState.isInSync()).thenReturn(Boolean.TRUE);
     assertThat(postMergeContext.isSyncing()).isFalse();
+  }
+
+  private static BlockWithReceipts createBlockWithReceipts(
+      final int number, final long gasUsed, final int txCount) {
+    Block mockBlock = mock(Block.class, RETURNS_DEEP_STUBS);
+    when(mockBlock.toLogString()).thenReturn(number + " (" + Hash.wrap(Bytes32.random()) + ")");
+    when(mockBlock.getHeader().getGasUsed()).thenReturn(gasUsed);
+    when(mockBlock.getBody().getTransactions().size()).thenReturn(txCount);
+    BlockWithReceipts mockBlockWithReceipts = mock(BlockWithReceipts.class);
+    when(mockBlockWithReceipts.getBlock()).thenReturn(mockBlock);
+    return mockBlockWithReceipts;
   }
 
   private static class MergeStateChangeCollector implements MergeStateHandler {
