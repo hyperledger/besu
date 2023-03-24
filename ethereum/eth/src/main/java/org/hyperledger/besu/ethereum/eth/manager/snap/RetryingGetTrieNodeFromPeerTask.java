@@ -72,7 +72,7 @@ public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Ma
                     "No trie node returned by peer " + peer.nodeId());
               }
               result.complete(peerResult.getResult());
-              // TODO: should we update the height of peer here?
+              peerResult.getPeer().chainState().updateHeightEstimate(blockHeader.getNumber());
               return peerResult.getResult();
             });
   }

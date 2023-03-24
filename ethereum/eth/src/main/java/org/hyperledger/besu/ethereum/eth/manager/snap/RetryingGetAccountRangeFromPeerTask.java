@@ -79,7 +79,7 @@ public class RetryingGetAccountRangeFromPeerTask
                     "No account range returned by peer " + peer.nodeId());
               }
               result.complete(peerResult.getResult());
-              // TODO: update block height of peer?
+              peerResult.getPeer().chainState().updateHeightEstimate(blockHeader.getNumber());
               return peerResult.getResult();
             });
   }

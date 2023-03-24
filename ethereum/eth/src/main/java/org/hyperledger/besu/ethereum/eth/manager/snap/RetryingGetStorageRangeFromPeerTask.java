@@ -83,6 +83,7 @@ public class RetryingGetStorageRangeFromPeerTask
                     "No storage returned by peer " + peer.nodeId());
               }
               result.complete(peerResult.getResult());
+              peerResult.getPeer().chainState().updateHeightEstimate(blockHeader.getNumber());
               return peerResult.getResult();
             });
   }

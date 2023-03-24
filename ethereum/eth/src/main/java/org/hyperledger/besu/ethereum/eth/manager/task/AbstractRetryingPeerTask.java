@@ -147,8 +147,6 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     return error instanceof PeerBreachedProtocolException
         || error instanceof PeerDisconnectedException
         || error instanceof NoAvailablePeersException;
-    // should we add this here?:
-    //        || error instanceof IncompleteResultsException;
   }
 
   public boolean isEmptyResponse(final T peerResult) {
