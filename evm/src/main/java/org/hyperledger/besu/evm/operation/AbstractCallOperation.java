@@ -156,6 +156,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    */
   protected abstract boolean isStatic(MessageFrame frame);
 
+  /**
+   * Returns whether the child message call is a delegate call.
+   *
+   * @return {@code true} if the child message call is a delegate call; otherwise {@code false}
+   */
+  protected abstract boolean isDelegate();
+
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     // manual check because some reads won't come until the "complete" step.
@@ -194,29 +201,35 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             ? CodeV0.EMPTY_CODE
             : evm.getCode(contract.getCodeHash(), contract.getCode());
 
-    if (code.isValid()) {
-      // frame addition is automatically handled by parent messageFrameStack
-      MessageFrame.builder()
-          .parentMessageFrame(frame)
-          .type(MessageFrame.Type.MESSAGE_CALL)
-          .initialGas(gasAvailableForChildCall(frame))
-          .address(address(frame))
-          .contract(to)
-          .inputData(inputData)
-          .sender(sender(frame))
-          .value(value(frame))
-          .apparentValue(apparentValue(frame))
-          .code(code)
-          .isStatic(isStatic(frame))
-          .completer(child -> complete(frame, child))
-          .build();
-      frame.incrementRemainingGas(cost);
-
-      frame.setState(MessageFrame.State.CODE_SUSPENDED);
-      return new OperationResult(cost, null, 0);
-    } else {
+    // invalid code results in a quick exit
+    if (!code.isValid()) {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
+
+    // delegate calls to prior EOF versions are prohibited
+    if (isDelegate() && frame.getCode().getEofVersion() > code.getEofVersion()) {
+      return new OperationResult(
+          cost, ExceptionalHaltReason.EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE, 0);
+    }
+
+    MessageFrame.builder()
+        .parentMessageFrame(frame)
+        .type(MessageFrame.Type.MESSAGE_CALL)
+        .initialGas(gasAvailableForChildCall(frame))
+        .address(address(frame))
+        .contract(to)
+        .inputData(inputData)
+        .sender(sender(frame))
+        .value(value(frame))
+        .apparentValue(apparentValue(frame))
+        .code(code)
+        .isStatic(isStatic(frame))
+        .completer(child -> complete(frame, child))
+        .build();
+    frame.incrementRemainingGas(cost);
+
+    frame.setState(MessageFrame.State.CODE_SUSPENDED);
+    return new OperationResult(cost, null, 0);
   }
 
   /**

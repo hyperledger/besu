@@ -93,6 +93,11 @@ public class CallOperation extends AbstractCallOperation {
   }
 
   @Override
+  protected boolean isDelegate() {
+    return false;
+  }
+
+  @Override
   public long cost(final MessageFrame frame) {
     final long stipend = gas(frame);
     final long inputDataOffset = inputDataOffset(frame);
