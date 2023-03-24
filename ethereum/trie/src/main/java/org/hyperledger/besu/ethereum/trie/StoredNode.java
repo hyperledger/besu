@@ -99,12 +99,12 @@ public class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlp() {
-    return load().getRlp();
+  public Bytes getEncodedBytes() {
+    return load().getEncodedBytes();
   }
 
   @Override
-  public Bytes getRlpRef() {
+  public Bytes getEncodedBytesRef() {
     // If this node was stored, then it must have a rlp larger than a hash
     return RLP.encodeOne(hash);
   }
@@ -152,7 +152,7 @@ public class StoredNode<V> implements Node<V> {
   @Override
   public String print() {
     if (loaded == null) {
-      return "StoredNode:" + "\n\tRef: " + getRlpRef();
+      return "StoredNode:" + "\n\tRef: " + getEncodedBytesRef();
     } else {
       return load().print();
     }

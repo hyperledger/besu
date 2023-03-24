@@ -20,7 +20,6 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -58,9 +57,7 @@ public class CombinedProtocolScheduleFactoryTest {
 
     final BlockNumberStreamingProtocolSchedule combinedProtocolSchedule =
         new BlockNumberStreamingProtocolSchedule(
-            (MutableProtocolSchedule)
-                combinedProtocolScheduleFactory.create(
-                    consensusSchedule, Optional.of(BigInteger.TEN)));
+            combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN)));
 
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
@@ -101,9 +98,7 @@ public class CombinedProtocolScheduleFactoryTest {
 
     final BlockNumberStreamingProtocolSchedule combinedProtocolSchedule =
         new BlockNumberStreamingProtocolSchedule(
-            (MutableProtocolSchedule)
-                combinedProtocolScheduleFactory.create(
-                    consensusSchedule, Optional.of(BigInteger.TEN)));
+            combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN)));
 
     // consensus schedule 1
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");

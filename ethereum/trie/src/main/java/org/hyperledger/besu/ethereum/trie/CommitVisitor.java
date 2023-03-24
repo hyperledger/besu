@@ -16,12 +16,13 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class CommitVisitor<V> implements LocationNodeVisitor<V> {
 
-  private final NodeUpdater nodeUpdater;
+  protected final NodeUpdater nodeUpdater;
 
   public CommitVisitor(final NodeUpdater nodeUpdater) {
     this.nodeUpdater = nodeUpdater;
@@ -71,7 +72,7 @@ public class CommitVisitor<V> implements LocationNodeVisitor<V> {
   public void visit(final Bytes location, final NullNode<V> nullNode) {}
 
   public void maybeStoreNode(final Bytes location, final Node<V> node) {
-    final Bytes nodeRLP = node.getRlp();
+    final Bytes nodeRLP = node.getEncodedBytes();
     if (nodeRLP.size() >= 32) {
       this.nodeUpdater.store(location, node.getHash(), nodeRLP);
     }

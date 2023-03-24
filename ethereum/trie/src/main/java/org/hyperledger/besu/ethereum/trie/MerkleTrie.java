@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.trie;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 
 import java.util.Map;
 import java.util.Optional;
@@ -98,7 +97,7 @@ public interface MerkleTrie<K, V> {
    * @param path of the node to be deleted.
    * @param removeVisitor custom visitor for the deletion
    */
-  void removePath(K path, RemoveVisitor<V> removeVisitor);
+  void removePath(K path, PathNodeVisitor<V> removeVisitor);
 
   /**
    * Returns the KECCAK256 hash of the root node of the trie.

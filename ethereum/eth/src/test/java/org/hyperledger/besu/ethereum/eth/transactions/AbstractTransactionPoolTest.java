@@ -26,7 +26,6 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TX_FEECAP_EXCEEDED;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeastOnce;
@@ -136,7 +135,7 @@ public abstract class AbstractTransactionPoolTest {
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     when(protocolSpec.getFeeMarket()).thenReturn(getFeeMarket());
     protocolSchedule = spy(executionContext.getProtocolSchedule());
-    doReturn(protocolSpec).when(protocolSchedule).getByBlockNumber(anyLong());
+    doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
     blockGasLimit = blockchain.getChainHeadBlock().getHeader().getGasLimit();
     ethProtocolManager = EthProtocolManagerTestUtil.create();
     ethContext = spy(ethProtocolManager.ethContext());

@@ -179,7 +179,7 @@ public class TrieNodeDecoderTest {
 
     // Decode partially available trie
     final KeyValueStorageTransaction partialTx = partialStorage.startTransaction();
-    partialTx.put(trie.getRootHash().toArrayUnsafe(), rootNode.getRlp().toArrayUnsafe());
+    partialTx.put(trie.getRootHash().toArrayUnsafe(), rootNode.getEncodedBytes().toArrayUnsafe());
     partialTx.commit();
     final List<Node<Bytes>> allDecodableNodes =
         TrieNodeDecoder.breadthFirstDecoder(
