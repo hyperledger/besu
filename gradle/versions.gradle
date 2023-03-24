@@ -210,7 +210,7 @@ dependencyManagement {
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.4'
 
-    dependency 'org.yaml:snakeyaml:1.32'
+    dependency 'org.yaml:snakeyaml:2.0'
 
     dependency 'tech.pegasys.discovery:discovery:22.2.0'
 
