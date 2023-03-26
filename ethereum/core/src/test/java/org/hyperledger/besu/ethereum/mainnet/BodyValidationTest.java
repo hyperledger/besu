@@ -58,5 +58,13 @@ public final class BodyValidationTest {
     }
   }
 
-  // TODO 6110: Add deposits root test
+  @Test
+  public void calculateDepositsRoot() throws IOException {
+    for (final int block : Arrays.asList(123, 124)) {
+      final BlockHeader header = ValidationTestUtils.readHeader(block);
+      final BlockBody body = ValidationTestUtils.readBody(block);
+      final Bytes32 depositsRoot = BodyValidation.depositsRoot(body.getDeposits().get());
+      Assertions.assertThat(header.getDepositsRoot()).hasValue(Hash.wrap(depositsRoot));
+    }
+  }
 }
