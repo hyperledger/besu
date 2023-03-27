@@ -66,7 +66,7 @@ public final class CodeFactory {
 
         final EOFLayout layout = EOFLayout.parseEOF(bytes);
         if (!layout.isValid()) {
-          return new CodeInvalid(bytes, "Invalid EOF Layout: " + layout.getInvalidReason());
+          return new CodeInvalid(bytes, "Invalid EOF Layout: " + layout.invalidReason());
         }
 
         final String codeValidationError = CodeV1Validation.validateCode(layout);

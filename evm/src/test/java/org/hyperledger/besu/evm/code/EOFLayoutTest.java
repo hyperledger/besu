@@ -329,10 +329,10 @@ public class EOFLayoutTest {
     final Bytes container = Bytes.fromHexString(containerString.replace(" ", ""));
     final EOFLayout layout = EOFLayout.parseEOF(container);
 
-    assertThat(layout.getVersion()).isEqualTo(expectedVersion);
-    assertThat(layout.getInvalidReason()).isEqualTo(failureReason);
-    assertThat(layout.getContainer()).isEqualTo(container);
-    if (layout.getInvalidReason() != null) {
+    assertThat(layout.version()).isEqualTo(expectedVersion);
+    assertThat(layout.invalidReason()).isEqualTo(failureReason);
+    assertThat(layout.container()).isEqualTo(container);
+    if (layout.invalidReason() != null) {
       assertThat(layout.isValid()).isFalse();
       assertThat(layout.getCodeSectionCount()).isZero();
     } else {

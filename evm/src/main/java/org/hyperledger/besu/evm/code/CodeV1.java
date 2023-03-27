@@ -40,12 +40,12 @@ public class CodeV1 implements Code {
    */
   CodeV1(final EOFLayout layout) {
     this.eofLayout = layout;
-    this.codeHash = Suppliers.memoize(() -> Hash.hash(eofLayout.getContainer()));
+    this.codeHash = Suppliers.memoize(() -> Hash.hash(eofLayout.container()));
   }
 
   @Override
   public int getSize() {
-    return eofLayout.getContainer().size();
+    return eofLayout.container().size();
   }
 
   @Override
@@ -62,7 +62,7 @@ public class CodeV1 implements Code {
 
   @Override
   public Bytes getBytes() {
-    return eofLayout.getContainer();
+    return eofLayout.container();
   }
 
   @Override
@@ -82,7 +82,7 @@ public class CodeV1 implements Code {
 
   @Override
   public int getEofVersion() {
-    return eofLayout.getVersion();
+    return eofLayout.version();
   }
 
   @Override
