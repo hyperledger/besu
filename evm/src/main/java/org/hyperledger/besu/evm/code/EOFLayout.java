@@ -17,11 +17,18 @@
 package org.hyperledger.besu.evm.code;
 
 import java.io.ByteArrayInputStream;
+import java.util.Arrays;
+import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** The EOF layout. */
-public class EOFLayout {
+public record EOFLayout(
+    Bytes container,
+    int version,
+    CodeSection[] codeSections,
+    EOFLayout[] containers,
+    String invalidReason) {
 
   public static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
 
@@ -39,30 +46,16 @@ public class EOFLayout {
   /** The Max supported section. */
   static final int MAX_SUPPORTED_VERSION = 1;
 
-  private final Bytes container;
-  private final int version;
-  private final CodeSection[] codeSections;
-  private final EOFLayout[] containers;
-  private final String invalidReason;
-
   private EOFLayout(
       final Bytes container,
       final int version,
       final CodeSection[] codeSections,
       final EOFLayout[] containers) {
-    this.container = container;
-    this.version = version;
-    this.codeSections = codeSections;
-    this.containers = containers;
-    this.invalidReason = null;
+    this(container, version, codeSections, containers, null);
   }
 
   private EOFLayout(final Bytes container, final int version, final String invalidReason) {
-    this.container = container;
-    this.version = version;
-    this.codeSections = null;
-    this.containers = null;
-    this.invalidReason = invalidReason;
+    this(container, version, null, null, invalidReason);
   }
 
   private static EOFLayout invalidLayout(
@@ -278,7 +271,7 @@ public class EOFLayout {
       }
       EOFLayout subLayout = EOFLayout.parseEOF(subcontainer);
       if (!subLayout.isValid()) {
-        System.out.println(subLayout.getInvalidReason());
+        System.out.println(subLayout.invalidReason());
         return invalidLayout(container, version, "invalid subcontainer");
       }
       subContainers[i] = subLayout;
@@ -303,24 +296,6 @@ public class EOFLayout {
     } else {
       return inputStream.read() << 8 | inputStream.read();
     }
-  }
-
-  /**
-   * Gets container.
-   *
-   * @return the container
-   */
-  public Bytes getContainer() {
-    return container;
-  }
-
-  /**
-   * Gets version.
-   *
-   * @return the version
-   */
-  public int getVersion() {
-    return version;
   }
 
   /**
@@ -362,20 +337,47 @@ public class EOFLayout {
   }
 
   /**
-   * Gets invalid reason.
-   *
-   * @return the invalid reason
-   */
-  public String getInvalidReason() {
-    return invalidReason;
-  }
-
-  /**
    * Is valid.
    *
    * @return the boolean
    */
   public boolean isValid() {
     return invalidReason == null;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof EOFLayout eofLayout)) return false;
+    return version == eofLayout.version
+        && container.equals(eofLayout.container)
+        && Arrays.equals(codeSections, eofLayout.codeSections)
+        && Arrays.equals(containers, eofLayout.containers)
+        && Objects.equals(invalidReason, eofLayout.invalidReason);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hash(container, version, invalidReason);
+    result = 31 * result + Arrays.hashCode(codeSections);
+    result = 31 * result + Arrays.hashCode(containers);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "EOFLayout{"
+        + "container="
+        + container
+        + ", version="
+        + version
+        + ", codeSections="
+        + (codeSections == null ? "null" : Arrays.asList(codeSections).toString())
+        + ", containers="
+        + (containers == null ? "null" : Arrays.asList(containers).toString())
+        + ", invalidReason='"
+        + invalidReason
+        + '\''
+        + '}';
   }
 }

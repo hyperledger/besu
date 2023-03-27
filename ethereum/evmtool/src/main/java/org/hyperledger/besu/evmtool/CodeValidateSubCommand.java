@@ -115,7 +115,7 @@ public class CodeValidateSubCommand implements Runnable {
 
     var layout = EOFLayout.parseEOF(codeBytes);
     if (!layout.isValid()) {
-      return "err: layout - " + layout.getInvalidReason() + "\n";
+      return "err: layout - " + layout.invalidReason() + "\n";
     }
 
     var code = CodeFactory.createCode(codeBytes, 1, true);
@@ -126,7 +126,7 @@ public class CodeValidateSubCommand implements Runnable {
     return "OK "
         + IntStream.range(0, code.getCodeSectionCount())
             .mapToObj(code::getCodeSection)
-            .map(cs -> layout.getContainer().slice(cs.getEntryPoint(), cs.getLength()))
+            .map(cs -> layout.container().slice(cs.getEntryPoint(), cs.getLength()))
             .map(Bytes::toUnprefixedHexString)
             .collect(Collectors.joining(","))
         + "\n";

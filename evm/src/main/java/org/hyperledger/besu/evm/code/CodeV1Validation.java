@@ -352,7 +352,7 @@ public final class CodeV1Validation {
       CodeSection cs = eofLayout.getCodeSection(i);
       var validation =
           CodeV1Validation.validateCode(
-              eofLayout.getContainer().slice(cs.getEntryPoint(), cs.getLength()), sectionCount);
+              eofLayout.container().slice(cs.getEntryPoint(), cs.getLength()), sectionCount);
       if (validation != null) {
         return validation;
       }
@@ -463,7 +463,7 @@ public final class CodeV1Validation {
     try {
       CodeSection toValidate = eofLayout.getCodeSection(codeSectionToValidate);
       byte[] code =
-          eofLayout.getContainer().slice(toValidate.entryPoint, toValidate.length).toArrayUnsafe();
+          eofLayout.container().slice(toValidate.entryPoint, toValidate.length).toArrayUnsafe();
       int codeLength = code.length;
       int[] stackHeights = new int[codeLength];
       Arrays.fill(stackHeights, -1);
