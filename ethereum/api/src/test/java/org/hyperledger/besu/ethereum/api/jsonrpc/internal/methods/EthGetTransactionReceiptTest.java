@@ -114,6 +114,7 @@ public class EthGetTransactionReceiptTest {
           Optional.of(PoWHasher.ETHASH_LIGHT),
           null,
           Optional.empty(),
+          null,
           true);
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
@@ -142,6 +143,7 @@ public class EthGetTransactionReceiptTest {
           Optional.of(PoWHasher.ETHASH_LIGHT),
           null,
           Optional.empty(),
+          null,
           true);
 
   @SuppressWarnings("unchecked")
