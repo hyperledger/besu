@@ -287,7 +287,8 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
         new GetHeadersFromPeerByHashTask(
             protocolSchedule, ethContext, Hash.ZERO, 0, 2, 0, false, metricsSystem);
     task.processResponse(true, BlockHeadersMessage.create(Collections.emptyList()), peer);
-    Mockito.verify(peer, Mockito.times(1)).recordUselessResponse("Stream closed without useful response 0x");
+    Mockito.verify(peer, Mockito.times(1))
+        .recordUselessResponse("Stream closed without useful response 0x");
   }
 
   @Test
