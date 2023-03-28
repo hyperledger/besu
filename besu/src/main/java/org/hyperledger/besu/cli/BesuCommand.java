@@ -3524,15 +3524,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  /**
-   * Used by Dagger to provide the BesuComponent this is a module in.
-   *
-   * @param besuComponent a BesuComponent that has a BesuCommand module of this
-   */
-  public void setBesuComponent(final BesuComponent besuComponent) {
-    this.besuComponent = besuComponent;
-  }
-
   private boolean isMergeEnabled() {
     return MergeConfigOptions.isMergeEnabled();
   }

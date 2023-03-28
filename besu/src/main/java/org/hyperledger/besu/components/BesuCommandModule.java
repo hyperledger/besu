@@ -52,7 +52,6 @@ public class BesuCommandModule {
             new BesuController.Builder(),
             new BesuPluginContextImpl(),
             System.getenv());
-    besuCommand.setBesuComponent(besuComponent);
     besuCommand.toCommandLine();
     return besuCommand;
   }
