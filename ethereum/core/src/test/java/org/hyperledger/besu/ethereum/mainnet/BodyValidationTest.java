@@ -57,4 +57,14 @@ public final class BodyValidationTest {
       Assertions.assertThat(header.getWithdrawalsRoot()).hasValue(Hash.wrap(withdrawalsRoot));
     }
   }
+
+  @Test
+  public void calculateDepositsRoot() throws IOException {
+    for (final int block : Arrays.asList(123, 124)) {
+      final BlockHeader header = ValidationTestUtils.readHeader(block);
+      final BlockBody body = ValidationTestUtils.readBody(block);
+      final Bytes32 depositsRoot = BodyValidation.depositsRoot(body.getDeposits().get());
+      Assertions.assertThat(header.getDepositsRoot()).hasValue(Hash.wrap(depositsRoot));
+    }
+  }
 }
