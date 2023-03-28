@@ -282,11 +282,12 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
   @Test
   public void checkThatStreamClosedResponseCallsPeerRecordUselessResponse() {
     final EthPeer peer = mock(EthPeer.class);
+    when(peer.nodeId()).thenReturn(Bytes.EMPTY);
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByHashTask(
             protocolSchedule, ethContext, Hash.ZERO, 0, 2, 0, false, metricsSystem);
     task.processResponse(true, BlockHeadersMessage.create(Collections.emptyList()), peer);
-    Mockito.verify(peer, Mockito.times(1)).recordUselessResponse("headers");
+    Mockito.verify(peer, Mockito.times(1)).recordUselessResponse("Stream closed without useful response 0x");
   }
 
   @Test
