@@ -2370,6 +2370,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (Objects.nonNull(engineRPCOptionGroup.engineJwtKeyFile)
           && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) {
         engineConfig.setAuthenticationPublicKeyFile(engineRPCOptionGroup.engineJwtKeyFile.toFile());
+        logger.info("Engine JWT loaded from: {}", engineRPCOptionGroup.engineJwtKeyFile);
       } else {
         logger.warn(
             "Engine API authentication enabled without key file. Expect ephemeral jwt.hex file in datadir");
