@@ -41,11 +41,10 @@ public class BesuCommandModule {
 
   @Provides
   @Singleton
-  BesuCommand provideBesuCommand(
-      @Named("besuCommandLogger") final Logger logger, final BesuComponent besuComponent) {
+  BesuCommand provideBesuCommand(final BesuComponent besuComponent) {
     final BesuCommand besuCommand =
         new BesuCommand(
-            logger,
+            besuComponent,
             RlpBlockImporter::new,
             JsonBlockImporter::new,
             RlpBlockExporter::new,
