@@ -31,6 +31,15 @@ public interface Code {
   int getSize();
 
   /**
+   * Size of the data in bytes. This is for the data only,
+   *
+   * @return size of code in bytes.
+   */
+  default int getDataSize() {
+    return 0;
+  }
+
+  /**
    * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
    * the same as getCodeBytes, for V1 it is the entire container, not just the data section.
    *
@@ -82,4 +91,15 @@ public interface Code {
    * @return The version of hte ode.
    */
   int getEofVersion();
+
+  /**
+   * Loads data from the appropriate data section
+   *
+   * @param offset Where within the data section to start copying
+   * @param length how many bytes to copy
+   * @return A slice of the code containing the requested data
+   */
+  default Bytes getData(final int offset, final int length) {
+    return Bytes.EMPTY;
+  }
 }

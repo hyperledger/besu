@@ -97,4 +97,17 @@ public class CodeV1 implements Code {
   public int hashCode() {
     return Objects.hash(codeHash, eofLayout);
   }
+
+  @Override
+  public Bytes getData(final int offset, final int length) {
+    Bytes data = eofLayout.data();
+    int dataLen = data.size();
+    if (offset > dataLen) {
+      return Bytes.EMPTY;
+    } else if ((offset + length) > dataLen) {
+      return data.slice(offset);
+    } else {
+      return data.slice(offset, length);
+    }
+  }
 }
