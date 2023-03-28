@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -217,7 +218,10 @@ public class PostMergeContextTest {
   private static BlockWithReceipts createBlockWithReceipts(
       final int number, final long gasUsed, final int txCount) {
     Block mockBlock = mock(Block.class, RETURNS_DEEP_STUBS);
-    when(mockBlock.toLogString()).thenReturn(number + " (" + Hash.wrap(Bytes32.random()) + ")");
+    // using lenient here, since some code is only executed when debug log is enabled
+    lenient()
+        .when(mockBlock.toLogString())
+        .thenReturn(number + " (" + Hash.wrap(Bytes32.random()) + ")");
     when(mockBlock.getHeader().getGasUsed()).thenReturn(gasUsed);
     when(mockBlock.getBody().getTransactions().size()).thenReturn(txCount);
     BlockWithReceipts mockBlockWithReceipts = mock(BlockWithReceipts.class);
