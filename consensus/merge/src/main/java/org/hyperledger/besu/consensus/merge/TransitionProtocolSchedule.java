@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,19 +198,6 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
             () ->
                 transitionUtils.dispatchFunctionAccordingToMergeState(
                     protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
-  }
-
-  /**
-   * Stream milestone blocks stream.
-   *
-   * @return the stream
-   */
-  @Override
-  public Stream<Long> streamMilestoneBlocks() {
-    Stream<Long> milestoneBlockNumbers =
-        transitionUtils.dispatchFunctionAccordingToMergeState(
-            ProtocolSchedule::streamMilestoneBlocks);
-    return Stream.concat(milestoneBlockNumbers, timestampSchedule.streamMilestoneBlocks());
   }
 
   @Override

@@ -12,11 +12,10 @@ on:
     branches:
       - master
       - main
-  merge_group:
 
 jobs:
   build:
-    runs-on: [besu,Linux,self-hosted,X64]
+    runs-on: [besu,Linux,self-hosted,X64,docker]
     container: ghcr.io/todogroup/repolinter:v0.10.1
     steps:
       - name: Checkout Code

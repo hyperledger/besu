@@ -103,7 +103,11 @@ public class EthGetLogs implements JsonRpcMethod {
                 });
 
     if (ex.get() != null) {
-      LOG.debug("eth_getLogs call failed: ", ex.get());
+      LOG.atDebug()
+          .setMessage("eth_getLogs request {} failed:")
+          .addArgument(requestContext.getRequest())
+          .setCause(ex.get())
+          .log();
       if (ex.get() instanceof IllegalArgumentException) {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), JsonRpcError.EXCEEDS_RPC_MAX_BLOCK_RANGE);

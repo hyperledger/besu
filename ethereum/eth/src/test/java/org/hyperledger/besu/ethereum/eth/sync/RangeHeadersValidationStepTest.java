@@ -38,13 +38,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RangeHeadersValidationStepTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
@@ -64,7 +63,6 @@ public class RangeHeadersValidationStepTest {
           new SyncTargetRange(syncTarget, rangeStart, rangeEnd),
           asList(firstHeader, gen.header(12), rangeEnd));
 
-  @Before
   public void setUp() {
     when(protocolSchedule.getByBlockHeader(any(BlockHeader.class))).thenReturn(protocolSpec);
     when(protocolSpec.getBlockHeaderValidator()).thenReturn(headerValidator);
@@ -76,6 +74,7 @@ public class RangeHeadersValidationStepTest {
 
   @Test
   public void shouldValidateFirstHeaderAgainstRangeStartHeader() {
+    setUp();
     when(headerValidator.validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY))
         .thenReturn(true);
     final Stream<BlockHeader> result = validationStep.apply(rangeHeaders);
@@ -90,6 +89,7 @@ public class RangeHeadersValidationStepTest {
 
   @Test
   public void shouldThrowExceptionWhenValidationFails() {
+    setUp();
     when(headerValidator.validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY))
         .thenReturn(false);
     assertThatThrownBy(() -> validationStep.apply(rangeHeaders))
@@ -111,7 +111,10 @@ public class RangeHeadersValidationStepTest {
   }
 
   @Test
-  public void acceptResponseWithNoHeaders() {
+  public void acceptResponseWithNoHeadersAndNoSetUp() {
+    // don't run the setUp
+    validationStep =
+        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy);
     var emptyRangeHeaders =
         new RangeHeaders(new SyncTargetRange(syncTarget, rangeStart, rangeEnd), List.of());
 

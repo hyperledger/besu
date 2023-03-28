@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
@@ -39,8 +41,8 @@ public class MergeProtocolScheduleTest {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule = MergeProtocolSchedule.create(config, false);
 
-    final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
-    final ProtocolSpec londonSpec = protocolSchedule.getByBlockNumber(1559);
+    final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
+    final ProtocolSpec londonSpec = protocolSchedule.getByBlockHeader(blockHeader(1559));
 
     assertThat(homesteadSpec).isNotEqualTo(londonSpec);
     assertThat(homesteadSpec.getFeeMarket().implementsBaseFee()).isFalse();
@@ -51,7 +53,7 @@ public class MergeProtocolScheduleTest {
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec london =
         MergeProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), false)
-            .getByBlockNumber(0);
+            .getByBlockHeader(blockHeader(0));
 
     assertThat(london.getName()).isEqualTo("Frontier");
     assertThat(london.getBlockReward()).isEqualTo(Wei.ZERO);
@@ -59,5 +61,9 @@ public class MergeProtocolScheduleTest {
 
     var op = london.getEvm().getOperationsUnsafe()[0x44];
     assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

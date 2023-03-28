@@ -21,11 +21,10 @@ on:
       - '**/*.md'
       - '**/*.properties'
       - '**/*.txt'
-  merge_group:
 jobs:
   analyze:
     name: Analyze
-    runs-on: [besu,Linux,self-hosted,X64]
+    runs-on: [besu,Linux,self-hosted,X64,nodocker]
     permissions:
       actions: read
       contents: read

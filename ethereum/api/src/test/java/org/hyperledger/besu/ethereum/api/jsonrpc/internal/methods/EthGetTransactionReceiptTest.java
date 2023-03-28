@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
@@ -50,7 +51,6 @@ import org.apache.tuweni.units.bigints.UInt256s;
 import org.junit.Test;
 
 public class EthGetTransactionReceiptTest {
-
   private final TransactionReceipt statusReceipt =
       new TransactionReceipt(1, 12, Collections.emptyList(), Optional.empty());
   private final Hash stateRoot =
@@ -165,7 +165,7 @@ public class EthGetTransactionReceiptTest {
     when(blockchain.headBlockNumber()).thenReturn(1L);
     when(blockchain.transactionReceiptByTransactionHash(receiptHash))
         .thenReturn(Optional.of(statusReceiptWithMetadata));
-    when(protocolSchedule.getByBlockNumber(1)).thenReturn(statusTransactionTypeSpec);
+    when(protocolSchedule.getByBlockHeader(blockHeader(1))).thenReturn(statusTransactionTypeSpec);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionReceipt.response(request);
@@ -181,7 +181,7 @@ public class EthGetTransactionReceiptTest {
     when(blockchain.headBlockNumber()).thenReturn(1L);
     when(blockchain.transactionReceiptByTransactionHash(receiptHash))
         .thenReturn(Optional.of(rootReceiptWithMetaData));
-    when(protocolSchedule.getByBlockNumber(1)).thenReturn(rootTransactionTypeSpec);
+    when(protocolSchedule.getByBlockHeader(blockHeader(1))).thenReturn(rootTransactionTypeSpec);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionReceipt.response(request);
@@ -202,7 +202,7 @@ public class EthGetTransactionReceiptTest {
             statusReceipt, transaction1559, hash, 1, 2, Optional.of(baseFee), blockHash, 4);
     when(blockchain.transactionReceiptByTransactionHash(receiptHash))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
-    when(protocolSchedule.getByBlockNumber(1)).thenReturn(rootTransactionTypeSpec);
+    when(protocolSchedule.getByBlockHeader(blockHeader(1))).thenReturn(rootTransactionTypeSpec);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionReceipt.response(request);
@@ -216,5 +216,9 @@ public class EthGetTransactionReceiptTest {
             UInt256s.min(
                 baseFee.add(transaction1559.getMaxPriorityFeePerGas().get()),
                 transaction1559.getMaxFeePerGas().get()));
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

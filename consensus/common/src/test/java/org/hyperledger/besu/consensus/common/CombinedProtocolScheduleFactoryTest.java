@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -54,8 +55,9 @@ public class CombinedProtocolScheduleFactoryTest {
         new TreeSet<>(ForkSpec.COMPARATOR);
     consensusSchedule.add(new ForkSpec<>(0, protocolSchedule));
 
-    final ProtocolSchedule combinedProtocolSchedule =
-        combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
+    final BlockNumberStreamingProtocolSchedule combinedProtocolSchedule =
+        new BlockNumberStreamingProtocolSchedule(
+            combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN)));
 
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
@@ -94,8 +96,9 @@ public class CombinedProtocolScheduleFactoryTest {
     consensusSchedule.add(new ForkSpec<>(100L, protocolSchedule2));
     consensusSchedule.add(new ForkSpec<>(200L, protocolSchedule3));
 
-    final ProtocolSchedule combinedProtocolSchedule =
-        combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
+    final BlockNumberStreamingProtocolSchedule combinedProtocolSchedule =
+        new BlockNumberStreamingProtocolSchedule(
+            combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN)));
 
     // consensus schedule 1
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");

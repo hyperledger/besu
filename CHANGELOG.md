@@ -4,7 +4,13 @@
 
 ### Breaking Changes
 
+- In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
+
 ### Additions and Improvements
+
+- An alternate build target for the EVM using GraalVM AOT compilaiton was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
+- To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew naticeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
+- Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
 
 ### Bug Fixes
 
@@ -23,6 +29,7 @@ This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended 
 
 ### Bug Fixes
 - Persist backward sync status to support resuming across restarts [#5182](https://github.com/hyperledger/besu/pull/5182)
+- Re-implement trace_block, trace_filter and trace_replayBlockTransactions RPC endpoints to fix memory issues and improve performance [#5131](https://github.com/hyperledger/besu/pull/5131) 
 
 ### Download Links
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.tar.gz / sha256: 3d3a709a3aab993a0801b412a4719d74e319f942ddc13fb0f30b3c4a54d12538
@@ -70,7 +77,7 @@ This release has everything from [23.1.0](https://github.com/hyperledger/besu/re
 - Add implementation for engine_getPayloadBodiesByRangeV1 and engine_getPayloadBodiesByHashV1 https://github.com/hyperledger/besu/pull/4980
 - If a PoS block creation repetition takes less than a configurable duration, then waits before next repetition https://github.com/hyperledger/besu/pull/5048
 - Allow other users to read the /opt/besu dir when using docker https://github.com/hyperledger/besu/pull/5092
-- Invalid params - add some error detail #5066
+- Invalid params - add some error detail [#5066](https://github.com/hyperledger/besu/pull/5066)
 
 ### Bug fixes
 - Fix engine_getPayloadV2 block value calculation https://github.com/hyperledger/besu/issues/5040

@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
@@ -35,15 +36,17 @@ public class CombinedProtocolScheduleFactory {
    * @param chainId the chain id
    * @return the protocol schedule
    */
-  public ProtocolSchedule create(
+  public BftProtocolSchedule create(
       final NavigableSet<ForkSpec<ProtocolSchedule>> forkSpecs,
       final Optional<BigInteger> chainId) {
-    final MutableProtocolSchedule combinedProtocolSchedule = new MutableProtocolSchedule(chainId);
+    final BftProtocolSchedule combinedProtocolSchedule =
+        new BftProtocolSchedule(new MutableProtocolSchedule(chainId));
     for (ForkSpec<ProtocolSchedule> spec : forkSpecs) {
       checkState(
           spec.getValue() instanceof MutableProtocolSchedule,
           "Consensus migration requires a MutableProtocolSchedule");
-      final MutableProtocolSchedule protocolSchedule = (MutableProtocolSchedule) spec.getValue();
+      final BftProtocolSchedule protocolSchedule =
+          new BftProtocolSchedule((MutableProtocolSchedule) spec.getValue());
 
       final Optional<Long> endBlock =
           Optional.ofNullable(forkSpecs.higher(spec)).map(ForkSpec::getBlock);
