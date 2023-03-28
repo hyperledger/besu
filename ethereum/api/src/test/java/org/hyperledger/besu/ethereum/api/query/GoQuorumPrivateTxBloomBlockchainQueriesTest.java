@@ -94,6 +94,7 @@ public class GoQuorumPrivateTxBloomBlockchainQueriesTest {
             0,
             null,
             null,
+            null,
             new MainnetBlockHeaderFunctions(),
             Optional.of(testLogsBloomFilter));
     testHash = fakeHeader.getHash();

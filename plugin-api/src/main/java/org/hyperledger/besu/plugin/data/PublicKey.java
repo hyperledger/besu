@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,31 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
+package org.hyperledger.besu.plugin.data;
 
-public enum JsonRpcResponseKey {
-  CHAIN_ID,
-  COINBASE,
-  DIFFICULTY,
-  EXTRA_DATA,
-  GAS_LIMIT,
-  GAS_PRICE,
-  GAS_USED,
-  LOGS_BLOOM,
-  MIX_HASH,
-  NONCE,
-  NUMBER,
-  OMMERS_HASH,
-  PARENT_HASH,
-  PUBLIC_KEY,
-  RAW,
-  RECEIPTS_ROOT,
-  SIZE,
-  STATE_ROOT,
-  TIMESTAMP,
-  TOTAL_DIFFICULTY,
-  TRANSACTION_ROOT,
-  BASEFEE,
-  WITHDRAWALS_ROOT,
-  DEPOSITS_ROOT
-}
+import org.hyperledger.besu.plugin.Unstable;
+
+import org.apache.tuweni.bytes.Bytes;
+
+/** An interface for {@link Bytes} that also represents a public key */
+@Unstable
+public interface PublicKey extends Bytes {}

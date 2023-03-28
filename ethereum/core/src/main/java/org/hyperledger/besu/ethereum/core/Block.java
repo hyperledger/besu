@@ -62,6 +62,7 @@ public class Block {
     out.writeList(body.getTransactions(), Transaction::writeTo);
     out.writeList(body.getOmmers(), BlockHeader::writeTo);
     body.getWithdrawals().ifPresent(withdrawals -> out.writeList(withdrawals, Withdrawal::writeTo));
+    body.getDeposits().ifPresent(deposits -> out.writeList(deposits, Deposit::writeTo));
 
     out.endList();
   }
@@ -73,9 +74,11 @@ public class Block {
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
     final Optional<List<Withdrawal>> withdrawals =
         in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(Withdrawal::readFrom));
+    final Optional<List<Deposit>> deposits =
+        in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(Deposit::readFrom));
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers, withdrawals));
+    return new Block(header, new BlockBody(transactions, ommers, withdrawals, deposits));
   }
 
   @Override
