@@ -616,6 +616,34 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
+  public void shouldCancelPreviousBlockCreationJobIfCalledAgainWithNewPayloadId() {
+
+    final long timestamp = System.currentTimeMillis() / 1000;
+
+    var payloadId1 =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            timestamp,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
+
+    assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isFalse();
+
+    var payloadId2 =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            timestamp + 1,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
+
+    assertThat(payloadId1).isNotEqualTo(payloadId2);
+    assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isTrue();
+    assertThat(coordinator.isBlockCreationCancelled(payloadId2)).isFalse();
+  }
+
+  @Test
   public void childTimestampExceedsParentsFails() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(

@@ -118,6 +118,11 @@ public class MonitoredExecutors {
             new ScheduledThreadPoolExecutor(corePoolSize, threadFactory, rejectedExecutionHandler));
   }
 
+  public static ExecutorService newSingleThreadExecutor(
+      final String name, final MetricsSystem metricsSystem) {
+    return newFixedThreadPool(name, 1, 1, metricsSystem);
+  }
+
   private static <T extends ThreadPoolExecutor> T newMonitoredExecutor(
       final String name,
       final MetricsSystem metricsSystem,
