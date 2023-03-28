@@ -351,6 +351,24 @@ public record EOFLayout(
   }
 
   /**
+   * Gets container.
+   *
+   * @return the container
+   */
+  public Bytes getContainer() {
+    return container;
+  }
+
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
+  public int getVersion() {
+    return version;
+  }
+
+  /**
    * Get code section count.
    *
    * @return the code section count
