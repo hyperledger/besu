@@ -90,7 +90,7 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash depositsRoot(final List<Deposit> deposits) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerkleTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, deposits.size())
         .forEach(i -> trie.put(indexKey(i), DepositEncoder.encodeOpaqueBytes(deposits.get(i))));
