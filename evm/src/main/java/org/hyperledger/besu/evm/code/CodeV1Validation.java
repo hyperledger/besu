@@ -263,12 +263,12 @@ public final class CodeV1Validation {
     OpcodeInfo.invalidOpcode("JUMPF", 0xb2),
     OpcodeInfo.unallocatedOpcode(0xb3),
     OpcodeInfo.unallocatedOpcode(0xb4),
-    OpcodeInfo.unallocatedOpcode(0xb5),
-    OpcodeInfo.unallocatedOpcode(0xb6),
-    OpcodeInfo.unallocatedOpcode(0xb7),
-    OpcodeInfo.unallocatedOpcode(0xb8),
-    OpcodeInfo.unallocatedOpcode(0xb9),
-    OpcodeInfo.unallocatedOpcode(0xba),
+    OpcodeInfo.unallocatedOpcode(0xb5), // DUPN
+    OpcodeInfo.unallocatedOpcode(0xb6), // SWPAN
+    OpcodeInfo.validOpcode("DATALOAD", 0xb7, 1, 1, 1),
+    OpcodeInfo.validOpcode("DATALOAD", 0xb8, 0, 1, 1),
+    OpcodeInfo.validOpcode("DATACOPY", 0xb9, 3, 0, 1),
+    OpcodeInfo.validOpcode("DATALOADN", 0xba, 0, 1, 3),
     OpcodeInfo.unallocatedOpcode(0xbb),
     OpcodeInfo.unallocatedOpcode(0xbc),
     OpcodeInfo.unallocatedOpcode(0xbd),

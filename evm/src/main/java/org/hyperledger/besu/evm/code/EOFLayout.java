@@ -17,6 +17,9 @@
 package org.hyperledger.besu.evm.code;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -25,6 +28,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** The EOF layout. */
 public record EOFLayout(
     Bytes container,
+    Bytes data,
     int version,
     CodeSection[] codeSections,
     EOFLayout[] containers,
@@ -48,14 +52,15 @@ public record EOFLayout(
 
   private EOFLayout(
       final Bytes container,
+      final Bytes data,
       final int version,
       final CodeSection[] codeSections,
       final EOFLayout[] containers) {
-    this(container, version, codeSections, containers, null);
+    this(container, data, version, codeSections, containers, null);
   }
 
   private EOFLayout(final Bytes container, final int version, final String invalidReason) {
-    this(container, version, null, null, invalidReason);
+    this(container, Bytes.EMPTY, version, null, null, invalidReason);
   }
 
   private static EOFLayout invalidLayout(
@@ -259,6 +264,7 @@ public record EOFLayout(
     if (inputStream.skip(dataSize) != dataSize) {
       return invalidLayout(container, version, "Incomplete data section");
     }
+    Bytes data = container.slice(pos, dataSize);
     pos += dataSize;
 
     EOFLayout[] subContainers = new EOFLayout[containerSectionCount];
@@ -281,7 +287,7 @@ public record EOFLayout(
       return invalidLayout(container, version, "Dangling data after end of all sections");
     }
 
-    return new EOFLayout(container, version, codeSections, subContainers);
+    return new EOFLayout(container, data, version, codeSections, subContainers);
   }
 
   /**
@@ -296,6 +302,24 @@ public record EOFLayout(
     } else {
       return inputStream.read() << 8 | inputStream.read();
     }
+  }
+
+  /**
+   * Gets container.
+   *
+   * @return the container
+   */
+  public Bytes getContainer() {
+    return container;
+  }
+
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
+  public int getVersion() {
+    return version;
   }
 
   /**
@@ -379,5 +403,57 @@ public record EOFLayout(
         + invalidReason
         + '\''
         + '}';
+  }
+
+  byte[] newContainerWithAuxData(final Bytes auxData) {
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(container.size() + auxData.size());
+      DataOutputStream dataOutput = new DataOutputStream(baos);
+      dataOutput.write(new byte[] {(byte) 0xef, 0x00, 0x01});
+
+      dataOutput.writeByte(SECTION_TYPES);
+      dataOutput.write(codeSections.length * 4);
+
+      dataOutput.writeByte(SECTION_CODE);
+      dataOutput.write(codeSections.length);
+      for (var codeSection : codeSections) {
+        dataOutput.writeShort(codeSection.length);
+      }
+
+      dataOutput.writeByte(SECTION_DATA);
+      dataOutput.writeShort(data.size() + auxData.size());
+
+      if (containers != null && containers.length > 0) {
+        dataOutput.writeByte(SECTION_CONTAINER);
+        dataOutput.write(containers.length);
+        for (var subcontainer : containers) {
+          dataOutput.writeShort(subcontainer.getContainer().size());
+        }
+      }
+
+      dataOutput.writeByte(SECTION_TERMINATOR);
+
+      for (var codeSection : codeSections) {
+        dataOutput.writeByte(codeSection.inputs);
+        dataOutput.writeByte(codeSection.outputs);
+        dataOutput.writeShort(codeSection.maxStackHeight);
+      }
+
+      byte[] container = container().toArrayUnsafe();
+      for (var codeSection : codeSections) {
+        dataOutput.write(container, codeSection.entryPoint, codeSection.length);
+      }
+
+      dataOutput.write(data().toArrayUnsafe());
+      dataOutput.write(auxData.toArrayUnsafe());
+
+      for (var subcontainer : containers) {
+        dataOutput.write(subcontainer.getContainer().toArrayUnsafe());
+      }
+
+      return baos.toByteArray();
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
   }
 }
