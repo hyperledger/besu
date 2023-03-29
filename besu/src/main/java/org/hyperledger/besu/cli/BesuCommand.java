@@ -3630,15 +3630,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .setRpcHttpApis(jsonRpcConfiguration.getRpcApis());
     }
 
-    if (engineJsonRpcConfiguration != null && engineJsonRpcConfiguration.isEnabled()) {
-      builder
-          .setEnginePort(engineJsonRpcConfiguration.getPort())
-          .setEngineApis(engineJsonRpcConfiguration.getRpcApis());
-    }
-    if (engineJsonRpcConfiguration.isAuthenticationEnabled()
-        && engineJsonRpcConfiguration.getAuthenticationPublicKeyFile() != null) {
-      builder.setEngineJwtFile(
-          engineJsonRpcConfiguration.getAuthenticationPublicKeyFile().getAbsolutePath());
+    if (engineJsonRpcConfiguration != null) {
+      if (engineJsonRpcConfiguration.isEnabled()) {
+        builder
+            .setEnginePort(engineJsonRpcConfiguration.getPort())
+            .setEngineApis(engineJsonRpcConfiguration.getRpcApis());
+      }
+      if (engineJsonRpcConfiguration.isAuthenticationEnabled()
+          && engineJsonRpcConfiguration.getAuthenticationPublicKeyFile() != null) {
+        builder.setEngineJwtFile(
+            engineJsonRpcConfiguration.getAuthenticationPublicKeyFile().getAbsolutePath());
+      }
     }
 
     if (rocksDBPlugin.isHighSpecEnabled()) {
