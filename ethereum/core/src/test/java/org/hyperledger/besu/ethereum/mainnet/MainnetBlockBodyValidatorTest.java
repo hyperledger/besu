@@ -45,7 +45,6 @@ class MainnetBlockBodyValidatorTest {
   private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forMainnet();
   private final List<Withdrawal> withdrawals =
       List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.ZERO, GWei.ONE));
-
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
