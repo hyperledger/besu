@@ -38,6 +38,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> rpcHttpApis;
   private Integer enginePort;
   private Collection<String> engineApis;
+  private String engineJwtFile;
   private boolean isHighSpec = false;
 
   /**
@@ -149,6 +150,11 @@ public class ConfigurationOverviewBuilder {
     return this;
   }
 
+  public ConfigurationOverviewBuilder setEngineJwtFile(final String engineJwtFile) {
+    this.engineJwtFile = engineJwtFile;
+    return this;
+  }
+
   /**
    * Build configuration overview.
    *
@@ -193,6 +199,9 @@ public class ConfigurationOverviewBuilder {
     }
     if (enginePort != null) {
       lines.add("Engine port: " + enginePort);
+    }
+    if (engineJwtFile != null) {
+      lines.add("Engine JWT: " + engineJwtFile);
     }
 
     if (isHighSpec) {
