@@ -41,6 +41,6 @@ public class ZeroBaseFeeMarket extends LondonFeeMarket {
 
   @Override
   public boolean implementsDataFee() {
-    return true;
+    return false;
   }
 }
