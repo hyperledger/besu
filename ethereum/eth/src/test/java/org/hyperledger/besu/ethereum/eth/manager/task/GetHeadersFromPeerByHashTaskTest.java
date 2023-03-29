@@ -382,8 +382,8 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
               0,
               Hash.ZERO,
               DataGas.fromHexString("0x1234"),
-              new MainnetBlockHeaderFunctions(),
-              Optional.empty()));
+              Hash.ZERO,
+              new MainnetBlockHeaderFunctions()));
     }
     return blockHeaders;
   }
