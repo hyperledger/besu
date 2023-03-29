@@ -161,7 +161,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     this.syncState.set(syncState);
 
     final ExecutorService blockBuilderExecutor =
-        MonitoredExecutors.newFixedThreadPool("PoS-Block-Builder", 1, 1, metricsSystem);
+        MonitoredExecutors.newSingleThreadExecutor("PoS-Block-Builder", metricsSystem);
 
     return new MergeCoordinator(
         protocolContext,

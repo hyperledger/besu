@@ -369,11 +369,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         recoverableBlockCreation(payloadIdentifier, blockCreator, lastStartAt);
         final long lastDuration = System.currentTimeMillis() - lastStartAt;
         final long waitBeforeRepetition =
-            miningParameters.getPosBlockCreationRepetitionMinDuration() - lastDuration;
-        if (waitBeforeRepetition > 0) {
-          LOG.debug("Waiting {}ms before repeating block creation", waitBeforeRepetition);
-          Thread.sleep(waitBeforeRepetition);
-        }
+            Math.max(
+                100, miningParameters.getPosBlockCreationRepetitionMinDuration() - lastDuration);
+        LOG.debug("Waiting {}ms before repeating block creation", waitBeforeRepetition);
+        Thread.sleep(waitBeforeRepetition);
       } catch (final CancellationException | InterruptedException ce) {
         LOG.atDebug()
             .setMessage("Block creation for payload id {} has been cancelled, reason {}")
