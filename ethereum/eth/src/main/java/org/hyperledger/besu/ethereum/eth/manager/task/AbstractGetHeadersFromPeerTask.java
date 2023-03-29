@@ -66,7 +66,7 @@ public abstract class AbstractGetHeadersFromPeerTask
     if (streamClosed) {
       // All outstanding requests have been responded to and we still haven't found the response
       // we wanted. It must have been empty or contain data that didn't match.
-      peer.recordUselessResponse("Stream closed without useful response " + peer.nodeId());
+      peer.recordUselessResponse("headers");
       return Optional.of(Collections.emptyList());
     }
 
@@ -74,23 +74,26 @@ public abstract class AbstractGetHeadersFromPeerTask
     final List<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
     if (headers.isEmpty()) {
       // Message contains no data - nothing to do
+      // We cannot register a useless response yet, as we have to try all response streams for the
+      // RequestManager if request ids are not supported (see RequestManager dispatchResponse())
+      // Instead we are returning Optional.empty() so the next response stream can be tried.
+      // If we cannot find a matching response stream for the message the
+      // peer.recordUselessResponse() of the if(streamClosed) block above is triggered by calling
+      // this method with streamClosed set to true.
       LOG.debug("headers.isEmpty. Peer: {}", peer);
-      peer.recordUselessResponse("No headers returned by peer " + peer.nodeId());
-      return Optional.of(Collections.emptyList());
+      return Optional.empty();
     }
     if (headers.size() > count) {
       // Too many headers - this isn't our response
       LOG.debug("headers.size()>count. Peer: {}", peer);
-      peer.recordUselessResponse("Too many headers returned by peer " + peer.nodeId());
-      return Optional.of(Collections.emptyList());
+      return Optional.empty();
     }
 
     final BlockHeader firstHeader = headers.get(0);
     if (!matchesFirstHeader(firstHeader)) {
       // This isn't our message - nothing to do
       LOG.debug("!matchesFirstHeader. Peer: {}", peer);
-      peer.recordUselessResponse("First header returned by peer not matching " + peer.nodeId());
-      return Optional.of(Collections.emptyList());
+      return Optional.empty();
     }
 
     final List<BlockHeader> headersList = new ArrayList<>(headers.size());
@@ -103,9 +106,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
         // Skip doesn't match, this isn't our data
         LOG.debug("header not matching the expected number. Peer: {}", peer);
-        peer.recordUselessResponse(
-            "Header returned by peer does not have expected number " + peer.nodeId());
-        return Optional.of(Collections.emptyList());
+        return Optional.empty();
       }
       // if headers are supposed to be sequential check if a chain is formed
       if (Math.abs(expectedDelta) == 1) {
@@ -116,7 +117,7 @@ public abstract class AbstractGetHeadersFromPeerTask
               "Sequential headers must form a chain through hashes (BREACH_OF_PROTOCOL), disconnecting peer: {}",
               peer);
           peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
-          return Optional.of(Collections.emptyList());
+          return Optional.empty();
         }
       }
       prevBlockHeader = header;

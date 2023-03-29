@@ -166,7 +166,7 @@ public class GetHeadersFromPeerByNumberTaskTest extends PeerMessageTaskTest<List
     final Optional<List<BlockHeader>> optionalBlockHeaders =
         task.processResponse(false, BlockHeadersMessage.create(headers), peer);
     assertThat(optionalBlockHeaders).isNotNull();
-    assertThat(optionalBlockHeaders.get()).isEmpty();
+    assertThat(optionalBlockHeaders).isEmpty();
     assertThat(peer.isDisconnected()).isTrue();
     assertThat(((MockPeerConnection) peer.getConnection()).getDisconnectReason().get())
         .isEqualTo(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
