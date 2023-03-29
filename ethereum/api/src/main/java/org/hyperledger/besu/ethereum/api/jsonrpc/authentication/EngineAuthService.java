@@ -46,6 +46,8 @@ public class EngineAuthService implements AuthenticationService {
   private static final Logger LOG = LoggerFactory.getLogger(EngineAuthService.class);
   private static final int JWT_EXPIRATION_TIME_IN_SECONDS = 60;
 
+  public static final String EPHEMERAL_JWT_FILE = "jwt.hex";
+
   private final JWTAuth jwtAuthProvider;
 
   public EngineAuthService(final Vertx vertx, final Optional<File> signingKey, final Path datadir) {
@@ -64,7 +66,7 @@ public class EngineAuthService implements AuthenticationService {
       final JwtAlgorithm jwtAlgorithm, final Optional<File> keyFile, final Path datadir) {
     byte[] signingKey = null;
     if (!keyFile.isPresent()) {
-      final File jwtFile = new File(datadir.toFile(), "jwt.hex");
+      final File jwtFile = new File(datadir.toFile(), EPHEMERAL_JWT_FILE);
       jwtFile.deleteOnExit();
       final byte[] ephemeralKey = Bytes32.random().toArray();
       try {

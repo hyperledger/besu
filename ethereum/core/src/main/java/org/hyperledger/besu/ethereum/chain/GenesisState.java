@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -96,7 +97,10 @@ public final class GenesisState {
   private static BlockBody buildBody(final GenesisConfigFile config) {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
-    return new BlockBody(emptyList(), emptyList(), withdrawals);
+    final Optional<List<Deposit>> deposits =
+        isExperimentalEipsTimeAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+
+    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits);
   }
 
   public Block getBlock() {
@@ -164,6 +168,7 @@ public final class GenesisState {
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
         .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
         .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
+        .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
 
@@ -225,6 +230,14 @@ public final class GenesisState {
     final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
     if (shanghaiTimestamp.isPresent()) {
       return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
+    }
+    return false;
+  }
+
+  private static boolean isExperimentalEipsTimeAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong experimentalEipsTime = genesis.getConfigOptions().getExperimentalEipsTime();
+    if (experimentalEipsTime.isPresent()) {
+      return experimentalEipsTime.getAsLong() == genesis.getTimestamp();
     }
     return false;
   }
