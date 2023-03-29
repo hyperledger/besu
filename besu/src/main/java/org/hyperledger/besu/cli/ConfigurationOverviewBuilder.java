@@ -38,7 +38,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> rpcHttpApis;
   private Integer enginePort;
   private Collection<String> engineApis;
-  private String engineJwtFile;
+  private String engineJwtFilePath;
   private boolean isHighSpec = false;
 
   /**
@@ -78,7 +78,7 @@ public class ConfigurationOverviewBuilder {
    * Sets data storage.
    *
    * @param dataStorage the data storage
-   * @return the data storage
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setDataStorage(final String dataStorage) {
     this.dataStorage = dataStorage;
@@ -89,7 +89,7 @@ public class ConfigurationOverviewBuilder {
    * Sets sync mode.
    *
    * @param syncMode the sync mode
-   * @return the sync mode
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setSyncMode(final String syncMode) {
     this.syncMode = syncMode;
@@ -100,7 +100,7 @@ public class ConfigurationOverviewBuilder {
    * Sets rpc port.
    *
    * @param rpcPort the rpc port
-   * @return the rpc port
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setRpcPort(final Integer rpcPort) {
     this.rpcPort = rpcPort;
@@ -111,7 +111,7 @@ public class ConfigurationOverviewBuilder {
    * Sets rpc http apis.
    *
    * @param rpcHttpApis the rpc http apis
-   * @return the rpc http apis
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setRpcHttpApis(final Collection<String> rpcHttpApis) {
     this.rpcHttpApis = rpcHttpApis;
@@ -122,7 +122,7 @@ public class ConfigurationOverviewBuilder {
    * Sets engine port.
    *
    * @param enginePort the engine port
-   * @return the engine port
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setEnginePort(final Integer enginePort) {
     this.enginePort = enginePort;
@@ -133,7 +133,7 @@ public class ConfigurationOverviewBuilder {
    * Sets engine apis.
    *
    * @param engineApis the engine apis
-   * @return the engine apis
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setEngineApis(final Collection<String> engineApis) {
     this.engineApis = engineApis;
@@ -143,15 +143,21 @@ public class ConfigurationOverviewBuilder {
   /**
    * Sets high spec enabled.
    *
-   * @return the high spec enabled
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setHighSpecEnabled() {
     isHighSpec = true;
     return this;
   }
 
-  public ConfigurationOverviewBuilder setEngineJwtFile(final String engineJwtFile) {
-    this.engineJwtFile = engineJwtFile;
+  /**
+   * Sets the engine jwt file path.
+   *
+   * @param engineJwtFilePath the engine apis
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setEngineJwtFile(final String engineJwtFilePath) {
+    this.engineJwtFilePath = engineJwtFilePath;
     return this;
   }
 
