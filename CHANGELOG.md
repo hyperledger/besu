@@ -14,6 +14,8 @@
 
 ### Bug Fixes
 
+- Make QBFT validator smart contract mode work with london fork [#5277](https://github.com/hyperledger/besu/pull/5277)
+
 ### Download Links
 
 ## 23.1.2
