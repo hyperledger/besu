@@ -346,13 +346,8 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldRespondWithSyncingDuringBackwardsSyncWhenNoParentHeader() {
-    final Hash uniqueParentHash = Hash.ZERO; // should miss the mock
-    BlockHeader mockHeader =
-        new BlockHeaderTestFixture()
-            .parentHash(uniqueParentHash)
-            .baseFeePerGas(Wei.ONE)
-            .buildHeader();
+  public void shouldRespondWithSyncingDuringBackwardsSync() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(mergeCoordinator.appendNewPayloadToSync(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
