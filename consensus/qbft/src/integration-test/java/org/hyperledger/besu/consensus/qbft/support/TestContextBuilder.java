@@ -279,16 +279,17 @@ public class TestContextBuilder {
         final GenesisState genesisState = createGenesisBlock(genesisFile.get());
         Block genesisBlock = genesisState.getBlock();
         if (useZeroBaseFee) {
-          final BlockHeader zeroBaseFeeHeader = BlockHeaderBuilder.fromHeader(genesisState.getBlock().getHeader())
-              .baseFee(Wei.ZERO)
-              .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(ProtocolScheduleFixture.MAINNET))
-              .buildBlockHeader();
+          final BlockHeader zeroBaseFeeHeader =
+              BlockHeaderBuilder.fromHeader(genesisState.getBlock().getHeader())
+                  .baseFee(Wei.ZERO)
+                  .blockHeaderFunctions(
+                      ScheduleBasedBlockHeaderFunctions.create(ProtocolScheduleFixture.MAINNET))
+                  .buildBlockHeader();
           genesisBlock = new Block(zeroBaseFeeHeader, genesisState.getBlock().getBody());
         }
         blockChain =
             createInMemoryBlockchain(
-                genesisBlock,
-                BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
+                genesisBlock, BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
         genesisState.writeStateTo(worldStateArchive.getMutable());
       } catch (IOException e) {
         throw new IllegalStateException(e);
@@ -424,7 +425,7 @@ public class TestContextBuilder {
             : Collections.emptyMap();
     final QbftConfigOptions qbftConfigOptions = createGenesisConfig(useValidatorContract);
 
-    if(useLondonMilestone) {
+    if (useLondonMilestone) {
       genesisConfigOptions.londonBlock(0);
     } else {
       genesisConfigOptions.berlinBlock(0);
