@@ -56,7 +56,7 @@ public class PrivateStateGenesisAllocatorTest {
           List.of(
               new PrivacyGenesisAccount() {
                 @Override
-                public org.hyperledger.besu.datatypes.Address getAddress() {
+                public Address getAddress() {
                   return genesisAddress;
                 }
 
