@@ -29,9 +29,9 @@ public interface TraceService extends BesuService {
   void traceBlock(long blockNumber, Object tracer);
 
   /**
-   * Traces a block
+   * Traces a block by hash
    *
-   * @param hash the block number
+   * @param hash the block hash
    * @param tracer the tracer (OperationTracer)
    */
   void traceBlock(Hash hash, Object tracer);

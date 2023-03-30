@@ -74,6 +74,12 @@ public class TraceServiceImpl implements TraceService {
     block.ifPresent(value -> trace(value, (OperationTracer) tracer));
   }
 
+  /**
+   * Traces block
+   *
+   * @param hash the block hash to be traced
+   * @param tracer an instance of OperationTracer
+   */
   @Override
   public void traceBlock(final org.hyperledger.besu.plugin.data.Hash hash, final Object tracer) {
     checkArgument(tracer instanceof OperationTracer, "Invalid OperationTracer");
