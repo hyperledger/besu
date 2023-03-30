@@ -28,6 +28,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.VALID_APIS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -3303,7 +3304,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final String staticNodesFilename = "static-nodes.json";
       staticNodesPath = dataDir().resolve(staticNodesFilename);
     }
-    logger.debug("Static Nodes file = {}", staticNodesPath);
+    logger.debug("Static Nodes file: {}", staticNodesPath);
     return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
   }
 
@@ -3645,6 +3646,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder
           .setEnginePort(engineJsonRpcConfiguration.getPort())
           .setEngineApis(engineJsonRpcConfiguration.getRpcApis());
+      if (engineJsonRpcConfiguration.isAuthenticationEnabled()) {
+        if (engineJsonRpcConfiguration.getAuthenticationPublicKeyFile() != null) {
+          builder.setEngineJwtFile(
+              engineJsonRpcConfiguration.getAuthenticationPublicKeyFile().getAbsolutePath());
+        } else {
+          // default ephemeral jwt created later
+          builder.setEngineJwtFile(dataDir().toAbsolutePath() + "/" + EPHEMERAL_JWT_FILE);
+        }
+      }
     }
 
     if (rocksDBPlugin.isHighSpecEnabled()) {

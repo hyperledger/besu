@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.LocationNodeVisitor;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeFactory;
+import org.hyperledger.besu.ethereum.trie.NodeVisitor;
+import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -28,7 +34,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class ExtensionNode<V> implements Node<V> {
+public class ExtensionNode<V> implements Node<V> {
 
   private final Optional<Bytes> location;
   private final Bytes path;
@@ -39,7 +45,7 @@ class ExtensionNode<V> implements Node<V> {
   private boolean dirty = false;
   private boolean needHeal = false;
 
-  ExtensionNode(
+  public ExtensionNode(
       final Bytes location,
       final Bytes path,
       final Node<V> child,
@@ -53,7 +59,7 @@ class ExtensionNode<V> implements Node<V> {
     this.nodeFactory = nodeFactory;
   }
 
-  ExtensionNode(final Bytes path, final Node<V> child, final NodeFactory<V> nodeFactory) {
+  public ExtensionNode(final Bytes path, final Node<V> child, final NodeFactory<V> nodeFactory) {
     assert (path.size() > 0);
     assert (path.get(path.size() - 1) != CompactEncoding.LEAF_TERMINATOR)
         : "Extension path ends in a leaf terminator";
@@ -103,7 +109,7 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlp() {
+  public Bytes getEncodedBytes() {
     if (rlp != null) {
       final Bytes encoded = rlp.get();
       if (encoded != null) {
@@ -113,7 +119,7 @@ class ExtensionNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeBytes(CompactEncoding.encode(path));
-    out.writeRaw(child.getRlpRef());
+    out.writeRaw(child.getEncodedBytesRef());
     out.endList();
     final Bytes encoded = out.encoded();
     rlp = new WeakReference<>(encoded);
@@ -121,11 +127,11 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlpRef() {
+  public Bytes getEncodedBytesRef() {
     if (isReferencedByHash()) {
       return RLP.encodeOne(getHash());
     } else {
-      return getRlp();
+      return getEncodedBytes();
     }
   }
 
@@ -137,7 +143,7 @@ class ExtensionNode<V> implements Node<V> {
         return hashed;
       }
     }
-    final Bytes rlp = getRlp();
+    final Bytes rlp = getEncodedBytes();
     final Bytes32 hashed = keccak256(rlp);
     hash = new SoftReference<>(hashed);
     return hashed;
@@ -163,7 +169,7 @@ class ExtensionNode<V> implements Node<V> {
     builder
         .append("Extension:")
         .append("\n\tRef: ")
-        .append(getRlpRef())
+        .append(getEncodedBytesRef())
         .append("\n\tPath: ")
         .append(CompactEncoding.encode(path))
         .append("\n\t")

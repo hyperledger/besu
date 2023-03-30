@@ -89,6 +89,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final Bytes32 random,
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals) {
+
     return createBlock(
         maybeTransactions,
         Optional.of(Collections.emptyList()),

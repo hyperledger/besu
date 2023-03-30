@@ -45,6 +45,7 @@ public class BlockHeaderBuilder {
   private Hash transactionsRoot;
 
   private Hash withdrawalsRoot = null;
+  private Hash depositsRoot = null;
 
   private Hash receiptsRoot;
 
@@ -118,7 +119,8 @@ public class BlockHeaderBuilder {
         .nonce(header.getNonce())
         .prevRandao(header.getPrevRandao().orElse(null))
         .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
-        .excessDataGas(header.getExcessDataGas().orElse(null));
+        .excessDataGas(header.getExcessDataGas().orElse(null))
+        .depositsRoot(header.getDepositsRoot().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -141,6 +143,7 @@ public class BlockHeaderBuilder {
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessDataGas(fromBuilder.excessDataGas)
+            .depositsRoot(fromBuilder.depositsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -168,6 +171,7 @@ public class BlockHeaderBuilder {
         nonce.getAsLong(),
         withdrawalsRoot,
         excessDataGas,
+        depositsRoot,
         blockHeaderFunctions);
   }
 
@@ -206,7 +210,8 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
-        excessDataGas);
+        excessDataGas,
+        depositsRoot);
   }
 
   private void validateBlockHeader() {
@@ -269,6 +274,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
     sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
+    depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     return this;
   }
 
@@ -381,6 +387,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder withdrawalsRoot(final Hash hash) {
     this.withdrawalsRoot = hash;
+    return this;
+  }
+
+  public BlockHeaderBuilder depositsRoot(final Hash hash) {
+    this.depositsRoot = hash;
     return this;
   }
 

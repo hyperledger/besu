@@ -28,6 +28,7 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -43,7 +44,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-public class BaseBftProtocolScheduleTest {
+public class BaseBftProtocolScheduleBuilderTest {
 
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
@@ -60,7 +61,7 @@ public class BaseBftProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions)));
-    final ProtocolSpec spec = schedule.getByBlockNumber(1);
+    final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(1));
 
     assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
     assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(mock(BlockHeader.class)))
@@ -76,7 +77,7 @@ public class BaseBftProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions)));
-    final ProtocolSpec spec = schedule.getByBlockNumber(1);
+    final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(1));
 
     final Address headerCoinbase = Address.fromHexString("0x123");
     final BlockHeader header = mock(BlockHeader.class);
@@ -131,7 +132,7 @@ public class BaseBftProtocolScheduleTest {
 
     // Check initial config
     for (int i = 0; i < 2; i++) {
-      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? headerCoinbase : beneficiary1;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(3)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -140,7 +141,7 @@ public class BaseBftProtocolScheduleTest {
 
     // Check fork1
     for (int i = 2; i < 5; i++) {
-      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? beneficiary2 : headerCoinbase;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(2)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -149,7 +150,7 @@ public class BaseBftProtocolScheduleTest {
 
     // Check fork2
     for (int i = 5; i < 8; i++) {
-      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(i));
       final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? headerCoinbase : beneficiary3;
       assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(1)));
       assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
@@ -219,15 +220,15 @@ public class BaseBftProtocolScheduleTest {
                         new ForkSpec<>(transitionBlock, blockRewardTransition))));
 
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(2);
-    assertThat(schedule.getByBlockNumber(0).getBlockReward())
+    assertThat(schedule.getByBlockHeader(blockHeader(0)).getBlockReward())
         .isEqualTo(Wei.of(arbitraryBlockReward));
-    assertThat(schedule.getByBlockNumber(transitionBlock).getBlockReward())
+    assertThat(schedule.getByBlockHeader(blockHeader(transitionBlock)).getBlockReward())
         .isEqualTo(Wei.of(forkBlockReward));
   }
 
   private ProtocolSchedule createProtocolSchedule(final List<ForkSpec<BftConfigOptions>> forks) {
-    final BaseBftProtocolSchedule bftProtocolSchedule =
-        new BaseBftProtocolSchedule() {
+    final BaseBftProtocolScheduleBuilder bftProtocolSchedule =
+        new BaseBftProtocolScheduleBuilder() {
           @Override
           protected BlockHeaderValidator.Builder createBlockHeaderRuleset(
               final BftConfigOptions config, final FeeMarket feeMarket) {
@@ -255,5 +256,9 @@ public class BaseBftProtocolScheduleTest {
     when(bftConfig.getEpochLength()).thenReturn(3000L);
 
     return bftConfig;
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

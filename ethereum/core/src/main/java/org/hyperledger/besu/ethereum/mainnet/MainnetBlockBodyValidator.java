@@ -104,6 +104,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
+    if (!validateDeposits(block)) {
+      return false;
+    }
+
     return true;
   }
 
@@ -303,5 +307,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     return true;
+  }
+
+  private boolean validateDeposits(final Block unusedBlock) {
+    return true; // TODO 6110: Implement deposit validation
   }
 }

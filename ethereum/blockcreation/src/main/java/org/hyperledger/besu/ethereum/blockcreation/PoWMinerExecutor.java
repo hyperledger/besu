@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
@@ -72,10 +73,14 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final Subscribers<MinedBlockObserver> observers,
       final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader) {
+    // We don't need to consider the timestamp when getting the protocol schedule for the next block
+    // as timestamps are not used for defining forks when using POW
+    final ProtocolSpec nextBlockProtocolSpec =
+        protocolSchedule.getForNextBlockHeader(parentHeader, 0);
     final PoWSolver solver =
         new PoWSolver(
             nonceGenerator,
-            protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1).getPoWHasher().get(),
+            nextBlockProtocolSpec.getPoWHasher().get(),
             stratumMiningEnabled,
             ethHashObservers,
             epochCalculator,

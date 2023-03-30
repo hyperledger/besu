@@ -18,13 +18,13 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 
@@ -33,7 +33,7 @@ public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
   private final ProtocolContext protocolContext;
-  private final ProtocolSchedule protocolSchedule;
+  private final BftProtocolSchedule protocolSchedule;
   private final BftExtraDataCodec bftExtraDataCodec;
 
   /**
@@ -46,7 +46,7 @@ public class MessageValidatorFactory {
    */
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
-      final ProtocolSchedule protocolSchedule,
+      final BftProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final BftExtraDataCodec bftExtraDataCodec) {
     this.proposerSelector = proposerSelector;

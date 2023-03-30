@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.LocationNodeVisitor;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeFactory;
+import org.hyperledger.besu.ethereum.trie.NodeVisitor;
+import org.hyperledger.besu.ethereum.trie.NullNode;
+import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -32,29 +38,28 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 
-class BranchNode<V> implements Node<V> {
-  public static final byte RADIX = CompactEncoding.LEAF_TERMINATOR;
+public class BranchNode<V> implements Node<V> {
 
   @SuppressWarnings("rawtypes")
-  private static final Node NULL_NODE = NullNode.instance();
+  protected static final Node NULL_NODE = NullNode.instance();
 
   private final Optional<Bytes> location;
-  private final ArrayList<Node<V>> children;
+  private final List<Node<V>> children;
   private final Optional<V> value;
-  private final NodeFactory<V> nodeFactory;
+  protected final NodeFactory<V> nodeFactory;
   private final Function<V, Bytes> valueSerializer;
-  private WeakReference<Bytes> rlp;
+  protected WeakReference<Bytes> encodedBytes;
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
   private boolean needHeal = false;
 
-  BranchNode(
+  public BranchNode(
       final Bytes location,
       final ArrayList<Node<V>> children,
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
-    assert (children.size() == RADIX);
+    assert (children.size() == maxChild());
     this.location = Optional.ofNullable(location);
     this.children = children;
     this.value = value;
@@ -62,12 +67,12 @@ class BranchNode<V> implements Node<V> {
     this.valueSerializer = valueSerializer;
   }
 
-  BranchNode(
-      final ArrayList<Node<V>> children,
+  public BranchNode(
+      final List<Node<V>> children,
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
-    assert (children.size() == RADIX);
+    assert (children.size() == maxChild());
     this.location = Optional.empty();
     this.children = children;
     this.value = value;
@@ -115,17 +120,17 @@ class BranchNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlp() {
-    if (rlp != null) {
-      final Bytes encoded = rlp.get();
+  public Bytes getEncodedBytes() {
+    if (encodedBytes != null) {
+      final Bytes encoded = encodedBytes.get();
       if (encoded != null) {
         return encoded;
       }
     }
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    for (int i = 0; i < RADIX; ++i) {
-      out.writeRaw(children.get(i).getRlpRef());
+    for (int i = 0; i < maxChild(); ++i) {
+      out.writeRaw(children.get(i).getEncodedBytesRef());
     }
     if (value.isPresent()) {
       out.writeBytes(valueSerializer.apply(value.get()));
@@ -134,16 +139,16 @@ class BranchNode<V> implements Node<V> {
     }
     out.endList();
     final Bytes encoded = out.encoded();
-    rlp = new WeakReference<>(encoded);
+    encodedBytes = new WeakReference<>(encoded);
     return encoded;
   }
 
   @Override
-  public Bytes getRlpRef() {
+  public Bytes getEncodedBytesRef() {
     if (isReferencedByHash()) {
       return RLP.encodeOne(getHash());
     } else {
-      return getRlp();
+      return getEncodedBytes();
     }
   }
 
@@ -155,7 +160,7 @@ class BranchNode<V> implements Node<V> {
         return hashed;
       }
     }
-    final Bytes32 hashed = keccak256(getRlp());
+    final Bytes32 hashed = keccak256(getEncodedBytes());
     hash = new SoftReference<>(hashed);
     return hashed;
   }
@@ -196,7 +201,7 @@ class BranchNode<V> implements Node<V> {
     return maybeFlatten(children).orElse(nodeFactory.createBranch(children, Optional.empty()));
   }
 
-  private boolean hasChildren() {
+  protected boolean hasChildren() {
     for (final Node<V> child : children) {
       if (child != NULL_NODE) {
         return true;
@@ -205,7 +210,7 @@ class BranchNode<V> implements Node<V> {
     return false;
   }
 
-  private static <V> Optional<Node<V>> maybeFlatten(final ArrayList<Node<V>> children) {
+  protected Optional<Node<V>> maybeFlatten(final List<Node<V>> children) {
     final int onlyChildIndex = findOnlyChild(children);
     if (onlyChildIndex >= 0) {
       // replace the path of the only child and return it
@@ -219,10 +224,10 @@ class BranchNode<V> implements Node<V> {
     return Optional.empty();
   }
 
-  private static <V> int findOnlyChild(final ArrayList<Node<V>> children) {
+  private int findOnlyChild(final List<Node<V>> children) {
     int onlyChildIndex = -1;
-    assert (children.size() == RADIX);
-    for (int i = 0; i < RADIX; ++i) {
+    assert (children.size() == maxChild());
+    for (int i = 0; i < maxChild(); ++i) {
       if (children.get(i) != NULL_NODE) {
         if (onlyChildIndex >= 0) {
           return -1;
@@ -237,8 +242,8 @@ class BranchNode<V> implements Node<V> {
   public String print() {
     final StringBuilder builder = new StringBuilder();
     builder.append("Branch:");
-    builder.append("\n\tRef: ").append(getRlpRef());
-    for (int i = 0; i < RADIX; i++) {
+    builder.append("\n\tRef: ").append(getEncodedBytesRef());
+    for (int i = 0; i < maxChild(); i++) {
       final Node<V> child = child((byte) i);
       if (!Objects.equals(child, NullNode.instance())) {
         final String branchLabel = "[" + Integer.toHexString(i) + "] ";
@@ -268,5 +273,9 @@ class BranchNode<V> implements Node<V> {
   @Override
   public void markHealNeeded() {
     this.needHeal = true;
+  }
+
+  public int maxChild() {
+    return 16;
   }
 }

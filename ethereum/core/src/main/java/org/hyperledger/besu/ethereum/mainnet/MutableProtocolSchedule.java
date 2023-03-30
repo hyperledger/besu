@@ -22,18 +22,14 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
-
 public class MutableProtocolSchedule implements ProtocolSchedule {
 
-  @VisibleForTesting
   protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::milestone).reversed());
 
@@ -43,7 +39,6 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
     this.chainId = chainId;
   }
 
-  @VisibleForTesting
   protected MutableProtocolSchedule(final MutableProtocolSchedule protocolSchedule) {
     this.chainId = protocolSchedule.chainId;
     this.protocolSpecs = protocolSchedule.protocolSpecs;
@@ -114,9 +109,5 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
             ((PrivacyBlockProcessor) blockProcessor)
                 .setPublicWorldStateArchive(publicWorldStateArchive);
         });
-  }
-
-  public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
-    return protocolSpecs.stream().toList();
   }
 }

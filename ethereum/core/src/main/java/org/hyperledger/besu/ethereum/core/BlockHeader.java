@@ -65,6 +65,7 @@ public class BlockHeader extends SealableBlockHeader
       final long nonce,
       final Hash withdrawalsRoot,
       final DataGas excessDataGas,
+      final Hash depositsRoot,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<LogsBloomFilter> privateLogsBloom) {
     super(
@@ -84,7 +85,8 @@ public class BlockHeader extends SealableBlockHeader
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
-        excessDataGas);
+        excessDataGas,
+        depositsRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -110,6 +112,7 @@ public class BlockHeader extends SealableBlockHeader
       final long nonce,
       final Hash withdrawalsRoot,
       final DataGas excessDataGas,
+      final Hash depositsRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -128,7 +131,8 @@ public class BlockHeader extends SealableBlockHeader
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
-        excessDataGas);
+        excessDataGas,
+        depositsRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -240,6 +244,9 @@ public class BlockHeader extends SealableBlockHeader
     if (excessDataGas != null) {
       out.writeUInt256Scalar(excessDataGas);
     }
+    if (depositsRoot != null) {
+      out.writeBytes(depositsRoot);
+    }
     out.endList();
   }
 
@@ -266,6 +273,8 @@ public class BlockHeader extends SealableBlockHeader
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     final DataGas excessDataGas =
         !input.isEndOfCurrentList() ? DataGas.of(input.readUInt256Scalar()) : null;
+    final Hash depositHashRoot =
+        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -286,6 +295,7 @@ public class BlockHeader extends SealableBlockHeader
         nonce,
         withdrawalHashRoot,
         excessDataGas,
+        depositHashRoot,
         blockHeaderFunctions);
   }
 
@@ -331,7 +341,10 @@ public class BlockHeader extends SealableBlockHeader
       sb.append("withdrawalsRoot=").append(withdrawalsRoot).append(", ");
     }
     if (excessDataGas != null) {
-      sb.append("excessDataGas=").append(excessDataGas);
+      sb.append("excessDataGas=").append(excessDataGas).append(", ");
+    }
+    if (depositsRoot != null) {
+      sb.append("depositsRoot=").append(depositsRoot);
     }
     return sb.append("}").toString();
   }
@@ -361,6 +374,10 @@ public class BlockHeader extends SealableBlockHeader
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
         pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
+        pluginBlockHeader
+            .getDepositsRoot()
+            .map(h -> Hash.fromHexString(h.toHexString()))
+            .orElse(null),
         blockHeaderFunctions);
   }
 

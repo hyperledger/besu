@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.LocationNodeVisitor;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeFactory;
+import org.hyperledger.besu.ethereum.trie.NodeVisitor;
+import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -29,17 +35,17 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class LeafNode<V> implements Node<V> {
+public class LeafNode<V> implements Node<V> {
   private final Optional<Bytes> location;
   private final Bytes path;
-  private final V value;
+  protected final V value;
   private final NodeFactory<V> nodeFactory;
-  private final Function<V, Bytes> valueSerializer;
-  private WeakReference<Bytes> rlp;
+  protected final Function<V, Bytes> valueSerializer;
+  protected WeakReference<Bytes> encodedBytes;
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
 
-  LeafNode(
+  public LeafNode(
       final Bytes location,
       final Bytes path,
       final V value,
@@ -52,7 +58,7 @@ class LeafNode<V> implements Node<V> {
     this.valueSerializer = valueSerializer;
   }
 
-  LeafNode(
+  public LeafNode(
       final Bytes path,
       final V value,
       final NodeFactory<V> nodeFactory,
@@ -100,9 +106,9 @@ class LeafNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlp() {
-    if (rlp != null) {
-      final Bytes encoded = rlp.get();
+  public Bytes getEncodedBytes() {
+    if (encodedBytes != null) {
+      final Bytes encoded = encodedBytes.get();
       if (encoded != null) {
         return encoded;
       }
@@ -114,16 +120,16 @@ class LeafNode<V> implements Node<V> {
     out.writeBytes(valueSerializer.apply(value));
     out.endList();
     final Bytes encoded = out.encoded();
-    rlp = new WeakReference<>(encoded);
+    encodedBytes = new WeakReference<>(encoded);
     return encoded;
   }
 
   @Override
-  public Bytes getRlpRef() {
+  public Bytes getEncodedBytesRef() {
     if (isReferencedByHash()) {
       return RLP.encodeOne(getHash());
     } else {
-      return getRlp();
+      return getEncodedBytes();
     }
   }
 
@@ -135,7 +141,7 @@ class LeafNode<V> implements Node<V> {
         return hashed;
       }
     }
-    final Bytes32 hashed = keccak256(getRlp());
+    final Bytes32 hashed = keccak256(getEncodedBytes());
     hash = new SoftReference<>(hashed);
     return hashed;
   }
@@ -149,7 +155,7 @@ class LeafNode<V> implements Node<V> {
   public String print() {
     return "Leaf:"
         + "\n\tRef: "
-        + getRlpRef()
+        + getEncodedBytesRef()
         + "\n\tPath: "
         + CompactEncoding.encode(path)
         + "\n\tValue: "

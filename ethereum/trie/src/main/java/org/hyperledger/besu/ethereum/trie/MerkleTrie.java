@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** An Merkle Patricial Trie. */
-public interface MerklePatriciaTrie<K, V> {
+public interface MerkleTrie<K, V> {
 
   Bytes EMPTY_TRIE_NODE = RLP.NULL;
   Bytes32 EMPTY_TRIE_NODE_HASH = keccak256(EMPTY_TRIE_NODE);
@@ -68,13 +68,21 @@ public interface MerklePatriciaTrie<K, V> {
   void put(K key, V value);
 
   /**
+   * Updates the value mapped to the specified path, creating the mapping if one does not already
+   * exist.
+   *
+   * @param path path of the node to be updated.
+   * @param value The value to associate the key with.
+   */
+  void putPath(K path, V value);
+  /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist.
    *
    * @param key The key that corresponds to the value to be updated.
    * @param putVisitor custom visitor for the update
    */
-  void put(K key, PutVisitor<V> putVisitor);
+  void put(K key, PathNodeVisitor<V> putVisitor);
 
   /**
    * Deletes the value mapped to the specified key, if such a value exists (Optional operation).
@@ -89,7 +97,7 @@ public interface MerklePatriciaTrie<K, V> {
    * @param path of the node to be deleted.
    * @param removeVisitor custom visitor for the deletion
    */
-  void removePath(K path, RemoveVisitor<V> removeVisitor);
+  void removePath(K path, PathNodeVisitor<V> removeVisitor);
 
   /**
    * Returns the KECCAK256 hash of the root node of the trie.

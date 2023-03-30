@@ -75,7 +75,8 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Optional<List<Double>> maybeRewardPercentiles =
         request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
 
-    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
+    final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
+    final long chainHeadBlockNumber = chainHeadHeader.getNumber();
     final long resolvedHighestBlockNumber =
         highestBlock
             .getNumber()
@@ -106,7 +107,14 @@ public class EthFeeHistory implements JsonRpcMethod {
             .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
             .orElseGet(
                 () ->
-                    Optional.of(protocolSchedule.getByBlockNumber(nextBlockNumber).getFeeMarket())
+                    Optional.of(
+                            // We are able to use the chain head timestamp for next block header as
+                            // the base fee market can only be pre or post London. If another fee
+                            // market is added will need to reconsider this.
+                            protocolSchedule
+                                .getForNextBlockHeader(
+                                    chainHeadHeader, chainHeadHeader.getTimestamp())
+                                .getFeeMarket())
                         .filter(FeeMarket::implementsBaseFee)
                         .map(BaseFeeMarket.class::cast)
                         .map(

@@ -404,7 +404,7 @@ public class PrivacyReorgTest {
       final Block block) {
     besuController
         .getProtocolSchedule()
-        .getByBlockNumber(blockchain.getChainHeadBlockNumber())
+        .getByBlockHeader(blockchain.getChainHeadHeader())
         .getBlockImporter()
         .importBlock(protocolContext, block, HeaderValidationMode.NONE);
   }

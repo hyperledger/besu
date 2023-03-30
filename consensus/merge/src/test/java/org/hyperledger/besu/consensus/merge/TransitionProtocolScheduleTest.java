@@ -47,10 +47,8 @@ public class TransitionProtocolScheduleTest {
   @Mock MergeContext mergeContext;
   @Mock ProtocolSchedule preMergeProtocolSchedule;
   @Mock ProtocolSchedule postMergeProtocolSchedule;
-
   @Mock TimestampSchedule timestampSchedule;
   @Mock BlockHeader blockHeader;
-
   private static final Difficulty TTD = Difficulty.of(100L);
   private static final long BLOCK_NUMBER = 29L;
   private static final long TIMESTAMP = 1L;

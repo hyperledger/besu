@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,6 +13,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.trie;
+
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
 
 import java.util.List;
 import java.util.Optional;
@@ -91,7 +96,7 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
     if (!(child instanceof StoredNode)) {
       child.accept(persistVisitor);
       final PersistedNode<V> persistedNode =
-          new PersistedNode<>(null, child.getHash(), child.getRlpRef());
+          new PersistedNode<>(null, child.getHash(), child.getEncodedBytesRef());
       return (BranchNode<V>) parent.replaceChild(index, persistedNode);
     } else {
       return parent;
@@ -204,13 +209,13 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
     }
 
     @Override
-    public Bytes getRlp() {
+    public Bytes getEncodedBytes() {
       throw new UnsupportedOperationException(
           "A persisted node cannot have rlp, as it's already been restored.");
     }
 
     @Override
-    public Bytes getRlpRef() {
+    public Bytes getEncodedBytesRef() {
       return refRlp;
     }
 
