@@ -25,12 +25,24 @@ import java.util.Optional;
 public class WithdrawalsValidatorProvider {
 
   static WithdrawalsValidator getWithdrawalsValidator(
+      final TimestampSchedule timestampSchedule, final BlockHeader blockHeader) {
+
+    return Optional.ofNullable(timestampSchedule.getByBlockHeader(blockHeader))
+        .map(ProtocolSpec::getWithdrawalsValidator)
+        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
+        // previous fork. This might be resolved when
+        // https://github.com/hyperledger/besu/issues/4789 is played
+        // and if we can combine protocolSchedule and timestampSchedule.
+        .orElseGet(WithdrawalsValidator.ProhibitedWithdrawals::new);
+  }
+
+  static WithdrawalsValidator getWithdrawalsValidator(
       final TimestampSchedule timestampSchedule,
       final BlockHeader parentBlockHeader,
-      final long newPayloadTimestamp) {
+      final long timestampForNextBlock) {
 
     return Optional.ofNullable(
-            timestampSchedule.getForNextBlockHeader(parentBlockHeader, newPayloadTimestamp))
+            timestampSchedule.getForNextBlockHeader(parentBlockHeader, timestampForNextBlock))
         .map(ProtocolSpec::getWithdrawalsValidator)
         // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
         // previous fork. This might be resolved when

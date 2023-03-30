@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadS
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -104,13 +105,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
-    final Optional<BlockHeader> maybeParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
-    boolean ableToValidateWithdrawals = maybeParentHeader.isPresent();
-    if (ableToValidateWithdrawals
-        && !getWithdrawalsValidator(
-                timestampSchedule, maybeParentHeader.get(), blockParam.getTimestamp())
-            .validateWithdrawals(maybeWithdrawals)) {
+
+    final BlockHeader blockHeaderForWithdrawalsValidation =
+        BlockHeaderBuilder.createDefault()
+            .timestamp(blockParam.getTimestamp())
+            .number(blockParam.getBlockNumber())
+            .buildBlockHeader();
+    if (!getWithdrawalsValidator(timestampSchedule, blockHeaderForWithdrawalsValidation)
+        .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
 
@@ -192,6 +194,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Block already present in bad block manager.");
     }
 
+    final Optional<BlockHeader> maybeParentHeader =
+        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
     if (maybeParentHeader.isPresent()
         && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
       return respondWithInvalid(
