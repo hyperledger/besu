@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
 

@@ -45,7 +45,7 @@ import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;

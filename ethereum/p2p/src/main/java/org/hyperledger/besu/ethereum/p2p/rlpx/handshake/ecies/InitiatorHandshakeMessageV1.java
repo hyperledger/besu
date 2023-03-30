@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;

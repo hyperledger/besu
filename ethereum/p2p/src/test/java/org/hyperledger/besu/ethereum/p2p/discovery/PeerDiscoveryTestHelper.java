@@ -19,8 +19,8 @@ import static java.util.Arrays.asList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;

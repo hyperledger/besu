@@ -35,7 +35,7 @@ dependencies {
 
   implementation project(':config')
   implementation project(':consensus:merge')
-  implementation project(':crypto:algorithms')
+  implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:blockcreation')
@@ -82,7 +82,7 @@ dependencies {
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  testImplementation project(path: ':crypto:algorithms', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':services:kvstore')

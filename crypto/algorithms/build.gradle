@@ -16,37 +16,33 @@
 apply plugin: 'java-library'
 
 jar {
-    archiveBaseName = 'besu-crypto'
-    manifest {
-        attributes(
-                'Specification-Title': archiveBaseName,
-                'Specification-Version': project.version,
-                'Implementation-Title': archiveBaseName,
-                'Implementation-Version': calculateVersion(),
-                'Automatic-Module-Name': 'org.hyperledger.besu.internal.crypto'
-        )
-    }
+  archiveBaseName = 'besu-crypto'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion(),
+      'Automatic-Module-Name': 'org.hyperledger.besu.internal.crypto'
+      )
+  }
 }
 
 dependencies {
-    api project(':plugin-api')
+  api 'org.bouncycastle:bcprov-jdk15on'
+  api 'org.slf4j:slf4j-api'
 
-    api 'org.bouncycastle:bcprov-jdk15on'
-    api 'org.slf4j:slf4j-api'
+  implementation 'net.java.dev.jna:jna'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.hyperledger.besu:secp256k1'
+  implementation 'org.hyperledger.besu:secp256r1'
+  implementation 'org.hyperledger.besu:blake2bf'
+  implementation 'com.google.guava:guava'
 
-    implementation 'net.java.dev.jna:jna'
-    implementation 'org.apache.tuweni:tuweni-bytes'
-    implementation 'org.apache.tuweni:tuweni-units'
-    implementation 'org.hyperledger.besu:secp256k1'
-    implementation 'org.hyperledger.besu:secp256r1'
-    implementation 'org.hyperledger.besu:blake2bf'
-    implementation 'com.google.guava:guava'
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
 
-    testImplementation 'junit:junit'
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
-
-artifacts { testSupportArtifacts testSupportJar }

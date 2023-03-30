@@ -31,7 +31,7 @@ dependencies {
   api project(':plugin-api')
 
   implementation project(':config')
-  implementation project(':crypto:algorithms')
+  implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
@@ -50,7 +50,7 @@ dependencies {
   testImplementation project(':crypto:algorithms')
   testImplementation project(':testutil')
   testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project( path: ':crypto:algorithms', configuration: 'testSupportArtifacts')
+  testImplementation project( path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
 
   testImplementation 'junit:junit'
@@ -61,7 +61,7 @@ dependencies {
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
-  testSupportImplementation project( path: ':crypto:algorithms', configuration: 'testSupportArtifacts')
+  testSupportImplementation project( path: ':crypto:services', configuration: 'testSupportArtifacts')
   testSupportImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testSupportImplementation 'org.mockito:mockito-core'
   testSupportImplementation 'org.assertj:assertj-core'

@@ -19,7 +19,7 @@ import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;

@@ -23,7 +23,7 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 

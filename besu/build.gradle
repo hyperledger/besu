@@ -38,7 +38,7 @@ dependencies {
   implementation project(':consensus:ibftlegacy')
   implementation project(':consensus:merge')
   implementation project(':consensus:qbft')
-  implementation project(':crypto:algorithms')
+  implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:api')
@@ -84,7 +84,7 @@ dependencies {
   runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(path: ':crypto:algorithms', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
   testImplementation 'com.google.auto.service:auto-service'

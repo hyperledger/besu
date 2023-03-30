@@ -22,8 +22,8 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;

@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.contentOf;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;

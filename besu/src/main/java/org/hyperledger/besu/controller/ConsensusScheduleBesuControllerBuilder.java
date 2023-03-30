@@ -28,7 +28,7 @@ import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ConsensusContextFactory;

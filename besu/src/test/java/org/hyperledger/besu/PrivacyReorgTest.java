@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;

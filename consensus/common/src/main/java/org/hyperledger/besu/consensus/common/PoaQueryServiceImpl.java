@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;

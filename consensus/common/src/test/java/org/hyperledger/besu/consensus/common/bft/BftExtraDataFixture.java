@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.common.bft;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
