@@ -75,6 +75,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
   private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
+  private boolean zeroBaseFee = false;
 
   @Override
   public StubGenesisConfigOptions clone() {
@@ -439,7 +440,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
 
   @Override
   public boolean isZeroBaseFee() {
-    return false;
+    return zeroBaseFee;
   }
 
   @Override
@@ -692,6 +693,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions baseFeePerGas(final long baseFeeOverride) {
     baseFeePerGas = Optional.of(Wei.of(baseFeeOverride));
+    return this;
+  }
+
+  /**
+   * Zero base fee per gas stub genesis config options.
+   *
+   * @param zeroBaseFee the zero base fee override
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions zeroBaseFee(final boolean zeroBaseFee) {
+    this.zeroBaseFee = zeroBaseFee;
     return this;
   }
 

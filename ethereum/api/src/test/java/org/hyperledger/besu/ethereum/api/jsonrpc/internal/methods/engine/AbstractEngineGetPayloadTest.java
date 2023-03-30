@@ -85,7 +85,8 @@ public abstract class AbstractEngineGetPayloadTest {
           new BlockBody(
               Collections.emptyList(),
               Collections.emptyList(),
-              Optional.of(Collections.emptyList())));
+              Optional.of(Collections.emptyList()),
+              Optional.empty()));
   protected static final BlockWithReceipts mockBlockWithReceiptsAndWithdrawals =
       new BlockWithReceipts(mockBlockWithWithdrawals, Collections.emptyList());
 

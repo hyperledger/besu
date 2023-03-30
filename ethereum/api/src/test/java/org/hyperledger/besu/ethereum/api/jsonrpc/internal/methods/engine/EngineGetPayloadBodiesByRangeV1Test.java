@@ -176,6 +176,7 @@ public class EngineGetPayloadBodiesByRangeV1Test {
         new BlockBody(
             List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
+            Optional.empty(),
             Optional.empty());
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(130));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(preShanghaiBlockBody));
@@ -210,13 +211,15 @@ public class EngineGetPayloadBodiesByRangeV1Test {
                 new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
                 new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.of(List.of(withdrawal)));
+            Optional.of(List.of(withdrawal)),
+            Optional.empty());
 
     final BlockBody shanghaiBlockBody2 =
         new BlockBody(
             List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.of(List.of(withdrawal2)));
+            Optional.of(List.of(withdrawal2)),
+            Optional.empty());
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(130));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(shanghaiBlockBody));
     when(blockchain.getBlockBody(blockHash2)).thenReturn(Optional.of(shanghaiBlockBody2));
@@ -246,7 +249,8 @@ public class EngineGetPayloadBodiesByRangeV1Test {
                 new TransactionTestFixture().createTransaction(sig.generateKeyPair()),
                 new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.of(List.of(withdrawal)));
+            Optional.of(List.of(withdrawal)),
+            Optional.empty());
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(123));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(shanghaiBlockBody));
     when(blockchain.getBlockHashByNumber(123)).thenReturn(Optional.of(blockHash1));
@@ -269,17 +273,20 @@ public class EngineGetPayloadBodiesByRangeV1Test {
         new BlockBody(
             List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.of(List.of(withdrawal)));
+            Optional.of(List.of(withdrawal)),
+            Optional.empty());
     final BlockBody shanghaiBlockBody2 =
         new BlockBody(
             List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.of(List.of(withdrawal)));
+            Optional.of(List.of(withdrawal)),
+            Optional.empty());
     final BlockBody shanghaiBlockBody3 =
         new BlockBody(
             List.of(new TransactionTestFixture().createTransaction(sig.generateKeyPair())),
             Collections.emptyList(),
-            Optional.of(List.of(withdrawal)));
+            Optional.of(List.of(withdrawal)),
+            Optional.empty());
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.valueOf(125));
     when(blockchain.getBlockBody(blockHash1)).thenReturn(Optional.of(shanghaiBlockBody));
     when(blockchain.getBlockBody(blockHash2)).thenReturn(Optional.of(shanghaiBlockBody2));
