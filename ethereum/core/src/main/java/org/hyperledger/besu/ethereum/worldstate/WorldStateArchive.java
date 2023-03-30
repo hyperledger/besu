@@ -42,7 +42,12 @@ public interface WorldStateArchive extends Closeable {
 
   MutableWorldState getMutable();
 
-  void setArchiveStateUnSafe(BlockHeader blockHeader);
+  /**
+   * Resetting the archive cache and adding the new pivot as the only entry
+   *
+   * @param blockHeader new pivot block header
+   */
+  void resetArchiveStateTo(BlockHeader blockHeader);
 
   Optional<Bytes> getNodeData(Hash hash);
 

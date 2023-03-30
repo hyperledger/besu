@@ -13,6 +13,9 @@
 - Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
 
 ### Bug Fixes
+- Fix QBFT and IBFT unable to propose blocks on London when zeroBaseFee is used [#5276](https://github.com/hyperledger/besu/pull/5276) 
+
+- Make QBFT validator smart contract mode work with london fork [#5249](https://github.com/hyperledger/besu/issues/5249)
 
 ### Download Links
 

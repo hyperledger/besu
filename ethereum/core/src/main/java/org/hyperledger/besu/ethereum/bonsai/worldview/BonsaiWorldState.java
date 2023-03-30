@@ -126,7 +126,12 @@ public class BonsaiWorldState
     return worldStateStorage.getCode(codeHash, Hash.hash(address));
   }
 
-  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
+  /**
+   * Reset the worldState to this block header
+   *
+   * @param blockHeader block to use
+   */
+  public void resetWorldStateTo(final BlockHeader blockHeader) {
     worldStateBlockHash = Hash.fromPlugin(blockHeader.getBlockHash());
     worldStateRootHash = Hash.fromPlugin(blockHeader.getStateRoot());
   }
