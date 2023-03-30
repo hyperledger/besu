@@ -17,6 +17,7 @@ package org.hyperledger.besu.services;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock.ChainUpdater;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
@@ -70,6 +71,14 @@ public class TraceServiceImpl implements TraceService {
   public void traceBlock(final long blockNumber, final Object tracer) {
     checkArgument(tracer instanceof OperationTracer, "Invalid OperationTracer");
     final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByNumber(blockNumber);
+    block.ifPresent(value -> trace(value, (OperationTracer) tracer));
+  }
+
+  @Override
+  public void traceBlock(final org.hyperledger.besu.plugin.data.Hash hash, final Object tracer) {
+    checkArgument(tracer instanceof OperationTracer, "Invalid OperationTracer");
+    final Optional<Block> block =
+        blockchainQueries.getBlockchain().getBlockByHash(Hash.fromPlugin(hash));
     block.ifPresent(value -> trace(value, (OperationTracer) tracer));
   }
 

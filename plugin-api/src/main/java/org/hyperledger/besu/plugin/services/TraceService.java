@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.Hash;
 
 /** The Trace service interface */
 @Unstable
@@ -26,4 +27,12 @@ public interface TraceService extends BesuService {
    * @param tracer the tracer (OperationTracer)
    */
   void traceBlock(long blockNumber, Object tracer);
+
+  /**
+   * Traces a block
+   *
+   * @param hash the block number
+   * @param tracer the tracer (OperationTracer)
+   */
+  void traceBlock(Hash hash, Object tracer);
 }
