@@ -85,6 +85,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -92,6 +93,7 @@ import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -125,6 +127,8 @@ public class TestContextBuilder {
 
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private boolean useValidatorContract;
+  private boolean useLondonMilestone = false;
+  private boolean useZeroBaseFee = false;
 
   private static class ControllerAndState {
 
@@ -237,6 +241,16 @@ public class TestContextBuilder {
     return this;
   }
 
+  public TestContextBuilder useLondonMilestone(final boolean useLondonMilestone) {
+    this.useLondonMilestone = useLondonMilestone;
+    return this;
+  }
+
+  public TestContextBuilder useZeroBaseFee(final boolean useZeroBaseFee) {
+    this.useZeroBaseFee = useZeroBaseFee;
+    return this;
+  }
+
   public TestContextBuilder qbftForks(final List<QbftFork> qbftForks) {
     this.qbftForks = qbftForks;
     return this;
@@ -263,9 +277,17 @@ public class TestContextBuilder {
     if (genesisFile.isPresent()) {
       try {
         final GenesisState genesisState = createGenesisBlock(genesisFile.get());
+        Block genesisBlock = genesisState.getBlock();
+        if (useZeroBaseFee) {
+          final BlockHeader zeroBaseFeeHeader = BlockHeaderBuilder.fromHeader(genesisState.getBlock().getHeader())
+              .baseFee(Wei.ZERO)
+              .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(ProtocolScheduleFixture.MAINNET))
+              .buildBlockHeader();
+          genesisBlock = new Block(zeroBaseFeeHeader, genesisState.getBlock().getBody());
+        }
         blockChain =
             createInMemoryBlockchain(
-                genesisState.getBlock(),
+                genesisBlock,
                 BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
         genesisState.writeStateTo(worldStateArchive.getMutable());
       } catch (IOException e) {
@@ -301,6 +323,8 @@ public class TestContextBuilder {
             gossiper,
             synchronizerUpdater,
             useValidatorContract,
+            useLondonMilestone,
+            useZeroBaseFee,
             qbftForks);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
@@ -379,6 +403,8 @@ public class TestContextBuilder {
       final Gossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater,
       final boolean useValidatorContract,
+      final boolean useLondonMilestone,
+      final boolean useZeroBaseFee,
       final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
@@ -398,7 +424,14 @@ public class TestContextBuilder {
             : Collections.emptyMap();
     final QbftConfigOptions qbftConfigOptions = createGenesisConfig(useValidatorContract);
 
-    genesisConfigOptions.byzantiumBlock(0);
+    if(useLondonMilestone) {
+      genesisConfigOptions.londonBlock(0);
+    } else {
+      genesisConfigOptions.berlinBlock(0);
+    }
+    if (useZeroBaseFee) {
+      genesisConfigOptions.zeroBaseFee(true);
+    }
     genesisConfigOptions.qbftConfigOptions(
         new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
     genesisConfigOptions.transitions(TestTransitions.createQbftTestTransitions(qbftForks));
