@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.privacy.markertransaction;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;

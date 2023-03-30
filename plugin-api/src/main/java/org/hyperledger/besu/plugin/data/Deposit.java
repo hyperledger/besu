@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.datatypes.BLSSignature;
+import org.hyperledger.besu.datatypes.PublicKey;
+import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.plugin.Unstable;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -53,7 +56,7 @@ public interface Deposit {
    *
    * @return signature
    */
-  Signature getSignature();
+  BLSSignature getSignature();
 
   /**
    * A monotonically increasing index, starting from 0 that increments by 1 per deposit to uniquely

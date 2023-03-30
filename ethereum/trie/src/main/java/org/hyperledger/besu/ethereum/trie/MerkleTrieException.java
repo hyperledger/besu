@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Optional;
 

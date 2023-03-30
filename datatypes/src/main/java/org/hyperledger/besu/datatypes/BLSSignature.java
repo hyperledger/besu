@@ -24,8 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A BLS Signature * */
-public class BLSSignature extends DelegatingBytes
-    implements org.hyperledger.besu.plugin.data.Signature {
+public class BLSSignature extends DelegatingBytes {
 
   /** The constant SIZE. */
   public static final int SIZE = 96;

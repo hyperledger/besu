@@ -132,8 +132,8 @@ public class BonsaiWorldState
    * @param blockHeader block to use
    */
   public void resetWorldStateTo(final BlockHeader blockHeader) {
-    worldStateBlockHash = Hash.fromPlugin(blockHeader.getBlockHash());
-    worldStateRootHash = Hash.fromPlugin(blockHeader.getStateRoot());
+    worldStateBlockHash = blockHeader.getBlockHash();
+    worldStateRootHash = blockHeader.getStateRoot();
   }
 
   @Override

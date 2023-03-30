@@ -24,8 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A BLS public key. */
-public class BLSPublicKey extends DelegatingBytes
-    implements org.hyperledger.besu.plugin.data.PublicKey {
+public class BLSPublicKey extends DelegatingBytes implements PublicKey {
 
   /** The constant SIZE. */
   public static final int SIZE = 48;

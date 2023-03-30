@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft.inttest;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 
 public class NodeParams {
