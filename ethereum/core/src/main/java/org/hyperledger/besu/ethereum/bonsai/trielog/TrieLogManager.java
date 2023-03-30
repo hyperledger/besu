@@ -45,5 +45,7 @@ public interface TrieLogManager {
 
   long getMaxLayersToLoad();
 
+  void reset();
+
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
 }
