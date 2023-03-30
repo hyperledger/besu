@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadS
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -106,12 +105,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         Optional.ofNullable(blockParam.getWithdrawals())
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
 
-    final BlockHeader blockHeaderForWithdrawalsValidation =
-        BlockHeaderBuilder.createDefault()
-            .timestamp(blockParam.getTimestamp())
-            .number(blockParam.getBlockNumber())
-            .buildBlockHeader();
-    if (!getWithdrawalsValidator(timestampSchedule, blockHeaderForWithdrawalsValidation)
+    if (!getWithdrawalsValidator(
+            timestampSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
