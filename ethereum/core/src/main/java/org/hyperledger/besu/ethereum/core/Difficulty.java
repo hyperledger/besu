@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.plugin.data.Quantity;
+import org.hyperledger.besu.datatypes.Quantity;
 
 import java.math.BigInteger;
 

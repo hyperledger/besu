@@ -18,11 +18,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
-import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;

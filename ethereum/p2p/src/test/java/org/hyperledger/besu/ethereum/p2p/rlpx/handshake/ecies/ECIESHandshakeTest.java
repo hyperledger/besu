@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker.HandshakeStatus;
 
 import java.util.Optional;

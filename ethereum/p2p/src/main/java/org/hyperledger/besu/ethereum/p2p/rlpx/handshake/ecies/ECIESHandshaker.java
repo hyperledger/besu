@@ -19,11 +19,11 @@ import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;

@@ -31,14 +31,15 @@ dependencies {
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
+  implementation project(':plugin-api')
 
-  implementation "org.immutables:value-annotations"
+  implementation 'org.immutables:value-annotations'
   implementation 'com.google.guava:guava'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcprov-jdk15on'
 
-  annotationProcessor "org.immutables:value"
+  annotationProcessor 'org.immutables:value'
 
   testImplementation project(':services:kvstore')
   testImplementation project(':testutil')

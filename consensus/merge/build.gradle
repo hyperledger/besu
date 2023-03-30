@@ -40,6 +40,7 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:trie')
   implementation project(':evm')
+  implementation project(':plugin-api')
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'

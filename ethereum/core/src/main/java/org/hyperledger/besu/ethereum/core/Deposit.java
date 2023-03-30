@@ -17,12 +17,12 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.PublicKey;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.PublicKey;
 
 import java.util.Objects;
 

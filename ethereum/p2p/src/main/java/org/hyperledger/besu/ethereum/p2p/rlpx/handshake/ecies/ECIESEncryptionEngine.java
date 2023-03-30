@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.crypto.BufferedBlockCipher;

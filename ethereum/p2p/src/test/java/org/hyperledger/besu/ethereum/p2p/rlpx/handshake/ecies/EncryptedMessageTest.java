@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 
 import java.util.concurrent.ThreadLocalRandom;
 
