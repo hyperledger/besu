@@ -34,7 +34,7 @@ solidity { resolvePackages = false }
 dependencies {
   api 'org.slf4j:slf4j-api'
 
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
 
   testImplementation project(':acceptance-tests:dsl')
   testImplementation project(':acceptance-tests:test-plugins')

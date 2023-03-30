@@ -33,7 +33,7 @@ jar {
 dependencies {
   api 'org.slf4j:slf4j-api'
 
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
   implementation 'com.google.guava:guava'

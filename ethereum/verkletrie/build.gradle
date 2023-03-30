@@ -28,7 +28,7 @@ jar {
 }
 
 dependencies {
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
 

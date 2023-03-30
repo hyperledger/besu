@@ -14,7 +14,7 @@ jar {
 
 dependencies {
   implementation project(':config')
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
