@@ -15,6 +15,8 @@
 ### Bug Fixes
 - Fix QBFT and IBFT unable to propose blocks on London when zeroBaseFee is used [#5276](https://github.com/hyperledger/besu/pull/5276) 
 
+- Make QBFT validator smart contract mode work with london fork [#5249](https://github.com/hyperledger/besu/issues/5249)
+
 ### Download Links
 
 ## 23.1.2
