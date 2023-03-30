@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -36,6 +35,8 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -68,7 +69,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -325,10 +326,11 @@ public abstract class AbstractBlockPropagationManagerTest {
 
   @Test
   public void handlesDuplicateAnnouncements() {
+
     final ProtocolSchedule stubProtocolSchedule = spy(protocolSchedule);
-    final ProtocolSpec stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
+    final ProtocolSpec stubProtocolSpec = spy(protocolSchedule.getByBlockHeader(blockHeader(2)));
     final BlockImporter stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
-    doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockNumber(anyLong());
+    doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockHeader(any());
     doReturn(stubBlockImporter).when(stubProtocolSpec).getBlockImporter();
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
@@ -378,9 +380,9 @@ public abstract class AbstractBlockPropagationManagerTest {
   @Test
   public void handlesPendingDuplicateAnnouncements() {
     final ProtocolSchedule stubProtocolSchedule = spy(protocolSchedule);
-    final ProtocolSpec stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
+    final ProtocolSpec stubProtocolSpec = spy(protocolSchedule.getByBlockHeader(blockHeader(2)));
     final BlockImporter stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
-    doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockNumber(anyLong());
+    doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockHeader(any());
     doReturn(stubBlockImporter).when(stubProtocolSpec).getBlockImporter();
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
@@ -783,7 +785,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     blockchainUtil.importFirstBlocks(2);
     final Block firstBlock = blockchainUtil.getBlock(1);
     final BadBlockManager badBlocksManager =
-        protocolSchedule.getByBlockNumber(1).getBadBlocksManager();
+        protocolSchedule.getByBlockHeader(blockHeader(1)).getBadBlocksManager();
     final Block badBlock =
         new BlockDataGenerator()
             .block(
@@ -994,4 +996,8 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   public abstract Blockchain getFullBlockchain();
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
+  }
 }

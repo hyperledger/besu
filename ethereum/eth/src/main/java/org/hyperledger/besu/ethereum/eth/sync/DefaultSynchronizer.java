@@ -254,8 +254,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     result
         .getPivotBlockHeader()
         .ifPresent(
-            blockHeader ->
-                protocolContext.getWorldStateArchive().setArchiveStateUnSafe(blockHeader));
+            blockHeader -> protocolContext.getWorldStateArchive().resetArchiveStateTo(blockHeader));
     LOG.info(
         "Sync completed successfully with pivot block {}",
         result.getPivotBlockNumber().getAsLong());

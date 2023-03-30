@@ -58,7 +58,9 @@ public class DebugOperationTracer implements OperationTracer {
   public void tracePreExecution(final MessageFrame frame) {
     preExecutionStack = captureStack(frame);
     gasRemaining = frame.getRemainingGas();
-    inputData = frame.getInputData().copy();
+    if (lastFrame != null && frame.getMessageStackDepth() > lastFrame.getDepth())
+      inputData = frame.getInputData().copy();
+    else inputData = frame.getInputData();
     pc = frame.getPC();
   }
 

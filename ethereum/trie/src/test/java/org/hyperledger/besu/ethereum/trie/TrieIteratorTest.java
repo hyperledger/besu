@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,6 +27,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.LeafHandler;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
+import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
+import org.hyperledger.besu.ethereum.trie.patricia.PutVisitor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.NavigableSet;

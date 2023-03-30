@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -336,8 +336,11 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   }
 
   @Override
-  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
-    persistedState.setArchiveStateUnSafe(blockHeader);
+  public void resetArchiveStateTo(final BlockHeader blockHeader) {
+    persistedState.resetWorldStateTo(blockHeader);
+    this.trieLogManager.reset();
+    this.trieLogManager.addCachedLayer(
+        blockHeader, persistedState.worldStateRootHash, persistedState);
   }
 
   @Override

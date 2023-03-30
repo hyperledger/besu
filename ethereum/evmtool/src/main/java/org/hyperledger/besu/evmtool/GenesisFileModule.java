@@ -41,10 +41,6 @@ public class GenesisFileModule {
 
   private final String genesisConfig;
 
-  protected GenesisFileModule(final File genesisFile) throws IOException {
-    this.genesisConfig = Files.readString(genesisFile.toPath(), Charset.defaultCharset());
-  }
-
   protected GenesisFileModule(final String genesisConfig) {
     this.genesisConfig = genesisConfig;
   }
@@ -101,20 +97,11 @@ public class GenesisFileModule {
   }
 
   private static GenesisFileModule createGenesisModule(final String genesisConfig) {
-    // duplicating work from JsonGenesisConfigOptions, but in a refactoring this goes away.
     final JsonObject genesis = new JsonObject(genesisConfig);
     final JsonObject config = genesis.getJsonObject("config");
-    if (config.containsKey("ethash")) {
-      return new MainnetGenesisFileModule(genesisConfig);
-    } else if (config.containsKey("ibft")) {
-      return new IBFTGenesisFileModule(genesisConfig);
-    } else if (config.containsKey("clique")) {
-      return new CliqueGenesisFileModule(genesisConfig);
-    } else if (config.containsKey("qbft")) {
-      return new QBFTGenesisFileModule(genesisConfig);
-    } else {
-      // default is mainnet
-      return new MainnetGenesisFileModule(genesisConfig);
+    if (config.containsKey("ibft") || config.containsKey("clique") || config.containsKey("qbft")) {
+      throw new RuntimeException("Only Ethash and Merge configs accepted as genesis files");
     }
+    return new MainnetGenesisFileModule(genesisConfig);
   }
 }

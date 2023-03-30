@@ -16,14 +16,17 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.junit.Before;
@@ -87,17 +90,6 @@ public class DefaultTimestampScheduleTest {
   }
 
   @Test
-  public void streamMilestoneBlocksReturnTimestampsInOrder() {
-    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
-    config.cancunTime(2L);
-    config.experimentalEipsTime(5L);
-    config.futureEipsTime(3L);
-    final TimestampSchedule schedule = builder.createTimestampSchedule();
-
-    assertThat(schedule.streamMilestoneBlocks()).containsExactly(FIRST_TIMESTAMP_FORK, 2L, 3L, 5L);
-  }
-
-  @Test
   public void isOnMilestoneBoundary() {
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
     config.cancunTime(2L);
@@ -110,6 +102,22 @@ public class DefaultTimestampScheduleTest {
     assertThat(protocolSchedule.isOnMilestoneBoundary(header(2))).isEqualTo(true);
     assertThat(protocolSchedule.isOnMilestoneBoundary(header(3))).isEqualTo(false);
     assertThat(protocolSchedule.isOnMilestoneBoundary(header(4))).isEqualTo(true);
+  }
+
+  @Test
+  public void getForNextBlockHeader_shouldGetHeaderForNextTimestamp() {
+    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+
+    final TimestampSchedule protocolSchedule = new DefaultTimestampSchedule(Optional.of(chainId));
+    protocolSchedule.putMilestone(0, spec1);
+    protocolSchedule.putMilestone(1000, spec2);
+
+    final BlockHeader blockHeader =
+        BlockHeaderBuilder.createDefault().number(0L).buildBlockHeader();
+    final ProtocolSpec spec = protocolSchedule.getForNextBlockHeader(blockHeader, 1000);
+
+    assertThat(spec).isEqualTo(spec2);
   }
 
   private BlockHeader header(final long timestamp) {

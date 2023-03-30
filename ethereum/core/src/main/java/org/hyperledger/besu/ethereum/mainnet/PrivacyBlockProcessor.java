@@ -23,6 +23,7 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -89,6 +90,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> withdrawals,
+      final Optional<List<Deposit>> deposits,
       final PrivateMetadataUpdater privateMetadataUpdater) {
 
     if (privateMetadataUpdater != null) {
@@ -108,6 +110,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
             transactions,
             ommers,
             withdrawals,
+            deposits,
             metadataUpdater);
     metadataUpdater.commit();
     return result;

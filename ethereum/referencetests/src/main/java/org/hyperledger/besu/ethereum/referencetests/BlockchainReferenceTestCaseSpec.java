@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -161,6 +162,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
+        @JsonProperty("depositsRoot") final String depositsRoot,
         @JsonProperty("excessDataGas") final String excessDataGas,
         @JsonProperty("hash") final String hash) {
       super(
@@ -186,6 +188,7 @@ public class BlockchainReferenceTestCaseSpec {
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
           excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
+          depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -268,7 +271,10 @@ public class BlockchainReferenceTestCaseSpec {
               input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
               input.isEndOfCurrentList()
                   ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)));
+                  : Optional.of(input.readList(Withdrawal::readFrom)),
+              input.isEndOfCurrentList()
+                  ? Optional.empty()
+                  : Optional.of(input.readList(Deposit::readFrom)));
       return new Block(header, body);
     }
   }

@@ -21,7 +21,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -83,12 +82,15 @@ public class BackwardSyncContextTest {
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
   private MutableBlockchain localBlockchain;
+  private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Spy
   private ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions());
 
-  @Spy private ProtocolSpec mockProtocolSpec = protocolSchedule.getByBlockNumber(0L);
+  @Spy
+  private ProtocolSpec protocolSpec =
+      protocolSchedule.getByBlockHeader(blockDataGenerator.header(0L));
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private ProtocolContext protocolContext;
@@ -101,12 +103,11 @@ public class BackwardSyncContextTest {
   private BackwardChain backwardChain;
   private Block uncle;
   private Block genesisBlock;
-  private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Before
   public void setup() {
-    when(mockProtocolSpec.getBlockValidator()).thenReturn(blockValidator);
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
+    when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
+    doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
     genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
     localBlockchain = createInMemoryBlockchain(genesisBlock);

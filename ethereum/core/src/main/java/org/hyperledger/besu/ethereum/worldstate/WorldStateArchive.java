@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.io.Closeable;
@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public interface WorldStateArchive extends Closeable {
-  Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+  Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   Optional<WorldState> get(Hash rootHash, Hash blockHash);
 
@@ -42,7 +42,12 @@ public interface WorldStateArchive extends Closeable {
 
   MutableWorldState getMutable();
 
-  void setArchiveStateUnSafe(BlockHeader blockHeader);
+  /**
+   * Resetting the archive cache and adding the new pivot as the only entry
+   *
+   * @param blockHeader new pivot block header
+   */
+  void resetArchiveStateTo(BlockHeader blockHeader);
 
   Optional<Bytes> getNodeData(Hash hash);
 

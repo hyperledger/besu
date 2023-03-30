@@ -60,7 +60,7 @@ public class TransitionUtils<SwitchingObject> {
    *
    * @param consumer the consumer
    */
-  protected void dispatchConsumerAccordingToMergeState(final Consumer<SwitchingObject> consumer) {
+  void dispatchConsumerAccordingToMergeState(final Consumer<SwitchingObject> consumer) {
     consumer.accept(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 
@@ -71,8 +71,7 @@ public class TransitionUtils<SwitchingObject> {
    * @param function the function
    * @return the t
    */
-  protected <T> T dispatchFunctionAccordingToMergeState(
-      final Function<SwitchingObject, T> function) {
+  public <T> T dispatchFunctionAccordingToMergeState(final Function<SwitchingObject, T> function) {
     return function.apply(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 
