@@ -85,7 +85,6 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -93,7 +92,6 @@ import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -277,19 +275,10 @@ public class TestContextBuilder {
     if (genesisFile.isPresent()) {
       try {
         final GenesisState genesisState = createGenesisBlock(genesisFile.get());
-        Block genesisBlock = genesisState.getBlock();
-        if (useZeroBaseFee) {
-          final BlockHeader zeroBaseFeeHeader =
-              BlockHeaderBuilder.fromHeader(genesisState.getBlock().getHeader())
-                  .baseFee(Wei.ZERO)
-                  .blockHeaderFunctions(
-                      ScheduleBasedBlockHeaderFunctions.create(ProtocolScheduleFixture.MAINNET))
-                  .buildBlockHeader();
-          genesisBlock = new Block(zeroBaseFeeHeader, genesisState.getBlock().getBody());
-        }
         blockChain =
             createInMemoryBlockchain(
-                genesisBlock, BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
+                genesisState.getBlock(),
+                BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
         genesisState.writeStateTo(worldStateArchive.getMutable());
       } catch (IOException e) {
         throw new IllegalStateException(e);
