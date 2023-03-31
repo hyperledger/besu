@@ -22,6 +22,9 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
+/**
+ * Dagger module for providing the {@link MetricsConfiguration} instance.
+ */
 @Module
 public class MetricsConfigurationModule {
   @Provides
