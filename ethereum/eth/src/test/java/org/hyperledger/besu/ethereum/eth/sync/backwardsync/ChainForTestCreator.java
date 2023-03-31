@@ -63,7 +63,7 @@ public class ChainForTestCreator {
   }
 
   public static BlockHeader prepareWrongParentHash(final BlockHeader blockHeader) {
-    BlockHeader fakeHeader =
+    final BlockHeader fakeHeader =
         prepareHeader(blockHeader.getNumber(), Optional.of("111111111111111111111111"));
     return new BlockHeader(
         fakeHeader.getHash(),
@@ -89,7 +89,7 @@ public class ChainForTestCreator {
   }
 
   public static List<Block> prepareChain(final int elements, final long height) {
-    List<Block> blockList = new ArrayList<>(elements);
+    final List<Block> blockList = new ArrayList<>(elements);
 
     blockList.add(createEmptyBlock(height));
 

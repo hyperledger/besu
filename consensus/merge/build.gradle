@@ -40,6 +40,7 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:trie')
   implementation project(':evm')
+  implementation project(':plugin-api')
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -49,8 +50,8 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
-  testImplementation project(':crypto')
-  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation project(':crypto:algorithms')
+  testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
   testImplementation project(path: ':metrics:core', configuration: 'testSupportArtifacts')

@@ -193,10 +193,10 @@ public class LogWithMetadata extends Log
     return new LogWithMetadata(
         pluginObject.getLogIndex(),
         pluginObject.getBlockNumber(),
-        Hash.fromPlugin(pluginObject.getBlockHash()),
-        Hash.fromPlugin(pluginObject.getTransactionHash()),
+        pluginObject.getBlockHash(),
+        pluginObject.getTransactionHash(),
         pluginObject.getTransactionIndex(),
-        Address.fromPlugin(pluginObject.getLogger()),
+        pluginObject.getLogger(),
         pluginObject.getData(),
         pluginObject.getTopics().stream().map(LogTopic::create).collect(Collectors.toList()),
         pluginObject.isRemoved());

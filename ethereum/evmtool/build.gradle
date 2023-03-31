@@ -38,7 +38,7 @@ dependencies {
 
   implementation project(':besu')
   implementation project(':config')
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')

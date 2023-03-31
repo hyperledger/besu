@@ -27,7 +27,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;

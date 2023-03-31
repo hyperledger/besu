@@ -5,7 +5,7 @@ dependencies {
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':consensus:qbft')
-  implementation project(':crypto')
+  implementation project(':crypto:services')
   implementation project(':enclave')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')

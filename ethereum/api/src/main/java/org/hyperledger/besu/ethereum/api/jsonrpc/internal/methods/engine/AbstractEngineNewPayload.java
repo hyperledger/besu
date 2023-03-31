@@ -104,7 +104,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
-    if (!getWithdrawalsValidator(timestampSchedule, blockParam.getTimestamp())
+
+    if (!getWithdrawalsValidator(
+            timestampSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
@@ -188,10 +190,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Block already present in bad block manager.");
     }
 
-    Optional<BlockHeader> parentHeader =
+    final Optional<BlockHeader> maybeParentHeader =
         protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
-    if (parentHeader.isPresent()
-        && (blockParam.getTimestamp() <= parentHeader.get().getTimestamp())) {
+    if (maybeParentHeader.isPresent()
+        && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -206,7 +208,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             new BlockBody(
                 transactions, Collections.emptyList(), maybeWithdrawals, Optional.empty()));
 
-    if (parentHeader.isEmpty()) {
+    if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()
           .setMessage("Parent of block {} is not present, append it to backward sync")
           .addArgument(block::toLogString)
