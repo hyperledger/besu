@@ -74,6 +74,12 @@ public abstract class AbstractGetHeadersFromPeerTask
     final List<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
     if (headers.isEmpty()) {
       // Message contains no data - nothing to do
+      // We cannot register a useless response yet, as we have to try all response streams for the
+      // RequestManager if request ids are not supported (see RequestManager dispatchResponse())
+      // Instead we are returning Optional.empty() so the next response stream can be tried.
+      // If we cannot find a matching response stream for the message the
+      // peer.recordUselessResponse() of the if(streamClosed) block above is triggered by calling
+      // this method with streamClosed set to true.
       LOG.debug("headers.isEmpty. Peer: {}", peer);
       return Optional.empty();
     }

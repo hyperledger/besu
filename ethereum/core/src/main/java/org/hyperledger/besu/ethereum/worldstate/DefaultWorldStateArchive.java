@@ -74,7 +74,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
+  public void resetArchiveStateTo(final BlockHeader blockHeader) {
     // ignore for forest
   }
 

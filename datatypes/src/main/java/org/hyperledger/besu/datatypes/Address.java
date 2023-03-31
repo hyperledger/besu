@@ -28,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A 160-bits account address. */
-public class Address extends DelegatingBytes implements org.hyperledger.besu.plugin.data.Address {
+public class Address extends DelegatingBytes {
 
   /** The constant SIZE. */
   public static final int SIZE = 20;
@@ -236,15 +236,5 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
                   out.writeBytes(privacyGroupId);
                   out.endList();
                 })));
-  }
-
-  /**
-   * Convert plugin Address to this Address type.
-   *
-   * @param address the address
-   * @return the address
-   */
-  public static Address fromPlugin(final org.hyperledger.besu.plugin.data.Address address) {
-    return address instanceof Address ? (Address) address : wrap(address.copy());
   }
 }

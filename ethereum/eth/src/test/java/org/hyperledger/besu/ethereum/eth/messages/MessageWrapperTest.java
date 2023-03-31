@@ -330,6 +330,7 @@ public class MessageWrapperTest {
           Bytes.fromHexStringLenient(nonce).toLong(),
           null,
           null,
+          null,
           new MainnetBlockHeaderFunctions());
     }
   }

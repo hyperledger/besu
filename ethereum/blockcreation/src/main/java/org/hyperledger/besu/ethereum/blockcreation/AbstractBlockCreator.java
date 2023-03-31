@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -194,6 +195,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
+      final Optional<List<Deposit>> maybeDeposits =
+          Optional.empty(); // TODO 6110: Extract deposits from transaction receipts
+
       if (rewardCoinbase
           && !rewardBeneficiary(
               disposableWorldState,
@@ -228,6 +232,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
+              .depositsRoot(null) // TODO 6110: Derive deposit roots from deposits
               .excessDataGas(newExcessDataGas)
               .buildSealableBlockHeader();
 
@@ -238,7 +243,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Block block =
           new Block(
               blockHeader,
-              new BlockBody(transactionResults.getTransactions(), ommers, withdrawals));
+              new BlockBody(
+                  transactionResults.getTransactions(), ommers, withdrawals, maybeDeposits));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);

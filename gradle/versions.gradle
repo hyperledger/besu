@@ -206,7 +206,7 @@ dependencyManagement {
       entry 'jmh-generator-annprocess'
     }
 
-    dependency 'org.rocksdb:rocksdbjni:7.7.3'
+    dependency 'org.rocksdb:rocksdbjni:8.0.0'
 
     dependencySet(group: 'org.slf4j', version:'2.0.7') {
       entry 'slf4j-api'

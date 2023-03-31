@@ -207,7 +207,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     final boolean newTimestampGreaterThanHead =
         payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
     return newTimestampGreaterThanHead
-        && getWithdrawalsValidator(timestampSchedule, payloadAttributes.getTimestamp())
+        && getWithdrawalsValidator(
+                timestampSchedule, headBlockHeader, payloadAttributes.getTimestamp())
             .validateWithdrawals(maybeWithdrawals);
   }
 

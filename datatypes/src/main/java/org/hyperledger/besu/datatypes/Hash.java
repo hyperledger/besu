@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes32;
 
 /** A 32-bytes hash value as used in Ethereum blocks, usually the result of the KEC algorithm. */
-public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plugin.data.Hash {
+public class Hash extends DelegatingBytes32 {
 
   /** The constant ZERO. */
   public static final Hash ZERO = new Hash(Bytes32.ZERO);
@@ -97,15 +97,5 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
    */
   public static Hash fromHexStringLenient(final String str) {
     return new Hash(Bytes32.fromHexStringLenient(str));
-  }
-
-  /**
-   * From plugin hash.
-   *
-   * @param blockHash the block hash
-   * @return the hash
-   */
-  public static Hash fromPlugin(final org.hyperledger.besu.plugin.data.Hash blockHash) {
-    return blockHash instanceof Hash ? (Hash) blockHash : wrap(blockHash);
   }
 }

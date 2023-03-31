@@ -58,11 +58,12 @@ public class ChainForTestCreator {
         0,
         null,
         null,
+        null,
         new MainnetBlockHeaderFunctions());
   }
 
   public static BlockHeader prepareWrongParentHash(final BlockHeader blockHeader) {
-    BlockHeader fakeHeader =
+    final BlockHeader fakeHeader =
         prepareHeader(blockHeader.getNumber(), Optional.of("111111111111111111111111"));
     return new BlockHeader(
         fakeHeader.getHash(),
@@ -83,11 +84,12 @@ public class ChainForTestCreator {
         blockHeader.getNonce(),
         blockHeader.getWithdrawalsRoot().orElse(null),
         blockHeader.getExcessDataGas().orElse(null),
+        blockHeader.getDepositsRoot().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
 
   public static List<Block> prepareChain(final int elements, final long height) {
-    List<Block> blockList = new ArrayList<>(elements);
+    final List<Block> blockList = new ArrayList<>(elements);
 
     blockList.add(createEmptyBlock(height));
 
@@ -128,6 +130,7 @@ public class ChainForTestCreator {
         Wei.ZERO,
         Hash.EMPTY,
         0,
+        null,
         null,
         null,
         new MainnetBlockHeaderFunctions());

@@ -15,11 +15,11 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins.privacy;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.data.PrivacyGenesisAccount;
-import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 
 import java.util.Collections;
