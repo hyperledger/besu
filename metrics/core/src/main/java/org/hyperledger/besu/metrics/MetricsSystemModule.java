@@ -25,7 +25,8 @@ import dagger.Module;
 import dagger.Provides;
 
 /**
- * Dagger module for providing the {@link MetricsSystem} and {@link ObservableMetricsSystem} instances.
+ * Dagger module for providing the {@link MetricsSystem} and {@link ObservableMetricsSystem}
+ * instances.
  */
 @Module
 public class MetricsSystemModule {
