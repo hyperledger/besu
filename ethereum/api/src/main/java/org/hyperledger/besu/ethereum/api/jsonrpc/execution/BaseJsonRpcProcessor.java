@@ -46,6 +46,7 @@ public class BaseJsonRpcProcessor implements JsonRpcProcessor {
     } catch (final MultiTenancyValidationException e) {
       return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     } catch (final RuntimeException e) {
+      LOG.error("Error processing method: {}", method.getName(), e);
       return new JsonRpcErrorResponse(id, JsonRpcError.INTERNAL_ERROR);
     }
   }
