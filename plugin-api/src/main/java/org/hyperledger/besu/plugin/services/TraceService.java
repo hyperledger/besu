@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.data.Hash;
 
 /** The Trace service interface */
 @Unstable
