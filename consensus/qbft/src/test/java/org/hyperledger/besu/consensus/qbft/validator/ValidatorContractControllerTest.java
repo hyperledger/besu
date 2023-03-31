@@ -22,12 +22,15 @@ import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collection;
 import java.util.List;
@@ -49,9 +52,15 @@ public class ValidatorContractControllerTest {
   private static final Address VALIDATOR_ADDRESS =
       Address.fromHexString("0xeac51e3fe1afc9894f0dfeab8ceb471899b932df");
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("1");
+  private static final TransactionValidationParams ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS =
+      ImmutableTransactionValidationParams.builder()
+          .from(TransactionValidationParams.transactionSimulator())
+          .isAllowExceedingBalance(true)
+          .build();
 
   private final TransactionSimulator transactionSimulator =
       Mockito.mock(TransactionSimulator.class);
+
   private final Transaction transaction = Mockito.mock(Transaction.class);
   private CallParameter callParameter;
 
@@ -81,7 +90,12 @@ public class ValidatorContractControllerTest {
                 Bytes.fromHexString(GET_VALIDATORS_FUNCTION_RESULT),
                 ValidationResult.valid()));
 
-    when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
+    when(transactionSimulator.process(
+            callParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
@@ -98,13 +112,18 @@ public class ValidatorContractControllerTest {
             TransactionProcessingResult.invalid(
                 ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR)));
 
-    when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
+    when(transactionSimulator.process(
+            callParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
     Assertions.assertThatThrownBy(
             () -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
-        .hasMessage("Failed validator smart contract call");
+        .hasMessageContaining("Failed validator smart contract call");
   }
 
   @Test
@@ -118,13 +137,18 @@ public class ValidatorContractControllerTest {
                 ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR),
                 Optional.empty()));
 
-    when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
+    when(transactionSimulator.process(
+            callParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
     Assertions.assertThatThrownBy(
             () -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
-        .hasMessage("Failed validator smart contract call");
+        .hasMessageContaining("Failed validator smart contract call");
   }
 
   @Test
@@ -135,7 +159,12 @@ public class ValidatorContractControllerTest {
             TransactionProcessingResult.successful(
                 List.of(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
-    when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
+    when(transactionSimulator.process(
+            callParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
@@ -147,7 +176,12 @@ public class ValidatorContractControllerTest {
 
   @Test
   public void throwErrorIfEmptySimulationResult() {
-    when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.empty());
+    when(transactionSimulator.process(
+            callParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.empty());
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);

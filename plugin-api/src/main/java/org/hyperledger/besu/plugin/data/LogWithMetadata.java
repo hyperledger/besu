@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;

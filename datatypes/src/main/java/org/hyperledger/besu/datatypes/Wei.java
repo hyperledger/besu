@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.datatypes;
 
-import org.hyperledger.besu.plugin.data.Quantity;
-
 import java.math.BigInteger;
 import java.util.Arrays;
 

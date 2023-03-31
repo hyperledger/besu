@@ -19,11 +19,11 @@ import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
-import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.ArrayList;
 import java.util.Optional;

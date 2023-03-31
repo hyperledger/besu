@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
-import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Base64;
@@ -154,7 +153,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
-        privateWorldStateArchive.getMutable(fromPlugin(lastRootHash), null).get();
+        privateWorldStateArchive.getMutable(lastRootHash, null).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 

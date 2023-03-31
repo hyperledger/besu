@@ -94,10 +94,9 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     blockchain
         .getBlockHeader(persistedState.worldStateBlockHash)
         .ifPresent(
-            blockHeader -> {
-              this.trieLogManager.addCachedLayer(
-                  blockHeader, persistedState.worldStateRootHash, persistedState);
-            });
+            blockHeader ->
+                this.trieLogManager.addCachedLayer(
+                    blockHeader, persistedState.worldStateRootHash, persistedState));
   }
 
   @VisibleForTesting
@@ -114,10 +113,9 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     blockchain
         .getBlockHeader(persistedState.worldStateBlockHash)
         .ifPresent(
-            blockHeader -> {
-              this.trieLogManager.addCachedLayer(
-                  blockHeader, persistedState.worldStateRootHash, persistedState);
-            });
+            blockHeader ->
+                this.trieLogManager.addCachedLayer(
+                    blockHeader, persistedState.worldStateRootHash, persistedState));
   }
 
   @Override
@@ -336,8 +334,11 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   }
 
   @Override
-  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
-    persistedState.setArchiveStateUnSafe(blockHeader);
+  public void resetArchiveStateTo(final BlockHeader blockHeader) {
+    persistedState.resetWorldStateTo(blockHeader);
+    this.trieLogManager.reset();
+    this.trieLogManager.addCachedLayer(
+        blockHeader, persistedState.worldStateRootHash, persistedState);
   }
 
   @Override
