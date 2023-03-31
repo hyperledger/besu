@@ -526,7 +526,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller
    */
   public BesuController build() {
-    // checkNotNull(besuComponent, "Dagger should have provided a BesuComponent");
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
@@ -560,10 +559,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString());
 
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        besuComponent == null
-            ? new CachedMerkleTrieLoader(metricsSystem)
-            : besuComponent.getCachedMerkleTrieLoader();
+    final CachedMerkleTrieLoader cachedMerkleTrieLoader = besuComponent.getCachedMerkleTrieLoader();
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
