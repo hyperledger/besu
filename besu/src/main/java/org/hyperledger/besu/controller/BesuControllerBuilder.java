@@ -559,7 +559,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString());
 
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader = besuComponent.getCachedMerkleTrieLoader();
+    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
+        besuComponent == null
+            ? new CachedMerkleTrieLoader(metricsSystem)
+            : besuComponent.getCachedMerkleTrieLoader();
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
