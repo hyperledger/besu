@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 
 import org.rocksdb.RocksDBException;
+import org.rocksdb.Status;
 import org.rocksdb.Transaction;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
@@ -27,9 +28,10 @@ import org.slf4j.LoggerFactory;
 
 /** The RocksDb transaction. */
 public class RocksDBTransaction implements KeyValueStorageTransaction {
-  private static final Logger logger = LoggerFactory.getLogger(RocksDBTransaction.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDBTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
-
+  private static final int MAX_BUSY_RETRIES = 5;
+  private static final int BUSY_RETRY_MILLISECONDS_INTERVAL = 100;
   private final RocksDBMetrics metrics;
   private final Transaction innerTx;
   private final WriteOptions options;
@@ -54,7 +56,7 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
       innerTx.put(key, value);
     } catch (final RocksDBException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
+        LOG.error(e.getMessage());
         System.exit(0);
       }
       throw new StorageException(e);
@@ -67,7 +69,7 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
       innerTx.delete(key);
     } catch (final RocksDBException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
+        LOG.error(e.getMessage());
         System.exit(0);
       }
       throw new StorageException(e);
@@ -80,12 +82,36 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
       innerTx.commit();
     } catch (final RocksDBException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
+        LOG.error(e.getMessage());
         System.exit(0);
+      }
+      if (e.getStatus().getCode() == Status.Code.Busy) {
+        LOG.error(e.getMessage());
+        commitRetry(MAX_BUSY_RETRIES);
       }
       throw new StorageException(e);
     } finally {
       close();
+    }
+  }
+
+  private void commitRetry(final int retries) {
+    if (retries == 0) {
+      LOG.error("RocksDB Busy - Already retried {} times", MAX_BUSY_RETRIES);
+    } else {
+      try {
+        LOG.debug("Retries left: {}", retries - 1);
+        innerTx.rollback();
+        metrics.getRollbackCount().inc();
+        Thread.sleep(BUSY_RETRY_MILLISECONDS_INTERVAL);
+        innerTx.commit();
+      } catch (final RocksDBException e) {
+        if (e.getStatus().getCode() == Status.Code.Busy) {
+          commitRetry(retries - 1);
+        }
+      } catch (final InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -96,7 +122,7 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
       metrics.getRollbackCount().inc();
     } catch (final RocksDBException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
+        LOG.error(e.getMessage());
         System.exit(0);
       }
       throw new StorageException(e);

@@ -74,6 +74,8 @@ public class RocksDBColumnarKeyValueStorage
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   private static final String DEFAULT_COLUMN = "default";
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
+  private static final int MAX_BUSY_RETRIES = 5;
+  private static final int BUSY_RETRY_MILLISECONDS_INTERVAL = 100;
   private static final int ROCKSDB_FORMAT_VERSION = 5;
   private static final long ROCKSDB_BLOCK_SIZE = 32768;
   private static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
@@ -405,9 +407,34 @@ public class RocksDBColumnarKeyValueStorage
           LOG.error(e.getMessage());
           System.exit(0);
         }
-        throw new StorageException(e);
+        if (e.getStatus().getCode() == Status.Code.Busy) {
+          LOG.error(e.getMessage());
+          commitRetry(MAX_BUSY_RETRIES);
+        } else {
+          throw new StorageException(e);
+        }
       } finally {
         close();
+      }
+    }
+
+    private void commitRetry(final int retries) {
+      if (retries == 0) {
+        LOG.error("RocksDB Busy - Already retried {} times", MAX_BUSY_RETRIES);
+      } else {
+        try {
+          LOG.debug("Retries left: {}", retries - 1);
+          innerTx.rollback();
+          metrics.getRollbackCount().inc();
+          Thread.sleep(BUSY_RETRY_MILLISECONDS_INTERVAL);
+          innerTx.commit();
+        } catch (final RocksDBException e) {
+          if (e.getStatus().getCode() == Status.Code.Busy) {
+            commitRetry(retries - 1);
+          }
+        } catch (final InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
 
