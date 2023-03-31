@@ -16,9 +16,6 @@ package org.hyperledger.besu.services;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -36,6 +33,11 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.TraceService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,10 +68,10 @@ public class TraceServiceImpl implements TraceService {
    * @param tracer an instance of OperationTracer
    */
   @Override
-  public void traceBlock(final long blockNumber, final Object tracer) {
-    checkArgument(tracer instanceof OperationTracer, "Invalid OperationTracer");
+  public void traceBlock(final long blockNumber, final OperationTracer tracer) {
+    checkArgument(tracer != null);
     final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByNumber(blockNumber);
-    block.ifPresent(value -> trace(value, (OperationTracer) tracer));
+    block.ifPresent(value -> trace(value, tracer));
   }
 
   /**
@@ -79,11 +81,10 @@ public class TraceServiceImpl implements TraceService {
    * @param tracer an instance of OperationTracer
    */
   @Override
-  public void traceBlock(final Hash hash, final Object tracer) {
+  public void traceBlock(final Hash hash, final OperationTracer tracer) {
     checkArgument(tracer != null);
-    final Optional<Block> block =
-        blockchainQueries.getBlockchain().getBlockByHash(hash);
-    block.ifPresent(value -> trace(value, (OperationTracer) tracer));
+    final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByHash(hash);
+    block.ifPresent(value -> trace(value, tracer));
   }
 
   private void trace(final Block block, final OperationTracer tracer) {
