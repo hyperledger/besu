@@ -132,6 +132,7 @@ public class ReplayTest {
                     case "D":
                       System.out.println("D:" + commaSplit[1]);
                       processInvalid(commaSplit, prioritizedTransactions);
+                      break;
                     default:
                       throw new IllegalArgumentException("Unexpected first field value " + type);
                   }
