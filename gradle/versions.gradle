@@ -184,6 +184,7 @@ dependencyManagement {
     dependencySet(group: 'org.junit.jupiter', version: '5.8.2') {
       entry 'junit-jupiter'
       entry 'junit-jupiter-api'
+      entry 'junit-jupiter-engine'
       entry 'junit-jupiter-params'
     }
 
