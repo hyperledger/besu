@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -33,6 +34,7 @@ public class TimestampScheduleBuilderTest {
   private static final BigInteger defaultChainId = BigInteger.ONE;
   private static final PrivacyParameters privacyParameters = new PrivacyParameters();
   private static final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
+  private static final LineaParameters lineaParameters = LineaParameters.DEFAULT;
   private TimestampScheduleBuilder builder;
   private StubGenesisConfigOptions config;
 
@@ -54,7 +56,8 @@ public class TimestampScheduleBuilderTest {
             privacyParameters,
             isRevertReasonEnabled,
             quorumCompatibilityMode,
-            evmConfiguration);
+            evmConfiguration,
+            lineaParameters);
   }
 
   @Test

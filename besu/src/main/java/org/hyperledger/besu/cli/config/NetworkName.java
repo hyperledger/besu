@@ -42,7 +42,9 @@ public enum NetworkName {
   /** Mordor network name. */
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
   /** Ecip 1049 dev network name. */
-  ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021));
+  ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021)),
+
+  LINEA("/linea.json", BigInteger.valueOf(23331), false);
 
   private final String genesisFile;
   private final BigInteger networkId;

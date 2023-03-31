@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -45,7 +46,8 @@ public class MergeProtocolSchedule {
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+    return create(
+        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, LineaParameters.DEFAULT);
   }
 
   /**
@@ -59,7 +61,8 @@ public class MergeProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final LineaParameters lineaParameters) {
 
     return new ProtocolScheduleBuilder(
             config,
@@ -72,7 +75,8 @@ public class MergeProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            EvmConfiguration.DEFAULT)
+            EvmConfiguration.DEFAULT,
+            lineaParameters)
         .createProtocolSchedule();
   }
 
@@ -87,7 +91,8 @@ public class MergeProtocolSchedule {
   public static TimestampSchedule createTimestamp(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final LineaParameters lineaParameters) {
     return new TimestampScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
@@ -97,7 +102,8 @@ public class MergeProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            EvmConfiguration.DEFAULT)
+            EvmConfiguration.DEFAULT,
+            lineaParameters)
         .createTimestampSchedule();
   }
 

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.difficulty.fixed;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -38,7 +39,8 @@ public class FixedDifficultyProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            evmConfiguration)
+            evmConfiguration,
+            LineaParameters.DEFAULT)
         .createProtocolSchedule();
   }
 

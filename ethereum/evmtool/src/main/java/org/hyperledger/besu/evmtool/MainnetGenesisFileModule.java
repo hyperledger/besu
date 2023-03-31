@@ -19,6 +19,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -130,7 +131,8 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 PrivacyParameters.DEFAULT,
                 false,
                 options.isQuorum(),
-                EvmConfiguration.DEFAULT)
+                EvmConfiguration.DEFAULT,
+                LineaParameters.DEFAULT)
             .createTimestampSchedule();
   }
 }

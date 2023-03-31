@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -77,7 +78,8 @@ public class JsonRpcMethodsFactory {
       final Path dataDir,
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
-      final Optional<Long> maxLogRange) {
+      final Optional<Long> maxLogRange,
+      final LineaParameters lineaParameters) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -108,7 +110,7 @@ public class JsonRpcMethodsFactory {
               new ExecutionEngineJsonRpcMethods(
                   miningCoordinator,
                   MergeProtocolSchedule.createTimestamp(
-                      genesisConfigOptions, privacyParameters, false),
+                      genesisConfigOptions, privacyParameters, false, lineaParameters),
                   protocolContext,
                   ethPeers,
                   consensusEngineServer),
