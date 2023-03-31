@@ -33,19 +33,21 @@ jar {
 dependencies {
   api 'org.slf4j:slf4j-api'
 
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
+
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
+  implementation 'net.java.dev.jna:jna'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.hyperledger.besu:arithmetic'
+  implementation 'org.hyperledger.besu:bls12-381'
+  implementation 'tech.pegasys:jc-kzg-4844'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.hyperledger.besu:arithmetic'
-  implementation 'org.hyperledger.besu:bls12-381'
-  implementation 'net.java.dev.jna:jna'
-  implementation 'com.github.ben-manes.caffeine:caffeine'
-  implementation 'tech.pegasys:jc-kzg-4844'
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'info.picocli:picocli'
   testImplementation 'junit:junit'

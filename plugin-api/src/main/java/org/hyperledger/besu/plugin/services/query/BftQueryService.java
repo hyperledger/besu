@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.query;
 
-import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Collection;
