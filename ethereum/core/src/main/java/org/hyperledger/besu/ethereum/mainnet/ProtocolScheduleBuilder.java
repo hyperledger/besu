@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -45,7 +46,28 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        evmConfiguration);
+        evmConfiguration,
+        LineaParameters.DEFAULT);
+  }
+
+  public ProtocolScheduleBuilder(
+      final GenesisConfigOptions config,
+      final BigInteger defaultChainId,
+      final ProtocolSpecAdapters protocolSpecAdapters,
+      final PrivacyParameters privacyParameters,
+      final boolean isRevertReasonEnabled,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration,
+      final LineaParameters lineaParameters) {
+    this(
+        config,
+        Optional.of(defaultChainId),
+        protocolSpecAdapters,
+        privacyParameters,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode,
+        evmConfiguration,
+        lineaParameters);
   }
 
   public ProtocolScheduleBuilder(
@@ -57,12 +79,31 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration) {
     this(
         config,
+        protocolSpecAdapters,
+        privacyParameters,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode,
+        evmConfiguration,
+        LineaParameters.DEFAULT);
+  }
+
+  public ProtocolScheduleBuilder(
+      final GenesisConfigOptions config,
+      final ProtocolSpecAdapters protocolSpecAdapters,
+      final PrivacyParameters privacyParameters,
+      final boolean isRevertReasonEnabled,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration,
+      final LineaParameters lineaParameters) {
+    this(
+        config,
         Optional.empty(),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        evmConfiguration);
+        evmConfiguration,
+        lineaParameters);
   }
 
   private ProtocolScheduleBuilder(
@@ -72,14 +113,16 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final LineaParameters lineaParameters) {
     super(
         config,
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        evmConfiguration);
+        evmConfiguration,
+        lineaParameters);
     this.defaultChainId = defaultChainId;
   }
 
@@ -92,7 +135,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
 
   @Override
   protected void validateForkOrdering() {
-    if (config.getDaoForkBlock().isEmpty()) {
+    if (config.getDaoForkBlock().isEmpty() && config.getLineaBlockNumber().isEmpty()) {
       validateClassicForkOrdering();
     } else {
       validateEthereumForkOrdering();
@@ -122,6 +165,8 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         validateForkOrder("ArrowGlacier", config.getArrowGlacierBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("GrayGlacier", config.getGrayGlacierBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Linea", config.getLineaBlockNumber(), lastForkBlock);
+
     assert (lastForkBlock >= 0);
   }
 
@@ -163,6 +208,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         create(config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
         create(config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
         create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
+        create(config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)),
         // Classic Milestones
         create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
         create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),

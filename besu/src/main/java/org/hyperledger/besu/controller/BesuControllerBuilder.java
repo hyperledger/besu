@@ -74,6 +74,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
@@ -136,6 +137,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected ObservableMetricsSystem metricsSystem;
   /** The Privacy parameters. */
   protected PrivacyParameters privacyParameters;
+
+  protected LineaParameters lineaParameters;
   /** The Pki block creation configuration. */
   protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
       Optional.empty();
@@ -679,7 +682,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalJsonRpcMethodFactory,
         nodeKey,
         closeables,
-        additionalPluginServices);
+        additionalPluginServices,
+        lineaParameters);
   }
 
   /**
@@ -1023,4 +1027,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   protected abstract PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext);
+
+  public BesuControllerBuilder lineaParameters(final LineaParameters lineaParameters) {
+    this.lineaParameters = lineaParameters;
+    return this;
+  }
 }

@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.TimestampStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.DefaultTimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
@@ -223,7 +224,7 @@ public class ForkIdsNetworkConfigTest {
           new TimestampStreamingProtocolSchedule(
               (DefaultTimestampSchedule)
                   MergeProtocolSchedule.createTimestamp(
-                      configOptions, PrivacyParameters.DEFAULT, false));
+                      configOptions, PrivacyParameters.DEFAULT, false, LineaParameters.DEFAULT));
       final MilestoneStreamingTransitionProtocolSchedule schedule =
           new MilestoneStreamingTransitionProtocolSchedule(
               preMergeProtocolSchedule, postMergeProtocolSchedule, timestampSchedule);
