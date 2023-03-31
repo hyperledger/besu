@@ -18,15 +18,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain.generateTestBlockHash;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +44,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +53,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<BlockHeader>> {
+
+  public final int DEFAULT_COUNT = 3;
 
   @Override
   protected void assertPartialResultMatchesExpectation(
@@ -56,9 +68,8 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
 
   @Override
   protected List<BlockHeader> generateDataToBeRequested() {
-    final int count = 3;
-    final List<BlockHeader> requestedHeaders = new ArrayList<>(count);
-    for (long i = 0; i < count; i++) {
+    final List<BlockHeader> requestedHeaders = new ArrayList<>(DEFAULT_COUNT);
+    for (long i = 0; i < DEFAULT_COUNT; i++) {
       requestedHeaders.add(blockchain.getBlockHeader(5 + i).get());
     }
     return requestedHeaders;
@@ -97,9 +108,71 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     getHeadersFromHash(2, true);
   }
 
+  @Test
+  public void completesWhenPeersSendEmptyResponsesAndReducesReputation() {
+    final Responder responder = RespondingEthPeer.emptyResponder();
+    final RespondingEthPeer respondingEthPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+
+    // Setup data to be requested
+    final List<BlockHeader> requestedData = generateDataToBeRequested();
+
+    // Execute task and wait for response
+    final EthTask<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> task =
+        createTask(requestedData);
+    final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> future = task.run();
+    respondingEthPeer.respond(responder);
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCompletedExceptionally()).isFalse();
+    assertThat(respondingEthPeer.getEthPeer().getReputation().getScore()).isEqualTo(99);
+  }
+
+  @Test
+  public void completesWhenPeerSendsTooManyHeadersAndReducesReputation() {
+    // Setup a peer returning too many headers
+    final RespondingEthPeer respondingEthPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+
+    // Setup data to be requested
+    final List<BlockHeader> requestedData =
+        generateDataToBeRequested(); // request DEFAULT_COUNT headers
+
+    // Execute task and wait for response
+    final EthTask<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> task =
+        createTask(requestedData);
+    final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> future = task.run();
+    // respond with the requested headers with one header added
+    requestedData.add(dummyBHList(1).get(0));
+    respondingEthPeer.respond((c, m) -> Optional.of(BlockHeadersMessage.create(requestedData)));
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCompletedExceptionally()).isFalse();
+    assertThat(respondingEthPeer.getEthPeer().getReputation().getScore()).isEqualTo(99);
+  }
+
+  @Test
+  public void completesWhenPeerSendsWrongFirstHeaderAndReducesReputation() {
+    // Setup a peer returning result where the first header has the wrong number
+    final RespondingEthPeer respondingEthPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+
+    // Setup data to be requested
+    final List<BlockHeader> requestedData =
+        generateDataToBeRequested(); // request DEFAULT_COUNT headers
+
+    // Execute task and wait for response
+    final EthTask<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> task =
+        createTask(requestedData);
+    final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> future = task.run();
+    respondingEthPeer.respond(
+        (c, m) -> Optional.of(BlockHeadersMessage.create(dummyBHList(DEFAULT_COUNT))));
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCompletedExceptionally()).isFalse();
+    assertThat(respondingEthPeer.getEthPeer().getReputation().getScore()).isEqualTo(99);
+  }
+
   private void getHeadersFromHash(final int skip, final boolean reverse) {
     // Setup a responsive peer
-    final RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
@@ -199,5 +272,34 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     assertThat(peer.isDisconnected()).isTrue();
     assertThat(((MockPeerConnection) peer.getConnection()).getDisconnectReason().get())
         .isEqualTo(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+  }
+
+  private List<BlockHeader> dummyBHList(final int count) {
+    final ArrayList<BlockHeader> blockHeaders = new ArrayList<>(count);
+    for (int i = 0; i < count; i++) {
+      blockHeaders.add(
+          new BlockHeader(
+              Hash.ZERO,
+              Hash.ZERO,
+              Address.ZERO,
+              Hash.ZERO,
+              Hash.ZERO,
+              Hash.ZERO,
+              new LogsBloomFilter(),
+              Difficulty.ZERO,
+              133,
+              0,
+              0,
+              0,
+              Bytes.fromHexString("abcd"),
+              Wei.ZERO,
+              Bytes32.ZERO,
+              0,
+              Hash.ZERO,
+              DataGas.fromHexString("0x1234"),
+              Hash.ZERO,
+              new MainnetBlockHeaderFunctions()));
+    }
+    return blockHeaders;
   }
 }
