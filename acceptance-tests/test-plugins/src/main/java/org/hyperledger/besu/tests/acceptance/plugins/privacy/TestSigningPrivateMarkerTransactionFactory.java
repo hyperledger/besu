@@ -20,11 +20,11 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
@@ -65,9 +65,7 @@ public class TestSigningPrivateMarkerTransactionFactory implements PrivateMarker
             .gasPrice(
                 unsignedPrivateMarkerTransaction.getGasPrice().map(Wei::fromQuantity).orElse(null))
             .gasLimit(unsignedPrivateMarkerTransaction.getGasLimit())
-            .to(
-                org.hyperledger.besu.datatypes.Address.fromPlugin(
-                    unsignedPrivateMarkerTransaction.getTo().orElseThrow()))
+            .to(unsignedPrivateMarkerTransaction.getTo().orElseThrow())
             .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
             .payload(unsignedPrivateMarkerTransaction.getPayload())
             .signAndBuild(aliceFixedSigningKey);

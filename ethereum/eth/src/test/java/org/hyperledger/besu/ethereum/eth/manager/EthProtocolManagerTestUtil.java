@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
+import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -71,7 +72,7 @@ public class EthProtocolManagerTestUtil {
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final Optional<MergePeerFilter> mergePeerFilter) {
 
-    EthPeers peers =
+    final EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
@@ -79,9 +80,9 @@ public class EthProtocolManagerTestUtil {
             new NoOpMetricsSystem(),
             25,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    EthMessages messages = new EthMessages();
-    EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
-    EthContext ethContext = new EthContext(peers, messages, ethScheduler);
+    final EthMessages messages = new EthMessages();
+    final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
+    final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
 
     return new EthProtocolManager(
         blockchain,
@@ -185,7 +186,7 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration) {
-    EthPeers peers =
+    final EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
@@ -193,7 +194,7 @@ public class EthProtocolManagerTestUtil {
             new NoOpMetricsSystem(),
             25,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    EthMessages messages = new EthMessages();
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -214,7 +215,7 @@ public class EthProtocolManagerTestUtil {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration,
       final ForkIdManager forkIdManager) {
-    EthPeers peers =
+    final EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
@@ -222,7 +223,7 @@ public class EthProtocolManagerTestUtil {
             new NoOpMetricsSystem(),
             25,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    EthMessages messages = new EthMessages();
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -240,7 +241,7 @@ public class EthProtocolManagerTestUtil {
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final EthScheduler ethScheduler) {
-    EthPeers peers =
+    final EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
@@ -248,7 +249,7 @@ public class EthProtocolManagerTestUtil {
             new NoOpMetricsSystem(),
             25,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    EthMessages messages = new EthMessages();
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -389,6 +390,17 @@ public class EthProtocolManagerTestUtil {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
         .estimatedHeight(estimatedHeight)
+        .build();
+  }
+
+  public static RespondingEthPeer createPeer(
+      final EthProtocolManager ethProtocolManager,
+      final SnapProtocolManager snapProtocolManager,
+      final long estimatedHeight) {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .estimatedHeight(estimatedHeight)
+        .snapProtocolManager(snapProtocolManager)
         .build();
   }
 

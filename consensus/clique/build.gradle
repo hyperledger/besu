@@ -32,7 +32,7 @@ repositories { mavenCentral() }
 dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
-  implementation project(':crypto')
+  implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
@@ -51,7 +51,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
-  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')

@@ -1,6 +1,6 @@
 dependencies {
   api project(':util')
-  api project(':crypto')
+  api project(':crypto:algorithms')
   api 'org.slf4j:slf4j-api'
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
