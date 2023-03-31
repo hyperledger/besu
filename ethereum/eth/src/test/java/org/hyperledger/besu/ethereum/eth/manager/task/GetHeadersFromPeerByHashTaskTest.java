@@ -141,6 +141,7 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     final EthTask<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> task =
         createTask(requestedData);
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> future = task.run();
+    // respond with DEFAULT_COUNT + 1 headers
     respondingEthPeer.respond(
         (c, m) -> Optional.of(BlockHeadersMessage.create(dummyBHList(DEFAULT_COUNT + 1))));
     assertThat(future.isDone()).isTrue();

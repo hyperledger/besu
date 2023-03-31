@@ -496,8 +496,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
             .orElseGet(() -> blockchain.getBlockByNumber(blockNumber));
 
     // check if we got this block by other means
-    if (maybeBlock.isPresent()
-        || (maybeBlockHash.isPresent() && pendingBlocksManager.contains(maybeBlockHash.get()))) {
+    if (maybeBlock.isPresent()) {
       final Block block = maybeBlock.get();
       LOG.atDebug()
           .setMessage("No need to retry to get block {} since it is already present")
