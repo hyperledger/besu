@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -124,7 +123,7 @@ public abstract class AbstractEngineNewPayloadTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.of(protocolSpec));
+    when(timestampSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(ethPeers.peerCount()).thenReturn(1);
     this.method =
         methodFactory.create(
@@ -462,7 +461,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnValidIfTimestampScheduleIsEmpty() {
-    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.empty());
+    when(timestampSchedule.getByBlockHeader(any())).thenReturn(null);
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
