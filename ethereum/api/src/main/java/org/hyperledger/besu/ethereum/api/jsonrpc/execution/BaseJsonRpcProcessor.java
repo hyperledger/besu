@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauth
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 
 import io.opentelemetry.api.trace.Span;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +48,8 @@ public class BaseJsonRpcProcessor implements JsonRpcProcessor {
     } catch (final MultiTenancyValidationException e) {
       return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     } catch (final RuntimeException e) {
-      LOG.error("Error processing method: {}", method.getName(), e);
+      final JsonArray params = JsonObject.mapFrom(request.getRequest()).getJsonArray("params");
+      LOG.error(String.format("Error processing method: %s %s", method.getName(), params), e);
       return new JsonRpcErrorResponse(id, JsonRpcError.INTERNAL_ERROR);
     }
   }
