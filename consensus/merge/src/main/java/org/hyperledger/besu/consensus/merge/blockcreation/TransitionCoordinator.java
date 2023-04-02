@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
@@ -148,10 +147,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Deposit>> deposits) {
+      final Optional<List<Withdrawal>> withdrawals) {
     return mergeCoordinator.preparePayload(
-        parentHeader, timestamp, prevRandao, feeRecipient, withdrawals, deposits);
+        parentHeader, timestamp, prevRandao, feeRecipient, withdrawals);
   }
 
   @Override

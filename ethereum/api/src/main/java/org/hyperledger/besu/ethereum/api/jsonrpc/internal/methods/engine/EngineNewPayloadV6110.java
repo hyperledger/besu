@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import io.vertx.core.Vertx;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+
+import io.vertx.core.Vertx;
 
 public class EngineNewPayloadV6110 extends AbstractEngineNewPayload {
 

@@ -410,7 +410,7 @@ public abstract class AbstractEngineNewPayloadTest {
                 createBlockHeader(Optional.of(Collections.emptyList())),
                 Collections.emptyList(),
                 withdrawals,
-                    null));
+                null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -440,7 +440,8 @@ public abstract class AbstractEngineNewPayloadTest {
 
     var resp =
         resp(
-            mockPayload(createBlockHeader(Optional.empty()), Collections.emptyList(), withdrawals, null));
+            mockPayload(
+                createBlockHeader(Optional.empty()), Collections.emptyList(), withdrawals, null));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -462,7 +463,7 @@ public abstract class AbstractEngineNewPayloadTest {
     assertValidResponse(mockHeader, resp);
   }
 
-  //TODO 6110: Add deposit related tests
+  // TODO 6110: Add deposit related tests
 
   @Test
   public void shouldReturnValidIfTimestampScheduleIsEmpty() {
@@ -501,7 +502,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         null,
-            null);
+        null);
   }
 
   private EnginePayloadParameter mockPayload(
@@ -591,5 +592,4 @@ public abstract class AbstractEngineNewPayloadTest {
     assertThat(res.getError()).isNull();
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
-
 }

@@ -119,20 +119,20 @@ public class BlockResultFactory {
   }
 
   public EngineGetPayloadResultV6110 payloadTransactionCompleteV6110(
-          final BlockWithReceipts blockWithReceipts) {
+      final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
-            blockWithReceipts.getBlock().getBody().getTransactions().stream()
-                    .map(TransactionEncoder::encodeOpaqueBytes)
-                    .map(Bytes::toHexString)
-                    .collect(Collectors.toList());
+        blockWithReceipts.getBlock().getBody().getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
 
     final Wei blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
     return new EngineGetPayloadResultV6110(
-            blockWithReceipts.getHeader(),
-            txs,
-            blockWithReceipts.getBlock().getBody().getWithdrawals(),
-            blockWithReceipts.getBlock().getBody().getDeposits(),
-            Quantity.create(blockValue));
+        blockWithReceipts.getHeader(),
+        txs,
+        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        blockWithReceipts.getBlock().getBody().getDeposits(),
+        Quantity.create(blockValue));
   }
 
   public EngineGetPayloadBodiesResultV1 payloadBodiesCompleteV1(

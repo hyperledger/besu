@@ -21,12 +21,12 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.DepositContract;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.evm.log.Log;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
-import org.hyperledger.besu.evm.log.Log;
-import org.web3j.tx.Contract;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
+import org.web3j.tx.Contract;
 
 public class DepositDecoder {
 
@@ -51,12 +51,11 @@ public class DepositDecoder {
     byte[] rawIndex = (byte[]) eventValues.getNonIndexedValues().get(4).getValue();
 
     return new Deposit(
-      BLSPublicKey.wrap(Bytes.wrap(rawPublicKey)),
-      Bytes32.wrap(Bytes.wrap(rawWithdrawalCredential)),
-      GWei.of(Bytes.wrap(rawAmount).reverse().toLong()),
-      BLSSignature.wrap(Bytes.wrap(rawSignature)),
-      UInt64.valueOf(Bytes.wrap(rawIndex).reverse().toLong())
-      );
+        BLSPublicKey.wrap(Bytes.wrap(rawPublicKey)),
+        Bytes32.wrap(Bytes.wrap(rawWithdrawalCredential)),
+        GWei.of(Bytes.wrap(rawAmount).reverse().toLong()),
+        BLSSignature.wrap(Bytes.wrap(rawSignature)),
+        UInt64.valueOf(Bytes.wrap(rawIndex).reverse().toLong()));
   }
 
   public static Deposit decodeOpaqueBytes(final Bytes input) {

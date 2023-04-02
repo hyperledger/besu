@@ -270,8 +270,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator
-            .createBlock(
-                Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
+            .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
             .getBlock();
 
     BlockProcessingResult result = validateProposedBlock(emptyBlock);
@@ -293,8 +292,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       }
     }
 
-    tryToBuildBetterBlock(
-        timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals);
+    tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals);
 
     return payloadIdentifier;
   }
@@ -332,9 +330,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Optional<List<Withdrawal>> withdrawals) {
 
     final Supplier<BlockCreationResult> blockCreator =
-        () ->
-            mergeBlockCreator.createBlock(
-                Optional.empty(), random, timestamp, withdrawals);
+        () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp, withdrawals);
 
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",

@@ -15,9 +15,9 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
-import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 
 public class DepositsValidatorProvider {
 

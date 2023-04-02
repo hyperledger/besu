@@ -56,7 +56,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -263,8 +262,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doThrow(new MerkleTrieException("missing leaf"))
               .doCallRealMethod()
               .when(beingSpiedOn)
-              .createBlock(
-                  any(), any(Bytes32.class), anyLong(), eq(Optional.empty()));
+              .createBlock(any(), any(Bytes32.class), anyLong(), eq(Optional.empty()));
           return beingSpiedOn;
         };
 
