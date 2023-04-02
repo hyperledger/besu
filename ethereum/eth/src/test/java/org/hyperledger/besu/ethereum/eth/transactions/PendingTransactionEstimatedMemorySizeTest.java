@@ -35,12 +35,14 @@ import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jol.info.ClassLayout;
 import org.openjdk.jol.info.GraphPathRecord;
 import org.openjdk.jol.info.GraphVisitor;
 import org.openjdk.jol.info.GraphWalker;
 
+@Disabled("Need to handle different results on different OS")
 public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPoolTest {
   private static final Set<Class<?>> SHARED_CLASSES =
       Set.of(SignatureAlgorithm.class, TransactionType.class);

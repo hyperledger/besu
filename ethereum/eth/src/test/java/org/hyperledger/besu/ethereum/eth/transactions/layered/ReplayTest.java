@@ -50,7 +50,7 @@ import java.util.zip.GZIPInputStream;
 
 import com.google.common.base.Splitter;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class ReplayTest {
@@ -91,8 +91,8 @@ public class ReplayTest {
    *
    * @throws IOException when fails to read the resource
    */
-  @Ignore
   @Test
+  @Disabled("Provide a replay file to run the test on demand")
   public void replay() throws IOException {
     try (BufferedReader br =
         new BufferedReader(

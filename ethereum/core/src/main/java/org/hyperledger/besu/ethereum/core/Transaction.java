@@ -1237,7 +1237,10 @@ public class Transaction
     }
 
     public Builder accessList(final List<AccessListEntry> accessList) {
-      this.accessList = accessList.isEmpty() ? EMPTY_ACCESS_LIST : Optional.of(accessList);
+      this.accessList =
+          accessList == null
+              ? Optional.empty()
+              : accessList.isEmpty() ? EMPTY_ACCESS_LIST : Optional.of(accessList);
       return this;
     }
 
