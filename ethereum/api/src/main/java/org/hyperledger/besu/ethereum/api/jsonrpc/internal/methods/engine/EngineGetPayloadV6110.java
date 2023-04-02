@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 import io.vertx.core.Vertx;
 
+// TODO 6110: Not needed
 public class EngineGetPayloadV6110 extends AbstractEngineGetPayload {
 
   public EngineGetPayloadV6110(

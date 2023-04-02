@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 public interface DepositsValidator {
 
+  boolean validateDepositParameters(Optional<List<Deposit>> deposits);
   boolean validateDeposits(Block block, List<TransactionReceipt> receipts);
 
   boolean validateDepositsRoot(Block block);
@@ -42,6 +43,11 @@ public interface DepositsValidator {
   class ProhibitedDeposits implements DepositsValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProhibitedDeposits.class);
+
+    @Override
+    public boolean validateDepositParameters(Optional<List<Deposit>> deposits) {
+      return false;
+    }
 
     @Override
     public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
@@ -71,6 +77,10 @@ public interface DepositsValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(AllowedDeposits.class);
 
+    @Override
+    public boolean validateDepositParameters(Optional<List<Deposit>> deposits) {
+      return true;
+    }
     @Override
     public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
       if (block.getBody().getDeposits().isEmpty()) {

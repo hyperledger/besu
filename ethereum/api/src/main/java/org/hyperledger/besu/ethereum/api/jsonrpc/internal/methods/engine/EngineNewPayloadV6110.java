@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import io.vertx.core.Vertx;
 
+// TODO 6110: Probably not needed
 public class EngineNewPayloadV6110 extends AbstractEngineNewPayload {
 
   public EngineNewPayloadV6110(

@@ -115,9 +115,11 @@ public class BlockResultFactory {
         blockWithReceipts.getHeader(),
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        blockWithReceipts.getBlock().getBody().getDeposits(),
         Quantity.create(blockValue));
   }
 
+  // TODO 6110: Remove
   public EngineGetPayloadResultV6110 payloadTransactionCompleteV6110(
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =

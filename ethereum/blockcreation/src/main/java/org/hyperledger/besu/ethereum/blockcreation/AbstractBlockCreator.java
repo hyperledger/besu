@@ -196,8 +196,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final List<Deposit> depositsFromReceipts = transactionResults.getReceipts().stream().flatMap(receipt -> receipt.getLogsList().stream()).map(DepositDecoder::decode).toList();
-      final Optional<List<Deposit>> maybeDeposits = depositsFromReceipts.isEmpty() ? Optional.empty() : Optional.of(depositsFromReceipts);
+      final List<Deposit> depositsFromReceipts =
+          transactionResults.getReceipts().stream()
+              .flatMap(receipt -> receipt.getLogsList().stream())
+              .map(DepositDecoder::decode)
+              .toList();
+      final Optional<List<Deposit>> maybeDeposits =
+          depositsFromReceipts.isEmpty() ? Optional.empty() : Optional.of(depositsFromReceipts);
 
       if (rewardCoinbase
           && !rewardBeneficiary(
