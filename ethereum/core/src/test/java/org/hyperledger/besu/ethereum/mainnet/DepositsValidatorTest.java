@@ -226,5 +226,25 @@ public class DepositsValidatorTest {
     assertThat(new DepositsValidator.AllowedDeposits().validateDepositsRoot(block)).isFalse();
   }
 
-  // TODO 6110: To add deposit param test
+  @Test
+  public void validateProhibitedDepositParams() {
+    final Optional<List<Deposit>> deposits = Optional.empty();
+    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositParameters(deposits)).isTrue();
+  }
+
+  @Test
+  public void invalidateProhibitedDepositParams() {
+    final Optional<List<Deposit>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
+    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositParameters(deposits)).isFalse();
+  }
+
+  @Test
+  public void validateAllowedDepositParams() {
+    final Optional<List<Deposit>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
+    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameters(deposits)).isTrue();
+
+    final Optional<List<Deposit>> emptyDeposits = Optional.empty();
+    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameters(emptyDeposits)).isTrue();
+  }
+
 }
