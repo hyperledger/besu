@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -195,8 +196,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final Optional<List<Deposit>> maybeDeposits =
-          Optional.empty(); // TODO 6110: Extract deposits from transaction receipts
+      final List<Deposit> depositsFromReceipts = transactionResults.getReceipts().stream().flatMap(receipt -> receipt.getLogsList().stream()).map(DepositDecoder::decode).toList();
+      final Optional<List<Deposit>> maybeDeposits = depositsFromReceipts.isEmpty() ? Optional.empty() : Optional.of(depositsFromReceipts);
 
       if (rewardCoinbase
           && !rewardBeneficiary(
