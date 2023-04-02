@@ -47,10 +47,8 @@ public class TransitionProtocolScheduleTest {
   @Mock MergeContext mergeContext;
   @Mock ProtocolSchedule preMergeProtocolSchedule;
   @Mock ProtocolSchedule postMergeProtocolSchedule;
-
   @Mock TimestampSchedule timestampSchedule;
   @Mock BlockHeader blockHeader;
-
   private static final Difficulty TTD = Difficulty.of(100L);
   private static final long BLOCK_NUMBER = 29L;
   private static final long TIMESTAMP = 1L;
@@ -222,6 +220,68 @@ public class TransitionProtocolScheduleTest {
     transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
+  }
+
+  @Test
+  public void anyMatch_usesTimestampSchedule() {
+    when(timestampSchedule.anyMatch(any())).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.anyMatch(__ -> true)).isTrue();
+    verifyNoInteractions(preMergeProtocolSchedule);
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  @Test
+  public void anyMatch_delegatesToPreMergeSchedule() {
+    when(mergeContext.isPostMerge()).thenReturn(false);
+
+    when(timestampSchedule.anyMatch(any())).thenReturn(false);
+    when(preMergeProtocolSchedule.anyMatch(any())).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.anyMatch(__ -> true)).isTrue();
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  @Test
+  public void anyMatch_delegatesToPostMergeSchedule() {
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    when(timestampSchedule.anyMatch(any())).thenReturn(false);
+    when(postMergeProtocolSchedule.anyMatch(any())).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.anyMatch(__ -> true)).isTrue();
+    verifyNoInteractions(preMergeProtocolSchedule);
+  }
+
+  @Test
+  public void isOnMilestoneBoundary_usesTimestampSchedule() {
+    when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
+    verifyNoInteractions(preMergeProtocolSchedule);
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  @Test
+  public void isOnMilestoneBoundary_delegatesToPreMergeSchedule() {
+    when(mergeContext.isPostMerge()).thenReturn(false);
+
+    when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(false);
+    when(preMergeProtocolSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
+    verifyNoInteractions(postMergeProtocolSchedule);
+  }
+
+  @Test
+  public void isOnMilestoneBoundary_delegatesToPostMergeSchedule() {
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(false);
+    when(postMergeProtocolSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
+
+    assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
+    verifyNoInteractions(preMergeProtocolSchedule);
   }
 
   private void verifyPreMergeProtocolScheduleReturnedUsingBlockNumber() {

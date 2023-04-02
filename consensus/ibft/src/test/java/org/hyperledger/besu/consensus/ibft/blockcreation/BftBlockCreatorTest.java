@@ -26,7 +26,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
@@ -87,8 +87,8 @@ public class BftBlockCreatorTest {
 
     final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
 
-    final BaseBftProtocolSchedule bftProtocolSchedule =
-        new BaseBftProtocolSchedule() {
+    final BaseBftProtocolScheduleBuilder bftProtocolSchedule =
+        new BaseBftProtocolScheduleBuilder() {
           @Override
           public BlockHeaderValidator.Builder createBlockHeaderRuleset(
               final BftConfigOptions config, final FeeMarket feeMarket) {

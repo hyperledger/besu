@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
-import org.hyperledger.besu.datatypes.DepositWithdrawalCredential;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Deposit;
 
@@ -26,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class DepositParameter {
@@ -41,7 +41,7 @@ public class DepositParameter {
   @JsonCreator
   public DepositParameter(
       @JsonProperty("pubKey") final String pubKey,
-      @JsonProperty("withdrawalCredentials") final String withdrawalCredentials,
+      @JsonProperty("withdrawal_credentials") final String withdrawalCredentials,
       @JsonProperty("amount") final String amount,
       @JsonProperty("signature") final String signature,
       @JsonProperty("index") final String index) {
@@ -64,7 +64,7 @@ public class DepositParameter {
   public Deposit toDeposit() {
     return new Deposit(
         BLSPublicKey.fromHexString(publicKey),
-        DepositWithdrawalCredential.fromHexString(withdrawalCredentials),
+        Bytes32.fromHexString(withdrawalCredentials),
         GWei.fromHexString(amount),
         BLSSignature.fromHexString(signature),
         UInt64.fromHexString(index));

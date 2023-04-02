@@ -1,5 +1,43 @@
 # Changelog
 
+## 23.1.3 
+
+### Breaking Changes
+
+- In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
+
+### Additions and Improvements
+
+- An alternate build target for the EVM using GraalVM AOT compilaiton was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
+- To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew naticeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
+- Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
+
+### Bug Fixes
+- Fix QBFT and IBFT unable to propose blocks on London when zeroBaseFee is used [#5276](https://github.com/hyperledger/besu/pull/5276) 
+
+- Make QBFT validator smart contract mode work with london fork [#5249](https://github.com/hyperledger/besu/issues/5249)
+
+### Download Links
+
+## 23.1.2
+This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended for all Mainnet users.
+
+### Breaking Changes
+
+### Additions and Improvements
+- Schedule Shanghai (Shapella) fork for Mainnet [#5230](https://github.com/hyperledger/besu/pull/5230)
+- Increase default from 1000 to 5000 for `--rpc-max-logs-range` [#5209](https://github.com/hyperledger/besu/pull/5209)
+- Bonsai-safe refactor [#5123](https://github.com/hyperledger/besu/pull/5123)
+- Safe tracing [#5197](https://github.com/hyperledger/besu/pull/5197)
+
+### Bug Fixes
+- Persist backward sync status to support resuming across restarts [#5182](https://github.com/hyperledger/besu/pull/5182)
+- Re-implement trace_block, trace_filter and trace_replayBlockTransactions RPC endpoints to fix memory issues and improve performance [#5131](https://github.com/hyperledger/besu/pull/5131) 
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.tar.gz / sha256: 3d3a709a3aab993a0801b412a4719d74e319f942ddc13fb0f30b3c4a54d12538
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.zip / sha256: 2a9ff091cb4349fc23625a52089400bb6529a831eb22d15d0221cb27039ab203
+
 ## 23.1.1
 This update is required for the Goerli Shanghai/Capella upgrade and recommended for all Mainnet users. If you use Besu on Goerli, update to 23.1.1. If you previously used 23.1.1-RC1, update to test 23.1.1 on Goerli. 
 
@@ -16,8 +54,13 @@ This update is required for the Goerli Shanghai/Capella upgrade and recommended 
 - Goerli configs for shapella [#5151](https://github.com/hyperledger/besu/pull/5151)
 
 ### Bug Fixes
-- Fix engine_getPayloadV2 block value calculation https://github.com/hyperledger/besu/issues/5040
-- Moves check for init code length before balance check https://github.com/hyperledger/besu/pull/5077
+- Fix engine_getPayloadV2 block value calculation [#5040](https://github.com/hyperledger/besu/issues/5040)
+- Moves check for init code length before balance check [#5077](https://github.com/hyperledger/besu/pull/5077)
+- Address concurrency problems with eth_call [#5179](https://github.com/hyperledger/besu/pull/5179)
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.1/besu-23.1.1.tar.gz / sha256: 11c3e5cdbc06df16a690e7ee9f98eefa46848f9fa280824b6e4c896d88f6b975
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.1/besu-23.1.1.zip / sha256: afcf852f193adb8e82d187aa4f02e4669f12cc680270624d37101b94cf37adec
 
 ## 23.1.1-RC1
 ### Sepolia Shanghai Release aka Sepolia Shapella aka Shapolia
@@ -37,7 +80,7 @@ This release has everything from [23.1.0](https://github.com/hyperledger/besu/re
 - Add implementation for engine_getPayloadBodiesByRangeV1 and engine_getPayloadBodiesByHashV1 https://github.com/hyperledger/besu/pull/4980
 - If a PoS block creation repetition takes less than a configurable duration, then waits before next repetition https://github.com/hyperledger/besu/pull/5048
 - Allow other users to read the /opt/besu dir when using docker https://github.com/hyperledger/besu/pull/5092
-- Invalid params - add some error detail #5066
+- Invalid params - add some error detail [#5066](https://github.com/hyperledger/besu/pull/5066)
 
 ### Bug fixes
 - Fix engine_getPayloadV2 block value calculation https://github.com/hyperledger/besu/issues/5040

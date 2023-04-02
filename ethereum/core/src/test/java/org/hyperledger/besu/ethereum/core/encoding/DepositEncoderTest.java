@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
-import org.hyperledger.besu.datatypes.DepositWithdrawalCredential;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Deposit;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +33,7 @@ class DepositEncoderTest {
         new Deposit(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
-            DepositWithdrawalCredential.fromHexString(
+            Bytes32.fromHexString(
                 "0x0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483"),
             GWei.of(32000000000L),
             BLSSignature.fromHexString(

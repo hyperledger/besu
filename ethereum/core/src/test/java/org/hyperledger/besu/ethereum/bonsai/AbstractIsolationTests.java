@@ -28,11 +28,14 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -72,7 +75,7 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
 public abstract class AbstractIsolationTests {
-  protected BonsaiWorldStateArchive archive;
+  protected BonsaiWorldStateProvider archive;
   protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
   final Function<String, KeyPair> asKeyPair =
@@ -101,26 +104,19 @@ public abstract class AbstractIsolationTests {
 
   @Rule public final TemporaryFolder tempData = new TemporaryFolder();
 
-  protected boolean shouldUseSnapshots() {
-    // override for layered worldstate
-    return true;
-  }
-
   @Before
   public void createStorage() {
     bonsaiWorldStateStorage =
         (BonsaiWorldStateKeyValueStorage)
             createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
     archive =
-        new BonsaiWorldStateArchive(
+        new BonsaiWorldStateProvider(
             bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),
-            shouldUseSnapshots(),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    ws.persist(blockchain.getChainHeadHeader());
     protocolContext = new ProtocolContext(blockchain, archive, null);
   }
 
@@ -246,10 +242,14 @@ public abstract class AbstractIsolationTests {
   protected BlockProcessingResult executeBlock(final MutableWorldState ws, final Block block) {
     var res =
         protocolSchedule
-            .getByBlockNumber(0)
+            .getByBlockHeader(blockHeader(0))
             .getBlockProcessor()
             .processBlock(blockchain, ws, block);
     blockchain.appendBlock(block, res.getReceipts());
     return res;
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

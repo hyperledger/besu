@@ -189,6 +189,7 @@ public class BlockchainReferenceTestCaseSpec {
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
           depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
+          depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {

@@ -39,21 +39,21 @@ public class FixedProtocolScheduleTest {
 
     assertThat(
             schedule
-                .getByBlockNumber(0)
+                .getByBlockHeader(blockHeader(0))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
-                .getByBlockNumber(500)
+                .getByBlockHeader(blockHeader(500))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
-                .getByBlockNumber(500_000)
+                .getByBlockHeader(blockHeader(500_000))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
@@ -72,23 +72,27 @@ public class FixedProtocolScheduleTest {
 
     assertThat(
             schedule
-                .getByBlockNumber(0)
+                .getByBlockHeader(blockHeader(0))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(10000);
 
     assertThat(
             schedule
-                .getByBlockNumber(500)
+                .getByBlockHeader(blockHeader(500))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(10000);
 
     assertThat(
             schedule
-                .getByBlockNumber(500_000)
+                .getByBlockHeader(blockHeader(500_000))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(10000);
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

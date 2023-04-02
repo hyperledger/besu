@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
@@ -121,7 +121,7 @@ public class FastSyncDownloader<REQUEST> {
     } else {
       LOG.error(
           "Encountered an unexpected error during fast sync. Restarting sync in "
-              + FAST_SYNC_RETRY_DELAY
+              + FAST_SYNC_RETRY_DELAY.getSeconds()
               + " seconds.",
           error);
       return fastSyncActions.scheduleFutureTask(

@@ -28,6 +28,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.VALID_APIS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -163,6 +164,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
@@ -178,6 +180,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
@@ -186,7 +189,7 @@ import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.InvalidConfigurationException;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
@@ -240,7 +243,6 @@ import net.consensys.quorum.mainnet.launcher.LauncherManager;
 import net.consensys.quorum.mainnet.launcher.config.ImmutableLauncherConfig;
 import net.consensys.quorum.mainnet.launcher.exception.LauncherException;
 import net.consensys.quorum.mainnet.launcher.util.ParseArgsHelper;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -1313,7 +1315,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--rpc-max-logs-range"},
       description =
           "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
-  private final Long rpcMaxLogsRange = 1000L;
+  private final Long rpcMaxLogsRange = 5000L;
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
@@ -1440,7 +1442,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param args arguments to Besu command
    * @return success or failure exit code.
    */
-  @VisibleForTesting
   public int parse(
       final IExecutionStrategy resultHandler,
       final BesuParameterExceptionHandler parameterExceptionHandler,
@@ -1553,7 +1554,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void registerConverters() {
     commandLine.registerConverter(Address.class, Address::fromHexStringStrict);
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
-    commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.registerConverter(MetricsProtocol.class, MetricsProtocol::fromString);
     commandLine.registerConverter(UInt256.class, (arg) -> UInt256.valueOf(new BigInteger(arg)));
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
@@ -1734,6 +1734,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getSyncState()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
+    besuPluginContext.addService(
+        BlockchainService.class,
+        new BlockchainServiceImpl(besuController.getProtocolContext().getBlockchain()));
+
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
   }
@@ -1796,14 +1800,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public void configureLogging(final boolean announce) {
     // To change the configuration if color was enabled/disabled
-    Log4j2ConfiguratorUtil.reconfigure();
+    LogConfigurator.reconfigure();
     // set log level per CLI flags
-    final Level logLevel = loggingLevelOption.getLogLevel();
+    final String logLevel = loggingLevelOption.getLogLevel();
     if (logLevel != null) {
       if (announce) {
-        System.out.println("Setting logging level to " + logLevel.name());
+        System.out.println("Setting logging level to " + logLevel);
       }
-      Log4j2ConfiguratorUtil.setAllLevels("", logLevel);
+      LogConfigurator.setLevel("", logLevel);
     }
   }
 
@@ -3109,7 +3113,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                   try {
                     besuPluginContext.stopPlugins();
                     runner.close();
-                    Log4j2ConfiguratorUtil.shutdown();
+                    LogConfigurator.shutdown();
                   } catch (final Exception e) {
                     logger.error("Failed to stop Besu");
                   }
@@ -3289,7 +3293,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final String staticNodesFilename = "static-nodes.json";
       staticNodesPath = dataDir().resolve(staticNodesFilename);
     }
-    logger.debug("Static Nodes file = {}", staticNodesPath);
+    logger.debug("Static Nodes file: {}", staticNodesPath);
     return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
   }
 
@@ -3306,7 +3310,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @return instance of BesuParameterExceptionHandler
    */
-  @VisibleForTesting
   public BesuParameterExceptionHandler parameterExceptionHandler() {
     return new BesuParameterExceptionHandler(this::getLogLevel);
   }
@@ -3454,7 +3457,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   @VisibleForTesting
-  Level getLogLevel() {
+  String getLogLevel() {
     return loggingLevelOption.getLogLevel();
   }
 
@@ -3632,6 +3635,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder
           .setEnginePort(engineJsonRpcConfiguration.getPort())
           .setEngineApis(engineJsonRpcConfiguration.getRpcApis());
+      if (engineJsonRpcConfiguration.isAuthenticationEnabled()) {
+        if (engineJsonRpcConfiguration.getAuthenticationPublicKeyFile() != null) {
+          builder.setEngineJwtFile(
+              engineJsonRpcConfiguration.getAuthenticationPublicKeyFile().getAbsolutePath());
+        } else {
+          // default ephemeral jwt created later
+          builder.setEngineJwtFile(dataDir().toAbsolutePath() + "/" + EPHEMERAL_JWT_FILE);
+        }
+      }
     }
 
     if (rocksDBPlugin.isHighSpecEnabled()) {

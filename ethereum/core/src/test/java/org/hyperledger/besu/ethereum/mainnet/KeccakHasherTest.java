@@ -49,8 +49,8 @@ public class KeccakHasherTest {
         final Wei baseFee,
         final Bytes32 random,
         final Hash withdrawalsRoot,
-        final Hash depositsRoot,
-        final DataGas excessDataGas) {
+        final DataGas excessDataGas,
+        final Hash depositsRoot) {
       super(
           parentHash,
           ommersHash,
@@ -68,8 +68,8 @@ public class KeccakHasherTest {
           baseFee,
           random,
           withdrawalsRoot,
-          depositsRoot,
-          excessDataGas);
+          excessDataGas,
+          depositsRoot);
     }
   }
 

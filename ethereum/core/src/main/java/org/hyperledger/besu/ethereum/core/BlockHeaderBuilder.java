@@ -119,8 +119,8 @@ public class BlockHeaderBuilder {
         .nonce(header.getNonce())
         .prevRandao(header.getPrevRandao().orElse(null))
         .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
-        .depositsRoot(header.getDepositsRoot().orElse(null))
-        .excessDataGas(header.getExcessDataGas().orElse(null));
+        .excessDataGas(header.getExcessDataGas().orElse(null))
+        .depositsRoot(header.getDepositsRoot().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -142,8 +142,8 @@ public class BlockHeaderBuilder {
             .baseFee(fromBuilder.baseFee)
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
-            .depositsRoot(fromBuilder.depositsRoot)
             .excessDataGas(fromBuilder.excessDataGas)
+            .depositsRoot(fromBuilder.depositsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -170,8 +170,8 @@ public class BlockHeaderBuilder {
         mixHashOrPrevRandao,
         nonce.getAsLong(),
         withdrawalsRoot,
-        depositsRoot,
         excessDataGas,
+        depositsRoot,
         blockHeaderFunctions);
   }
 
@@ -210,8 +210,8 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
-        depositsRoot,
-        excessDataGas);
+        excessDataGas,
+        depositsRoot);
   }
 
   private void validateBlockHeader() {
@@ -273,8 +273,8 @@ public class BlockHeaderBuilder {
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
-    depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
+    depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     return this;
   }
 

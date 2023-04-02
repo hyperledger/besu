@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** An interface for {@link Bytes} that also represents a public key */
+@Unstable
 public interface PublicKey extends Bytes {}

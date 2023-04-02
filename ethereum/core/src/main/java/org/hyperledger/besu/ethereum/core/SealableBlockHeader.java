@@ -62,8 +62,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final Hash withdrawalsRoot,
-      final Hash depositsRoot,
-      final DataGas excessDataGas) {
+      final DataGas excessDataGas,
+      final Hash depositsRoot) {
     super(
         parentHash,
         coinbase,

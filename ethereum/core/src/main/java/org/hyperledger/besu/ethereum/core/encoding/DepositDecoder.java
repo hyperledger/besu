@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
-import org.hyperledger.besu.datatypes.DepositWithdrawalCredential;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Deposit;
-import org.hyperledger.besu.ethereum.core.DepositContract;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -28,15 +25,14 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.evm.log.Log;
 import org.web3j.tx.Contract;
-
+import org.apache.tuweni.bytes.Bytes32;
 
 public class DepositDecoder {
 
   public static Deposit decode(final RLPInput rlpInput) {
     rlpInput.enterList();
     final BLSPublicKey publicKey = BLSPublicKey.readFrom(rlpInput);
-    final DepositWithdrawalCredential depositWithdrawalCredential =
-        DepositWithdrawalCredential.readFrom(rlpInput);
+    final Bytes32 depositWithdrawalCredential = Bytes32.wrap(rlpInput.readBytes());
     final GWei amount = GWei.of(rlpInput.readUInt64Scalar());
     final BLSSignature signature = BLSSignature.readFrom(rlpInput);
     final UInt64 index = UInt64.valueOf(rlpInput.readBigIntegerScalar());

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,12 +14,16 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
 /**
  * A deposit is a system-level operation to support validator deposits that are pushed from the EVM
  * to beacon chain.
  */
+@Unstable
 public interface Deposit {
 
   /**
@@ -35,7 +39,7 @@ public interface Deposit {
    *
    * @return withdrawal credential
    */
-  DepositWithdrawalCredential getWithdrawalCredentials();
+  Bytes32 getWithdrawalCredentials();
 
   /**
    * Amount of ether to be sent to the deposit contract

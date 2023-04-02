@@ -22,6 +22,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -39,7 +42,6 @@ import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProtocolScheduleBuilderTest {
-
   @Mock GenesisConfigOptions configOptions;
   @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
@@ -67,15 +69,17 @@ public class ProtocolScheduleBuilderTest {
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
-    assertThat(protocolSchedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
-    assertThat(protocolSchedule.getByBlockNumber(1).getName()).isEqualTo("Homestead");
-    assertThat(protocolSchedule.getByBlockNumber(2).getName()).isEqualTo("DaoRecoveryInit");
-    assertThat(protocolSchedule.getByBlockNumber(3).getName()).isEqualTo("DaoRecoveryTransition");
-    assertThat(protocolSchedule.getByBlockNumber(12).getName()).isEqualTo("Homestead");
-    assertThat(protocolSchedule.getByBlockNumber(13).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockNumber(14).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockNumber(15).getName()).isEqualTo("ParisFork");
-    assertThat(protocolSchedule.getByBlockNumber(50).getName()).isEqualTo("ParisFork");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Frontier");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Homestead");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(2)).getName())
+        .isEqualTo("DaoRecoveryInit");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(3)).getName())
+        .isEqualTo("DaoRecoveryTransition");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(12)).getName()).isEqualTo("Homestead");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(13)).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(14)).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(15)).getName()).isEqualTo("ParisFork");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(50)).getName()).isEqualTo("ParisFork");
   }
 
   @Test
@@ -85,8 +89,8 @@ public class ProtocolScheduleBuilderTest {
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
-    assertThat(protocolSchedule.getByBlockNumber(0).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockNumber(1).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Byzantium");
   }
 
   @Test
@@ -97,7 +101,7 @@ public class ProtocolScheduleBuilderTest {
     assertThatThrownBy(() -> builder.createProtocolSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'GrayGlacier' is scheduled for block 11 but it must be on or after block 12.");
+            "Genesis Config Error: 'GrayGlacier' is scheduled for milestone 11 but it must be on or after milestone 12.");
   }
 
   @Test
@@ -107,26 +111,15 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final ProtocolScheduleBuilder builder =
-        new ProtocolScheduleBuilder(
-            configOptions,
-            CHAIN_ID,
-            ProtocolSpecAdapters.create(2, modifier),
-            new PrivacyParameters(),
-            false,
-            false,
-            EvmConfiguration.DEFAULT);
-
-    final MutableProtocolSchedule schedule =
-        (MutableProtocolSchedule) builder.createProtocolSchedule();
+    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(2);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 2L, 5L);
-    assertThat(schedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockNumber(2).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockNumber(5).getName()).isEqualTo("Homestead");
+    assertThat(schedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockHeader(5)).getName()).isEqualTo("Homestead");
 
     verify(modifier, times(2)).apply(any());
   }
@@ -136,25 +129,14 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final ProtocolScheduleBuilder builder =
-        new ProtocolScheduleBuilder(
-            configOptions,
-            CHAIN_ID,
-            ProtocolSpecAdapters.create(2, modifier),
-            new PrivacyParameters(),
-            false,
-            false,
-            EvmConfiguration.DEFAULT);
-
-    final MutableProtocolSchedule schedule =
-        (MutableProtocolSchedule) builder.createProtocolSchedule();
+    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(2);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 2L);
-    assertThat(schedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockNumber(2).getName()).isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Frontier");
 
     verify(modifier, times(1)).apply(any());
   }
@@ -165,26 +147,33 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final ProtocolScheduleBuilder builder =
-        new ProtocolScheduleBuilder(
-            configOptions,
-            CHAIN_ID,
-            ProtocolSpecAdapters.create(5, modifier),
-            new PrivacyParameters(),
-            false,
-            false,
-            EvmConfiguration.DEFAULT);
-
-    final MutableProtocolSchedule schedule =
-        (MutableProtocolSchedule) builder.createProtocolSchedule();
+    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(5);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 5L);
-    assertThat(schedule.getByBlockNumber(0).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockNumber(5).getName()).isEqualTo("Homestead");
-
+    assertThat(schedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockHeader(5)).getName()).isEqualTo("Homestead");
     verify(modifier, times(1)).apply(any());
+  }
+
+  private BlockNumberStreamingProtocolSchedule createScheduleModifiedAt(final int blockNumber) {
+    final ProtocolScheduleBuilder builder =
+        new ProtocolScheduleBuilder(
+            configOptions,
+            CHAIN_ID,
+            ProtocolSpecAdapters.create(blockNumber, modifier),
+            new PrivacyParameters(),
+            false,
+            false,
+            EvmConfiguration.DEFAULT);
+
+    return new BlockNumberStreamingProtocolSchedule(
+        (MutableProtocolSchedule) builder.createProtocolSchedule());
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

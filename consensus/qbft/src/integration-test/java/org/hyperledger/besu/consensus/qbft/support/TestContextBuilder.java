@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
@@ -61,7 +62,7 @@ import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
-import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
@@ -91,7 +92,6 @@ import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -125,6 +125,8 @@ public class TestContextBuilder {
 
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private boolean useValidatorContract;
+  private boolean useLondonMilestone = false;
+  private boolean useZeroBaseFee = false;
 
   private static class ControllerAndState {
 
@@ -237,6 +239,16 @@ public class TestContextBuilder {
     return this;
   }
 
+  public TestContextBuilder useLondonMilestone(final boolean useLondonMilestone) {
+    this.useLondonMilestone = useLondonMilestone;
+    return this;
+  }
+
+  public TestContextBuilder useZeroBaseFee(final boolean useZeroBaseFee) {
+    this.useZeroBaseFee = useZeroBaseFee;
+    return this;
+  }
+
   public TestContextBuilder qbftForks(final List<QbftFork> qbftForks) {
     this.qbftForks = qbftForks;
     return this;
@@ -301,6 +313,8 @@ public class TestContextBuilder {
             gossiper,
             synchronizerUpdater,
             useValidatorContract,
+            useLondonMilestone,
+            useZeroBaseFee,
             qbftForks);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
@@ -379,6 +393,8 @@ public class TestContextBuilder {
       final Gossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater,
       final boolean useValidatorContract,
+      final boolean useLondonMilestone,
+      final boolean useZeroBaseFee,
       final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
@@ -398,7 +414,14 @@ public class TestContextBuilder {
             : Collections.emptyMap();
     final QbftConfigOptions qbftConfigOptions = createGenesisConfig(useValidatorContract);
 
-    genesisConfigOptions.byzantiumBlock(0);
+    if (useLondonMilestone) {
+      genesisConfigOptions.londonBlock(0);
+    } else {
+      genesisConfigOptions.berlinBlock(0);
+    }
+    if (useZeroBaseFee) {
+      genesisConfigOptions.zeroBaseFee(true);
+    }
     genesisConfigOptions.qbftConfigOptions(
         new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
     genesisConfigOptions.transitions(TestTransitions.createQbftTestTransitions(qbftForks));
@@ -411,8 +434,8 @@ public class TestContextBuilder {
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(genesisConfigOptions);
 
-    final ProtocolSchedule protocolSchedule =
-        QbftProtocolSchedule.create(
+    final BftProtocolSchedule protocolSchedule =
+        QbftProtocolScheduleBuilder.create(
             genesisConfigOptions, forksSchedule, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);

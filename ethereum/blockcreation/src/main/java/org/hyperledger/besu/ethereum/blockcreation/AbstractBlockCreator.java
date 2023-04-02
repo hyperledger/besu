@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -144,33 +143,20 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
     return createBlock(
-        maybeTransactions,
-        maybeOmmers,
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        timestamp,
-        true);
+        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), timestamp, true);
   }
 
   protected BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits,
       final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
 
     try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
       final ProtocolSpec newProtocolSpec =
-          protocolSchedule.getByBlockHeader(
-              BlockHeaderBuilder.fromHeader(parentHeader)
-                  .number(parentHeader.getNumber() + 1)
-                  .timestamp(timestamp)
-                  .parentHash(parentHeader.getHash())
-                  .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-                  .buildBlockHeader());
+          protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
 
       final ProcessableBlockHeader processableBlockHeader =
           createPendingBlockHeader(timestamp, maybePrevRandao, newProtocolSpec);
@@ -208,6 +194,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       }
 
       throwIfStopped();
+
+      final Optional<List<Deposit>> maybeDeposits =
+          Optional.empty(); // TODO 6110: Extract deposits from transaction receipts
 
       if (rewardCoinbase
           && !rewardBeneficiary(
@@ -328,16 +317,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Hash parentStateRoot = parentHeader.getStateRoot();
     return protocolContext
         .getWorldStateArchive()
-        .getMutable(parentStateRoot, parentHeader.getHash(), false)
-        .map(
-            ws -> {
-              if (ws.isPersistable()) {
-                return ws;
-              } else {
-                // non-persistable worldstates should return a copy which is persistable:
-                return ws.copy();
-              }
-            })
+        .getMutable(parentHeader, false)
         .orElseThrow(
             () -> {
               LOG.info("Unable to create block because world state is not available");

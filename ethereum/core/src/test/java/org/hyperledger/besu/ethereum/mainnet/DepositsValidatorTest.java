@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
@@ -40,6 +41,8 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.junit.BeforeClass;
 import org.junit.jupiter.api.BeforeAll;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 public class DepositsValidatorTest {
@@ -55,7 +58,7 @@ public class DepositsValidatorTest {
     DEPOSIT_1 = new Deposit(
             BLSPublicKey.fromHexString(
                     "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
-            DepositWithdrawalCredential.fromHexString(
+            Bytes32.fromHexString(
                     "0x0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483"),
             GWei.of(32000000000L),
             BLSSignature.fromHexString(
@@ -65,7 +68,7 @@ public class DepositsValidatorTest {
     DEPOSIT_2 = new Deposit(
             BLSPublicKey.fromHexString(
                     "0x8706d19a62f28a6a6549f96c5adaebac9124a61d44868ec94f6d2d707c6a2f82c9162071231dfeb40e24bfde4ffdf243"),
-            DepositWithdrawalCredential.fromHexString(
+            Bytes32.fromHexString(
                     "0x006a8dc800c6d8dd6977ef53264e2d030350f0145a91bcd167b4f1c3ea21b271"),
             GWei.of(32000000000L),
             BLSSignature.fromHexString(

@@ -85,6 +85,7 @@ public class ChainForTestCreator {
         blockHeader.getWithdrawalsRoot().orElse(null),
         blockHeader.getDepositsRoot().orElse(null),
         blockHeader.getExcessDataGas().orElse(null),
+        blockHeader.getDepositsRoot().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
 

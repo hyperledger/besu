@@ -25,8 +25,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PermissioningPluginTest extends AcceptanceTestBase {
   private BesuNode minerNode;
@@ -35,7 +35,7 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
   private BesuNode bobNode;
   private BesuNode charlieNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     final BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()

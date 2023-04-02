@@ -17,21 +17,20 @@ package org.hyperledger.besu.cli.error;
 import java.io.PrintWriter;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.Level;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 /** The custom parameter exception handler for Besu PicoCLI. */
 public class BesuParameterExceptionHandler implements CommandLine.IParameterExceptionHandler {
 
-  private final Supplier<Level> levelSupplier;
+  private final Supplier<String> levelSupplier;
 
   /**
    * Instantiates a new Besu parameter exception handler.
    *
    * @param levelSupplier the logging level supplier
    */
-  public BesuParameterExceptionHandler(final Supplier<Level> levelSupplier) {
+  public BesuParameterExceptionHandler(final Supplier<String> levelSupplier) {
     this.levelSupplier = levelSupplier;
   }
 
@@ -39,8 +38,9 @@ public class BesuParameterExceptionHandler implements CommandLine.IParameterExce
   public int handleParseException(final CommandLine.ParameterException ex, final String[] args) {
     final CommandLine cmd = ex.getCommandLine();
     final PrintWriter err = cmd.getErr();
-    final Level logLevel = levelSupplier.get();
-    if (logLevel != null && Level.DEBUG.isMoreSpecificThan(logLevel)) {
+    final String logLevel = levelSupplier.get();
+    if (logLevel != null
+        && (logLevel.equals("DEBUG") || logLevel.equals("TRACE") || logLevel.equals("ALL"))) {
       ex.printStackTrace(err);
     } else {
       err.println(ex.getMessage());

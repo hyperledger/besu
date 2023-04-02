@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -24,12 +24,13 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.TreeMap;
@@ -50,9 +51,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getAccountStateTrieNode_returnsEmptyNode() {
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(
-            storage.getAccountStateTrieNode(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
@@ -60,8 +60,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
     assertThat(
             storage.getAccountStorageTrieNode(
-                Hash.EMPTY, Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+                Hash.EMPTY, Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
@@ -73,7 +73,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getNodeData_returnsEmptyNode() {
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(storage.getNodeData(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
+    assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
   }
 
   @Test
@@ -81,12 +81,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
     storage
         .updater()
-        .putCode(Hash.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE)
+        .putCode(Hash.EMPTY, MerkleTrie.EMPTY_TRIE_NODE)
         .putCode(Hash.EMPTY, Bytes.EMPTY)
         .commit();
 
-    assertThat(storage.getCode(Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE), Hash.EMPTY))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getCode(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), Hash.EMPTY))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
@@ -104,15 +104,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
     storage
         .updater()
         .putAccountStateTrieNode(
-            Bytes.EMPTY,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
+            Bytes.EMPTY, Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
         .putAccountStateTrieNode(Bytes.EMPTY, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
-    assertThat(
-            storage.getAccountStateTrieNode(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
   }
 
@@ -134,15 +131,15 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .putAccountStorageTrieNode(
             Hash.EMPTY,
             Bytes.EMPTY,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
+            Hash.hash(MerkleTrie.EMPTY_TRIE_NODE),
+            MerkleTrie.EMPTY_TRIE_NODE)
         .putAccountStorageTrieNode(Hash.EMPTY, Bytes.EMPTY, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
     assertThat(
             storage.getAccountStorageTrieNode(
-                Hash.EMPTY, Bytes.EMPTY, Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE)))
-        .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+                Hash.EMPTY, Bytes.EMPTY, Hash.hash(MerkleTrie.EMPTY_TRIE_NODE)))
+        .contains(MerkleTrie.EMPTY_TRIE_NODE);
     assertThat(storage.getAccountStorageTrieNode(Hash.EMPTY, Bytes.EMPTY, Hash.EMPTY))
         .contains(Bytes.EMPTY);
   }
@@ -165,7 +162,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getAccount_loadFromTrieWhenEmpty() {
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
@@ -189,7 +186,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @Test
   public void getStorage_loadFromTrieWhenEmpty() {
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final MerklePatriciaTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));

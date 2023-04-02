@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
-import org.hyperledger.besu.datatypes.DepositWithdrawalCredential;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
@@ -28,20 +27,20 @@ import org.hyperledger.besu.plugin.data.PublicKey;
 import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.jetbrains.annotations.NotNull;
 
 public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
   private final BLSPublicKey pubKey;
-  private final DepositWithdrawalCredential depositWithdrawalCredentials;
+  private final Bytes32 depositWithdrawalCredentials;
   private final GWei amount;
   private final BLSSignature signature;
   private final UInt64 index;
 
   public Deposit(
       final BLSPublicKey pubKey,
-      final DepositWithdrawalCredential depositWithdrawalCredentials,
+      final Bytes32 depositWithdrawalCredentials,
       final GWei amount,
       final BLSSignature signature,
       final UInt64 index) {
@@ -64,14 +63,13 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
     DepositEncoder.encode(this, out);
   }
 
-
   @Override
   public PublicKey getPublicKey() {
     return pubKey;
   }
 
   @Override
-  public DepositWithdrawalCredential getWithdrawalCredentials() {
+  public Bytes32 getWithdrawalCredentials() {
     return depositWithdrawalCredentials;
   }
 
@@ -122,5 +120,4 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   public int hashCode() {
     return Objects.hash(pubKey, depositWithdrawalCredentials, amount, signature, index);
   }
-
 }

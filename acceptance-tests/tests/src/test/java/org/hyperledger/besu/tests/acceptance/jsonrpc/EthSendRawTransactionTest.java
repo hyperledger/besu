@@ -24,8 +24,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 import java.math.BigInteger;
 import java.util.function.UnaryOperator;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthSendRawTransactionTest extends AcceptanceTestBase {
   private static final long CHAIN_ID = 20211;
@@ -36,7 +36,7 @@ public class EthSendRawTransactionTest extends AcceptanceTestBase {
   private Node strictNode;
   private Node miningNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     sender = accounts.getPrimaryBenefactor();
 

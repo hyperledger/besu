@@ -157,7 +157,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   public boolean isEmpty() {
-    return transactions.isEmpty() && ommers.isEmpty() && withdrawals.isEmpty();
+    return transactions.isEmpty()
+        && ommers.isEmpty()
+        && withdrawals.isEmpty()
+        && deposits.isEmpty();
   }
 
   @Override

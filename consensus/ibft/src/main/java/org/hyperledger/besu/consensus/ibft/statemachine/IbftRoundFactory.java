@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 /** The Ibft round factory. */
@@ -34,7 +34,7 @@ public class IbftRoundFactory {
   private final BftFinalState finalState;
   private final BftBlockCreatorFactory<?> blockCreatorFactory;
   private final ProtocolContext protocolContext;
-  private final ProtocolSchedule protocolSchedule;
+  private final BftProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> minedBlockObservers;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
@@ -54,7 +54,7 @@ public class IbftRoundFactory {
   public IbftRoundFactory(
       final BftFinalState finalState,
       final ProtocolContext protocolContext,
-      final ProtocolSchedule protocolSchedule,
+      final BftProtocolSchedule protocolSchedule,
       final Subscribers<MinedBlockObserver> minedBlockObservers,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,

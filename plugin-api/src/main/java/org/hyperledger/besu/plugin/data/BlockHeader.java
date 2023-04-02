@@ -195,6 +195,7 @@ public interface BlockHeader {
    * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
    *     deposit in the deposit list portion of the block.
    */
+  @Unstable
   Optional<? extends Hash> getDepositsRoot();
 
   /**
