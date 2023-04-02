@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 
@@ -80,8 +79,7 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
   protected Object latestResult(final JsonRpcRequestContext request) {
 
     final long headBlockNumber = blockchainQueriesSupplier.get().headBlockNumber();
-    Blockchain chain = blockchainQueriesSupplier.get().getBlockchain();
-    BlockHeader headHeader = chain.getBlockHeader(headBlockNumber).orElse(null);
+    BlockHeader headHeader = blockchainQueriesSupplier.get().headBlockHeader();
 
     Hash block = headHeader.getHash();
     Hash stateRoot = headHeader.getStateRoot();
