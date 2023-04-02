@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositContract;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -51,7 +52,7 @@ public class DepositDecoder {
 
     return new Deposit(
       BLSPublicKey.wrap(Bytes.wrap(rawPublicKey)),
-      DepositWithdrawalCredential.wrap(Bytes.wrap(rawWithdrawalCredential)),
+      Bytes32.wrap(Bytes.wrap(rawWithdrawalCredential)),
       GWei.of(Bytes.wrap(rawAmount).reverse().toLong()),
       BLSSignature.wrap(Bytes.wrap(rawSignature)),
       UInt64.valueOf(Bytes.wrap(rawIndex).reverse().toLong())

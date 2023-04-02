@@ -111,11 +111,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
 
-    // TODO 6110: How do I verify validity of the deposits before I have transaction receipts?
-    final Optional<List<Deposit>> maybeDeposits = Optional.ofNullable(blockParam.getDeposits())
-            .map(ds -> ds.stream().map(DepositParameter::toDeposit).collect(toList()));
-
-
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");
       return respondWith(reqId, blockParam, null, SYNCING);
