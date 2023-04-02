@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameterTestFixture.DEPOSIT_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -56,9 +57,11 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
@@ -125,6 +128,8 @@ public abstract class AbstractEngineNewPayloadTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.ProhibitedDeposits());
     when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.of(protocolSpec));
     when(ethPeers.peerCount()).thenReturn(1);
     this.method =
@@ -145,6 +150,7 @@ public abstract class AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
             Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -155,7 +161,7 @@ public abstract class AbstractEngineNewPayloadTest {
   @Test
   public void shouldReturnInvalidOnBlockExecutionError() {
     BlockHeader mockHeader =
-        setupValidPayload(new BlockProcessingResult("error 42"), Optional.empty());
+        setupValidPayload(new BlockProcessingResult("error 42"), Optional.empty(), Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -168,7 +174,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnAcceptedOnLatestValidAncestorEmpty() {
-    BlockHeader mockHeader = createBlockHeader(Optional.empty());
+    BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -203,7 +209,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnInvalidWithLatestValidHashIsABadBlock() {
-    BlockHeader mockHeader = createBlockHeader(Optional.empty());
+    BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
 
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
@@ -224,7 +230,7 @@ public abstract class AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.empty(), new StorageException("database bedlam")),
-            Optional.empty());
+            Optional.empty(), Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -239,7 +245,7 @@ public abstract class AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.empty(), new MerkleTrieException("missing leaf")),
-            Optional.empty());
+            Optional.empty(), Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -251,7 +257,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldNotReturnInvalidOnThrownMerkleTrieException() {
-    BlockHeader mockHeader = createBlockHeader(Optional.empty());
+    BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -407,7 +413,7 @@ public abstract class AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockPayload(
-                createBlockHeader(Optional.of(Collections.emptyList())),
+                createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
                 null));
@@ -425,7 +431,7 @@ public abstract class AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.empty());
+            Optional.empty(), Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals, null));
 
@@ -441,7 +447,7 @@ public abstract class AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockPayload(
-                createBlockHeader(Optional.empty()), Collections.emptyList(), withdrawals, null));
+                createBlockHeader(Optional.empty(), Optional.empty()), Collections.emptyList(), withdrawals, null));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -456,14 +462,80 @@ public abstract class AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.of(withdrawals));
+            Optional.of(withdrawals),
+            Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawalsParam, null));
 
     assertValidResponse(mockHeader, resp);
   }
 
-  // TODO 6110: Add deposit related tests
+  @Test
+  public void shouldReturnInvalidIfDepositsIsNotNull_WhenDepositsProhibited() {
+    final List<DepositParameter> deposits = List.of();
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+
+    var resp =
+        resp(
+            mockPayload(
+                createBlockHeader(Optional.empty(), Optional.of(Collections.emptyList())),
+                Collections.emptyList(),
+                null,
+                deposits));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnValidIfDepositsIsNull_WhenDepositsProhibited() {
+    final List<DepositParameter> deposits = null;
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+    BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
+            Optional.empty());
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, deposits));
+
+    assertValidResponse(mockHeader, resp);
+  }
+
+  @Test
+  public void shouldReturnInvalidIfDepositsIsNull_WhenDepositsAllowed() {
+    final List<DepositParameter> deposits = null;
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.AllowedDeposits());
+
+    var resp =
+        resp(
+            mockPayload(
+                createBlockHeader(Optional.empty(), Optional.empty()), Collections.emptyList(), null, deposits));
+
+    assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
+    final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
+    final List<Deposit> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.AllowedDeposits());
+    BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
+            Optional.of(deposits));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, depositsParam));
+
+    assertValidResponse(mockHeader, resp);
+  }
 
   @Test
   public void shouldReturnValidIfTimestampScheduleIsEmpty() {
@@ -471,6 +543,7 @@ public abstract class AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
             Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -531,8 +604,8 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @NotNull
   private BlockHeader setupValidPayload(
-      final BlockProcessingResult value, final Optional<List<Withdrawal>> maybeWithdrawals) {
-    BlockHeader mockHeader = createBlockHeader(maybeWithdrawals);
+      final BlockProcessingResult value, final Optional<List<Withdrawal>> maybeWithdrawals, final Optional<List<Deposit>> maybeDeposits) {
+    BlockHeader mockHeader = createBlockHeader(maybeWithdrawals, maybeDeposits);
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -571,7 +644,7 @@ public abstract class AbstractEngineNewPayloadTest {
         .get();
   }
 
-  protected BlockHeader createBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals) {
+  protected BlockHeader createBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals, final Optional<List<Deposit>> maybeDeposits) {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     BlockHeader mockHeader =
@@ -581,6 +654,7 @@ public abstract class AbstractEngineNewPayloadTest {
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(parentBlockHeader.getTimestamp() + 1)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
+            .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
             .buildHeader();
     return mockHeader;
   }

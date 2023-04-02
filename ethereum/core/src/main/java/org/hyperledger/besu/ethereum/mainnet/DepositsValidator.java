@@ -45,8 +45,8 @@ public interface DepositsValidator {
     private static final Logger LOG = LoggerFactory.getLogger(ProhibitedDeposits.class);
 
     @Override
-    public boolean validateDepositParameters(Optional<List<Deposit>> deposits) {
-      return false;
+    public boolean validateDepositParameters(final Optional<List<Deposit>> deposits) {
+      return deposits.isEmpty();
     }
 
     @Override
@@ -78,8 +78,8 @@ public interface DepositsValidator {
     private static final Logger LOG = LoggerFactory.getLogger(AllowedDeposits.class);
 
     @Override
-    public boolean validateDepositParameters(Optional<List<Deposit>> deposits) {
-      return true;
+    public boolean validateDepositParameters(final Optional<List<Deposit>> deposits) {
+      return deposits.isPresent();
     }
     @Override
     public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {

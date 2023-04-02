@@ -225,4 +225,6 @@ public class DepositsValidatorTest {
     final Block block = blockDataGenerator.block(blockOptions);
     assertThat(new DepositsValidator.AllowedDeposits().validateDepositsRoot(block)).isFalse();
   }
+
+  // TODO 6110: To add deposit param test
 }

@@ -187,7 +187,6 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
-          depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
           depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {
