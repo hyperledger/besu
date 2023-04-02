@@ -94,7 +94,7 @@ public interface DepositsValidator {
       for (TransactionReceipt receipt : receipts) {
         for (Log log : receipt.getLogsList()) {
           if (Address.DEPOSIT_ADDRESS.equals(log.getLogger())) {
-            Deposit deposit = DepositDecoder.decode(log);
+            Deposit deposit = DepositDecoder.decodeFromLog(log);
             expectedDeposits.add(deposit);
           }
         }

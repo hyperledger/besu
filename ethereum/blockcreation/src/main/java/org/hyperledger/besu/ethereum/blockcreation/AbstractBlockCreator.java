@@ -199,7 +199,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final List<Deposit> depositsFromReceipts =
           transactionResults.getReceipts().stream()
               .flatMap(receipt -> receipt.getLogsList().stream())
-              .map(DepositDecoder::decode)
+              .map(DepositDecoder::decodeFromLog)
               .toList();
       final Optional<List<Deposit>> maybeDeposits =
           depositsFromReceipts.isEmpty() ? Optional.empty() : Optional.of(depositsFromReceipts);

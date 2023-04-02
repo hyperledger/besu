@@ -42,7 +42,7 @@ public class DepositDecoder {
     return new Deposit(publicKey, depositWithdrawalCredential, amount, signature, index);
   }
 
-  public static Deposit decode(final Log log) {
+  public static Deposit decodeFromLog(final Log log) {
     Contract.EventValuesWithLog eventValues = DepositContract.staticExtractDepositEventWithLog(log);
     byte[] rawPublicKey = (byte[]) eventValues.getNonIndexedValues().get(0).getValue();
     byte[] rawWithdrawalCredential = (byte[]) eventValues.getNonIndexedValues().get(1).getValue();
