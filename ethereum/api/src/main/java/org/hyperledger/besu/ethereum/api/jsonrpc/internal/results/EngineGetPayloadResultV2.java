@@ -106,10 +106,7 @@ public class EngineGetPayloadResultV2 {
       this.deposits =
           deposits
               .map(
-                  ds ->
-                      ds.stream()
-                          .map(DepositParameter::fromDeposit)
-                          .collect(Collectors.toList()))
+                  ds -> ds.stream().map(DepositParameter::fromDeposit).collect(Collectors.toList()))
               .orElse(null);
     }
 

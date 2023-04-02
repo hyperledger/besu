@@ -79,8 +79,9 @@ public interface DepositsValidator {
 
     @Override
     public boolean validateDepositParameters(final Optional<List<Deposit>> deposits) {
-      return true;
+      return deposits != null;
     }
+
     @Override
     public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
       if (block.getBody().getDeposits().isEmpty()) {
