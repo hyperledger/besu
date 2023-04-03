@@ -108,7 +108,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   }
 
   @Test
-  public void shouldMineOnSingleNodeWithFree_London() throws Exception {
+  public void shouldMineOnSingleNodeWithFreeGas_London() throws Exception {
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     setGenesisConfigToLondon(minerNode, true);
 
