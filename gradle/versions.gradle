@@ -16,7 +16,7 @@
 dependencyManagement {
   dependencies {
 
-    dependencySet(group: 'org.antlr', version: '4.12.0') {
+    dependencySet(group: 'org.antlr', version: '4.10.1') {
       entry 'antlr4'
       entry 'antlr4-runtime'
     }
