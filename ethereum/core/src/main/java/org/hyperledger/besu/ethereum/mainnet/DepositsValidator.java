@@ -80,7 +80,7 @@ public interface DepositsValidator {
 
     @Override
     public boolean validateDepositParameters(final Optional<List<Deposit>> deposits) {
-      return deposits != null;
+      return deposits.isPresent();
     }
 
     @Override
