@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -38,6 +39,7 @@ public class DefaultTimestampScheduleTest {
   private static final BigInteger defaultChainId = BigInteger.ONE;
   private static final PrivacyParameters privacyParameters = new PrivacyParameters();
   private static final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
+  private static final LineaParameters lineaParameters = LineaParameters.DEFAULT;
   private static final BlockHeader BLOCK_HEADER =
       new BlockHeaderTestFixture().timestamp(1L).buildHeader();
   private TimestampScheduleBuilder builder;
@@ -61,7 +63,8 @@ public class DefaultTimestampScheduleTest {
             privacyParameters,
             isRevertReasonEnabled,
             quorumCompatibilityMode,
-            evmConfiguration);
+            evmConfiguration,
+            lineaParameters);
   }
 
   @Test
@@ -83,7 +86,8 @@ public class DefaultTimestampScheduleTest {
             privacyParameters,
             false,
             false,
-            evmConfiguration);
+            evmConfiguration,
+            lineaParameters);
     final TimestampSchedule schedule = builder.createTimestampSchedule();
 
     assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNull();

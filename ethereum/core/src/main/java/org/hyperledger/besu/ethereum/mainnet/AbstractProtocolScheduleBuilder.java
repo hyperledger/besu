@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -41,6 +42,7 @@ public abstract class AbstractProtocolScheduleBuilder {
   protected final BadBlockManager badBlockManager = new BadBlockManager();
   protected final boolean quorumCompatibilityMode;
   protected final EvmConfiguration evmConfiguration;
+  protected final LineaParameters lineaParameters;
 
   protected AbstractProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -48,13 +50,15 @@ public abstract class AbstractProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final LineaParameters lineaParameters) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
     this.evmConfiguration = evmConfiguration;
+    this.lineaParameters = lineaParameters;
   }
 
   protected void initSchedule(

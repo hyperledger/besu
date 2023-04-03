@@ -20,6 +20,7 @@ import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -34,7 +35,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ProtocolScheduleFixture {
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
-          getMainnetConfigOptions(), PrivacyParameters.DEFAULT, false, EvmConfiguration.DEFAULT);
+          getMainnetConfigOptions(),
+          PrivacyParameters.DEFAULT,
+          false,
+          EvmConfiguration.DEFAULT,
+          LineaParameters.DEFAULT);
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     // this method avoids reading all the alloc accounts when all we want is the "config" section

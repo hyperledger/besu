@@ -241,6 +241,7 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getMergeNetSplitBlockNumber();
 
+  OptionalLong getLineaBlockNumber();
   /**
    * Gets shanghai time.
    *

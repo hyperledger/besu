@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -34,14 +35,16 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final LineaParameters lineaParameters) {
     super(
         config,
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        evmConfiguration);
+        evmConfiguration,
+        lineaParameters);
     this.defaultChainId = Optional.of(defaultChainId);
   }
 

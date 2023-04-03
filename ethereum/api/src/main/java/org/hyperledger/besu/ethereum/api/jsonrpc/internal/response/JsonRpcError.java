@@ -78,7 +78,7 @@ public enum JsonRpcError {
   LOWER_NONCE_INVALID_TRANSACTION_EXISTS(
       -32000, "An invalid transaction with a lower nonce exists"),
   TOTAL_DATA_GAS_TOO_HIGH(-32000, "Total data gas too high"),
-
+  CALLDATA_TOO_LARGE(-32000, "Calldata too large"),
   // Execution engine failures
   UNKNOWN_PAYLOAD(-32001, "Payload does not exist / is not available"),
   INVALID_TERMINAL_BLOCK(-32002, "Terminal block doesn't satisfy terminal block conditions"),
