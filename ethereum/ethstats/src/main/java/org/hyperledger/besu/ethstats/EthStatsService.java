@@ -76,6 +76,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketConnectOptions;
+import io.vertx.core.net.PemTrustOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,22 +148,34 @@ public class EthStatsService {
     this.genesisConfigOptions = genesisConfigOptions;
     this.p2PNetwork = p2PNetwork;
     this.blockResultFactory = new BlockResultFactory();
-    this.httpClientOptions = new HttpClientOptions();
-    this.webSocketConnectOptions =
-        new WebSocketConnectOptions()
-            .setURI("/api")
-            .setHost(netstatsUrl.getHost())
-            .setPort(netstatsUrl.getPort())
-            .setSsl(true);
+    this.httpClientOptions = buildHttpClientOptions(netstatsUrl);
+    this.webSocketConnectOptions = buildWebSocketConnectOptions(netstatsUrl);
+  }
+
+  private static HttpClientOptions buildHttpClientOptions(final NetstatsUrl netstatsUrl) {
+    final HttpClientOptions options = new HttpClientOptions();
+
+    if (netstatsUrl.getPemTrust() != null) {
+      options.setPemTrustOptions(
+          new PemTrustOptions().addCertPath(netstatsUrl.getPemTrust().toString()));
+    }
+    return options;
+  }
+
+  private static WebSocketConnectOptions buildWebSocketConnectOptions(
+      final NetstatsUrl netstatsUrl) {
+    return new WebSocketConnectOptions()
+        .setURI("/api")
+        .setHost(netstatsUrl.getHost())
+        .setPort(netstatsUrl.getPort())
+        .setSsl(true);
   }
 
   /** Start. */
   public void start() {
 
     try {
-
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
-
       vertx
           .createHttpClient(httpClientOptions)
           .webSocket(
@@ -199,8 +212,8 @@ public class EthStatsService {
                   String errorMessage =
                       "Failed to reach the ethstats server " + event.cause().getMessage();
                   if (event.cause() instanceof SSLHandshakeException) {
-                    webSocketConnectOptions.setSsl(false);
-                    errorMessage += " (trying without ssl)";
+                    errorMessage += " (trying with ssl: " + !webSocketConnectOptions.isSsl() + ")";
+                    webSocketConnectOptions.setSsl(!webSocketConnectOptions.isSsl());
                   }
                   LOG.error(errorMessage);
                   retryInProgress.set(false);

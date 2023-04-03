@@ -17,7 +17,8 @@ package org.hyperledger.besu.cli.options.stable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
 
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import picocli.CommandLine;
@@ -27,6 +28,7 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
 
   private static final String ETHSTATS = "--ethstats";
   private static final String ETHSTATS_CONTACT = "--ethstats-contact";
+  private static final String ETHSTATS_PEM_TRUST = "--ethstats-pem-trust";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
@@ -43,6 +45,13 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
       arity = "1")
   private String ethstatsContact = "";
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @CommandLine.Option(
+      names = {ETHSTATS_PEM_TRUST},
+      paramLabel = "<FILE>",
+      description = "Path to CA certificate in PEM format to trust ethstats server.")
+  private Path ethstatsPemTrust = null;
+
   private EthstatsOptions() {}
 
   /**
@@ -56,7 +65,7 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
 
   @Override
   public NetstatsUrl toDomainObject() {
-    return NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact);
+    return NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact, ethstatsPemTrust);
   }
 
   /**
@@ -77,8 +86,23 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
     return ethstatsContact;
   }
 
+  /**
+   * Returns path to CA truststore file (PEM)
+   *
+   * @return Path to CA file. null if no CA file to set.
+   */
+  public Path getEthstatsPemTrust() {
+    return ethstatsPemTrust;
+  }
+
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(ETHSTATS + "=" + ethstatsUrl, ETHSTATS_CONTACT + "=" + ethstatsContact);
+    final ArrayList<String> options = new ArrayList<>();
+    options.add(ETHSTATS + "=" + ethstatsUrl);
+    options.add(ETHSTATS_CONTACT + "=" + ethstatsContact);
+    if (ethstatsPemTrust != null) {
+      options.add(ETHSTATS_PEM_TRUST + "=" + ethstatsPemTrust);
+    }
+    return options;
   }
 }

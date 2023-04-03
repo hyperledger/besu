@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -172,9 +173,7 @@ public class RunnerBuilder {
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
-
-  private String ethstatsUrl;
-  private String ethstatsContact;
+  private EthstatsOptions ethstatsOptions;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
@@ -402,24 +401,13 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add Ethstats url.
+   * Add EthStatsOptions
    *
-   * @param ethstatsUrl the ethstats url
-   * @return the runner builder
+   * @param ethstatsOptions the ethstats options
+   * @return Runner builder instance
    */
-  public RunnerBuilder ethstatsUrl(final String ethstatsUrl) {
-    this.ethstatsUrl = ethstatsUrl;
-    return this;
-  }
-
-  /**
-   * Add Ethstats contact.
-   *
-   * @param ethstatsContact the ethstats contact
-   * @return the runner builder
-   */
-  public RunnerBuilder ethstatsContact(final String ethstatsContact) {
-    this.ethstatsContact = ethstatsContact;
+  public RunnerBuilder ethstatsOptions(final EthstatsOptions ethstatsOptions) {
+    this.ethstatsOptions = ethstatsOptions;
     return this;
   }
 
@@ -1038,11 +1026,14 @@ public class RunnerBuilder {
         createMetricsService(vertx, metricsConfiguration);
 
     final Optional<EthStatsService> ethStatsService;
-    if (!Strings.isNullOrEmpty(ethstatsUrl)) {
+    if (!Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl())) {
       ethStatsService =
           Optional.of(
               new EthStatsService(
-                  NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact),
+                  NetstatsUrl.fromParams(
+                      ethstatsOptions.getEthstatsUrl(),
+                      ethstatsOptions.getEthstatsContact(),
+                      ethstatsOptions.getEthstatsPemTrust()),
                   blockchainQueries,
                   besuController.getProtocolManager(),
                   transactionPool,

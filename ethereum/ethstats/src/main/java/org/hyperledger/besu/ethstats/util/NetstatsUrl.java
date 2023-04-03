@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethstats.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 import org.immutables.value.Value;
 import org.slf4j.LoggerFactory;
@@ -38,7 +40,10 @@ public interface NetstatsUrl {
 
   String getContact();
 
-  static NetstatsUrl fromParams(final String url, final String contact) {
+  @Nullable
+  Path getPemTrust();
+
+  static NetstatsUrl fromParams(final String url, final String contact, final Path pemTrust) {
     try {
       checkArgument(url != null && !url.trim().isEmpty(), "Invalid empty value.");
 
@@ -50,6 +55,7 @@ public interface NetstatsUrl {
             .host(netStatsUrl.group(3))
             .port(Integer.parseInt(Optional.ofNullable(netStatsUrl.group(5)).orElse("3000")))
             .contact(contact)
+            .pemTrust(pemTrust)
             .build();
       }
 
