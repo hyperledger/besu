@@ -13,6 +13,7 @@
     "berlinBlock":0,
     "londonBlock":0,
     "shanghaiTime":10,
+    "experimentaleipstime":20,
     "clique": {
       "period": 5,
       "epoch": 30000
