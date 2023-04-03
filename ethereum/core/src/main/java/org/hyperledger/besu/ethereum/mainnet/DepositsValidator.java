@@ -18,10 +18,15 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
+import org.hyperledger.besu.evm.log.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +35,8 @@ import org.slf4j.LoggerFactory;
 
 public interface DepositsValidator {
 
-  boolean validateDeposits(Optional<List<Deposit>> deposits);
+  boolean validateDepositParameters(Optional<List<Deposit>> deposits);
+  boolean validateDeposits(Block block, List<TransactionReceipt> receipts);
 
   boolean validateDepositsRoot(Block block);
 
@@ -39,7 +45,13 @@ public interface DepositsValidator {
     private static final Logger LOG = LoggerFactory.getLogger(ProhibitedDeposits.class);
 
     @Override
-    public boolean validateDeposits(final Optional<List<Deposit>> deposits) {
+    public boolean validateDepositParameters(final Optional<List<Deposit>> deposits) {
+      return deposits.isEmpty();
+    }
+
+    @Override
+    public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
+      Optional<List<Deposit>> deposits = block.getBody().getDeposits();
       final boolean isValid = deposits.isEmpty();
       if (!isValid) {
         LOG.warn("Deposits must be null when Deposits are prohibited but were: {}", deposits);
@@ -66,8 +78,30 @@ public interface DepositsValidator {
     private static final Logger LOG = LoggerFactory.getLogger(AllowedDeposits.class);
 
     @Override
-    public boolean validateDeposits(final Optional<List<Deposit>> deposits) {
-      return true; // TODO 6110: Validate deposits in the next PR
+    public boolean validateDepositParameters(final Optional<List<Deposit>> deposits) {
+      return deposits != null;
+    }
+
+    @Override
+    public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
+      if (block.getBody().getDeposits().isEmpty()) {
+        LOG.warn("Deposits must not be null when Deposits are activated");
+        return false;
+      }
+
+      List<Deposit> actualDeposits = new ArrayList<>(block.getBody().getDeposits().get());
+      List<Deposit> expectedDeposits = new ArrayList<>();
+
+      for (TransactionReceipt receipt : receipts) {
+        for (Log log : receipt.getLogsList()) {
+          if (Address.DEPOSIT_ADDRESS.equals(log.getLogger())) {
+            Deposit deposit = DepositDecoder.decodeFromLog(log);
+            expectedDeposits.add(deposit);
+          }
+        }
+      }
+
+      return actualDeposits.equals(expectedDeposits);
     }
 
     @Override
