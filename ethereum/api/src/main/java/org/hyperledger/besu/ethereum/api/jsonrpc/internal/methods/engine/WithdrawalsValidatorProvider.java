@@ -18,7 +18,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.Optional;
@@ -26,7 +26,7 @@ import java.util.Optional;
 public class WithdrawalsValidatorProvider {
 
   static WithdrawalsValidator getWithdrawalsValidator(
-      final TimestampSchedule timestampSchedule,
+      final UnifiedProtocolSchedule timestampSchedule,
       final long blockTimestamp,
       final long blockNumber) {
 
@@ -45,7 +45,7 @@ public class WithdrawalsValidatorProvider {
   }
 
   static WithdrawalsValidator getWithdrawalsValidator(
-      final TimestampSchedule timestampSchedule,
+      final UnifiedProtocolSchedule timestampSchedule,
       final BlockHeader parentBlockHeader,
       final long timestampForNextBlock) {
 

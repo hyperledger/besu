@@ -18,12 +18,11 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -46,8 +45,7 @@ public class ReferenceTestProtocolSchedules {
   }
 
   public static ReferenceTestProtocolSchedules create(final StubGenesisConfigOptions genesisStub) {
-    final ImmutableMap.Builder<String, HeaderBasedProtocolSchedule> builder =
-        ImmutableMap.builder();
+    final ImmutableMap.Builder<String, ProtocolSchedule> builder = ImmutableMap.builder();
     builder.put("Frontier", createSchedule(genesisStub.clone()));
     builder.put("FrontierToHomesteadAt5", createSchedule(genesisStub.clone().homesteadBlock(5)));
     builder.put("Homestead", createSchedule(genesisStub.clone().homesteadBlock(0)));
@@ -82,13 +80,13 @@ public class ReferenceTestProtocolSchedules {
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
-  private final Map<String, HeaderBasedProtocolSchedule> schedules;
+  private final Map<String, ProtocolSchedule> schedules;
 
-  private ReferenceTestProtocolSchedules(final Map<String, HeaderBasedProtocolSchedule> schedules) {
+  private ReferenceTestProtocolSchedules(final Map<String, ProtocolSchedule> schedules) {
     this.schedules = schedules;
   }
 
-  public HeaderBasedProtocolSchedule getByName(final String name) {
+  public ProtocolSchedule getByName(final String name) {
     return schedules.get(name);
   }
 
@@ -104,7 +102,8 @@ public class ReferenceTestProtocolSchedules {
         .createProtocolSchedule();
   }
 
-  private static TimestampSchedule createTimestampSchedule(final GenesisConfigOptions options) {
+  private static UnifiedProtocolSchedule createTimestampSchedule(
+      final GenesisConfigOptions options) {
     return new TimestampScheduleBuilder(
             options,
             CHAIN_ID,

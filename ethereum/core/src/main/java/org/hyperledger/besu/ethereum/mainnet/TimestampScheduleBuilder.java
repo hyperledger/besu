@@ -45,9 +45,9 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
     this.defaultChainId = Optional.of(defaultChainId);
   }
 
-  public TimestampSchedule createTimestampSchedule() {
+  public UnifiedProtocolSchedule createTimestampSchedule() {
     final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
-    TimestampSchedule timestampSchedule = new DefaultTimestampSchedule(chainId);
+    UnifiedProtocolSchedule timestampSchedule = new UnifiedProtocolSchedule(chainId);
     initSchedule(timestampSchedule, chainId);
     return timestampSchedule;
   }
@@ -69,10 +69,10 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
   protected Stream<Optional<BuilderMapEntry>> createMilestones(
       final MainnetProtocolSpecFactory specFactory) {
     return Stream.of(
-        // generally this TimestampSchedule will not have an entry for 0 instead it is relying
+        // generally this UnifiedProtocolSchedule will not have an entry for 0 instead it is relying
         // on defaulting to a MergeProtocolSchedule in
         // TransitionProtocolSchedule.getByBlockHeader if the given milestone is before the
-        // first entry in TimestampSchedule
+        // first entry in UnifiedProtocolSchedule
         create(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
         create(config.getCancunTime(), specFactory.cancunDefinition(config)),
         create(config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),

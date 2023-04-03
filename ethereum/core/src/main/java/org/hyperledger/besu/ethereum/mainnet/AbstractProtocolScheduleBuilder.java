@@ -58,7 +58,7 @@ public abstract class AbstractProtocolScheduleBuilder {
   }
 
   protected void initSchedule(
-      final HeaderBasedProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
+      final ProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
 
     final MainnetProtocolSpecFactory specFactory =
         new MainnetProtocolSpecFactory(
@@ -144,7 +144,7 @@ public abstract class AbstractProtocolScheduleBuilder {
   }
 
   protected ProtocolSpec getProtocolSpec(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolSpecBuilder definition,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
     definition
@@ -157,7 +157,7 @@ public abstract class AbstractProtocolScheduleBuilder {
   }
 
   protected void addProtocolSpec(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final long blockNumberOrTimestamp,
       final ProtocolSpecBuilder definition,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {

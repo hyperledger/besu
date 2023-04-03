@@ -58,7 +58,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -86,7 +86,7 @@ public abstract class AbstractEngineNewPayloadTest {
   interface MethodFactory {
     AbstractEngineNewPayload create(
         final Vertx vertx,
-        final TimestampSchedule timestampSchedule,
+        final UnifiedProtocolSchedule timestampSchedule,
         final ProtocolContext protocolContext,
         final MergeMiningCoordinator mergeCoordinator,
         final EthPeers ethPeers,
@@ -104,7 +104,7 @@ public abstract class AbstractEngineNewPayloadTest {
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private TimestampSchedule timestampSchedule;
+  @Mock private UnifiedProtocolSchedule timestampSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;

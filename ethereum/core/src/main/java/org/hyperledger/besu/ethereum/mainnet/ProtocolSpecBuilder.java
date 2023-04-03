@@ -58,7 +58,7 @@ public class ProtocolSpecBuilder {
       transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
-  private Function<HeaderBasedProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
+  private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
   private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
       precompileContractRegistryBuilder;
@@ -145,7 +145,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder blockBodyValidatorBuilder(
-      final Function<HeaderBasedProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder) {
+      final Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder) {
     this.blockBodyValidatorBuilder = blockBodyValidatorBuilder;
     return this;
   }
@@ -271,7 +271,7 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
+  public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
@@ -419,7 +419,7 @@ public class ProtocolSpecBuilder {
 
   private BlockProcessor createBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
-      final HeaderBasedProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
     return blockProcessorBuilder.apply(
         transactionProcessor,
         transactionReceiptFactory,
@@ -466,7 +466,7 @@ public class ProtocolSpecBuilder {
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
         Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
-        HeaderBasedProtocolSchedule protocolSchedule);
+        ProtocolSchedule protocolSchedule);
   }
 
   public interface BlockValidatorBuilder {

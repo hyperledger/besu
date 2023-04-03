@@ -37,9 +37,8 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.TimestampStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.DefaultTimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 
 import java.util.Collection;
 import java.util.List;
@@ -215,15 +214,14 @@ public class ForkIdsNetworkConfigTest {
       final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
       BlockNumberStreamingProtocolSchedule preMergeProtocolSchedule =
           new BlockNumberStreamingProtocolSchedule(
-              (MutableProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
+              (UnifiedProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
       BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule =
           new BlockNumberStreamingProtocolSchedule(
-              (MutableProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
+              (UnifiedProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
       TimestampStreamingProtocolSchedule timestampSchedule =
           new TimestampStreamingProtocolSchedule(
-              (DefaultTimestampSchedule)
-                  MergeProtocolSchedule.createTimestamp(
-                      configOptions, PrivacyParameters.DEFAULT, false));
+              MergeProtocolSchedule.createTimestamp(
+                  configOptions, PrivacyParameters.DEFAULT, false));
       final MilestoneStreamingTransitionProtocolSchedule schedule =
           new MilestoneStreamingTransitionProtocolSchedule(
               preMergeProtocolSchedule, postMergeProtocolSchedule, timestampSchedule);

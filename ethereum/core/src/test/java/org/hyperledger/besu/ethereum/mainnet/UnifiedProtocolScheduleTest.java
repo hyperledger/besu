@@ -32,7 +32,7 @@ import java.util.function.Function;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DefaultTimestampScheduleTest {
+public class UnifiedProtocolScheduleTest {
 
   private static final BigInteger chainId = BigInteger.ONE;
   private static final BigInteger defaultChainId = BigInteger.ONE;
@@ -67,7 +67,7 @@ public class DefaultTimestampScheduleTest {
   @Test
   public void getByBlockHeader_whenSpecFound() {
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
-    final TimestampSchedule schedule = builder.createTimestampSchedule();
+    final UnifiedProtocolSchedule schedule = builder.createTimestampSchedule();
 
     assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNotNull();
   }
@@ -84,7 +84,7 @@ public class DefaultTimestampScheduleTest {
             false,
             false,
             evmConfiguration);
-    final TimestampSchedule schedule = builder.createTimestampSchedule();
+    final UnifiedProtocolSchedule schedule = builder.createTimestampSchedule();
 
     assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNull();
   }
@@ -94,7 +94,7 @@ public class DefaultTimestampScheduleTest {
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
     config.cancunTime(2L);
     config.experimentalEipsTime(4L);
-    final HeaderBasedProtocolSchedule protocolSchedule = builder.createTimestampSchedule();
+    final ProtocolSchedule protocolSchedule = builder.createTimestampSchedule();
 
     assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(false);
     assertThat(protocolSchedule.isOnMilestoneBoundary(header(FIRST_TIMESTAMP_FORK)))
@@ -109,7 +109,8 @@ public class DefaultTimestampScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    final TimestampSchedule protocolSchedule = new DefaultTimestampSchedule(Optional.of(chainId));
+    final UnifiedProtocolSchedule protocolSchedule =
+        new UnifiedProtocolSchedule(Optional.of(chainId));
     protocolSchedule.putMilestone(0, spec1);
     protocolSchedule.putMilestone(1000, spec2);
 

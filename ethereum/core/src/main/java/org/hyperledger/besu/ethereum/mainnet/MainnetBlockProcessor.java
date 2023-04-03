@@ -39,7 +39,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
-      final HeaderBasedProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
         transactionReceiptFactory,

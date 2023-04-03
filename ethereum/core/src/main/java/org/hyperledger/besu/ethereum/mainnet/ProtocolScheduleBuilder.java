@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
 
   private final Optional<BigInteger> defaultChainId;
-  private MutableProtocolSchedule protocolSchedule;
+  private UnifiedProtocolSchedule protocolSchedule;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -83,9 +83,10 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
     this.defaultChainId = defaultChainId;
   }
 
-  public ProtocolSchedule createProtocolSchedule() {
+  // TODO SLD should this be ProtocolSchedule or UnifiedProtocolSchedule?
+  public UnifiedProtocolSchedule createProtocolSchedule() {
     final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
-    protocolSchedule = new MutableProtocolSchedule(chainId);
+    protocolSchedule = new UnifiedProtocolSchedule(chainId);
     initSchedule(protocolSchedule, chainId);
     return protocolSchedule;
   }

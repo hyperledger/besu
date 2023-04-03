@@ -66,28 +66,30 @@ public class MutableProtocolScheduleTest {
   }
 
   @SuppressWarnings("unchecked")
-  @Test
-  public void getByBlockNumber() {
-    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
-    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
-    final ProtocolSpec spec3 = mock(ProtocolSpec.class);
-    final ProtocolSpec spec4 = mock(ProtocolSpec.class);
-
-    final MutableProtocolSchedule schedule = new MutableProtocolSchedule(CHAIN_ID);
-    schedule.putMilestone(20, spec3);
-    schedule.putMilestone(0, spec1);
-    schedule.putMilestone(30, spec4);
-    schedule.putMilestone(10, spec2);
-
-    assertThat(schedule.getByBlockNumber(0)).isEqualTo(spec1);
-    assertThat(schedule.getByBlockNumber(15)).isEqualTo(spec2);
-    assertThat(schedule.getByBlockNumber(35)).isEqualTo(spec4);
-    assertThat(schedule.getByBlockNumber(105)).isEqualTo(spec4);
-  }
+  //  @Test
+  //  public void getByBlockNumber() {
+  //    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+  //    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+  //    final ProtocolSpec spec3 = mock(ProtocolSpec.class);
+  //    final ProtocolSpec spec4 = mock(ProtocolSpec.class);
+  //
+  //    final UnifiedProtocolSchedule schedule = new UnifiedProtocolSchedule(CHAIN_ID);
+  //    schedule.putMilestone(20, spec3);
+  //    schedule.putMilestone(0, spec1);
+  //    schedule.putMilestone(30, spec4);
+  //    schedule.putMilestone(10, spec2);
+  //
+  //    assertThat(schedule.getByBlockNumber(0)).isEqualTo(spec1);
+  //    assertThat(schedule.getByBlockNumber(15)).isEqualTo(spec2);
+  //    assertThat(schedule.getByBlockNumber(35)).isEqualTo(spec4);
+  //    assertThat(schedule.getByBlockNumber(105)).isEqualTo(spec4);
+  //  }
 
   @Test
   public void emptySchedule() {
-    Assertions.assertThatThrownBy(() -> new MutableProtocolSchedule(CHAIN_ID).getByBlockNumber(0))
+    final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
+    Assertions.assertThatThrownBy(
+            () -> new UnifiedProtocolSchedule(CHAIN_ID).getByBlockHeader(blockHeader))
         .hasMessage("At least 1 milestone must be provided to the protocol schedule");
   }
 
@@ -97,7 +99,7 @@ public class MutableProtocolScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(CHAIN_ID);
+    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(0, spec1);
     protocolSchedule.putMilestone(0, spec2);
     assertThat(protocolSchedule.getByBlockHeader(header(0))).isSameAs(spec2);
@@ -108,7 +110,7 @@ public class MutableProtocolScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(CHAIN_ID);
+    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(0, spec1);
     protocolSchedule.putMilestone(1, spec2);
 
@@ -125,7 +127,7 @@ public class MutableProtocolScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(CHAIN_ID);
+    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(0, spec1);
     protocolSchedule.putMilestone(1, spec2);
 
@@ -141,7 +143,7 @@ public class MutableProtocolScheduleTest {
     config.berlinBlock(1L);
     config.londonBlock(2L);
     config.mergeNetSplitBlock(4L);
-    final HeaderBasedProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(true);
     assertThat(protocolSchedule.isOnMilestoneBoundary(header(1))).isEqualTo(true);

@@ -169,8 +169,7 @@ public class ProtocolScheduleBuilderTest {
             false,
             EvmConfiguration.DEFAULT);
 
-    return new BlockNumberStreamingProtocolSchedule(
-        (MutableProtocolSchedule) builder.createProtocolSchedule());
+    return new BlockNumberStreamingProtocolSchedule(builder.createProtocolSchedule());
   }
 
   private BlockHeader blockHeader(final long number) {

@@ -19,9 +19,9 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
@@ -46,7 +46,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
   }
 
   @Override
-  HeaderBasedProtocolSchedule provideProtocolSchedule(
+  ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("Fork") final Optional<String> fork,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
@@ -60,7 +60,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
     return MainnetProtocolSchedule.fromConfig(configOptions, EvmConfiguration.DEFAULT);
   }
 
-  public static Map<String, Supplier<HeaderBasedProtocolSchedule>> createSchedules() {
+  public static Map<String, Supplier<ProtocolSchedule>> createSchedules() {
     return Map.ofEntries(
         Map.entry("frontier", createSchedule(new StubGenesisConfigOptions())),
         Map.entry("homestead", createSchedule(new StubGenesisConfigOptions().homesteadBlock(0))),
@@ -106,8 +106,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 new StubGenesisConfigOptions().experimentalEipsTime(0).baseFeePerGas(0x0a))));
   }
 
-  private static Supplier<HeaderBasedProtocolSchedule> createSchedule(
-      final GenesisConfigOptions options) {
+  private static Supplier<ProtocolSchedule> createSchedule(final GenesisConfigOptions options) {
     return () ->
         new ProtocolScheduleBuilder(
                 options,
@@ -120,7 +119,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
             .createProtocolSchedule();
   }
 
-  private static Supplier<HeaderBasedProtocolSchedule> createTimestampSchedule(
+  private static Supplier<ProtocolSchedule> createTimestampSchedule(
       final GenesisConfigOptions options) {
     return () ->
         new TimestampScheduleBuilder(

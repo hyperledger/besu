@@ -21,12 +21,11 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -40,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class TransitionProtocolSchedule implements ProtocolSchedule {
   private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
-  private final TimestampSchedule timestampSchedule;
+  private final UnifiedProtocolSchedule timestampSchedule;
   private final MergeContext mergeContext;
   private ProtocolContext protocolContext;
 
@@ -56,7 +55,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
       final MergeContext mergeContext,
-      final TimestampSchedule timestampSchedule) {
+      final UnifiedProtocolSchedule timestampSchedule) {
     this.timestampSchedule = timestampSchedule;
     this.mergeContext = mergeContext;
     transitionUtils =
@@ -76,7 +75,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         MainnetProtocolSchedule.fromConfig(genesisConfigOptions);
     ProtocolSchedule postMergeProtocolSchedule =
         MergeProtocolSchedule.create(genesisConfigOptions, false);
-    TimestampSchedule timestampSchedule =
+    UnifiedProtocolSchedule timestampSchedule =
         MergeProtocolSchedule.createTimestamp(
             genesisConfigOptions, PrivacyParameters.DEFAULT, false);
     return new TransitionProtocolSchedule(
@@ -112,12 +111,8 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    */
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
-    return this.timestampSchedule
-        .getByTimestamp(blockHeader.getTimestamp())
-        .orElseGet(
-            () ->
-                transitionUtils.dispatchFunctionAccordingToMergeState(
-                    protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader)));
+    return this.transitionUtils.dispatchFunctionAccordingToMergeState(
+        protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader));
   }
 
   /**
@@ -127,13 +122,6 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    * @return the ProtocolSpec to be used by the provided block
    */
   public ProtocolSpec getByBlockHeaderWithTransitionReorgHandling(
-      final ProcessableBlockHeader blockHeader) {
-    return this.timestampSchedule
-        .getByTimestamp(blockHeader.getTimestamp())
-        .orElseGet(() -> getByBlockHeaderFromTransitionUtils(blockHeader));
-  }
-
-  private ProtocolSpec getByBlockHeaderFromTransitionUtils(
       final ProcessableBlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
     if (mergeContext.getFinalized().isEmpty()) {
@@ -181,25 +169,6 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     return getPostMergeSchedule().getByBlockHeader(blockHeader);
   }
 
-  /**
-   * Gets by block number.
-   *
-   * @param number the number
-   * @return the by block number
-   */
-  @Override
-  public ProtocolSpec getByBlockNumber(final long number) {
-
-    return Optional.ofNullable(protocolContext)
-        .map(ProtocolContext::getBlockchain)
-        .flatMap(blockchain -> blockchain.getBlockHeader(number))
-        .map(timestampSchedule::getByBlockHeader)
-        .orElseGet(
-            () ->
-                transitionUtils.dispatchFunctionAccordingToMergeState(
-                    protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
-  }
-
   @Override
   public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
     return timestampSchedule.anyMatch(predicate)
@@ -244,8 +213,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     String blockNumberMilestones =
-        transitionUtils.dispatchFunctionAccordingToMergeState(
-            HeaderBasedProtocolSchedule::listMilestones);
+        transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::listMilestones);
     return blockNumberMilestones + ";" + timestampSchedule.listMilestones();
   }
 

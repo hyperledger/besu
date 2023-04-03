@@ -52,7 +52,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.List;
@@ -76,7 +76,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   interface MethodFactory {
     AbstractEngineForkchoiceUpdated create(
         final Vertx vertx,
-        final TimestampSchedule timestampSchedule,
+        final UnifiedProtocolSchedule timestampSchedule,
         final ProtocolContext protocolContext,
         final MergeMiningCoordinator mergeCoordinator,
         final EngineCallListener engineCallListener);
@@ -99,7 +99,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
       new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
 
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private TimestampSchedule timestampSchedule;
+  @Mock private UnifiedProtocolSchedule timestampSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;

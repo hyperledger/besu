@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -61,43 +63,25 @@ public class TimestampScheduleBuilderTest {
   public void createTimestampScheduleInOrder() {
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
     config.cancunTime(3);
-    final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
+    final UnifiedProtocolSchedule timestampSchedule = builder.createTimestampSchedule();
 
     assertThat(timestampSchedule.getChainId()).contains(chainId);
-    assertThat(timestampSchedule.getByTimestamp(0)).isEmpty();
-    assertThat(timestampSchedule.getByTimestamp(1))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Shanghai");
-    assertThat(timestampSchedule.getByTimestamp(2))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Shanghai");
-    assertThat(timestampSchedule.getByTimestamp(3))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Cancun");
-    assertThat(timestampSchedule.getByTimestamp(4))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Cancun");
+    assertThat(timestampSchedule.getByBlockHeader(blockHeader(0))).isNull();
+    assertThat(timestampSchedule.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Shanghai");
+    assertThat(timestampSchedule.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Shanghai");
+    assertThat(timestampSchedule.getByBlockHeader(blockHeader(3)).getName()).isEqualTo("Cancun");
+    assertThat(timestampSchedule.getByBlockHeader(blockHeader(4)).getName()).isEqualTo("Cancun");
   }
 
   @Test
   public void createTimestampScheduleOverlappingUsesLatestFork() {
     config.shanghaiTime(0);
     config.cancunTime(0);
-    final TimestampSchedule timestampSchedule = builder.createTimestampSchedule();
+    final UnifiedProtocolSchedule timestampSchedule = builder.createTimestampSchedule();
 
     assertThat(timestampSchedule.getChainId()).contains(chainId);
-    assertThat(timestampSchedule.getByTimestamp(0))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Cancun");
-    assertThat(timestampSchedule.getByTimestamp(1))
-        .isPresent()
-        .map(ProtocolSpec::getName)
-        .hasValue("Cancun");
+    assertThat(timestampSchedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Cancun");
+    assertThat(timestampSchedule.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Cancun");
   }
 
   @Test
@@ -108,5 +92,9 @@ public class TimestampScheduleBuilderTest {
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
             "Genesis Config Error: 'Cancun' is scheduled for milestone 2 but it must be on or after milestone 3.");
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

@@ -35,9 +35,9 @@ import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
@@ -60,7 +60,7 @@ public class GoQuorumBlockProcessorTest {
   @Mock private GoQuorumPrivateStorage goQuorumPrivateStorage;
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private MainnetTransactionValidator transactionValidator;
-  @Mock private HeaderBasedProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
 
   private GoQuorumPrivacyParameters goQuorumPrivacyParameters;
