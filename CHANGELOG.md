@@ -1,5 +1,12 @@
 # Changelog
 
+## 23.4-RC
+
+### Additions and Improvements
+- New experimental transaction pool implementation [#5290](https://github.com/hyperledger/besu/pull/5290)
+
+### Bug Fixes
+
 ## 23.1.3 
 
 ### Breaking Changes
