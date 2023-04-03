@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -196,13 +197,20 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final List<Deposit> depositsFromReceipts =
-          transactionResults.getReceipts().stream()
-              .flatMap(receipt -> receipt.getLogsList().stream())
-              .map(DepositDecoder::decodeFromLog)
-              .toList();
-      final Optional<List<Deposit>> maybeDeposits =
-          depositsFromReceipts.isEmpty() ? Optional.empty() : Optional.of(depositsFromReceipts);
+
+      final DepositsValidator depositsValidator = newProtocolSpec.getDepositsValidator();
+      Optional<List<Deposit>> maybeDeposits = Optional.empty();
+
+      if (depositsValidator instanceof DepositsValidator.AllowedDeposits) {
+        final List<Deposit> depositsFromReceipts =
+            transactionResults.getReceipts().stream()
+                .flatMap(receipt -> receipt.getLogsList().stream())
+                .map(DepositDecoder::decodeFromLog)
+                .toList();
+        maybeDeposits = Optional.of(depositsFromReceipts);
+      }
+
+      throwIfStopped();
 
       if (rewardCoinbase
           && !rewardBeneficiary(

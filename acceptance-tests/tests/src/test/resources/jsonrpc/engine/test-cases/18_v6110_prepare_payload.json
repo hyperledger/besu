@@ -4,12 +4,12 @@
     "method": "engine_forkchoiceUpdatedV2",
     "params": [
       {
-        "headBlockHash": "0x3559e851470f6e7bbed1db474980683e8c315bfce99b2a6ef47c057c04de7858",
-        "safeBlockHash": "0x3559e851470f6e7bbed1db474980683e8c315bfce99b2a6ef47c057c04de7858",
+        "headBlockHash": "0x5dec96e86ccd61362959cc73a0992b033fcde6f01d7467393363538c74c5260d",
+        "safeBlockHash": "0x5dec96e86ccd61362959cc73a0992b033fcde6f01d7467393363538c74c5260d",
         "finalizedBlockHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
       {
-        "timestamp": "0x10",
+        "timestamp": "0x20",
         "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "suggestedFeeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
         "withdrawals": [
@@ -36,10 +36,10 @@
     "result": {
       "payloadStatus": {
         "status": "VALID",
-        "latestValidHash": "0x3559e851470f6e7bbed1db474980683e8c315bfce99b2a6ef47c057c04de7858",
+        "latestValidHash": "0x5dec96e86ccd61362959cc73a0992b033fcde6f01d7467393363538c74c5260d",
         "validationError": null
       },
-      "payloadId": "0x0065bd32d4f95410"
+      "payloadId": "0x0065bd48ff13b2e0"
     }
   },
   "statusCode" : 200
