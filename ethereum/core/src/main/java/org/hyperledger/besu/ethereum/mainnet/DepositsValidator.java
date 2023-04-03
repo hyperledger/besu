@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public interface DepositsValidator {
 
   boolean validateDepositParameters(Optional<List<Deposit>> deposits);
+
   boolean validateDeposits(Block block, List<TransactionReceipt> receipts);
 
   boolean validateDepositsRoot(Block block);

@@ -68,7 +68,6 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
             });
     verify(engineCallListener, times(1)).executionEngineCalled();
 
-
     // should return deposits for a post-V6110 block
     when(mergeContext.retrieveBlockById(mockPid))
         .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
