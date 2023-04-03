@@ -37,6 +37,13 @@ public class AccountTransactions {
   }
 
   public TransferTransaction createTransfer(
+      final Account recipient, final int amount, final Amount gasPrice) {
+    return createBuilder(accounts.getPrimaryBenefactor(), recipient, Amount.ether(amount))
+        .gasPrice(gasPrice)
+        .build();
+  }
+
+  public TransferTransaction createTransfer(
       final Account recipient, final int amount, final SignatureAlgorithm signatureAlgorithm) {
     return createBuilder(accounts.getPrimaryBenefactor(), recipient, Amount.ether(amount))
         .setSignatureAlgorithm(signatureAlgorithm)
@@ -71,9 +78,14 @@ public class AccountTransactions {
 
   public TransferTransactionSet createIncrementalTransfers(
       final Account sender, final Account recipient, final int etherAmount) {
+    return createIncrementalTransfers(sender, recipient, etherAmount, DEFAULT_GAS_PRICE);
+  }
+
+  public TransferTransactionSet createIncrementalTransfers(
+      final Account sender, final Account recipient, final int etherAmount, final Amount gasPrice) {
     final List<TransferTransaction> transfers = new ArrayList<>();
     final TransferTransactionBuilder transferOneEther =
-        createBuilder(sender, recipient, Amount.ether(1));
+        createBuilder(sender, recipient, Amount.ether(1)).gasPrice(gasPrice);
 
     for (int i = 1; i <= etherAmount; i++) {
       transfers.add(transferOneEther.build());

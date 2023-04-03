@@ -116,17 +116,7 @@ public class TransferTransaction implements Transaction<Hash> {
   }
 
   private BigInteger convertGasPriceToWei(final Amount unconverted) {
-    final BigInteger price =
-        Convert.toWei(unconverted.getValue(), unconverted.getUnit()).toBigInteger();
-
-    if (MINIMUM_GAS_PRICE.compareTo(price) > 0) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Gas price: %s WEI, is below the accepted minimum: %s WEI",
-              price, MINIMUM_GAS_PRICE));
-    }
-
-    return price;
+    return Convert.toWei(unconverted.getValue(), unconverted.getUnit()).toBigInteger();
   }
 
   private RawTransaction createRawTransaction() {
