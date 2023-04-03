@@ -11,10 +11,11 @@
 - An alternate build target for the EVM using GraalVM AOT compilaiton was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
 - To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew naticeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
 - Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
+- Log an error with stacktrace when RPC responds with internal error [#5288](https://github.com/hyperledger/besu/pull/5288)
 
 ### Bug Fixes
+- Fix eth_getBlockByNumber cache error for latest block when called during syncing [#5292](https://github.com/hyperledger/besu/pull/5292)
 - Fix QBFT and IBFT unable to propose blocks on London when zeroBaseFee is used [#5276](https://github.com/hyperledger/besu/pull/5276) 
-
 - Make QBFT validator smart contract mode work with london fork [#5249](https://github.com/hyperledger/besu/issues/5249)
 
 ### Download Links
