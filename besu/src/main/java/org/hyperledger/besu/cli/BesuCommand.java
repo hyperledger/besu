@@ -2792,7 +2792,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     checkPrivacyTlsOptionsDependencies();
 
     if (isGoQuorumCompatibilityMode) {
-      throw new IllegalStateException("GoQuorum privacy is no longer supported in Besu");
+      throw new IllegalStateException("GoQuorum compatibility mode is no longer supported in Besu");
     }
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();

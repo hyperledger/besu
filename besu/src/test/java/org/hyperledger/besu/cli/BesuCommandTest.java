@@ -5135,52 +5135,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void quorumInteropEnabledSucceedsWithGasPriceSetToZero() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "0",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH);
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsIfEnclaveKeyFileDoesNotExist() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "0",
-        "--privacy-public-key-file",
-        "ThisFileDoesNotExist");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsIfEnclaveKeyFileIsNotSet() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithMainnetDefaultNetwork() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("isQuorum mode cannot be used on Mainnet.");
-  }
-
-  @Test
   public void quorumInteropEnabledFailsWithMainnetChainId() throws IOException {
     final Path genesisFile =
         createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET.put("chainId", "1"));
