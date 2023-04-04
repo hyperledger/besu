@@ -88,7 +88,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   @Test
   public void shouldMineOnSingleNodeWithPaidGas_London() throws Exception {
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
-    setGenesisConfigToLondon(minerNode, false);
+    updateGenesisConfigToLondon(minerNode, false);
 
     cluster.start(minerNode);
 
@@ -103,7 +103,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     minerNode.execute(accountTransactions.create1559Transfer(sender, 50, 4));
     cluster.verify(sender.balanceEquals(100));
 
-    minerNode.execute(accountTransactions.create1559IncrementalTransfers(sender, receiver, 1, 4));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
     cluster.verify(receiver.balanceEquals(1));
 
     minerNode.execute(accountTransactions.create1559IncrementalTransfers(sender, receiver, 2, 4));
@@ -113,7 +113,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   @Test
   public void shouldMineOnSingleNodeWithFreeGas_London() throws Exception {
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
-    setGenesisConfigToLondon(minerNode, true);
+    updateGenesisConfigToLondon(minerNode, true);
 
     cluster.start(minerNode);
 
@@ -129,7 +129,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     cluster.verify(sender.balanceEquals(100));
 
     minerNode.execute(
-        accountTransactions.create1559IncrementalTransfers(sender, receiver, 1, 4, Amount.ZERO));
+        accountTransactions.createIncrementalTransfers(sender, receiver, 1, Amount.ZERO));
     cluster.verify(receiver.balanceEquals(1));
 
     minerNode.execute(
@@ -213,7 +213,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     cluster.verifyOnActiveNodes(receiver.balanceEquals(80));
   }
 
-  private static void setGenesisConfigToLondon(
+  private static void updateGenesisConfigToLondon(
       final BesuNode minerNode, final boolean zeroBaseFeeEnabled) {
     final Optional<String> genesisConfig =
         minerNode.getGenesisConfigProvider().create(List.of(minerNode));
@@ -222,7 +222,6 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     config.remove("berlinBlock");
     config.put("londonBlock", 0);
     config.put("zeroBaseFee", zeroBaseFeeEnabled);
-    final String updatedGenesisConfig = genesisConfigNode.toString();
-    minerNode.setGenesisConfig(updatedGenesisConfig);
+    minerNode.setGenesisConfig(genesisConfigNode.toString());
   }
 }
