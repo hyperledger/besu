@@ -92,7 +92,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
   public void setup() {
     worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     pendingTransactions = createPendingTransactions();
-    when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
   }
 
   protected abstract PendingTransactions createPendingTransactions();
