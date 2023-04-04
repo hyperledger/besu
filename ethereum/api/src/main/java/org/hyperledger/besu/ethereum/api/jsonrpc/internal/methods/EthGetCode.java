@@ -27,13 +27,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
 
-  public EthGetCode(
-      final BlockchainQueries blockchainQueries) {
+  public EthGetCode(final BlockchainQueries blockchainQueries) {
     super(blockchainQueries);
   }
 
-  public EthGetCode(
-      final Supplier<BlockchainQueries> blockchainQueries) {
+  public EthGetCode(final Supplier<BlockchainQueries> blockchainQueries) {
     super(blockchainQueries);
   }
 

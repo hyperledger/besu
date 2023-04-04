@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
-import static java.util.Optional.ofNullable;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;

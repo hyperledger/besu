@@ -78,56 +78,32 @@ public class MainnetProtocolSpecFactory {
 
   public ProtocolSpecBuilder byzantiumDefinition() {
     return MainnetProtocolSpecs.byzantiumDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder constantinopleDefinition() {
     return MainnetProtocolSpecs.constantinopleDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder petersburgDefinition() {
     return MainnetProtocolSpecs.petersburgDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder istanbulDefinition() {
     return MainnetProtocolSpecs.istanbulDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder muirGlacierDefinition() {
     return MainnetProtocolSpecs.muirGlacierDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder berlinDefinition() {
     return MainnetProtocolSpecs.berlinDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder londonDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -244,20 +220,12 @@ public class MainnetProtocolSpecFactory {
 
   public ProtocolSpecBuilder gothamDefinition() {
     return ClassicProtocolSpecs.gothamDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        ecip1017EraRounds,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, ecip1017EraRounds, evmConfiguration);
   }
 
   public ProtocolSpecBuilder defuseDifficultyBombDefinition() {
     return ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        ecip1017EraRounds,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, ecip1017EraRounds, evmConfiguration);
   }
 
   public ProtocolSpecBuilder atlantisDefinition() {

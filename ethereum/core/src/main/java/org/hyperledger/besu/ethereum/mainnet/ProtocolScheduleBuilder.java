@@ -68,12 +68,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration) {
-    super(
-        config,
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration);
+    super(config, protocolSpecAdapters, privacyParameters, isRevertReasonEnabled, evmConfiguration);
     this.defaultChainId = defaultChainId;
   }
 
@@ -219,9 +214,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
                   protocolSchedule,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      evmConfiguration),
+                      config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
                   Function.identity());
               protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
             });

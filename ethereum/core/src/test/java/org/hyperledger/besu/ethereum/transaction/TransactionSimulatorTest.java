@@ -92,7 +92,6 @@ public class TransactionSimulatorTest {
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
 
     when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
-    when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(false);
   }
 
   @Test

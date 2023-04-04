@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -66,12 +65,6 @@ import org.apache.tuweni.bytes.Bytes32;
 public class GraphQLDataFetchers {
 
   private final Integer highestEthVersion;
-
-  public GraphQLDataFetchers(
-      final Set<Capability> supportedCapabilities,
-      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
-    this(supportedCapabilities);
-  }
 
   public GraphQLDataFetchers(final Set<Capability> supportedCapabilities) {
     final OptionalInt version =

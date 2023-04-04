@@ -212,8 +212,6 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
 
   @Test
   public void shouldRejectGoQuorumTransactionWithNonZeroValue() {
-    when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
-
     final Transaction transaction37 =
         Transaction.builder().v(BigInteger.valueOf(37)).gasPrice(Wei.ZERO).value(Wei.ONE).build();
     final Transaction transaction38 =

@@ -105,7 +105,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -139,15 +138,10 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBui
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -212,7 +206,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -234,7 +227,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -1481,8 +1473,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         genesisConfigOptions = readGenesisConfigOptions();
 
         if (genesisConfigOptions.isQuorum()) {
-          throw new IllegalStateException(
-              "GoQuorum compatibility mode is no longer supported in Besu");
+          enableGoQuorumCompatibilityMode();
         }
       }
 
@@ -2289,7 +2280,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
-        .privacyParameters(privacyParameters(storageProvider))
+        .privacyParameters(privacyParameters())
         .pkiBlockCreationConfiguration(maybePkiBlockCreationConfiguration())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
@@ -2782,7 +2773,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         || permissionsOptionGroup.permissionsAccountsContractEnabled;
   }
 
-  private PrivacyParameters privacyParameters(final KeyValueStorageProvider storageProvider) {
+  private PrivacyParameters privacyParameters() {
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -2799,6 +2790,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         List.of("--privacy-url", "--privacy-public-key-file"));
 
     checkPrivacyTlsOptionsDependencies();
+
+    if (isGoQuorumCompatibilityMode) {
+      throw new IllegalStateException("GoQuorum privacy is no longer supported in Besu");
+    }
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
@@ -2891,14 +2886,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return privacyParameters;
   }
 
-  private WorldStateArchive createPrivateWorldStateArchive(final StorageProvider storageProvider) {
-    final WorldStateStorage privateWorldStateStorage =
-        storageProvider.createPrivateWorldStateStorage();
-    final WorldStatePreimageStorage preimageStorage =
-        storageProvider.createPrivateWorldStatePreimageStorage();
-    return new DefaultWorldStateArchive(privateWorldStateStorage, preimageStorage);
-  }
-
   private boolean anyPrivacyApiEnabled() {
     return jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.EEA.name())
         || jsonRPCWebsocketOptionGroup.rpcWsApis.contains(RpcApis.EEA.name())
@@ -2935,7 +2922,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                                   "No KeyValueStorageFactory found for key: " + name)))
               .withCommonConfiguration(pluginCommonConfiguration)
               .withMetricsSystem(getMetricsSystem())
-              .isGoQuorumCompatibilityMode(isGoQuorumCompatibilityMode.booleanValue())
               .build();
     }
     return this.keyValueStorageProvider;
@@ -3471,6 +3457,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
     return genesisConfigOptions.getEcCurve();
+  }
+
+  /** Enables Go Quorum Compatibility mode. Visible for testing. */
+  @VisibleForTesting
+  protected void enableGoQuorumCompatibilityMode() {
+    // this static flag is still used for GoQuorum permissioning compatibility
+    isGoQuorumCompatibilityMode = true;
   }
 
   private GenesisConfigOptions getActualGenesisConfigOptions() {

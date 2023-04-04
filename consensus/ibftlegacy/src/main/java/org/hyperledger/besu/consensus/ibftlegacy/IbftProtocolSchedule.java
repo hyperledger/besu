@@ -58,12 +58,9 @@ public class IbftProtocolSchedule {
             DEFAULT_CHAIN_ID,
             ProtocolSpecAdapters.create(
                 0,
-                builder ->
-                    applyIbftChanges(
-                        blockPeriod, builder, config.isQuorum(), ibftConfig.getCeil2Nby3Block())),
+                builder -> applyIbftChanges(blockPeriod, builder, ibftConfig.getCeil2Nby3Block())),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
             evmConfiguration)
         .createProtocolSchedule();
   }
@@ -86,7 +83,6 @@ public class IbftProtocolSchedule {
   private static ProtocolSpecBuilder applyIbftChanges(
       final long secondsBetweenBlocks,
       final ProtocolSpecBuilder builder,
-      final boolean goQuorumMode,
       final long ceil2nBy3Block) {
     return builder
         .blockHeaderValidatorBuilder(
@@ -94,7 +90,7 @@ public class IbftProtocolSchedule {
         .ommerHeaderValidatorBuilder(
             feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.ZERO)

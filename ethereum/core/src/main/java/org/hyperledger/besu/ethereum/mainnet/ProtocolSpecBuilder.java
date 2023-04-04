@@ -345,10 +345,7 @@ public class ProtocolSpecBuilder {
 
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(
-            blockHeaderValidator,
-            blockBodyValidator,
-            blockProcessor,
-            badBlockManager);
+            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
         name,

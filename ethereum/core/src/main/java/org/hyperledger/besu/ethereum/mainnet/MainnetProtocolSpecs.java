@@ -184,10 +184,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static BlockValidatorBuilder blockValidatorBuilder() {
-    return (blockHeaderValidator,
-        blockBodyValidator,
-        blockProcessor,
-        badBlockManager) ->
+    return (blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager) ->
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
   }
@@ -197,10 +194,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
-    return frontierDefinition(
-            configContractSizeLimit,
-            configStackSizeLimit,
-            evmConfiguration)
+    return frontierDefinition(configContractSizeLimit, configStackSizeLimit, evmConfiguration)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEVMs::homestead)
         .contractCreationProcessorBuilder(
@@ -214,10 +208,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
                 new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    true,
-                    Optional.empty()))
+                    gasCalculator, gasLimitCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -226,8 +217,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final EvmConfiguration evmConfiguration) {
-    return homesteadDefinition(
-            contractSizeLimit, configStackSizeLimit, evmConfiguration)
+    return homesteadDefinition(contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
@@ -251,8 +241,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final EvmConfiguration evmConfiguration) {
-    return daoRecoveryInitDefinition(
-            contractSizeLimit, configStackSizeLimit, evmConfiguration)
+    return daoRecoveryInitDefinition(contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
@@ -261,8 +250,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final EvmConfiguration evmConfiguration) {
-    return homesteadDefinition(
-            contractSizeLimit, configStackSizeLimit, evmConfiguration)
+    return homesteadDefinition(contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
@@ -276,8 +264,7 @@ public abstract class MainnetProtocolSpecs {
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
-    return tangerineWhistleDefinition(
-            OptionalInt.empty(), configStackSizeLimit, evmConfiguration)
+    return tangerineWhistleDefinition(OptionalInt.empty(), configStackSizeLimit, evmConfiguration)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
@@ -297,8 +284,7 @@ public abstract class MainnetProtocolSpecs {
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
-                    gasCalculator, gasLimitCalculator, true, chainId))
+                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -325,10 +311,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration) {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return spuriousDragonDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            evmConfiguration)
+            chainId, contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEVMs::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -361,11 +344,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
     return byzantiumDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            evmConfiguration)
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
@@ -380,11 +359,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
     return constantinopleDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            evmConfiguration)
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
         .gasCalculator(PetersburgGasCalculator::new)
         .name("Petersburg");
   }
@@ -428,11 +403,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
     return istanbulDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            evmConfiguration)
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
   }
@@ -444,11 +415,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
     return muirGlacierDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            evmConfiguration)
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->

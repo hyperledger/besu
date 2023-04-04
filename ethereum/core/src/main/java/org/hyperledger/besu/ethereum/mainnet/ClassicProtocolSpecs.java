@@ -75,8 +75,7 @@ public class ClassicProtocolSpecs {
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
-                    gasCalculator, gasLimitCalculator, true, chainId))
+                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
         .name("ClassicTangerineWhistle");
   }
 
@@ -86,10 +85,7 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final EvmConfiguration evmConfiguration) {
     return tangerineWhistleDefinition(
-            chainId,
-            OptionalInt.empty(),
-            configStackSizeLimit,
-            evmConfiguration)
+            chainId, OptionalInt.empty(), configStackSizeLimit, evmConfiguration)
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
         .name("DieHard");
@@ -101,11 +97,7 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration) {
-    return dieHardDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            evmConfiguration)
+    return dieHardDefinition(chainId, contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
         .blockProcessorBuilder(
@@ -133,16 +125,11 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration) {
     return gothamDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            ecip1017EraRounds,
-            evmConfiguration)
+            chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds, evmConfiguration)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
-                    gasCalculator, gasLimitCalculator, true, chainId))
+                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
         .name("DefuseDifficultyBomb");
   }
 
