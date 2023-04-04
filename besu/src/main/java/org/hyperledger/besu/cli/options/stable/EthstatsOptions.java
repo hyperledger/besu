@@ -98,7 +98,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   @Override
   public List<String> getCLIOptions() {
-    final ArrayList<String> options = new ArrayList<>();
+    final List<String> options = new ArrayList<>();
     options.add(ETHSTATS + "=" + ethstatsUrl);
     options.add(ETHSTATS_CONTACT + "=" + ethstatsContact);
     if (ethstatsCaCert != null) {
