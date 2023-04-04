@@ -4543,7 +4543,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled", "--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
 
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("GoQuorum compatibility mode is no longer supported in Besu");
+        .contains("GoQuorum privacy is no longer supported in Besu");
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();

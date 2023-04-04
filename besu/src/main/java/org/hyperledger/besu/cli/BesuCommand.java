@@ -2802,7 +2802,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       if (isGoQuorumCompatibilityMode) {
         throw new ParameterException(
-            commandLine, String.format("%s %s", "GoQuorum mode", errorSuffix));
+            commandLine, String.format("GoQuorum privacy is no longer supported in Besu"));
       }
 
       if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
