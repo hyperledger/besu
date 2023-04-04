@@ -644,6 +644,37 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
+  public void shouldUseExtraDataFromMiningParameters() {
+    final Bytes extraData = Bytes.fromHexString("0x1234");
+
+    miningParameters = new MiningParameters.Builder().extraData(extraData).build();
+
+    this.coordinator =
+        new MergeCoordinator(
+            protocolContext,
+            protocolSchedule,
+            proposalBuilderExecutor,
+            transactions,
+            miningParameters,
+            backwardSyncContext);
+
+    final PayloadIdentifier payloadId =
+        this.coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            1L,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
+
+    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
+        ArgumentCaptor.forClass(BlockWithReceipts.class);
+
+    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), blockWithReceipts.capture());
+
+    assertThat(blockWithReceipts.getValue().getHeader().getExtraData()).isEqualTo(extraData);
+  }
+
+  @Test
   public void childTimestampExceedsParentsFails() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(

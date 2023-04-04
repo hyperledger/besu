@@ -123,6 +123,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .getTargetGasLimit()
             // TODO: revisit default target gas limit
             .orElse(new AtomicLong(30000000L));
+    this.extraData.set(miningParams.getExtraData());
 
     this.mergeBlockCreatorFactory =
         (parentHeader, address) ->
