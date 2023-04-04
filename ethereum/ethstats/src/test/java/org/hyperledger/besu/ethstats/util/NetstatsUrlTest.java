@@ -59,7 +59,7 @@ public class NetstatsUrlTest {
     final NetstatsUrl netstatsUrl =
         NetstatsUrl.fromParams("Dev-Node-1:secret@" + host, CONTACT, null);
     assertThat(netstatsUrl.getHost()).isEqualTo(host);
-    assertThat(netstatsUrl.getPort()).isEqualTo(3000);
+    assertThat(netstatsUrl.getPort()).isEqualTo(-1);
   }
 
   @Test

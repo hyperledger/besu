@@ -53,7 +53,7 @@ public interface NetstatsUrl {
             .nodeName(netStatsUrl.group(1))
             .secret(netStatsUrl.group(2))
             .host(netStatsUrl.group(3))
-            .port(Integer.parseInt(Optional.ofNullable(netStatsUrl.group(5)).orElse("3000")))
+            .port(Integer.parseInt(Optional.ofNullable(netStatsUrl.group(5)).orElse("-1")))
             .contact(contact)
             .pemTrust(pemTrust)
             .build();

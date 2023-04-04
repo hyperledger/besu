@@ -69,7 +69,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import javax.net.ssl.SSLHandshakeException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.vertx.core.Vertx;
@@ -166,14 +165,23 @@ public class EthStatsService {
       final NetstatsUrl netstatsUrl) {
     return new WebSocketConnectOptions()
         .setURI("/api")
-        .setHost(netstatsUrl.getHost())
-        .setPort(netstatsUrl.getPort())
-        .setSsl(true);
+        .setSsl(false)
+        .setHost(netstatsUrl.getHost());
+
+    // port will be set up in start method.
+  }
+
+  private static int getWsPort(final NetstatsUrl netstatsUrl, final boolean isSSL) {
+    if (netstatsUrl.getPort() >= 0) {
+      return netstatsUrl.getPort();
+    }
+    return isSSL ? 443 : 80;
   }
 
   /** Start. */
   public void start() {
-
+    flipSSL();
+    LOG.info("Connecting to EthStats: {}", getEthStatsHost());
     try {
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
       vertx
@@ -209,13 +217,8 @@ public class EthStatsService {
                   // sending a hello to initiate the connection using the secret
                   sendHello();
                 } else {
-                  String errorMessage =
-                      "Failed to reach the ethstats server " + event.cause().getMessage();
-                  if (event.cause() instanceof SSLHandshakeException) {
-                    errorMessage += " (trying with ssl: " + !webSocketConnectOptions.isSsl() + ")";
-                    webSocketConnectOptions.setSsl(!webSocketConnectOptions.isSsl());
-                  }
-                  LOG.error(errorMessage);
+                  LOG.error(
+                      "Failed to reach the ethstats server due to: {}", event.cause().getMessage());
                   retryInProgress.set(false);
                   retryConnect();
                 }
@@ -224,6 +227,20 @@ public class EthStatsService {
     } catch (Exception e) {
       retryConnect();
     }
+  }
+
+  private String getEthStatsHost() {
+    return String.format(
+        "%s://%s:%s",
+        webSocketConnectOptions.isSsl() ? "wss" : "ws",
+        netstatsUrl.getHost(),
+        getWsPort(netstatsUrl, webSocketConnectOptions.isSsl()));
+  }
+
+  private void flipSSL() {
+    final boolean isSSL = !webSocketConnectOptions.isSsl();
+    webSocketConnectOptions.setSsl(isSSL);
+    webSocketConnectOptions.setPort(getWsPort(netstatsUrl, isSSL));
   }
 
   /** Ends the current web socket connection, observers and schedulers */
