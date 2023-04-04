@@ -246,14 +246,14 @@ public class DepositsValidatorTest {
     assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameters(deposits))
         .isTrue();
 
-    final Optional<List<Deposit>> emptyDeposits = Optional.empty();
+    final Optional<List<Deposit>> emptyDeposits = Optional.of(List.of());
     assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameters(emptyDeposits))
         .isTrue();
   }
 
   @Test
   public void invalidateAllowedDepositParams() {
-    final Optional<List<Deposit>> deposits = null;
+    final Optional<List<Deposit>> deposits = Optional.empty();
     assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameters(deposits))
         .isFalse();
   }
