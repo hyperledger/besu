@@ -1026,7 +1026,7 @@ public class RunnerBuilder {
         createMetricsService(vertx, metricsConfiguration);
 
     final Optional<EthStatsService> ethStatsService;
-    if (!Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl())) {
+    if (isEthStatsEnabled()) {
       ethStatsService =
           Optional.of(
               new EthStatsService(
@@ -1103,6 +1103,10 @@ public class RunnerBuilder {
         pidPath,
         autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
         context.getBlockchain());
+  }
+
+  private boolean isEthStatsEnabled() {
+    return ethstatsOptions != null && !Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl());
   }
 
   private Stream<EnodeURL> sanitizePeers(
