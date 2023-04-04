@@ -100,10 +100,13 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     minerNode.execute(accountTransactions.createTransfer(sender, 50));
     cluster.verify(sender.balanceEquals(50));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
+    minerNode.execute(accountTransactions.create1559Transfer(sender, 50, 4));
+    cluster.verify(sender.balanceEquals(100));
+
+    minerNode.execute(accountTransactions.create1559IncrementalTransfers(sender, receiver, 1, 4));
     cluster.verify(receiver.balanceEquals(1));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    minerNode.execute(accountTransactions.create1559IncrementalTransfers(sender, receiver, 2, 4));
     cluster.verify(receiver.balanceEquals(3));
   }
 
@@ -122,12 +125,15 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     minerNode.execute(accountTransactions.createTransfer(sender, 50, Amount.ZERO));
     cluster.verify(sender.balanceEquals(50));
 
+    minerNode.execute(accountTransactions.create1559Transfer(sender, 50, 4, Amount.ZERO));
+    cluster.verify(sender.balanceEquals(100));
+
     minerNode.execute(
-        accountTransactions.createIncrementalTransfers(sender, receiver, 1, Amount.ZERO));
+        accountTransactions.create1559IncrementalTransfers(sender, receiver, 1, 4, Amount.ZERO));
     cluster.verify(receiver.balanceEquals(1));
 
     minerNode.execute(
-        accountTransactions.createIncrementalTransfers(sender, receiver, 2, Amount.ZERO));
+        accountTransactions.create1559IncrementalTransfers(sender, receiver, 2, 4, Amount.ZERO));
     cluster.verify(receiver.balanceEquals(3));
   }
 
@@ -211,7 +217,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
       final BesuNode minerNode, final boolean zeroBaseFeeEnabled) {
     final Optional<String> genesisConfig =
         minerNode.getGenesisConfigProvider().create(List.of(minerNode));
-    final ObjectNode genesisConfigNode = JsonUtil.objectNodeFromString(genesisConfig.get());
+    final ObjectNode genesisConfigNode = JsonUtil.objectNodeFromString(genesisConfig.orElseThrow());
     final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
     config.remove("berlinBlock");
     config.put("londonBlock", 0);
