@@ -88,13 +88,6 @@ public interface GenesisConfigOptions {
   String getConsensusEngine();
 
   /**
-   * Gets ibft legacy config options.
-   *
-   * @return the ibft legacy config options
-   */
-  IbftLegacyConfigOptions getIbftLegacyConfigOptions();
-
-  /**
    * Gets checkpoint options.
    *
    * @return the checkpoint options

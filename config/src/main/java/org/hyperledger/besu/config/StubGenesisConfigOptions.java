@@ -122,11 +122,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
-    return IbftLegacyConfigOptions.DEFAULT;
-  }
-
-  @Override
   public CheckpointConfigOptions getCheckpointOptions() {
     return CheckpointConfigOptions.DEFAULT;
   }
