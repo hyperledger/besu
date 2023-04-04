@@ -15,7 +15,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import java.util.List;
 import picocli.CommandLine;
 
 /** The Ethstats CLI options. */
-public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
+public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   private static final String ETHSTATS = "--ethstats";
   private static final String ETHSTATS_CONTACT = "--ethstats-contact";
@@ -64,8 +64,8 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
   }
 
   @Override
-  public NetstatsUrl toDomainObject() {
-    return NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact, ethstatsPemTrust);
+  public EthStatsConnectOptions toDomainObject() {
+    return EthStatsConnectOptions.fromParams(ethstatsUrl, ethstatsContact, ethstatsPemTrust);
   }
 
   /**

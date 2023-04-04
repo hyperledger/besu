@@ -106,7 +106,7 @@ import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethstats.EthStatsService;
-import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -1030,7 +1030,7 @@ public class RunnerBuilder {
       ethStatsService =
           Optional.of(
               new EthStatsService(
-                  NetstatsUrl.fromParams(
+                  EthStatsConnectOptions.fromParams(
                       ethstatsOptions.getEthstatsUrl(),
                       ethstatsOptions.getEthstatsContact(),
                       ethstatsOptions.getEthstatsPemTrust()),

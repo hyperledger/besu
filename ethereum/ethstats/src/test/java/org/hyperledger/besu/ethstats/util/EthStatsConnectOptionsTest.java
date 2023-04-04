@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class NetstatsUrlTest {
+public class EthStatsConnectOptionsTest {
 
   private final String VALID_NETSTATS_URL = "Dev-Node-1:secret-with-dashes@127.0.0.1:3001";
 
@@ -35,36 +35,36 @@ public class NetstatsUrlTest {
   @Test
   public void buildWithValidParams() {
     final Path pemTrustPath = Path.of("./test.pem");
-    final NetstatsUrl netstatsUrl =
-        NetstatsUrl.fromParams(VALID_NETSTATS_URL, CONTACT, pemTrustPath);
-    assertThat(netstatsUrl.getHost()).isEqualTo("127.0.0.1");
-    assertThat(netstatsUrl.getNodeName()).isEqualTo("Dev-Node-1");
-    assertThat(netstatsUrl.getPort()).isEqualTo(3001);
-    assertThat(netstatsUrl.getSecret()).isEqualTo("secret-with-dashes");
-    assertThat(netstatsUrl.getContact()).isEqualTo(CONTACT);
-    assertThat(netstatsUrl.getPemTrust()).isEqualTo(pemTrustPath);
+    final EthStatsConnectOptions ethStatsConnectOptions =
+        EthStatsConnectOptions.fromParams(VALID_NETSTATS_URL, CONTACT, pemTrustPath);
+    assertThat(ethStatsConnectOptions.getHost()).isEqualTo("127.0.0.1");
+    assertThat(ethStatsConnectOptions.getNodeName()).isEqualTo("Dev-Node-1");
+    assertThat(ethStatsConnectOptions.getPort()).isEqualTo(3001);
+    assertThat(ethStatsConnectOptions.getSecret()).isEqualTo("secret-with-dashes");
+    assertThat(ethStatsConnectOptions.getContact()).isEqualTo(CONTACT);
+    assertThat(ethStatsConnectOptions.getPemTrust()).isEqualTo(pemTrustPath);
   }
 
   @ParameterizedTest(name = "#{index} - With Host {0}")
   @ValueSource(strings = {"url-test.test.com", "url.test.com", "test.com", "10.10.10.15"})
   public void buildWithValidHost(final String host) {
-    final NetstatsUrl netstatsUrl =
-        NetstatsUrl.fromParams("Dev-Node-1:secret@" + host + ":3001", CONTACT, null);
-    assertThat(netstatsUrl.getHost()).isEqualTo(host);
+    final EthStatsConnectOptions ethStatsConnectOptions =
+        EthStatsConnectOptions.fromParams("Dev-Node-1:secret@" + host + ":3001", CONTACT, null);
+    assertThat(ethStatsConnectOptions.getHost()).isEqualTo(host);
   }
 
   @ParameterizedTest(name = "#{index} - With Host {0}")
   @ValueSource(strings = {"url-test.test.com", "url.test.com", "test.com", "10.10.10.15"})
   public void buildWithValidHostWithoutPort(final String host) {
-    final NetstatsUrl netstatsUrl =
-        NetstatsUrl.fromParams("Dev-Node-1:secret@" + host, CONTACT, null);
-    assertThat(netstatsUrl.getHost()).isEqualTo(host);
-    assertThat(netstatsUrl.getPort()).isEqualTo(-1);
+    final EthStatsConnectOptions ethStatsConnectOptions =
+        EthStatsConnectOptions.fromParams("Dev-Node-1:secret@" + host, CONTACT, null);
+    assertThat(ethStatsConnectOptions.getHost()).isEqualTo(host);
+    assertThat(ethStatsConnectOptions.getPort()).isEqualTo(-1);
   }
 
   @Test
   public void shouldDetectEmptyParams() {
-    assertThatThrownBy(() -> NetstatsUrl.fromParams("", CONTACT, null))
+    assertThatThrownBy(() -> EthStatsConnectOptions.fromParams("", CONTACT, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
   }
@@ -72,17 +72,19 @@ public class NetstatsUrlTest {
   @Test
   public void shouldDetectMissingParams() {
     // missing node name
-    assertThatThrownBy(() -> NetstatsUrl.fromParams("secret@127.0.0.1:3001", CONTACT, null))
+    assertThatThrownBy(
+            () -> EthStatsConnectOptions.fromParams("secret@127.0.0.1:3001", CONTACT, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
 
     // missing host
-    assertThatThrownBy(() -> NetstatsUrl.fromParams("Dev-Node-1:secret@", CONTACT, null))
+    assertThatThrownBy(() -> EthStatsConnectOptions.fromParams("Dev-Node-1:secret@", CONTACT, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
 
     // missing port
-    assertThatThrownBy(() -> NetstatsUrl.fromParams("Dev-Node-1:secret@127.0.0.1:", CONTACT, null))
+    assertThatThrownBy(
+            () -> EthStatsConnectOptions.fromParams("Dev-Node-1:secret@127.0.0.1:", CONTACT, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
   }
@@ -91,13 +93,17 @@ public class NetstatsUrlTest {
   public void shouldDetectInvalidParams() {
     // invalid host
     assertThatThrownBy(
-            () -> NetstatsUrl.fromParams("Dev-Node-1:secret@127.0@0.1:3001", CONTACT, null))
+            () ->
+                EthStatsConnectOptions.fromParams(
+                    "Dev-Node-1:secret@127.0@0.1:3001", CONTACT, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
 
     // invalid port
     assertThatThrownBy(
-            () -> NetstatsUrl.fromParams("Dev-Node-1:secret@127.0.0.1:A001", CONTACT, null))
+            () ->
+                EthStatsConnectOptions.fromParams(
+                    "Dev-Node-1:secret@127.0.0.1:A001", CONTACT, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
   }

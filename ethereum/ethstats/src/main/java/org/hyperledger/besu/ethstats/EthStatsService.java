@@ -52,7 +52,7 @@ import org.hyperledger.besu.ethstats.report.ImmutablePingReport;
 import org.hyperledger.besu.ethstats.report.NodeStatsReport;
 import org.hyperledger.besu.ethstats.report.PendingTransactionsReport;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
-import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 import org.hyperledger.besu.ethstats.util.PrimusHeartBeatsHelper;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.platform.PlatformDetector;
@@ -92,7 +92,7 @@ public class EthStatsService {
 
   private final AtomicBoolean retryInProgress = new AtomicBoolean(false);
 
-  private final NetstatsUrl netstatsUrl;
+  private final EthStatsConnectOptions ethStatsConnectOptions;
   private final EthProtocolManager protocolManager;
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
@@ -114,7 +114,7 @@ public class EthStatsService {
   /**
    * Instantiates a new EthStats service.
    *
-   * @param netstatsUrl the netstats url
+   * @param ethStatsConnectOptions the netstats url
    * @param blockchainQueries the blockchain queries
    * @param protocolManager the protocol manager
    * @param transactionPool the transaction pool
@@ -126,7 +126,7 @@ public class EthStatsService {
    * @param p2PNetwork the p 2 p network
    */
   public EthStatsService(
-      final NetstatsUrl netstatsUrl,
+      final EthStatsConnectOptions ethStatsConnectOptions,
       final BlockchainQueries blockchainQueries,
       final EthProtocolManager protocolManager,
       final TransactionPool transactionPool,
@@ -136,7 +136,7 @@ public class EthStatsService {
       final String clientVersion,
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork p2PNetwork) {
-    this.netstatsUrl = netstatsUrl;
+    this.ethStatsConnectOptions = ethStatsConnectOptions;
     this.blockchainQueries = blockchainQueries;
     this.protocolManager = protocolManager;
     this.transactionPool = transactionPool;
@@ -147,40 +147,42 @@ public class EthStatsService {
     this.genesisConfigOptions = genesisConfigOptions;
     this.p2PNetwork = p2PNetwork;
     this.blockResultFactory = new BlockResultFactory();
-    this.httpClientOptions = buildHttpClientOptions(netstatsUrl);
-    this.webSocketConnectOptions = buildWebSocketConnectOptions(netstatsUrl);
+    this.httpClientOptions = buildHttpClientOptions(ethStatsConnectOptions);
+    this.webSocketConnectOptions = buildWebSocketConnectOptions(ethStatsConnectOptions);
   }
 
-  private static HttpClientOptions buildHttpClientOptions(final NetstatsUrl netstatsUrl) {
+  private static HttpClientOptions buildHttpClientOptions(
+      final EthStatsConnectOptions ethStatsConnectOptions) {
     final HttpClientOptions options = new HttpClientOptions();
 
-    if (netstatsUrl.getPemTrust() != null) {
+    if (ethStatsConnectOptions.getPemTrust() != null) {
       options.setPemTrustOptions(
-          new PemTrustOptions().addCertPath(netstatsUrl.getPemTrust().toString()));
+          new PemTrustOptions().addCertPath(ethStatsConnectOptions.getPemTrust().toString()));
     }
     return options;
   }
 
   private static WebSocketConnectOptions buildWebSocketConnectOptions(
-      final NetstatsUrl netstatsUrl) {
+      final EthStatsConnectOptions ethStatsConnectOptions) {
     return new WebSocketConnectOptions()
         .setURI("/api")
         .setSsl(false)
-        .setHost(netstatsUrl.getHost());
+        .setHost(ethStatsConnectOptions.getHost());
 
     // port will be set up in start method.
   }
 
-  private static int getWsPort(final NetstatsUrl netstatsUrl, final boolean isSSL) {
-    if (netstatsUrl.getPort() >= 0) {
-      return netstatsUrl.getPort();
+  private static int getWsPort(
+      final EthStatsConnectOptions ethStatsConnectOptions, final boolean isSSL) {
+    if (ethStatsConnectOptions.getPort() >= 0) {
+      return ethStatsConnectOptions.getPort();
     }
     return isSSL ? 443 : 80;
   }
 
   /** Start. */
   public void start() {
-    flipSSL();
+    updateSSLProtocol(); // Try wss:// (default) and ws:// for each retry.
     LOG.info("Connecting to EthStats: {}", getEthStatsHost());
     try {
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
@@ -233,14 +235,15 @@ public class EthStatsService {
     return String.format(
         "%s://%s:%s",
         webSocketConnectOptions.isSsl() ? "wss" : "ws",
-        netstatsUrl.getHost(),
-        getWsPort(netstatsUrl, webSocketConnectOptions.isSsl()));
+        ethStatsConnectOptions.getHost(),
+        getWsPort(ethStatsConnectOptions, webSocketConnectOptions.isSsl()));
   }
 
-  private void flipSSL() {
+  /** Switch from ssl to non-ssl and vice-versa. Sets port to 443 or 80 if not specified. */
+  private void updateSSLProtocol() {
     final boolean isSSL = !webSocketConnectOptions.isSsl();
     webSocketConnectOptions.setSsl(isSSL);
-    webSocketConnectOptions.setPort(getWsPort(netstatsUrl, isSSL));
+    webSocketConnectOptions.setPort(getWsPort(ethStatsConnectOptions, isSSL));
   }
 
   /** Ends the current web socket connection, observers and schedulers */
@@ -275,7 +278,7 @@ public class EthStatsService {
 
         final NodeInfo nodeInfo =
             ImmutableNodeInfo.of(
-                netstatsUrl.getNodeName(),
+                ethStatsConnectOptions.getNodeName(),
                 clientVersion,
                 String.valueOf(port.get()),
                 chainId.get().toString(),
@@ -285,13 +288,15 @@ public class EthStatsService {
                 arch,
                 "0.1.1",
                 true,
-                netstatsUrl.getContact());
+                ethStatsConnectOptions.getContact());
 
         final EthStatsRequest hello =
             new EthStatsRequest(
                 HELLO,
                 ImmutableAuthenticationData.of(
-                    enodeURL.getNodeId().toHexString(), nodeInfo, netstatsUrl.getSecret()));
+                    enodeURL.getNodeId().toHexString(),
+                    nodeInfo,
+                    ethStatsConnectOptions.getSecret()));
         sendMessage(
             webSocket,
             hello,
