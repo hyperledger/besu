@@ -191,7 +191,7 @@ auto-log-bloom-caching-enabled=true
 # ethstats
 ethstats="nodename:secret@host:1234"
 ethstats-contact="contact@mail.n"
-ethstats-cacert="./root.cert"
+ethstats-cacert-file="./root.cert"
 
 # Data storage
 data-storage-format="BONSAI"

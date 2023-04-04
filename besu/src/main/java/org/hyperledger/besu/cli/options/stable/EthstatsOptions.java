@@ -28,7 +28,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   private static final String ETHSTATS = "--ethstats";
   private static final String ETHSTATS_CONTACT = "--ethstats-contact";
-  private static final String ETHSTATS_CACERT = "--ethstats-cacert";
+  private static final String ETHSTATS_CACERT_FILE = "--ethstats-cacert-file";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
@@ -47,7 +47,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
-      names = {ETHSTATS_CACERT},
+      names = {ETHSTATS_CACERT_FILE},
       paramLabel = "<FILE>",
       description =
           "Specifies the path to the root CA (Certificate Authority) certificate file that has signed ethstats server certificate. This option is optional.")
@@ -102,7 +102,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
     options.add(ETHSTATS + "=" + ethstatsUrl);
     options.add(ETHSTATS_CONTACT + "=" + ethstatsContact);
     if (ethstatsCaCert != null) {
-      options.add(ETHSTATS_CACERT + "=" + ethstatsCaCert);
+      options.add(ETHSTATS_CACERT_FILE + "=" + ethstatsCaCert);
     }
     return options;
   }
