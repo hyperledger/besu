@@ -18,11 +18,16 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class PersistDataStep {
+  private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
   private final WorldStateStorage worldStateStorage;
 
   public PersistDataStep(final WorldStateStorage worldStateStorage) {
@@ -50,7 +55,17 @@ public class PersistDataStep {
                 request.persist(updater);
               }
             });
-    updater.commit();
+    try {
+      updater.commit();
+    } catch (StorageException e) {
+      if (e.getMessage().contains("Busy")) {
+        tasks.forEach(
+            nodeDataRequestTask -> {
+              LOG.error("Busy on persistDataStep marked task as failed");
+              nodeDataRequestTask.markFailed();
+            });
+      }
+    }
     return tasks;
   }
 

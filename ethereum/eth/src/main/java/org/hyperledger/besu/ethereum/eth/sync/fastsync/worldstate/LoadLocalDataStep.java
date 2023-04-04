@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
@@ -25,9 +26,11 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoadLocalDataStep {
-
+  private static final Logger LOG = LoggerFactory.getLogger(LoadLocalDataStep.class);
   private final WorldStateStorage worldStateStorage;
   private final Counter existingNodeCounter;
 
@@ -51,10 +54,16 @@ public class LoadLocalDataStep {
       request.setRequiresPersisting(false);
       final WorldStateStorage.Updater updater = worldStateStorage.updater();
       request.persist(updater);
-      updater.commit();
-
-      completedTasks.put(task);
-      return Stream.empty();
+      try {
+        updater.commit();
+        completedTasks.put(task);
+        return Stream.empty();
+      } catch (StorageException e) {
+        if (e.getMessage().contains("Busy")) {
+          LOG.error("(loadLocalData) Busy, marking task as failed");
+          task.markFailed();
+        }
+      }
     }
     return Stream.of(task);
   }

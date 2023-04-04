@@ -17,13 +17,17 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-public class PersistDataStep {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class PersistDataStep {
+  private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
   private final SnapSyncState snapSyncState;
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
@@ -66,7 +70,17 @@ public class PersistDataStep {
         }
       }
     }
-    updater.commit();
+    try {
+      updater.commit();
+    } catch (StorageException e) {
+      if (e.getMessage().contains("Busy")) {
+        tasks.forEach(
+            nodeDataRequestTask -> {
+              LOG.error("Busy on persistDataStep, marking task as failed");
+              nodeDataRequestTask.markFailed();
+            });
+      }
+    }
     return tasks;
   }
 
