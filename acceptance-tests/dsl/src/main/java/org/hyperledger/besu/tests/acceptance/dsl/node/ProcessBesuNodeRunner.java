@@ -421,24 +421,27 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                 + "acceptance-tests/tests/build/resources/test/acceptanceTesting.security");
     // add additional environment variables
     processBuilder.environment().putAll(node.getEnvironment());
-    
+
     try {
       Integer debugPort = Integer.parseInt(System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT"));
-      if(debugPort != null) {
+      if (debugPort != null) {
         LOG.warn("Waiting for debugger to attach to SUSPENDED child process");
-        String debugOpts = " -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:"+debugPort;
+        String debugOpts =
+            " -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:" + debugPort;
         String prevJavaOpts = processBuilder.environment().get("JAVA_OPTS");
-        if(prevJavaOpts == null) {
+        if (prevJavaOpts == null) {
           processBuilder.environment().put("JAVA_OPTS", debugOpts);
         } else {
           processBuilder.environment().put("JAVA_OPTS", prevJavaOpts + debugOpts);
         }
 
       } else {
-        LOG.debug("Child process may be attached to by specifying -DBESU_DEBUG_CHILD_PROCESS_PORT=<port>");
+        LOG.debug(
+            "Child process may be attached to by specifying -DBESU_DEBUG_CHILD_PROCESS_PORT=<port>");
       }
-    } catch(NumberFormatException e) {
-      LOG.debug("Child process may be attached to by specifying -DBESU_DEBUG_CHILD_PROCESS_PORT=<port>");
+    } catch (NumberFormatException e) {
+      LOG.debug(
+          "Child process may be attached to by specifying -DBESU_DEBUG_CHILD_PROCESS_PORT=<port>");
     }
 
     try {
