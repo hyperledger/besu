@@ -89,7 +89,6 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
@@ -1483,7 +1482,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         genesisConfigOptions = readGenesisConfigOptions();
 
         if (genesisConfigOptions.isQuorum()) {
-          throw new IllegalStateException("GoQuorum compatibility mode is no longer supported in Besu");
+          throw new IllegalStateException(
+              "GoQuorum compatibility mode is no longer supported in Besu");
         }
       }
 

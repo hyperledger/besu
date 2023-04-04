@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -813,16 +812,7 @@ public class Transaction
    * @return true if GoQuorum private transaction, false otherwise
    */
   public boolean isGoQuorumPrivateTransaction(final boolean goQuorumCompatibilityMode) {
-    if (!goQuorumCompatibilityMode) {
-      return false;
-    }
-    if (chainId.isPresent()) {
-      return false;
-    }
-    if (!v.isPresent()) {
-      return false;
-    }
-    return GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v.get());
+    return false;
   }
 
   /**

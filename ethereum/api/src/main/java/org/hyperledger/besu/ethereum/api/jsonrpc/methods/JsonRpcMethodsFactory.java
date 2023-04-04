@@ -112,8 +112,6 @@ public class JsonRpcMethodsFactory {
                   protocolContext,
                   ethPeers,
                   consensusEngineServer),
-              new GoQuorumJsonRpcPrivacyMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(
                   blockchainQueries,
                   synchronizer,

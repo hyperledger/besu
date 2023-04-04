@@ -66,9 +66,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
             forkSpec ->
                 specMap.put(
                     forkSpec.getBlock(),
-                    builder ->
-                        applyBftChanges(
-                            builder, forkSpec.getValue(), config.isQuorum(), bftExtraDataCodec)));
+                    builder -> applyBftChanges(builder, forkSpec.getValue(), bftExtraDataCodec)));
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
@@ -99,7 +97,6 @@ public abstract class BaseBftProtocolScheduleBuilder {
   private ProtocolSpecBuilder applyBftChanges(
       final ProtocolSpecBuilder builder,
       final BftConfigOptions configOptions,
-      final boolean goQuorumMode,
       final BftExtraDataCodec bftExtraDataCodec) {
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
@@ -114,7 +111,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
         .ommerHeaderValidatorBuilder(
             feeMarket -> createBlockHeaderRuleset(configOptions, feeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .skipZeroBlockRewards(true)

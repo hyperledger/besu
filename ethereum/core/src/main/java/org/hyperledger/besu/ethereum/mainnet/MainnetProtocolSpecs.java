@@ -29,9 +29,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -163,8 +160,8 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .blockProcessorBuilder(MainnetProtocolSpecs.blockProcessorBuilder(goQuorumMode))
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
+        .blockProcessorBuilder(MainnetBlockProcessor::new)
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
@@ -187,26 +184,14 @@ public abstract class MainnetProtocolSpecs {
     }
   }
 
-  public static BlockValidatorBuilder blockValidatorBuilder(final boolean goQuorumMode) {
-    if (goQuorumMode) {
-      return GoQuorumBlockValidator::new;
-    } else {
-      return (blockHeaderValidator,
-          blockBodyValidator,
-          blockProcessor,
-          badBlockManager,
-          goQuorumPrivacyParameters) ->
-          new MainnetBlockValidator(
-              blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
-    }
-  }
-
-  public static BlockProcessorBuilder blockProcessorBuilder(final boolean goQuorumMode) {
-    if (goQuorumMode) {
-      return GoQuorumBlockProcessor::new;
-    } else {
-      return MainnetBlockProcessor::new;
-    }
+  public static BlockValidatorBuilder blockValidatorBuilder() {
+    return (blockHeaderValidator,
+        blockBodyValidator,
+        blockProcessor,
+        badBlockManager,
+        goQuorumPrivacyParameters) ->
+        new MainnetBlockValidator(
+            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
