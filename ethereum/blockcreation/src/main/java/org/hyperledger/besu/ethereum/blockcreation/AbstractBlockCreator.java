@@ -197,7 +197,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-
       final DepositsValidator depositsValidator = newProtocolSpec.getDepositsValidator();
       Optional<List<Deposit>> maybeDeposits = Optional.empty();
 
