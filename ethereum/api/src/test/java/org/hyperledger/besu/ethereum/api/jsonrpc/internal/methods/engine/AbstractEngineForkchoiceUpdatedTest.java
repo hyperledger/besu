@@ -116,7 +116,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.of(protocolSpec));
+    when(timestampSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
     this.method =
         methodFactory.create(
             vertx, timestampSchedule, protocolContext, mergeCoordinator, engineCallListener);
@@ -619,7 +619,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnValidIfTimestampScheduleIsEmpty() {
-    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.empty());
+    when(timestampSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(null);
 
     BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
     BlockHeader mockHeader =
