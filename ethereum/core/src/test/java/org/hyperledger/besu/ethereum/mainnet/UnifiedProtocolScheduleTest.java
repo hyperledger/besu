@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -29,34 +29,33 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
 public class UnifiedProtocolScheduleTest {
 
-  private static final BigInteger chainId = BigInteger.ONE;
-  private static final BigInteger defaultChainId = BigInteger.ONE;
+  private static final Optional<BigInteger> CHAIN_ID = Optional.of(BigInteger.ONE);
+  private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
   private static final PrivacyParameters privacyParameters = new PrivacyParameters();
   private static final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
-  private static final BlockHeader BLOCK_HEADER =
-      new BlockHeaderTestFixture().timestamp(1L).buildHeader();
-  private TimestampScheduleBuilder builder;
+  private ProtocolScheduleBuilder builder;
   private StubGenesisConfigOptions config;
 
   private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier = Function.identity();
 
-  private final long FIRST_TIMESTAMP_FORK = 1L;
+  private final long FIRST_TIMESTAMP_FORK = 9991L;
 
   @Before
   public void setup() {
     config = new StubGenesisConfigOptions();
-    config.chainId(chainId);
+    config.chainId(DEFAULT_CHAIN_ID);
     boolean isRevertReasonEnabled = false;
     boolean quorumCompatibilityMode = false;
     builder =
-        new TimestampScheduleBuilder(
+        new ProtocolScheduleBuilder(
             config,
-            defaultChainId,
+            DEFAULT_CHAIN_ID,
             ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             privacyParameters,
             isRevertReasonEnabled,
@@ -65,43 +64,87 @@ public class UnifiedProtocolScheduleTest {
   }
 
   @Test
-  public void getByBlockHeader_whenSpecFound() {
-    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
-    final UnifiedProtocolSchedule schedule = builder.createTimestampSchedule();
-
-    assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNotNull();
+  public void emptySchedule() {
+    final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
+    Assertions.assertThatThrownBy(
+            () -> new UnifiedProtocolSchedule(CHAIN_ID).getByBlockHeader(blockHeader))
+        .hasMessage("At least 1 milestone must be provided to the protocol schedule");
   }
 
   @Test
-  public void getByBlockHeader_whenSpecNotFoundReturnsNull() {
-    config.shanghaiTime(2L);
-    builder =
-        new TimestampScheduleBuilder(
-            config,
-            defaultChainId,
-            ProtocolSpecAdapters.create(2L, modifier),
-            privacyParameters,
-            false,
-            false,
-            evmConfiguration);
-    final UnifiedProtocolSchedule schedule = builder.createTimestampSchedule();
+  public void conflictingSchedules() {
+    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    assertThat(schedule.getByBlockHeader(BLOCK_HEADER)).isNull();
+    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    protocolSchedule.putMilestone(false, 0, spec1);
+    protocolSchedule.putMilestone(false, 0, spec2);
+    assertThat(protocolSchedule.getByBlockHeader(header(0, 1L))).isSameAs(spec2);
   }
 
   @Test
-  public void isOnMilestoneBoundary() {
+  public void getByBlockHeader_getLatestTimestampFork() {
+    config.grayGlacierBlock(0);
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
-    config.cancunTime(2L);
-    config.experimentalEipsTime(4L);
-    final ProtocolSchedule protocolSchedule = builder.createTimestampSchedule();
+    config.cancunTime(FIRST_TIMESTAMP_FORK + 2);
+    final ProtocolSchedule schedule = builder.createProtocolSchedule();
 
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0))).isEqualTo(false);
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(FIRST_TIMESTAMP_FORK)))
-        .isEqualTo(true);
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(2))).isEqualTo(true);
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(3))).isEqualTo(false);
-    assertThat(protocolSchedule.isOnMilestoneBoundary(header(4))).isEqualTo(true);
+    assertThat(schedule.getByBlockHeader(header(2, FIRST_TIMESTAMP_FORK + 2)).getName())
+        .isEqualTo("Cancun");
+    assertThat(schedule.getByBlockHeader(header(3, FIRST_TIMESTAMP_FORK + 3)).getName())
+        .isEqualTo("Cancun");
+  }
+
+  @Test
+  public void getByBlockHeader_getIntermediateTimestampFork() {
+    config.grayGlacierBlock(0);
+    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
+    config.cancunTime(FIRST_TIMESTAMP_FORK + 2);
+    final ProtocolSchedule schedule = builder.createProtocolSchedule();
+
+    assertThat(schedule.getByBlockHeader(header(2, FIRST_TIMESTAMP_FORK)).getName())
+        .isEqualTo("Shanghai");
+    assertThat(schedule.getByBlockHeader(header(3, FIRST_TIMESTAMP_FORK + 1)).getName())
+        .isEqualTo("Shanghai");
+  }
+
+  @Test
+  public void getByBlockHeader_getLatestBlockNumberFork() {
+    config.londonBlock(0);
+    config.grayGlacierBlock(100);
+    config.shanghaiTime(9992L);
+    final ProtocolSchedule schedule = builder.createProtocolSchedule();
+
+    assertThat(schedule.getByBlockHeader(header(100, 8881L)).getName()).isEqualTo("GrayGlacier");
+    assertThat(schedule.getByBlockHeader(header(200, 9991L)).getName()).isEqualTo("GrayGlacier");
+  }
+
+  @Test
+  public void getByBlockHeader_getIntermediateBlockNumberFork() {
+    config.berlinBlock(0);
+    config.londonBlock(50);
+    config.grayGlacierBlock(100);
+    config.shanghaiTime(9992L);
+    final ProtocolSchedule schedule = builder.createProtocolSchedule();
+
+    assertThat(schedule.getByBlockHeader(header(99, 8881L)).getName()).isEqualTo("London");
+  }
+
+  @Test
+  public void getForNextBlockHeader_shouldGetHeaderForNextBlockNumber() {
+    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+
+    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    protocolSchedule.putMilestone(false, 0, spec1);
+    protocolSchedule.putMilestone(false, 10, spec2);
+
+    final BlockHeader blockHeader =
+        new BlockHeaderTestFixture().number(10L).timestamp(1L).buildHeader();
+    final BlockHeader blockHeaderSpy = spy(blockHeader);
+    final ProtocolSpec spec = protocolSchedule.getForNextBlockHeader(blockHeaderSpy, 2L);
+
+    assertThat(spec).isEqualTo(spec2);
   }
 
   @Test
@@ -109,19 +152,46 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    final UnifiedProtocolSchedule protocolSchedule =
-        new UnifiedProtocolSchedule(Optional.of(chainId));
-    protocolSchedule.putMilestone(0, spec1);
-    protocolSchedule.putMilestone(1000, spec2);
+    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    protocolSchedule.putMilestone(false, 0, spec1);
+    protocolSchedule.putMilestone(true, 9992, spec2);
 
     final BlockHeader blockHeader =
-        BlockHeaderBuilder.createDefault().number(0L).buildBlockHeader();
-    final ProtocolSpec spec = protocolSchedule.getForNextBlockHeader(blockHeader, 1000);
+        new BlockHeaderTestFixture().number(1001L).timestamp(9991L).buildHeader();
+    final BlockHeader blockHeaderSpy = spy(blockHeader);
+    final ProtocolSpec spec = protocolSchedule.getForNextBlockHeader(blockHeaderSpy, 9992L);
 
     assertThat(spec).isEqualTo(spec2);
   }
 
-  private BlockHeader header(final long timestamp) {
-    return new BlockHeaderTestFixture().timestamp(timestamp).buildHeader();
+  @Test
+  public void isOnMilestoneBoundary() {
+    config.berlinBlock(1L);
+    config.londonBlock(2L);
+    config.mergeNetSplitBlock(4L);
+    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
+    config.cancunTime(9992L);
+    config.experimentalEipsTime(9994L);
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0L, 0L))).isEqualTo(true);
+
+    // blockNumber schedule
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(0L, 8880L))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(1L, 8881L))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(2L, 8882L))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(3L, 8883L))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(4L, 8884L))).isEqualTo(true);
+
+    // timestamp schedule
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(10L, FIRST_TIMESTAMP_FORK)))
+        .isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(12L, 9992L))).isEqualTo(true);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(13L, 9993L))).isEqualTo(false);
+    assertThat(protocolSchedule.isOnMilestoneBoundary(header(14L, 9994L))).isEqualTo(true);
+  }
+
+  private BlockHeader header(final long number, final long timestamp) {
+    return new BlockHeaderTestFixture().number(number).timestamp(timestamp).buildHeader();
   }
 }

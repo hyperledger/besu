@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import io.vertx.core.Vertx;
 
@@ -27,7 +27,7 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
 
   public EngineForkchoiceUpdatedV2(
       final Vertx vertx,
-      final UnifiedProtocolSchedule timestampSchedule,
+      final ProtocolSchedule timestampSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {

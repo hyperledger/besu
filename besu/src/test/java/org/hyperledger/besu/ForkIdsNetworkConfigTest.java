@@ -238,11 +238,7 @@ public class ForkIdsNetworkConfigTest {
           final BlockNumberStreamingProtocolSchedule preMergeProtocolSchedule,
           final BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule,
           final TimestampStreamingProtocolSchedule timestampSchedule) {
-        super(
-            preMergeProtocolSchedule,
-            postMergeProtocolSchedule,
-            PostMergeContext.get(),
-            timestampSchedule);
+        super(preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
         this.timestampSchedule = timestampSchedule;
         transitionUtils =
             new TransitionUtils<>(

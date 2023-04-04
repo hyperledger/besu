@@ -107,8 +107,11 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec) {
-    delegate.putMilestone(blockOrTimestamp, protocolSpec);
+  public void putMilestone(
+      final boolean isTimestampMilestone,
+      final long blockOrTimestamp,
+      final ProtocolSpec protocolSpec) {
+    delegate.putMilestone(isTimestampMilestone, blockOrTimestamp, protocolSpec);
   }
 
   @Override

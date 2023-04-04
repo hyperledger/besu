@@ -144,7 +144,7 @@ public class BlockMinerTest {
   private ProtocolSchedule singleSpecSchedule(final ProtocolSpec protocolSpec) {
     final UnifiedProtocolSchedule protocolSchedule =
         new UnifiedProtocolSchedule(Optional.of(BigInteger.valueOf(1234)));
-    protocolSchedule.putMilestone(0, protocolSpec);
+    protocolSchedule.putMilestone(false, 0, protocolSpec);
     return protocolSchedule;
   }
 }

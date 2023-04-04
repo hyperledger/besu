@@ -83,8 +83,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
     this.defaultChainId = defaultChainId;
   }
 
-  // TODO SLD should this be ProtocolSchedule or UnifiedProtocolSchedule?
-  public UnifiedProtocolSchedule createProtocolSchedule() {
+  public ProtocolSchedule createProtocolSchedule() {
     final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
     protocolSchedule = new UnifiedProtocolSchedule(chainId);
     initSchedule(protocolSchedule, chainId);
@@ -123,6 +122,12 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         validateForkOrder("ArrowGlacier", config.getArrowGlacierBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("GrayGlacier", config.getGrayGlacierBlockNumber(), lastForkBlock);
+    // Begin timestamp forks
+    lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -164,6 +169,14 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         create(config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
         create(config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
         create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
+        // Timestamp Forks
+        createTimestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
+        createTimestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
+        createTimestampMilestone(
+            config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
+        createTimestampMilestone(
+            config.getExperimentalEipsTime(), specFactory.experimentalEipsDefinition(config)),
+
         // Classic Milestones
         create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
         create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
@@ -198,16 +211,18 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
                       previousSpecBuilder.getModifier());
               addProtocolSpec(
                   protocolSchedule,
+                  false,
                   daoBlockNumber,
                   specFactory.daoRecoveryInitDefinition(),
                   protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
               addProtocolSpec(
                   protocolSchedule,
+                  false,
                   daoBlockNumber + 1L,
                   specFactory.daoRecoveryTransitionDefinition(),
                   protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
               // Return to the previous protocol spec after the dao fork has completed.
-              protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
+              protocolSchedule.putMilestone(false, daoBlockNumber + 10, originalProtocolSpec);
             });
 
     // specs for classic network
@@ -224,6 +239,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
                       previousSpecBuilder.getModifier());
               addProtocolSpec(
                   protocolSchedule,
+                  false,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
                       config.getContractSizeLimit(),
@@ -231,7 +247,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
                       quorumCompatibilityMode,
                       evmConfiguration),
                   Function.identity());
-              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
+              protocolSchedule.putMilestone(false, classicBlockNumber + 1, originalProtocolSpec);
             });
   }
 }

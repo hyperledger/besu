@@ -87,7 +87,11 @@ public abstract class AbstractProtocolScheduleBuilder {
                         .getValue();
                 builders.put(
                     modifierBlock,
-                    new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
+                    new BuilderMapEntry(
+                        parent.isTimestampMilestone,
+                        modifierBlock,
+                        parent.getBuilder(),
+                        entry.getValue()));
               });
     }
 
@@ -97,7 +101,11 @@ public abstract class AbstractProtocolScheduleBuilder {
         .forEach(
             e ->
                 addProtocolSpec(
-                    protocolSchedule, e.getBlockIdentifier(), e.getBuilder(), e.modifier));
+                    protocolSchedule,
+                    e.isTimestampMilestone,
+                    e.getBlockIdentifier(),
+                    e.getBuilder(),
+                    e.modifier));
 
     postBuildStep(specFactory, builders);
 
@@ -133,14 +141,30 @@ public abstract class AbstractProtocolScheduleBuilder {
   abstract Stream<Optional<BuilderMapEntry>> createMilestones(
       final MainnetProtocolSpecFactory specFactory);
 
+  protected Optional<BuilderMapEntry> createTimestampMilestone(
+      final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
+    return create(blockIdentifier, builder, true);
+  }
+
   protected Optional<BuilderMapEntry> create(
       final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
+    return create(blockIdentifier, builder, false);
+  }
+
+  private Optional<BuilderMapEntry> create(
+      final OptionalLong blockIdentifier,
+      final ProtocolSpecBuilder builder,
+      final boolean isTimestampMilestone) {
     if (blockIdentifier.isEmpty()) {
       return Optional.empty();
     }
     final long blockVal = blockIdentifier.getAsLong();
     return Optional.of(
-        new BuilderMapEntry(blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
+        new BuilderMapEntry(
+            isTimestampMilestone,
+            blockVal,
+            builder,
+            protocolSpecAdapters.getModifierForBlock(blockVal)));
   }
 
   protected ProtocolSpec getProtocolSpec(
@@ -158,12 +182,15 @@ public abstract class AbstractProtocolScheduleBuilder {
 
   protected void addProtocolSpec(
       final ProtocolSchedule protocolSchedule,
+      final boolean isTimestampMilestone,
       final long blockNumberOrTimestamp,
       final ProtocolSpecBuilder definition,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
 
     protocolSchedule.putMilestone(
-        blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+        isTimestampMilestone,
+        blockNumberOrTimestamp,
+        getProtocolSpec(protocolSchedule, definition, modifier));
   }
 
   abstract void postBuildStep(
@@ -171,14 +198,17 @@ public abstract class AbstractProtocolScheduleBuilder {
 
   protected static class BuilderMapEntry {
 
+    private final boolean isTimestampMilestone;
     private final long blockIdentifier;
     private final ProtocolSpecBuilder builder;
     private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
 
     public BuilderMapEntry(
+        final boolean isTimestampMilestone,
         final long blockIdentifier,
         final ProtocolSpecBuilder builder,
         final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+      this.isTimestampMilestone = isTimestampMilestone;
       this.blockIdentifier = blockIdentifier;
       this.builder = builder;
       this.modifier = modifier;

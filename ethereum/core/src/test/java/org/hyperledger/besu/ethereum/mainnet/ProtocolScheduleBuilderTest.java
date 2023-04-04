@@ -169,10 +169,12 @@ public class ProtocolScheduleBuilderTest {
             false,
             EvmConfiguration.DEFAULT);
 
-    return new BlockNumberStreamingProtocolSchedule(builder.createProtocolSchedule());
+    return new BlockNumberStreamingProtocolSchedule(
+        (UnifiedProtocolSchedule) builder.createProtocolSchedule());
   }
 
   private BlockHeader blockHeader(final long number) {
-    return new BlockHeaderTestFixture().number(number).buildHeader();
+    final long timestamp = 1680488620L; // Mon, 03 Apr 2023 02:23:40 UTC
+    return new BlockHeaderTestFixture().number(number).timestamp(timestamp).buildHeader();
   }
 }

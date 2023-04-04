@@ -18,6 +18,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.stream.Collectors.partitioningBy;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -26,11 +27,15 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -54,34 +59,110 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
-    return getByTimestamp(blockHeader.getTimestamp())
-        .orElse(getByBlockNumber(blockHeader.getNumber()));
-  }
-
-  private Optional<ProtocolSpec> getByTimestamp(final long timestamp) {
-    for (final ScheduledProtocolSpec protocolSpec : protocolSpecs) {
-      if (protocolSpec.milestone() <= timestamp) {
-        return Optional.of(protocolSpec.spec());
-      }
-    }
-    return Optional.empty();
-  }
-
-  private ProtocolSpec getByBlockNumber(final long number) {
-    checkArgument(number >= 0, "number must be non-negative");
+    //    checkArgument(number >= 0, "number must be non-negative");
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
     checkArgument(
         protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block 0");
+
+    final Map<Boolean, List<ScheduledProtocolSpec>> partitionedSpecs =
+        protocolSpecs.stream().collect(partitioningBy(ScheduledProtocolSpec::isTimestampMilestone));
+    final List<ScheduledProtocolSpec> blockNumberSpecs = partitionedSpecs.get(false);
+    final List<ScheduledProtocolSpec> timestampSpecs = partitionedSpecs.get(true);
+
+    assert blockNumberSpecs.stream()
+            .mapToLong(ScheduledProtocolSpec::milestone)
+            .max()
+            .orElse(Long.MIN_VALUE)
+        < timestampSpecs.stream()
+            .mapToLong(ScheduledProtocolSpec::milestone)
+            .min()
+            .orElse(Long.MAX_VALUE);
+
+    final ScheduledProtocolSpec byBlockNumber =
+        getByMilestone(blockNumberSpecs, blockHeader.getNumber());
+    final ScheduledProtocolSpec byTimestamp =
+        getByMilestone(timestampSpecs, blockHeader.getTimestamp());
+    return Stream.of(byBlockNumber, byTimestamp)
+        .filter(Objects::nonNull)
+        .max(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(ScheduledProtocolSpec::spec)
+        .orElse(null);
+  }
+
+  private ScheduledProtocolSpec getByMilestone(
+      final List<ScheduledProtocolSpec> specsAscending, final long number) {
+
+    NavigableSet<ScheduledProtocolSpec> navigableSpecs =
+        new TreeSet<>(Comparator.comparingLong(ScheduledProtocolSpec::milestone).reversed());
+    navigableSpecs.addAll(specsAscending);
+
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
-    for (final ScheduledProtocolSpec s : protocolSpecs) {
+    for (final ScheduledProtocolSpec s : navigableSpecs) {
       if (number >= s.milestone()) {
-        return s.spec();
+        return s;
       }
     }
     return null;
   }
+
+  //  private ScheduledProtocolSpec getByBlockNumber(final List<ScheduledProtocolSpec>
+  // blockNumberSpecs, final long blockNumber) {
+  //
+  //    NavigableSet<ScheduledProtocolSpec> navigableSpecs = new TreeSet<>(
+  //        Comparator.comparingLong(ScheduledProtocolSpec::milestone)
+  //    );
+  //    navigableSpecs.addAll(blockNumberSpecs);
+  //
+  //    ScheduledProtocolSpec latestSpec = null;
+  //    for (final ScheduledProtocolSpec current : navigableSpecs) {
+  //      if (blockNumber == current.milestone()) {
+  //        return current;
+  //      } else if (blockNumber < current.milestone()) {
+  //        latestSpec = navigableSpecs.lower(current);
+  //      }
+  //    }
+  //    return latestSpec;
+  //  }
+  //
+  //  private ScheduledProtocolSpec getByTimestamp(final List<ScheduledProtocolSpec> timestampSpecs,
+  // final long timestamp) {
+  //    NavigableSet<ScheduledProtocolSpec> navigableSpecs = new TreeSet<>(
+  //        Comparator.comparingLong(ScheduledProtocolSpec::milestone)
+  //    );
+  //    navigableSpecs.addAll(timestampSpecs);
+  //
+  //    ScheduledProtocolSpec latestSpec = null;
+  //    for (final ScheduledProtocolSpec current : navigableSpecs) {
+  //      if (timestamp == current.milestone()) {
+  //        return current;
+  //      } else if (timestamp < current.milestone()) {
+  //        latestSpec = navigableSpecs.lower(current);
+  //      }
+  //    }
+  //    return latestSpec;
+  //  }
+
+  //
+  //  private ScheduledProtocolSpec getByMilestone(final long number) {
+  //    checkArgument(number >= 0, "number must be non-negative");
+  //    checkArgument(
+  //        !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol
+  // schedule");
+  //    checkArgument(
+  //        protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block
+  // 0");
+  //    // protocolSpecs is sorted in descending block order, so the first one we find that's lower
+  // than
+  //    // the requested level will be the most appropriate spec
+  //    for (final ScheduledProtocolSpec s : protocolSpecs) {
+  //      if (number >= s.milestone()) {
+  //        return s;
+  //      }
+  //    }
+  //    return null;
+  //  }
 
   @Override
   public Optional<BigInteger> getChainId() {
@@ -103,9 +184,10 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public void putMilestone(final long milestone, final ProtocolSpec protocolSpec) {
+  public void putMilestone(
+      final boolean isTimestampMilestone, final long milestone, final ProtocolSpec protocolSpec) {
     final ScheduledProtocolSpec scheduledProtocolSpec =
-        new ScheduledProtocolSpec(milestone, protocolSpec);
+        new ScheduledProtocolSpec(isTimestampMilestone, milestone, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);

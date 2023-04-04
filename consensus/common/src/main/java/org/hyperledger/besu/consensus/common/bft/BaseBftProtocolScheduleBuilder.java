@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
@@ -72,7 +73,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
-    final UnifiedProtocolSchedule protocolSchedule =
+    final ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
                 config,
                 DEFAULT_CHAIN_ID,
@@ -82,7 +83,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 config.isQuorum(),
                 evmConfiguration)
             .createProtocolSchedule();
-    return new BftProtocolSchedule(protocolSchedule);
+    return new BftProtocolSchedule((UnifiedProtocolSchedule) protocolSchedule);
   }
 
   /**
