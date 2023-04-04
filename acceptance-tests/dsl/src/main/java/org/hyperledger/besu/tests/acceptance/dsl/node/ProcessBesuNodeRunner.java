@@ -437,11 +437,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
       } else {
         LOG.debug(
-            "Child process may be attached to by specifying -DBESU_DEBUG_CHILD_PROCESS_PORT=<port>");
+            "Child process may be attached to by exporting BESU_DEBUG_CHILD_PROCESS_PORT=<port> to env");
       }
     } catch (NumberFormatException e) {
       LOG.debug(
-          "Child process may be attached to by specifying -DBESU_DEBUG_CHILD_PROCESS_PORT=<port>");
+          "Child process may be attached to by exporting BESU_DEBUG_CHILD_PROCESS_PORT=<port> to env");
     }
 
     try {
