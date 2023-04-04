@@ -34,15 +34,15 @@ public class EthStatsConnectOptionsTest {
 
   @Test
   public void buildWithValidParams() {
-    final Path pemTrustPath = Path.of("./test.pem");
+    final Path caCert = Path.of("./test.pem");
     final EthStatsConnectOptions ethStatsConnectOptions =
-        EthStatsConnectOptions.fromParams(VALID_NETSTATS_URL, CONTACT, pemTrustPath);
+        EthStatsConnectOptions.fromParams(VALID_NETSTATS_URL, CONTACT, caCert);
     assertThat(ethStatsConnectOptions.getHost()).isEqualTo("127.0.0.1");
     assertThat(ethStatsConnectOptions.getNodeName()).isEqualTo("Dev-Node-1");
     assertThat(ethStatsConnectOptions.getPort()).isEqualTo(3001);
     assertThat(ethStatsConnectOptions.getSecret()).isEqualTo("secret-with-dashes");
     assertThat(ethStatsConnectOptions.getContact()).isEqualTo(CONTACT);
-    assertThat(ethStatsConnectOptions.getPemTrust()).isEqualTo(pemTrustPath);
+    assertThat(ethStatsConnectOptions.getCaCert()).isEqualTo(caCert);
   }
 
   @ParameterizedTest(name = "#{index} - With Host {0}")

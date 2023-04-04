@@ -155,9 +155,9 @@ public class EthStatsService {
       final EthStatsConnectOptions ethStatsConnectOptions) {
     final HttpClientOptions options = new HttpClientOptions();
 
-    if (ethStatsConnectOptions.getPemTrust() != null) {
+    if (ethStatsConnectOptions.getCaCert() != null) {
       options.setPemTrustOptions(
-          new PemTrustOptions().addCertPath(ethStatsConnectOptions.getPemTrust().toString()));
+          new PemTrustOptions().addCertPath(ethStatsConnectOptions.getCaCert().toString()));
     }
     return options;
   }

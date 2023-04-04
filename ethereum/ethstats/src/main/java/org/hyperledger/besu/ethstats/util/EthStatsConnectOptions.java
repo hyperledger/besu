@@ -41,10 +41,10 @@ public interface EthStatsConnectOptions {
   String getContact();
 
   @Nullable
-  Path getPemTrust();
+  Path getCaCert();
 
   static EthStatsConnectOptions fromParams(
-      final String url, final String contact, final Path pemTrust) {
+      final String url, final String contact, final Path caCert) {
     try {
       checkArgument(url != null && !url.trim().isEmpty(), "Invalid empty value.");
 
@@ -56,7 +56,7 @@ public interface EthStatsConnectOptions {
             .host(netStatsUrl.group(3))
             .port(Integer.parseInt(Optional.ofNullable(netStatsUrl.group(5)).orElse("-1")))
             .contact(contact)
-            .pemTrust(pemTrust)
+            .caCert(caCert)
             .build();
       }
 
