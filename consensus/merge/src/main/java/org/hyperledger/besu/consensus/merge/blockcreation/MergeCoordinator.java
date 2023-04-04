@@ -77,7 +77,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /** The Merge block creator factory. */
   protected final MergeBlockCreatorFactory mergeBlockCreatorFactory;
   /** The Extra data. */
-  protected AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
+  protected final AtomicReference<Bytes> extraData =
+      new AtomicReference<>(Bytes.fromHexString("0x"));
   /** The Latest descends from terminal. */
   protected final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
   /** The Merge context. */
