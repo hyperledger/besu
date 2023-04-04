@@ -116,8 +116,6 @@ public class BesuControllerTest {
             .getBesuControllerBuilderSchedule();
 
     assertThat(besuControllerBuilderSchedule).containsKeys(0L, qbftStartBlock);
-    assertThat(besuControllerBuilderSchedule.get(0L))
-        .isInstanceOf(IbftLegacyBesuControllerBuilder.class);
     assertThat(besuControllerBuilderSchedule.get(qbftStartBlock))
         .isInstanceOf(QbftBesuControllerBuilder.class);
   }
@@ -131,11 +129,6 @@ public class BesuControllerTest {
       case "ibft2":
         {
           when(genesisConfigOptions.isIbft2()).thenReturn(true);
-          break;
-        }
-      case "ibftlegacy":
-        {
-          when(genesisConfigOptions.isIbftLegacy()).thenReturn(true);
           break;
         }
       default:
