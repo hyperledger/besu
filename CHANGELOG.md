@@ -1,13 +1,15 @@
 # Changelog
 
-## 23.4
+## 23.4-RC
 
 ### Breaking Changes
 - Removed IBFT 1.0 feature (deprecated in 23.1.0-beta) [#5302](https://github.com/hyperledger/besu/pull/5302)
 - Removed GoQuorum-compatible privacy feature (deprecated in 23.1.0-beta)
 
 ### Additions and Improvements
--
+- Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
+
+### Bug Fixes
 
 ## 23.1.3 
 
@@ -25,6 +27,7 @@
 - Fix eth_getBlockByNumber cache error for latest block when called during syncing [#5292](https://github.com/hyperledger/besu/pull/5292)
 - Fix QBFT and IBFT unable to propose blocks on London when zeroBaseFee is used [#5276](https://github.com/hyperledger/besu/pull/5276) 
 - Make QBFT validator smart contract mode work with london fork [#5249](https://github.com/hyperledger/besu/issues/5249)
+- Allow --miner-extra-data to be used in Proof-of-Stake block production [#5291](https://github.com/hyperledger/besu/pull/5291)
 
 ### Download Links
 
