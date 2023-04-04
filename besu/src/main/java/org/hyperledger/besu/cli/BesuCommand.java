@@ -1483,7 +1483,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         genesisConfigOptions = readGenesisConfigOptions();
 
         if (genesisConfigOptions.isQuorum()) {
-          enableGoQuorumCompatibilityMode();
+          throw new IllegalStateException("GoQuorum compatibility mode is no longer supported in Besu");
         }
       }
 
@@ -3518,14 +3518,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
     return genesisConfigOptions.getEcCurve();
-  }
-
-  /** Enables Go Quorum Compatibility mode. Visible for testing. */
-  @VisibleForTesting
-  protected void enableGoQuorumCompatibilityMode() {
-    // this static flag is read by the RLP decoder
-    GoQuorumOptions.setGoQuorumCompatibilityMode(true);
-    isGoQuorumCompatibilityMode = true;
   }
 
   private GenesisConfigOptions getActualGenesisConfigOptions() {

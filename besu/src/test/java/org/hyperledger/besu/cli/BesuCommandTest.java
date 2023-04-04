@@ -4543,13 +4543,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled", "--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
 
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("GoQuorum mode cannot be enabled with privacy.");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    verify(mockLogger, atLeast(1))
-        .warn(
-            DEPRECATION_WARNING_MSG,
-            "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)",
-            "--privacy-enabled");
+        .contains("GoQuorum compatibility mode is no longer supported in Besu");
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
