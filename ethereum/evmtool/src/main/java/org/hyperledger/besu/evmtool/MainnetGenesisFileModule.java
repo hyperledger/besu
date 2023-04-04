@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
-import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -90,19 +89,16 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 new StubGenesisConfigOptions().mergeNetSplitBlock(0).baseFeePerGas(0x0a))),
         Map.entry(
             "shanghai",
-            createTimestampSchedule(
-                new StubGenesisConfigOptions().shanghaiTime(0).baseFeePerGas(0x0a))),
+            createSchedule(new StubGenesisConfigOptions().shanghaiTime(0).baseFeePerGas(0x0a))),
         Map.entry(
             "cancun",
-            createTimestampSchedule(
-                new StubGenesisConfigOptions().cancunTime(0).baseFeePerGas(0x0a))),
+            createSchedule(new StubGenesisConfigOptions().cancunTime(0).baseFeePerGas(0x0a))),
         Map.entry(
             "futureeips",
-            createTimestampSchedule(
-                new StubGenesisConfigOptions().futureEipsTime(0).baseFeePerGas(0x0a))),
+            createSchedule(new StubGenesisConfigOptions().futureEipsTime(0).baseFeePerGas(0x0a))),
         Map.entry(
             "experimentaleips",
-            createTimestampSchedule(
+            createSchedule(
                 new StubGenesisConfigOptions().experimentalEipsTime(0).baseFeePerGas(0x0a))));
   }
 
@@ -117,19 +113,5 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 options.isQuorum(),
                 EvmConfiguration.DEFAULT)
             .createProtocolSchedule();
-  }
-
-  private static Supplier<ProtocolSchedule> createTimestampSchedule(
-      final GenesisConfigOptions options) {
-    return () ->
-        new TimestampScheduleBuilder(
-                options,
-                options.getChainId().orElse(BigInteger.ONE),
-                ProtocolSpecAdapters.create(0, Function.identity()),
-                PrivacyParameters.DEFAULT,
-                false,
-                options.isQuorum(),
-                EvmConfiguration.DEFAULT)
-            .createTimestampSchedule();
   }
 }

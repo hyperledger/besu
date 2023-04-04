@@ -39,7 +39,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
     return delegate.getByBlockHeader(blockHeader);
   }
 
-  // TODO SLD
+  // TODO SLD - do we need this or a getByBlockHeader equivalent? Could be why referenceTests are
+  // failing?
   //  @Override
   //  public ProtocolSpec getByBlockNumber(final long number) {
   //    final ProtocolSpec original = delegate.getByBlockNumber(number);

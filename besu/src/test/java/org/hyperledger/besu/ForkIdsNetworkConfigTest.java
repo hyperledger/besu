@@ -33,8 +33,6 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.TimestampStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -218,38 +216,29 @@ public class ForkIdsNetworkConfigTest {
       BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule =
           new BlockNumberStreamingProtocolSchedule(
               (UnifiedProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
-      TimestampStreamingProtocolSchedule timestampSchedule =
-          new TimestampStreamingProtocolSchedule(
-              MergeProtocolSchedule.createTimestamp(
-                  configOptions, PrivacyParameters.DEFAULT, false));
       final MilestoneStreamingTransitionProtocolSchedule schedule =
           new MilestoneStreamingTransitionProtocolSchedule(
-              preMergeProtocolSchedule, postMergeProtocolSchedule, timestampSchedule);
+              preMergeProtocolSchedule, postMergeProtocolSchedule);
       return schedule;
     }
 
     public static class MilestoneStreamingTransitionProtocolSchedule
         extends TransitionProtocolSchedule {
 
-      private final TimestampStreamingProtocolSchedule timestampSchedule;
       private final TransitionUtils<MilestoneStreamingProtocolSchedule> transitionUtils;
 
       public MilestoneStreamingTransitionProtocolSchedule(
           final BlockNumberStreamingProtocolSchedule preMergeProtocolSchedule,
-          final BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule,
-          final TimestampStreamingProtocolSchedule timestampSchedule) {
+          final BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule) {
         super(preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
-        this.timestampSchedule = timestampSchedule;
         transitionUtils =
             new TransitionUtils<>(
                 preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
       }
 
       public Stream<Long> streamMilestoneBlocks() {
-        final Stream<Long> milestoneBlockNumbers =
-            transitionUtils.dispatchFunctionAccordingToMergeState(
-                MilestoneStreamingProtocolSchedule::streamMilestoneBlocks);
-        return Stream.concat(milestoneBlockNumbers, timestampSchedule.streamMilestoneBlocks());
+        return transitionUtils.dispatchFunctionAccordingToMergeState(
+            MilestoneStreamingProtocolSchedule::streamMilestoneBlocks);
       }
     }
   }

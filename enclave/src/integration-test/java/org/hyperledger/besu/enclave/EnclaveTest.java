@@ -39,12 +39,9 @@ import io.vertx.core.Vertx;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-// TODO SLD
-@Disabled
 public class EnclaveTest {
 
   @TempDir private static Path folder;

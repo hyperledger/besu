@@ -107,7 +107,6 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
                   miningCoordinator,
-                  // TODO SLD
                   MergeProtocolSchedule.create(genesisConfigOptions, privacyParameters, false),
                   protocolContext,
                   ethPeers,

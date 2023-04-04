@@ -135,69 +135,6 @@ public class TransitionProtocolScheduleTest {
     verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
-  // TODO SLD
-  //  @Test
-  //  public void getByBlockNumber_returnsTimestampScheduleIfPresent() {
-  //    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
-  //    when(timestampSchedule.getByBlockHeader(blockHeader)).thenReturn(mock(ProtocolSpec.class));
-  //
-  //    assertThat(transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER)).isNotNull();
-  //
-  //    verify(timestampSchedule).getByBlockHeader(blockHeader);
-  //    verifyNoMergeScheduleInteractions();
-  //  }
-  //
-  //  @Test
-  //  public void getByBlockNumber_delegatesToPreMergeScheduleWhenBlockNotFound() {
-  //    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.empty());
-  //    when(mergeContext.isPostMerge()).thenReturn(false);
-  //
-  //    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
-  //
-  //    verifyPreMergeProtocolScheduleReturnedUsingBlockNumber();
-  //  }
-  //
-  //  @Test
-  //  public void getByBlockNumber_delegatesToPostMergeScheduleWhenBlockNotFound() {
-  //    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.empty());
-  //    when(mergeContext.isPostMerge()).thenReturn(true);
-  //
-  //    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
-  //
-  //    verifyPostMergeProtocolScheduleReturnedUsingBlockNumber();
-  //  }
-  //
-  //  @Test
-  //  public void getByBlockNumber_delegatesToPreMergeScheduleWhenTimestampScheduleDoesNotExist() {
-  //    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
-  //    when(mergeContext.isPostMerge()).thenReturn(false);
-  //
-  //    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
-  //
-  //    verifyPreMergeProtocolScheduleReturnedUsingBlockNumber();
-  //  }
-  //
-  //  @Test
-  //  public void getByBlockNumber_delegatesToPostMergeScheduleWhenTimestampScheduleDoesNotExist() {
-  //    when(blockchain.getBlockHeader(BLOCK_NUMBER)).thenReturn(Optional.of(blockHeader));
-  //    when(mergeContext.isPostMerge()).thenReturn(true);
-  //
-  //    transitionProtocolSchedule.getByBlockNumber(BLOCK_NUMBER);
-  //
-  //    verifyPostMergeProtocolScheduleReturnedUsingBlockNumber();
-  //  }
-
-  //  @Test
-  //  public void getByBlockHeader_returnsTimestampScheduleIfPresent() {
-  //    when(timestampSchedule.getByTimestamp(TIMESTAMP))
-  //        .thenReturn(Optional.of(mock(ProtocolSpec.class)));
-  //
-  //    assertThat(transitionProtocolSchedule.getByBlockHeader(blockHeader)).isNotNull();
-  //
-  //    verify(timestampSchedule).getByTimestamp(TIMESTAMP);
-  //    verifyNoMergeScheduleInteractions();
-  //  }
-
   @Test
   public void getByBlockHeader_delegatesToPreMergeScheduleWhenTimestampScheduleDoesNotExist() {
     when(mergeContext.isPostMerge()).thenReturn(false);
@@ -215,16 +152,6 @@ public class TransitionProtocolScheduleTest {
 
     verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
   }
-
-  // TODO SLD
-  //  @Test
-  //  public void anyMatch_usesTimestampSchedule() {
-  //    when(timestampSchedule.anyMatch(any())).thenReturn(true);
-  //
-  //    assertThat(transitionProtocolSchedule.anyMatch(__ -> true)).isTrue();
-  //    verifyNoInteractions(preMergeProtocolSchedule);
-  //    verifyNoInteractions(postMergeProtocolSchedule);
-  //  }
 
   @Test
   public void anyMatch_delegatesToPreMergeSchedule() {
@@ -246,16 +173,6 @@ public class TransitionProtocolScheduleTest {
     verifyNoInteractions(preMergeProtocolSchedule);
   }
 
-  // TODO SLD
-  //  @Test
-  //  public void isOnMilestoneBoundary_usesTimestampSchedule() {
-  //    when(timestampSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
-  //
-  //    assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
-  //    verifyNoInteractions(preMergeProtocolSchedule);
-  //    verifyNoInteractions(postMergeProtocolSchedule);
-  //  }
-
   @Test
   public void isOnMilestoneBoundary_delegatesToPreMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(false);
@@ -275,21 +192,6 @@ public class TransitionProtocolScheduleTest {
     assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
     verifyNoInteractions(preMergeProtocolSchedule);
   }
-
-  // TODO SLD
-  //  private void verifyPreMergeProtocolScheduleReturnedUsingBlockNumber() {
-  //    verify(preMergeProtocolSchedule).getByBlockNumber(anyLong());
-  //    verifyNoInteractions(postMergeProtocolSchedule);
-  //  }
-  //
-  //  private void verifyPostMergeProtocolScheduleReturnedUsingBlockNumber() {
-  //    verify(postMergeProtocolSchedule).getByBlockNumber(anyLong());
-  //    verifyNoInteractions(preMergeProtocolSchedule);
-  //  }
-  //  private void verifyNoMergeScheduleInteractions() {
-  //    verifyNoInteractions(preMergeProtocolSchedule);
-  //    verifyNoInteractions(postMergeProtocolSchedule);
-  //  }
 
   private void verifyPreMergeProtocolScheduleReturnedUsingBlockHeader() {
     verify(preMergeProtocolSchedule).getByBlockHeader(any());

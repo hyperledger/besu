@@ -58,13 +58,10 @@ import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-// TODO SLD
-@Disabled
 @RunWith(Parameterized.class)
 public class FullSyncChainDownloaderTest {
 

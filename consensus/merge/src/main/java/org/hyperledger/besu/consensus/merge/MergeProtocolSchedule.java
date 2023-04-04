@@ -22,8 +22,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
-import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
-import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -74,43 +72,6 @@ public class MergeProtocolSchedule {
             config.isQuorum(),
             EvmConfiguration.DEFAULT)
         .createProtocolSchedule();
-  }
-
-  /**
-   * Create timestamp schedule.
-   *
-   * @param config the config
-   * @param privacyParameters the privacy parameters
-   * @param isRevertReasonEnabled the is revert reason enabled
-   * @return the timestamp schedule
-   */
-  public static UnifiedProtocolSchedule createTimestamp(
-      final GenesisConfigOptions config,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
-    return new TimestampScheduleBuilder(
-            config,
-            DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(
-                config.getShanghaiTime().orElse(0),
-                MergeProtocolSchedule::applyMergeSpecificModificationsForShanghai),
-            privacyParameters,
-            isRevertReasonEnabled,
-            config.isQuorum(),
-            EvmConfiguration.DEFAULT)
-        .createTimestampSchedule();
-  }
-
-  // TODO Withdrawals remove this as part of https://github.com/hyperledger/besu/issues/4788
-  private static ProtocolSpecBuilder applyMergeSpecificModificationsForShanghai(
-      final ProtocolSpecBuilder specBuilder) {
-
-    return specBuilder
-        .blockProcessorBuilder(MergeBlockProcessor::new)
-        .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
-        .blockReward(Wei.ZERO)
-        .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
-        .skipZeroBlockRewards(true);
   }
 
   private static ProtocolSpecBuilder applyMergeSpecificModifications(
