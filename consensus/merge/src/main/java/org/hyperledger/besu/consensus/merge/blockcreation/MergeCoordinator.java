@@ -77,7 +77,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /** The Merge block creator factory. */
   protected final MergeBlockCreatorFactory mergeBlockCreatorFactory;
   /** The Extra data. */
-  protected Bytes extraData;
+  protected AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
   /** The Latest descends from terminal. */
   protected final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
   /** The Merge context. */
@@ -122,14 +122,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .getTargetGasLimit()
             // TODO: revisit default target gas limit
             .orElse(new AtomicLong(30000000L));
-    this.extraData = miningParams.getExtraData();
+    this.extraData.set(miningParams.getExtraData());
 
     this.mergeBlockCreatorFactory =
         (parentHeader, address) ->
             new MergeBlockCreator(
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 () -> Optional.of(targetGasLimit.longValue()),
-                parent -> extraData,
+                parent -> extraData.get(),
                 pendingTransactions,
                 protocolContext,
                 protocolSchedule,
@@ -207,7 +207,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public void setExtraData(final Bytes extraData) {
-    this.extraData = extraData;
+    this.extraData.set(extraData);
   }
 
   @Override
