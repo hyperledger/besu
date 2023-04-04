@@ -28,7 +28,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   private static final String ETHSTATS = "--ethstats";
   private static final String ETHSTATS_CONTACT = "--ethstats-contact";
-  private static final String ETHSTATS_PEM_TRUST = "--ethstats-pem-trust";
+  private static final String ETHSTATS_CACERT = "--ethstats-cacert";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
@@ -47,10 +47,11 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
-      names = {ETHSTATS_PEM_TRUST},
+      names = {ETHSTATS_CACERT},
       paramLabel = "<FILE>",
-      description = "Path to CA certificate in PEM format to trust ethstats server.")
-  private Path ethstatsPemTrust = null;
+      description =
+          "Specifies the path to the root CA (Certificate Authority) certificate file that has signed ethstats server certificate. This option is optional.")
+  private Path ethstatsCaCert = null;
 
   private EthstatsOptions() {}
 
@@ -65,7 +66,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   @Override
   public EthStatsConnectOptions toDomainObject() {
-    return EthStatsConnectOptions.fromParams(ethstatsUrl, ethstatsContact, ethstatsPemTrust);
+    return EthStatsConnectOptions.fromParams(ethstatsUrl, ethstatsContact, ethstatsCaCert);
   }
 
   /**
@@ -87,12 +88,12 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
   }
 
   /**
-   * Returns path to CA truststore file (PEM)
+   * Returns path to root CA cert file.
    *
    * @return Path to CA file. null if no CA file to set.
    */
-  public Path getEthstatsPemTrust() {
-    return ethstatsPemTrust;
+  public Path getEthstatsCaCert() {
+    return ethstatsCaCert;
   }
 
   @Override
@@ -100,8 +101,8 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
     final ArrayList<String> options = new ArrayList<>();
     options.add(ETHSTATS + "=" + ethstatsUrl);
     options.add(ETHSTATS_CONTACT + "=" + ethstatsContact);
-    if (ethstatsPemTrust != null) {
-      options.add(ETHSTATS_PEM_TRUST + "=" + ethstatsPemTrust);
+    if (ethstatsCaCert != null) {
+      options.add(ETHSTATS_CACERT + "=" + ethstatsCaCert);
     }
     return options;
   }

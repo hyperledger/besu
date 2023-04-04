@@ -1033,7 +1033,7 @@ public class RunnerBuilder {
                   EthStatsConnectOptions.fromParams(
                       ethstatsOptions.getEthstatsUrl(),
                       ethstatsOptions.getEthstatsContact(),
-                      ethstatsOptions.getEthstatsPemTrust()),
+                      ethstatsOptions.getEthstatsCaCert()),
                   blockchainQueries,
                   besuController.getProtocolManager(),
                   transactionPool,
