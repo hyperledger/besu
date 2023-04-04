@@ -423,22 +423,17 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     processBuilder.environment().putAll(node.getEnvironment());
 
     try {
-      Integer debugPort = Integer.parseInt(System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT"));
-      if (debugPort != null) {
-        LOG.warn("Waiting for debugger to attach to SUSPENDED child process");
-        String debugOpts =
-            " -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:" + debugPort;
-        String prevJavaOpts = processBuilder.environment().get("JAVA_OPTS");
-        if (prevJavaOpts == null) {
-          processBuilder.environment().put("JAVA_OPTS", debugOpts);
-        } else {
-          processBuilder.environment().put("JAVA_OPTS", prevJavaOpts + debugOpts);
-        }
-
+      int debugPort = Integer.parseInt(System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT"));
+      LOG.warn("Waiting for debugger to attach to SUSPENDED child process");
+      String debugOpts =
+          " -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:" + debugPort;
+      String prevJavaOpts = processBuilder.environment().get("JAVA_OPTS");
+      if (prevJavaOpts == null) {
+        processBuilder.environment().put("JAVA_OPTS", debugOpts);
       } else {
-        LOG.debug(
-            "Child process may be attached to by exporting BESU_DEBUG_CHILD_PROCESS_PORT=<port> to env");
+        processBuilder.environment().put("JAVA_OPTS", prevJavaOpts + debugOpts);
       }
+
     } catch (NumberFormatException e) {
       LOG.debug(
           "Child process may be attached to by exporting BESU_DEBUG_CHILD_PROCESS_PORT=<port> to env");
