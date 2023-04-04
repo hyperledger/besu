@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 
-- Removed IBFT1 feature
+- Removed IBFT1 feature [#5302](https://github.com/hyperledger/besu/pull/5302)
 
 ### Additions and Improvements
 
