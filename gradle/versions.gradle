@@ -21,22 +21,22 @@ dependencyManagement {
       entry 'antlr4-runtime'
     }
 
-    dependencySet(group:'com.fasterxml.jackson.core', version:'2.14.1') {
+    dependencySet(group:'com.fasterxml.jackson.core', version:'2.14.2') {
       entry 'jackson-databind'
       entry 'jackson-datatype'
       entry 'jackson-datatype-jdk8'
     }
 
-    dependency 'com.github.ben-manes.caffeine:caffeine:3.1.1'
+    dependency 'com.github.ben-manes.caffeine:caffeine:3.1.5'
 
-    dependencySet(group: 'com.github.tomakehurst', version: '2.33.2') {
+    dependencySet(group: 'com.github.tomakehurst', version: '2.35.0') {
       entry'wiremock-jre8-standalone'
       entry'wiremock-jre8'
     }
 
     dependency 'com.google.auto.service:auto-service:1.0.1'
 
-    dependencySet(group: 'com.google.dagger', version: '2.42') {
+    dependencySet(group: 'com.google.dagger', version: '2.45') {
       entry'dagger-compiler'
       entry'dagger'
     }
@@ -50,7 +50,7 @@ dependencyManagement {
 
     dependency 'com.google.guava:guava:31.1-jre'
 
-    dependency 'com.graphql-java:graphql-java:19.2'
+    dependency 'com.graphql-java:graphql-java:20.1'
 
     dependency 'com.splunk.logging:splunk-library-javalogging:1.11.5'
 
@@ -60,12 +60,14 @@ dependencyManagement {
 
     dependency 'commons-io:commons-io:2.11.0'
 
-    dependency 'dnsjava:dnsjava:3.5.1'
+    dependency 'dnsjava:dnsjava:3.5.2'
 
-    dependency 'info.picocli:picocli:4.6.3'
-    dependency 'info.picocli:picocli-codegen:4.6.3'
+    dependencySet(group: 'info.picocli', version: '4.7.1') {
+      entry 'picocli'
+      entry 'picocli-codegen'
+    }
 
-    dependencySet(group: 'io.grpc', version: '1.47.0') {
+    dependencySet(group: 'io.grpc', version: '1.53.0') {
       entry 'grpc-all'
       entry 'grpc-core'
       entry 'grpc-netty'
@@ -80,16 +82,16 @@ dependencyManagement {
     dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.90.Final', classifier: 'osx-x86_64'
     dependency 'io.netty:netty-transport-native-unix-common:4.1.90.Final'
 
-    dependency 'io.opentelemetry:opentelemetry-api:1.19.0'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.19.0'
-    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.19.0'
+    dependency 'io.opentelemetry:opentelemetry-api:1.24.0'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.24.0'
+    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.24.0'
     dependency 'io.opentelemetry.proto:opentelemetry-proto:0.19.0-alpha'
-    dependency 'io.opentelemetry:opentelemetry-sdk-metrics:1.19.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.19.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk:1.19.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.19.0-alpha'
-    dependency 'io.opentelemetry:opentelemetry-semconv:1.19.0-alpha'
-    dependency 'io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0:1.19.1-alpha'
+    dependency 'io.opentelemetry:opentelemetry-sdk-metrics:1.24.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.24.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk:1.24.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.24.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-semconv:1.24.0-alpha'
+    dependency 'io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0:1.24.0-alpha'
 
     dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
     dependency 'io.opentracing:opentracing-api:0.33.0'
@@ -105,7 +107,7 @@ dependencyManagement {
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
-    dependencySet(group: 'io.vertx', version: '4.2.7') {
+    dependencySet(group: 'io.vertx', version: '4.3.5') {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
       entry 'vertx-core'
@@ -120,30 +122,34 @@ dependencyManagement {
 
     dependency 'net.consensys.services:quorum-mainnet-launcher:1.0.1'
 
-    dependency 'net.java.dev.jna:jna:5.12.1'
+    dependency 'net.java.dev.jna:jna:5.13.0'
 
-    dependency 'org.apache.commons:commons-compress:1.21'
+    dependency 'org.apache.commons:commons-compress:1.23.0'
     dependency 'org.apache.commons:commons-lang3:3.12.0'
     dependency 'org.apache.commons:commons-text:1.10.0'
 
-    dependency 'org.apache.logging.log4j:log4j-api:2.20.0'
-    dependency 'org.apache.logging.log4j:log4j-core:2.20.0'
-    dependency 'org.apache.logging.log4j:log4j-jul:2.20.0'
-    dependency 'org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0'
+    dependencySet(group: 'org.apache.logging.log4j', version: '2.20.0') {
+      entry 'log4j-api'
+      entry 'log4j-core'
+      entry 'log4j-jul'
+      entry 'log4j-slf4j2-impl'
+    }
 
-    dependency 'org.apache.tuweni:tuweni-bytes:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-config:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-concurrent:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-crypto:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-devp2p:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-dns-discovery:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-io:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-net:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-rlp:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-toml:2.3.1'
-    dependency 'org.apache.tuweni:tuweni-units:2.3.1'
+    dependencySet(group: 'org.apache.tuweni', version: '2.3.1') {
+      entry 'tuweni-bytes'
+      entry 'tuweni-config'
+      entry 'tuweni-concurrent'
+      entry 'tuweni-crypto'
+      entry 'tuweni-devp2p'
+      entry 'tuweni-dns-discovery'
+      entry 'tuweni-io'
+      entry 'tuweni-net'
+      entry 'tuweni-rlp'
+      entry 'tuweni-toml'
+      entry 'tuweni-units'
+    }
 
-    dependency 'org.assertj:assertj-core:3.23.1'
+    dependency 'org.assertj:assertj-core:3.24.2'
 
     dependency 'org.awaitility:awaitility:4.2.0'
 
@@ -154,6 +160,7 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
     dependency 'tech.pegasys:jc-kzg-4844:0.4.0'
+
     dependencySet(group: 'org.hyperledger.besu', version: '0.7.1') {
       entry 'arithmetic'
       entry 'ipa-multipoint'
@@ -163,57 +170,66 @@ dependencyManagement {
       entry 'blake2bf'
     }
 
-    dependency 'org.immutables:value-annotations:2.9.0'
-    dependency 'org.immutables:value:2.9.0'
+    dependencySet(group: 'org.immutables', version: '2.9.3') {
+      entry 'value-annotations'
+      entry 'value'
+    }
 
     dependency 'org.java-websocket:Java-WebSocket:1.5.3'
 
-    dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.7.0'
+    dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.8.10'
 
-    dependency 'org.junit.jupiter:junit-jupiter:5.8.2'
-    dependency 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    dependency 'org.junit.jupiter:junit-jupiter-params:5.8.2'
+    dependencySet(group: 'org.junit.jupiter', version: '5.8.2') {
+      entry 'junit-jupiter'
+      entry 'junit-jupiter-api'
+      entry 'junit-jupiter-engine'
+      entry 'junit-jupiter-params'
+    }
 
-    dependency 'org.junit.platform:junit-platform-runner:1.8.2'
+    dependency 'org.junit.platform:junit-platform-runner:1.9.2'
 
-    dependency 'org.junit.vintage:junit-vintage-engine:5.8.2'
+    dependency 'org.junit.vintage:junit-vintage-engine:5.9.2'
 
-    dependencySet(group: 'org.jupnp', version:'2.6.1') {
+    dependencySet(group: 'org.jupnp', version:'2.7.0') {
       entry 'org.jupnp.support'
       entry 'org.jupnp'
     }
 
-    dependencySet(group: 'org.mockito', version:'4.6.1') {
+    dependencySet(group: 'org.mockito', version:'4.11.0') {
       entry 'mockito-core'
       entry 'mockito-junit-jupiter'
     }
 
-    dependency 'org.openjdk.jmh:jmh-core:1.34'
-    dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+    dependencySet(group: 'org.openjdk.jmh', version:'1.36') {
+      entry 'jmh-core'
+      entry 'jmh-generator-annprocess'
+    }
 
     dependency 'org.rocksdb:rocksdbjni:8.0.0'
 
-    dependency 'org.slf4j:slf4j-api:2.0.6'
-    dependency 'org.slf4j:slf4j-nop:2.0.6'
+    dependencySet(group: 'org.slf4j', version:'2.0.7') {
+      entry 'slf4j-api'
+      entry 'slf4j-nop'
+    }
 
-    dependency 'org.springframework.security:spring-security-crypto:5.7.2'
+    dependency 'org.springframework.security:spring-security-crypto:6.0.2'
 
-    dependency 'org.testcontainers:testcontainers:1.17.2'
+    dependency 'org.testcontainers:testcontainers:1.17.6'
 
-    dependency 'org.web3j:quorum:4.9.0'
-    dependencySet(group: 'org.web3j', version: '4.9.4') {
+    dependency 'org.web3j:quorum:4.9.5'
+    dependencySet(group: 'org.web3j', version: '4.9.7') {
       entry 'abi'
       entry 'besu'
       entry 'core'
       entry 'crypto'
     }
 
-    dependency 'org.xerial.snappy:snappy-java:1.1.8.4'
+    dependency 'org.xerial.snappy:snappy-java:1.1.9.1'
 
     dependency 'org.yaml:snakeyaml:2.0'
 
     dependency 'tech.pegasys.discovery:discovery:22.2.0'
 
-    dependency 'com.github.oshi:oshi-core:6.2.2'
+    dependency 'com.github.oshi:oshi-core:6.4.1'
   }
 }
