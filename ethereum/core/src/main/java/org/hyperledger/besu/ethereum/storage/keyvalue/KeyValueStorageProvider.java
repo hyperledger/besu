@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateKeyValueStorage;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -111,12 +109,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStatePreimageStorage createPrivateWorldStatePreimageStorage() {
     return new WorldStatePreimageKeyValueStorage(privateWorldStatePreimageStorage);
-  }
-
-  @Override
-  public GoQuorumPrivateStorage createGoQuorumPrivateStorage() {
-    return new GoQuorumPrivateKeyValueStorage(
-        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.GOQUORUM_PRIVATE_STORAGE));
   }
 
   @Override

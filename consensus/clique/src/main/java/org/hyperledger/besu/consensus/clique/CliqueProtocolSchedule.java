@@ -82,7 +82,6 @@ public class CliqueProtocolSchedule {
                         builder)),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
             evmConfiguration)
         .createProtocolSchedule();
   }

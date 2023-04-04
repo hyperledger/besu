@@ -121,7 +121,6 @@ import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -2225,44 +2224,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         vertx.isNativeTransportEnabled() && enabled, actualPath, rpcIpcApis);
   }
 
-  private GoQuorumPrivacyParameters configureGoQuorumPrivacy(
-      final KeyValueStorageProvider storageProvider) {
-    return new GoQuorumPrivacyParameters(
-        createGoQuorumEnclave(),
-        readEnclaveKey(),
-        storageProvider.createGoQuorumPrivateStorage(),
-        createPrivateWorldStateArchive(storageProvider));
-  }
-
-  private GoQuorumEnclave createGoQuorumEnclave() {
-    final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
-    if (privacyOptionGroup.privacyKeyStoreFile != null) {
-      return enclaveFactory.createGoQuorumEnclave(
-          privacyOptionGroup.privacyUrl,
-          privacyOptionGroup.privacyKeyStoreFile,
-          privacyOptionGroup.privacyKeyStorePasswordFile,
-          privacyOptionGroup.privacyTlsKnownEnclaveFile);
-    } else {
-      return enclaveFactory.createGoQuorumEnclave(privacyOptionGroup.privacyUrl);
-    }
-  }
-
-  private String readEnclaveKey() {
-    final String key;
-    try {
-      key = Files.asCharSource(privacyOptionGroup.privacyPublicKeyFile, UTF_8).read();
-    } catch (final Exception e) {
-      throw new ParameterException(
-          this.commandLine,
-          "--privacy-public-key-file must be set if isQuorum is set in the genesis file.",
-          e);
-    }
-    // throws exception if invalid base 64
-    Base64.getDecoder().decode(key);
-
-    return key;
-  }
-
   private void ensureAllNodesAreInAllowlist(
       final Collection<EnodeURL> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
@@ -2912,20 +2873,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             privacyOptionGroup.privacyTlsKnownEnclaveFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
-    } else if (isGoQuorumCompatibilityMode) {
-      privacyParametersBuilder.setGoQuorumPrivacyParameters(
-          Optional.of(configureGoQuorumPrivacy(storageProvider)));
     }
 
     if (Boolean.FALSE.equals(privacyOptionGroup.isPrivacyEnabled) && anyPrivacyApiEnabled()) {
       logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
     }
 
-    if (!isGoQuorumCompatibilityMode
-        && (jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.GOQUORUM.name())
-            || jsonRPCWebsocketOptionGroup.rpcWsApis.contains(RpcApis.GOQUORUM.name()))) {
-      logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
-    }
     privacyParametersBuilder.setPrivacyService(privacyPluginService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 

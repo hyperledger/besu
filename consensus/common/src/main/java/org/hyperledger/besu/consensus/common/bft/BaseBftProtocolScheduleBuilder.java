@@ -78,7 +78,6 @@ public abstract class BaseBftProtocolScheduleBuilder {
                     specAdapters,
                     privacyParameters,
                     isRevertReasonEnabled,
-                    config.isQuorum(),
                     evmConfiguration)
                 .createProtocolSchedule();
     return new BftProtocolSchedule(mutableProtocolSchedule);

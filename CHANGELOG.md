@@ -1,5 +1,14 @@
 # Changelog
 
+## 23.4
+
+### Breaking Changes
+- Removed IBFT 1.0 feature (deprecated in 23.1.0-beta) [#5302](https://github.com/hyperledger/besu/pull/5302)
+- Removed GoQuorum-compatible privacy feature (deprecated in 23.1.0-beta)
+
+### Additions and Improvements
+-
+
 ## 23.1.3 
 
 ### Breaking Changes
@@ -7,9 +16,8 @@
 - In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
 
 ### Additions and Improvements
-
-- An alternate build target for the EVM using GraalVM AOT compilaiton was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
-- To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew naticeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
+- An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
+- To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew nativeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
 - Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
 - Log an error with stacktrace when RPC responds with internal error [#5288](https://github.com/hyperledger/besu/pull/5288)
 

@@ -42,8 +42,6 @@ public interface StorageProvider extends Closeable {
 
   WorldStatePreimageStorage createPrivateWorldStatePreimageStorage();
 
-  GoQuorumPrivateStorage createGoQuorumPrivateStorage();
-
   boolean isWorldStateIterable();
 
   boolean isWorldStateSnappable();
