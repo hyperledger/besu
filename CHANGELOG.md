@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 - In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
+- In `--ethstats`, if the port is not specified in the URI, it will default to 443 and 80 for ssl and non-ssl connections respectively instead of 3000. [#5301](https://github.com/hyperledger/besu/pull/5301)
 
 ### Additions and Improvements
 
@@ -12,6 +13,7 @@
 - To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew naticeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
 - Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
 - Log an error with stacktrace when RPC responds with internal error [#5288](https://github.com/hyperledger/besu/pull/5288)
+- `--ethstats-cacert` to specify root CA of ethstats server (useful for non-production environments). [#5301](https://github.com/hyperledger/besu/pull/5301)
 
 ### Bug Fixes
 - Fix eth_getBlockByNumber cache error for latest block when called during syncing [#5292](https://github.com/hyperledger/besu/pull/5292)
