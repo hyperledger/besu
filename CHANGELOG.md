@@ -1,5 +1,12 @@
 # Changelog
 
+## 23.4-RC
+
+### Additions and Improvements
+- Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
+
+### Bug Fixes
+
 ## 23.1.3 
 
 ### Breaking Changes
@@ -20,7 +27,7 @@
 - Fix QBFT and IBFT unable to propose blocks on London when zeroBaseFee is used [#5276](https://github.com/hyperledger/besu/pull/5276) 
 - Make QBFT validator smart contract mode work with london fork [#5249](https://github.com/hyperledger/besu/issues/5249)
 - Try to connect to EthStats server by default with ssl followed by non-ssl. [#5301](https://github.com/hyperledger/besu/pull/5301)
-
+- Allow --miner-extra-data to be used in Proof-of-Stake block production [#5291](https://github.com/hyperledger/besu/pull/5291)
 
 ### Download Links
 
