@@ -15,17 +15,26 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
+import java.util.Optional;
+
 public class DepositsValidatorProvider {
-
   static DepositsValidator getDepositsValidator(
-      final TimestampSchedule timestampSchedule, final long newPayloadTimestamp) {
+      final TimestampSchedule timestampSchedule,
+      final long blockTimestamp,
+      final long blockNumber) {
 
-    return timestampSchedule
-        .getByTimestamp(newPayloadTimestamp)
+    final BlockHeader blockHeader =
+        BlockHeaderBuilder.createDefault()
+            .timestamp(blockTimestamp)
+            .number(blockNumber)
+            .buildBlockHeader();
+    return Optional.ofNullable(timestampSchedule.getByBlockHeader(blockHeader))
         .map(ProtocolSpec::getDepositsValidator)
         .orElseGet(DepositsValidator.ProhibitedDeposits::new);
   }
