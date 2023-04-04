@@ -1,5 +1,12 @@
 # Changelog
 
+## 23.4-RC
+
+### Additions and Improvements
+- Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
+
+### Bug Fixes
+
 ## 23.1.3 
 
 ### Breaking Changes
