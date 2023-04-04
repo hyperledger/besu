@@ -166,10 +166,9 @@ public class EthStatsService {
       final EthStatsConnectOptions ethStatsConnectOptions) {
     return new WebSocketConnectOptions()
         .setURI("/api")
-        .setSsl(false)
-        .setHost(ethStatsConnectOptions.getHost());
-
-    // port will be set up in start method.
+        .setSsl(true)
+        .setHost(ethStatsConnectOptions.getHost())
+        .setPort(getWsPort(ethStatsConnectOptions, true));
   }
 
   private static int getWsPort(
@@ -182,8 +181,7 @@ public class EthStatsService {
 
   /** Start. */
   public void start() {
-    updateSSLProtocol(); // Try wss:// (default) and ws:// for each retry.
-    LOG.info("Connecting to EthStats: {}", getEthStatsHost());
+    LOG.debug("Connecting to EthStats: {}", getEthStatsHost());
     try {
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
       vertx
@@ -241,9 +239,9 @@ public class EthStatsService {
 
   /** Switch from ssl to non-ssl and vice-versa. Sets port to 443 or 80 if not specified. */
   private void updateSSLProtocol() {
-    final boolean isSSL = !webSocketConnectOptions.isSsl();
-    webSocketConnectOptions.setSsl(isSSL);
-    webSocketConnectOptions.setPort(getWsPort(ethStatsConnectOptions, isSSL));
+    final boolean updatedSSL = !webSocketConnectOptions.isSsl();
+    webSocketConnectOptions.setSsl(updatedSSL);
+    webSocketConnectOptions.setPort(getWsPort(ethStatsConnectOptions, updatedSSL));
   }
 
   /** Ends the current web socket connection, observers and schedulers */
@@ -260,6 +258,7 @@ public class EthStatsService {
   private void retryConnect() {
     if (retryInProgress.getAndSet(true) == FALSE) {
       stop();
+      updateSSLProtocol(); // switch from ssl:true to ssl:false and vice-versa
       protocolManager
           .ethContext()
           .getScheduler()
