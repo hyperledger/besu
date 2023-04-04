@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static com.google.common.collect.Streams.stream;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils.truncToken;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
@@ -129,7 +130,10 @@ public class WebSocketService {
       final String connectionId = websocket.textHandlerID();
       final String token = getAuthToken(websocket);
       if (token != null) {
-        LOG.trace("Websocket authentication token {}", token);
+        LOG.atTrace()
+            .setMessage("Websocket authentication token {}")
+            .addArgument(() -> truncToken(token))
+            .log();
       }
 
       if (!hasAllowedHostnameHeader(Optional.ofNullable(websocket.headers().get("Host")))) {

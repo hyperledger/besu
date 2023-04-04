@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
 import static org.apache.tuweni.net.tls.VertxTrustOptions.allowlistClients;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils.truncToken;
 
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
@@ -327,7 +328,10 @@ public class EngineJsonRpcService {
           AuthenticationUtils.getJwtTokenFromAuthorizationHeaderValue(
               websocket.headers().get("Authorization"));
       if (token != null) {
-        LOG.trace("Websocket authentication token {}", token);
+        LOG.atTrace()
+            .setMessage("JWT authentication token {}")
+            .addArgument(() -> truncToken(token))
+            .log();
       }
 
       if (!hostIsInAllowlist(
