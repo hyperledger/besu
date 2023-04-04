@@ -72,7 +72,7 @@ public class BesuControllerTest {
   public void invalidConsensusCombination() {
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
-    // explicitly not setting isIbftLegacy() or isIbft2() for genesisConfigOptions
+    // explicitly not setting isIbft2() for genesisConfigOptions
 
     assertThatThrownBy(
             () -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL))
@@ -97,25 +97,6 @@ public class BesuControllerTest {
 
     assertThat(besuControllerBuilderSchedule).containsKeys(0L, qbftStartBlock);
     assertThat(besuControllerBuilderSchedule.get(0L)).isInstanceOf(IbftBesuControllerBuilder.class);
-    assertThat(besuControllerBuilderSchedule.get(qbftStartBlock))
-        .isInstanceOf(QbftBesuControllerBuilder.class);
-  }
-
-  @Test
-  public void createConsensusScheduleBesuControllerBuilderWhenMigratingFromIbftLegacyToQbft() {
-    final long qbftStartBlock = 10L;
-    mockGenesisConfigForMigration("ibftLegacy", OptionalLong.of(qbftStartBlock));
-
-    final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL);
-
-    assertThat(besuControllerBuilder).isInstanceOf(ConsensusScheduleBesuControllerBuilder.class);
-
-    final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule =
-        ((ConsensusScheduleBesuControllerBuilder) besuControllerBuilder)
-            .getBesuControllerBuilderSchedule();
-
-    assertThat(besuControllerBuilderSchedule).containsKeys(0L, qbftStartBlock);
     assertThat(besuControllerBuilderSchedule.get(qbftStartBlock))
         .isInstanceOf(QbftBesuControllerBuilder.class);
   }

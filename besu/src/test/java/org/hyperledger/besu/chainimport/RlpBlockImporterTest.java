@@ -148,44 +148,4 @@ public final class RlpBlockImporterTest {
     assertThat(result.td).isEqualTo(UInt256.valueOf(34351349760L));
   }
 
-  @Test
-  public void ibftImport() throws IOException {
-    final Path dataDir = folder.newFolder().toPath();
-    final Path source = dataDir.resolve("ibft.blocks");
-    final String config =
-        Resources.toString(this.getClass().getResource("/ibftlegacy_genesis.json"), UTF_8);
-
-    try {
-      Files.write(
-          source,
-          Resources.toByteArray(this.getClass().getResource("/ibft.blocks")),
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING);
-    } catch (final IOException ex) {
-      throw new IllegalStateException(ex);
-    }
-
-    final BesuController controller =
-        new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.fromConfig(config), SyncMode.FULL)
-            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .storageProvider(new InMemoryKeyValueStorageProvider())
-            .networkId(BigInteger.valueOf(10))
-            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
-            .nodeKey(NodeKeyUtils.generate())
-            .metricsSystem(new NoOpMetricsSystem())
-            .privacyParameters(PrivacyParameters.DEFAULT)
-            .dataDirectory(dataDir)
-            .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-            .gasLimitCalculator(GasLimitCalculator.constant())
-            .evmConfiguration(EvmConfiguration.DEFAULT)
-            .build();
-    final RlpBlockImporter.ImportResult result =
-        rlpBlockImporter.importBlockchain(source, controller, false);
-
-    // Don't count the Genesis block
-    assertThat(result.count).isEqualTo(958);
-  }
 }
