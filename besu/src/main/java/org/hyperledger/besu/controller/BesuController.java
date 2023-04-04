@@ -325,7 +325,8 @@ public class BesuController implements java.io.Closeable {
       } else if (configOptions.isIbft2()) {
         builder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
-        throw new IllegalStateException("IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
+        throw new IllegalStateException(
+            "IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
       } else if (configOptions.isQbft()) {
         builder = new QbftBesuControllerBuilder();
       } else if (configOptions.isClique()) {
@@ -358,7 +359,8 @@ public class BesuController implements java.io.Closeable {
       if (configOptions.isIbft2()) {
         originalControllerBuilder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
-        throw new IllegalStateException("IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
+        throw new IllegalStateException(
+            "IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
       } else {
         throw new IllegalStateException(
             "Invalid genesis migration config. Migration is supported from IBFT (legacy) or IBFT2 to QBFT)");

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.chainimport;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -37,12 +36,9 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletionException;
 
-import com.google.common.io.Resources;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Rule;
 import org.junit.Test;
@@ -147,5 +143,4 @@ public final class RlpBlockImporterTest {
     assertThat(result.count).isEqualTo(1);
     assertThat(result.td).isEqualTo(UInt256.valueOf(34351349760L));
   }
-
 }
