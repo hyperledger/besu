@@ -211,25 +211,6 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
   }
 
   @Test
-  public void shouldRejectGoQuorumTransactionWithNonZeroValue() {
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
-    final Transaction transaction37 =
-        Transaction.builder().v(BigInteger.valueOf(37)).gasPrice(Wei.ZERO).value(Wei.ONE).build();
-    final Transaction transaction38 =
-        Transaction.builder().v(BigInteger.valueOf(38)).gasPrice(Wei.ZERO).value(Wei.ONE).build();
-
-    final ValidationResult<TransactionInvalidReason> result37 =
-        transactionPool.addLocalTransaction(transaction37);
-    final ValidationResult<TransactionInvalidReason> result38 =
-        transactionPool.addLocalTransaction(transaction38);
-
-    assertThat(result37.getInvalidReason())
-        .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
-    assertThat(result38.getInvalidReason())
-        .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
-  }
-
-  @Test
   public void shouldAcceptZeroGasPriceFrontierTransactionsWhenMining() {
     when(miningParameters.isMiningEnabled()).thenReturn(true);
 
