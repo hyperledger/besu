@@ -13,7 +13,7 @@ permissions:
 jobs:
   Analysis:
     runs-on: ubuntu-latest
-
+    if: github.repository == 'hyperledger/besu'
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -38,5 +38,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew build sonarqube --info
+        run: ./gradlew build sonarqube --continue --info
 
