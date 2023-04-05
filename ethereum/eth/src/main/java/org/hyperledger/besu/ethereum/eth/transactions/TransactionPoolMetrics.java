@@ -31,9 +31,9 @@ import org.slf4j.LoggerFactory;
 
 public class TransactionPoolMetrics {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolMetrics.class);
-  public static final String ADDED_COUNTER_NAME = "transactions_added_total";
-  public static final String REMOVED_COUNTER_NAME = "transactions_removed_total";
-  public static final String REJECTED_COUNTER_NAME = "transactions_rejected_total";
+  public static final String ADDED_COUNTER_NAME = "added_total";
+  public static final String REMOVED_COUNTER_NAME = "removed_total";
+  public static final String REJECTED_COUNTER_NAME = "rejected_total";
   public static final String EXPIRED_MESSAGES_COUNTER_NAME = "messages_expired_total";
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private final MetricsSystem metricsSystem;
@@ -79,7 +79,7 @@ public class TransactionPoolMetrics {
     spaceUsed =
         metricsSystem.createLabelledGauge(
             BesuMetricCategory.TRANSACTION_POOL,
-            "layer_space_used",
+            "space_used",
             "The amount of space used by the transactions in the layer",
             "layer");
 
