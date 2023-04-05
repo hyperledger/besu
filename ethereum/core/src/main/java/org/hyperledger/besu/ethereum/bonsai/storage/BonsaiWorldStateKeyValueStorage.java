@@ -22,6 +22,9 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
@@ -55,19 +58,31 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
 
+  private final Counter getAccountCounter;
+  private final Counter getAccountFlatDatabaseCounter;
+  private final Counter getAccountMerkleTrieCounter;
+
+  private final Counter getStorageValueCounter;
+  private final Counter getStorageValueFlatDatabaseCounter;
+  private final Counter getStorageValueMerkleTrieCounter;
+
+  protected final ObservableMetricsSystem metricsSystem;
+
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
 
   protected final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
-  public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
+  public BonsaiWorldStateKeyValueStorage(
+      final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
     this(
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+        metricsSystem);
   }
 
   public BonsaiWorldStateKeyValueStorage(
@@ -75,12 +90,50 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage) {
+      final KeyValueStorage trieLogStorage,
+      final ObservableMetricsSystem metricsSystem) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
+    this.metricsSystem = metricsSystem;
+
+    getAccountCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_total",
+            "Total number of calls to getAccount");
+
+    getAccountFlatDatabaseCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_flat_database",
+            "Number of accounts found in the database");
+
+    getAccountMerkleTrieCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_merkle_trie",
+            "Number of accounts not found in the flat database, but found in the merkle trie");
+
+    getStorageValueCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_total",
+            "Total number of calls to getStorageValueBySlotHash");
+
+    getStorageValueFlatDatabaseCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_flat_database",
+            "Number of storage slots found in the database");
+
+    getStorageValueMerkleTrieCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_merkle_trie",
+            "Number of storage slots not found in the flat database, but found in the merkle trie");
   }
 
   @Override
@@ -96,6 +149,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
+    getAccountCounter.inc();
     Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
@@ -107,8 +161,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                         this::getAccountStateTrieNode, Function.identity(), Function.identity()),
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
+        getAccountMerkleTrieCounter.inc();
       }
+    } else {
+      getAccountFlatDatabaseCounter.inc();
     }
+
     return response;
   }
 
@@ -176,6 +234,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final Hash slotHash) {
+    getStorageValueCounter.inc();
     Optional<Bytes> response =
         storageStorage
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
@@ -193,7 +252,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                     storageRoot.get())
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+        getAccountMerkleTrieCounter.inc();
       }
+    } else {
+      getStorageValueFlatDatabaseCounter.inc();
     }
     return response;
   }
