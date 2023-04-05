@@ -83,6 +83,32 @@ public class UnifiedProtocolScheduleTest {
   }
 
   @Test
+  public void conflictingTimestampSchedules() {
+    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec3 = mock(ProtocolSpec.class);
+
+    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    protocolSchedule.putMilestone(true, 0, spec1);
+    protocolSchedule.putMilestone(true, 10, spec2);
+    protocolSchedule.putMilestone(true, 10, spec3);
+    assertThat(protocolSchedule.getByBlockHeader(header(0, 10L))).isSameAs(spec3);
+  }
+
+  @Test
+  public void conflictingBlockNumberAndTimestampSchedules() {
+    final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+    final ProtocolSpec spec3 = mock(ProtocolSpec.class);
+
+    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    protocolSchedule.putMilestone(false, 0, spec1);
+    protocolSchedule.putMilestone(false, 10, spec2);
+    protocolSchedule.putMilestone(true, 10, spec3);
+    assertThat(protocolSchedule.getByBlockHeader(header(10, 10L))).isSameAs(spec3);
+  }
+
+  @Test
   public void getByBlockHeader_getLatestTimestampFork() {
     config.grayGlacierBlock(0);
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);
@@ -128,6 +154,18 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSchedule schedule = builder.createProtocolSchedule();
 
     assertThat(schedule.getByBlockHeader(header(99, 8881L)).getName()).isEqualTo("London");
+  }
+
+  @Test
+  public void getByBlockHeader_getLatestBlockNumberForkWhenNoTimestampForks() {
+    config.magneto(0);
+    config.mystique(100);
+    final ProtocolSchedule schedule = builder.createProtocolSchedule();
+
+    assertThat(schedule.getByBlockHeader(header(100, Long.MAX_VALUE)).getName())
+        .isEqualTo("Mystique");
+    assertThat(schedule.getByBlockHeader(header(200, Long.MAX_VALUE)).getName())
+        .isEqualTo("Mystique");
   }
 
   @Test
