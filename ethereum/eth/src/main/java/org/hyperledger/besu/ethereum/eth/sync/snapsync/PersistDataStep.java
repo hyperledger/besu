@@ -74,11 +74,8 @@ public class PersistDataStep {
       updater.commit();
     } catch (StorageException e) {
       if (e.getMessage().contains("Busy")) {
-        tasks.forEach(
-            nodeDataRequestTask -> {
-              LOG.error("Busy on persistDataStep, marking task as failed");
-              nodeDataRequestTask.markFailed();
-            });
+        LOG.error("Busy on persistDataStep, marking task as failed");
+        tasks.forEach(nodeDataRequestTask -> nodeDataRequestTask.markFailed());
       }
     }
     return tasks;
