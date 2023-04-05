@@ -18,7 +18,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.util.stream.Collectors.partitioningBy;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -27,15 +26,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.NavigableSet;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -66,45 +61,18 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
     checkArgument(
         protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block 0");
 
-    final Map<Boolean, List<ScheduledProtocolSpec>> partitionedSpecs =
-        protocolSpecs.stream().collect(partitioningBy(ScheduledProtocolSpec::isTimestampMilestone));
-    final List<ScheduledProtocolSpec> blockNumberSpecs = partitionedSpecs.get(false);
-    final List<ScheduledProtocolSpec> timestampSpecs = partitionedSpecs.get(true);
-
-    assert blockNumberSpecs.stream()
-            .mapToLong(ScheduledProtocolSpec::milestone)
-            .max()
-            .orElse(Long.MIN_VALUE)
-        < timestampSpecs.stream()
-            .mapToLong(ScheduledProtocolSpec::milestone)
-            .min()
-            .orElse(Long.MAX_VALUE);
-
-    final ScheduledProtocolSpec byBlockNumber =
-        getByMilestone(blockNumberSpecs, blockHeader.getNumber());
-    final ScheduledProtocolSpec byTimestamp =
-        getByMilestone(timestampSpecs, blockHeader.getTimestamp());
-    return Stream.of(byBlockNumber, byTimestamp)
-        .filter(Objects::nonNull)
-        .max(Comparator.comparing(ScheduledProtocolSpec::milestone))
-        .map(ScheduledProtocolSpec::spec)
-        .orElse(null);
-  }
-
-  private ScheduledProtocolSpec getByMilestone(
-      final List<ScheduledProtocolSpec> specsAscending, final long number) {
-
-    NavigableSet<ScheduledProtocolSpec> navigableSpecs =
-        new TreeSet<>(Comparator.comparingLong(ScheduledProtocolSpec::milestone).reversed());
-    navigableSpecs.addAll(specsAscending);
-
-    // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
-    // the requested level will be the most appropriate spec
-    for (final ScheduledProtocolSpec s : navigableSpecs) {
-      if (number >= s.milestone()) {
-        return s;
+    for (final ScheduledProtocolSpec scheduledProtocolSpec : protocolSpecs) {
+      if (scheduledProtocolSpec.isTimestampMilestone()) {
+        if (blockHeader.getTimestamp() >= scheduledProtocolSpec.milestone()) {
+          return scheduledProtocolSpec.spec();
+        }
+      } else {
+        if (blockHeader.getNumber() >= scheduledProtocolSpec.milestone()) {
+          return scheduledProtocolSpec.spec();
+        }
       }
     }
+
     return null;
   }
 
