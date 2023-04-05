@@ -115,6 +115,17 @@ public class BesuNodeFactory {
     return createMinerNode(name, BesuNodeConfigurationBuilder::revertReasonEnabled);
   }
 
+  public BesuNode createDaggerNode(final String name) throws IOException {
+    BesuNodeConfigurationBuilder builder =
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcTxPool()
+            .webSocketEnabled();
+
+    return create(builder.build());
+  }
+
   public BesuNode createArchiveNode(final String name) throws IOException {
     return createArchiveNode(name, UnaryOperator.identity());
   }

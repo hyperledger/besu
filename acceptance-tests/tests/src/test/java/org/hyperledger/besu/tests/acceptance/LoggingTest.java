@@ -27,7 +27,7 @@ public class LoggingTest extends AcceptanceTestBase {
 
   @Test
   public void testDefaultLoggingIsAtLeastInfo() throws IOException {
-    final BesuNode node = besu.createArchiveNode("logger");
+    final BesuNode node = besu.createDaggerNode("logger");
     cluster.startConsoleCapture();
     cluster.runNodeStart(node);
 

@@ -28,6 +28,8 @@ dependencies {
 
   implementation 'com.github.tomakehurst:wiremock-jre8'
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'info.picocli:picocli'
   implementation 'io.reactivex.rxjava2:rxjava'
