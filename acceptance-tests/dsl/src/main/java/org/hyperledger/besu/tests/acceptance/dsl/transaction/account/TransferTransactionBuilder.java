@@ -18,6 +18,7 @@ import static org.testcontainers.shaded.com.google.common.base.Preconditions.che
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 
@@ -33,6 +34,8 @@ public class TransferTransactionBuilder {
   private BigInteger nonce;
   private Optional<BigInteger> chainId = Optional.empty();
   private SignatureAlgorithm signatureAlgorithm = new SECP256K1();
+
+  private TransactionType transactionType;
 
   public TransferTransactionBuilder sender(final Account sender) {
     this.sender = sender;
@@ -68,13 +71,6 @@ public class TransferTransactionBuilder {
     return this;
   }
 
-  public TransferTransaction build() {
-    validateSender();
-    validateTransferAmount();
-    return new TransferTransaction(
-        sender, recipient, transferAmount, gasPrice, nonce, chainId, signatureAlgorithm);
-  }
-
   public TransferTransactionBuilder chainId(final BigInteger chainId) {
     this.chainId = Optional.ofNullable(chainId);
     return this;
@@ -83,6 +79,26 @@ public class TransferTransactionBuilder {
   public TransferTransactionBuilder chainId(final Long chainId) {
     checkNotNull(chainId);
     return chainId(BigInteger.valueOf(chainId));
+  }
+
+  public TransferTransactionBuilder transactionType(final TransactionType transactionType) {
+    this.transactionType = transactionType;
+    return this;
+  }
+
+  public TransferTransaction build() {
+    validateSender();
+    validateTransferAmount();
+    validateTransactionType();
+    return new TransferTransaction(
+        sender,
+        recipient,
+        transferAmount,
+        gasPrice,
+        nonce,
+        chainId,
+        signatureAlgorithm,
+        transactionType);
   }
 
   private void validateSender() {
@@ -94,6 +110,15 @@ public class TransferTransactionBuilder {
   private void validateTransferAmount() {
     if (transferAmount == null) {
       throw new IllegalArgumentException("NULL transferAmount is not allowed.");
+    }
+  }
+
+  private void validateTransactionType() {
+    if (transactionType == null) {
+      throw new IllegalArgumentException("NULL transactionType is not allowed.");
+    }
+    if (transactionType == TransactionType.EIP1559 && chainId.isEmpty()) {
+      throw new IllegalStateException("Chain ID must be specified for EIP-1559 transactions");
     }
   }
 }
