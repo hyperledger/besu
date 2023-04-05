@@ -82,7 +82,6 @@ public class TransactionSimulatorTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private MainnetTransactionProcessor transactionProcessor;
-  @Mock private MainnetTransactionValidator transactionValidator;
 
   private final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
 
@@ -90,8 +89,6 @@ public class TransactionSimulatorTest {
   public void setUp() {
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
-
-    when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
   }
 
   @Test

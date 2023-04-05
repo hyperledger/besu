@@ -29,9 +29,7 @@ public interface PrivacyIdProvider {
   String getPrivacyUserId(Optional<User> user);
 
   static PrivacyIdProvider build(final PrivacyParameters privacyParameters) {
-    if (privacyParameters.getGoQuorumPrivacyParameters().isPresent()) {
-      return goQuorumPrivacyUserIdProvider(privacyParameters);
-    } else if (privacyParameters.isMultiTenancyEnabled()) {
+    if (privacyParameters.isMultiTenancyEnabled()) {
       return multiTenancyPrivacyUserIdProvider();
     }
     return defaultPrivacyUserIdProvider(privacyParameters);
@@ -47,15 +45,5 @@ public interface PrivacyIdProvider {
   private static PrivacyIdProvider defaultPrivacyUserIdProvider(
       final PrivacyParameters privacyParameters) {
     return user -> privacyParameters.getPrivacyUserId();
-  }
-
-  private static PrivacyIdProvider goQuorumPrivacyUserIdProvider(
-      final PrivacyParameters privacyParameters) {
-    return user ->
-        privacyParameters
-            .getGoQuorumPrivacyParameters()
-            .orElseThrow(
-                () -> new InvalidConfigurationException("GoQuorumPrivacyParameters not set"))
-            .enclaveKey();
   }
 }
