@@ -33,8 +33,8 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
-import org.hyperledger.besu.ethstats.util.ImmutableNetstatsUrl;
-import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
+import org.hyperledger.besu.ethstats.util.ImmutableEthStatsConnectOptions;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.math.BigInteger;
@@ -74,8 +74,8 @@ public class EthStatsServiceTest {
   @Mock private HttpClient httpClient;
   @Mock private WebSocket webSocket;
 
-  final NetstatsUrl netstatsUrl =
-      ImmutableNetstatsUrl.builder()
+  final EthStatsConnectOptions ethStatsConnectOptions =
+      ImmutableEthStatsConnectOptions.builder()
           .nodeName("besu-node")
           .secret("secret")
           .host("127.0.0.1")
@@ -108,7 +108,7 @@ public class EthStatsServiceTest {
   public void shouldRetryWhenLocalEnodeNotAvailable() throws Exception {
     ethStatsService =
         new EthStatsService(
-            netstatsUrl,
+            ethStatsConnectOptions,
             blockchainQueries,
             ethProtocolManager,
             transactionPool,
@@ -127,7 +127,7 @@ public class EthStatsServiceTest {
   public void shouldSendHelloMessage() {
     ethStatsService =
         new EthStatsService(
-            netstatsUrl,
+            ethStatsConnectOptions,
             blockchainQueries,
             ethProtocolManager,
             transactionPool,
@@ -160,7 +160,7 @@ public class EthStatsServiceTest {
 
     ethStatsService =
         new EthStatsService(
-            netstatsUrl,
+            ethStatsConnectOptions,
             blockchainQueries,
             ethProtocolManager,
             transactionPool,
@@ -192,7 +192,7 @@ public class EthStatsServiceTest {
   public void shouldSendFullReportIfHelloMessageSucceeded() {
     ethStatsService =
         new EthStatsService(
-            netstatsUrl,
+            ethStatsConnectOptions,
             blockchainQueries,
             ethProtocolManager,
             transactionPool,

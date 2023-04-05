@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -105,7 +106,7 @@ import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethstats.EthStatsService;
-import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -172,9 +173,7 @@ public class RunnerBuilder {
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
-
-  private String ethstatsUrl;
-  private String ethstatsContact;
+  private EthstatsOptions ethstatsOptions;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
@@ -402,24 +401,13 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add Ethstats url.
+   * Add EthStatsOptions
    *
-   * @param ethstatsUrl the ethstats url
-   * @return the runner builder
+   * @param ethstatsOptions the ethstats options
+   * @return Runner builder instance
    */
-  public RunnerBuilder ethstatsUrl(final String ethstatsUrl) {
-    this.ethstatsUrl = ethstatsUrl;
-    return this;
-  }
-
-  /**
-   * Add Ethstats contact.
-   *
-   * @param ethstatsContact the ethstats contact
-   * @return the runner builder
-   */
-  public RunnerBuilder ethstatsContact(final String ethstatsContact) {
-    this.ethstatsContact = ethstatsContact;
+  public RunnerBuilder ethstatsOptions(final EthstatsOptions ethstatsOptions) {
+    this.ethstatsOptions = ethstatsOptions;
     return this;
   }
 
@@ -1038,11 +1026,14 @@ public class RunnerBuilder {
         createMetricsService(vertx, metricsConfiguration);
 
     final Optional<EthStatsService> ethStatsService;
-    if (!Strings.isNullOrEmpty(ethstatsUrl)) {
+    if (isEthStatsEnabled()) {
       ethStatsService =
           Optional.of(
               new EthStatsService(
-                  NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact),
+                  EthStatsConnectOptions.fromParams(
+                      ethstatsOptions.getEthstatsUrl(),
+                      ethstatsOptions.getEthstatsContact(),
+                      ethstatsOptions.getEthstatsCaCert()),
                   blockchainQueries,
                   besuController.getProtocolManager(),
                   transactionPool,
@@ -1112,6 +1103,10 @@ public class RunnerBuilder {
         pidPath,
         autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
         context.getBlockchain());
+  }
+
+  private boolean isEthStatsEnabled() {
+    return ethstatsOptions != null && !Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl());
   }
 
   private Stream<EnodeURL> sanitizePeers(
