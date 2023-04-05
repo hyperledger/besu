@@ -453,12 +453,12 @@ public class MainnetTransactionProcessor {
         final Wei baseFee = blockHeader.getBaseFee().get();
         if (transactionGasPrice.compareTo(baseFee) < 0) {
           return TransactionProcessingResult.failed(
-                  gasUsedByTransaction,
-                  refundedGas,
-                  ValidationResult.invalid(
-                          TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
-                          "transaction price must be greater than base fee"),
-                  Optional.empty());
+              gasUsedByTransaction,
+              refundedGas,
+              ValidationResult.invalid(
+                  TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                  "transaction price must be greater than base fee"),
+              Optional.empty());
         }
         coinbaseCalculator = coinbaseFeePriceCalculator;
       } else {
@@ -466,7 +466,7 @@ public class MainnetTransactionProcessor {
       }
 
       final Wei coinbaseWeiDelta =
-              coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
+          coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       coinbase.incrementBalance(coinbaseWeiDelta);
 

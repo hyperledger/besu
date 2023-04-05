@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.privacyUserId;
 
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.util.Optional;
 
