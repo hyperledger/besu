@@ -61,6 +61,8 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
     checkArgument(
         protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block 0");
 
+    // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
+    // the requested level will be the most appropriate spec
     for (final ScheduledProtocolSpec scheduledProtocolSpec : protocolSpecs) {
       if (scheduledProtocolSpec.isTimestampMilestone()) {
         if (blockHeader.getTimestamp() >= scheduledProtocolSpec.milestone()) {
@@ -72,7 +74,6 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
         }
       }
     }
-
     return null;
   }
 
