@@ -66,6 +66,6 @@ public class BesuCommandModule {
   @Named("besuCommandLogger")
   @Singleton
   Logger provideBesuCommandLogger() {
-    return Besu.setupLogging();
+    return Besu.getFirstLogger();
   }
 }

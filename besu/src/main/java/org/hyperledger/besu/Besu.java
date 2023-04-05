@@ -33,7 +33,7 @@ public final class Besu {
    * @param args command line arguments.
    */
   public static void main(final String... args) {
-
+    setupLogging();
     final BesuCommand besuCommand = DaggerBesuComponent.create().getBesuCommand();
     int exitCode =
         besuCommand.parse(
@@ -49,10 +49,8 @@ public final class Besu {
   /**
    * a Logger setup for handling any exceptions during the bootstrap process, to indicate to users
    * their CLI configuration had problems.
-   *
-   * @return Logger
    */
-  public static Logger setupLogging() {
+  public static void setupLogging() {
     try {
       InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
     } catch (Throwable t) {
@@ -72,6 +70,9 @@ public final class Besu {
           "Could not set logging system property: %s - %s%n",
           t.getClass().getSimpleName(), t.getMessage());
     }
+  }
+
+  public static Logger getFirstLogger() {
     final Logger logger = LoggerFactory.getLogger(Besu.class);
     Thread.setDefaultUncaughtExceptionHandler(slf4jExceptionHandler(logger));
     Thread.currentThread().setUncaughtExceptionHandler(slf4jExceptionHandler(logger));

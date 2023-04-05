@@ -23,7 +23,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.Runner;
@@ -323,8 +322,7 @@ public abstract class CommandTestAbstract {
         .doReturn(mockPkiBlockCreationConfiguration)
         .when(mockPkiBlockCreationConfigProvider)
         .load(pkiKeyStoreConfigurationArgumentCaptor.capture());
-    when(mockContext.getBesuCommandLogger())
-        .thenReturn(mockLogger);
+    when(mockContext.getBesuCommandLogger()).thenReturn(mockLogger);
   }
 
   @Before
