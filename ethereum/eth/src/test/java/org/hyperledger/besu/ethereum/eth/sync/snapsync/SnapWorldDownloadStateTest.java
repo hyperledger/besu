@@ -107,7 +107,7 @@ public class SnapWorldDownloadStateTest {
 
     if (storageFormat == DataStorageFormat.BONSAI) {
       worldStateStorage =
-          new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+          new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     } else {
       worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }
