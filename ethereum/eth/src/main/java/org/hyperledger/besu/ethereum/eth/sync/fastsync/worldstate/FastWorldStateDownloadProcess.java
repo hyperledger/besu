@@ -199,7 +199,7 @@ public class FastWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   maxOutstandingRequests)
               .thenProcess(
                   "batchPersistData",
-                  tasks -> persistDataStep.persist(tasks, pivotBlockHeader, downloadState))
+                  tasks -> persistDataStep.persist(tasks, pivotBlockHeader, downloadState, 0))
               .andFinishWith(
                   "batchDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
 

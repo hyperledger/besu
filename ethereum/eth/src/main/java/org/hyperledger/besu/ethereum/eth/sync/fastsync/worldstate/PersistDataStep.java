@@ -37,33 +37,36 @@ public class PersistDataStep {
   public List<Task<NodeDataRequest>> persist(
       final List<Task<NodeDataRequest>> tasks,
       final BlockHeader blockHeader,
-      final WorldDownloadState<NodeDataRequest> downloadState) {
-    final Updater updater = worldStateStorage.updater();
-    tasks.stream()
-        .map(
-            task -> {
-              enqueueChildren(task, downloadState);
-              return task;
-            })
-        .map(Task::getData)
-        .filter(request -> request.getData() != null)
-        .forEach(
-            request -> {
-              if (isRootState(blockHeader, request)) {
-                downloadState.setRootNodeData(request.getData());
-              } else {
-                request.persist(updater);
-              }
-            });
+      final WorldDownloadState<NodeDataRequest> downloadState,
+      final int retryAttempts) {
     try {
+      final Updater updater = worldStateStorage.updater();
+      tasks.stream()
+          .map(
+              task -> {
+                if (retryAttempts == 0) enqueueChildren(task, downloadState);
+                return task;
+              })
+          .map(Task::getData)
+          .filter(request -> request.getData() != null)
+          .forEach(
+              request -> {
+                if (isRootState(blockHeader, request) && retryAttempts == 0) {
+                  downloadState.setRootNodeData(request.getData());
+                } else {
+                  request.persist(updater);
+                }
+              });
+
       updater.commit();
+      return tasks;
     } catch (StorageException e) {
-      if (e.getMessage().contains("Busy")) {
-        LOG.error("Busy on persistDataStep marked tasks as failed");
-        tasks.forEach(nodeDataRequestTask -> nodeDataRequestTask.getData().setData(null));
-      }
+      LOG.warn(
+          "Unable to persist node data due to storage exception: {}. Retry {} attempt(s).",
+          e.getMessage(),
+          retryAttempts + 1);
+      return persist(tasks, blockHeader, downloadState, retryAttempts + 1);
     }
-    return tasks;
   }
 
   private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
