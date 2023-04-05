@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -273,6 +274,8 @@ public class P2PNetworkTest {
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
         .timestampForks(Collections.emptyList())
-        .blockchain(blockchainMock);
+        .blockchain(blockchainMock)
+        .allConnectionsSupplier(Stream::empty)
+        .allActiveConnectionsSupplier(Stream::empty);
   }
 }

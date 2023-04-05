@@ -197,6 +197,8 @@ public class TestNode implements Closeable {
                         .blockchain(blockchain)
                         .blockNumberForks(Collections.emptyList())
                         .timestampForks(Collections.emptyList())
+                        .allConnectionsSupplier(ethPeers::getAllConnections)
+                        .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
                         .build())
             .metricsSystem(new NoOpMetricsSystem())
             .build();

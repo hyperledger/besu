@@ -70,9 +70,9 @@ public class RlpxAgent {
   private final PeerPrivileges peerPrivileges;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
-  private int lowerBound;
-  private Supplier<Stream<PeerConnection>> getAllConnectionsSupplier = () -> Stream.empty();
-  private Supplier<Stream<PeerConnection>> getAllActiveConnectionsSupplier = () -> Stream.empty();
+  private final int lowerBound;
+  private final Supplier<Stream<PeerConnection>> allConnectionsSupplier;
+  private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
       CacheBuilder.newBuilder()
           .expireAfterWrite(
@@ -85,12 +85,18 @@ public class RlpxAgent {
       final PeerConnectionEvents connectionEvents,
       final ConnectionInitializer connectionInitializer,
       final PeerRlpxPermissions peerPermissions,
-      final PeerPrivileges peerPrivileges) {
+      final PeerPrivileges peerPrivileges,
+      final int peersLowerBound,
+      final Supplier<Stream<PeerConnection>> allConnectionsSupplier,
+      final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
     this.localNode = localNode;
     this.connectionEvents = connectionEvents;
     this.connectionInitializer = connectionInitializer;
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
+    this.lowerBound = peersLowerBound;
+    this.allConnectionsSupplier = allConnectionsSupplier;
+    this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
   }
 
   public static Builder builder() {
@@ -134,7 +140,7 @@ public class RlpxAgent {
 
   public Stream<PeerConnection> streamConnections() {
     try {
-      return getAllConnectionsSupplier.get();
+      return allConnectionsSupplier.get();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -142,7 +148,7 @@ public class RlpxAgent {
 
   public Stream<PeerConnection> streamActiveConnections() {
     try {
-      return getAllActiveConnectionsSupplier.get();
+      return allActiveConnectionsSupplier.get();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -150,7 +156,7 @@ public class RlpxAgent {
 
   public int getConnectionCount() {
     try {
-      return (int) getAllActiveConnectionsSupplier.get().count();
+      return (int) allActiveConnectionsSupplier.get().count();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -165,7 +171,7 @@ public class RlpxAgent {
 
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
     try {
-      getAllActiveConnectionsSupplier
+      allActiveConnectionsSupplier
           .get()
           .filter(c -> c.getPeer().getId().equals(peerId))
           .forEach(c -> c.disconnect(reason));
@@ -308,15 +314,6 @@ public class RlpxAgent {
     return peerPrivileges.canExceedConnectionLimits(peer);
   }
 
-  public void setGetAllConnectionsSupplier(final Supplier<Stream<PeerConnection>> streamSupplier) {
-    this.getAllConnectionsSupplier = streamSupplier;
-  }
-
-  public void setGetAllActiveConnectionsSupplier(
-      final Supplier<Stream<PeerConnection>> streamSupplier) {
-    this.getAllActiveConnectionsSupplier = streamSupplier;
-  }
-
   private void handleIncomingConnection(final PeerConnection peerConnection) {
     // TODO: when we get here, we are already connected and have spent the time and effort to go
     // through the handshake (expensive). We might want to put in a check before doing the handshake
@@ -369,10 +366,6 @@ public class RlpxAgent {
     return peersConnectingCache.asMap();
   }
 
-  public void setPeerLowerBound(final int lowerBound) {
-    this.lowerBound = lowerBound;
-  }
-
   public int getPeerLowerBound() {
     return lowerBound;
   }
@@ -387,6 +380,9 @@ public class RlpxAgent {
     private PeerConnectionEvents connectionEvents;
     private MetricsSystem metricsSystem;
     private Optional<TLSConfiguration> p2pTLSConfiguration;
+    private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
+    private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
+    private int peersLowerBound;
 
     private Builder() {}
 
@@ -418,7 +414,14 @@ public class RlpxAgent {
       final PeerRlpxPermissions rlpxPermissions =
           new PeerRlpxPermissions(localNode, peerPermissions);
       return new RlpxAgent(
-          localNode, connectionEvents, connectionInitializer, rlpxPermissions, peerPrivileges);
+          localNode,
+          connectionEvents,
+          connectionInitializer,
+          rlpxPermissions,
+          peerPrivileges,
+          peersLowerBound,
+          allConnectionsSupplier,
+          allActiveConnectionsSupplier);
     }
 
     private void validate() {
@@ -480,6 +483,23 @@ public class RlpxAgent {
 
     public Builder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
       this.p2pTLSConfiguration = p2pTLSConfiguration;
+      return this;
+    }
+
+    public Builder allConnectionsSupplier(
+        final Supplier<Stream<PeerConnection>> allConnectionsSupplier) {
+      this.allConnectionsSupplier = allConnectionsSupplier;
+      return this;
+    }
+
+    public Builder allActiveConnectionsSupplier(
+        final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
+      this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
+      return this;
+    }
+
+    public Builder peersLowerBound(final int peersLowerBound) {
+      this.peersLowerBound = peersLowerBound;
       return this;
     }
   }

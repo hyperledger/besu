@@ -71,6 +71,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
@@ -650,8 +651,8 @@ public class RunnerBuilder {
     networkingConfiguration
         .setRlpx(rlpxConfiguration)
         .setDiscovery(
-            discoveryConfiguration); // TODO: Something fishy here, as we do getDiscovery in line
-    // 660 above ...
+            discoveryConfiguration); // TODO: Check whether this is OK, as we do getDiscovery in
+    // line 622 and 624 above ...
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
@@ -680,22 +681,27 @@ public class RunnerBuilder {
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
-        caps ->
-            DefaultP2PNetwork.builder()
-                .vertx(vertx)
-                .nodeKey(nodeKey)
-                .config(networkingConfiguration)
-                .legacyForkIdEnabled(legacyForkIdEnabled)
-                .peerPermissions(peerPermissions)
-                .metricsSystem(metricsSystem)
-                .supportedCapabilities(caps)
-                .natService(natService)
-                .storageProvider(storageProvider)
-                .p2pTLSConfiguration(p2pTLSConfiguration)
-                .blockchain(context.getBlockchain())
-                .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-                .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
-                .build();
+        caps -> {
+          final EthPeers ethPeers = besuController.getEthPeers();
+          return DefaultP2PNetwork.builder()
+              .vertx(vertx)
+              .nodeKey(nodeKey)
+              .config(networkingConfiguration)
+              .legacyForkIdEnabled(legacyForkIdEnabled)
+              .peerPermissions(peerPermissions)
+              .metricsSystem(metricsSystem)
+              .supportedCapabilities(caps)
+              .natService(natService)
+              .storageProvider(storageProvider)
+              .p2pTLSConfiguration(p2pTLSConfiguration)
+              .blockchain(context.getBlockchain())
+              .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
+              .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+              .allConnectionsSupplier(ethPeers::getAllConnections)
+              .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
+              .peersLowerBound(ethPeers.getPeerLowerBound())
+              .build();
+        };
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()

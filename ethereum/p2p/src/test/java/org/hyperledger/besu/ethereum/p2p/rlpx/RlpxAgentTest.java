@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -59,9 +60,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -75,6 +78,9 @@ public class RlpxAgentTest {
   private final PeerConnectionEvents peerConnectionEvents = new PeerConnectionEvents(metrics);
   private final MockConnectionInitializer connectionInitializer =
       new MockConnectionInitializer(peerConnectionEvents);
+  private List<PeerConnection> connections = Collections.emptyList();
+  private final Supplier<Stream<PeerConnection>> allConnectionsSupplier = this::streamConnections;
+  private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier = Stream::empty;
   private RlpxAgent agent = agent();
 
   @Before
@@ -82,6 +88,11 @@ public class RlpxAgentTest {
     // Set basic defaults
     when(peerPrivileges.canExceedConnectionLimits(any())).thenReturn(false);
     agent.subscribeConnectRequest((a, b) -> true);
+  }
+
+  @After
+  public void after() {
+    connections = Collections.emptyList();
   }
 
   @Test
@@ -114,7 +125,7 @@ public class RlpxAgentTest {
     startAgent();
 
     final MockPeerConnection connection = (MockPeerConnection) agent.connect(createPeer()).get();
-    agent.setGetAllConnectionsSupplier(() -> Stream.of(connection));
+    connections = List.of(connection);
 
     final CompletableFuture<Void> future2 = agent.stop();
     assertThat(future2).isDone();
@@ -325,8 +336,7 @@ public class RlpxAgentTest {
     final PeerConnection permittedConnection = permittedConnectionFuture.get();
     final PeerConnection nonPermittedConnection = spy(this.agent.connect(nonPermittedPeer).get());
 
-    agent.setGetAllConnectionsSupplier(
-        () -> Stream.of(permittedConnection, nonPermittedConnection));
+    connections = List.of(permittedConnection, nonPermittedConnection);
 
     // Sanity check
     assertThat(agent.getMapOfCompletableFutures().size()).isEqualTo(2);
@@ -355,8 +365,7 @@ public class RlpxAgentTest {
     final PeerConnection permittedConnection = agent.connect(permittedPeer).get();
     final PeerConnection nonPermittedConnection = agent.connect(nonPermittedPeer).get();
 
-    agent.setGetAllConnectionsSupplier(
-        () -> Stream.of(permittedConnection, nonPermittedConnection));
+    connections = List.of(permittedConnection, nonPermittedConnection);
 
     // Sanity check
     assertThat(agent.getMapOfCompletableFutures().size()).isEqualTo(2);
@@ -386,8 +395,7 @@ public class RlpxAgentTest {
 
     final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
     final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer, true);
-    agent.setGetAllConnectionsSupplier(
-        () -> Stream.of(locallyInitiatedConnection, remotelyInitiatedConnection));
+    connections = List.of(locallyInitiatedConnection, remotelyInitiatedConnection);
     connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
 
     // Sanity check
@@ -419,8 +427,7 @@ public class RlpxAgentTest {
 
     final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
     final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer, true);
-    agent.setGetAllConnectionsSupplier(
-        () -> Stream.of(locallyInitiatedConnection, remotelyInitiatedConnection));
+    connections = List.of(locallyInitiatedConnection, remotelyInitiatedConnection);
     connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
 
     // Sanity check
@@ -590,7 +597,9 @@ public class RlpxAgentTest {
                 .localNode(localNode)
                 .metricsSystem(metrics)
                 .connectionInitializer(connectionInitializer)
-                .connectionEvents(peerConnectionEvents))
+                .connectionEvents(peerConnectionEvents)
+                .allConnectionsSupplier(allConnectionsSupplier)
+                .allActiveConnectionsSupplier(allActiveConnectionsSupplier))
         .build();
   }
 
@@ -621,5 +630,9 @@ public class RlpxAgentTest {
     public int getDispatchCount() {
       return dispatchCount;
     }
+  }
+
+  private Stream<PeerConnection> streamConnections() {
+    return connections.stream();
   }
 }

@@ -69,6 +69,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -502,6 +503,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private List<Long> blockNumberForks;
     private List<Long> timestampForks;
     private boolean legacyForkIdEnabled = false;
+    private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
+    private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
+    private int peersLowerBound;
 
     public P2PNetwork build() {
       validate();
@@ -545,6 +549,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
       checkState(blockNumberForks != null, "BlockNumberForks must be set.");
       checkState(timestampForks != null, "TimestampForks must be set.");
+      checkState(allConnectionsSupplier != null, "Supplier must be set.");
+      checkState(allActiveConnectionsSupplier != null, "Supplier must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
@@ -565,6 +571,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private RlpxAgent createRlpxAgent(
         final LocalNode localNode, final PeerPrivileges peerPrivileges) {
+
       return RlpxAgent.builder()
           .nodeKey(nodeKey)
           .config(config.getRlpx())
@@ -573,6 +580,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .localNode(localNode)
           .metricsSystem(metricsSystem)
           .p2pTLSConfiguration(p2pTLSConfiguration)
+          .allConnectionsSupplier(allConnectionsSupplier)
+          .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
+          .peersLowerBound(peersLowerBound)
           .build();
     }
 
@@ -673,6 +683,23 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     public Builder legacyForkIdEnabled(final boolean legacyForkIdEnabled) {
       this.legacyForkIdEnabled = legacyForkIdEnabled;
+      return this;
+    }
+
+    public Builder allConnectionsSupplier(
+        final Supplier<Stream<PeerConnection>> allConnectionsSupplier) {
+      this.allConnectionsSupplier = allConnectionsSupplier;
+      return this;
+    }
+
+    public Builder allActiveConnectionsSupplier(
+        final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
+      this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
+      return this;
+    }
+
+    public Builder peersLowerBound(final int peersLowerBound) {
+      this.peersLowerBound = peersLowerBound;
       return this;
     }
   }

@@ -392,6 +392,8 @@ public final class DefaultP2PNetworkTest {
         .supportedCapabilities(Capability.create("eth", 63))
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
-        .timestampForks(Collections.emptyList());
+        .timestampForks(Collections.emptyList())
+        .allConnectionsSupplier(Stream::empty)
+        .allActiveConnectionsSupplier(Stream::empty);
   }
 }

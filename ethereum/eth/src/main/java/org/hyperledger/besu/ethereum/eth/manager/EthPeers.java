@@ -170,6 +170,10 @@ public class EthPeers {
     }
   }
 
+  public int getPeerLowerBound() {
+    return peerLowerBound;
+  }
+
   @NotNull
   private List<PeerConnection> getIncompleteConnections(final Bytes id) {
     return incompleteConnections.asMap().keySet().stream()
@@ -343,20 +347,15 @@ public class EthPeers {
 
   public void setRlpxAgent(final RlpxAgent rlpxAgent) {
     this.rlpxAgent = rlpxAgent;
-    if (rlpxAgent != null) {
-      rlpxAgent.setGetAllActiveConnectionsSupplier(this::getAllActiveConnections);
-      rlpxAgent.setGetAllConnectionsSupplier(this::getAllConnections);
-      rlpxAgent.setPeerLowerBound(peerLowerBound);
-    }
   }
 
-  private Stream<PeerConnection> getAllActiveConnections() {
+  public Stream<PeerConnection> getAllActiveConnections() {
     return completeConnections.values().stream()
         .map(EthPeer::getConnection)
         .filter(c -> !c.isDisconnected());
   }
 
-  private Stream<PeerConnection> getAllConnections() {
+  public Stream<PeerConnection> getAllConnections() {
     return Stream.concat(
             completeConnections.values().stream().map(EthPeer::getConnection),
             incompleteConnections.asMap().keySet().stream())

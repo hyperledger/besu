@@ -55,7 +55,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -142,13 +141,6 @@ public class BesuControllerBuilderTest {
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater bonsaiUpdater =
-        mock(BonsaiWorldStateKeyValueStorage.BonsaiUpdater.class);
-    when(bonsaiUpdater.getTrieLogStorageTransaction())
-        .thenReturn(mock(KeyValueStorageTransaction.class));
-    when(bonsaiUpdater.getTrieBranchStorageTransaction())
-        .thenReturn(mock(KeyValueStorageTransaction.class));
-    when(bonsaiWorldStateStorage.updater()).thenReturn(bonsaiUpdater);
     besuControllerBuilder = spy(visitWithMockConfigs(new MainnetBesuControllerBuilder()));
   }
 
