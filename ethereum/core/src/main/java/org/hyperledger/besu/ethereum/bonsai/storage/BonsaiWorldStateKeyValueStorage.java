@@ -252,7 +252,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                     storageRoot.get())
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-        getAccountMerkleTrieCounter.inc();
+        getStorageValueMerkleTrieCounter.inc();
       }
     } else {
       getStorageValueFlatDatabaseCounter.inc();
