@@ -44,14 +44,14 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final BlockResultFactory blockResultFactory = new BlockResultFactory();
 
   private final Optional<MergeMiningCoordinator> mergeCoordinator;
-  private final ProtocolSchedule timestampSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthPeers ethPeers;
   private final Vertx consensusEngineServer;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
-      final ProtocolSchedule timestampSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthPeers ethPeers,
       final Vertx consensusEngineServer) {
@@ -59,7 +59,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
             .map(MergeMiningCoordinator.class::cast);
-    this.timestampSchedule = timestampSchedule;
+    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethPeers = ethPeers;
     this.consensusEngineServer = consensusEngineServer;
@@ -90,27 +90,27 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               engineQosTimer),
           new EngineNewPayloadV1(
               consensusEngineServer,
-              timestampSchedule,
+              protocolSchedule,
               protocolContext,
               mergeCoordinator.get(),
               ethPeers,
               engineQosTimer),
           new EngineNewPayloadV2(
               consensusEngineServer,
-              timestampSchedule,
+              protocolSchedule,
               protocolContext,
               mergeCoordinator.get(),
               ethPeers,
               engineQosTimer),
           new EngineForkchoiceUpdatedV1(
               consensusEngineServer,
-              timestampSchedule,
+              protocolSchedule,
               protocolContext,
               mergeCoordinator.get(),
               engineQosTimer),
           new EngineForkchoiceUpdatedV2(
               consensusEngineServer,
-              timestampSchedule,
+              protocolSchedule,
               protocolContext,
               mergeCoordinator.get(),
               engineQosTimer),

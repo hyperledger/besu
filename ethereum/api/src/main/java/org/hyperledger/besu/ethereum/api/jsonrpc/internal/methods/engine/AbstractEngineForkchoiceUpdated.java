@@ -49,17 +49,17 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
-  private final ProtocolSchedule timestampSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
-      final ProtocolSchedule timestampSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
-    this.timestampSchedule = timestampSchedule;
+    this.protocolSchedule = protocolSchedule;
     this.mergeCoordinator = mergeCoordinator;
   }
 
@@ -208,7 +208,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
     return newTimestampGreaterThanHead
         && getWithdrawalsValidator(
-                timestampSchedule, headBlockHeader, payloadAttributes.getTimestamp())
+                protocolSchedule, headBlockHeader, payloadAttributes.getTimestamp())
             .validateWithdrawals(maybeWithdrawals);
   }
 

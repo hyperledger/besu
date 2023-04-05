@@ -26,11 +26,11 @@ public class EngineForkchoiceUpdatedV1 extends AbstractEngineForkchoiceUpdated {
 
   public EngineForkchoiceUpdatedV1(
       final Vertx vertx,
-      final ProtocolSchedule timestampSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
-    super(vertx, timestampSchedule, protocolContext, mergeCoordinator, engineCallListener);
+    super(vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
   }
 
   @Override

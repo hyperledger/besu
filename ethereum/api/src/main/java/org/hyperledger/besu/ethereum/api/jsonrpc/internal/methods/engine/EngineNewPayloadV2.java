@@ -26,13 +26,12 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
 
   public EngineNewPayloadV2(
       final Vertx vertx,
-      final ProtocolSchedule timestampSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
       final EngineCallListener engineCallListener) {
-    super(
-        vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
+    super(vertx, protocolSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
   }
 
   @Override

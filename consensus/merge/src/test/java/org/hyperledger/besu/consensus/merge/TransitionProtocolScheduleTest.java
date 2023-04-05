@@ -136,7 +136,7 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void getByBlockHeader_delegatesToPreMergeScheduleWhenTimestampScheduleDoesNotExist() {
+  public void getByBlockHeader_delegatesToPreMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(false);
 
     transitionProtocolSchedule.getByBlockHeader(blockHeader);
@@ -145,7 +145,7 @@ public class TransitionProtocolScheduleTest {
   }
 
   @Test
-  public void getByBlockHeader_delegatesToPostMergeScheduleWhenTimestampScheduleDoesNotExist() {
+  public void getByBlockHeader_delegatesToPostMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(true);
 
     transitionProtocolSchedule.getByBlockHeader(blockHeader);
