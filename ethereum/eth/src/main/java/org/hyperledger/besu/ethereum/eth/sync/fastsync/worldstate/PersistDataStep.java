@@ -60,7 +60,7 @@ public class PersistDataStep {
     } catch (StorageException e) {
       if (e.getMessage().contains("Busy")) {
         LOG.error("Busy on persistDataStep marked tasks as failed");
-        tasks.forEach(nodeDataRequestTask -> nodeDataRequestTask.markFailed());
+        tasks.forEach(nodeDataRequestTask -> nodeDataRequestTask.getData().setData(null));
       }
     }
     return tasks;

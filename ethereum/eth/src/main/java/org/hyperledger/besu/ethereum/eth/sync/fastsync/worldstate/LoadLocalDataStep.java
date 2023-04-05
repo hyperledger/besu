@@ -61,7 +61,7 @@ public class LoadLocalDataStep {
       } catch (StorageException e) {
         if (e.getMessage().contains("Busy")) {
           LOG.error("(loadLocalData) Busy, marking task as failed");
-          task.markFailed();
+          task.getData().setData(null);
         }
       }
     }
