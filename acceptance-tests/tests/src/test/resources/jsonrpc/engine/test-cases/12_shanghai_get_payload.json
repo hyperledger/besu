@@ -37,6 +37,7 @@
             "amount": "0x2"
           }
         ],
+        "deposits": null,
         "blockNumber": "0x2",
         "blockHash": "0x5dec96e86ccd61362959cc73a0992b033fcde6f01d7467393363538c74c5260d",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
