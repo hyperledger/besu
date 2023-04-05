@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.account;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
@@ -49,6 +50,7 @@ public class TransferTransaction implements Transaction<Hash> {
   private final BigInteger nonce;
   private final Optional<BigInteger> chainId;
   private final SignatureAlgorithm signatureAlgorithm;
+  private final TransactionType transactionType;
   private byte[] signedTxData = null;
 
   public TransferTransaction(
@@ -58,7 +60,8 @@ public class TransferTransaction implements Transaction<Hash> {
       final Amount gasPrice,
       final BigInteger nonce,
       final Optional<BigInteger> chainId,
-      final SignatureAlgorithm signatureAlgorithm) {
+      final SignatureAlgorithm signatureAlgorithm,
+      final TransactionType transactionType) {
     this.sender = sender;
     this.recipient = recipient;
     this.transferAmount = transferAmount.getValue();
@@ -67,6 +70,7 @@ public class TransferTransaction implements Transaction<Hash> {
     this.nonce = nonce;
     this.chainId = chainId;
     this.signatureAlgorithm = signatureAlgorithm;
+    this.transactionType = transactionType;
   }
 
   @Override
@@ -116,26 +120,16 @@ public class TransferTransaction implements Transaction<Hash> {
   }
 
   private BigInteger convertGasPriceToWei(final Amount unconverted) {
-    final BigInteger price =
-        Convert.toWei(unconverted.getValue(), unconverted.getUnit()).toBigInteger();
-
-    if (MINIMUM_GAS_PRICE.compareTo(price) > 0) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Gas price: %s WEI, is below the accepted minimum: %s WEI",
-              price, MINIMUM_GAS_PRICE));
-    }
-
-    return price;
+    return Convert.toWei(unconverted.getValue(), unconverted.getUnit()).toBigInteger();
   }
 
   private RawTransaction createRawTransaction() {
-    return chainId
-        .map(this::createTransactionWithChainId)
-        .orElseGet(this::createTransactionWithoutChainId);
+    return transactionType == TransactionType.FRONTIER
+        ? createFrontierTransaction()
+        : create1559Transaction(chainId.orElseThrow());
   }
 
-  private RawTransaction createTransactionWithoutChainId() {
+  private RawTransaction createFrontierTransaction() {
     return RawTransaction.createEtherTransaction(
         getNonce(),
         gasPrice,
@@ -144,14 +138,14 @@ public class TransferTransaction implements Transaction<Hash> {
         Convert.toWei(transferAmount, transferUnit).toBigIntegerExact());
   }
 
-  private RawTransaction createTransactionWithChainId(final BigInteger chainId) {
+  private RawTransaction create1559Transaction(final BigInteger chainId) {
     return RawTransaction.createEtherTransaction(
         chainId.longValueExact(),
         getNonce(),
         INTRINSIC_GAS,
         recipient.getAddress(),
         Convert.toWei(transferAmount, transferUnit).toBigIntegerExact(),
-        BigInteger.ONE,
+        BigInteger.ZERO,
         gasPrice);
   }
 }
