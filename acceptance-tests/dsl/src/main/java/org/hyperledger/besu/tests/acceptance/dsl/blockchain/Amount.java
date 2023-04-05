@@ -28,6 +28,8 @@ public class Amount {
   private final BigDecimal value;
   private final Unit unit;
 
+  public static Amount ZERO = new Amount(BigDecimal.ZERO, WEI);
+
   private Amount(final BigDecimal value, final Unit unit) {
     this.value = value;
     this.unit = unit;

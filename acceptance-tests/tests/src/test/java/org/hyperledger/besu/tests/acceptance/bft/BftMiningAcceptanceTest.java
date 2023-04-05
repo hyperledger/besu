@@ -14,11 +14,18 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft;
 
+import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
+import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.util.List;
+import java.util.Optional;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
 public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
@@ -29,7 +36,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   }
 
   @Test
-  public void shouldMineOnSingleNode() throws Exception {
+  public void shouldMineOnSingleNodeWithPaidGas_Berlin() throws Exception {
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     cluster.start(minerNode);
 
@@ -45,6 +52,88 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     cluster.verify(receiver.balanceEquals(1));
 
     minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    cluster.verify(receiver.balanceEquals(3));
+  }
+
+  @Test
+  public void shouldMineOnSingleNodeWithFreeGas_Berlin() throws Exception {
+    final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
+    final MiningParameters zeroGasMiningParams =
+        new MiningParameters.Builder()
+            .miningEnabled(true)
+            .minTransactionGasPrice(Wei.ZERO)
+            .coinbase(AddressHelpers.ofValue(1))
+            .build();
+    minerNode.setMiningParameters(zeroGasMiningParams);
+
+    cluster.start(minerNode);
+
+    cluster.verify(blockchain.reachesHeight(minerNode, 1));
+
+    final Account sender = accounts.createAccount("account1");
+    final Account receiver = accounts.createAccount("account2");
+
+    minerNode.execute(accountTransactions.createTransfer(sender, 50, Amount.ZERO));
+    cluster.verify(sender.balanceEquals(50));
+
+    minerNode.execute(
+        accountTransactions.createIncrementalTransfers(sender, receiver, 1, Amount.ZERO));
+    cluster.verify(receiver.balanceEquals(1));
+
+    minerNode.execute(
+        accountTransactions.createIncrementalTransfers(sender, receiver, 2, Amount.ZERO));
+    cluster.verify(receiver.balanceEquals(3));
+  }
+
+  @Test
+  public void shouldMineOnSingleNodeWithPaidGas_London() throws Exception {
+    final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
+    updateGenesisConfigToLondon(minerNode, false);
+
+    cluster.start(minerNode);
+
+    cluster.verify(blockchain.reachesHeight(minerNode, 1));
+
+    final Account sender = accounts.createAccount("account1");
+    final Account receiver = accounts.createAccount("account2");
+
+    minerNode.execute(accountTransactions.createTransfer(sender, 50));
+    cluster.verify(sender.balanceEquals(50));
+
+    minerNode.execute(accountTransactions.create1559Transfer(sender, 50, 4));
+    cluster.verify(sender.balanceEquals(100));
+
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
+    cluster.verify(receiver.balanceEquals(1));
+
+    minerNode.execute(accountTransactions.create1559IncrementalTransfers(sender, receiver, 2, 4));
+    cluster.verify(receiver.balanceEquals(3));
+  }
+
+  @Test
+  public void shouldMineOnSingleNodeWithFreeGas_London() throws Exception {
+    final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
+    updateGenesisConfigToLondon(minerNode, true);
+
+    cluster.start(minerNode);
+
+    cluster.verify(blockchain.reachesHeight(minerNode, 1));
+
+    final Account sender = accounts.createAccount("account1");
+    final Account receiver = accounts.createAccount("account2");
+
+    minerNode.execute(accountTransactions.createTransfer(sender, 50, Amount.ZERO));
+    cluster.verify(sender.balanceEquals(50));
+
+    minerNode.execute(accountTransactions.create1559Transfer(sender, 50, 4, Amount.ZERO));
+    cluster.verify(sender.balanceEquals(100));
+
+    minerNode.execute(
+        accountTransactions.createIncrementalTransfers(sender, receiver, 1, Amount.ZERO));
+    cluster.verify(receiver.balanceEquals(1));
+
+    minerNode.execute(
+        accountTransactions.create1559IncrementalTransfers(sender, receiver, 2, 4, Amount.ZERO));
     cluster.verify(receiver.balanceEquals(3));
   }
 
@@ -122,5 +211,17 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     validators.get(0).execute(accountTransactions.createTransfer(receiver, 80));
 
     cluster.verifyOnActiveNodes(receiver.balanceEquals(80));
+  }
+
+  private static void updateGenesisConfigToLondon(
+      final BesuNode minerNode, final boolean zeroBaseFeeEnabled) {
+    final Optional<String> genesisConfig =
+        minerNode.getGenesisConfigProvider().create(List.of(minerNode));
+    final ObjectNode genesisConfigNode = JsonUtil.objectNodeFromString(genesisConfig.orElseThrow());
+    final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
+    config.remove("berlinBlock");
+    config.put("londonBlock", 0);
+    config.put("zeroBaseFee", zeroBaseFeeEnabled);
+    minerNode.setGenesisConfig(genesisConfigNode.toString());
   }
 }
