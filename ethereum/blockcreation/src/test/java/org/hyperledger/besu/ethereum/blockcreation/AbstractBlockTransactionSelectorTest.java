@@ -264,7 +264,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Wei.ZERO,
             FeeMarket.london(0L),
             new LondonGasCalculator(),
-            GasLimitCalculator.constant());
+            GasLimitCalculator.constant(),
+            -1);
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -469,7 +470,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             dataGasPrice,
             getFeeMarket(),
             new LondonGasCalculator(),
-            GasLimitCalculator.constant());
+            GasLimitCalculator.constant(),
+            -1);
     return selector;
   }
 

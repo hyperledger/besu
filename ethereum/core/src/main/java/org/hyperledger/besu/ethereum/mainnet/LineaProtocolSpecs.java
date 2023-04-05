@@ -12,7 +12,9 @@ import java.util.OptionalInt;
 import java.util.Set;
 
 public class LineaProtocolSpecs {
-  private static final int LINEA_MAX_TX_CALLDATA_SIZE =
+  private static final int LINEA_BLOCK_MAX_CALLDATA_SIZE =
+      1000000; // fake value replace with the actual one when known
+  private static final int LINEA_TX_MAX_CALLDATA_SIZE =
       10000; // fake value replace with the actual one when known
 
   private LineaProtocolSpecs() {}
@@ -27,8 +29,11 @@ public class LineaProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final LineaParameters lineaParameters) {
 
+    // calldata limits overridden?
     final int txCalldataMaxSize =
-        lineaParameters.maybeTransactionCalldataMaxSize().orElse(LINEA_MAX_TX_CALLDATA_SIZE);
+        lineaParameters.maybeTransactionCalldataMaxSize().orElse(LINEA_TX_MAX_CALLDATA_SIZE);
+    final int blockCalldataMaxSize =
+        lineaParameters.maybeBlockCalldataMaxSize().orElse(LINEA_BLOCK_MAX_CALLDATA_SIZE);
 
     return MainnetProtocolSpecs.parisDefinition(
             chainId,
@@ -52,6 +57,7 @@ public class LineaProtocolSpecs {
                         TransactionType.EIP1559),
                     quorumCompatibilityMode,
                     txCalldataMaxSize))
+        .blockMaxCalldataSize(blockCalldataMaxSize)
         .name("Linea");
   }
 }

@@ -115,7 +115,8 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          true);
+          true,
+          -1);
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           "status",
@@ -144,7 +145,8 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          true);
+          true,
+          -1);
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
