@@ -103,6 +103,8 @@ processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
 task acceptanceTest(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
 
+  useJUnitPlatform {}
+
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
@@ -129,6 +131,8 @@ task acceptanceTestMainnet(type: Test) {
   exclude '**/clique/**'
   exclude '**/permissioning/**'
   exclude '**/privacy/**'
+
+  useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
@@ -157,6 +161,8 @@ task acceptanceTestNonMainnet(type: Test) {
   include '**/clique/**'
   include '**/permissioning/**'
   include '**/privacy/**'
+
+  useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
