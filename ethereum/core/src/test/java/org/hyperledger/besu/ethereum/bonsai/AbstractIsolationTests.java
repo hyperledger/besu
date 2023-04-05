@@ -114,7 +114,7 @@ public abstract class AbstractIsolationTests {
             bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()), new NoOpMetricsSystem());
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null);

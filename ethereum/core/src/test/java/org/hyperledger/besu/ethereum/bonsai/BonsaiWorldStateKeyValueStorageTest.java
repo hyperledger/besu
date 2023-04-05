@@ -38,6 +38,7 @@ import java.util.TreeMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.Test;
 
 public class BonsaiWorldStateKeyValueStorageTest {
@@ -289,6 +290,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
-    return new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+    return new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
   }
 }

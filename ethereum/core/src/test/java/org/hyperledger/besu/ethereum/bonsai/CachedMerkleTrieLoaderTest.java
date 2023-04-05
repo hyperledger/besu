@@ -46,7 +46,7 @@ public class CachedMerkleTrieLoaderTest {
   private CachedMerkleTrieLoader merkleTrieLoader;
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
   private final BonsaiWorldStateKeyValueStorage inMemoryWorldState =
-      Mockito.spy(new BonsaiWorldStateKeyValueStorage(storageProvider));
+      Mockito.spy(new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()));
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));
@@ -67,7 +67,7 @@ public class CachedMerkleTrieLoaderTest {
         inMemoryWorldState, Hash.wrap(trie.getRootHash()), accounts.get(0));
 
     final BonsaiWorldStateKeyValueStorage emptyStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
@@ -103,7 +103,7 @@ public class CachedMerkleTrieLoaderTest {
 
     final List<Bytes> cachedSlots = new ArrayList<>();
     final BonsaiWorldStateKeyValueStorage emptyStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
