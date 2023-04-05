@@ -59,7 +59,7 @@ public class PersistDataStepTest {
             createTaskWithData(10, 11, 12));
 
     final List<Task<NodeDataRequest>> result =
-        persistDataStep.persist(tasks, blockHeader, downloadState);
+        persistDataStep.persist(tasks, blockHeader, downloadState, 0);
 
     assertThat(result).isSameAs(tasks);
     assertDataPersisted(tasks);
@@ -72,7 +72,7 @@ public class PersistDataStepTest {
     final List<Task<NodeDataRequest>> tasks = asList(withData, withoutData);
 
     final List<Task<NodeDataRequest>> result =
-        persistDataStep.persist(tasks, blockHeader, downloadState);
+        persistDataStep.persist(tasks, blockHeader, downloadState, 0);
     assertThat(result).isSameAs(tasks);
 
     assertThat(worldStateStorage.contains(withData.getData().getHash())).isTrue();
@@ -84,7 +84,7 @@ public class PersistDataStepTest {
     final Task<NodeDataRequest> rootNode = createTaskWithData(rootNodeData);
     final List<Task<NodeDataRequest>> tasks = singletonList(rootNode);
     final List<Task<NodeDataRequest>> result =
-        persistDataStep.persist(tasks, blockHeader, downloadState);
+        persistDataStep.persist(tasks, blockHeader, downloadState, 0);
     assertThat(result).isSameAs(tasks);
 
     assertThat(worldStateStorage.contains(rootNode.getData().getHash())).isFalse();
