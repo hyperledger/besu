@@ -67,7 +67,8 @@ public class CachedMerkleTrieLoaderTest {
         inMemoryWorldState, Hash.wrap(trie.getRootHash()), accounts.get(0));
 
     final BonsaiWorldStateKeyValueStorage emptyStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
@@ -103,7 +104,8 @@ public class CachedMerkleTrieLoaderTest {
 
     final List<Bytes> cachedSlots = new ArrayList<>();
     final BonsaiWorldStateKeyValueStorage emptyStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
