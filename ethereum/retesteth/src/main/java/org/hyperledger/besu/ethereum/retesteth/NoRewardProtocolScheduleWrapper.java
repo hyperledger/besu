@@ -14,9 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.retesteth;
 
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
@@ -36,61 +43,52 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
 
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
-    return delegate.getByBlockHeader(blockHeader);
+    final ProtocolSpec original = delegate.getByBlockHeader(blockHeader);
+    final BlockProcessor noRewardBlockProcessor =
+        new MainnetBlockProcessor(
+            original.getTransactionProcessor(),
+            original.getTransactionReceiptFactory(),
+            Wei.ZERO,
+            original.getMiningBeneficiaryCalculator(),
+            original.isSkipZeroBlockRewards(),
+            Optional.empty(),
+            delegate);
+    final BlockValidator noRewardBlockValidator =
+        new MainnetBlockValidator(
+            original.getBlockHeaderValidator(),
+            original.getBlockBodyValidator(),
+            noRewardBlockProcessor,
+            original.getBadBlocksManager());
+    final BlockImporter noRewardBlockImporter = new MainnetBlockImporter(noRewardBlockValidator);
+    return new ProtocolSpec(
+        original.getName(),
+        original.getEvm(),
+        original.getTransactionValidator(),
+        original.getTransactionProcessor(),
+        original.getPrivateTransactionProcessor(),
+        original.getBlockHeaderValidator(),
+        original.getOmmerHeaderValidator(),
+        original.getBlockBodyValidator(),
+        noRewardBlockProcessor,
+        noRewardBlockImporter,
+        noRewardBlockValidator,
+        original.getBlockHeaderFunctions(),
+        original.getTransactionReceiptFactory(),
+        original.getDifficultyCalculator(),
+        Wei.ZERO, // block reward
+        original.getMiningBeneficiaryCalculator(),
+        original.getPrecompileContractRegistry(),
+        original.isSkipZeroBlockRewards(),
+        original.getGasCalculator(),
+        original.getGasLimitCalculator(),
+        original.getFeeMarket(),
+        original.getBadBlocksManager(),
+        Optional.empty(),
+        original.getWithdrawalsValidator(),
+        original.getWithdrawalsProcessor(),
+        original.getDepositsValidator(),
+        original.isPoS());
   }
-
-  // TODO SLD - do we need this or a getByBlockHeader equivalent? Could be why referenceTests are
-  // failing?
-  //  @Override
-  //  public ProtocolSpec getByBlockNumber(final long number) {
-  //    final ProtocolSpec original = delegate.getByBlockNumber(number);
-  //    final BlockProcessor noRewardBlockProcessor =
-  //        new MainnetBlockProcessor(
-  //            original.getTransactionProcessor(),
-  //            original.getTransactionReceiptFactory(),
-  //            Wei.ZERO,
-  //            original.getMiningBeneficiaryCalculator(),
-  //            original.isSkipZeroBlockRewards(),
-  //            Optional.empty(),
-  //            delegate);
-  //    final BlockValidator noRewardBlockValidator =
-  //        new MainnetBlockValidator(
-  //            original.getBlockHeaderValidator(),
-  //            original.getBlockBodyValidator(),
-  //            noRewardBlockProcessor,
-  //            original.getBadBlocksManager());
-  //    final BlockImporter noRewardBlockImporter = new
-  // MainnetBlockImporter(noRewardBlockValidator);
-  //    return new ProtocolSpec(
-  //        original.getName(),
-  //        original.getEvm(),
-  //        original.getTransactionValidator(),
-  //        original.getTransactionProcessor(),
-  //        original.getPrivateTransactionProcessor(),
-  //        original.getBlockHeaderValidator(),
-  //        original.getOmmerHeaderValidator(),
-  //        original.getBlockBodyValidator(),
-  //        noRewardBlockProcessor,
-  //        noRewardBlockImporter,
-  //        noRewardBlockValidator,
-  //        original.getBlockHeaderFunctions(),
-  //        original.getTransactionReceiptFactory(),
-  //        original.getDifficultyCalculator(),
-  //        Wei.ZERO, // block reward
-  //        original.getMiningBeneficiaryCalculator(),
-  //        original.getPrecompileContractRegistry(),
-  //        original.isSkipZeroBlockRewards(),
-  //        original.getGasCalculator(),
-  //        original.getGasLimitCalculator(),
-  //        original.getFeeMarket(),
-  //        original.getBadBlocksManager(),
-  //        Optional.empty(),
-  //        original.getWithdrawalsValidator(),
-  //        original.getWithdrawalsProcessor(),
-  //        original.getDepositsValidator(),
-  //        original.isPoS());
-
-  //  }
 
   @Override
   public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
