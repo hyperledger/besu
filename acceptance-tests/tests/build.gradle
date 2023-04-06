@@ -127,10 +127,10 @@ task acceptanceTest(type: Test) {
 }
 task acceptanceTestMainnet(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-    exclude '**/bft/**'
-    exclude '**/clique/**'
-    exclude '**/permissioning/**'
-    exclude '**/privacy/**'
+  exclude '**/bft/**'
+  exclude '**/clique/**'
+  exclude '**/permissioning/**'
+  exclude '**/privacy/**'
 
   useJUnitPlatform {}
 
