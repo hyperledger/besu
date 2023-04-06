@@ -62,7 +62,7 @@ public class BonsaiWorldStateUpdateAccumulator
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
-  private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
+  //  private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
@@ -98,7 +98,6 @@ public class BonsaiWorldStateUpdateAccumulator
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
-    emptySlot.addAll(source.emptySlot);
     this.isAccumulatorStateChanged = true;
   }
 
@@ -399,39 +398,29 @@ public class BonsaiWorldStateUpdateAccumulator
         return Optional.ofNullable(value.getUpdated());
       }
     }
-    final Bytes slot = Bytes.concatenate(Hash.hash(address), slotHash);
-    if (emptySlot.contains(slot)) {
-      return Optional.empty();
-    } else {
-      try {
-        final Optional<UInt256> valueUInt =
-            (wrappedWorldView() instanceof BonsaiWorldState)
-                ? ((BonsaiWorldState) wrappedWorldView())
-                    .getStorageValueBySlotHash(
-                        () ->
-                            Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
-                                .map(BonsaiAccount::getStorageRoot),
-                        address,
-                        slotHash)
-                : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
-        valueUInt.ifPresentOrElse(
-            v ->
-                storageToUpdate
-                    .computeIfAbsent(
-                        address,
-                        key ->
-                            new StorageConsumingMap<>(
-                                address, new ConcurrentHashMap<>(), storagePreloader))
-                    .put(slotHash, new BonsaiValue<>(v, v)),
-            () -> {
-              emptySlot.add(Bytes.concatenate(Hash.hash(address), slotHash));
-            });
-        return valueUInt;
-      } catch (MerkleTrieException e) {
-        // need to throw to trigger the heal
-        throw new MerkleTrieException(
-            e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
-      }
+    try {
+      final Optional<UInt256> valueUInt =
+          (wrappedWorldView() instanceof BonsaiWorldState)
+              ? ((BonsaiWorldState) wrappedWorldView())
+                  .getStorageValueBySlotHash(
+                      () ->
+                          Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
+                              .map(BonsaiAccount::getStorageRoot),
+                      address,
+                      slotHash)
+              : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
+      storageToUpdate
+          .computeIfAbsent(
+              address,
+              key ->
+                  new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
+          .put(slotHash, new BonsaiValue<>(valueUInt.orElse(null), valueUInt.orElse(null)));
+
+      return valueUInt;
+    } catch (MerkleTrieException e) {
+      // need to throw to trigger the heal
+      throw new MerkleTrieException(
+          e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
     }
   }
 
@@ -528,6 +517,13 @@ public class BonsaiWorldStateUpdateAccumulator
       final Address address = updatesStorage.getKey();
       for (final Map.Entry<Hash, BonsaiValue<UInt256>> slotUpdate :
           updatesStorage.getValue().entrySet()) {
+        var val = slotUpdate.getValue();
+
+        if (val.getPrior() == null && val.getUpdated() == null) {
+          // by default do not persist empty reads to the trie log
+          continue;
+        }
+
         layer.addStorageChange(
             address,
             slotUpdate.getKey(),
@@ -817,7 +813,6 @@ public class BonsaiWorldStateUpdateAccumulator
     storageToUpdate.clear();
     codeToUpdate.clear();
     accountsToUpdate.clear();
-    emptySlot.clear();
     resetAccumulatorStateChanged();
     super.reset();
   }
