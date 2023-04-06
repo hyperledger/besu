@@ -61,10 +61,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   private final Counter getAccountCounter;
   private final Counter getAccountFlatDatabaseCounter;
   private final Counter getAccountMerkleTrieCounter;
+  private final Counter getAccountMissingMerkleTrieCounter;
 
   private final Counter getStorageValueCounter;
   private final Counter getStorageValueFlatDatabaseCounter;
   private final Counter getStorageValueMerkleTrieCounter;
+  private final Counter getStorageValueMissingMerkleTrieCounter;
 
   protected final ObservableMetricsSystem metricsSystem;
 
@@ -117,6 +119,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             "get_account_merkle_trie",
             "Number of accounts not found in the flat database, but found in the merkle trie");
 
+    getAccountMissingMerkleTrieCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_missing_merkle_trie",
+            "Number of accounts not found in the flat database and in the merkle trie");
+
     getStorageValueCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
@@ -134,6 +142,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             BesuMetricCategory.BLOCKCHAIN,
             "get_storagevalue_merkle_trie",
             "Number of storage slots not found in the flat database, but found in the merkle trie");
+
+    getStorageValueMissingMerkleTrieCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_missing_merkle_trie",
+            "Number of storage slots not found in the flat database and in the merkle trie");
   }
 
   @Override
@@ -161,7 +175,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                         this::getAccountStateTrieNode, Function.identity(), Function.identity()),
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
-        getAccountMerkleTrieCounter.inc();
+        if (response.isEmpty()) getAccountMissingMerkleTrieCounter.inc();
+        else getAccountMerkleTrieCounter.inc();
       }
     } else {
       getAccountFlatDatabaseCounter.inc();
@@ -252,7 +267,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                     storageRoot.get())
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-        getStorageValueMerkleTrieCounter.inc();
+        if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
+        else getStorageValueMerkleTrieCounter.inc();
       }
     } else {
       getStorageValueFlatDatabaseCounter.inc();
