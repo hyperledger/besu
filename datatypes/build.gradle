@@ -29,18 +29,18 @@ jar {
 }
 
 dependencies {
-  api project(':plugin-api')
-
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
 
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
   implementation 'com.google.guava:guava'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 

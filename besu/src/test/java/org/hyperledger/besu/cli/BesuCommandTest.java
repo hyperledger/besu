@@ -1835,14 +1835,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void ethStatsOptionIsParsedCorrectly() {
     final String url = "besu-node:secret@host:443";
     parseCommand("--ethstats", url);
-    verify(mockRunnerBuilder).ethstatsUrl(url);
+    verify(mockRunnerBuilder).ethstatsOptions(ethstatsOptionsArgumentCaptor.capture());
+    assertThat(ethstatsOptionsArgumentCaptor.getValue().getEthstatsUrl()).isEqualTo(url);
   }
 
   @Test
   public void ethStatsContactOptionIsParsedCorrectly() {
     final String contact = "contact@mail.net";
     parseCommand("--ethstats", "besu-node:secret@host:443", "--ethstats-contact", contact);
-    verify(mockRunnerBuilder).ethstatsContact(contact);
+    verify(mockRunnerBuilder).ethstatsOptions(ethstatsOptionsArgumentCaptor.capture());
+    assertThat(ethstatsOptionsArgumentCaptor.getValue().getEthstatsContact()).isEqualTo(contact);
   }
 
   @Test

@@ -103,7 +103,7 @@ public class EthSendRawTransactionTest extends AcceptanceTestBase {
 
   private TransferTransaction createTransaction(final boolean withChainId) {
     if (withChainId) {
-      return accountTransactions.createTransfer(createAccount(), 2, CHAIN_ID);
+      return accountTransactions.create1559Transfer(createAccount(), 2, CHAIN_ID);
     } else {
       final BigInteger nonce =
           miningNode.execute(ethTransactions.getTransactionCount(sender.getAddress()));

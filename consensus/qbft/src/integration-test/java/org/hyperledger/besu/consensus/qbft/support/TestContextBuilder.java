@@ -73,7 +73,7 @@ import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogger;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -125,6 +125,8 @@ public class TestContextBuilder {
 
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private boolean useValidatorContract;
+  private boolean useLondonMilestone = false;
+  private boolean useZeroBaseFee = false;
 
   private static class ControllerAndState {
 
@@ -237,6 +239,16 @@ public class TestContextBuilder {
     return this;
   }
 
+  public TestContextBuilder useLondonMilestone(final boolean useLondonMilestone) {
+    this.useLondonMilestone = useLondonMilestone;
+    return this;
+  }
+
+  public TestContextBuilder useZeroBaseFee(final boolean useZeroBaseFee) {
+    this.useZeroBaseFee = useZeroBaseFee;
+    return this;
+  }
+
   public TestContextBuilder qbftForks(final List<QbftFork> qbftForks) {
     this.qbftForks = qbftForks;
     return this;
@@ -301,6 +313,8 @@ public class TestContextBuilder {
             gossiper,
             synchronizerUpdater,
             useValidatorContract,
+            useLondonMilestone,
+            useZeroBaseFee,
             qbftForks);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
@@ -379,6 +393,8 @@ public class TestContextBuilder {
       final Gossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater,
       final boolean useValidatorContract,
+      final boolean useLondonMilestone,
+      final boolean useZeroBaseFee,
       final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
@@ -398,7 +414,14 @@ public class TestContextBuilder {
             : Collections.emptyMap();
     final QbftConfigOptions qbftConfigOptions = createGenesisConfig(useValidatorContract);
 
-    genesisConfigOptions.byzantiumBlock(0);
+    if (useLondonMilestone) {
+      genesisConfigOptions.londonBlock(0);
+    } else {
+      genesisConfigOptions.berlinBlock(0);
+    }
+    if (useZeroBaseFee) {
+      genesisConfigOptions.zeroBaseFee(true);
+    }
     genesisConfigOptions.qbftConfigOptions(
         new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
     genesisConfigOptions.transitions(TestTransitions.createQbftTestTransitions(qbftForks));
