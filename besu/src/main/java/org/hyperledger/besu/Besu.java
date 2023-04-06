@@ -72,6 +72,11 @@ public final class Besu {
     }
   }
 
+  /**
+   * Returns the first logger to be created. This is used to set the default uncaught exception
+   *
+   * @return Logger
+   */
   public static Logger getFirstLogger() {
     final Logger logger = LoggerFactory.getLogger(Besu.class);
     Thread.setDefaultUncaughtExceptionHandler(slf4jExceptionHandler(logger));
