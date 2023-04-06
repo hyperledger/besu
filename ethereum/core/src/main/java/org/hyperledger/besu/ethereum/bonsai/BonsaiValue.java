@@ -80,6 +80,10 @@ public class BonsaiValue<T> {
     return Objects.equals(updated, prior);
   }
 
+  public void setCleared() {
+    this.cleared = true;
+  }
+
   public boolean isCleared() {
     return cleared;
   }

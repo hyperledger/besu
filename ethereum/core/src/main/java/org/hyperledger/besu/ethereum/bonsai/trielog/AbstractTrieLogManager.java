@@ -153,5 +153,4 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   public synchronized void unSubscribe(final long id) {
     trieLogAddedObservers.unsubscribe(id);
   }
-
 }

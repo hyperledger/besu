@@ -177,12 +177,14 @@ public class BonsaiWorldStateUpdateAccumulator
         } else {
           account = wrappedWorldView().get(address);
         }
+        BonsaiAccount mutableAccount = null;
         if (account instanceof BonsaiAccount) {
-          final BonsaiAccount mutableAccount =
-              new BonsaiAccount((BonsaiAccount) account, this, true);
+          mutableAccount = new BonsaiAccount((BonsaiAccount) account, this, true);
           accountsToUpdate.put(address, new BonsaiValue<>((BonsaiAccount) account, mutableAccount));
           return mutableAccount;
         } else {
+          // add the empty read in accountsToUpdate
+          accountsToUpdate.put(address, new BonsaiValue<>(null, null));
           return null;
         }
       } else {
@@ -217,11 +219,11 @@ public class BonsaiWorldStateUpdateAccumulator
       final BonsaiValue<BonsaiAccount> accountValue =
           accountsToUpdate.computeIfAbsent(
               deletedAddress,
-              __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
+              __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null, true)));
       storageToClear.add(deletedAddress);
       final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
-        codeValue.setUpdated(null);
+        codeValue.setUpdated(null).setCleared();
       } else {
         wrappedWorldView()
             .getCode(
@@ -232,7 +234,7 @@ public class BonsaiWorldStateUpdateAccumulator
                     .orElse(Hash.EMPTY))
             .ifPresent(
                 deletedCode ->
-                    codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null)));
+                    codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null, true)));
       }
 
       // mark all updated storage as to be cleared
@@ -250,7 +252,7 @@ public class BonsaiWorldStateUpdateAccumulator
         if (updatedSlot.getPrior() == null || updatedSlot.getPrior().isZero()) {
           iter.remove();
         } else {
-          updatedSlot.setUpdated(null);
+          updatedSlot.setUpdated(null).setCleared();
         }
       }
 
@@ -501,6 +503,10 @@ public class BonsaiWorldStateUpdateAccumulator
                   newValue.getBalance(),
                   newValue.getStorageRoot(),
                   newValue.getCodeHash());
+      if (oldValue == null && newValue == null) {
+        // by default do not persist empty reads of accounts to the trie log
+        continue;
+      }
       layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
     }
 
@@ -524,11 +530,7 @@ public class BonsaiWorldStateUpdateAccumulator
           continue;
         }
 
-        layer.addStorageChange(
-            address,
-            slotUpdate.getKey(),
-            slotUpdate.getValue().getPrior(),
-            slotUpdate.getValue().getUpdated());
+        layer.addStorageChange(address, slotUpdate.getKey(), val.getPrior(), val.getUpdated());
       }
     }
   }
