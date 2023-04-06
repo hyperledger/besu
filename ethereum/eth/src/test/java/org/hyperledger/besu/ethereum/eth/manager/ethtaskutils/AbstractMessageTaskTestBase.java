@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -47,6 +46,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -83,44 +83,44 @@ public abstract class AbstractMessageTaskTestBase<T, R> {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
     ethPeers =
-            spy(
-                    new EthPeers(
-                            EthProtocol.NAME,
-                            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-                            TestClock.fixed(),
-                            metricsSystem,
-                            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-                            Collections.emptyList(),
-                            Bytes.random(64),
-                            MAX_PEERS,
-                            MAX_PEERS,
-                            MAX_PEERS,
-                            false));
+        spy(
+            new EthPeers(
+                EthProtocol.NAME,
+                () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
+                TestClock.fixed(),
+                metricsSystem,
+                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+                Collections.emptyList(),
+                Bytes.random(64),
+                MAX_PEERS,
+                MAX_PEERS,
+                MAX_PEERS,
+                false));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
-            new DeterministicEthScheduler(
-                    () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
+        new DeterministicEthScheduler(
+            () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
     ethContext = new EthContext(ethPeers, ethMessages, ethScheduler);
     final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
     transactionPool =
-            TransactionPoolFactory.createTransactionPool(
-                    protocolSchedule,
-                    protocolContext,
-                    ethContext,
-                    TestClock.system(ZoneId.systemDefault()),
-                    metricsSystem,
-                    syncState,
-                    new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
-                    TransactionPoolConfiguration.DEFAULT);
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            syncState,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
+            TransactionPoolConfiguration.DEFAULT);
     ethProtocolManager =
-            EthProtocolManagerTestUtil.create(
-                    blockchain,
-                    ethScheduler,
-                    protocolContext.getWorldStateArchive(),
-                    transactionPool,
-                    EthProtocolConfiguration.defaultConfig(),
-                    ethPeers,
-                    ethMessages,
-                    ethContext);
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            ethScheduler,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig(),
+            ethPeers,
+            ethMessages,
+            ethContext);
   }
 }

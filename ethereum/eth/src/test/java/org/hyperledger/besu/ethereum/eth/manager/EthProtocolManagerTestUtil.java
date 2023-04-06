@@ -75,18 +75,18 @@ public class EthProtocolManagerTestUtil {
       final Optional<MergePeerFilter> mergePeerFilter) {
 
     final EthPeers peers =
-            new EthPeers(
-                    EthProtocol.NAME,
-                    () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-                    TestClock.fixed(),
-                    new NoOpMetricsSystem(),
-                    EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-                    Collections.emptyList(),
-                    Bytes.random(64),
-                    25,
-                    25,
-                    25,
-                    false);
+        new EthPeers(
+            EthProtocol.NAME,
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.emptyList(),
+            Bytes.random(64),
+            25,
+            25,
+            25,
+            false);
     final EthMessages messages = new EthMessages();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
     final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
