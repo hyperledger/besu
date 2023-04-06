@@ -5404,11 +5404,15 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void logsUsingJemallocWhenEnvVarPresent() {
+  public void logsWarningWhenFailToLoadJemalloc() {
     assumeThat(PlatformDetector.getOSType(), is("linux"));
     setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
     parseCommand();
-    verify(mockLogger).info("Using jemalloc");
+    verify(mockLogger)
+        .warn(
+            eq(
+                "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version"),
+            any(Throwable.class));
   }
 
   @Test
