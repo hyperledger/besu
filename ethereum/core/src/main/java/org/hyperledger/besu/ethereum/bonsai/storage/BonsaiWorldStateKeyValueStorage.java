@@ -111,7 +111,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
             "get_account_flat_database",
-            "Number of accounts found in the database");
+            "Number of accounts found in the flat database");
 
     getAccountMerkleTrieCounter =
         metricsSystem.createCounter(
@@ -135,7 +135,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
             "get_storagevalue_flat_database",
-            "Number of storage slots found in the database");
+            "Number of storage slots found in the flat database");
 
     getStorageValueMerkleTrieCounter =
         metricsSystem.createCounter(
