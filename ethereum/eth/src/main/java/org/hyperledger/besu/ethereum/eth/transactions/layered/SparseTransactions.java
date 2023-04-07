@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.PROMOTED;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -155,6 +156,22 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     }
 
     return promotedTx;
+  }
+
+  @Override
+  public void invalidate(final PendingTransaction invalidatedTx) {
+
+    final var senderTxs = txsBySender.get(invalidatedTx.getSender());
+    if (senderTxs != null && senderTxs.containsKey(invalidatedTx.getNonce())) {
+      // gaps are allowed here then just remove
+      senderTxs.remove(invalidatedTx.getNonce());
+      processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
+      if (senderTxs.isEmpty()) {
+        txsBySender.remove(invalidatedTx.getSender());
+      }
+    } else {
+      nextLayer.invalidate(invalidatedTx);
+    }
   }
 
   @Override

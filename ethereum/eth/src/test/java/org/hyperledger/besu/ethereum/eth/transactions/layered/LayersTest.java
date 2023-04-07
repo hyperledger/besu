@@ -496,7 +496,15 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .removeForSender(S1, 6)
                 .expectedPrioritizedForSender(S1, 0, 1, 2)
                 .expectedReadyForSender(S1, 3, 4, 5)
-                .expectedSparseForSender(S1, 7, 8)));
+                .expectedSparseForSender(S1, 7, 8)),
+        Arguments.of(
+            new Scenario("overflow to sparse then remove 7")
+                .setAccountNonce(S1, 1)
+                .addForSender(S1, 1, 2, 3, 4, 5, 8)
+                .removeForSender(S1, 2)
+                .expectedPrioritizedForSender(S1, 1)
+                .expectedSparseForSender(S1, 3, 4, 5)
+                .expectedDroppedForSender(S1, 8)));
   }
 
   static Stream<Arguments> providerInterleavedAddRemoveTransactions() {
@@ -1038,8 +1046,8 @@ public class LayersTest extends BaseTransactionPoolTest {
       return this;
     }
 
-    Scenario setGap(final Sender sender, final int gap) {
-      nonceBySender.put(sender, gap);
+    Scenario setAccountNonce(final Sender sender, final int nonce) {
+      nonceBySender.put(sender, nonce);
       return this;
     }
 

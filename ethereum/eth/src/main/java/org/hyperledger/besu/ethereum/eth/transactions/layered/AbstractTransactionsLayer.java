@@ -21,8 +21,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CONFIRMED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CROSS_LAYER_REPLACED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.EVICTED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.FOLLOW_INVALIDATED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.PROMOTED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 
@@ -270,10 +268,10 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final PendingTransaction pendingTransaction,
       final int distance) {
     final int nextLayerDistance;
-    if (!senderTxs.isEmpty()) {
-      nextLayerDistance = (int) (pendingTransaction.getNonce() - (senderTxs.lastKey() + 1));
-    } else {
+    if (senderTxs.isEmpty()) {
       nextLayerDistance = distance;
+    } else {
+      nextLayerDistance = (int) (pendingTransaction.getNonce() - (senderTxs.lastKey() + 1));
     }
     return nextLayer.add(pendingTransaction, nextLayerDistance);
   }
@@ -384,44 +382,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected abstract void internalEvict(
       final NavigableMap<Long, PendingTransaction> lessReadySenderTxs,
       final PendingTransaction evictedTx);
-
-  @Override
-  public void invalidate(final PendingTransaction invalidatedTx) {
-    nextLayer.invalidate(invalidatedTx);
-
-    final var senderTxs = txsBySender.get(invalidatedTx.getSender());
-    if (senderTxs != null) {
-      if (gapsAllowed()) {
-        // if gaps are allowed then just remove
-        senderTxs.remove(invalidatedTx.getNonce());
-        processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
-      } else {
-        // on sequential layer we need to remove and push to next layer all the following txs
-        final List<PendingTransaction> txsToRemove =
-            new ArrayList<>(senderTxs.tailMap(invalidatedTx.getNonce(), true).values());
-        final boolean skipFirst =
-            !txsToRemove.isEmpty() && txsToRemove.get(0).equals(invalidatedTx);
-
-        if (skipFirst) {
-          senderTxs.remove(invalidatedTx.getNonce());
-          processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
-        }
-
-        txsToRemove.stream()
-            .skip(skipFirst ? 1 : 0)
-            .peek(
-                txToRemove -> {
-                  senderTxs.remove(txToRemove.getNonce());
-                  processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
-                })
-            .forEach(followingTx -> nextLayer.add(followingTx, 1));
-      }
-
-      if (senderTxs.isEmpty()) {
-        txsBySender.remove(invalidatedTx.getSender());
-      }
-    }
-  }
 
   @Override
   public final void blockAdded(

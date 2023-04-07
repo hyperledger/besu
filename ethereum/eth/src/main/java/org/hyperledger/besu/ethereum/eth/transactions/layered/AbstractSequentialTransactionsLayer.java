@@ -14,11 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.FOLLOW_INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.OptionalLong;
@@ -35,6 +39,38 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
           transactionReplacementTester,
       final TransactionPoolMetrics metrics) {
     super(poolConfig, nextLayer, transactionReplacementTester, metrics);
+  }
+
+  @Override
+  public void invalidate(final PendingTransaction invalidatedTx) {
+    nextLayer.invalidate(invalidatedTx);
+
+    final var senderTxs = txsBySender.get(invalidatedTx.getSender());
+    final long invalidNonce = invalidatedTx.getNonce();
+    if (senderTxs != null && invalidNonce <= senderTxs.lastKey()) {
+      // on sequential layer we to push to next layer all the following txs, even if the invalid
+      // belong to a previous layer
+
+      if (senderTxs.remove(invalidNonce) != null) {
+        // invalid tx removed in this layer
+        processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
+      }
+
+      // push following to next layer in reverse order so no gaps are created in next sequential
+      // layers
+      new ArrayList<>(senderTxs.tailMap(invalidNonce, false).descendingMap().values())
+          .stream()
+              .peek(
+                  txToRemove -> {
+                    senderTxs.remove(txToRemove.getNonce());
+                    processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
+                  })
+              .forEach(followingTx -> nextLayer.add(followingTx, 1));
+
+      if (senderTxs.isEmpty()) {
+        txsBySender.remove(invalidatedTx.getSender());
+      }
+    }
   }
 
   @Override
