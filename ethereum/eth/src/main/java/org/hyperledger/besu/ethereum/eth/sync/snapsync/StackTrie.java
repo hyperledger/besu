@@ -79,6 +79,10 @@ public class StackTrie {
     return elementsCount;
   }
 
+  public void commit(final NodeUpdater nodeUpdater) {
+    commit((key, value) -> {}, nodeUpdater);
+  }
+
   public void commit(final FlatDatabaseUpdater flatDatabaseUpdater, final NodeUpdater nodeUpdater) {
 
     if (nbSegments.decrementAndGet() <= 0 && !elements.isEmpty()) {
