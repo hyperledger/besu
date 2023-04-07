@@ -119,7 +119,7 @@ public class PersistDataStep {
             RangeStorageEntriesCollector.createCollector(
                 accountFlatDataRangeRequest.getAccounts().firstKey(),
                 accountFlatDataRangeRequest.getAccounts().lastKey(),
-                10,
+                Integer.MAX_VALUE,
                 Integer.MAX_VALUE);
         final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
         final TreeMap<Bytes32, Bytes> accounts =
