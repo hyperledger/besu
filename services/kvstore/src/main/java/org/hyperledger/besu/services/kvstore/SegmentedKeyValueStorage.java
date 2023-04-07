@@ -78,7 +78,7 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    */
   Stream<Pair<byte[], byte[]>> stream(final S segmentHandle);
 
-  Stream<Pair<byte[], byte[]>> streamFromKey(S segmentHandle, byte[] startKey);
+  Stream<Pair<byte[], byte[]>> streamFromKey(final S segmentHandle, final byte[] startKey);
 
   /**
    * Stream keys.
