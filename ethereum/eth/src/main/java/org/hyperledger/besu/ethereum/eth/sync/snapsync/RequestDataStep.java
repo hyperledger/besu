@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapAccountFlatDataRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
@@ -37,8 +38,10 @@ import org.hyperledger.besu.services.tasks.Task;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import kotlin.collections.ArrayDeque;
@@ -47,6 +50,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class RequestDataStep {
 
+  private final WorldStateStorage worldStateStorage;
   private final SnapSyncState fastSyncState;
   private final WorldDownloadState<SnapDataRequest> downloadState;
   private final MetricsSystem metricsSystem;
@@ -59,6 +63,7 @@ public class RequestDataStep {
       final SnapSyncState fastSyncState,
       final WorldDownloadState<SnapDataRequest> downloadState,
       final MetricsSystem metricsSystem) {
+    this.worldStateStorage = worldStateStorage;
     this.fastSyncState = fastSyncState;
     this.downloadState = downloadState;
     this.metricsSystem = metricsSystem;
@@ -92,6 +97,42 @@ public class RequestDataStep {
               }
               return requestTask;
             });
+  }
+
+  public CompletableFuture<Task<SnapDataRequest>> requestLocalAccount(
+      final Task<SnapDataRequest> requestTask) {
+
+    final SnapAccountFlatDataRangeRequest accountDataRequest =
+        (SnapAccountFlatDataRangeRequest) requestTask.getData();
+    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+
+    final TreeMap<Bytes32, Bytes> accounts =
+        (TreeMap<Bytes32, Bytes>)
+            worldStateStorage.streamFlatDatabase(accountDataRequest.getStartKeyHash(), 128);
+    final List<Bytes> leftAccountProofRelatedNodes =
+        worldStateProofProvider.getAccountProofRelatedNodes(
+            blockHeader.getStateRoot(), accounts.firstKey());
+    final List<Bytes> rightAccountProofRelatedNodes =
+        worldStateProofProvider.getAccountProofRelatedNodes(
+            blockHeader.getStateRoot(), accounts.lastKey());
+
+    System.out.println(
+        "Found keys "
+            + accounts.size()
+            + " from "
+            + accounts.firstKey()
+            + " "
+            + accounts.lastKey());
+    accountDataRequest.setRootHash(blockHeader.getStateRoot());
+    accountDataRequest.addResponse(
+        worldStateProofProvider,
+        accounts,
+        new ArrayDeque<>(
+            Stream.concat(
+                    leftAccountProofRelatedNodes.stream(), rightAccountProofRelatedNodes.stream())
+                .collect(Collectors.toList())));
+
+    return CompletableFuture.completedFuture(requestTask);
   }
 
   public CompletableFuture<List<Task<SnapDataRequest>>> requestStorage(

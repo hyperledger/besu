@@ -99,7 +99,14 @@ public class StorageRangeDataRequest extends SnapDataRequest {
           }
         };
 
-    stackTrie.commit(nodeUpdater);
+    stackTrie.commit(
+        new StackTrie.FlatDatabaseUpdater() {
+          @Override
+          public void update(final Bytes32 key, final Bytes value) {
+            // NO OP
+          }
+        },
+        nodeUpdater);
 
     updaterTmp.get().commit();
 
@@ -163,7 +170,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                         storageRangeDataRequest.addStackTrie(Optional.of(stackTrie));
                         childRequests.add(storageRangeDataRequest);
                       });
-              if (!snapSyncState.isHealInProgress()
+              if (!snapSyncState.isHealTrieInProgress()
                   && startKeyHash.equals(MIN_RANGE)
                   && endKeyHash.equals(MAX_RANGE)) {
                 // need to heal this account storage

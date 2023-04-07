@@ -162,7 +162,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                   newDownloadState.enqueueRequest(snapDataRequest);
                 });
       } else if (!snapContext.getInconsistentAccounts().isEmpty()) { // restart only the heal step
-        snapSyncState.setHealStatus(true);
+        snapSyncState.setHealTrieStatus(true);
         worldStateStorage.clearFlatDatabase();
         worldStateStorage.clearTrieLog();
         newDownloadState.setInconsistentAccounts(inconsistentAccounts);

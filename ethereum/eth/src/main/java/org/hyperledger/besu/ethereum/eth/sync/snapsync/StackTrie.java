@@ -79,7 +79,7 @@ public class StackTrie {
     return elementsCount;
   }
 
-  public void commit(final NodeUpdater nodeUpdater) {
+  public void commit(final FlatDatabaseUpdater flatDatabaseUpdater, final NodeUpdater nodeUpdater) {
 
     if (nbSegments.decrementAndGet() <= 0 && !elements.isEmpty()) {
 
@@ -112,9 +112,12 @@ public class StackTrie {
           new StoredMerklePatriciaTrie<>(
               snapStoredNodeFactory, proofs.isEmpty() ? MerkleTrie.EMPTY_TRIE_NODE_HASH : rootHash);
 
-      for (Map.Entry<Bytes32, Bytes> account : keys.entrySet()) {
-        trie.put(account.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, account.getValue()));
+      for (Map.Entry<Bytes32, Bytes> entry : keys.entrySet()) {
+        trie.put(entry.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, entry.getValue()));
       }
+
+      keys.forEach(flatDatabaseUpdater::update);
+
       trie.commit(
           nodeUpdater,
           (new CommitVisitor<>(nodeUpdater) {
@@ -135,6 +138,11 @@ public class StackTrie {
       nbSegments.incrementAndGet();
       return true;
     }
+  }
+
+  public interface FlatDatabaseUpdater {
+
+    void update(final Bytes32 key, final Bytes value);
   }
 
   @Value.Immutable

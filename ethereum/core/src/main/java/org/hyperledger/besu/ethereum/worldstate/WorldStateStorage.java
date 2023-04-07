@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.worldstate;
 import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -40,6 +42,10 @@ public interface WorldStateStorage {
   default boolean contains(final Bytes32 hash) {
     // we don't have location info
     return getNodeData(null, hash).isPresent();
+  }
+
+  default Map<Bytes32, Bytes> streamFlatDatabase(final Bytes startKeyHash, final long max) {
+    return Collections.emptyMap();
   }
 
   void clear();

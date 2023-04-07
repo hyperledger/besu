@@ -14,13 +14,26 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapAccountFlatDataRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.TrieIterator;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Stream;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PersistDataStep {
 
@@ -70,8 +83,91 @@ public class PersistDataStep {
     return tasks;
   }
 
+  public List<Task<SnapDataRequest>> healFlatDatabase(final List<Task<SnapDataRequest>> tasks) {
+    final BonsaiWorldStateKeyValueStorage.Updater updater =
+        (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
+    for (Task<SnapDataRequest> task : tasks) {
+
+      if (task.getData().isResponseReceived()) {
+        // enqueue child requests
+        final Stream<SnapDataRequest> childRequests =
+            task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
+        enqueueChildren(childRequests);
+
+        SnapAccountFlatDataRangeRequest accountFlatDataRangeRequest =
+            (SnapAccountFlatDataRangeRequest) task;
+        System.out.println(
+            "Range from "
+                + accountFlatDataRangeRequest.getAccounts().firstKey()
+                + " to "
+                + accountFlatDataRangeRequest.getAccounts().lastKey()
+                + " "
+                + task.getData().isResponseReceived());
+
+      } else {
+        final MerkleTrie<Bytes, Bytes> accountTrie =
+            new StoredMerklePatriciaTrie<>(
+                worldStateStorage::getAccountTrieNodeData,
+                task.getData().getRootHash(),
+                Function.identity(),
+                Function.identity());
+
+        SnapAccountFlatDataRangeRequest accountFlatDataRangeRequest =
+            (SnapAccountFlatDataRangeRequest) task;
+
+        final RangeStorageEntriesCollector collector =
+            RangeStorageEntriesCollector.createCollector(
+                accountFlatDataRangeRequest.getAccounts().firstKey(),
+                accountFlatDataRangeRequest.getAccounts().lastKey(),
+                10,
+                Integer.MAX_VALUE);
+        final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
+        final TreeMap<Bytes32, Bytes> accounts =
+            (TreeMap<Bytes32, Bytes>)
+                accountTrie.entriesFrom(
+                    root ->
+                        RangeStorageEntriesCollector.collectEntries(
+                            collector,
+                            visitor,
+                            root,
+                            accountFlatDataRangeRequest.getAccounts().firstKey()));
+
+        Map<Bytes32, Bytes> keysAdd = new TreeMap<>();
+        Map<Bytes32, Bytes> keysToDelete = new TreeMap<>(accountFlatDataRangeRequest.getAccounts());
+        accounts.forEach(
+            (key, value) -> {
+              if (keysToDelete.containsKey(key)) {
+                keysToDelete.remove(key);
+              } else {
+                keysAdd.put(key, value);
+                updater.putAccountInfoState(Hash.wrap(key), value);
+              }
+            });
+        System.out.println(
+            "Range from "
+                + accountFlatDataRangeRequest.getAccounts().firstKey()
+                + " to "
+                + accountFlatDataRangeRequest.getAccounts().lastKey()
+                + " "
+                + task.getData().isResponseReceived()
+                + " fixed "
+                + keysAdd.size()
+                + " "
+                + keysToDelete.size());
+
+        keysToDelete.forEach((key, value) -> updater.removeAccountInfoState(Hash.wrap(key)));
+      }
+    }
+    updater.commit();
+    return tasks;
+  }
+
   public Task<SnapDataRequest> persist(final Task<SnapDataRequest> task) {
     return persist(List.of(task)).get(0);
+  }
+
+  public Task<SnapDataRequest> healFlatDatabase(final Task<SnapDataRequest> task) {
+    return healFlatDatabase(List.of(task)).get(0);
   }
 
   private void enqueueChildren(final Stream<SnapDataRequest> childRequests) {

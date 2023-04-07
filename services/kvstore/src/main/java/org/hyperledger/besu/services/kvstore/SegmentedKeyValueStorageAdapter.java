@@ -103,6 +103,11 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   }
 
   @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) throws StorageException {
+    return storage.streamFromKey(segmentHandle, startKey);
+  }
+
+  @Override
   public Stream<byte[]> streamKeys() {
     return storage.streamKeys(segmentHandle);
   }

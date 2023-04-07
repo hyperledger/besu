@@ -71,6 +71,10 @@ public interface KeyValueStorage extends Closeable {
    */
   Stream<Pair<byte[], byte[]>> stream() throws StorageException;
 
+  default Stream<Pair<byte[], byte[]>> streamFromKey(byte[] startKey) throws StorageException {
+    return Stream.empty();
+  }
+
   /**
    * Returns a stream of all keys.
    *

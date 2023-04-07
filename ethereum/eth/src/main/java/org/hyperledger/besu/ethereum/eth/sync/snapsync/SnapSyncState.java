@@ -24,7 +24,9 @@ import org.slf4j.LoggerFactory;
 public class SnapSyncState extends FastSyncState {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncState.class);
 
-  private boolean isHealInProgress;
+  private boolean isHealTrieInProgress;
+
+  private boolean isHealFlatInProgress;
   private boolean isWaitingBlockchain;
 
   public SnapSyncState(final FastSyncState fastSyncState) {
@@ -34,12 +36,20 @@ public class SnapSyncState extends FastSyncState {
         fastSyncState.getPivotBlockHeader());
   }
 
-  public boolean isHealInProgress() {
-    return isHealInProgress;
+  public boolean isHealTrieInProgress() {
+    return isHealTrieInProgress;
   }
 
-  public void setHealStatus(final boolean healStatus) {
-    isHealInProgress = healStatus;
+  public void setHealTrieStatus(final boolean healTrieStatus) {
+    isHealTrieInProgress = healTrieStatus;
+  }
+
+  public boolean isHealFlatInProgress() {
+    return isHealFlatInProgress;
+  }
+
+  public void setHealFlatInProgress(final boolean healFlatInProgress) {
+    isHealFlatInProgress = healFlatInProgress;
   }
 
   public boolean isWaitingBlockchain() {
