@@ -156,4 +156,9 @@ public class EndLayer implements TransactionsLayer {
   public String logStats() {
     return "Dropped: " + droppedCount;
   }
+
+  @Override
+  public String logSender(final Address sender) {
+    return "";
+  }
 }

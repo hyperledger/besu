@@ -110,12 +110,23 @@ public class LayeredPendingTransactions implements PendingTransactions {
       return nonceChecksResult;
     }
 
-    final TransactionAddedResult result =
-        prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
+    try {
+      final TransactionAddedResult result =
+          prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
 
-    assert prioritizedTransactions.consistencyCheck(new HashMap<>());
+      assert prioritizedTransactions.consistencyCheck(new HashMap<>());
 
-    return result;
+      return result;
+    } catch (final Throwable throwable) {
+      // in case something unexpected happened, log this sender txs and do a consistency check
+      LOG.warn(
+          "Unexpected error {} when adding transaction {}, current sender status {}",
+          throwable,
+          pendingTransaction.toTraceLog(),
+          prioritizedTransactions.logSender(pendingTransaction.getSender()));
+      prioritizedTransactions.consistencyCheck(new HashMap<>());
+      return TransactionAddedResult.INTERNAL_ERROR;
+    }
   }
 
   private void logTransactionForReplayAdd(

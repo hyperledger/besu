@@ -25,7 +25,8 @@ public final class TransactionAddedResult {
     REPLACED,
     DROPPED,
     TRY_NEXT_LAYER,
-    ADDED
+    ADDED,
+    INTERNAL_ERROR
   }
 
   public static final TransactionAddedResult ALREADY_KNOWN =
@@ -44,6 +45,9 @@ public final class TransactionAddedResult {
       new TransactionAddedResult(Status.TRY_NEXT_LAYER);
 
   public static final TransactionAddedResult DROPPED = new TransactionAddedResult(Status.DROPPED);
+
+  public static final TransactionAddedResult INTERNAL_ERROR =
+      new TransactionAddedResult(Status.INTERNAL_ERROR);
 
   private final Optional<TransactionInvalidReason> rejectReason;
 

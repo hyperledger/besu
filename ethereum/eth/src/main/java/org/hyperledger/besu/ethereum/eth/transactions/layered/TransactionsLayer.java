@@ -76,6 +76,8 @@ public interface TransactionsLayer {
 
   String logStats();
 
+  String logSender(Address sender);
+
   enum RemovalReason {
     CONFIRMED,
     CROSS_LAYER_REPLACED,

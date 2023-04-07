@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
@@ -529,6 +530,16 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   @Override
   public String logStats() {
     return internalLogStats() + " | " + nextLayer.logStats();
+  }
+
+  @Override
+  public String logSender(final Address sender) {
+    final var senderTxs = txsBySender.get(sender);
+    return name()
+        + "["
+        + (Objects.isNull(txsBySender) ? "Empty" : senderTxs.keySet())
+        + "] "
+        + nextLayer.logSender(sender);
   }
 
   protected abstract String internalLogStats();
