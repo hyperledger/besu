@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapAccountFlatDataRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
@@ -102,8 +101,8 @@ public class RequestDataStep {
   public CompletableFuture<Task<SnapDataRequest>> requestLocalAccount(
       final Task<SnapDataRequest> requestTask) {
 
-    final SnapAccountFlatDataRangeRequest accountDataRequest =
-        (SnapAccountFlatDataRangeRequest) requestTask.getData();
+    final AccountRangeDataRequest accountDataRequest =
+        (AccountRangeDataRequest) requestTask.getData();
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
 
     final TreeMap<Bytes32, Bytes> accounts =

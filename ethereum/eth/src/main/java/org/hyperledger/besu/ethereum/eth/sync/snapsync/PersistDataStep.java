@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapAccountFlatDataRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -94,8 +94,7 @@ public class PersistDataStep {
             task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
         enqueueChildren(childRequests);
 
-        SnapAccountFlatDataRangeRequest accountFlatDataRangeRequest =
-            (SnapAccountFlatDataRangeRequest) task;
+        AccountRangeDataRequest accountFlatDataRangeRequest = (AccountRangeDataRequest) task;
         System.out.println(
             "Range from "
                 + accountFlatDataRangeRequest.getAccounts().firstKey()
@@ -112,8 +111,7 @@ public class PersistDataStep {
                 Function.identity(),
                 Function.identity());
 
-        SnapAccountFlatDataRangeRequest accountFlatDataRangeRequest =
-            (SnapAccountFlatDataRangeRequest) task;
+        AccountRangeDataRequest accountFlatDataRangeRequest = (AccountRangeDataRequest) task;
 
         final RangeStorageEntriesCollector collector =
             RangeStorageEntriesCollector.createCollector(
