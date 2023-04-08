@@ -22,7 +22,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Add mod operation. */
 public class AddModOperation extends AbstractFixedCostOperation {
@@ -57,7 +56,7 @@ public class AddModOperation extends AbstractFixedCostOperation {
     final Bytes value2 = frame.popStackItem();
 
     if (value2.isZero()) {
-      frame.pushStackItem(UInt256.ZERO);
+      frame.pushStackItem(FAILURE_STACK_ITEM);
     } else {
       BigInteger b0 = new BigInteger(1, value0.toArrayUnsafe());
       BigInteger b1 = new BigInteger(1, value1.toArrayUnsafe());

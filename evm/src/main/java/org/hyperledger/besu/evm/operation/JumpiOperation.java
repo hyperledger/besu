@@ -43,10 +43,10 @@ public class JumpiOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes dest = frame.popStackItem().trimLeadingZeros();
-    final Bytes condition = frame.popStackItem();
+    final Bytes condition = frame.popStackItem().trimLeadingZeros();
 
     // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
-    if (condition.isZero()) {
+    if (condition.size() == 0) {
       return successResponse;
     } else {
       final int jumpDestination;

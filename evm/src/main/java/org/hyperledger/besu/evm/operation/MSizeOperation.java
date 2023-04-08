@@ -18,7 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 /** The M size operation. */
 public class MSizeOperation extends AbstractFixedCostOperation {
@@ -35,7 +35,7 @@ public class MSizeOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(UInt256.valueOf(frame.memoryByteSize()));
+    frame.pushStackItem(Bytes.ofUnsignedLong(frame.memoryByteSize()));
 
     return successResponse;
   }

@@ -19,7 +19,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Return data size operation. */
 public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
@@ -37,7 +36,7 @@ public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Bytes returnData = frame.getReturnData();
-    frame.pushStackItem(UInt256.valueOf(returnData.size()));
+    frame.pushStackItem(Bytes.ofUnsignedLong(returnData.size()));
 
     return successResponse;
   }

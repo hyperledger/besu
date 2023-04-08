@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.IsZeroOperation;
+import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -187,10 +188,7 @@ public class EVM {
           case 0x0b: // SIGNEXTEND
             result = SignExtendOperation.staticOperation(frame);
             break;
-          case 0x0c:
-          case 0x0d:
-          case 0x0e:
-          case 0x0f:
+          case 0x0c, 0x0d, 0x0e, 0x0f:
             result = InvalidOperation.INVALID_RESULT;
             break;
             // case 0x10: // LT
@@ -226,80 +224,86 @@ public class EVM {
           case 0x50: // POP
             result = PopOperation.staticOperation(frame);
             break;
+          case 0x5b: // JUMPDEST
+            result = JumpDestOperation.jumpdestSuccess;
+            break;
           case 0x5f: // PUSH0
             result =
                 enableShanghai
                     ? Push0Operation.staticOperation(frame)
                     : InvalidOperation.INVALID_RESULT;
             break;
-          case 0x60: // PUSH1-32
-          case 0x61:
-          case 0x62:
-          case 0x63:
-          case 0x64:
-          case 0x65:
-          case 0x66:
-          case 0x67:
-          case 0x68:
-          case 0x69:
-          case 0x6a:
-          case 0x6b:
-          case 0x6c:
-          case 0x6d:
-          case 0x6e:
-          case 0x6f:
-          case 0x70:
-          case 0x71:
-          case 0x72:
-          case 0x73:
-          case 0x74:
-          case 0x75:
-          case 0x76:
-          case 0x77:
-          case 0x78:
-          case 0x79:
-          case 0x7a:
-          case 0x7b:
-          case 0x7c:
-          case 0x7d:
-          case 0x7e:
-          case 0x7f:
+            // PUSH1-32
+          case 0x60,
+              0x61,
+              0x62,
+              0x63,
+              0x64,
+              0x65,
+              0x66,
+              0x67,
+              0x68,
+              0x69,
+              0x6a,
+              0x6b,
+              0x6c,
+              0x6d,
+              0x6e,
+              0x6f,
+              0x70,
+              0x71,
+              0x72,
+              0x73,
+              0x74,
+              0x75,
+              0x76,
+              0x77,
+              0x78,
+              0x79,
+              0x7a,
+              0x7b,
+              0x7c,
+              0x7d,
+              0x7e,
+              0x7f:
             result = PushOperation.staticOperation(frame, code, pc, opcode - PUSH_BASE);
             break;
-          case 0x80: // DUP1-16
-          case 0x81:
-          case 0x82:
-          case 0x83:
-          case 0x84:
-          case 0x85:
-          case 0x86:
-          case 0x87:
-          case 0x88:
-          case 0x89:
-          case 0x8a:
-          case 0x8b:
-          case 0x8c:
-          case 0x8d:
-          case 0x8e:
-          case 0x8f:
+            // DUP1-16
+          case 0x80,
+              0x81,
+              0x82,
+              0x83,
+              0x84,
+              0x85,
+              0x86,
+              0x87,
+              0x88,
+              0x89,
+              0x8a,
+              0x8b,
+              0x8c,
+              0x8d,
+              0x8e,
+              0x8f:
             result = DupOperation.staticOperation(frame, opcode - DupOperation.DUP_BASE);
             break;
-          case 0x90: // SWAP1-16
-          case 0x91:
-          case 0x92:
-          case 0x93:
-          case 0x94:
-          case 0x95:
-          case 0x96:
-          case 0x97:
-          case 0x98:
-          case 0x99:
-          case 0x9a:
-          case 0x9b:
-          case 0x9c:
-          case 0x9d:
-          case 0x9e:
-          case 0x9f:
+            // SWAP1-16
+          case 0x90,
+              0x91,
+              0x92,
+              0x93,
+              0x94,
+              0x95,
+              0x96,
+              0x97,
+              0x98,
+              0x99,
+              0x9a,
+              0x9b,
+              0x9c,
+              0x9d,
+              0x9e,
+              0x9f:
             result = SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
             break;
           default: // unoptimized operations

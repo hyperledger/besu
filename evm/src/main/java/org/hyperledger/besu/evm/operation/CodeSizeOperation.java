@@ -19,7 +19,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 /** The Code size operation. */
 public class CodeSizeOperation extends AbstractFixedCostOperation {
@@ -37,7 +37,7 @@ public class CodeSizeOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Code code = frame.getCode();
-    frame.pushStackItem(UInt256.valueOf(code.getSize()));
+    frame.pushStackItem(Bytes.ofUnsignedShort(code.getSize()));
 
     return successResponse;
   }

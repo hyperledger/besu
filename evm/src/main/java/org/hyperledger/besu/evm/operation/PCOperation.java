@@ -18,7 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 /** The PC operation. */
 public class PCOperation extends AbstractFixedCostOperation {
@@ -35,7 +35,7 @@ public class PCOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(UInt256.valueOf(frame.getPC()));
+    frame.pushStackItem(Bytes.ofUnsignedInt(frame.getPC()));
 
     return successResponse;
   }
