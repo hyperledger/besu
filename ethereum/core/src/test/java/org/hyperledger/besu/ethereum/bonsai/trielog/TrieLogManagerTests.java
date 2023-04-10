@@ -74,4 +74,5 @@ public class TrieLogManagerTests {
 
     assertThat(eventFired.get()).isTrue();
   }
+
 }

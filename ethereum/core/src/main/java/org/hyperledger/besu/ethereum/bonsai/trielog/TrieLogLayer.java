@@ -50,11 +50,11 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class TrieLogLayer {
 
-  private Hash blockHash;
-  private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
-  private final Map<Address, BonsaiValue<Bytes>> code;
-  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;
-  private boolean frozen = false;
+  protected Hash blockHash;
+  protected final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
+  protected final Map<Address, BonsaiValue<Bytes>> code;
+  protected final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;
+  protected boolean frozen = false;
 
   public TrieLogLayer() {
     // TODO when tuweni fixes zero length byte comparison consider TreeMap
@@ -105,119 +105,6 @@ public class TrieLogLayer {
         .put(slotHash, new BonsaiValue<>(oldValue, newValue));
   }
 
-  public static TrieLogLayer fromBytes(final byte[] bytes) {
-    return readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
-  }
-
-  public static TrieLogLayer readFrom(final RLPInput input) {
-    final TrieLogLayer newLayer = new TrieLogLayer();
-
-    input.enterList();
-    newLayer.blockHash = Hash.wrap(input.readBytes32());
-
-    while (!input.isEndOfCurrentList()) {
-      input.enterList();
-      final Address address = Address.readFrom(input);
-
-      if (input.nextIsNull()) {
-        input.skipNext();
-      } else {
-        input.enterList();
-        final StateTrieAccountValue oldValue = nullOrValue(input, StateTrieAccountValue::readFrom);
-        final StateTrieAccountValue newValue = nullOrValue(input, StateTrieAccountValue::readFrom);
-        input.leaveList();
-        newLayer.accounts.put(address, new BonsaiValue<>(oldValue, newValue));
-      }
-
-      if (input.nextIsNull()) {
-        input.skipNext();
-      } else {
-        input.enterList();
-        final Bytes oldCode = nullOrValue(input, RLPInput::readBytes);
-        final Bytes newCode = nullOrValue(input, RLPInput::readBytes);
-        input.leaveList();
-        newLayer.code.put(address, new BonsaiValue<>(oldCode, newCode));
-      }
-
-      if (input.nextIsNull()) {
-        input.skipNext();
-      } else {
-        final Map<Hash, BonsaiValue<UInt256>> storageChanges = new TreeMap<>();
-        input.enterList();
-        while (!input.isEndOfCurrentList()) {
-          input.enterList();
-          final Hash slotHash = Hash.wrap(input.readBytes32());
-          final UInt256 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
-          final UInt256 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
-          storageChanges.put(slotHash, new BonsaiValue<>(oldValue, newValue));
-          input.leaveList();
-        }
-        input.leaveList();
-        newLayer.storage.put(address, storageChanges);
-      }
-
-      // TODO add trie nodes
-
-      // lenient leave list for forward compatible additions.
-      input.leaveListLenient();
-    }
-    input.leaveListLenient();
-    newLayer.freeze();
-
-    return newLayer;
-  }
-
-  public void writeTo(final RLPOutput output) {
-    freeze();
-
-    final Set<Address> addresses = new TreeSet<>();
-    addresses.addAll(accounts.keySet());
-    addresses.addAll(code.keySet());
-    addresses.addAll(storage.keySet());
-
-    output.startList(); // container
-    output.writeBytes(blockHash);
-
-    for (final Address address : addresses) {
-      output.startList(); // this change
-      output.writeBytes(address);
-
-      final BonsaiValue<StateTrieAccountValue> accountChange = accounts.get(address);
-      if (accountChange == null || accountChange.isUnchanged()) {
-        output.writeNull();
-      } else {
-        accountChange.writeRlp(output, (o, sta) -> sta.writeTo(o));
-      }
-
-      final BonsaiValue<Bytes> codeChange = code.get(address);
-      if (codeChange == null || codeChange.isUnchanged()) {
-        output.writeNull();
-      } else {
-        codeChange.writeRlp(output, RLPOutput::writeBytes);
-      }
-
-      final Map<Hash, BonsaiValue<UInt256>> storageChanges = storage.get(address);
-      if (storageChanges == null) {
-        output.writeNull();
-      } else {
-        output.startList();
-        for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageChangeEntry :
-            storageChanges.entrySet()) {
-          output.startList();
-          output.writeBytes(storageChangeEntry.getKey());
-          storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
-          output.endList();
-        }
-        output.endList();
-      }
-
-      // TODO write trie nodes
-
-      output.endList(); // this change
-    }
-    output.endList(); // container
-  }
-
   public Stream<Map.Entry<Address, BonsaiValue<StateTrieAccountValue>>> streamAccountChanges() {
     return accounts.entrySet().stream();
   }
@@ -236,15 +123,6 @@ public class TrieLogLayer {
 
   public Stream<Map.Entry<Hash, BonsaiValue<UInt256>>> streamStorageChanges(final Address address) {
     return storage.getOrDefault(address, Map.of()).entrySet().stream();
-  }
-
-  private static <T> T nullOrValue(final RLPInput input, final Function<RLPInput, T> reader) {
-    if (input.nextIsNull()) {
-      input.skipNext();
-      return null;
-    } else {
-      return reader.apply(input);
-    }
   }
 
   public Optional<Bytes> getPriorCode(final Address address) {
