@@ -59,6 +59,7 @@ public class PayloadIdentifier implements Quantity {
    * @param timestamp the timestamp
    * @param prevRandao the prev randao
    * @param feeRecipient the fee recipient
+   * @param withdrawals the withdrawals
    * @return the payload identifier
    */
   public static PayloadIdentifier forPayloadParams(
