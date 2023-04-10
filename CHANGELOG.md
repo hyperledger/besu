@@ -1,5 +1,15 @@
 # Changelog
 
+## 23.1.3
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
 ## 23.1.2
 This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended for all Mainnet users.
 
